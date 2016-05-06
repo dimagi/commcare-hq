@@ -108,6 +108,8 @@ from corehq.apps.app_manager.util import (
     update_unique_ids,
     app_callout_templates,
     use_app_aware_sync,
+    xpath_references_case,
+    xpath_references_user_case,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -223,6 +225,7 @@ class IndexedSchema(DocumentSchema):
     and need to know their own position within that list.
 
     """
+
     def with_id(self, i, parent):
         self._i = i
         self._parent = parent
@@ -236,6 +239,7 @@ class IndexedSchema(DocumentSchema):
         return other and (self.id == other.id) and (self._parent == other._parent)
 
     class Getter(object):
+
         def __init__(self, attr):
             self.attr = attr
 
@@ -367,6 +371,7 @@ class FormActions(DocumentSchema):
 
     case_preload = SchemaProperty(PreloadAction)
     referral_preload = SchemaProperty(PreloadAction)
+    load_from_form = SchemaProperty(PreloadAction)
 
     usercase_update = SchemaProperty(UpdateCaseAction)
     usercase_preload = SchemaProperty(PreloadAction)
@@ -411,6 +416,10 @@ class AdvancedAction(IndexedSchema):
     @property
     def is_subcase(self):
         return bool(self.case_indices)
+
+    @property
+    def form_element_name(self):
+        return "case_{}".format(self.case_tag)
 
 
 class AutoSelectCase(DocumentSchema):
@@ -540,6 +549,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
 
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
+
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
     get_load_update_actions = IndexedSchema.Getter('load_update_cases')
@@ -615,6 +625,7 @@ class AdvancedFormActions(DocumentSchema):
 
 
 class FormSource(object):
+
     def __get__(self, form, form_cls):
         if not form:
             return self
@@ -651,6 +662,7 @@ class FormSource(object):
 
 
 class CachedStringProperty(object):
+
     def __init__(self, key):
         self.get_key = key
 
@@ -823,8 +835,12 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            # formtranslate requires all attributes to be valid xpaths, but
+            # vellum namespaced attributes aren't
+            form = self.wrapped_xform()
+            form.strip_vellum_ns_attributes()
             try:
-                validate_xform(self.source,
+                validate_xform(etree.tostring(form.xml),
                                version=self.get_app().application_version)
             except XFormValidationError as e:
                 validation_dict = {
@@ -964,6 +980,7 @@ class FormBase(DocumentSchema):
         except XFormException as e:
             # punt on invalid xml (sorry, no rich attachments)
             valid_paths = {}
+
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
                 return u"{}{}".format(ATTACHMENT_PREFIX, key)
@@ -1044,6 +1061,7 @@ class FormBase(DocumentSchema):
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
+
     def get_app(self):
         return self._parent._parent
 
@@ -1309,7 +1327,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             elif self.requires == 'case':
                 action_types = (
                     'update_case', 'close_case', 'case_preload', 'subcases',
-                    'usercase_update', 'usercase_preload',
+                    'usercase_update', 'usercase_preload', 'load_from_form',
                 )
             else:
                 # this is left around for legacy migrated apps
@@ -1468,7 +1486,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
         questions = {
             q['value']: FormQuestionResponse(q)
-            for q in self.get_questions(self.get_app().langs, include_translations=True)
+            for q in self.get_questions(self.get_app().langs, include_triggers=True,
+                include_groups=True, include_translations=True)
         }
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
@@ -1493,7 +1512,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                         questions,
                         question_path
                     )
-            if type_ == 'case_preload':
+            if type_ == 'case_preload' or type_ == 'load_from_form':
                 for name, question_path in FormAction.get_action_properties(action):
                     self.add_property_load(
                         app_case_meta,
@@ -1642,6 +1661,7 @@ class DetailColumn(IndexedSchema):
             'month': 30.4375,
             'year': 365.25
         }
+
         @classmethod
         def get_from_old_format(cls, format):
             if format == 'years-ago':
@@ -1759,6 +1779,22 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
+
+
+class CaseSearchProperty(DocumentSchema):
+    """
+    Case properties available to search on.
+    """
+    name = StringProperty()
+    label = DictProperty()
+
+
+class CaseSearch(DocumentSchema):
+    """
+    Properties and search command label
+    """
+    command_label = DictProperty(default={'en': 'Search All Cases'})
+    properties = SchemaListProperty(CaseSearchProperty)
 
 
 class ParentSelect(DocumentSchema):
@@ -2004,6 +2040,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
 
 class ModuleDetailsMixin():
+
     @classmethod
     def wrap_details(cls, data):
         if 'details' in data:
@@ -2142,6 +2179,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
+    search_config = SchemaProperty(CaseSearch)
 
     @classmethod
     def wrap(cls, data):
@@ -2440,7 +2478,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_tag=action.case_tag
             ))
 
-        if self.form_filter:
+        form_filter_references_case = (
+            xpath_references_case(self.form_filter) or
+            xpath_references_user_case(self.form_filter)
+        )
+
+        if form_filter_references_case:
             if not any(action for action in self.actions.load_update_cases if not action.auto_select):
                 errors.append({'type': "filtering without case"})
 
@@ -2639,6 +2682,7 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
+    search_config = SchemaListProperty(CaseSearch)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -3285,6 +3329,7 @@ class ReportGraphConfig(DocumentSchema):
 
 
 class ReportAppFilter(DocumentSchema):
+
     @classmethod
     def wrap(cls, data):
         if cls is ReportAppFilter:
@@ -3511,6 +3556,7 @@ class CustomMonthFilter(ReportAppFilter):
 
 
 class MobileSelectFilter(ReportAppFilter):
+
     def get_filter_value(self, user, ui_filter):
         return None
 
@@ -5202,6 +5248,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 form.update_app_case_meta(meta)
 
         seen_types = []
+
         def get_children(case_type):
             seen_types.append(case_type)
             return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]

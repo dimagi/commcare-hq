@@ -370,6 +370,7 @@ class StockState(models.Model):
     stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5, default=Decimal(0))
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
+    last_modified_form_id = models.CharField(max_length=100, null=True)
     sql_product = models.ForeignKey(SQLProduct)
     sql_location = models.ForeignKey(SQLLocation, null=True)
 
@@ -507,8 +508,6 @@ def _reopen_or_create_supply_point(location):
     )
     if supply_point:
         if supply_point and supply_point.closed:
-            form_ids = CaseAccessors(supply_point.domain).get_case_xform_ids(supply_point.case_id)
-            form_accessor = FormAccessors(supply_point.domain)
             transactions = supply_point.closed_transactions
             for transaction in transactions:
                 transaction.form.archive(user_id=const.COMMTRACK_USERNAME)
@@ -561,9 +560,8 @@ def remove_data(sender, xform, *args, **kwargs):
 def reprocess_form(sender, xform, *args, **kwargs):
     from corehq.apps.commtrack.processing import process_stock
     result = process_stock([xform])
-    for to_save in result.get_models_to_save():
-        if to_save:
-            to_save.commit()
+    result.populate_models()
+    result.commit()
     result.finalize()
     # todo: use LedgerProcessor
     CommCareCase.get_db().bulk_save(result.relevant_cases)

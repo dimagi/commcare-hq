@@ -79,6 +79,7 @@ class EWSBroadcastForm(BroadcastForm):
 
 
 class FacilitiesSelectWidget(forms.Widget):
+
     def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
         super(FacilitiesSelectWidget, self).__init__(attrs)
         self.domain = domain

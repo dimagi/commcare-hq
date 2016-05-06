@@ -12,6 +12,7 @@ from corehq.util.test_utils import flag_enabled
 
 
 class AutoCloseExtensionsTest(SyncBaseTest):
+
     def setUp(self):
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()

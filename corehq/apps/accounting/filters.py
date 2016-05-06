@@ -171,13 +171,12 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
         (SubscriptionAdjustmentMethod.INTERNAL, "Operations Created"),
         (SubscriptionAdjustmentMethod.USER, "User Created"),
         (SubscriptionAdjustmentMethod.TASK, "Created During Invoicing"),
-        (SubscriptionAdjustmentMethod.TRIAL_INTERNAL, "Custom Trial"),
         (SubscriptionAdjustmentMethod.TRIAL, "30 Day Trial (default signup)"),
     )
 
 
 class DateRangeFilter(BaseReportFilter):
-    template = 'reports/filters/bootstrap2/daterange.html'
+    template = 'reports/filters/daterange.html'
     default_days = 7
 
     START_DATE = 'startdate'
@@ -247,6 +246,7 @@ class DateRangeFilter(BaseReportFilter):
 
 
 class OptionalFilterMixin(object):
+
     @classmethod
     def use_filter(cls, request):
         return cls.optional_filter_string_value(request) == 'on'
@@ -261,7 +261,7 @@ class OptionalFilterMixin(object):
 
 
 class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
-    template = 'reports/filters/bootstrap2/optional_daterange.html'
+    template = 'reports/filters/optional_daterange.html'
 
     @property
     def filter_context(self):
@@ -275,6 +275,7 @@ class OptionalDateRangeFilter(DateRangeFilter, OptionalFilterMixin):
 class DateFilter(OptionalDateRangeFilter):
     slug = 'date'
     label = "Date"
+
 
 class DateCreatedFilter(OptionalDateRangeFilter):
     slug = 'date_created'
@@ -292,7 +293,7 @@ class EndDateFilter(OptionalDateRangeFilter):
 
 
 class OptionalMonthYearFilter(BaseReportFilter, OptionalFilterMixin):
-    template = 'reports/filters/bootstrap2/optional_month_year.html'
+    template = 'reports/filters/optional_month_year.html'
 
     @property
     def filter_context(self):

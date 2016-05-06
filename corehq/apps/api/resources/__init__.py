@@ -12,6 +12,7 @@ from corehq.apps.api.util import get_obj
 
 
 class dict_object(object):
+
     def __init__(self, dict):
         self.dict = dict
 
@@ -58,6 +59,7 @@ class CorsResourceMixin(object):
     """
     Mixin implementing CORS
     """
+
     def create_response(self, *args, **kwargs):
         response = super(CorsResourceMixin, self).create_response(*args, **kwargs)
         response['Access-Control-Allow-Origin'] = '*'
@@ -91,6 +93,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
     """
     Convenience class to allow easy adjustment of API resource base classes.
     """
+
     def dispatch(self, request_type, request, **kwargs):
         if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
             return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
@@ -150,6 +153,7 @@ class SimpleSortableResourceMixin(object):
 
 
 class DomainSpecificResourceMixin(object):
+
     def get_list(self, request, **kwargs):
         """
         Exactly copied from https://github.com/toastdriven/django-tastypie/blob/v0.9.14/tastypie/resources.py#L1262
@@ -196,6 +200,7 @@ class DomainSpecificResourceMixin(object):
 
 
 class CouchResourceMixin(object):
+
     def detail_uri_kwargs(self, bundle_or_obj):
         return {
             'pk': get_obj(bundle_or_obj)._id

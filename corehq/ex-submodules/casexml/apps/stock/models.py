@@ -28,6 +28,7 @@ class StockReport(models.Model):
 
 
 class ConsumptionMixin(object):
+
     @property
     def is_stockout(self):
         return (

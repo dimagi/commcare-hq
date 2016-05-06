@@ -29,6 +29,7 @@ def strip_plus(phone_number):
     else:
         return phone_number
 
+
 def clean_phone_number(text):
     """
     strip non-numeric characters and add '%2B' at the front
@@ -160,6 +161,7 @@ CLEAN_TEXT_REPLACEMENTS = (
     (u"\u2026", "..."), # Ellipsis
 )
 
+
 def clean_text(text):
     """
     Performs the replacements in CLEAN_TEXT_REPLACEMENTS on text.
@@ -170,10 +172,10 @@ def clean_text(text):
 
 
 def get_contact(contact_id):
-    from corehq.apps.sms.models import CommConnectCase
+    from casexml.apps.case.models import CommCareCase
     contact = None
     try:
-        contact = CommConnectCase.get(contact_id)
+        contact = CommCareCase.get(contact_id)
     except ResourceNotFound:
         pass
 

@@ -1,11 +1,7 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/bootstrap3/two_column.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
-
-{% block head %}
-    {{ block.super }}
-{% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
@@ -56,8 +52,8 @@
 
             $('a.remove_row').click(removeRow);
 
-            $('a.add_mapping').click(function() {
-                var table = $(this).prev('table');
+            $('#js-add-mapping').click(function() {
+                var table = $('#fieldlist');
                 var cloned = table.find('tbody tr').first().clone();
 
                 cloned.find('input').val('');
@@ -142,16 +138,37 @@
                 populateRowErrors($(tr));
             });
             validateSubmitButton();
+
+            $('#back_breadcrumb').click(function(e) {
+                e.preventDefault();
+                history.back();
+                return false;
+            });
         });
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+        <li>
+            <a href="{% url "data_interfaces_default" domain %}"><strong>{% trans "Data" %}</strong></a>
+        </li>
+        <li>
+            <a href="#" id="back_breadcrumb">{% trans "Import Cases from Excel" %}</a>
+        </li>
+        <li class="active">
+            {% trans "Matchings" %}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block page_content %}
     {% include 'importer/partials/help_message.html' %}
 
     <form action="{% url "corehq.apps.importer.views.excel_commit" domain %}"
           method="post"
-          id="field_form">
+          id="field_form"
+          class="form-horizontal">
           {% csrf_token %}
         <input type="hidden" name="named_columns" value="{{named_columns}}" />
         <input type="hidden" name="case_type" value="{{case_type}}" />
@@ -169,7 +186,7 @@
                     <th>{% trans "Excel Field" %}</th>
                     <th>{% trans "Data Type" %}</th>
                     <th></th>
-                    <th>{% trans "Case Property" %}<button type="button" class="btn btn-primary pull-right" id="autofill">{% trans "Auto Fill" %}</button></th>
+                    <th>{% trans "Case Property" %}<button type="button" class="btn btn-primary btn-xs pull-right" id="autofill">{% trans "Auto Fill" %}</button></th>
                     <th></th>
                     <th></th>
                 </thead>
@@ -181,19 +198,28 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <a class="add_mapping" href="#">
-                <i class="icon-plus"></i> {% trans "Add another matching" %}
-            </a>
+            <div class="form-group">
+                <label class="control-label col-sm-3">
+                    {% trans "Modify" %}
+                </label>
+                <div class="col-sm-6">
+                    <a id="js-add-mapping" class="btn btn-default" href="#">
+                        <i class="fa fa-plus"></i> {% trans "Add another matching" %}
+                    </a>
+                </div>
+            </div>
         </fieldset>
 
         <div class="form-actions">
-            <button type="button" class="btn btn-primary" id="back_button">
-                <i class="icon-backward icon-white"></i> {% trans "Back" %}
-            </button>
-            <button type="submit" class="btn btn-primary">
-                <i class="icon-forward icon-white"></i>
-                {% trans "Confirm Import" %}
-            </button>
+            <div class="col-sm-offset-3">
+                <button type="button" class="btn btn-primary" id="back_button">
+                    <i class="fa fa-backward"></i> {% trans "Back" %}
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-forward"></i>
+                    {% trans "Confirm Import" %}
+                </button>
+            </div>
         </div>
     </form>
 {% endblock %}

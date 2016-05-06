@@ -9,6 +9,7 @@ from django.core.urlresolvers import reverse
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_noop
 
+
 @require_previewer
 @login_and_domain_required
 def upload_message_bank(request, domain):

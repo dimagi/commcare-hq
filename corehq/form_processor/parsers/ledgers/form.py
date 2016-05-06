@@ -27,6 +27,7 @@ class LedgerFormat(object):
 
 class CaseActionIntent(namedtuple('CaseActionIntent',
                                   ['case_id', 'form_id', 'is_deprecation', 'action_type', 'form'])):
+
     def get_couch_action(self):
         assert self.action_type == CASE_ACTION_COMMTRACK
         return CommCareCaseAction.from_parsed_action(
@@ -46,6 +47,16 @@ LedgerInstruction = namedtuple(
      # for transfer instructions
      'src', 'dest', 'type']
 )
+
+
+def get_case_ids_from_stock_transactions(xform):
+    stock_report_helpers = list(_get_all_stock_report_helpers_from_form(xform))
+    case_ids = {
+        transaction_helper.case_id
+        for stock_report_helper in stock_report_helpers
+        for transaction_helper in stock_report_helper.transactions
+    }
+    return case_ids
 
 
 def get_stock_actions(xform):

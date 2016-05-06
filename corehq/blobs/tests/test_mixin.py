@@ -436,6 +436,9 @@ class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
 
 class FakeCouchDocument(mod.BlobMixin, Document):
 
+    class Meta:
+        app_label = "couch"
+
     doc_type = "FakeCouchDocument"
     saved = False
 
@@ -445,6 +448,7 @@ class FakeCouchDocument(mod.BlobMixin, Document):
             dbname = "commcarehq_test"
 
             class server:
+
                 @staticmethod
                 def next_uuid():
                     return uuid.uuid4().hex
@@ -486,6 +490,9 @@ class AttachmentFallback(object):
 
 
 class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
+
+    class Meta:
+        app_label = "couch"
 
     doc_type = "FallbackToCouchDocument"
     migrating_blobs_from_couch = True

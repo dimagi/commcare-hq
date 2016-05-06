@@ -60,7 +60,7 @@ class FormProcessorSQL(object):
         CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
 
     @classmethod
-    def save_processed_models(cls, processed_forms, cases=None, stock_updates=None):
+    def save_processed_models(cls, processed_forms, cases=None, stock_result=None):
         with transaction.atomic():
             logging.debug('Beginning atomic commit\n')
             # Save deprecated form first to avoid ID conflicts
@@ -72,11 +72,9 @@ class FormProcessorSQL(object):
                 for case in cases:
                     CaseAccessorSQL.save_case(case)
 
-            ledgers_to_save = []
-            for stock_update in stock_updates or []:
-                ledgers_to_save.extend(stock_update.to_save)
-
-            LedgerAccessorSQL.save_ledger_values(ledgers_to_save)
+            if stock_result:
+                ledgers_to_save = stock_result.models_to_save
+                LedgerAccessorSQL.save_ledger_values(ledgers_to_save, processed_forms.deprecated)
 
         cls._publish_changes(processed_forms, cases)
 

@@ -51,8 +51,6 @@ DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 BUSINESS_UNITS = [
     "DSA",
     "DSI",
-    "DLAC",
-    "DMOZ",
     "DWA",
     "INC",
 ]
@@ -82,6 +80,7 @@ LICENSE_LINKS = {
     'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
 }
 
+
 def cached_property(method):
     def find_cached(self):
         try:
@@ -94,9 +93,11 @@ def cached_property(method):
 
 
 class UpdatableSchema():
+
     def update(self, new_dict):
         for kw in new_dict:
             self[kw] = new_dict[kw]
+
 
 class Deployment(DocumentSchema, UpdatableSchema):
     date = DateTimeProperty()
@@ -131,6 +132,7 @@ class LicenseAgreement(DocumentSchema):
     user_id = StringProperty()
     user_ip = StringProperty()
     version = StringProperty()
+
 
 class InternalProperties(DocumentSchema, UpdatableSchema):
     """
@@ -175,12 +177,14 @@ class CaseDisplaySettings(DocumentSchema):
 
     # todo: case list
 
+
 class DynamicReportConfig(DocumentSchema):
     """configurations of generic/template reports to be set up for this domain"""
     report = StringProperty()  # fully-qualified path to template report class
     name = StringProperty()  # report display name in sidebar
     kwargs = DictProperty()  # arbitrary settings to configure report
     previewers_only = BooleanProperty()
+
 
 class DynamicReportSet(DocumentSchema):
     """a set of dynamic reports grouped under a section header in the sidebar"""
@@ -189,6 +193,7 @@ class DynamicReportSet(DocumentSchema):
 
 
 LOGO_ATTACHMENT = 'logo.png'
+
 
 class DayTimeWindow(DocumentSchema):
     """
@@ -440,6 +445,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     def full_applications(self, include_builds=True):
         from corehq.apps.app_manager.models import Application, RemoteApp
         WRAPPERS = {'Application': Application, 'RemoteApp': RemoteApp}
+
         def wrap_application(a):
             return WRAPPERS[a['doc']['doc_type']].wrap(a['doc'])
 
@@ -582,7 +588,11 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     @classmethod
     def get_all_names(cls):
-        return [d['key'] for d in Domain.get_all(include_docs=False)]
+        return [d['key'] for d in cls.get_all(include_docs=False)]
+
+    @classmethod
+    def get_all_ids(cls):
+        return [d['id'] for d in cls.get_all(include_docs=False)]
 
     @classmethod
     def get_names_by_prefix(cls, prefix):
@@ -870,16 +880,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
-        self._delete_web_users_from_domain()
         apply_deletion_operations(self.name, dynamic_deletion_operations)
-
-    def _delete_web_users_from_domain(self):
-        from corehq.apps.users.models import WebUser
-        active_web_users = WebUser.by_domain(self.name)
-        inactive_web_users = WebUser.by_domain(self.name, is_active=False)
-        for web_user in list(active_web_users) + list(inactive_web_users):
-            web_user.delete_domain_membership(self.name)
-            web_user.save()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia

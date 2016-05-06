@@ -92,6 +92,7 @@ month_start_date| First day in the month of a date | `2015-01-20` -> `2015-01-01
 month_end_date  | Last day in the month of a date | `2015-01-20` -> `2015-01-31`
 diff_days       | A way to get duration in days between two dates | `(to_date - from-date).days`
 evaluator       | A way to do arithmetic operations | `a + b*c / d`
+base_iteration_number | Used with [`base_item_expression`](#saving-multiple-rows-per-caseform) - a way to get the current iteration number (starting from 0). | `loop.index`
 
 
 Following expressions act on a list of objects or a list of lists (for e.g. on a repeat list) and return another list or value. These expressions can be combined to do complex aggregations on list data.
@@ -257,6 +258,16 @@ You can add a `test` attribute to filter rows from what is emitted - if you don'
 This can be used/combined with the `base_item_expression` to emit multiple rows per document.
 
 
+#### Base iteration number expressions
+
+These are very simple expressions with no config. They return the index of the repeat item starting from 0 when used with a `base_item_expression`.
+
+```json
+{
+    "type": "base_iteration_number"
+}
+```
+
 #### Related document expressions
 
 This can be used to lookup a property in another document. Here's an example that lets you look up `form.case.owner_id` from a form.
@@ -390,12 +401,25 @@ The from_date_expression and to_date_expression can be any valid expressions, or
 ```
 This returns 25 (1 + 20 - 2 + 6).
 
-`statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power opertor are available for use.
+`statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power operator are available for use.
 
 `context_variables` is a dictionary of Expressions where keys are names of variables used in the `statement` and values are expressions to generate those variables.
-Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` are considered valid numbers.) or also expressions that return numbers.
+Variables can be any valid numbers (Python datatypes `int`, `float` and `long` are considered valid numbers.) or also expressions that return numbers. In addition to numbers the following types are supported:
 
-More examples can be found on practical [examples page](examples/examples.md#evaluator-examples).
+* `date`
+* `datetime`
+
+#### Function calls within evaluator expressions
+Only the following functions are permitted:
+
+* `rand()`: generate a random number between 0 and 1
+* `randint(max)`: generate a random integer beween 0 and `max`
+* `int(value)`: convert `value` to an int. Value can be a number or a string representation of a number
+* `float(value)`: convert `value` to a floating point number
+* `str(value)`: convert `value` to a string
+* `timedelta_to_seconds(time_delta)`: convert a TimeDelta object into seconds. This is useful for getting the number of seconds between two dates.
+  * e.g. `timedelta_to_seconds(time_end - time_start)`
+
 
 #### "Month Start Date" and "Month End Date" expressions
 
@@ -829,7 +853,8 @@ All indicators output single values. Though fractional indicators are common, th
 ## Saving Multiple Rows per Case/Form
 
 You can save multiple rows per case/form by specifying a root level `base_item_expression` that describes how to get the repeat data from the main document.
-You can also use the `root_doc` expression type to reference parent properties.
+You can also use the `root_doc` expression type to reference parent properties
+and the `base_iteration_number` expression type to reference the current index of the item.
 This can be combined with the `iterator` expression type to do complex data source transforms.
 This is not described in detail, but the following sample (which creates a table off of a repeat element called "time_logs" can be used as a guide).
 There are also additional examples in the [examples](examples/examples.md):

@@ -1,8 +1,10 @@
 import random
 import datetime
 import string
+import uuid
 from collections import namedtuple
 from decimal import Decimal
+from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
 from dimagi.utils.data import generator as data_gen
 from corehq.apps.accounting.models import Currency
@@ -68,11 +70,18 @@ def arbitrary_country_code_and_prefixes(
     ]
 
 
+def _available_gateway_fee_backends():
+    return filter(
+        lambda backend: backend.get_api_id() != SQLTwilioBackend.get_api_id(),
+        get_sms_backend_classes().values()
+    )
+
+
 def arbitrary_fees_by_prefix(backend_ids, country_codes_and_prefixes):
     fees = {}
     for direction in DIRECTIONS:
         fees_by_backend = {}
-        for backend in get_sms_backend_classes().values():
+        for backend in _available_gateway_fee_backends():
             fees_by_country_code = {}
             for country_code, _ in country_codes_and_prefixes:
                 fees_by_country_code[country_code] = {}
@@ -117,7 +126,7 @@ def arbitrary_fees_by_direction_and_backend():
     fees = {}
     for direction in DIRECTIONS:
         fees_by_backend = {}
-        for backend in get_sms_backend_classes().values():
+        for backend in _available_gateway_fee_backends():
             fees_by_backend[backend.get_api_id()] = arbitrary_fee()
         fees[direction] = fees_by_backend
     return fees
@@ -127,7 +136,7 @@ def arbitrary_fees_by_country():
     fees = {}
     for direction in DIRECTIONS:
         fees_by_backend = {}
-        for backend in get_sms_backend_classes().values():
+        for backend in _available_gateway_fee_backends():
             fees_by_country = {}
             for country in TEST_COUNTRY_CODES:
                 fees_by_country[country] = arbitrary_fee()
@@ -140,7 +149,7 @@ def arbitrary_fees_by_backend_instance(backend_ids):
     fees = {}
     for direction in DIRECTIONS:
         fees_by_backend = {}
-        for backend in get_sms_backend_classes().values():
+        for backend in _available_gateway_fee_backends():
             fees_by_backend[backend.get_api_id()] = (backend_ids[backend.get_api_id()], arbitrary_fee())
         fees[direction] = fees_by_backend
     return fees
@@ -150,7 +159,7 @@ def arbitrary_fees_by_all(backend_ids):
     fees = {}
     for direction in DIRECTIONS:
         fees_by_backend = {}
-        for backend in get_sms_backend_classes().values():
+        for backend in _available_gateway_fee_backends():
             fees_by_country = {}
             for country in TEST_COUNTRY_CODES:
                 fees_by_country[country] = (backend_ids[backend.get_api_id()], arbitrary_fee())
@@ -161,7 +170,7 @@ def arbitrary_fees_by_all(backend_ids):
 
 def arbitrary_backend_ids():
     backend_ids = {}
-    for backend in get_sms_backend_classes().values():
+    for backend in _available_gateway_fee_backends():
         backend_instance = data_gen.arbitrary_unique_name("back")
         backend_ids[backend.get_api_id()] = backend_instance
         sms_backend = backend()
@@ -189,6 +198,7 @@ def arbitrary_messages_by_backend_and_direction(backend_ids,
                 domain=domain,
                 backend_api=api_id,
                 backend_id=instance_id,
+                backend_message_id=uuid.uuid4().hex,
                 text=arbitrary_message(),
                 date=datetime.datetime.utcnow()
             )

@@ -73,6 +73,9 @@ SUBMITTED_REMINDER_DISTRICT = _(
     "Reply with 'submitted A <number of R&Rs submitted for group A> "
     "B <number of R&Rs submitted for group B>'"
 )
+SUBMITTED_INVALID_QUANTITY = _(
+    'Not a valid number: %(number)s'
+)
 
 NOT_DELIVERED_CONFIRM = _("You have reported that you haven't yet received your delivery.")
 
@@ -186,6 +189,7 @@ class Roles(object):
         DISTRICT_PHARMACIST: "district pharmacist",
         IMCI_COORDINATOR: "imci coordinator"
     }
+
 
 class Languages(object):
     """

@@ -114,7 +114,6 @@ def _hubspot_post(url, data):
         response.raise_for_status()
 
 
-
 def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:

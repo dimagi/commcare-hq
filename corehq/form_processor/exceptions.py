@@ -17,6 +17,7 @@ class LedgerValueNotFound(Exception):
 
 
 class AttachmentNotFound(UnicodeMixIn, ResourceNotFound, ObjectDoesNotExist):
+
     def __init__(self, attachment_name):
         self.attachment_name = attachment_name
 

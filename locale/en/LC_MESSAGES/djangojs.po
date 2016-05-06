@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-19 19:14+0000\n"
+"POT-Creation-Date: 2016-05-04 16:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,6 +33,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:166
 msgid "Auto-set by "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:474
+msgid "Select One"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/password_setter.jquery.js:8
@@ -64,15 +68,15 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:197
+#: corehq/apps/export/static/export/js/models.js:211
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:199
+#: corehq/apps/export/static/export/js/models.js:213
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:201
+#: corehq/apps/export/static/export/js/models.js:215
 msgid "None"
 msgstr ""
 

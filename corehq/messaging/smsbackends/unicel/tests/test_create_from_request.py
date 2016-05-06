@@ -8,6 +8,7 @@ from corehq.apps.users.models import CouchUser, WebUser
 from corehq.messaging.smsbackends.unicel.models import InboundParams
 import json
 
+
 class IncomingPostTest(TestCase):
 
     INDIA_TZ_OFFSET = timedelta(hours=5.5)

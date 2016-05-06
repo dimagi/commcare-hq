@@ -117,13 +117,14 @@
                                 <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong> {{ export.formname }}
                             </p>
                             {% endangularjs %}
-                            {% if has_edit_permissions %}
                             {% angularjs %}
                             <div class="alert alert-neutral alert-small"
                                  ng-show="export.emailedExport">
                                 <h5>
                                     <i class="fa fa-envelope"></i>
                                     {% trans "Saved for Daily Report" %}
+                                    {% if has_edit_permissions %}
+                                    {% angularjs %}
                                     <button type="button"
                                             class="btn btn-default btn-xs"
                                             ng-show="!export.emailedExport.updatingData"
@@ -132,6 +133,7 @@
                                         <i class="fa fa-refresh"></i>
                                         {% trans "Update Data" %}
                                     </button>
+                                    {% endangularjs %}
                                     <button type="button"
                                             class="btn btn-default btn-xs btn-disabled"
                                             ng-show="export.emailedExport.updatingData"
@@ -139,7 +141,10 @@
                                         <i class="fa fa-refresh fa-spin"></i>
                                         {% trans "Updating Data, please wait..." %}
                                     </button>
+                                    {% endif %}
                                 </h5>
+
+                                {% if has_edit_permissions %}
                                 <p class="text-warning"
                                    ng-if="export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning && !export.emailedExport.updateDataTriggered">
                                     <i class="fa fa-exclamation-triangle"></i>
@@ -154,6 +159,8 @@
                                     <strong>{% trans "Data update started." %}</strong><br />
                                     {% trans "Please check back later for updates. (Page refresh required)" %}
                                 </p>
+                                {% endif %}
+
                                 <p ng-if="export.emailedExport.hasFile">
                                     <a href="{{ export.emailedExport.fileData.downloadUrl }}"
                                        class="btn btn-info btn-xs">
@@ -163,14 +170,18 @@
                                     <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
                                     <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}
                                 </p>
+                            
+                                {% if has_edit_permissions %}
                                 <p ng-if="!export.emailedExport.hasFile && !export.emailedExport.updatedDataTriggered">
                                     {% blocktrans %}
                                     <strong>No data is available yet.</strong><br />
                                         Please click 'update data' if the automatic scheduler hasn't picked up the changes in a while.
                                     {% endblocktrans %}
                                 </p>
+                                {% angularjs %}
                                 <div class="modal fade"
                                      id="modalRefreshExportConfirm-{{ export.id }}-{{ export.emailedExport.groupId }}">
+                                {% endangularjs %}
                                     <div class="modal-dialog">
                                         <div class="modal-content">
                                             <div class="modal-header">
@@ -208,9 +219,9 @@
                                         </div>
                                     </div>
                                 </div>
+                                {% endif %}
                             </div>
                             {% endangularjs %}
-                            {% endif %}
                         </td>
                         {% if has_edit_permissions %}
                         {% angularjs %}

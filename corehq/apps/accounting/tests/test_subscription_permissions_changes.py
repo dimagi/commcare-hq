@@ -35,7 +35,6 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
             web_user=self.admin_user.username
         )
 
-
     def test_app_icon_permissions(self):
         LOGO_HOME = u'hq_logo_android_home'
         LOGO_LOGIN = u'hq_logo_android_login'

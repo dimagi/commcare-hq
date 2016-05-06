@@ -42,15 +42,16 @@ def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
         raise ExportRebuildError(u'Schema mismatch for {}. Rebuilding tables...'.format(config.filename))
 
     with files:
-        _save_export_payload(files, saved_export, config)
+        _save_export_payload(files, saved_export, config, is_safe=schema.is_safe)
 
 
-def _save_export_payload(files, saved_export, config):
+def _save_export_payload(files, saved_export, config, is_safe=False):
     payload = files.file.payload
     if not saved_export:
         saved_export = SavedBasicExport(configuration=config)
     else:
         saved_export.configuration = config
+    saved_export.is_safe = is_safe
 
     if saved_export.last_accessed is None:
         saved_export.last_accessed = datetime.utcnow()

@@ -135,7 +135,7 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
 def domain_is_on_trial(domain):
     from corehq.apps.accounting.models import Subscription
     subscription = Subscription.get_subscribed_plan_by_domain(domain)[1]
-    return subscription.is_trial_or_internal_trial
+    return subscription.is_trial
 
 
 def is_active_subscription(date_start, date_end):
@@ -213,7 +213,7 @@ def get_customer_cards(account, username, domain):
         )
         stripe_customer = payment_method.customer
         return stripe_customer.cards
-    except (StripePaymentMethod.DoesNotExist):
+    except StripePaymentMethod.DoesNotExist:
         pass
     return None
 

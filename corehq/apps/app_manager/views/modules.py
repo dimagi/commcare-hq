@@ -1,3 +1,4 @@
+# coding=utf-8
 from collections import OrderedDict, namedtuple
 import json
 import logging
@@ -10,6 +11,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
+from corehq.apps.case_search.models import case_search_enabled_for_domain
 
 from dimagi.utils.logging import notify_exception
 
@@ -24,9 +26,12 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
-    get_per_type_defaults, ParentCasePropertyBuilder,
-    prefix_usercase_properties, commtrack_ledger_sections)
-
+    get_per_type_defaults,
+    ParentCasePropertyBuilder,
+    prefix_usercase_properties,
+    commtrack_ledger_sections,
+    module_offers_search,
+)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration
 from dimagi.utils.web import json_response, json_request
@@ -34,6 +39,8 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     CareplanModule,
+    CaseSearch,
+    CaseSearchProperty,
     DeleteModuleRecord,
     DetailColumn,
     DetailTab,
@@ -81,7 +88,6 @@ def _get_careplan_module_view_context(app, module):
         'parent_modules': _get_parent_modules(app, module,
                                              case_property_builder,
                                              CAREPLAN_GOAL),
-        'fixtures': _get_fixture_types(app.domain),
         'details': [
             {
                 'label': gettext_lazy('Goal List'),
@@ -116,7 +122,7 @@ def _get_advanced_module_view_context(app, module, lang=None):
     case_type = module.case_type
     form_options = _case_list_form_options(app, module, case_type, lang)
     return {
-        'fixtures': _get_fixture_types(app.domain),
+        'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
         'details': _get_module_details_context(app, module,
                                                case_property_builder,
                                                case_type),
@@ -128,6 +134,8 @@ def _get_advanced_module_view_context(app, module, lang=None):
             if not getattr(parent_module, 'root_module_id', None)
         ],
         'child_module_enabled': True,
+        'is_search_enabled': case_search_enabled_for_domain(app.domain),
+        'search_properties': module.search_config.properties if module_offers_search(module) else [],
         'schedule_phases': [
             {
                 'id': schedule.id,
@@ -142,11 +150,6 @@ def _get_advanced_module_view_context(app, module, lang=None):
 
 def _get_basic_module_view_context(app, module, lang=None):
     case_property_builder = _setup_case_property_builder(app)
-    fixture_columns = [
-        field.field_name
-        for fixture in FixtureDataType.by_domain(app.domain)
-        for field in fixture.fields
-    ]
     case_type = module.case_type
     form_options = _case_list_form_options(app, module, case_type, lang)
     # http://manage.dimagi.com/default.asp?178635
@@ -156,18 +159,17 @@ def _get_basic_module_view_context(app, module, lang=None):
         AllowWithReason(allow_with_parent_select, AllowWithReason.PARENT_SELECT_ACTIVE)
     )
     return {
-        'parent_modules': _get_parent_modules(app, module,
-                                             case_property_builder, case_type),
-        'fixtures': _get_fixture_types(app.domain),
-        'fixture_columns': fixture_columns,
-        'details': _get_module_details_context(app, module,
-                                               case_property_builder,
-                                               case_type),
+        'parent_modules': _get_parent_modules(app, module, case_property_builder, case_type),
+        'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
+        'details': _get_module_details_context(app, module, case_property_builder, case_type),
         'case_list_form_options': form_options,
         'case_list_form_not_allowed_reason': allow_case_list_form,
         'valid_parent_modules': _get_valid_parent_modules(app, module),
-        'child_module_enabled': toggles.BASIC_CHILD_MODULE.enabled(app.domain)
-                                 and module.doc_type != "ShadowModule"
+        'child_module_enabled': (
+            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and module.doc_type != "ShadowModule"
+        ),
+        'is_search_enabled': case_search_enabled_for_domain(app.domain),
+        'search_properties': module.search_config.properties if module_offers_search(module) else [],
     }
 
 
@@ -201,8 +203,11 @@ def _get_report_module_context(app, module):
     }
 
 
-def _get_fixture_types(domain):
-    return [f.tag for f in FixtureDataType.by_domain(domain)]
+def _get_fixture_columns_by_type(domain):
+    return {
+        fixture.tag: [field.field_name for field in fixture.fields]
+        for fixture in FixtureDataType.by_domain(domain)
+    }
 
 
 def _setup_case_property_builder(app):
@@ -542,6 +547,44 @@ def undo_delete_module(request, domain, record_id):
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
 
 
+def _update_search_properties(module, search_properties, lang='en'):
+    """
+    Updates the translation of a module's current search properties, and drops missing search properties.
+
+    Labels in incoming search_properties aren't keyed by language, so lang specifies that.
+
+    e.g.:
+
+    >>> module = Module()
+    >>> module.search_config.properties = [
+    ...     CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+    ...     CaseSearchProperty(name='age', label={'fr': 'Âge'}),
+    ... ]
+    >>> search_properties = [
+    ...     {'name': 'name', 'label': 'Name'},
+    ...     {'name': 'dob'. 'label': 'Date of birth'}
+    ... ]  # Incoming search properties' labels are not dictionaries
+    >>> lang = 'en'
+    >>> list(_update_search_properties(module, search_properties, lang)) == [
+    ...     {'name': 'name', 'label': {'fr': 'Nom', 'en': 'Name'}},
+    ...     {'name': 'dob'. 'label': {'en': 'Date of birth'}},
+    ... ]  # English label is added, "age" property is dropped
+    True
+
+    """
+    current = {p.name: p.label for p in module.search_config.properties}
+    for prop in search_properties:
+        if prop['name'] in current:
+            label = current[prop['name']]
+            label.update({lang: prop['label']})
+        else:
+            label = {lang: prop['label']}
+        yield {
+            'name': prop['name'],
+            'label': label
+        }
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_module_detail_screens(request, domain, app_id, module_id):
@@ -565,6 +608,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     pull_down_tile = params.get("enableTilePullDown", None)
     case_list_lookup = params.get("case_list_lookup", None)
+    search_properties = params.get("search_properties")
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -616,6 +660,12 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         module.parent_select = ParentSelect.wrap(parent_select)
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
+    if search_properties is not None:
+        lang = request.COOKIES.get('lang', app.langs[0])
+        module.search_config = CaseSearch(properties=[
+            CaseSearchProperty.wrap(p) for p in _update_search_properties(module, search_properties, lang)
+        ])
+        # TODO: Add UI and controller support for CaseSearch.command_label
 
     resp = {}
     app.save(resp)

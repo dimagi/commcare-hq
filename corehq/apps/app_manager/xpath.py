@@ -166,8 +166,10 @@ class XPath(unicode):
 class CaseSelectionXPath(XPath):
     selector = ''
 
-    def case(self):
-        return CaseXPath(u"instance('casedb')/casedb/case[%s=%s]" % (self.selector, self))
+    def case(self, instance_name='casedb', case_name='case'):
+        return CaseXPath(u"instance('{inst}')/{inst}/{case}[{sel}={self}]".format(
+            inst=instance_name, case=case_name, sel=self.selector, self=self
+        ))
 
 
 class CaseIDXPath(CaseSelectionXPath):
@@ -177,11 +179,13 @@ class CaseIDXPath(CaseSelectionXPath):
 class CaseTypeXpath(CaseSelectionXPath):
     selector = '@case_type'
 
-    def case(self):
-        return CaseXPath(u"instance('casedb')/casedb/case[%s='%s']" % (self.selector, self))
+    def case(self, instance_name='casedb', case_name='case'):
+        quoted = CaseTypeXpath(u"'{}'".format(self))
+        return super(CaseTypeXpath, quoted).case(instance_name, case_name)
 
 
 class UserCaseXPath(XPath):
+
     def case(self):
         user_id = session_var(var='userid', path='context')
         return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id).select_raw(1)
@@ -284,7 +288,9 @@ class LocationXpath(XPath):
 class LedgerdbXpath(XPath):
 
     def ledger(self):
-        return LedgerXpath(u"instance('ledgerdb')/ledgerdb/ledger[@entity-id=instance('commcaresession')/session/data/%s]" % self)
+        entity_id_selection = CaseSelectionXPath(session_var(self))
+        entity_id_selection.selector = '@entity-id'
+        return LedgerXpath(entity_id_selection.case(instance_name='ledgerdb', case_name='ledger'))
 
 
 class LedgerXpath(XPath):
@@ -316,6 +322,7 @@ class SessionInstanceXpath(InstanceXpath):
 
 
 class ItemListFixtureXpath(InstanceXpath):
+
     @property
     def id(self):
         return u'item-list:{}'.format(self)
@@ -362,6 +369,7 @@ class ScheduleFormXPath(object):
     """
     XPath queries for scheduled forms
     """
+
     def __init__(self, form, phase, module):
         self.form = form
         self.phase = phase
@@ -678,6 +686,7 @@ class QualifiedScheduleFormXPath(ScheduleFormXPath):
 
     Instead of raw case properties, this fetches the properties from the casedb
     """
+
     def __init__(self, form, phase, module, case_xpath):
         super(QualifiedScheduleFormXPath, self).__init__(form, phase, module)
         self.case_xpath = case_xpath

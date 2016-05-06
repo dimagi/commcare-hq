@@ -54,7 +54,6 @@ class FundamentalCaseTests(TestCase):
 
         self.assertEqual(case.dynamic_case_properties()['dynamic'], '123')
 
-
     @run_with_all_backends
     def test_update_case(self):
         case_id = uuid.uuid4().hex

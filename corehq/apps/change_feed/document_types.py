@@ -10,6 +10,7 @@ DOMAIN = 'domain'
 META = 'meta'
 COMMCARE_USER = 'commcare-user'
 WEB_USER = 'web-user'
+GROUP = 'group'
 
 
 DocumentMetadata = namedtuple(
@@ -35,6 +36,8 @@ def _get_primary_type(raw_doc_type):
         return COMMCARE_USER
     elif raw_doc_type in ('WebUser', 'WebUser-Deleted'):
         return WEB_USER
+    elif raw_doc_type in ('Group', 'Group-Deleted'):
+        return GROUP
     else:
         # at some point we may want to make this more granular
         return META

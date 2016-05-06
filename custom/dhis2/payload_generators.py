@@ -63,7 +63,6 @@ class FormRepeaterDhis2EventPayloadGenerator(BasePayloadGenerator):
             # This is not a form we care about
             raise IgnoreDocument
 
-
         settings = Dhis2Settings.for_domain(form['domain'])
         dhis2_api = Dhis2Api(settings.dhis2['host'], settings.dhis2['username'], settings.dhis2['password'],
                              settings.dhis2['top_org_unit_name'])

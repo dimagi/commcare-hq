@@ -1,6 +1,7 @@
 class PaletteColorGroup(object):
     """This defines a group of palette colors that fall under
     the same classification"""
+
     def __init__(self, name, slug, primary, light, dark,
                  usage=None):
         self.name = name
@@ -13,6 +14,7 @@ class PaletteColorGroup(object):
 class PaletteColor(object):
     """This defines the different color values of a color
     """
+
     def __init__(self, hex_val, cmyk=None, pantone=None, usage=None, name=None):
         self.hex = hex_val
         self.rgb = {
@@ -37,6 +39,7 @@ class PaletteColor(object):
 class Palette(object):
     """This defines the structure of the CCHQ Color Palette
     """
+
     def __init__(self, color_groups, text_color, bg_color):
         self.color_groups = color_groups
         self.text_color = text_color

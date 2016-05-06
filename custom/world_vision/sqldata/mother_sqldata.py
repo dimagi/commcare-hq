@@ -100,7 +100,7 @@ class MotherRegistrationDetails(BaseSqlData):
 
 class ClosedMotherCasesBreakdown(BaseSqlData):
     table_name = "fluff_WorldVisionMotherFluff"
-    slug = 'closed_mother_cases-breakdown'
+    slug = 'closed_mother_cases_breakdown'
     title = 'Closed Mother Cases Breakdown'
     show_total = True
     total_row_name = "Mother cases closed during the time period"
@@ -329,6 +329,7 @@ class DeliveryMothersIds(BaseSqlData):
         return [
             DatabaseColumn("Mother ID",  SimpleColumn('doc_id'))
         ]
+
 
 class DeliveryLiveBirthDetails(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"

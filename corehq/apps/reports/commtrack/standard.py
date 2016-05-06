@@ -426,6 +426,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             'request': self.request,
         }
         statuses = list(ReportingStatusDataSource(config).get_data())
+
         def child_loc(path):
             root = self.active_location
             ix = path.index(root._id) if root else -1

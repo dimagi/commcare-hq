@@ -18,6 +18,7 @@ from corehq.apps.users.models import WebUser
 
 
 class TestSubscriptionProperties(TestCase):
+
     @classmethod
     def setUpClass(cls):
         generator.instantiate_accounting_for_tests()

@@ -20,6 +20,7 @@ class HqOpMixin(object):
     Hack until we upgrade to Django 1.8 to allow selectively running custom operations
     on different DB's
     """
+
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
         db_alias = schema_editor.connection.alias
         if allow_migrate(db_alias, app_label):
@@ -56,6 +57,7 @@ class RunSqlLazy(RunSQL):
     Also supports reading the SQL as a Django template and rendering
     it with the provided template context.
     """
+
     def __init__(self, sql_template_path, reverse_sql_template_path, template_context=None):
         self.template_context = template_context or {}
         self.rendered_forwards = False
@@ -95,6 +97,7 @@ class RawSQLMigration(object):
         migrator = RawSQLMigration(('base', 'path'), {'variable': 'value'})
         migrator.get_migration('sql_template.sql')
     """
+
     def __init__(self, base_path_tuple, template_context=None):
         self.template_context = template_context
         self.base_path = os.path.join(*base_path_tuple)

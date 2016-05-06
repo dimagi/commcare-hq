@@ -20,6 +20,7 @@ from custom.logistics.tests.utils import bootstrap_user
 
 
 class RemindersTest(ILSTestScript):
+
     @classmethod
     def setUpClass(cls):
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()

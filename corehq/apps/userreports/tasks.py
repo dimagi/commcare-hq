@@ -4,10 +4,10 @@ from celery.task import task
 from couchdbkit import ResourceConflict
 
 from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.userreports.sql import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
 
@@ -31,7 +31,7 @@ def _get_redis_key_for_config(config):
 
 
 def _build_indicators(config, document_store, relevant_ids):
-    adapter = IndicatorSqlAdapter(config)
+    adapter = ErrorRaisingIndicatorSqlAdapter(config)
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
 

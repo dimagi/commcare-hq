@@ -1,13 +1,16 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import CommConnectCase
+from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from datetime import datetime, timedelta
 from django.test import TestCase
-
-from corehq.form_processor.tests.utils import set_case_property_directly
+from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.util.test_utils import create_test_case
 
 
 class PhoneNumberLookupTestCase(TestCase):
+
     def assertNoMatch(self, phone_search, suffix_search, owner_id_search):
         self.assertIsNone(VerifiedNumber.by_phone(phone_search))
         self.assertIsNone(VerifiedNumber.by_suffix(suffix_search))
@@ -78,14 +81,26 @@ class PhoneNumberLookupTestCase(TestCase):
 
 
 class CaseContactPhoneNumberTestCase(TestCase):
+
+    def setUp(self):
+        self.domain = 'case-phone-number-test'
+
+    def tearDown(self):
+        for v in VerifiedNumber.by_domain(self.domain):
+            v.delete()
+
+    def set_case_property(self, case, property_name, value):
+        update_case(self.domain, case.case_id, case_properties={property_name: value})
+        return CaseAccessors(self.domain).get_case(case.case_id)
+
     def get_case_verified_number(self, case):
-        return CommConnectCase.wrap_as_commconnect_case(case).get_verified_number()
+        return case.get_verified_number()
 
     def assertPhoneNumberDetails(self, case, phone_number, sms_backend_id, ivr_backend_id, _id=None, _rev=None):
         v = self.get_case_verified_number(case)
         self.assertEqual(v.domain, case.domain)
         self.assertEqual(v.owner_doc_type, case.doc_type)
-        self.assertEqual(v.owner_id, case._id)
+        self.assertEqual(v.owner_id, case.case_id)
         self.assertEqual(v.phone_number, phone_number)
         self.assertEqual(v.backend_id, sms_backend_id)
         self.assertEqual(v.ivr_backend_id, ivr_backend_id)
@@ -98,140 +113,97 @@ class CaseContactPhoneNumberTestCase(TestCase):
         if _rev:
             self.assertTrue(v._rev.startswith(_rev + '-'))
 
+    @run_with_all_backends
     def test_case_phone_number_updates(self):
-        case = CommCareCase(
-            domain='case-phone-number-test',
-            name='TEST1'
-        )
-        case.save()
-        self.assertIsNone(self.get_case_verified_number(case))
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
+            self.assertIsNone(self.get_case_verified_number(case))
 
-        set_case_property_directly(case, 'contact_phone_number', '99987658765')
-        case.save()
-        self.assertIsNone(self.get_case_verified_number(case))
+            case = self.set_case_property(case, 'contact_phone_number', '99987658765')
+            self.assertIsNone(self.get_case_verified_number(case))
 
-        set_case_property_directly(case, 'contact_phone_number_is_verified', '1')
-        case.save()
-        self.assertPhoneNumberDetails(case, '99987658765', None, None, _rev='1')
-        _id = self.get_case_verified_number(case)._id
+            case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
+            self.assertPhoneNumberDetails(case, '99987658765', None, None, _rev='1')
+            _id = self.get_case_verified_number(case)._id
 
-        set_case_property_directly(case, 'contact_phone_number', '99987698769')
-        case.save()
-        self.assertPhoneNumberDetails(case, '99987698769', None, None, _id=_id, _rev='2')
+            case = self.set_case_property(case, 'contact_phone_number', '99987698769')
+            self.assertPhoneNumberDetails(case, '99987698769', None, None, _id=_id, _rev='2')
 
-        set_case_property_directly(case, 'contact_backend_id', 'sms-backend')
-        case.save()
-        self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', None, _id=_id, _rev='3')
+            case = self.set_case_property(case, 'contact_backend_id', 'sms-backend')
+            self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', None, _id=_id, _rev='3')
 
-        set_case_property_directly(case, 'contact_ivr_backend_id', 'ivr-backend')
-        case.save()
-        self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', 'ivr-backend', _id=_id, _rev='4')
+            case = self.set_case_property(case, 'contact_ivr_backend_id', 'ivr-backend')
+            self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', 'ivr-backend', _id=_id, _rev='4')
 
-        # If nothing changes, the phone entry should not be saved
-        case.save()
-        self.assertTrue(self.get_case_verified_number(case)._rev.startswith('4-'))
+            # If nothing changes, the phone entry should not be saved
+            case = self.set_case_property(case, 'abc', 'def')
+            self.assertTrue(self.get_case_verified_number(case)._rev.startswith('4-'))
 
-        # If phone entry is ahead of the case in terms of contact_last_modified, no update should happen
-        v = self.get_case_verified_number(case)
-        v.contact_last_modified += timedelta(days=1)
-        v.save()
-        self.assertTrue(v._rev.startswith('5-'))
+            # If phone entry is ahead of the case in terms of contact_last_modified, no update should happen
+            v = self.get_case_verified_number(case)
+            v.contact_last_modified += timedelta(days=1)
+            v.save()
+            self.assertTrue(v._rev.startswith('5-'))
 
-        set_case_property_directly(case, 'contact_phone_number', '99912341234')
-        case.save()
-        self.assertTrue(self.get_case_verified_number(case)._rev.startswith('5-'))
+            case = self.set_case_property(case, 'contact_phone_number', '99912341234')
+            self.assertTrue(self.get_case_verified_number(case)._rev.startswith('5-'))
 
-        self.get_case_verified_number(case).delete()
-        case.delete()
-
+    @run_with_all_backends
     def test_close_case(self):
-        case = CommCareCase(
-            domain='case-phone-number-test',
-            name='TEST1'
-        )
-        set_case_property_directly(case, 'contact_phone_number', '99987658765')
-        set_case_property_directly(case, 'contact_phone_number_is_verified', '1')
-        case.save()
-        self.assertIsNotNone(self.get_case_verified_number(case))
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
+            case = self.set_case_property(case, 'contact_phone_number', '99987658765')
+            case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
+            self.assertIsNotNone(self.get_case_verified_number(case))
 
-        case.closed = True
-        case.save()
-        self.assertIsNone(self.get_case_verified_number(case))
-        case.delete()
+            update_case(self.domain, case.case_id, close=True)
+            self.assertIsNone(self.get_case_verified_number(case))
 
+    @run_with_all_backends
     def test_case_soft_delete(self):
-        case = CommCareCase(
-            domain='case-phone-number-test',
-            name='TEST1'
-        )
-        set_case_property_directly(case, 'contact_phone_number', '99987658765')
-        set_case_property_directly(case, 'contact_phone_number_is_verified', '1')
-        case.save()
-        self.assertIsNotNone(self.get_case_verified_number(case))
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
+            case = self.set_case_property(case, 'contact_phone_number', '99987658765')
+            case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
+            self.assertIsNotNone(self.get_case_verified_number(case))
 
-        case.doc_type += '-Deleted'
-        case.save()
-        self.assertIsNone(self.get_case_verified_number(case))
-        case.delete()
+            tag_cases_as_deleted_and_remove_indices(self.domain, [case.case_id], '123', datetime.utcnow())
+            self.assertIsNone(self.get_case_verified_number(case))
 
+    @run_with_all_backends
     def test_case_zero_phone_number(self):
-        case = CommCareCase(
-            domain='case-phone-number-test',
-            name='TEST1'
-        )
-        set_case_property_directly(case, 'contact_phone_number', '99987658765')
-        set_case_property_directly(case, 'contact_phone_number_is_verified', '1')
-        case.save()
-        self.assertIsNotNone(self.get_case_verified_number(case))
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
+            case = self.set_case_property(case, 'contact_phone_number', '99987658765')
+            case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
+            self.assertIsNotNone(self.get_case_verified_number(case))
 
-        set_case_property_directly(case, 'contact_phone_number', '0')
-        case.save()
-        self.assertIsNone(self.get_case_verified_number(case))
-        case.delete()
+            case = self.set_case_property(case, 'contact_phone_number', '0')
+            self.assertIsNone(self.get_case_verified_number(case))
 
+    @run_with_all_backends
     def test_invalid_phone_format(self):
-        case = CommCareCase(
-            domain='case-phone-number-test',
-            name='TEST1'
-        )
-        set_case_property_directly(case, 'contact_phone_number', '99987658765')
-        set_case_property_directly(case, 'contact_phone_number_is_verified', '1')
-        case.save()
-        self.assertIsNotNone(self.get_case_verified_number(case))
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
+            case = self.set_case_property(case, 'contact_phone_number', '99987658765')
+            case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
+            self.assertIsNotNone(self.get_case_verified_number(case))
 
-        set_case_property_directly(case, 'contact_phone_number', 'xyz')
-        case.save()
-        self.assertIsNone(self.get_case_verified_number(case))
-        case.delete()
+            case = self.set_case_property(case, 'contact_phone_number', 'xyz')
+            self.assertIsNone(self.get_case_verified_number(case))
 
+    @run_with_all_backends
     def test_phone_number_already_in_use(self):
-        case1 = CommCareCase(
-            domain='case-phone-number-test',
-            name='TEST1'
-        )
-        set_case_property_directly(case1, 'contact_phone_number', '99987658765')
-        set_case_property_directly(case1, 'contact_phone_number_is_verified', '1')
-        case1.save()
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case1, \
+                create_test_case(self.domain, 'participant', 'test2', drop_signals=False) as case2:
+            case1 = self.set_case_property(case1, 'contact_phone_number', '99987658765')
+            case1 = self.set_case_property(case1, 'contact_phone_number_is_verified', '1')
 
-        case2 = CommCareCase(
-            domain='case-phone-number-test',
-            name='TEST2'
-        )
-        set_case_property_directly(case2, 'contact_phone_number', '99987698769')
-        set_case_property_directly(case2, 'contact_phone_number_is_verified', '1')
-        case2.save()
+            case2 = self.set_case_property(case2, 'contact_phone_number', '99987698769')
+            case2 = self.set_case_property(case2, 'contact_phone_number_is_verified', '1')
 
-        self.assertIsNotNone(self.get_case_verified_number(case1))
-        self.assertIsNotNone(self.get_case_verified_number(case2))
+            self.assertIsNotNone(self.get_case_verified_number(case1))
+            self.assertIsNotNone(self.get_case_verified_number(case2))
 
-        set_case_property_directly(case2, 'contact_phone_number', '99987658765')
-        case2.save()
-        self.assertIsNotNone(self.get_case_verified_number(case1))
-        self.assertIsNone(self.get_case_verified_number(case2))
+            case2 = self.set_case_property(case2, 'contact_phone_number', '99987658765')
 
-        case2.delete()
-        self.get_case_verified_number(case1).delete()
-        case1.delete()
+            self.assertIsNotNone(self.get_case_verified_number(case1))
+            self.assertIsNone(self.get_case_verified_number(case2))
 
     def test_filter_pending(self):
         v1 = VerifiedNumber(verified=True)

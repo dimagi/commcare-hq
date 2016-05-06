@@ -164,6 +164,7 @@ def is_valid_case_type(case_type, module):
 
 
 class ParentCasePropertyBuilder(object):
+
     def __init__(self, app, defaults=(), per_type_defaults=None):
         self.app = app
         self.defaults = defaults
@@ -589,6 +590,16 @@ def get_usercase_default_properties(domain):
 
 def prefix_usercase_properties(properties):
     return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
+
+
+def module_offers_search(module):
+    from corehq.apps.app_manager.models import AdvancedModule, Module
+
+    return (
+        isinstance(module, (Module, AdvancedModule)) and
+        module.search_config and
+        module.search_config.properties
+    )
 
 
 def get_cloudcare_session_data(domain_name, form, couch_user):

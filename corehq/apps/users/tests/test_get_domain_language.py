@@ -12,6 +12,7 @@ from corehq.apps.users.views import get_domain_languages
 
 
 class TestDomainLanguages(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'test-languages'

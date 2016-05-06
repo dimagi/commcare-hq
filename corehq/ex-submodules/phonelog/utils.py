@@ -120,6 +120,7 @@ def _process_user_error_subreport(domain, xform):
             msg=error['msg'],
             session=error['session'],
             type=error['type'],
+            context_node=error.get('context_node', ''),
         )
         to_save.append(entry)
     UserErrorEntry.objects.bulk_create(to_save)

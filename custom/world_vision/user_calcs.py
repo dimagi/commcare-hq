@@ -1,16 +1,22 @@
 import fluff
 
+
 class MotherRegistered(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, case):
         yield case.opened_on
+
 
 class ChildRegistered(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, case):
         yield case.opened_on
 
+
 class NumberChildren(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, case):
         total = 0
@@ -18,7 +24,9 @@ class NumberChildren(fluff.Calculator):
             total = int(case.get_case_property('number_of_children'))
         yield { 'date': case.opened_on, 'value': total }
 
+
 class NumberBoys(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, case):
         total = 0
@@ -26,7 +34,9 @@ class NumberBoys(fluff.Calculator):
             total = int(case.get_case_property('number_of_boys'))
         yield { 'date': case.opened_on, 'value': total }
 
+
 class NumberGirls(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, case):
         total = 0
@@ -34,7 +44,9 @@ class NumberGirls(fluff.Calculator):
             total = int(case.get_case_property('number_of_girls'))
         yield { 'date': case.opened_on, 'value': total }
 
+
 class StillBirth(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, case):
         total = 0

@@ -4,12 +4,12 @@
 {% load crispy_forms_tags %}
 
 {% block stylesheets %} {{ block.super }}
-    <link rel="stylesheet" href="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

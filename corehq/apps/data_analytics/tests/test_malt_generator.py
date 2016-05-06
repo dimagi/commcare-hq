@@ -107,7 +107,6 @@ class MaltGeneratorTest(TestCase):
         # should be included in MALT
         _save_form_data(cls.non_wam_app_id, device_id=COMMCONNECT_DEVICE_ID)
 
-
     @classmethod
     def run_malt_generation(cls):
         generator = MALTTableGenerator([cls.malt_month])

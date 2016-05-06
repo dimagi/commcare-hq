@@ -9,6 +9,7 @@ from custom.utils.utils import flat_field
 
 
 class Numerator(fluff.Calculator):
+
     @fluff.null_emitter
     def numerator(self, case):
         yield None
@@ -25,11 +26,12 @@ class Property(fluff.Calculator):
                 for domain in chain.next:
                     for practice in domain.next:
                         ppt_prop = case.get_case_property(practice.val)
-                        yield {
-                            'date': case.opened_on,
-                            'value': 1 if ppt_prop == 'Y' else 0,
-                            'group_by': [case.domain, chain.val, domain.val, practice.val]
-                        }
+                        if ppt_prop:
+                            yield {
+                                'date': case.opened_on,
+                                'value': 1 if ppt_prop == 'Y' else 0,
+                                'group_by': [case.domain, chain.val, domain.val, practice.val]
+                            }
 
 
 def get_property(case, property):
@@ -76,6 +78,12 @@ def get_ppt_year(case):
     return ppt_year.split('/')[0]
 
 
+def get_group_leadership(case):
+    if case.domain in ('care-macf-malawi', 'care-macf-bangladesh'):
+        return 'Y' if case.get_case_property('farmer_role') == 'office_bearer' else 'N'
+    return case.get_case_property('farmer_is_leader')
+
+
 def case_property(property):
     return flat_field(lambda case: get_property(case, property))
 
@@ -120,8 +128,8 @@ class FarmerRecordFluff(fluff.IndicatorDocument):
     ppt_year = flat_field(lambda c: get_ppt_year(c))
     owner_id = flat_field(lambda c: c.get_case_property('owner_id'))
     gender = flat_field(lambda c: get_gender(c))
-    group_leadership = flat_field(lambda c: c.get_case_property('farmer_is_leader'))
-    real_or_test = flat_field(lambda c: c.get_case_property('real_or_test'))
+    group_leadership = flat_field(get_group_leadership)
+    real_or_test = flat_field(lambda c: c.get_case_property('test_or_real'))
     schedule = flat_field(lambda c: (c.get_case_property('farmer_social_category') or '').lower())
     prop = Property()
 

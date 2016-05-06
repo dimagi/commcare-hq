@@ -61,6 +61,7 @@ class GroupMemoizer(object):
     If you use this to get a group, do not set group.name directly;
     use group_memoizer.rename_group(group, name) instead.
     """
+
     def __init__(self, domain):
         self.groups_by_name = {}
         self.groups_by_id = {}
@@ -125,6 +126,7 @@ def _fmt_phone(phone_number):
 
 
 class BulkCacheBase(object):
+
     def __init__(self, domain):
         self.domain = domain
         self.cache = {}
@@ -156,6 +158,7 @@ class SiteCodeToSupplyPointCache(BulkCacheBase):
 
 
 class SiteCodeToLocationCache(BulkCacheBase):
+
     def __init__(self, domain):
         self.non_admin_types = [
             loc_type.name for loc_type in Domain.get_by_name(domain).location_types
@@ -171,6 +174,7 @@ class SiteCodeToLocationCache(BulkCacheBase):
 
 
 class LocationIdToSiteCodeCache(BulkCacheBase):
+
     def lookup(self, location_id):
         return SQLLocation.objects.get(
             domain=self.domain,  # this is only for safety
@@ -179,6 +183,7 @@ class LocationIdToSiteCodeCache(BulkCacheBase):
 
 
 class UserLocMapping(object):
+
     def __init__(self, username, domain, location_cache):
         self.username = username
         self.domain = domain
@@ -321,6 +326,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     custom_data_validator = UserFieldsView.get_validator(domain)
     ret = {"errors": [], "rows": []}
     total = len(user_specs) + len(group_specs) + len(location_specs)
+
     def _set_progress(progress):
         if task is not None:
             DownloadBase.set_progress(task, progress, total)
@@ -506,6 +512,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
 
 
 class GroupNameError(Exception):
+
     def __init__(self, blank_groups):
         self.blank_groups = blank_groups
 
@@ -570,13 +577,14 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             'location-sms-code': location_cache.get(user.location_id),
         }
 
-    user_data_keys = set()
+    unrecognized_user_data_keys = set()
     user_groups_length = 0
     user_dicts = []
     for user in get_all_commcare_users_by_domain(domain):
         group_names = _get_group_names(user)
-        user_dicts.append(_make_user_dict(user, group_names, location_cache))
-        user_data_keys.update(user.user_data.keys() if user.user_data else [])
+        user_dict = _make_user_dict(user, group_names, location_cache)
+        user_dicts.append(user_dict)
+        unrecognized_user_data_keys.update(user_dict['uncategorized_data'].keys())
         user_groups_length = max(user_groups_length, len(group_names))
 
     user_headers = [
@@ -585,10 +593,10 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
     ]
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.append('location-sms-code')
-    user_data_fields = [f.slug for f in user_data_model.fields]
+    user_data_fields = [f.slug for f in user_data_model.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
     user_headers.extend(build_data_headers(
-        user_data_keys.difference(set(user_data_fields)),
+        unrecognized_user_data_keys,
         header_prefix='uncategorized_data'
     ))
     user_headers.extend(json_to_headers(
@@ -634,6 +642,7 @@ def parse_groups(groups):
 
 def dump_users_and_groups(response, domain):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()

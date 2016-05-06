@@ -1,0 +1,41 @@
+{% extends "reports/async/tabular.html" %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block reportcontent %}
+{% block pretable %}
+    {% if not report.needs_filters %}
+        {% if rendered_as == 'print' %}
+        <div class="row">
+            <div class="col-md-10">{% now "d M Y" %}</div>
+        </div>
+        <div class="row">
+            <div class="col-md-10">
+                <h3 class="media-heading">{{ title }}<br/></h3>
+            </div>
+        </div>
+        {% else %}
+        <div class="media">
+          <div class="media-body" style="height: 64px">
+            <h3 class="media-heading">{{ title }}<br/></h3>
+          </div>
+        </div>
+        {% endif %}
+    {% endif %}{{ block.super }}
+{% endblock %}
+
+{% block reporttable %}
+{% if report.needs_filters %}
+    {% include 'reports/partials/description.html' %}
+{% else %}
+    {% for thisreport in reports %}
+        <br/>
+        <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+        {% include 'icds_reports/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
+        <br/>
+    {% endfor %}
+{% endif %}
+{% endblock %}
+{% block posttable %}{% endblock %}
+{% endblock %}

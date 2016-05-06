@@ -11,6 +11,7 @@ class localize(object):
     ...     print _('hello')
     hola
     """
+
     def __init__(self, language):
         self.language = language
 

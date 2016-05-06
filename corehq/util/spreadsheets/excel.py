@@ -127,12 +127,14 @@ class IteratorJSONReader(object):
 
 
 class WorksheetNotFound(Exception):
+
     def __init__(self, title):
         self.title = title
         super(WorksheetNotFound, self).__init__()
 
 
 class WorksheetJSONReader(IteratorJSONReader):
+
     def __init__(self, worksheet, title=None):
         width = 0
         self.title = title
@@ -170,6 +172,7 @@ class WorksheetJSONReader(IteratorJSONReader):
 
 
 class WorkbookJSONReader(object):
+
     def __init__(self, f):
         if isinstance(f, basestring):
             filename = f

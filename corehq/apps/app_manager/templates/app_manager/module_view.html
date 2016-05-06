@@ -41,7 +41,8 @@
             var langs = {{ app.langs|JSON }};
             var saveUrl = "{% url "edit_module_detail_screens" domain app.id module.id %}";
             var parentModules = {{ parent_modules|JSON }};
-            var fixtures = {{ fixtures|JSON }};
+            var fixture_columns_by_type = {{ fixture_columns_by_type|JSON }};
+            var searchProperties = {{ search_properties|JSON }};
 
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
@@ -59,9 +60,10 @@
                     saveUrl: saveUrl,
                     parentModules: parentModules,
                     childCaseTypes: detail.subcase_types,
-                    fixtures: fixtures,
+                    fixture_columns_by_type: fixture_columns_by_type,
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
+                    searchProperties: searchProperties,
                     contextVariables: state
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");

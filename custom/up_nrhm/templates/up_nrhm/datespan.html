@@ -1,4 +1,4 @@
-{% extends 'reports/filters/bootstrap3/datespan.html' %}
+{% extends 'reports/filters/datespan.html' %}
 {% load staticfiles %}
 {% load i18n %}
 {% block filter_js %}
@@ -14,7 +14,8 @@
                 '{{ datespan.startdate|date:"Y-m-d" }}',
                 '{{ datespan.enddate|date:"Y-m-d" }}'
             );
-            $('#filter_range').on('apply', function(ev, picker) {
+            $('#filter_range').on('change apply', function() {
+                picker = $(this).data('daterangepicker');
                 var diffDays = moment.duration(picker.endDate.diff(picker.startDate)).asDays();
                 if (diffDays > 31) {
                     var startDate = picker.endDate.clone();

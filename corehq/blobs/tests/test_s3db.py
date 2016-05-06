@@ -78,6 +78,7 @@ from django.conf import settings
 from testil import tempdir
 
 import corehq.blobs.s3db as mod
+from corehq.blobs.exceptions import ArgumentError
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.util.test_utils import generate_cases, trap_extra_setup
 
@@ -143,6 +144,31 @@ class TestS3BlobDB(TestCase):
         self.assertTrue(info.identifier)
         with self.assertRaises(mod.NotFound):
             self.db.get(info.identifier, bucket=bucket)
+
+    def test_delete_identifier_in_default_bucket(self):
+        info = self.db.put(StringIO(b"content"))
+        self.assertTrue(self.db.delete(info.identifier), 'delete failed')
+        with self.assertRaises(mod.NotFound):
+            self.db.get(info.identifier)
+
+    def test_delete_no_args(self):
+        info = self.db.put(StringIO(b"content"))
+        with self.assertRaises(ArgumentError):
+            self.db.delete()
+        # blobs in default bucket should not be deleted
+        with self.db.get(info.identifier) as fh:
+            self.assertEqual(fh.read(), b"content")
+        self.assertTrue(self.db.delete(bucket=mod.DEFAULT_BUCKET))
+
+    def test_prevent_delete_bucket_by_mistake(self):
+        info = self.db.put(StringIO(b"content"))
+        id_mistake = None
+        with self.assertRaises(ArgumentError):
+            self.db.delete(id_mistake, mod.DEFAULT_BUCKET)
+        # blobs in default bucket should not be deleted
+        with self.db.get(info.identifier) as fh:
+            self.assertEqual(fh.read(), b"content")
+        self.assertTrue(self.db.delete(bucket=mod.DEFAULT_BUCKET))
 
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")

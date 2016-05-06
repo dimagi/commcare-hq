@@ -8,6 +8,7 @@ from .util import bootstrap_domain, bootstrap_products
 
 
 class CommTrackSettingsTest(TestCase):
+
     def testOTASettings(self):
         self.domain = bootstrap_domain()
         bootstrap_products(self.domain.name)

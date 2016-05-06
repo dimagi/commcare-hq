@@ -4,6 +4,7 @@ from corehq.apps.sms.models import ForwardingRule
 
 
 class DBAccessorsTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'forwarding-rules-dbaccessors'

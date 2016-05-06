@@ -1,17 +1,12 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'hqwebapp/ko/select2_handler.js' %}"></script>
     <script src="{% static 'smsbillables/ko/smsbillables.rate_calc.js' %}"></script>
-{% endblock %}
-
-{% block head %}{{ block.super }}
-    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet" />
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -27,7 +22,7 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <div class="well">
         <p class="lead">
             {% blocktrans %}
@@ -58,9 +53,9 @@
             Calculating SMS Rate...
             {% endblocktrans %}
         </div>
-        <div class="alert"
+        <div class="alert alert-info"
              data-bind="text: rate,
-                        css: { 'alert-error': hasError, 'alert-info': noError },
+                        css: { 'alert-danger': hasError, 'alert-info': noError },
                         visible: showRateInfo"></div>
     </div>
 {% endblock %}

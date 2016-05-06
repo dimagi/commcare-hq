@@ -17,6 +17,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class WorkflowHelper(PostProcessor):
+
     def __init__(self, suite, app, modules):
         super(WorkflowHelper, self).__init__(suite, app, modules)
 
@@ -32,15 +33,12 @@ class WorkflowHelper(PostProcessor):
         for module in self.modules:
             for form in module.get_suite_forms():
                 form_command = id_strings.form_command(form, module)
-                if_prefix = None
                 stack_frames = []
-                case_list_form_frames = CaseListFormWorkflow(self).case_list_forms_frames(form)
-                stack_frames.extend(case_list_form_frames)
-
-                if case_list_form_frames:
-                    if_prefix = session_var(RETURN_TO).count().eq(0)
-
-                stack_frames.extend(EndOfFormNavigationWorkflow(self).form_workflow_frames(if_prefix, module, form))
+                end_of_form_frames = EndOfFormNavigationWorkflow(self).form_workflow_frames(module, form)
+                if end_of_form_frames:
+                    stack_frames.extend(end_of_form_frames)
+                else:
+                    stack_frames.extend(CaseListFormWorkflow(self).case_list_forms_frames(form))
 
                 self.create_workflow_stack(form_command, stack_frames)
 
@@ -146,10 +144,11 @@ class WorkflowHelper(PostProcessor):
 
 
 class EndOfFormNavigationWorkflow(object):
+
     def __init__(self, helper):
         self.helper = helper
 
-    def form_workflow_frames(self, if_prefix, module, form):
+    def form_workflow_frames(self, module, form):
         """
         post_form_workflow = 'module':
           * Add stack frame and a command with value = "module command"
@@ -186,14 +185,14 @@ class EndOfFormNavigationWorkflow(object):
 
         stack_frames = []
         if form.post_form_workflow == WORKFLOW_ROOT:
-            stack_frames.append(StackFrameMeta(if_prefix, None, [], allow_empty_frame=True))
+            stack_frames.append(StackFrameMeta(None, [], allow_empty_frame=True))
         elif form.post_form_workflow == WORKFLOW_MODULE:
             frame_children = frame_children_for_module(module, include_user_selections=False)
-            stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
+            stack_frames.append(StackFrameMeta(None, frame_children))
         elif form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             root_module = module.root_module
             frame_children = frame_children_for_module(root_module)
-            stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
+            stack_frames.append(StackFrameMeta(None, frame_children))
         elif form.post_form_workflow == WORKFLOW_PREVIOUS:
             frame_children = self.helper.get_frame_children(form)
 
@@ -205,7 +204,7 @@ class EndOfFormNavigationWorkflow(object):
                 # or a non-autoselect datum
                 last = frame_children.pop()
 
-            stack_frames.append(StackFrameMeta(if_prefix, None, frame_children))
+            stack_frames.append(StackFrameMeta(None, frame_children))
         elif form.post_form_workflow == WORKFLOW_FORM:
             source_form_datums = self.helper.get_form_datums(form)
             for link in form.form_links:
@@ -233,7 +232,7 @@ class EndOfFormNavigationWorkflow(object):
                         if child.id not in parent_ids
                     ]
 
-                stack_frames.append(StackFrameMeta(if_prefix, link.xpath, frame_children))
+                stack_frames.append(StackFrameMeta(link.xpath, frame_children))
 
         return stack_frames
 
@@ -301,6 +300,7 @@ class EndOfFormNavigationWorkflow(object):
 
 
 class CaseListFormWorkflow(object):
+
     def __init__(self, helper):
         self.helper = helper
 
@@ -331,9 +331,9 @@ class CaseListFormWorkflow(object):
             source_session_var = reg_action.case_session_var
         source_case_id = session_var(source_session_var)
         case_count = CaseIDXPath(source_case_id).case().count()
-        frame_case_created = StackFrameMeta(None, self.get_if_clause(case_count.gt(0), target_command))
+        frame_case_created = StackFrameMeta(self.get_if_clause(case_count.gt(0), target_command))
         stack_frames.append(frame_case_created)
-        frame_case_not_created = StackFrameMeta(None, self.get_if_clause(case_count.eq(0), target_command))
+        frame_case_not_created = StackFrameMeta(self.get_if_clause(case_count.eq(0), target_command))
         stack_frames.append(frame_case_not_created)
 
         def add_datums_for_target(module, source_form_dm, allow_missing=False):
@@ -434,10 +434,8 @@ class StackFrameMeta(object):
     """
     Class used in computing the form workflow.
     """
-    def __init__(self, if_prefix, if_clause, children=None, allow_empty_frame=False):
-        if if_prefix:
-            template = '({{}}) and ({})'.format(if_clause) if if_clause else '{}'
-            if_clause = template.format(if_prefix)
+
+    def __init__(self, if_clause, children=None, allow_empty_frame=False):
         self.if_clause = unescape(if_clause) if if_clause else None
         self.children = []
         self.allow_empty_frame = allow_empty_frame
@@ -470,6 +468,7 @@ class StackFrameMeta(object):
 
 @total_ordering
 class CommandId(object):
+
     def __init__(self, command):
         self.id = command
 

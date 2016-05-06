@@ -9,6 +9,7 @@ from custom.openlmis.commtrack import sync_facility_to_supply_point, get_supply_
 
 TEST_DOMAIN = 'openlmis-commtrack-facility-test'
 
+
 class FacilitySyncTest(TestCase):
 
     def setUp(self):

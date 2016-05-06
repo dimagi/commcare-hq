@@ -66,6 +66,7 @@ def default_cleanup(schema_or_doc):
 
 
 class SerializableFunction(object):
+
     def __init__(self, function=None, **kwargs):
         self.functions = []
         if function:
@@ -118,6 +119,7 @@ class SerializableFunction(object):
                 'function': self.to_path(f),
                 'kwargs': kwargs
             })
+
         def handler(obj):
             try:
                 json_handler(obj)

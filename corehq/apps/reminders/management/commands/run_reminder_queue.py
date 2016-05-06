@@ -49,6 +49,7 @@ class ReminderEnqueuingOperation(GenericEnqueuingOperation):
             # pick it up later and enqueue.
             pass
 
+
 class Command(ReminderEnqueuingOperation):
     pass
 

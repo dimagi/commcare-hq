@@ -8,6 +8,7 @@ from pillowtop.utils import prepare_bulk_payloads
 
 
 class BulkTest(SimpleTestCase):
+
     def test_prepare_bulk_payloads_unicode(self):
         unicode_domain = u'हिंदी'
         bulk_changes = [

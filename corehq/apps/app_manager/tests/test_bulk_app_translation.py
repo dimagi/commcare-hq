@@ -202,6 +202,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '', '', '', ''),
         ))
      )
+
     def test_set_up(self):
         self._shared_test_initial_set_up()
 
@@ -271,7 +272,6 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         )
 
 
-
 class MismatchedItextReferenceTest(BulkAppTranslationTestBase):
     """
     Test the bulk app translation upload when the itext reference in a question
@@ -323,7 +323,6 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
           ('no_media-label', 'No media', '', '', ''),
           ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')))
     )
-
 
     @classmethod
     def setUpClass(cls):

@@ -175,7 +175,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         assert isinstance(form_ids, list)
         deletion_date = deletion_date or datetime.utcnow()
-        with get_cursor(CommCareCaseSQL) as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
                 'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
                 [domain, form_ids, deletion_date, deletion_id]
@@ -655,23 +655,32 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        from corehq.form_processor.change_publishers import publish_case_deleted
+
         assert isinstance(case_ids, list)
-        deletion_date = deletion_date or datetime.utcnow()
+        utcnow = datetime.utcnow()
+        deletion_date = deletion_date or utcnow
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT soft_delete_cases(%s, %s, %s, %s) as affected_count',
-                [domain, case_ids, deletion_date, deletion_id]
+                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as affected_count',
+                [domain, case_ids, utcnow, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
+            affected_count = sum([result.affected_count for result in results])
+
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
+
+        return affected_count
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
+
     @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_case(%s)',
-            [case_id]
+            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            [[case_id]]
         ))
 
     @staticmethod
@@ -685,23 +694,23 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             raise LedgerValueNotFound
 
     @staticmethod
-    def save_ledger_values(ledger_values):
+    def save_ledger_values(ledger_values, deprecated_form=None):
         if not ledger_values:
             return
 
-        for ledger_value in ledger_values:
-            transactions = ledger_value.get_live_tracked_models(LedgerTransaction)
+        deprecated_form_id = deprecated_form.orig_id if deprecated_form else None
 
-            ledger_value.last_modified = datetime.utcnow()
+        for ledger_value in ledger_values:
+            transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
             with get_cursor(LedgerValue) as cursor:
                 try:
                     cursor.execute(
-                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[])".format(
+                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[], %s)".format(
                             LedgerValue_DB_TABLE,
                             LedgerTransaction_DB_TABLE
                         ),
-                        [ledger_value.case_id, ledger_value, transactions]
+                        [ledger_value.case_id, ledger_value, transactions_to_save, deprecated_form_id]
                     )
                 except InternalError as e:
                     raise LedgerSaveError(e)
@@ -751,6 +760,19 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         except IndexError:
             return None
 
+    @staticmethod
+    def get_current_ledger_state(case_ids, ensure_form_id=False):
+        ledger_values = LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            [case_ids]
+        )
+        ret = {case_id: {} for case_id in case_ids}
+        for value in ledger_values:
+            sections = ret[value.case_id].setdefault(value.section_id, {})
+            sections[value.entry_id] = value
+
+        return ret
+
 
 def _order_list(id_list, object_list, id_property):
     # SQL won't return the rows in any particular order so we need to order them ourselves
@@ -798,6 +820,7 @@ class RawQuerySetWrapper(object):
     Wrapper for RawQuerySet objects to make them behave more like
     normal QuerySet objects
     """
+
     def __init__(self, queryset):
         self.queryset = queryset
         self._result_cache = None

@@ -33,7 +33,7 @@ from phonelog.utils import process_device_log
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
-    'case_result, case_models, stock_result, stock_models'
+    'case_result, case_models, stock_result'
 )
 
 
@@ -173,7 +173,7 @@ class SubmissionPost(object):
             self.interface.save_processed_models(
                 xforms,
                 case_stock_result.case_models,
-                case_stock_result.stock_models
+                case_stock_result.stock_result
             )
 
             unfinished_submission_stub.saved = True
@@ -200,13 +200,12 @@ class SubmissionPost(object):
             stock_result = process_stock(xforms, case_db)
 
             cases = case_db.get_cases_for_saving(instance.received_on)
-            stock_models = stock_result.get_models_to_save()
+            stock_result.populate_models()
 
         return CaseStockProcessingResult(
             case_result=case_result,
             case_models=cases,
             stock_result=stock_result,
-            stock_models=stock_models
         )
 
     def get_response(self):
