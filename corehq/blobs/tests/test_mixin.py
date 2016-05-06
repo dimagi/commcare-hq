@@ -125,6 +125,8 @@ class TestBlobMixin(BaseTestCase):
         content = b"<xml />"
         obj.deferred_put_attachment(content, name, content_type="text/xml")
         self.assertTrue(obj.delete_attachment(name))
+        with self.assertRaises(mod.ResourceNotFound):
+            self.obj.fetch_attachment(name)
 
     def test_save_persists_unsaved_blob(self):
         obj = self.make_doc(DeferredPutBlobDocument)
