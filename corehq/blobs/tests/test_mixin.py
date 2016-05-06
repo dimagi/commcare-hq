@@ -716,6 +716,9 @@ class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
 
 class BaseFakeDocument(Document):
 
+    class Meta:
+        app_label = "couch"
+
     saved = False
 
     def save(self):
