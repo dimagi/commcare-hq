@@ -894,23 +894,24 @@ class CallcenterUCRCheck(BaseAdminSectionView):
 
         for domain in domains:
             adapters = get_sql_adapters_for_domain(domain)
+            domain_cases = domains_to_cases.get(domain, 0)
             context['domains'].append({
                 'name': domain,
                 'stats': [
                     {
                         'name': 'forms',
                         'ucr': adapters.forms.get_query_object().count(),
-                        'es': domains_to_forms[domain]
+                        'es': domains_to_forms.get(domain, 0)
                     },
                     {
                         'name': 'cases',
                         'ucr': adapters.cases.get_query_object().count(),
-                        'es': domains_to_cases[domain].doc_count
+                        'es': domain_cases.doc_count if domain_cases else 0
                     },
                     {
                         'name': 'case_actions',
                         'ucr': adapters.case_actions.get_query_object().count(),
-                        'es': domains_to_cases[domain].actions.doc_count
+                        'es': domain_cases.actions.doc_count if domain_cases else 0
                     }
                 ]
             })
