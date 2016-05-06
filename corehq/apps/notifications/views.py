@@ -1,10 +1,22 @@
+import datetime
+
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
+
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq import toggles
-from corehq.apps.domain.decorators import login_required
-from corehq.apps.notifications.models import get_fake_notifications
+from corehq.apps.domain.decorators import login_required, require_superuser
+from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.notifications.forms import NotificationCreationForm
+from corehq.apps.notifications.models import Notification
+from corehq.apps.notifications.util import get_notifications_by_user
+from corehq.apps.style.decorators import use_bootstrap3
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):
@@ -20,11 +32,9 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def get_notifications(self, in_data):
-        # todo actual models
         # todo always grab alerts if they are still relevant
-        # todo only grab info notifications up to 10
-        notifications = get_fake_notifications()
-        has_unread = len(filter(lambda x: x['isRead'], notifications)) > 0
+        notifications = get_notifications_by_user(self.request.user)
+        has_unread = len(filter(lambda x: not x['isRead'], notifications)) > 0
         return {
             'hasUnread': has_unread,
             'notifications': notifications,
@@ -32,5 +42,59 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def mark_as_read(self, in_data):
-        # todo
+        Notification.objects.get(pk=in_data['id']).users_read.add(self.request.user)
         return {}
+
+
+class ManageNotificationView(BasePageView):
+    urlname = 'manage_notifications'
+    page_title = ugettext_noop("Manage Notification")
+    template_name = 'notifications/manage_notifications.html'
+
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManageNotificationView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def create_form(self):
+        if self.request.method == 'POST' and 'submit' in self.request.POST:
+            return NotificationCreationForm(self.request.POST)
+        return NotificationCreationForm()
+
+    @property
+    def page_context(self):
+        return {
+            'alerts': [{
+                'content': alert.content,
+                'url': alert.url,
+                'type': alert.get_type_display(),
+                'activated': unicode(alert.activated),
+                'isActive': alert.is_active,
+                'id': alert.id,
+            } for alert in Notification.objects.order_by('-created').all()],
+            'form': self.create_form,
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    def post(self, request, *args, **kwargs):
+        if 'submit' in request.POST and self.create_form.is_valid():
+            self.create_form.save()
+        elif 'activate' in request.POST:
+            note = Notification.objects.filter(pk=request.POST.get('alert_id')).first()
+            note.is_active = True
+            note.activated = datetime.datetime.now()
+            note.save()
+        elif 'deactivate' in request.POST:
+            note = Notification.objects.filter(pk=request.POST.get('alert_id')).first()
+            note.is_active = False
+            note.activated = None
+            note.save()
+        elif 'remove' in request.POST:
+            Notification.objects.filter(pk=request.POST.get('alert_id')).delete()
+        return self.get(request, *args, **kwargs)
+
