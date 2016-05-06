@@ -141,7 +141,7 @@ def transform_array(item):
     except (InvalidOperation)
         return None
 
-    
+
 def transform_from_datatype(datatype):
     """
     Given a datatype, return a transform for that type.
