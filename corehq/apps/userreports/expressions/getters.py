@@ -132,6 +132,7 @@ def transform_unicode(item):
     except (ValueError, TypeError):
         return None
 
+
 def transform_array(item):
     if isinstance(item, list):
         return item
