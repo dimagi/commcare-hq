@@ -20,10 +20,6 @@ class LedgerDBSQL(LedgerDBInterface):
         except LedgerValueNotFound:
             return None
 
-    def get_current_ledger_value(self, unique_ledger_reference):
-        ledger = self.get_ledger(unique_ledger_reference)
-        return ledger.balance if ledger else 0
-
 
 class LedgerProcessorSQL(LedgerProcessorInterface):
     """

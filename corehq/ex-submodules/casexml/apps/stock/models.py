@@ -99,6 +99,13 @@ class StockTransaction(models.Model, ConsumptionMixin):
     def received_on(self):
         return self.report.date
 
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.product_id
+        )
+
     @classmethod
     def latest(cls, case_id, section_id, product_id):
         relevant = cls.get_ordered_transactions_for_stock(case_id, section_id, product_id)
