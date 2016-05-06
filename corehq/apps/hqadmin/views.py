@@ -866,9 +866,6 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         if 'domain' not in self.request.GET:
             return {}
 
-        context = {
-            'domains': []
-        }
         domain = self.request.GET.get('domain', None)
         if domain:
             domains = [domain]
@@ -892,12 +889,20 @@ class CallcenterUCRCheck(BaseAdminSectionView):
 
         domains_to_cases = results.aggregations.domain.buckets_dict
 
+        context = {
+            'data': [],
+            'domain': domain
+        }
         for domain in domains:
-            adapters = get_sql_adapters_for_domain(domain)
-            domain_cases = domains_to_cases.get(domain, 0)
-            context['domains'].append({
+            domain_context = {
                 'name': domain,
-                'stats': [
+                'stats': []
+            }
+            context['data'].append(domain_context)
+            try:
+                adapters = get_sql_adapters_for_domain(domain)
+                domain_cases = domains_to_cases.get(domain, 0)
+                domain_context['stats'] = [
                     {
                         'name': 'forms',
                         'ucr': adapters.forms.get_query_object().count(),
@@ -914,7 +919,8 @@ class CallcenterUCRCheck(BaseAdminSectionView):
                         'es': domain_cases.actions.doc_count if domain_cases else 0
                     }
                 ]
-            })
+            except Exception as e:
+                domain_context['error'] = str(e)
 
         scale = [
             (40, 'warning'),
@@ -922,16 +928,22 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         ]
 
         stat_names = ['es', 'ucr']
-        for info in context['domains']:
+        for info in context['data']:
             for stat in info['stats']:
                 total = sum([stat[name] for name in stat_names])
                 stat['total'] = total
                 stat['es_class'] = 'info'
                 stat['ucr_class'] = 'success'
+                percent = None
                 for name in stat_names:
                     percent = int(100 * stat[name] / total)
                     stat[name + '_percent'] = percent
                     for range in scale:
                         if percent <= range[0]:
                             stat[name + '_class'] = range[1]
+
+                if 5 >= percent or percent >= 95:
+                    stat['es_class'] = 'danger'
+                    stat['ucr_class'] = 'danger'
+
         return context
