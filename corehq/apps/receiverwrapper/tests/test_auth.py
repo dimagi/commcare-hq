@@ -13,6 +13,7 @@ from corehq.apps.receiverwrapper.views import secure_post
 
 
 class FakeFile(object):
+
     def __init__(self, data, name=None):
         self.data = data
         self.name = name

@@ -6,7 +6,7 @@
 {% block title %}{% trans "Edit Feature Flag: " %}{{ toggle_meta.label }}{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'style/js/bootstrap2/main.js' %}"></script>
+    <script src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}
@@ -155,7 +155,7 @@
                             <br/>
                             <ul>
                                 <li>
-                                    <span class="muted">{% trans "Go to the project settings page to see if a toggle is randomly enabled for your domain." %}</span>
+                                    <span class="text-muted">{% trans "Go to the project settings page to see if a toggle is randomly enabled for your domain." %}</span>
                                 </li>
                             </ul>
                         </p>
@@ -163,7 +163,7 @@
                 </div>
                 <hr/>
                 <div class="row" data-bind="visible: latest_use().name">
-                    <div class="span6">
+                    <div class="col-sm-6">
                         Most recently updated: <strong data-bind="text:latest_use().name"></strong>: <span data-bind="text:latest_use().date"></span>
                     </div>
                 </div>

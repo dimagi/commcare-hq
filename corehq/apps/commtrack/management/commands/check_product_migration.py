@@ -6,6 +6,7 @@ from corehq.apps.products.models import Product
 from dimagi.utils.couch.database import iter_docs
 from datetime import datetime
 
+
 class Command(BaseCommand):
     # context: https://github.com/dimagi/commcare-hq/pull/4043/files#diff-649db0a832878e7671cee114fa1e66b0R50
     help = 'Checks the state of products prior to migrating them to sql'

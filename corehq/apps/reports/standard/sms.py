@@ -23,6 +23,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
+from datetime import datetime
 from django.conf import settings
 from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
     get_object_info, DomainMismatchException)
@@ -39,6 +40,7 @@ from corehq.apps.sms.models import (
     MessagingEvent,
     MessagingSubEvent,
     SMS,
+    PhoneBlacklist,
 )
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -60,7 +62,6 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         "This report will only show data for users whose phone numbers have "
         "been verified. Phone numbers can be verified from the Settings and "
         "Users tab.")
-    is_bootstrap3 = True
 
     @property
     def headers(self):
@@ -88,6 +89,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
             # NOTE: this currently counts all messages from the user, whether
             # or not they were from verified numbers
             counts = _sms_count(user, self.datespan.startdate_utc, self.datespan.enddate_utc)
+
             def _fmt(val):
                 return format_datatables_data(val, val)
             return [
@@ -128,7 +130,6 @@ def _sms_count(user, startdate, enddate):
 
 
 class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
-    is_bootstrap3 = True
 
     def _fmt(self, val):
         if val is None:
@@ -452,6 +453,7 @@ class MessageLogReport(BaseCommConnectLogReport):
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
+
     @property
     def export_table(self):
         # Ignore the BaseCommConnectLogReport export
@@ -1001,3 +1003,79 @@ class SurveyDetailReport(BaseMessagingEventReport):
                 self._fmt(status),
             ])
         return result
+
+
+class SMSOptOutReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport):
+
+    name = ugettext_noop("SMS Opt Out Report")
+    slug = 'sms_opt_out'
+    ajax_pagination = True
+    exportable = True
+    fields = []
+
+    @property
+    def headers(self):
+        header = DataTablesHeader(
+            DataTablesColumn(_("Phone Number")),
+            DataTablesColumn(_("Can Receive SMS")),
+            DataTablesColumn(_("Last Opt Out Timestamp")),
+            DataTablesColumn(_("Last Opt In Timestamp")),
+        )
+        return header
+
+    def _get_queryset(self):
+        qs = PhoneBlacklist.objects.filter(
+            domain=self.domain
+        )
+
+        fields = ['phone_number', 'send_sms', 'last_sms_opt_out_timestamp', 'last_sms_opt_in_timestamp']
+        sort_col = self.request_params.get('iSortCol_0')
+        sort_dir = self.request_params.get('sSortDir_0')
+
+        if isinstance(sort_col, int) and sort_col < len(fields):
+            qs = qs.order_by(fields[sort_col])
+            if sort_dir == 'desc':
+                qs = qs.reverse()
+
+        return qs
+
+    def _get_rows(self, paginate=True):
+        qs = self._get_queryset()
+        if paginate:
+            qs = qs[self.pagination.start:self.pagination.start + self.pagination.count]
+        for entry in qs:
+            yield [
+                self._fmt(entry.phone_number),
+                self._fmt_bool(entry.send_sms),
+                self._fmt_timestamp(entry.last_sms_opt_out_timestamp),
+                self._fmt_timestamp(entry.last_sms_opt_in_timestamp),
+            ]
+
+    def _fmt(self, value):
+        return value or '-'
+
+    def _fmt_bool(self, value):
+        return _("Yes") if value else _("No")
+
+    def _fmt_timestamp(self, timestamp):
+        if not isinstance(timestamp, datetime):
+            return '-'
+
+        timestamp = ServerTime(timestamp).user_time(self.timezone).done()
+        return timestamp.strftime(SERVER_DATETIME_FORMAT)
+
+    @property
+    def rows(self):
+        return self._get_rows()
+
+    @property
+    def total_records(self):
+        return self._get_queryset().count()
+
+    @property
+    def shared_pagination_GET_params(self):
+        return []
+
+    @property
+    def export_rows(self):
+        return self._get_rows(paginate=False)

@@ -3,6 +3,7 @@ from corehq.apps.reports.views import calculate_hour, recalculate_hour, calculat
 
 
 class TimeAndDateManipulationTest(SimpleTestCase):
+
     def test_calculate_hour(self):
         self.assertEqual(calculate_hour(10, -2, 0), (12, 0))
         self.assertEqual(calculate_hour(10, 2, 0), (8, 0))

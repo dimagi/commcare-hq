@@ -9,6 +9,7 @@ from time import sleep
 
 
 class BaseMigrationTestCase(TestCase):
+
     def setUp(self):
         self.domain = 'test-sms-sql-migration'
         self.deleteAllLogs()
@@ -53,6 +54,7 @@ class BaseMigrationTestCase(TestCase):
 
 
 class PhoneNumberMigrationTestCase(BaseMigrationTestCase):
+
     def getCouchCount(self):
         result = VerifiedNumber.view(
             'phone_numbers/verified_number_by_domain',

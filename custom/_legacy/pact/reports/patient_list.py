@@ -23,7 +23,6 @@ class PactPrimaryHPField(BaseSingleOptionFilter):
         chws = list(self.get_chws())
         return [(c['val'], c['text']) for c in chws]
 
-
     @classmethod
     def get_chws(cls):
         users = CommCareUser.by_domain(PACT_DOMAIN)
@@ -65,7 +64,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
     ajax_pagination = True
     asynchronous = True
     default_sort = {"pactid": "asc"}
-    report_template_path = "reports/async/bootstrap2/tabular.html"
+    report_template_path = "reports/async/tabular.html"
     flush_layout = True
 
     fields = [
@@ -106,7 +105,6 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             case_id_count_map[f['term']] = f['count']
         return case_id_count_map
 
-
     @property
     def rows(self):
         """
@@ -139,7 +137,6 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             facet_dict = self.case_submits_facet_dict(SIZE_LIMIT)
             for result in res['hits']['hits']:
                 yield list(_format_row(result['fields']))
-
 
     @property
     def es_results(self):
@@ -193,7 +190,6 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             full_query['filter']['and'].append(primary_hp_filter)
         return self.case_es.run_query(full_query)
 
-
     def pact_case_link(self, case_id, name):
         try:
             return html.mark_safe("<a class='ajax_dialog' href='%s'>%s</a>" % (
@@ -213,7 +209,6 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             else:
                 css = 'label label-info'
             return '<span class="%s">%s</span>' % (css, status)
-
 
     def pact_dot_link(self, case_id, status):
 

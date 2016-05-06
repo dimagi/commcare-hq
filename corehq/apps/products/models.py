@@ -266,6 +266,7 @@ class Product(Document):
 
 
 class ProductQueriesMixin(object):
+
     def product_ids(self):
         return self.values_list('product_id', flat=True)
 
@@ -285,6 +286,7 @@ class ProductQuerySet(ProductQueriesMixin, models.query.QuerySet):
 
 
 class ProductManager(ProductQueriesMixin, models.Manager):
+
     def get_queryset(self):
         return ProductQuerySet(self.model, using=self._db)
 

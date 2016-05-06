@@ -34,6 +34,7 @@ def get_dynamic_element(key, val):
         element.text = unicode(val)
     return element
 
+
 class CaseXMLGeneratorBase(object):
     # The breakdown of functionality here is a little sketchy, but basically
     # everything that changed from v1 to v2 gets a split. The rest is
@@ -89,6 +90,7 @@ class CaseXMLGeneratorBase(object):
     def add_indices(self, element):
         self._ni()
 
+
 class V1CaseXMLGenerator(CaseXMLGeneratorBase):
 
     def get_root_element(self):
@@ -125,7 +127,9 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_attachments(self, element):
         pass
 
+
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
+
     def get_root_element(self):
         root = safe_element("case")
         root.attrib = {
@@ -176,6 +180,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
                 attachment_elem.append(aroot)
             element.append(attachment_elem)
 
+
 def get_generator(version, case):
     check_version(version)
     return GENERATOR_MAP[version](case)
@@ -188,6 +193,7 @@ GENERATOR_MAP = {
 
 
 class CaseDBXMLGenerator(V2CaseXMLGenerator):
+
     def __init__(self, case):
         self.case = case
 

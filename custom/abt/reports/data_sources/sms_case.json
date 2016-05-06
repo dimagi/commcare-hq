@@ -1,7 +1,8 @@
 {
   "domains": [
     "airs-testing",
-    "airsbenin"
+    "airsbenin",
+    "airsethiopia"
   ],
   "config": {
     "engine_id": "default",
@@ -373,28 +374,50 @@
                 }
               }
             },
-            "Benin": {
-                  "default": 0,
-                  "cases": {
-                      "Atacora": 270141
+            "Ethiopia": {
+              "default": 0,
+              "cases": {
+                "oromia": 708258
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_1_data"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
+            "benin": {
+                "default": 0,
+                "cases": {
+                    "Atacora": 270141
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_1_name"
+                    ]
                   },
-                  "type": "switch",
-                  "switch_on": {
-                    "value_expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "user_data",
-                        "level_1_name"
-                      ]
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareUser",
-                    "doc_id_expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id"
-                    }
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
                   }
                 }
+              }
           },
           "type": "switch",
           "switch_on": {
@@ -614,18 +637,45 @@
                 }
               }
             },
-            "Benin": {
+            "Ethiopia": {
+              "default": 0,
+              "cases": {
+                "east_wollega": 141827,
+                "ilu_aba_bora": 81882,
+                "jimma": 155256,
+                "kellem_wollega": 106629,
+                "west_shewa": 86478,
+                "west_wollega": 136186
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_2_data"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            },
+            "benin": {
                   "default": 0,
                   "cases": {
                     "boukoumbe": 29090,
-                    "cobly": 22044,
-                    "kerou": 40328,
+                    "colby": 22044,
+                    "kérou": 40328,
                     "kouande": 44275,
                     "materi": 41474,
                     "natitingou": 29385,
                     "pehunco": 37137,
                     "tanguieta": 13490,
-                    "toucountouna": 12918
+                    "toucoutouna": 12918
                   },
                   "type": "switch",
                   "switch_on": {
@@ -704,42 +754,42 @@
             "Ethiopia": {
               "default": 0,
               "cases": {
-                "Diga": 13304,
-                "Sasisga": 17562,
-                "Gida Ayana": 20243,
-                "Boneya Boshe": 11126,
-                "Wama_Agalo": 17215,
-                "Guto Gida": 16406,
-                "Gobu Sayo": 11910,
-                "Limu": 11593,
-                "Wayu Tuka": 15408,
-                "Menesibu": 32426,
-                "Kondala": 18571,
-                "Begi": 16790,
-                "Guliso": 12206,
-                "Kiltu Kara": 12162,
-                "Nejo": 19530,
-                "Babo Gambela": 19277,
-                "Dendi": 12639,
-                "Dano": 19205,
-                "Nono": 14728,
-                "Illu Gelan": 19561,
-                "Bako Tibe": 19370,
-                "Sokoru": 20599,
-                "Omo Nada": 32984,
-                "Tiro Afeta": 24455,
-                "Kersa": 27624,
-                "Seka Chekorsa": 22699,
-                "Shebe Sombo": 16665,
-                "Lalo Kilie": 13380,
-                "Dale Sadi": 17522,
-                "Dale Wabera": 18836,
-                "Hawa Gelan": 31441,
-                "Sayo": 15256,
-                "Chewaka": 32041,
-                "Borecha": 22313,
-                "Dedesa": 13113,
-                "Bedele": 10143
+                "boneya_boshe": 12190,
+                "diga": 14758,
+                "gida_ayana": 22259,
+                "gobu_sayo": 12458,
+                "guto_gida": 17006,
+                "limu": 11329,
+                "sasiga_cb": 19027,
+                "wama_hagalo": 16840,
+                "wayu_tuka": 15960,
+                "bedele": 10464,
+                "borecha": 22283,
+                "chewaka_CB": 34548,
+                "dhedessa": 14587,
+                "kersa_cb": 29435,
+                "omo_nada": 36167,
+                "seka_chekorsa": 24312,
+                "sekoru": 21732,
+                "shebe_sombo": 17413,
+                "tiro afeta": 26197,
+                "dale_sadi": 17728,
+                "dale_wabara": 21665,
+                "hawa_galan_cb": 38626,
+                "lalo_kile": 12757,
+                "seyo": 15853,
+                "bako_tibe_cb": 19593,
+                "danno": 18870,
+                "dendy": 12984,
+                "ilu_galan": 19399,
+                "nonno": 15632,
+                "babo_gambel": 18343,
+                "begi": 17692,
+                "guliso": 12639,
+                "kiltu_kara": 12250,
+                "kondala": 19233,
+                "manasibu_cb": 37714,
+                "nejo_rural": 18315
               },
               "type": "switch",
               "switch_on": {
@@ -747,7 +797,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_3_name"
+                    "level_3_data"
                   ]
                 },
                 "type": "related_doc",
@@ -995,26 +1045,26 @@
                 }
               }
             },
-            "Benin": {
+            "benin": {
                   "default": 0,
                   "cases": {
-                    "natta_base": 15078,
-                    "manta_base": 14012,
-                    "cobly_base": 22044,
-                    "kerou_centre_base": 27741,
-                    "firou_base": 10128,
-                    "kaoubagou_base": 2459,
-                    "kouande_base": 17279,
-                    "guilimaro_base": 16308,
-                    "birni_base": 10688,
-                    "materi_base": 24510,
-                    "dassari_base": 16964,
-                    "perma_base": 13065,
-                    "natitingou_base": 16320,
-                    "pehunco_base": 28313,
-                    "gnemasson_base": 8824,
-                    "tanguieta_base": 13490,
-                    "toucountouna_base": 12918
+                    "natta": 15078,
+                    "manta": 14012,
+                    "cobly": 22044,
+                    "kérou_centre": 27741,
+                    "firou": 10128,
+                    "kaoubagou": 2459,
+                    "kouande": 17279,
+                    "guilimaro": 16308,
+                    "birni": 10688,
+                    "materi": 24510,
+                    "dassari": 16964,
+                    "perma": 13065,
+                    "natitingou_central_warehouse": 16320,
+                    "pehunco": 28313,
+                    "gnemasson": 8824,
+                    "taicou": 13490,
+                    "toucountouna": 12918
                   },
                   "type": "switch",
                   "switch_on": {
@@ -1066,11 +1116,11 @@
             "Senegal": 31816,
             "Rwanda": 144417,
             "Zambia": 539348,
-            "Ethiopia": 670303,
+            "Ethiopia": 708258,
             "Mali": 135717,
             "Madagascar": 72120,
             "Tanzania": 502934,
-            "Benin": 270141
+            "benin": 270141
           },
           "type": "switch",
           "switch_on": {

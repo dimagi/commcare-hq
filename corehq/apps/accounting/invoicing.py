@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from django.db import transaction
 from django.db.models import F, Q, Min, Max
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ungettext
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -418,9 +418,12 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def unit_description(self):
         if self.is_prorated:
-            return _("%(num_days)s day%(pluralize)s of %(plan_name)s Software Plan.") % {
+            return ungettext(
+                "%(num_days)s day of %(plan_name)s Software Plan.",
+                "%(num_days)s days of %(plan_name)s Software Plan.",
+                self.num_prorated_days
+            ) % {
                 'num_days': self.num_prorated_days,
-                'pluralize': "" if self.num_prorated_days == 1 else "s",
                 'plan_name': self.plan_name,
             }
 
@@ -490,9 +493,10 @@ class UserLineItemFactory(FeatureLineItemFactory):
     @property
     def unit_description(self):
         if self.num_excess_users > 0:
-            return _(
-                "Per User fee exceeding monthly limit of "
-                "%(monthly_limit)s users."
+            return ungettext(
+                "Per User fee exceeding monthly limit of %(monthly_limit)s user.",
+                "Per User fee exceeding monthly limit of %(monthly_limit)s users.",
+                self.rate.monthly_limit
             ) % {
                 'monthly_limit': self.rate.monthly_limit,
             }
@@ -528,9 +532,12 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @memoized
     def unit_description(self):
         if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
-            return _("%(num_sms)d SMS Message%(plural)s") % {
+            return ungettext(
+                "%(num_sms)d SMS Message",
+                "%(num_sms)d SMS Messages",
+                self.num_sms
+            ) % {
                 'num_sms': self.num_sms,
-                'plural': '' if self.num_sms == 1 else 's',
             }
         elif self.is_within_monthly_limit:
             return _(
@@ -544,13 +551,12 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             assert self.rate.monthly_limit < self.num_sms
             num_extra = self.num_sms - self.rate.monthly_limit
             assert num_extra > 0
-            return _(
-                "%(num_extra_sms)d SMS %(messages)s beyond "
-                "%(monthly_limit)d messages included."
+            return ungettext(
+                "%(num_extra_sms)d SMS Message beyond %(monthly_limit)d messages included.",
+                "%(num_extra_sms)d SMS Messages beyond %(monthly_limit)d messages included.",
+                num_extra
             ) % {
                 'num_extra_sms': num_extra,
-                'messages': (_('Messages') if num_extra == 1
-                             else _('Messages')),
                 'monthly_limit': self.rate.monthly_limit,
             }
 

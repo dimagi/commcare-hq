@@ -542,10 +542,9 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
-    is_bootstrap3 = True
 
     base_template = "hqadmin/faceted_report.html"
-    report_template_path = "reports/async/bootstrap3/tabular.html"
+    report_template_path = "reports/async/tabular.html"
     section_name = ugettext_noop("ADMINREPORT")
     default_params = {}
     is_admin_report = True
@@ -1108,7 +1107,7 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
 
 
 class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
-    base_template = 'reports/bootstrap3/base_template.html'
+    base_template = 'reports/base_template.html'
 
     slug = 'device_log_soft_asserts'
     name = ugettext_lazy("Global Device Logs Soft Asserts")

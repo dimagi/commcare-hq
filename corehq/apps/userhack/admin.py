@@ -21,6 +21,7 @@ class HackedUserChangeForm(UserChangeForm):
         exclusions.append("username")
         return exclusions
 
+
 class HackedUserAdmin(UserAdmin):
     """
     Support > 30 character length usernames in the admin
@@ -31,8 +32,10 @@ class HackedUserAdmin(UserAdmin):
 admin.site.unregister(User)
 admin.site.register(User, HackedUserAdmin)
 
+
 class DDUserNonceAdmin(admin.ModelAdmin):
     list_display = ('user', 'nonce', 'count', 'last_used_at')
+
 
 class DDPartialDigestAdmin(admin.ModelAdmin):
     list_display = ('user', 'partial_digest', 'confirmed')

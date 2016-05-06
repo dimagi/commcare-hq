@@ -23,7 +23,6 @@ class MultiReportPage(CustomProjectReport, ProjectReportParametersMixin, Datespa
     title = ''
     report_template_path = "cvsu/multi_report.html"
     flush_layout = True
-    is_bootstrap3 = True
 
     @use_nvd3_v3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):

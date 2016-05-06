@@ -16,6 +16,7 @@ ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, T
 
 
 class StaticToggle(object):
+
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None):
         self.slug = slug

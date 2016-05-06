@@ -4,6 +4,7 @@ from django.test import Client
 
 
 class KooKooLogCallTestCase(util.LogCallTestCase):
+
     @property
     def phone_number(self):
         return '9100000000'

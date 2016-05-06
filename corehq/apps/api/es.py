@@ -653,5 +653,4 @@ def es_search(request, domain, reserved_query_params=None):
         else:
             payload["filter"]["and"].append({"term": {key: value}})
 
-
     return payload

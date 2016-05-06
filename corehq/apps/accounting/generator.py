@@ -209,6 +209,7 @@ def create_excess_community_users(domain):
 
 
 class FakeStripeCard(mock.MagicMock):
+
     def __init__(self):
         super(FakeStripeCard, self).__init__()
         self._metadata = {}
@@ -228,6 +229,7 @@ class FakeStripeCard(mock.MagicMock):
 
 
 class FakeStripeCustomer(mock.MagicMock):
+
     def __init__(self, cards):
         super(FakeStripeCustomer, self).__init__()
         self.id = uuid.uuid4().hex.lower()[:25]

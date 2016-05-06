@@ -212,7 +212,6 @@ class SetupTab(UITab):
 
         dropdown_items = []
 
-
         if self.project.commtrack_enabled:
             dropdown_items += [(_(view.page_title), view) for view in (
                 ProductListView,
@@ -835,7 +834,6 @@ class MessagingTab(UITab):
                 ]
             })
 
-
         return contacts_urls
 
     @property
@@ -1265,6 +1263,7 @@ class ProjectSettingsTab(UITab):
 class MySettingsTab(UITab):
     title = ugettext_noop("My Settings")
     view = 'default_my_settings'
+    url_prefix_formats = ('/account/',)
 
     @property
     def _is_viewable(self):
@@ -1450,6 +1449,8 @@ class AdminTab(UITab):
                  'url': reverse('web_user_lookup')},
                 {'title': _('View raw couch documents'),
                  'url': reverse('raw_couch')},
+                {'title': _('Check Call Center UCR tables'),
+                 'url': reverse('callcenter_ucr_check')},
             ])
         return [
             (_('Administrative Reports'), [

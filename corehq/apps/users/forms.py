@@ -86,6 +86,7 @@ class LanguageField(forms.CharField):
     """
     Adds language code validation to a field
     """
+
     def __init__(self, *args, **kwargs):
         super(LanguageField, self).__init__(*args, **kwargs)
         self.min_length = 2
@@ -364,13 +365,7 @@ class CommCareAccountForm(forms.Form):
 
         return self.cleaned_data
 
-import django
-if django.VERSION < (1, 6):
-    from django.core.validators import email_re
-    validate_username = EmailValidator(email_re,
-            ugettext_lazy(u'Username contains invalid characters.'), 'invalid')
-else:
-    validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
+validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
 
 
 _username_help = """
@@ -537,6 +532,7 @@ class MultipleSelectionForm(forms.Form):
 
 
 class SupplyPointSelectWidget(forms.Widget):
+
     def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
@@ -688,6 +684,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
 
 
 class SelfRegistrationForm(forms.Form):
+
     def __init__(self, *args, **kwargs):
         if 'domain' not in kwargs:
             raise Exception('Expected kwargs: domain')

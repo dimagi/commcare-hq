@@ -1260,7 +1260,6 @@ class FormExportListView(BaseExportListView):
             view_cls = DownloadNewFormExportView
         return reverse(view_cls.urlname, args=(self.domain, export_id))
 
-
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
         if self.is_deid:

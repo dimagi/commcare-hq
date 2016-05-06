@@ -15,11 +15,14 @@ phone_number_re = re.compile("^\d+$")
 class PhoneNumberException(Exception):
     pass
 
+
 class InvalidFormatException(PhoneNumberException):
     pass
 
+
 class PhoneNumberInUseException(PhoneNumberException):
     pass
+
 
 class BadSMSConfigException(Exception):
     pass
@@ -280,6 +283,7 @@ def apply_leniency(contact_phone_number):
     else:
         contact_phone_number = None
     return contact_phone_number
+
 
 class CommCareMobileContactMixin(object):
     """

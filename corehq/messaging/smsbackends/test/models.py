@@ -4,6 +4,7 @@ from corehq.apps.sms.forms import BackendForm
 
 
 class SQLTestSMSBackend(SQLSMSBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True

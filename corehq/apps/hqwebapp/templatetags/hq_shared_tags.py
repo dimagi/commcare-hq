@@ -349,6 +349,7 @@ def do_captureas(parser, token):
 
 
 class CaptureasNode(template.Node):
+
     def __init__(self, nodelist, varname):
         self.nodelist = nodelist
         self.varname = varname

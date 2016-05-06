@@ -150,8 +150,20 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
     sh.tar("xf", vellum_tar, "-C", hq_vellum)
     git.add("--all", hq_vellum)
 
+    message = "{}:{}".format(target, vellum_rev)
+    if branch == 'vellum-staging':
+        message += """
+
+        Oops. Looks like the vellum team forgot to update this branch
+        when updating master. To get past this you can run:
+
+        git checkout vellum-staging
+        git rebase -X theirs -i origin/master
+        get push -f
+        """
+
     code = subprocess.call([
-        "git", "commit", "--edit", "--message={}:{}".format(target, vellum_rev)
+        "git", "commit", "--edit", "--message={}".format(message)
     ], cwd=path)
     if code != 0:
         sys.exit(code)

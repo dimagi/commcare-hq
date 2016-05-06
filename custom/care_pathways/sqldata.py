@@ -28,6 +28,7 @@ def _get_grouping(prop_dict):
             group_by = []
         return group_by
 
+
 class CareQueryMeta(QueryMeta):
 
     def __init__(self, table_name, filters, group_by, order_by, key):
@@ -279,7 +280,6 @@ class AdoptionDisaggregatedSqlData(CareSqlData):
 
         return display
 
-
     @property
     def columns(self):
         return [
@@ -328,8 +328,6 @@ class TableCardSqlData(CareSqlData):
             elif int(x) == 2:
                 return 'All Women'
 
-
-
     @property
     def columns(self):
         if self.config['table_card_group_by'] == 'group_name':
@@ -370,7 +368,6 @@ class TableCardSqlData(CareSqlData):
             return ['group_name', 'value_chain', 'domains', 'practices']
         else:
             return ['gender', 'value_chain', 'domains', 'practices']
-
 
 
 class TableCardReportGrouppedPercentSqlData(TableCardSqlData):
@@ -439,6 +436,7 @@ class TableCardReportIndividualPercentSqlData(TableCardSqlData):
 
         def _calc_totals(row, idx):
             TAG_RE = re.compile(r'<[^>]+>')
+
             def remove_tags(text):
                 return TAG_RE.sub('', text)
 

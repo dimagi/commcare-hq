@@ -10,7 +10,7 @@
 ├── fuse.js#2.0.2 (latest is 2.2.0)
 ├── jquery#1.11.3 (latest is 3.0.0-beta1)
 ├── jsdiff#2.2.2
-├─┬ jstree#3.2.1 (latest is 3.3.0)
+├─┬ jstree#3.2.1 (latest is 3.3.1)
 │ └── jquery#1.11.3 (3.0.0-beta1 available)
 ├── langcodes#dd833883b5
 ├── markdown-it#6.0.0 (6.0.1 available)

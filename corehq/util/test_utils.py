@@ -165,6 +165,7 @@ def mock_out_couch(views=None, docs=None):
     """
     from fakecouch import FakeCouchDb
     db = FakeCouchDb(views=views, docs=docs)
+
     def _get_db(*args):
         return db
 
@@ -184,6 +185,7 @@ class RunConfig(object):
 
 
 class RunWithMultipleConfigs(object):
+
     def __init__(self, fn, run_configs):
         self.fn = fn
         self.run_configs = run_configs
@@ -234,6 +236,7 @@ class log_sql_output(ContextDecorator):
     """
     Can be used as either a context manager or decorator.
     """
+
     def __init__(self):
         self.logger = logging.getLogger('django.db.backends')
         self.new_level = logging.DEBUG
@@ -357,20 +360,70 @@ def create_and_save_a_form(domain):
     return form
 
 
-def create_and_save_a_case(domain, case_id, case_name, case_properties=None):
+def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
-    from casexml.apps.case.signals import case_post_save
     from casexml.apps.case.util import post_case_blocks
-    # this avoids having to deal with all the reminders code bootstrap
-    with drop_connected_signals(case_post_save):
-        form, cases = post_case_blocks(
-            [
-                CaseBlock(
-                    create=True,
-                    case_id=case_id,
-                    case_name=case_name,
-                    update=case_properties,
-                ).as_xml()
-            ], domain=domain
-        )
+    return post_case_blocks(
+        [CaseBlock(**kwargs).as_xml()], domain=domain
+    )
+
+
+def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None, drop_signals=True):
+    from casexml.apps.case.signals import case_post_save
+    from corehq.form_processor.signals import sql_case_post_save
+
+    kwargs = {
+        'create': True,
+        'case_id': case_id,
+        'case_name': case_name,
+        'update': case_properties,
+    }
+
+    if case_type:
+        kwargs['case_type'] = case_type
+
+    if drop_signals:
+        # this avoids having to deal with all the reminders code bootstrap
+        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+            form, cases = _create_case(domain, **kwargs)
+    else:
+        form, cases = _create_case(domain, **kwargs)
+
     return cases[0]
+
+
+@contextmanager
+def create_test_case(domain, case_type, case_name, case_properties=None, drop_signals=True):
+    from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+    from corehq.form_processor.utils.general import should_use_sql_backend
+
+    case = create_and_save_a_case(domain, uuid.uuid4().hex, case_name,
+        case_properties=case_properties, case_type=case_type, drop_signals=drop_signals)
+    try:
+        yield case
+    finally:
+        if should_use_sql_backend(domain):
+            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+        else:
+            case.delete()
+
+
+def set_parent_case(domain, child_case, parent_case):
+    """
+    Creates a parent-child relationship between child_case and parent_case.
+    """
+    from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+    from casexml.apps.case.models import INDEX_RELATIONSHIP_CHILD
+    from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+
+    parent = CaseStructure(case_id=parent_case.case_id)
+    CaseFactory(domain).create_or_update_case(
+        CaseStructure(
+            case_id=child_case.case_id,
+            indices=[CaseIndex(
+                related_structure=parent,
+                identifier=DEFAULT_PARENT_IDENTIFIER,
+                relationship=INDEX_RELATIONSHIP_CHILD
+            )],
+        )
+    )

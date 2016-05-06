@@ -5,6 +5,7 @@ from dateutil.parser import parse
 
 
 class CouchIndicatorDefTests(SimpleTestCase):
+
     def _test_datespan_shifts(self, expected_start, months=0, days=0):
         idef = CouchIndicatorDef(
             fixed_datespan_months=months,

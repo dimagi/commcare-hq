@@ -1,6 +1,5 @@
 
 
-
 def human_bytes(bytes):
     #source: https://github.com/bartTC/django-memcache-status
     bytes = float(bytes)

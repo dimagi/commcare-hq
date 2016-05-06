@@ -997,6 +997,7 @@ class Subscriber(models.Model):
 
 
 class SubscriptionManager(models.Manager):
+
     def get_queryset(self):
         return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
@@ -1697,6 +1698,7 @@ class Subscription(models.Model):
 
 
 class InvoiceBaseManager(models.Manager):
+
     def get_queryset(self):
         return super(InvoiceBaseManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
@@ -1792,6 +1794,7 @@ class WireInvoice(InvoiceBase):
 
 
 class WirePrepaymentInvoice(WireInvoice):
+
     class Meta:
         app_label = 'accounting'
         proxy = True
@@ -2143,6 +2146,7 @@ class WireBillingRecord(BillingRecordBase):
 
 
 class WirePrepaymentBillingRecord(WireBillingRecord):
+
     class Meta:
         app_label = 'accounting'
         proxy = True
@@ -2514,6 +2518,7 @@ class InvoicePdf(SafeSaveDocument):
 
 
 class LineItemManager(models.Manager):
+
     def get_products(self):
         return self.get_queryset().filter(feature_rate__exact=None)
 

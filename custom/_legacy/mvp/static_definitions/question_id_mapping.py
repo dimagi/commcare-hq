@@ -2,6 +2,7 @@
     Eventually the creation of new indicators should be part of a UI. This is a temporary solution.
 """
 
+
 def _make_qid(question_id, version):
     return {
         'question_id': question_id,

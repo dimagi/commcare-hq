@@ -4,6 +4,7 @@ from custom.intrahealth.reports.tableu_de_board_report import MultiReport
 from custom.intrahealth.sqldata import RecapPassageData, DateSource
 from dimagi.utils.decorators.memoized import memoized
 
+
 class RecapPassageReport(MonthYearMixin, MultiReport):
     title = "Recap Passage"
     name = "Recap Passage"
@@ -12,8 +13,6 @@ class RecapPassageReport(MonthYearMixin, MultiReport):
     exportable = True
     default_rows = 10
     fields = [FRMonthFilter, FRYearFilter, RecapPassageLocationFilter]
-
-    is_bootstrap3 = True
 
     def config_update(self, config):
         if self.location and self.location.location_type.lower() == 'pps':

@@ -10,6 +10,7 @@ from corehq.apps.domain.models import Domain
 
 
 class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
+
     def setUp(self):
         super(OptTestCase, self).setUp()
         self.domain = "opt-test"

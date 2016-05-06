@@ -6,6 +6,7 @@ from corehq.apps.app_manager.views.forms import _update_case_refs_from_form_buil
 
 
 class FormCaseReferenceTest(SimpleTestCase):
+
     def setUp(self):
         self.form = Form()
 
@@ -42,6 +43,7 @@ class FormCaseReferenceTest(SimpleTestCase):
 
 
 class AdvancedFormCaseReferenceTest(SimpleTestCase):
+
     def setUp(self):
         self.form = AdvancedForm()
 

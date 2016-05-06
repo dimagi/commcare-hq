@@ -9,6 +9,7 @@ from corehq.apps.users.models import CommCareUser
 
 
 class LocationGroupTest(LocationTestBase):
+
     def setUp(self):
         super(LocationGroupTest, self).setUp()
         self.test_state = make_loc(

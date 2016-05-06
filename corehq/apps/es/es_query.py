@@ -373,6 +373,7 @@ class ESQuerySet(object):
      * ESQuerySet.raw is the raw response from elasticsearch
      * ESQuerySet.query is the ESQuery object
     """
+
     def __init__(self, raw, query):
         if 'error' in raw:
             msg = ("ElasticSearch Error\n{error}\nIndex: {index}"

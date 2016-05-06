@@ -7,6 +7,7 @@ from custom.care_pathways.reports import CareBaseReport
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
 import re
 
+
 class AdoptionBarChartReport(CareBaseReport):
     name = 'Adoption Bar Chart'
     slug = 'adoption_bar_chart'
@@ -97,7 +98,6 @@ class AdoptionBarChartReport(CareBaseReport):
     @property
     def data_provider(self):
         return AdoptionBarChartReportSqlData(domain=self.domain, config=self.report_config, request_params=self.request_params)
-
 
     @property
     def headers(self):

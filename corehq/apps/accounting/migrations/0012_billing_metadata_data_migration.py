@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 
+
 def migrate_metadata(apps, schema_editor):
     Subscriptions = apps.get_model("accounting", "Subscription")
     for subscription in Subscriptions.objects.all():
@@ -15,7 +16,6 @@ def migrate_metadata(apps, schema_editor):
         elif subscription.pro_bono_status == "NO":
             subscription.pro_bono_status = "FULL_PRICE"
         subscription.save(update_fields=['service_type','pro_bono_status'])
-
 
 
 class Migration(migrations.Migration):

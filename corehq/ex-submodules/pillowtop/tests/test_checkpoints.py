@@ -8,6 +8,7 @@ from pillowtop.models import DjangoPillowCheckpoint
 
 
 class PillowCheckpointTest(SimpleTestCase):
+
     def test_get_machine_id(self):
         # since this is machine dependent just ensure that this returns something
         # and doesn't crash
