@@ -791,7 +791,9 @@ class DowngradeLocationsView(BaseDomainView):
     """
     template_name = 'locations/downgrade_locations.html'
     urlname = 'downgrade_locations'
+    section_name = ugettext_lazy("Project Settings")
 
+    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         if not users_have_locations(self.domain):  # irrelevant, redirect
             redirect_url = reverse('users_default', args=[self.domain])
@@ -800,7 +802,7 @@ class DowngradeLocationsView(BaseDomainView):
 
     @property
     def section_url(self):
-        return self.page_url
+        return reverse('settings_default', args=(self.domain, ))
 
 
 @domain_admin_required
