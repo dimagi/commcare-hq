@@ -28,7 +28,7 @@ class DeletableModelSerializer(serializers.ModelSerializer):
 
     def __init__(self, instance=None, *args, **kwargs):
         super(DeletableModelSerializer, self).__init__(instance=instance, *args, **kwargs)
-        if not instance.is_deleted:
+        if instance is not None and not instance.is_deleted:
             self.fields.pop('deletion_id')
             self.fields.pop('deleted_on')
 
