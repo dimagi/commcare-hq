@@ -128,7 +128,9 @@ class QuestionSelect(Widget):
         )
 
 
-class DataSourceProperty(namedtuple("DataSourceProperty", ["type", "id", "text", "column_id", "source", "is_non_numeric"])):
+class DataSourceProperty(namedtuple(
+    "DataSourceProperty", ["type", "id", "text", "column_id", "source", "is_non_numeric"]
+)):
     """
     A container class for information about data source properties
 
