@@ -4,10 +4,7 @@
             <li class="nav-header">{{ section_title }}</li>
             {% for nav in navs %}
 
-                <li
-                    {% if nav.is_active and not nav.subpage %}class="active"{% endif %}
-                    {% if nav.id %}id="{{ nav.id }}"{% endif %}
-                >
+                <li {% if nav.is_active and not nav.subpage %}class="active"{% endif %}>
                     <a href="{{ nav.url }}" {% if nav.description %}class="report-description-popover" data-title="{{ nav.title }}" data-content="{{ nav.description }}"{% endif %}>
                         {% if nav.icon %}
                         <i class="icon{% if nav.is_active %}-white{% endif %} {{ nav.icon }}"></i>

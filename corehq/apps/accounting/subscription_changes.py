@@ -11,7 +11,6 @@ from corehq import privileges
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
     log_accounting_error,
-    get_privileges,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
@@ -38,9 +37,7 @@ class BaseModifySubscriptionHandler(object):
         return filter(
             lambda message: message is not None,
             map(
-                lambda privilege: self.privilege_to_response_function()[privilege](
-                    self.domain, self.new_plan_version
-                ),
+                lambda privilege: self.privilege_to_response_function()[privilege](self.domain),
                 self.privileges
             )
         )
@@ -80,23 +77,18 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @classmethod
     def privilege_to_response_function(cls):
-        privs_to_responses = {
+        return {
             privileges.OUTBOUND_SMS: cls.response_outbound_sms,
             privileges.INBOUND_SMS: cls.response_inbound_sms,
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
+            privileges.REPORT_BUILDER: cls.response_report_builder,
         }
-        privs_to_responses.update({
-            p: cls.response_report_builder
-            for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
-        })
-        return privs_to_responses
-
 
     @staticmethod
-    def response_outbound_sms(domain, new_plan_version):
+    def response_outbound_sms(domain):
         """
         Reminder rules will be deactivated.
         """
@@ -113,7 +105,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
     @staticmethod
-    def response_inbound_sms(domain, new_plan_version):
+    def response_inbound_sms(domain):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
@@ -134,7 +126,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
     @staticmethod
-    def response_role_based_access(domain, new_plan_version):
+    def response_role_based_access(domain):
         """
         Perform Role Based Access Downgrade
         - Archive custom roles.
@@ -161,7 +153,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
     @staticmethod
-    def response_data_cleanup(domain, new_plan_version):
+    def response_data_cleanup(domain):
         """
         Any active automatic case update rules should be deactivated.
         """
@@ -180,7 +172,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             return False
 
     @staticmethod
-    def response_commcare_logo_uploader(domain, new_plan_version):
+    def response_commcare_logo_uploader(domain):
         """Make sure no existing applications are using a logo.
         """
         try:
@@ -197,30 +189,22 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             return False
 
     @staticmethod
-    def response_domain_security(domain, new_plan_version):
+    def response_domain_security(domain):
         if domain.two_factor_auth or domain.secure_sessions:
             domain.two_factor_auth = False
             domain.secure_sessions = False
             domain.save()
 
     @staticmethod
-    def response_report_builder(project, new_plan_version):
-        if not _has_report_builder_add_on(new_plan_version):
-            # Clear paywall flags
-            project.requested_report_builder_trial = []
-            project.requested_report_builder_subscription = []
-            project.save()
-
-            # Deactivate all report builder data sources
-            builder_reports = _get_report_builder_reports(project)
-            for report in builder_reports:
-                try:
-                    report.config.deactivate()
-                except DataSourceConfigurationNotFoundError:
-                    pass
-                report.visible = False
-                report.save()
-
+    def response_report_builder(project):
+        from corehq.apps.userreports.models import ReportConfiguration
+        reports = ReportConfiguration.by_domain(project.name)
+        builder_reports = filter(lambda report: report.report_meta.created_by_builder, reports)
+        for report in builder_reports:
+            try:
+                report.config.deactivate()
+            except DataSourceConfigurationNotFoundError:
+                pass
         return True
 
 
@@ -234,18 +218,14 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @classmethod
     def privilege_to_response_function(cls):
-        privs_to_repsones = {
+        return {
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
+            privileges.REPORT_BUILDER: cls.response_report_builder,
         }
-        privs_to_repsones.update({
-            p: cls.response_report_builder
-            for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
-        })
-        return privs_to_repsones
 
     @staticmethod
-    def response_role_based_access(domain, new_plan_version):
+    def response_role_based_access(domain):
         """
         Perform Role Based Access Upgrade
         - Un-archive custom roles.
@@ -254,7 +234,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
     @staticmethod
-    def response_commcare_logo_uploader(domain, new_plan_version):
+    def response_commcare_logo_uploader(domain):
         """Make sure no existing applications are using a logo.
         """
         try:
@@ -272,15 +252,13 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
             return False
 
     @staticmethod
-    def response_report_builder(project, new_plan_version):
+    def response_report_builder(project):
         from corehq.apps.userreports.models import ReportConfiguration
         from corehq.apps.userreports.tasks import rebuild_indicators
         reports = ReportConfiguration.by_domain(project.name)
         builder_reports = filter(lambda report: report.report_meta.created_by_builder, reports)
         for report in builder_reports:
             try:
-                report.visible = True
-                report.save()
                 if report.config.is_deactivated:
                     report.config.is_deactivated = False
                     report.config.save()
@@ -305,24 +283,6 @@ def _fmt_alert(message, details=None):
     }
 
 
-def _has_report_builder_add_on(plan_version):
-    """
-    Return True if the given SoftwarePlanVersion has a report builder add-on
-    privilege.
-    """
-    privs = get_privileges(plan_version) if plan_version is not None else set()
-    return bool(privileges.REPORT_BUILDER_ADD_ON_PRIVS.intersection(privs))
-
-
-def _get_report_builder_reports(project):
-    from corehq.apps.userreports.models import ReportConfiguration
-    reports = ReportConfiguration.by_domain(project.name)
-    return filter(
-        lambda report: report.report_meta.created_by_builder,
-        reports
-    )
-
-
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     """
     This returns a list of alerts for the user if their current domain is using features that
@@ -332,7 +292,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
     @classmethod
     def privilege_to_response_function(cls):
-        privs_to_responses = {
+        return {
             privileges.CLOUDCARE: cls.response_cloudcare,
             privileges.LOOKUP_TABLES: cls.response_lookup_tables,
             privileges.CUSTOM_BRANDING: cls.response_custom_branding,
@@ -343,11 +303,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
         }
-        privs_to_responses.update({
-            p: cls.response_report_builder
-            for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
-        })
-        return privs_to_responses
 
     def get_response(self):
         response = super(DomainDowngradeStatusHandler, self).get_response()
@@ -361,7 +316,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         return response
 
     @staticmethod
-    def response_cloudcare(domain, new_plan_version):
+    def response_cloudcare(domain):
         """
         CloudCare enabled apps will have cloudcare_enabled set to false on downgrade.
         """
@@ -387,7 +342,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         )
 
     @staticmethod
-    def response_lookup_tables(domain, new_plan_version):
+    def response_lookup_tables(domain):
         """
         Lookup tables will be deleted on downgrade.
         """
@@ -404,7 +359,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             )
 
     @staticmethod
-    def response_custom_branding(domain, new_plan_version):
+    def response_custom_branding(domain):
         """
         Custom logos will be removed on downgrade.
         """
@@ -415,7 +370,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             ))
 
     @staticmethod
-    def response_outbound_sms(domain, new_plan_version):
+    def response_outbound_sms(domain):
         """
         Reminder rules will be deactivated.
         """
@@ -434,7 +389,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             )
 
     @staticmethod
-    def response_inbound_sms(domain, new_plan_version):
+    def response_inbound_sms(domain):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
@@ -454,7 +409,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             )
 
     @staticmethod
-    def response_deidentified_data(domain, new_plan_version):
+    def response_deidentified_data(domain):
         """
         De-id exports will be hidden
         """
@@ -525,7 +480,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             )
 
     @staticmethod
-    def response_role_based_access(domain, new_plan_version):
+    def response_role_based_access(domain):
         """
         Alert the user if there are currently custom roles set up for the domain.
         """
@@ -569,7 +524,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             })
 
     @staticmethod
-    def response_data_cleanup(domain, new_plan_version):
+    def response_data_cleanup(domain):
         """
         Any active automatic case update rules should be deactivated.
         """
@@ -594,7 +549,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             )
 
     @staticmethod
-    def response_domain_security(domain, new_plan_version):
+    def response_domain_security(domain):
         """
         turn off any domain enforced security features and alert user of deactivated features
         """
@@ -616,13 +571,3 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 _("The following security features will be affected if you select this plan:"),
                 msgs
             )
-
-    @staticmethod
-    def response_report_builder(project, new_plan_version):
-        if not _has_report_builder_add_on(new_plan_version):
-            reports = _get_report_builder_reports(project)
-            if reports:
-                return _fmt_alert(_(
-                    "You have %(number_of_reports) report builder reports."
-                    "By selecting this plan you will lose access to those reports."
-                ) % {'number_of_reports': len(reports)})
