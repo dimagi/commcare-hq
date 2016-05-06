@@ -58,7 +58,6 @@ branches:
   - j2me # Nick P 4/26
   - b3-groups  # Biyeun 4/26
   - b3-app-multimedia  # Biyeun 4/27
-  - b3-exports-cleanup  # Biyeun 5/5
   - notifications # j$ 5/4
   - calculatedIcons # Sravan 3/2
 submodules:
