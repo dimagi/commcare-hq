@@ -521,6 +521,10 @@ class XFormManagementStatusView(DataInterfaceSection):
     urlname = 'xform_management_status'
     page_title = ugettext_noop('Form Status')
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(XFormManagementStatusView, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         context = super(XFormManagementStatusView, self).main_context
         mode = FormManagementMode(kwargs['mode'])
@@ -534,7 +538,7 @@ class XFormManagementStatusView(DataInterfaceSection):
             'title': mode.status_page_title,
             'error_text': mode.error_text,
         })
-        return render(request, 'style/bootstrap2/soil_status_full.html', context)
+        return render(request, 'style/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
