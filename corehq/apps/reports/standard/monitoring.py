@@ -1526,9 +1526,17 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             total_row[3] = '%s / %s' % (len(active_users), len(all_users))
         else:
             num = len(filter(lambda row: row[3] != _(self.NO_FORMS_TEXT), rows))
+            case_owners = set()
+            for user in self.users_to_iterate:
+                case_owners = case_owners.union((user.user_id, user.location_id))
+                case_owners = case_owners.union(user.group_ids)
             total_row[3] = '%s / %s' % (num, len(rows))
-            total_row[6] = get_active_case_count(self.domain, self.datespan, self.case_types).total
-            total_row[7] = get_active_case_count(self.domain, self.datespan, self.case_types, True).total
+            total_row[6] = sum(
+                [int(get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types).get(id, 0))
+                 for id in case_owners])
+            total_row[7] = sum(
+                [int(get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types).get(id, 0))
+                 for id in case_owners])
         return total_row
 
     @property
