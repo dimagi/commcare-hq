@@ -15,7 +15,6 @@ from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
 from corehq.apps.notifications.models import Notification
-from corehq.apps.notifications.util import get_notifications_by_user
 from corehq.apps.style.decorators import use_bootstrap3
 
 
@@ -33,7 +32,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     @allow_remote_invocation
     def get_notifications(self, in_data):
         # todo always grab alerts if they are still relevant
-        notifications = get_notifications_by_user(self.request.user)
+        notifications = Notification.get_by_user(self.request.user)
         has_unread = len(filter(lambda x: not x['isRead'], notifications)) > 0
         return {
             'hasUnread': has_unread,
