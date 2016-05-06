@@ -1428,9 +1428,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         last_form_by_user = self.es_last_submissions()
         for user in self.users_to_iterate:
             active_cases = int(report_data.active_cases_by_owner.get(user["user_id"].lower(), 0)) + \
-                sum([int(report_data.active_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+                sum([int(report_data.active_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]]) + \
+                int(report_data.active_cases_by_owner.get(user["location_id"], 0))
             total_cases = int(report_data.total_cases_by_owner.get(user["user_id"].lower(), 0)) + \
-                sum([int(report_data.total_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]])
+                sum([int(report_data.total_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]]) + \
+                int(report_data.total_cases_by_owner.get(user["location_id"], 0))
 
             cases_opened = int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
             cases_closed = int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
