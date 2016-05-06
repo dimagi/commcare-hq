@@ -189,6 +189,7 @@ class ArchiveFormView(DataInterfaceSection):
     ONE_MB = 1000000
     MAX_SIZE = 3 * ONE_MB
 
+    @use_bootstrap3
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_CASE_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
         if not toggles.BULK_ARCHIVE_FORMS.enabled(request.user.username):
