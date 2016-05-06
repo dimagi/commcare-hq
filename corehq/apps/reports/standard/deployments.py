@@ -329,6 +329,12 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     ajax_pagination = True
     fields = ['corehq.apps.reports.filters.select.SelectApplicationFilter']
 
+    # Filter parameters to pull from the URL
+    model_fields_to_url_params = [
+        ('app_id', SelectApplicationFilter.slug),
+        ('version_number', 'version_number'),
+    ]
+
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return (toggles.USER_ERROR_REPORT.enabled(user.username)
@@ -338,8 +344,10 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     def shared_pagination_GET_params(self):
         app_slug = SelectApplicationFilter.slug
         shared_params = super(ApplicationErrorReport, self).shared_pagination_GET_params
-        shared_params.append({'name': app_slug,
-                              'value': self.request.GET.get(app_slug, None)})
+        shared_params.extend([
+            {'name': param, 'value': self.request.GET.get(param, None)}
+            for model_field, param in self.model_fields_to_url_params
+        ])
         return shared_params
 
     @property
@@ -356,10 +364,11 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     @property
     @memoized
     def queryset(self):
-        app_id = self.request.GET.get(SelectApplicationFilter.slug, None)
         qs = UserErrorEntry.objects.filter(domain=self.domain)
-        if app_id:
-            qs = qs.filter(app_id=app_id)
+        for model_field, url_param in self.model_fields_to_url_params:
+            value = self.request.GET.get(url_param, None)
+            if value:
+                qs = qs.filter(**{model_field: value})
         return qs
 
     @property
