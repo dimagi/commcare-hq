@@ -1,5 +1,3 @@
-import datetime
-
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -41,7 +39,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
 
     @allow_remote_invocation
     def mark_as_read(self, in_data):
-        Notification.objects.get(pk=in_data['id']).users_read.add(self.request.user)
+        Notification.mark_as_read(in_data['id'], self.request.user)
         return {}
 
 
@@ -85,14 +83,10 @@ class ManageNotificationView(BasePageView):
             self.create_form.save()
         elif 'activate' in request.POST:
             note = Notification.objects.filter(pk=request.POST.get('alert_id')).first()
-            note.is_active = True
-            note.activated = datetime.datetime.now()
-            note.save()
+            note.activate()
         elif 'deactivate' in request.POST:
             note = Notification.objects.filter(pk=request.POST.get('alert_id')).first()
-            note.is_active = False
-            note.activated = None
-            note.save()
+            note.deactivate()
         elif 'remove' in request.POST:
             Notification.objects.filter(pk=request.POST.get('alert_id')).delete()
         return self.get(request, *args, **kwargs)

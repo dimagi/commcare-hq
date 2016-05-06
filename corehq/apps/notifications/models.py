@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -38,3 +40,17 @@ class Notification(models.Model):
             return note_dict
 
         return map(_fmt_note, enumerate(notes))
+
+    @classmethod
+    def mark_as_read(cls, id, user):
+        cls.objects.get(pk=id).users_read.add(user)
+
+    def activate(self):
+        self.is_active = True
+        self.activated = datetime.datetime.now()
+        self.save()
+
+    def deactivate(self):
+        self.is_active = False
+        self.activated = None
+        self.save()
