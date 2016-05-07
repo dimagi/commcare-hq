@@ -327,6 +327,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     name = ugettext_noop("Application Error Report")
     slug = "application_error"
     ajax_pagination = True
+    sortable = False
     fields = ['corehq.apps.reports.filters.select.SelectApplicationFilter']
 
     # Filter parameters to pull from the URL
@@ -392,7 +393,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     def rows(self):
         start = self.pagination.start
         end = start + self.pagination.count
-        for error in self._queryset[start:end]:
+        for error in self._queryset.order_by('-date')[start:end]:
             yield [
                 error.expr,
                 error.msg,
