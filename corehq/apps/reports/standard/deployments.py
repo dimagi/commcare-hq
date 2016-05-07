@@ -10,7 +10,7 @@ from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log, SyncLogAs
 from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
@@ -363,7 +363,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
     @property
     @memoized
-    def queryset(self):
+    def _queryset(self):
         qs = UserErrorEntry.objects.filter(domain=self.domain)
         for model_field, url_param in self.model_fields_to_url_params:
             value = self.request.GET.get(url_param, None)
@@ -373,18 +373,31 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
     @property
     def total_records(self):
-        return self.queryset.count()
+        return self._queryset.count()
+
+    @property
+    @memoized
+    def _apps_by_id(self):
+        def link(app):
+            return u'<a href="{}">{}</a>'.format(
+                reverse('view_app', args=[self.domain, app.get_id]),
+                app.name,
+            )
+        return {
+            app.get_id: link(app)
+            for app in get_brief_apps_in_domain(self.domain)
+        }
 
     @property
     def rows(self):
         start = self.pagination.start
         end = start + self.pagination.count
-        for error in self.queryset[start:end]:
+        for error in self._queryset[start:end]:
             yield [
                 error.expr,
                 error.msg,
                 error.session,
-                error.app_id,  # TODO display something more meaningful
+                self._apps_by_id.get(error.app_id, error.app_id),
                 error.version_number,
-                error.date,
+                str(error.date),
             ]
