@@ -175,7 +175,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         assert isinstance(form_ids, list)
         deletion_date = deletion_date or datetime.utcnow()
-        with get_cursor(CommCareCaseSQL) as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
                 'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
                 [domain, form_ids, deletion_date, deletion_id]
@@ -761,7 +761,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             return None
 
     @staticmethod
-    def get_current_ledger_state(case_ids):
+    def get_current_ledger_state(case_ids, ensure_form_id=False):
         ledger_values = LedgerValue.objects.raw(
             'SELECT * FROM get_ledger_values_for_cases(%s)',
             [case_ids]

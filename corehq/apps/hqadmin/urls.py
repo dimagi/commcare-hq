@@ -9,6 +9,7 @@ from .views import (
     RecentCouchChangesView,
     LoadtestReportView,
     ManagementCommandsView,
+    CallcenterUCRCheck,
 )
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
@@ -41,6 +42,8 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^doc_in_es/$', 'doc_in_es', name='doc_in_es'),
     url(r'^raw_couch/$', 'raw_couch', name='raw_couch'),
     url(r'^callcenter_test/$', 'callcenter_test', name='callcenter_test'),
+    (r'^api/', include(admin_api_urlpatterns)),
+    url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),
     (r'^api/', include(admin_api_urlpatterns)),
     url(r'^download_malt/$',
         DownloadMALTView.as_view(), name=DownloadMALTView.urlname),

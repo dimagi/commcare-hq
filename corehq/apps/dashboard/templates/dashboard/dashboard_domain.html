@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+{% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
 <script type="text/javascript">
 (function (angular, undefined) {
     'use strict';

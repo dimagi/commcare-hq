@@ -17,6 +17,7 @@ from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
 from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
+from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
@@ -246,6 +247,8 @@ def download_file(request, domain, app_id, path):
         else:
             _, buffer = obj.get()
             payload = buffer.getvalue()
+        if path in ['profile.xml', 'media_profile.xml']:
+            payload = convert_XML_To_J2ME(payload, path)
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response

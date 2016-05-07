@@ -8,7 +8,7 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 
 
-DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal']
+DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal', 'array']
 
 
 def DataTypeProperty(**kwargs):

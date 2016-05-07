@@ -20,10 +20,6 @@ class LedgerDBSQL(LedgerDBInterface):
         except LedgerValueNotFound:
             return None
 
-    def get_current_ledger_value(self, unique_ledger_reference):
-        ledger = self.get_ledger(unique_ledger_reference)
-        return ledger.balance if ledger else 0
-
 
 class LedgerProcessorSQL(LedgerProcessorInterface):
     """
@@ -80,6 +76,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         # only do this after we've created the transaction otherwise we'll get the wrong delta
         ledger_value.balance = new_ledger_values.balance
         ledger_value.last_modified = stock_trans.timestamp
+        ledger_value.last_modified_form_id = stock_report_helper.form_id
         return ledger_value
 
     def _rebuild_ledger(self, form_id, ledger_value):

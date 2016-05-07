@@ -29,8 +29,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
 
     name = "Patient Info"
 
-    is_bootstrap3 = True
-
     @use_timeago
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
         return super(PactPatientInfoReport, self).bootstrap3_dispatcher(request, *args, **kwargs)

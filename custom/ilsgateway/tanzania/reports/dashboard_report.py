@@ -18,8 +18,6 @@ class DashboardReport(MultiReport):
     slug = 'ils_dashboard_report'
     name = "Dashboard report"
 
-    is_bootstrap3 = True
-
     @use_bootstrap3
     @use_datatables
     @use_daterangepicker

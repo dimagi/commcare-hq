@@ -1,0 +1,26 @@
+{% extends 'tour/config/report_builder_tour.html' %}
+{% block steps %}
+[
+    {
+        path: '{{ request.guided_tour.dashboard_url }}',
+        element: '*[slug="reports"] .panel-heading',
+        title: gettext("NEW! Build Your Own Reports"),
+        content: gettext("Build real-time graphs and indicator reports for your project"),
+        placement: 'bottom'
+    },
+    {
+        path: '{{ request.guided_tour.report_builder_paywall_url }}',
+        element: '#try-builder-button',
+        title: gettext("Sign Up for the Trial"),
+        content: gettext("When you're ready, sign up for the trial"),
+        placement: "bottom"
+    },
+    {
+        path: '{{ request.guided_tour.reports_home_url }}',
+        element: '#create-new-report-left-nav',
+        title: gettext("Add a New Report"),
+        content: gettext("Come back here to add new reports and check the status of your trial."),
+        placement: 'right'
+    }
+]
+{% endblock %}

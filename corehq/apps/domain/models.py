@@ -338,6 +338,9 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     two_factor_auth = BooleanProperty(default=False)
 
+    requested_report_builder_trial = StringListProperty()
+    requested_report_builder_subscription = StringListProperty()
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc

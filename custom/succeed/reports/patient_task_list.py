@@ -25,7 +25,6 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
     fields = ['custom.succeed.fields.ResponsibleParty',
               'custom.succeed.fields.PatientName',
               'custom.succeed.fields.TaskStatus']
-    is_bootstrap3 = True
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         super(PatientTaskListReport, self).__init__(request, base_context=base_context, domain=domain, **kwargs)
