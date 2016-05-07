@@ -39,6 +39,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.users.models import CommCareUser
+from phonelog.models import UserErrorEntry
 
 
 @cache_control(no_cache=True, no_store=True)
@@ -68,8 +69,11 @@ def paginate_releases(request, domain, app_id):
 
         if (toggles.USER_ERROR_REPORT.enabled(request.couch_user.username)
                 or toggles.SUPPORT.enabled(request.couch_user.username)):
-            # TODO
-            app['num_errors'] = 3
+            app['num_errors'] = UserErrorEntry.objects.filter(
+                domain=domain,
+                app_id=app['copy_of'],
+                version_number=app['version'],
+            ).count()
     return json_response(saved_apps)
 
 
