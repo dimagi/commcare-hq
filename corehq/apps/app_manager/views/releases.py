@@ -15,7 +15,7 @@ from corehq.apps.app_manager.views.download import source_files
 
 from corehq.apps.app_manager.views.utils import back_to_main, encode_if_unicode, \
     get_langs
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.app_manager.exceptions import (
@@ -65,6 +65,11 @@ def paginate_releases(request, domain, app_id):
     ).all()
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
+
+        if (toggles.USER_ERROR_REPORT.enabled(request.couch_user.username)
+                or toggles.SUPPORT.enabled(request.couch_user.username)):
+            # TODO
+            app['num_errors'] = 3
     return json_response(saved_apps)
 
 
