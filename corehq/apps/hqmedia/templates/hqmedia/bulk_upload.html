@@ -4,15 +4,31 @@
 
 {% block title %}{% trans 'Bulk Upload of Multimedia' %}{% endblock title %}
 
-{% block centered-content %}
-    <ul class="breadcrumb">
-        <li><a href="{% url "view_app" domain app.get_id %}">{% trans 'Application' %} "{{ app.name }}"</a> <span class="divider">&gt;</span></li>
-        <li><a href="{% url "hqmedia_references" domain app.get_id %}">{% trans 'Multimedia Reference Checker' %}</a> <span class="divider">&gt;</span></li>
+{% block stylesheets %}{{ block.super }}
+    <style type="text/css">
+        .hqm-select-files-container {
+            display: inline-block;
+        }
+        .hqm-upload {
+            margin-right: 5px;
+        }
+    </style>
+{% endblock %}
+
+{% block page_name %}
+    {% trans 'Multimedia Bulk Upload' %}
+{% endblock %}
+
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+        <li><a href="{% url "view_app" domain app.get_id %}"><strong>{% trans 'Application' %} "{{ app.name }}"</strong></a></li>
+        <li><a href="{% url "hqmedia_references" domain app.get_id %}">{% trans 'Multimedia Reference Checker' %}</a></li>
         <li class="active"><a href="{% url "hqmedia_bulk_upload" domain app.get_id %}">{% trans 'Bulk Upload' %}</a></li>
-    </ul>
-    <div class="page-header">
-        <h1><i class="icon icon-cloud-upload"></i> {% trans 'Multimedia Bulk Upload' %}</h1>
-    </div>
+    </ol>
+{% endblock %}
+
+
+{% block page_content %}
     <p>{% blocktrans %}Use this tool to upload ZIP files of your multimedia, so you don't have to
         upload each file one-by-one.{% endblocktrans %}</p>
     <p>{% blocktrans %}The bulk uploader will compare the file paths in your form with the file paths
@@ -24,30 +40,30 @@
     {% for uploader in uploaders %}
     <div id="{{ uploader.slug }}">
         <div class="alert alert-info hqm-not-supported hide">
-            <i class="icon-warning-sign"></i>
+            <i class="fa fa-exclamation-triangle"></i>
             {% blocktrans %}
             Your browser does not support this uploader.
             We recommend <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a>.
             {% endblocktrans %}
         </div>
-        <a href="{% url "hqmedia_references" domain app.get_id %}" class="btn btn-inverse pull-right"><i class="icon-arrow-left"></i> {% trans 'Back to Reference Checker' %}</a>
+        <a href="{% url "hqmedia_references" domain app.get_id %}" class="btn btn-default pull-right"><i class="fa fa-arrow-left"></i> {% trans 'Back to Reference Checker' %}</a>
         <div class="btn-toolbar">
             <div class="hqm-select-files-container">
                 <button class="hqm-select btn btn-primary" role="button">{% trans 'Select Files' %}</button>
             </div>
-            <a class="hqm-upload hqm-upload-confirm btn disabled" data-toggle="modal">
-                <i class="icon icon-cloud-upload"></i> {% trans 'Begin Upload' %}
+            <a class="hqm-upload hqm-upload-confirm btn btn-default disabled" data-toggle="modal">
+                <i class="fa fa-cloud-upload"></i> {% trans 'Begin Upload' %}
             </a>
         </div>
         <h3>{% trans 'Bulk Upload File Queue' %}</h3>
         <table class="table table-striped table-bordered hqm-upload-list">
             <thead>
                 <tr>
-                    <th class="span2">{% trans 'Filename' %}</th>
-                    <th class="span1">{% trans 'Size' %}</th>
-                    <th class="span2">{% trans 'Upload Progress' %}</th>
-                    <th class="span2">{% trans 'Match Status' %}</th>
-                    <th class="span5">{% trans 'Details' %}</th>
+                    <th class="col-sm-2">{% trans 'Filename' %}</th>
+                    <th class="col-sm-1">{% trans 'Size' %}</th>
+                    <th class="col-sm-2">{% trans 'Upload Progress' %}</th>
+                    <th class="col-sm-2">{% trans 'Match Status' %}</th>
+                    <th class="col-sm-5">{% trans 'Details' %}</th>
                 </tr>
             </thead>
             <thead>
@@ -73,4 +89,4 @@
         </table>
     </div>
     {% endfor %}
-{% endblock centered-content %}
+{% endblock %}
