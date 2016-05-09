@@ -80,7 +80,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
             });
         };
         var sess = new WebFormSession(data);
-        sess.initDirect(data, $('#webforms'), FormplayerFrontend.request('currentUser').language);
+        sess.loadDirect(data, $('#webforms'), FormplayerFrontend.request('currentUser').language);
     };
     loadSession();
 });
