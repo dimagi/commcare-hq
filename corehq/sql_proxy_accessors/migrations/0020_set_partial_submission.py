@@ -14,7 +14,7 @@ migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_proxy_accessors', '0018_get_ledger_values_for_cases'),
+        ('sql_proxy_accessors', '0019_delete_ledgers'),
     ]
 
     operations = [
