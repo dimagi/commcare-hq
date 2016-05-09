@@ -14,7 +14,7 @@ migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_accessors', '0023_update_get_case_form_ids'),
+        ('sql_accessors', '0024_delete_ledgers'),
     ]
 
     operations = [
