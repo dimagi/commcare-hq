@@ -340,7 +340,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return toggles.USER_ERROR_REPORT.enabled(user.username)
+        return toggles.APPLICATION_ERROR_REPORT.enabled(user.username)
 
     @property
     def shared_pagination_GET_params(self):

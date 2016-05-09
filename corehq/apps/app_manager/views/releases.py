@@ -72,7 +72,7 @@ def paginate_releases(request, domain, app_id):
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
 
-    if toggles.USER_ERROR_REPORT.enabled(request.couch_user.username):
+    if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
         num_errors_dict = _get_error_counts(domain, app_id, versions)
         for app in saved_apps:

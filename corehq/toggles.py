@@ -606,9 +606,9 @@ CLOUDCARE_CACHE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-USER_ERROR_REPORT = StaticToggle(
-    'user_error_report',
-    'Show User Error Report',
+APPLICATION_ERROR_REPORT = StaticToggle(
+    'application_error_report',
+    'Show Application Error Report',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
 )
