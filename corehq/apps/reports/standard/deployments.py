@@ -338,12 +338,10 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return (toggles.USER_ERROR_REPORT.enabled(user.username)
-                or toggles.SUPPORT.enabled(user.username))
+        return toggles.USER_ERROR_REPORT.enabled(user.username)
 
     @property
     def shared_pagination_GET_params(self):
-        app_slug = SelectApplicationFilter.slug
         shared_params = super(ApplicationErrorReport, self).shared_pagination_GET_params
         shared_params.extend([
             {'name': param, 'value': self.request.GET.get(param, None)}

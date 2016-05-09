@@ -67,8 +67,7 @@ def paginate_releases(request, domain, app_id):
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
 
-        if (toggles.USER_ERROR_REPORT.enabled(request.couch_user.username)
-                or toggles.SUPPORT.enabled(request.couch_user.username)):
+        if toggles.USER_ERROR_REPORT.enabled(request.couch_user.username):
             app['num_errors'] = UserErrorEntry.objects.filter(
                 domain=domain,
                 app_id=app['copy_of'],

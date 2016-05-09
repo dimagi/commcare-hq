@@ -96,7 +96,7 @@
             <th></th>
             <th></th>
             <th>{% trans "Comments" %}</th>
-            {% if request|toggle_enabled:"SUPPORT" or request|toggle_enabled:"USER_ERROR_REPORT" %}
+            {% if request|toggle_enabled:"USER_ERROR_REPORT" %}
                 <th>Errors</th>
             {% endif %}
             <th>
@@ -256,7 +256,7 @@
                         </h6>
                     {% endif %}
                 </td>
-                {% if request|toggle_enabled:"SUPPORT" or request|toggle_enabled:"USER_ERROR_REPORT" %}
+                {% if request|toggle_enabled:"USER_ERROR_REPORT" %}
                 <td>
                     <a data-bind="text: num_errors,
                                   attr: {href: $root.url('application_errors', version())}" />
