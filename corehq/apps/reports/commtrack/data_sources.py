@@ -22,11 +22,15 @@ from django.db.models import Sum
 
 
 def format_decimal(d):
-    # https://docs.python.org/2/library/decimal.html#decimal-faq
+    """Remove exponent and trailing zeros.
+
+        >>> format_decimal(Decimal('5E+3'))
+        Decimal('5000')
+
+        https://docs.python.org/2/library/decimal.html#decimal-faq
+    """
     if d is not None:
         return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
-    else:
-        return None
 
 
 def _location_map(location_ids):
