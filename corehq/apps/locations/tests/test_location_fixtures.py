@@ -10,48 +10,74 @@ from casexml.apps.phone.models import SyncLog
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
+from corehq.apps.commtrack.tests.util import bootstrap_domain
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from casexml.apps.case.xml import V2
 
-from .util import LocationHierarchyPerTest
+from .util import (
+    LocationHierarchyPerTest,
+    setup_location_types_with_structure,
+    setup_locations_with_structure,
+    LocationStructure,
+    LocationTypeStructure,
+)
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator
 from ..models import SQLLocation, LocationType, Location
 
+DEPENDENT_APPS = [
+    'auditcare',
+    'couchforms',
+    'phonelog',
+    'django_digest',
+    'casexml.apps.case',
+    'casexml.apps.phone',
+    'casexml.apps.stock',
+    'corehq.couchapps',
+    'corehq.form_processor',
+    'corehq.sql_accessors',
+    'corehq.sql_proxy_accessors',
+    'corehq.apps.commtrack',
+    'corehq.apps.consumption',
+    'corehq.apps.custom_data_fields',
+    'corehq.apps.domain',
+    'corehq.apps.hqcase',
+    'corehq.apps.fixtures',
+    'corehq.apps.groups',
+    'corehq.apps.products',
+    'corehq.apps.reminders',
+    'corehq.apps.sms',
+    'corehq.apps.smsforms',
+    'corehq.apps.tzmigration',
+    'corehq.apps.users',
+    'custom.logistics',
+    'custom.ilsgateway',
+    'custom.ewsghana',
+]
 
-@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
-class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
-    dependent_apps = [
-        'auditcare',
-        'couchforms',
-        'phonelog',
-        'django_digest',
-        'casexml.apps.case',
-        'casexml.apps.phone',
-        'casexml.apps.stock',
-        'corehq.couchapps',
-        'corehq.form_processor',
-        'corehq.sql_accessors',
-        'corehq.sql_proxy_accessors',
-        'corehq.apps.commtrack',
-        'corehq.apps.consumption',
-        'corehq.apps.custom_data_fields',
-        'corehq.apps.domain',
-        'corehq.apps.hqcase',
-        'corehq.apps.fixtures',
-        'corehq.apps.groups',
-        'corehq.apps.products',
-        'corehq.apps.reminders',
-        'corehq.apps.sms',
-        'corehq.apps.smsforms',
-        'corehq.apps.tzmigration',
-        'corehq.apps.users',
-        'custom.logistics',
-        'custom.ilsgateway',
-        'custom.ewsghana',
-    ]
+
+class FixtureHasLocationsMixin(TestXmlMixin):
     root = os.path.dirname(__file__)
     file_path = ['data']
+
+    def _assert_fixture_has_locations(self, xml_name, desired_locations):
+        ids = {
+            "{}_id".format(desired_location.lower().replace(" ", "_")): (
+                self.locations[desired_location].location_id
+            )
+            for desired_location in desired_locations
+        }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
+        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
+        desired_fixture = self.get_xml(xml_name).format(
+            user_id=self.user.user_id,
+            **ids
+        )
+        self.assertXmlEqual(desired_fixture, fixture)
+
+
+@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
+class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+    dependent_apps = DEPENDENT_APPS
     location_type_names = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [
@@ -181,19 +207,62 @@ class LocationFixturesTest(LocationHierarchyPerTest, TestXmlMixin):
             ['Massachusetts', 'Suffolk', 'Middlesex', 'New York', 'New York City']
         )
 
-    def _assert_fixture_has_locations(self, xml_name, desired_locations):
-        ids = {
-            "{}_id".format(desired_location.lower().replace(" ", "_")): (
-                self.locations[desired_location].location_id
-            )
-            for desired_location in desired_locations
-        }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
-        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
-        desired_fixture = self.get_xml(xml_name).format(
-            user_id=self.user.user_id,
-            **ids
+
+@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
+class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+    """
+    - State
+        - County
+            - City
+        - Region
+            - Town
+    """
+    dependent_apps = DEPENDENT_APPS
+    location_type_structure = [
+        LocationTypeStructure('state', [
+            LocationTypeStructure('county', [
+                LocationTypeStructure('city', [])
+            ]),
+            LocationTypeStructure('region', [
+                LocationTypeStructure('town', [])
+            ])
+        ])
+    ]
+
+    location_structure = [
+        LocationStructure('Massachusetts', 'state', [
+            LocationStructure('Middlesex', 'county', [
+                LocationStructure('Cambridge', 'city', []),
+                LocationStructure('Somerville', 'city', [])
+            ]),
+            LocationStructure('Suffolk', 'county', [
+                LocationStructure('Boston', 'city', []),
+            ]),
+            LocationStructure('Berkshires', 'region', [
+                LocationStructure('Granville', 'town', []),
+                LocationStructure('Granby', 'town', []),
+            ]),
+            LocationStructure('Pioneer Valley', 'region', [
+                LocationStructure('Greenfield', 'town', []),
+            ]),
+        ])
+    ]
+
+    def setUp(self):
+        self.domain_obj = bootstrap_domain(self.domain)
+        self.user = CommCareUser.create(self.domain, 'user', '123')
+        self.location_types = setup_location_types_with_structure(self.domain, self.location_type_structure)
+        self.locations = setup_locations_with_structure(self.domain, self.location_structure)
+
+    def test_forked_locations(self, *args):
+        self.user.set_location(self.locations['Massachusetts'].couch_location)
+        location_type = self.locations['Massachusetts'].location_type
+        location_type.expand_to = self.locations['Middlesex'].location_type
+        location_type.save()
+        self._assert_fixture_has_locations(
+            'forked_expand_to_county',
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'Berkshires', 'Pioneer Valley']
         )
-        self.assertXmlEqual(desired_fixture, fixture)
 
 
 class ShouldSyncLocationFixturesTest(TestCase):
