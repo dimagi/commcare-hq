@@ -15,7 +15,7 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from casexml.apps.case.xml import V2
 
 from .util import LocationHierarchyPerTest
-from ..fixtures import _location_to_fixture, _location_footprint, should_sync_locations, location_fixture_generator
+from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator
 from ..models import SQLLocation, LocationType, Location
 
 
@@ -226,7 +226,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
             metadata={'best_swordsman': "Sylvio Forel",
                       'in_westeros': "false"},
         )
-        location_db = _location_footprint([location])
+        location_db = LocationSet([location])
         fixture = _location_to_fixture(location_db, location, self.location_type)
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
@@ -253,7 +253,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
         SQLLocation.objects.filter(pk=location.pk).update(last_modified=day_before_yesterday)
         location = SQLLocation.objects.last()
-        location_db = _location_footprint([location])
+        location_db = LocationSet([location])
 
         self.assertFalse(should_sync_locations(SyncLog(date=yesterday), location_db, self.user))
 
@@ -261,7 +261,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         self.location_type.save()
 
         location = SQLLocation.objects.last()
-        location_db = _location_footprint([location])
+        location_db = LocationSet([location])
 
         self.assertTrue(should_sync_locations(SyncLog(date=yesterday), location_db, self.user))
 
@@ -279,7 +279,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         self.assertEqual(couch_location._id, location.location_id)
         self.assertEqual('winterfell', location.name)
-        location_db = _location_footprint([location])
+        location_db = LocationSet([location])
         self.assertFalse(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
 
         # archive the location
@@ -287,6 +287,6 @@ class ShouldSyncLocationFixturesTest(TestCase):
         after_archive = datetime.utcnow()
 
         location = SQLLocation.objects.last()
-        location_db = _location_footprint([location])
+        location_db = LocationSet([location])
         self.assertTrue(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
         self.assertFalse(should_sync_locations(SyncLog(date=after_archive), location_db, self.user))

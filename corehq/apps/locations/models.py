@@ -86,7 +86,7 @@ class LocationType(models.Model):
         null=True,
         related_name='+',
         db_column='expand_from',
-    )  # levels below this location type that are synced
+    )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
     expand_to = models.ForeignKey('self', null=True, related_name='+')  # levels above this type that are synced
     last_modified = models.DateTimeField(auto_now=True)

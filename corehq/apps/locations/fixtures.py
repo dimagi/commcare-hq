@@ -1,4 +1,5 @@
 from collections import defaultdict
+from django.db.models import Min
 from xml.etree.ElementTree import Element
 from corehq.apps.locations.models import SQLLocation
 from corehq import toggles
@@ -97,33 +98,28 @@ def _all_locations(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return LocationSet(SQLLocation.active_objects.filter(domain=user.domain))
     else:
-        leaf_locations = {leaf_location for leaf_location in _gather_leaf_locations(user)}
-        return _location_footprint(leaf_locations)
+        all_locations = set()
 
+        user_location = user.sql_location
+        user_locations = set([user_location]) if user_location is not None else set()
+        user_locations |= {location for location in _gather_multiple_locations(user)}
 
-def _gather_leaf_locations(user):
-    """Returns all the leaf locations for which we want ancestors
-    """
-    # From the root most location we want (expand_from), we traverse down the
-    # tree until we get all the leaf-most locations we want. We populate the
-    # fixture with all ancestors of these desired leaves later
+        for user_location in user_locations:
+            location_type = user_location.location_type
+            expand_from = location_type.expand_from or location_type
+            expand_to = location_type.expand_to
+            expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
 
-    user_location = user.sql_location
-    user_locations = set([user_location]) if user_location is not None else set()
-    user_locations = user_locations | {location for location in _gather_multiple_locations(user)}
+            for expand_from_location in expand_from_locations:
+                for child in _get_children(user.domain, expand_from_location, expand_to):
+                    # Walk down the tree and get all the children we want to sync
+                    all_locations.add(child)
 
-    if not user_locations:
-        raise StopIteration()
+                for ancestor in expand_from_location.get_ancestors():
+                    # We sync all ancestors of the highest location
+                    all_locations.add(ancestor)
 
-    for user_location in user_locations:
-        location_type = user_location.location_type
-        expand_from = location_type.expand_from or location_type
-        expand_to = location_type.expand_to
-        root = _get_root(user.domain, user_location, expand_from)
-
-        for root_location in root:
-            for leaf in _get_leaves(root_location, expand_to):
-                yield leaf
+        return LocationSet(all_locations)
 
 
 def _gather_multiple_locations(user):
@@ -136,54 +132,43 @@ def _gather_multiple_locations(user):
             yield location
 
 
-def _get_root(domain, user_location, expand_from):
-    """From the users current location, returns the highest location they want in their fixture
+def _get_expand_from_level(domain, user_location, expand_from):
+    """From the users current location, returns the highest location they want to start expanding from
     """
     if user_location.location_type.expand_from_root:
         return SQLLocation.root_locations(domain=domain)
     else:
-        return (user_location.get_ancestors(include_self=True)
-                .filter(location_type=expand_from, is_archived=False))
+        ancestors = (
+            user_location
+            .get_ancestors(include_self=True)
+            .filter(location_type=expand_from, is_archived=False)
+        )
+        highest_level = ancestors.aggregate(Min('level'))['level__min']
+        highest_locations = ancestors.filter(level=highest_level)
+        return highest_locations
 
 
-def _get_leaves(root, expand_to):
-    """From the root, get the lowest location a user wants in their fixture
+def _get_children(domain, root, expand_to):
+    """From the topmost location, get all the children we want to sync
     """
-    leaves = (root.get_descendants(include_self=True).filter(is_archived=False))
-    if expand_to is not None:
-        leaves = leaves.filter(location_type=expand_to)
-    return leaves
+    expand_to_level = set(
+        SQLLocation.active_objects.
+        filter(domain__exact=domain, location_type=expand_to).
+        values_list('level', flat=True)
+    ) or None
+
+    children = root.get_descendants(include_self=True).filter(is_archived=False)
+    if expand_to_level is not None:
+        assert len(expand_to_level) == 1
+        children = children.filter(level__lte=expand_to_level.pop())
+
+    return children
 
 
 def _valid_parent_type(location):
     parent = location.parent
     parent_type = parent.location_type if parent else None
     return parent_type == location.location_type.parent_type
-
-
-def _location_footprint(locations):
-    """
-    Given a list of locations, generate the footprint of those by walking up parents.
-
-    Returns a dict of location ids to location objects.
-    """
-    all_locs = LocationSet(locations)
-    queue = list(locations)
-    while queue:
-        loc = queue.pop()
-
-        if loc.location_id not in all_locs:
-            # if it's not in there, it wasn't valid
-            continue
-
-        parent = loc.parent
-        if (parent and
-                parent.location_id not in all_locs and
-                _valid_parent_type(loc)):
-            all_locs.add_location(parent)
-            queue.append(parent)
-
-    return all_locs
 
 
 def _append_children(node, location_db, locations):
