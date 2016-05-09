@@ -1,32 +1,34 @@
 # coding=utf-8
 from datetime import date, datetime, timedelta
-from casexml.apps.phone.analytics import get_sync_logs_for_user
-from corehq import toggles
+
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log, SyncLogAssertionError
-from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
+from django.utils.translation import ugettext_noop, ugettext as _
+
+from casexml.apps.phone.analytics import get_sync_logs_for_user
+from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
-from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
-from corehq.apps.reports.filters.select import SelectApplicationFilter
-from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.users.models import CommCareUser
-from corehq.const import USER_DATE_FORMAT
-from corehq.util.couch import get_document_or_404
-from corehq.apps.reports.analytics.esaccessors import get_last_form_submissions_by_user
-from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
 from phonelog.models import UserErrorEntry
+
+from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
+from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
+from corehq.apps.users.models import CommCareUser
+from corehq.const import USER_DATE_FORMAT
+from corehq.util.couch import get_document_or_404
+
+from corehq.apps.reports.analytics.esaccessors import get_last_form_submissions_by_user
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.reports.filters.select import SelectApplicationFilter
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
+from corehq.apps.reports.util import format_datatables_data
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
