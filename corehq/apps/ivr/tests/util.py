@@ -2,10 +2,9 @@ from corehq.apps.ivr.models import Call
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import INCOMING
 from corehq.apps.sms.util import register_sms_contact
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.util.test_utils import create_test_case
 from django.test import TestCase
 
 
@@ -32,13 +31,6 @@ class LogCallTestCase(TestCase):
 
     def tearDown(self):
         self.delete_call_logs(self.domain)
-        VerifiedNumber.by_phone(self.phone_number).delete()
-
-    def delete_case(self):
-        if should_use_sql_backend(self.domain):
-            CaseAccessorSQL.hard_delete_cases(self.domain, [self.case.case_id])
-        else:
-            self.case.delete()
 
     def simulate_inbound_call(self, phone_number):
         """
@@ -53,25 +45,28 @@ class LogCallTestCase(TestCase):
         """
         raise NotImplementedError("Please implement this method")
 
+    def create_case(self):
+        case_properties = {
+            'contact_phone_number': self.phone_number,
+            'contact_phone_number_is_verified': '1',
+        }
+        return create_test_case(self.domain, 'contact', 'test',
+            case_properties=case_properties, drop_signals=False)
+
     @run_with_all_backends
     def test_log_call(self):
-        self.case_id = register_sms_contact(self.domain, 'participant', 'test',
-            'system', self.phone_number)
-        self.case = CaseAccessors(self.domain).get_case(self.case_id)
+        with self.create_case() as case:
+            if self.__class__ == LogCallTestCase:
+                # The test runner picks up this base class too, but we only
+                # want to run the test on subclasses.
+                return
 
-        if self.__class__ == LogCallTestCase:
-            # The test runner picks up this base class too, but we only
-            # want to run the test on subclasses.
-            return
+            self.assertEqual(Call.by_domain(self.domain).count(), 0)
+            response = self.simulate_inbound_call(self.phone_number)
+            self.check_response(response)
+            self.assertEqual(Call.by_domain(self.domain).count(), 1)
 
-        self.assertEqual(Call.by_domain(self.domain).count(), 0)
-        response = self.simulate_inbound_call(self.phone_number)
-        self.check_response(response)
-        self.assertEqual(Call.by_domain(self.domain).count(), 1)
-
-        call = Call.by_domain(self.domain)[0]
-        self.assertEqual(call.couch_recipient_doc_type, 'CommCareCase')
-        self.assertEqual(call.couch_recipient, self.case.case_id)
-        self.assertEqual(call.direction, INCOMING)
-
-        self.delete_case()
+            call = Call.by_domain(self.domain)[0]
+            self.assertEqual(call.couch_recipient_doc_type, 'CommCareCase')
+            self.assertEqual(call.couch_recipient, case.case_id)
+            self.assertEqual(call.direction, INCOMING)
