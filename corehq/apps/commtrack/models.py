@@ -541,7 +541,7 @@ def sync_supply_point(location):
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
     try:
-        domain_name = instance.domain
+        domain_name = instance.__domain
         if not domain_name:
             raise ValueError()
     except (AttributeError, ValueError):
