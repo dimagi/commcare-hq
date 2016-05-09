@@ -29,7 +29,7 @@ class Notification(models.Model):
         After five notifications all notifications should be marked as read.
         """
         notes = cls.objects.filter(is_active=True)[:limit]
-        read_notifications = cls.objects.filter(users_read=user)
+        read_notifications = set(cls.objects.filter(users_read=user).values_list('id', flat=True))
 
         def _fmt_note(note_idx):
             index = note_idx[0]
@@ -41,7 +41,7 @@ class Notification(models.Model):
                 'date': '{dt:%B} {dt.day}'.format(dt=note.activated),
                 'content': note.content,
                 'type': note.type,
-                'isRead': (index > 4 or note in read_notifications),
+                'isRead': (index > 4 or note.pk in read_notifications),
             }
             return note_dict
 
