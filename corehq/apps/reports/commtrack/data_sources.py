@@ -1,10 +1,11 @@
 import logging
 from couchdbkit.exceptions import ResourceNotFound
+
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import SupplyPointCase, StockState, SQLLocation
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
@@ -105,6 +106,33 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         return datetime(date.year, date.month, date.day, 23, 59, 59)
 
     def get_data(self):
+        locations = self.locations()
+        # locations at this point will only have location objects
+        # that have supply points associated
+        for loc in locations[:self.config.get('max_rows', 100)]:
+            transactions = StockTransaction.objects.filter(
+                case_id=loc.supply_point_id,
+                section_id=SECTION_TYPE_STOCK,
+            )
+
+            if self.program_id:
+                transactions = transactions.filter(
+                    sql_product__program_id=self.program_id
+                )
+
+            stock_results = transactions.exclude(
+                report__date__gt=self.datetime
+            ).order_by(
+                'product_id', '-report__date'
+            ).values_list(
+                'product_id', 'stock_on_hand'
+            ).distinct(
+                'product_id'
+            )
+
+            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results})
+
+    def locations(self):
         if self.active_location:
             current_location = self.active_location.sql_location
 
