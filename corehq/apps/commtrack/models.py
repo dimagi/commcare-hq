@@ -552,16 +552,11 @@ def update_domain_mapping(sender, instance, *args, **kwargs):
 
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
-    # todo: use LedgerProcessor
-    StockReport.objects.filter(form_id=xform.form_id).delete()
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    FormProcessorInterface(xform.domain).ledger_processor.process_form_archived(xform)
 
 
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
-    from corehq.apps.commtrack.processing import process_stock
-    result = process_stock([xform])
-    result.populate_models()
-    result.commit()
-    result.finalize()
-    # todo: use LedgerProcessor
-    CommCareCase.get_db().bulk_save(result.relevant_cases)
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    FormProcessorInterface(xform.domain).ledger_processor.process_form_unarchived(xform)
