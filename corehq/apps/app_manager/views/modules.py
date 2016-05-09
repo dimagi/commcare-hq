@@ -575,7 +575,7 @@ def _update_search_properties(module, search_properties, lang='en'):
     current = {p.name: p.label for p in module.search_config.properties}
     for prop in search_properties:
         if prop['name'] in current:
-            label = current[prop['name']]
+            label = current[prop['name']].copy()
             label.update({lang: prop['label']})
         else:
             label = {lang: prop['label']}
