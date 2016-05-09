@@ -17,7 +17,7 @@ class DeviceLogTagFilter(BaseReportFilter):
         errors_only = bool(self.request.GET.get(self.errors_only_slug, False))
         selected_tags = self.request.GET.getlist(self.slug)
         show_all = bool(not selected_tags)
-        values = fast_distinct(DeviceReportEntry, 'type')
+        values = fast_distinct_in_domain(DeviceReportEntry, 'type', self.domain)
         tags = [{
             'name': value,
             'show': bool(show_all or value in selected_tags)
