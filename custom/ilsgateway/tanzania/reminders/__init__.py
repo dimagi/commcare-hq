@@ -143,7 +143,7 @@ LOSS_ADJUST_BAD_FORMAT = _("Sorry, invalid format.  The message should be in the
                            " 'la <product> +-<amount> +-<product> +-<amount>...")
 LOSS_ADJUST_CONFIRM = _("Thank you. Have you received supervision this month? "
                         "Please reply 'supervision yes' or 'supervision no'")
-LOSS_ADJUST_NO_SOH = _("Your report for products %(products_list)s, have not been processed, "
+LOSS_ADJUST_NO_SOH = _("Your report has been processed for all products except for %(products_list)s, "
                        "since we have no current SOH value for these products at your facility. "
                        "If any of those products are currently stocked at your facility, "
                        "please submit a stock on hand report for each product first, "
