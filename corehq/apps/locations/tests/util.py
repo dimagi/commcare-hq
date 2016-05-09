@@ -92,7 +92,7 @@ LocationStructure = namedtuple('LocationStructure', ['name', 'type', 'children']
 def setup_locations_with_structure(domain, locations):
     """
     Creates a hierarchy of locations given a recursive list of LocationStructure namedtuples
-    This allows you to set 
+    This allows you to set complex (e.g. forked) location structures within tests
     """
     created_locations = {}
 
