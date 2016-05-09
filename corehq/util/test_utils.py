@@ -366,7 +366,7 @@ def _create_case(domain, **kwargs):
 
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
-        drop_signals=True, owner_id=None):
+        drop_signals=True, owner_id=None, user_id=None):
     from casexml.apps.case.signals import case_post_save
     from corehq.form_processor.signals import sql_case_post_save
 
@@ -383,6 +383,9 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
     if owner_id:
         kwargs['owner_id'] = owner_id
 
+    if user_id:
+        kwargs['user_id'] = user_id
+
     if drop_signals:
         # this avoids having to deal with all the reminders code bootstrap
         with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
@@ -395,13 +398,13 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 
 @contextmanager
 def create_test_case(domain, case_type, case_name, case_properties=None, drop_signals=True,
-        case_id=None, owner_id=None):
+        case_id=None, owner_id=None, user_id=None):
     from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
     from corehq.form_processor.utils.general import should_use_sql_backend
 
     case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
         case_properties=case_properties, case_type=case_type, drop_signals=drop_signals,
-        owner_id=owner_id)
+        owner_id=owner_id, user_id=user_id)
     try:
         yield case
     finally:
@@ -429,4 +432,21 @@ def set_parent_case(domain, child_case, parent_case):
                 relationship=INDEX_RELATIONSHIP_CHILD
             )],
         )
+    )
+
+
+def update_case(domain, case_id, case_properties, user_id=None):
+    from casexml.apps.case.mock import CaseBlock
+    from casexml.apps.case.util import post_case_blocks
+
+    kwargs = {
+        'case_id': case_id,
+        'update': case_properties,
+    }
+
+    if user_id:
+        kwargs['user_id'] = user_id
+
+    post_case_blocks(
+        [CaseBlock(**kwargs).as_xml()], domain=domain
     )
