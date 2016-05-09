@@ -2,6 +2,7 @@ import json
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
+from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -36,6 +37,16 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
 
 
+def _get_error_counts(domain, app_id, version_numbers):
+    res = (UserErrorEntry.objects
+           .filter(domain=domain,
+                   app_id=app_id,
+                   version_number__in=version_numbers)
+           .values('version_number')
+           .annotate(count=Count('pk')))
+    return {r['version_number']: r['count'] for r in res}
+
+
 @cache_control(no_cache=True, no_store=True)
 @require_deploy_apps
 def paginate_releases(request, domain, app_id):
@@ -61,12 +72,12 @@ def paginate_releases(request, domain, app_id):
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
 
-        if toggles.USER_ERROR_REPORT.enabled(request.couch_user.username):
-            app['num_errors'] = UserErrorEntry.objects.filter(
-                domain=domain,
-                app_id=app['copy_of'],
-                version_number=app['version'],
-            ).count()
+    if toggles.USER_ERROR_REPORT.enabled(request.couch_user.username):
+        versions = [app['version'] for app in saved_apps]
+        num_errors_dict = _get_error_counts(domain, app_id, versions)
+        for app in saved_apps:
+            app['num_errors'] = num_errors_dict.get(app['version'], 0)
+
     return json_response(saved_apps)
 
 
