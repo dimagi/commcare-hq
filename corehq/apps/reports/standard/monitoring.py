@@ -28,8 +28,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_total_case_counts_by_owner,
     get_forms,
     get_form_duration_stats_by_user,
-    get_form_duration_stats_for_users,
-    get_active_case_count)
+    get_form_duration_stats_for_users)
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
@@ -1532,10 +1531,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 case_owners = case_owners.union(user.group_ids)
             total_row[3] = '%s / %s' % (num, len(rows))
             total_row[6] = sum(
-                [int(get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types).get(id, 0))
+                [int(report_data.active_cases_by_owner.get(id, 0))
                  for id in case_owners])
             total_row[7] = sum(
-                [int(get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types).get(id, 0))
+                [int(report_data.total_cases_by_owner.get(id, 0))
                  for id in case_owners])
         return total_row
 
