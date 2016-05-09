@@ -112,7 +112,11 @@ def _get_summary_details(config, domain):
                     return Series(
                         nodeset=(
                             "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
-                            .format(config.uuid, _MobileSelectFilterHelpers.get_data_filter_xpath(config, domain))),
+                            .format(
+                                config.uuid,
+                                _MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
+                            )
+                        ),
                         x_function="column[@id='{}']".format(chart_config.x_axis_column),
                         y_function="column[@id='{}']".format(column),
                         configuration=ConfigurationGroup(configs=[

@@ -72,4 +72,3 @@ class TestGetReportConfigs(SimpleTestCase, TestFileMixin):
                     'example'
                 )
                 self.assertEqual(len(configs), 2)
-
