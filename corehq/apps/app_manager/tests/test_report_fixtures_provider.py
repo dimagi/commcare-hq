@@ -32,7 +32,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         user = Mock()
 
         with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
-            patch('corehq.apps.app_manager.fixtures.mobile_ucr.ReportFactory') as report_factory_patch:
+                patch('corehq.apps.app_manager.fixtures.mobile_ucr.ReportFactory') as report_factory_patch:
 
             report_factory_patch.from_spec.return_value = self.get_data_source_mock()
             report = provider._report_config_to_fixture(report_app_config, user)
