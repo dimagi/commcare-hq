@@ -24,6 +24,10 @@ class Notification(models.Model):
 
     @classmethod
     def get_by_user(cls, user, limit=10):
+        """Returns notifications for a particular user
+
+        After five notifications all notifications should be marked as read.
+        """
         notes = cls.objects.filter(is_active=True)[:limit]
         read_notifications = cls.objects.filter(users_read=user)
 
