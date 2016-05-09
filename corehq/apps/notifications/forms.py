@@ -54,5 +54,5 @@ class NotificationCreationForm(forms.Form):
         )
 
     def save(self):
-        data = self.data
+        data = self.cleaned_data
         Notification(content=data.get('content'), url=data.get('url'), type=data.get('type')).save()
