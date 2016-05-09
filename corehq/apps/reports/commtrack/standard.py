@@ -1,5 +1,7 @@
-from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, SimplifiedInventoryDataSource, \
-    SimplifiedInventoryDataSourceNew
+from corehq.apps.reports.commtrack.data_sources import (
+    StockStatusDataSource, ReportingStatusDataSource,
+    SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
+)
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState
