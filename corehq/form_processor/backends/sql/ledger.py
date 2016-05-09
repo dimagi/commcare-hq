@@ -20,10 +20,6 @@ class LedgerDBSQL(LedgerDBInterface):
         except LedgerValueNotFound:
             return None
 
-    def get_current_ledger_value(self, unique_ledger_reference):
-        ledger = self.get_ledger(unique_ledger_reference)
-        return ledger.balance if ledger else 0
-
 
 class LedgerProcessorSQL(LedgerProcessorInterface):
     """
@@ -109,6 +105,9 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
     @staticmethod
     def hard_rebuild_ledgers(case_id, section_id=None, entry_id=None):
         transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id, section_id, entry_id)
+        if not transactions:
+            LedgerAccessorSQL.delete_ledger_values(case_id, section_id, entry_id)
+            return
         ledger_value = LedgerAccessorSQL.get_ledger_value(case_id, section_id, entry_id)
         ledger_value = LedgerProcessorSQL._rebuild_ledger_value_from_transactions(ledger_value, transactions)
         LedgerAccessorSQL.save_ledger_values([ledger_value])
@@ -131,6 +130,28 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
             ledger_value.balance = balance
 
         return ledger_value
+
+    def process_form_archived(self, form):
+        from corehq.form_processor.parsers.ledgers.form import get_ledger_references_from_stock_transactions
+        refs_to_rebuild = get_ledger_references_from_stock_transactions(form)
+        case_ids = list({ref.case_id for ref in refs_to_rebuild})
+        LedgerAccessorSQL.delete_ledger_transactions_for_form(case_ids, form.form_id)
+        for ref in refs_to_rebuild:
+            self.rebuild_ledger_state(**ref._asdict())
+
+    def process_form_unarchived(self, form):
+        from corehq.apps.commtrack.processing import process_stock
+        result = process_stock([form])
+        result.populate_models()
+        LedgerAccessorSQL.save_ledger_values(result.models_to_save)
+
+        refs_to_rebuild = {
+            ledger_value.ledger_reference for ledger_value in result.models_to_save
+        }
+        for ref in refs_to_rebuild:
+            self.rebuild_ledger_state(**ref._asdict())
+
+        result.finalize()
 
 
 def _compute_ledger_values(original_balance, transaction):

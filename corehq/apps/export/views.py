@@ -148,9 +148,14 @@ class ExportsPermissionsMixin(object):
 
 
 class BaseExportView(BaseProjectDataView):
-    template_name = 'export/bootstrap2/customize_export.html'
+    template_name = 'export/customize_export_old.html'
     export_type = None
     is_async = True
+
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, *args, **kwargs):
+        return super(BaseExportView, self).dispatch(*args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -1407,7 +1412,7 @@ class CaseExportListView(BaseExportListView):
 
 
 class BaseNewExportView(BaseExportView):
-    template_name = 'export/bootstrap3/customize_export.html'
+    template_name = 'export/customize_export_new.html'
 
     @use_bootstrap3
     @use_jquery_ui

@@ -575,8 +575,10 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
                             restore_id=self.sync_log_id, version=V2, line_by_line=False)
 
 
+@override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
 class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
+    @run_with_all_backends
     def test_archive_last_form(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         self.submit_xml_form(
@@ -587,30 +589,55 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         final_amounts = [(p._id, float(50)) for i, p in enumerate(self.products)]
         second_form_id = self.submit_xml_form(balance_submission(final_amounts))
 
+        ledger_accessors = LedgerAccessors(self.domain.name)
         def _assert_initial_state():
-            self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
-            # 6 = 3 stockonhand and 3 inferred consumption txns
-            self.assertEqual(6, StockTransaction.objects.filter(report__form_id=second_form_id).count())
-            self.assertEqual(3, StockState.objects.filter(case_id=self.sp.case_id).count())
-            for state in StockState.objects.filter(case_id=self.sp.case_id):
-                self.assertEqual(Decimal(50), state.stock_on_hand)
-                self.assertEqual(
-                    round(float(state.daily_consumption), 2),
-                    1.67
-                )
+            if should_use_sql_backend(self.domain.name):
+                self.assertEqual(3, LedgerTransaction.objects.filter(form_id=second_form_id).count())
+                ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
+                self.assertEqual(3, len(ledger_values))
+                for lv in ledger_values:
+                    self.assertEqual(50, lv.stock_on_hand)
+                    # TODO: hook up consumption for LedgerValues
+                    # self.assertEqual(
+                    #     round(float(lv.daily_consumption), 2),
+                    #     1.67
+                    # )
+            else:
+                self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
+                # 6 = 3 stockonhand and 3 inferred consumption txns
+                self.assertEqual(6, StockTransaction.objects.filter(report__form_id=second_form_id).count())
+                self.assertEqual(3, StockState.objects.filter(case_id=self.sp.case_id).count())
+                for state in StockState.objects.filter(case_id=self.sp.case_id):
+                    self.assertEqual(Decimal(50), state.stock_on_hand)
+                    self.assertEqual(
+                        round(float(state.daily_consumption), 2),
+                        1.67
+                    )
 
         # check initial setup
         _assert_initial_state()
 
         # archive and confirm commtrack data is deleted
-        form = XFormInstance.get(second_form_id)
+        form = FormAccessors(self.domain.name).get_form(second_form_id)
         form.archive()
-        self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
-        self.assertEqual(0, StockTransaction.objects.filter(report__form_id=second_form_id).count())
-        self.assertEqual(3, StockState.objects.filter(case_id=self.sp.case_id).count())
-        for state in StockState.objects.filter(case_id=self.sp.case_id):
+        if should_use_sql_backend(self.domain.name):
+            self.assertEqual(0, LedgerTransaction.objects.filter(form_id=second_form_id).count())
+            ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
+            self.assertEqual(3, len(ledger_values))
+            for lv in ledger_values:
+                # balance should be reverted to 100 in the StockState
+                self.assertEqual(100, lv.stock_on_hand)
+                # consumption should be none since there will only be 1 data point
+                self.assertIsNone(lv.daily_consumption)
+        else:
+            self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
+            self.assertEqual(0, StockTransaction.objects.filter(report__form_id=second_form_id).count())
+
+        ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
+        self.assertEqual(3, len(ledger_values))
+        for state in ledger_values:
             # balance should be reverted to 100 in the StockState
-            self.assertEqual(Decimal(100), state.stock_on_hand)
+            self.assertEqual(100, int(state.stock_on_hand))
             # consumption should be none since there will only be 1 data point
             self.assertIsNone(state.daily_consumption)
 
@@ -618,28 +645,40 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         form.unarchive()
         _assert_initial_state()
 
+    @run_with_all_backends
     def test_archive_only_form(self):
         # check no data in stock states
-        self.assertEqual(0, StockState.objects.filter(case_id=self.sp.case_id).count())
+        ledger_accessors = LedgerAccessors(self.domain.name)
+        ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
+        self.assertEqual(0, len(ledger_values))
 
         initial_amounts = [(p._id, float(100)) for p in self.products]
         form_id = self.submit_xml_form(balance_submission(initial_amounts))
 
         # check that we made stuff
         def _assert_initial_state():
-            self.assertEqual(1, StockReport.objects.filter(form_id=form_id).count())
-            self.assertEqual(3, StockTransaction.objects.filter(report__form_id=form_id).count())
-            self.assertEqual(3, StockState.objects.filter(case_id=self.sp.case_id).count())
-            for state in StockState.objects.filter(case_id=self.sp.case_id):
-                self.assertEqual(Decimal(100), state.stock_on_hand)
+            if should_use_sql_backend(self.domain.name):
+                self.assertEqual(3, LedgerTransaction.objects.filter(form_id=form_id).count())
+            else:
+                self.assertEqual(1, StockReport.objects.filter(form_id=form_id).count())
+                self.assertEqual(3, StockTransaction.objects.filter(report__form_id=form_id).count())
+
+            ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
+            self.assertEqual(3, len(ledger_values))
+            for state in ledger_values:
+                self.assertEqual(100, int(state.stock_on_hand))
+
         _assert_initial_state()
 
         # archive and confirm commtrack data is cleared
-        form = XFormInstance.get(form_id)
+        form = FormAccessors(self.domain.name).get_form(form_id)
         form.archive()
-        self.assertEqual(0, StockReport.objects.filter(form_id=form_id).count())
-        self.assertEqual(0, StockTransaction.objects.filter(report__form_id=form_id).count())
-        self.assertEqual(0, StockState.objects.filter(case_id=self.sp.case_id).count())
+        self.assertEqual(0, len(ledger_accessors.get_ledger_values_for_case(self.sp.case_id)))
+        if should_use_sql_backend(self.domain.name):
+            self.assertEqual(0, LedgerTransaction.objects.filter(form_id=form_id).count())
+        else:
+            self.assertEqual(0, StockReport.objects.filter(form_id=form_id).count())
+            self.assertEqual(0, StockTransaction.objects.filter(report__form_id=form_id).count())
 
         # unarchive and confirm commtrack data is restored
         form.unarchive()

@@ -133,6 +133,12 @@ def transform_unicode(item):
         return None
 
 
+def transform_array(item):
+    if isinstance(item, list):
+        return item
+    return [item]
+
+
 def transform_from_datatype(datatype):
     """
     Given a datatype, return a transform for that type.
@@ -144,6 +150,7 @@ def transform_from_datatype(datatype):
         'decimal': transform_decimal,
         'integer': transform_int,
         'string': transform_unicode,
+        'array': transform_array,
     }.get(datatype) or identity
 
 

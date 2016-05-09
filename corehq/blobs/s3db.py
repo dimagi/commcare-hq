@@ -5,6 +5,7 @@ from threading import Lock
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
+from corehq.blobs.util import ClosingContextProxy
 
 import boto3
 from boto3.s3.transfer import S3Transfer, ReadFileChunk
@@ -130,21 +131,6 @@ def maybe_not_found(throw=None):
             raise
         if throw is not None:
             raise throw
-
-
-class ClosingContextProxy(object):
-
-    def __init__(self, obj):
-        self.obj = obj
-
-    def __getattr__(self, name):
-        return getattr(self.obj, name)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        self.obj.close()
 
 
 class OpenFileOSUtils(object):

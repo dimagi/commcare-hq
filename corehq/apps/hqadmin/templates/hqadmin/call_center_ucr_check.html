@@ -6,7 +6,7 @@
         <div class="form-group">
             <label class="col-xs-2 control-label" for="domain">{% trans "Domain name" %}</label>
             <div class="col-xs-4">
-                <input type="text" name="domain" class="form-control" placeholder="ALL Domains"/>
+                <input type="text" name="domain" class="form-control" placeholder="ALL Domains" value="{{ domain }}">
             </div>
         </div>
         <div class="form-actions">
@@ -25,9 +25,12 @@
         <th>{% trans "Cases" %}</th>
         <th>{% trans "Case actions" %}</th>
     </tr>
-    {% for domain in domains %}
+    {% for domain in data %}
         <tr>
             <td>{{ domain.name }}</td>
+            {% if domain.error %}
+            <td colspan="3" class="alert alert-danger">{{ domain.error }}</td>
+            {% else %}
             {% for stats in domain.stats %}
             <td>
                 <div class="progress">
@@ -40,6 +43,7 @@
                 </div>
             </td>
             {% endfor %}
+            {% endif %}
         </tr>
     {% endfor %}
     </table>

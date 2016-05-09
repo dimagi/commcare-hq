@@ -1,44 +1,50 @@
 import json
 
+from django.contrib import messages
+from django.core.urlresolvers import reverse
+from django.db.models import Count
+from django.http import HttpResponse, Http404
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.cache import cache_control
-from django.http import HttpResponse, Http404
-from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
-from django.shortcuts import render
-from couchdbkit.resource import ResourceNotFound
-from django.contrib import messages
-import ghdiff
-from corehq.apps.app_manager.views.apps import get_apps_base_context
-from corehq.apps.app_manager.views.download import source_files
 
-from corehq.apps.app_manager.views.utils import back_to_main, encode_if_unicode, \
-    get_langs
-from corehq import privileges
+import ghdiff
+from couchdbkit.resource import ResourceNotFound
+from dimagi.utils.web import json_response
+from phonelog.models import UserErrorEntry
+
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
-from corehq.apps.app_manager.exceptions import (
-    ModuleIdMissingException,
-)
+from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
-from dimagi.utils.web import json_response
-from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
-from corehq.apps.domain.decorators import (
-    login_and_domain_required,
-)
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
-from corehq.apps.app_manager.models import (
-    Application,
-    SavedAppBuild,
-)
-from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps
 from corehq.apps.users.models import CommCareUser
+from corehq.util.timezones.utils import get_timezone_for_user
+
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
+from corehq.apps.app_manager.decorators import (
+    no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
+from corehq.apps.app_manager.exceptions import ModuleIdMissingException
+from corehq.apps.app_manager.models import Application, SavedAppBuild
+from corehq.apps.app_manager.views.apps import get_apps_base_context
+from corehq.apps.app_manager.views.download import source_files
+from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
+
+
+def _get_error_counts(domain, app_id, version_numbers):
+    res = (UserErrorEntry.objects
+           .filter(domain=domain,
+                   app_id=app_id,
+                   version_number__in=version_numbers)
+           .values('version_number')
+           .annotate(count=Count('pk')))
+    return {r['version_number']: r['count'] for r in res}
 
 
 @cache_control(no_cache=True, no_store=True)
@@ -65,6 +71,13 @@ def paginate_releases(request, domain, app_id):
     ).all()
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
+
+    if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
+        versions = [app['version'] for app in saved_apps]
+        num_errors_dict = _get_error_counts(domain, app_id, versions)
+        for app in saved_apps:
+            app['num_errors'] = num_errors_dict.get(app['version'], 0)
+
     return json_response(saved_apps)
 
 

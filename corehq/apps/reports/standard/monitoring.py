@@ -1354,7 +1354,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         url = self._make_url(base_url, params)
 
         return util.format_datatables_data(
-            self._html_anchor_tag(url, group_name),
+            self._html_anchor_tag(url, group_name.encode('utf-8')),
             group_name,
         )
 
