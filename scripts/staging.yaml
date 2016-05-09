@@ -51,9 +51,7 @@ branches:
   - app-blobs-testing+lang-profiles # Cal 5/4
   - inline-editing+lang-profiles # Cal 5/4
   - inline-editing # Jenny 4/9
-#  - lang-profiles+report-builder-paywall
   - lang-profiles  # Cal 5/4
-  - report-builder-paywall  # Noah 4/29
   - app-blobs-testing # daniel 4/20
   - b3-groups  # Biyeun 4/26
   - b3-app-multimedia  # Biyeun 4/27
