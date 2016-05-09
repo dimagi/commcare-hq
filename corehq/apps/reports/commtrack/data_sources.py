@@ -154,30 +154,45 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 supply_point_id__isnull=False
             )
 
+        return locations
+
+
+class SimplifiedInventoryDataSourceNew(SimplifiedInventoryDataSource):
+
+    @property
+    @memoized
+    def product_ids(self):
+        if self.program_id:
+            return SQLProduct.objects\
+                .filter(domain=self.domain, program_id=self.program_id)\
+                .values_list('product_id', flat=True)
+
+    def get_data(self):
+        from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+        locations = self.locations()
+
         # locations at this point will only have location objects
         # that have supply points associated
         for loc in locations[:self.config.get('max_rows', 100)]:
-            transactions = StockTransaction.objects.filter(
+            # TODO: this is very inefficient since it loads ALL the transactions up to the supplied
+            # date but only requires the most recent one. Should rather use a window function.
+            transactions = LedgerAccessorSQL.get_ledger_transactions_in_window(
                 case_id=loc.supply_point_id,
                 section_id=SECTION_TYPE_STOCK,
+                entry_id=None,
+                window_start=datetime.min,
+                window_end=self.datetime()
             )
 
             if self.program_id:
-                transactions = transactions.filter(
-                    sql_product__program_id=self.program_id
+                transactions = (
+                    tx for tx in transactions
+                    if tx.entry_id in self.product_ids
                 )
 
-            stock_results = transactions.exclude(
-                report__date__gt=self.datetime
-            ).order_by(
-                'product_id', '-report__date'
-            ).values_list(
-                'product_id', 'stock_on_hand'
-            ).distinct(
-                'product_id'
-            )
+            stock_results = sorted(transactions, key=lambda tx: tx.report_date, reverse=False)
 
-            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results})
+            yield (loc.name, {tx.entry_id: tx.updated_balance for tx in stock_results})
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
