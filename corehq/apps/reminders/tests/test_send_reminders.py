@@ -39,8 +39,8 @@ class ReminderTestCase(BaseReminderTestCase):
                         message={'en': self.message},
                         callback_timeout_intervals=[]
                     ),
-                ]
-            ).set_stop_condition(stop_case_property='stop_sending')
+                ])
+            .set_stop_condition(stop_case_property='stop_sending')
             .set_advanced_options()
         )
         self.handler.save()
@@ -165,8 +165,7 @@ class ReminderIrregularScheduleTestCase(BaseReminderTestCase):
                         message={"en": self.message_3},
                         callback_timeout_intervals=[]
                     ),
-                ]
-            )
+                ])
             .set_stop_condition(max_iteration_count=2, stop_case_property='stop_sending')
             .set_advanced_options()
         )
@@ -312,8 +311,8 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
                         message={'en': self.message_2},
                         callback_timeout_intervals=[15, 30]
                     )
-                ]
-            ).set_stop_condition(max_iteration_count=3, stop_case_property='stop_sending')
+                ])
+            .set_stop_condition(max_iteration_count=3, stop_case_property='stop_sending')
             .set_advanced_options()
         )
         self.handler.save()
@@ -572,8 +571,8 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
                         message={'en': 'Message1'},
                         callback_timeout_intervals=[]
                     ),
-                ]
-            ).set_stop_condition(stop_case_property='stop_sending1')
+                ])
+            .set_stop_condition(stop_case_property='stop_sending1')
             .set_advanced_options()
         )
         self.handler1.save()
@@ -593,8 +592,8 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
                         message={'en': 'Message2'},
                         callback_timeout_intervals=[]
                     ),
-                ]
-            ).set_stop_condition(stop_case_property='stop_sending2')
+                ])
+            .set_stop_condition(stop_case_property='stop_sending2')
             .set_advanced_options()
         )
         self.handler2.save()
@@ -614,8 +613,8 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
                         message={'en': 'Message3'},
                         callback_timeout_intervals=[]
                     ),
-                ]
-            ).set_stop_condition(stop_case_property='stop_sending3')
+                ])
+            .set_stop_condition(stop_case_property='stop_sending3')
             .set_advanced_options()
         )
         self.handler3.save()
@@ -769,8 +768,8 @@ class StartConditionReminderTestCase(BaseReminderTestCase):
                         message={'en': 'Message1'},
                         callback_timeout_intervals=[]
                     ),
-                ]
-            ).set_stop_condition(stop_case_property='stop_sending1')
+                ])
+            .set_stop_condition(stop_case_property='stop_sending1')
             .set_advanced_options(use_today_if_start_date_is_blank=True))
         self.handler1.save()
 
