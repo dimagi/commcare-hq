@@ -12,6 +12,7 @@ class LocationSet(object):
 
     def __init__(self, locations=None):
         self.by_id = {}
+        self.root_locations = set()
         self.by_parent = defaultdict(set)
         if locations is not None:
             for loc in locations:
@@ -22,7 +23,12 @@ class LocationSet(object):
             self.by_id[location.location_id] = location
             parent = location.parent
             parent_id = parent.location_id if parent else None
+            if parent_id is None:  # this is a root
+                self.add_root(location)
             self.by_parent[parent_id].add(location)
+
+    def add_root(self, location):
+        self.root_locations.add(location)
 
     def __contains__(self, item):
         return item in self.by_id
@@ -77,9 +83,7 @@ class LocationFixtureProvider(object):
             return []
 
         root_node = Element('fixture', {'id': self.id, 'user_id': user.user_id})
-        root_locations = filter(
-            lambda loc: loc.parent is None, all_locations.by_id.values()
-        )
+        root_locations = all_locations.root_locations
 
         if root_locations:
             _append_children(root_node, all_locations, root_locations)
