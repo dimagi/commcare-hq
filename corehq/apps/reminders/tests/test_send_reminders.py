@@ -1,11 +1,8 @@
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.ivr.models import Call
 from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder, MATCH_EXACT,
-    MATCH_ANY_VALUE, MATCH_REGEX, REPEAT_SCHEDULE_INDEFINITELY, EVENT_AS_OFFSET,
-    EVENT_AS_SCHEDULE, CaseReminderEvent, METHOD_SMS, METHOD_SMS_CALLBACK)
+    MATCH_ANY_VALUE, MATCH_REGEX, EVENT_AS_OFFSET, EVENT_AS_SCHEDULE, CaseReminderEvent)
 from corehq.apps.reminders.tests.utils import BaseReminderTestCase
 from corehq.apps.sms.models import ExpectedCallback, CALLBACK_RECEIVED, CALLBACK_PENDING, CALLBACK_MISSED
 from corehq.apps.users.models import CommCareUser
@@ -14,7 +11,6 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import create_test_case, update_case
 from datetime import datetime, date, time, timedelta
 from django.test import TestCase
-from dimagi.utils.parsing import json_format_datetime
 
 
 class ReminderTestCase(BaseReminderTestCase):
@@ -45,7 +41,8 @@ class ReminderTestCase(BaseReminderTestCase):
                     ),
                 ]
             ).set_stop_condition(stop_case_property='stop_sending')
-            .set_advanced_options())
+            .set_advanced_options()
+        )
         self.handler.save()
 
         self.user = CommCareUser.create(self.domain, 'chw.bob', 'abc', phone_number='99912345')
@@ -171,7 +168,8 @@ class ReminderIrregularScheduleTestCase(BaseReminderTestCase):
                 ]
             )
             .set_stop_condition(max_iteration_count=2, stop_case_property='stop_sending')
-            .set_advanced_options())
+            .set_advanced_options()
+        )
         self.handler.save()
 
         self.user = CommCareUser.create(self.domain, 'chw.bob2', 'abc', phone_number='99912345')
@@ -316,7 +314,8 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
                     )
                 ]
             ).set_stop_condition(max_iteration_count=3, stop_case_property='stop_sending')
-            .set_advanced_options())
+            .set_advanced_options()
+        )
         self.handler.save()
 
         self.user = CommCareUser.create(self.domain, 'chw.bob3', 'abc', phone_number='14445551234')
@@ -575,7 +574,8 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
                     ),
                 ]
             ).set_stop_condition(stop_case_property='stop_sending1')
-            .set_advanced_options())
+            .set_advanced_options()
+        )
         self.handler1.save()
 
         self.handler2 = (CaseReminderHandler.create(self.domain, 'test')
@@ -595,7 +595,8 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
                     ),
                 ]
             ).set_stop_condition(stop_case_property='stop_sending2')
-            .set_advanced_options())
+            .set_advanced_options()
+        )
         self.handler2.save()
 
         self.handler3 = (CaseReminderHandler.create(self.domain, 'test')
@@ -615,7 +616,8 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
                     ),
                 ]
             ).set_stop_condition(stop_case_property='stop_sending3')
-            .set_advanced_options())
+            .set_advanced_options()
+        )
         self.handler3.save()
 
     def tearDown(self):

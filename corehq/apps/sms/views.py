@@ -823,7 +823,7 @@ def chat_contact_list(request, domain):
 def get_contact_name_for_chat(contact, domain_obj):
     if is_commcarecase(contact):
         if domain_obj.custom_case_username:
-            contact_name = contact.get_case_property(custom_case_username)
+            contact_name = contact.get_case_property(domain_obj.custom_case_username)
         else:
             contact_name = contact.name
     else:

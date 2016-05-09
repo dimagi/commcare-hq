@@ -64,8 +64,8 @@ class ChatHistoryTestCase(TestCase):
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
 
-        cls.contact1_id = uuid.uuid4().hex;
-        cls.contact2_id = uuid.uuid4().hex;
+        cls.contact1_id = uuid.uuid4().hex
+        cls.contact2_id = uuid.uuid4().hex
         cls.contact3 = CommCareUser.create(cls.domain, 'user1', '123')
 
         cls.chat_user = CommCareUser.create(cls.domain, 'user2', '123')
