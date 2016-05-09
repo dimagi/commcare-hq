@@ -27,7 +27,7 @@
                 ],
                 value: operator"></select>
         <span data-bind="if: $root.getAnswers({question: question()}).length">
-            <select data-bind="
+            <select class="form-control" data-bind="
                 optstr: $root.getAnswers({question: question()}),
                 value: answer"></select>
         </span>
