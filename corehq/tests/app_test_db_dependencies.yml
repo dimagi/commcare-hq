@@ -454,3 +454,12 @@ corehq.apps.api:
   - corehq.apps.smsbillables
 corehq.apps.performance_sms:
   - corehq.couchapps
+corehq.apps.notifications:
+  - corehq.apps.notifications
+  - django.contrib.admin
+  - django_prbac
+  - tastypie
+  - django_digest
+  - corehq.apps.tour
+  - corehq.apps.dropbox
+  - touchforms.formplayer
