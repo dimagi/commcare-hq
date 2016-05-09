@@ -70,7 +70,7 @@ def update_stock_state_for_transaction(instance):
     # bunch more work and hit the database.
     sql_product = SQLProduct.objects.get(product_id=instance.product_id)
     try:
-        domain_name = instance.domain
+        domain_name = instance.__domain
     except AttributeError:
         domain_name = sql_product.domain
 
@@ -129,7 +129,7 @@ def update_stock_state_for_transaction(instance):
     )
     # so you don't have to look it up again in the signal receivers
     if domain:
-        state.domain = domain.name
+        state.__domain = domain.name
     state.save()
 
 
