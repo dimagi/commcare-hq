@@ -4,6 +4,7 @@ from ..utils import should_use_sql_backend
 
 
 class SupplyInterface(object):
+
     def __init__(self, domain=None):
         self.domain = domain
 

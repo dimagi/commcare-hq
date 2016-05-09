@@ -58,6 +58,7 @@ def setup_default_sms_test_backend():
 
 
 class BaseSMSTest(BaseAccountingTest, DomainSubscriptionMixin):
+
     def setUp(self):
         super(BaseSMSTest, self).setUp()
         self.account = None

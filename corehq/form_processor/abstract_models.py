@@ -283,6 +283,7 @@ class AbstractCommCareCase(object):
 
 
 class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
+
     @classmethod
     @abstractmethod
     def get_by_location(cls, location):
@@ -295,6 +296,7 @@ class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
 
 
 class IsImageMixin(object):
+
     @property
     def is_image(self):
         if self.content_type is None:
@@ -303,6 +305,7 @@ class IsImageMixin(object):
 
 
 class CaseAttachmentMixin(IsImageMixin):
+
     @property
     def is_present(self):
         """

@@ -11,6 +11,7 @@ from couchexport.export import SchemaMismatchException, ExportConfiguration
 
 logging = get_task_logger(__name__)
 
+
 @task
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
     try:
@@ -57,7 +58,6 @@ def rebuild_schemas(index):
 @task
 def bulk_export_async(bulk_export_helper, download_id,
                       filename="bulk_export", expiry=10*60*60, domain=None):
-
 
     if bulk_export_helper.zip_export:
         filename = "%s_%s"% (domain, filename) if domain else filename

@@ -165,6 +165,7 @@ def mock_out_couch(views=None, docs=None):
     """
     from fakecouch import FakeCouchDb
     db = FakeCouchDb(views=views, docs=docs)
+
     def _get_db(*args):
         return db
 
@@ -184,6 +185,7 @@ class RunConfig(object):
 
 
 class RunWithMultipleConfigs(object):
+
     def __init__(self, fn, run_configs):
         self.fn = fn
         self.run_configs = run_configs
@@ -234,6 +236,7 @@ class log_sql_output(ContextDecorator):
     """
     Can be used as either a context manager or decorator.
     """
+
     def __init__(self):
         self.logger = logging.getLogger('django.db.backends')
         self.new_level = logging.DEBUG

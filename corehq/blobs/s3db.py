@@ -5,6 +5,7 @@ from threading import Lock
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
+from corehq.blobs.util import ClosingContextProxy
 
 import boto3
 from boto3.s3.transfer import S3Transfer, ReadFileChunk
@@ -132,21 +133,6 @@ def maybe_not_found(throw=None):
             raise throw
 
 
-class ClosingContextProxy(object):
-
-    def __init__(self, obj):
-        self.obj = obj
-
-    def __getattr__(self, name):
-        return getattr(self.obj, name)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        self.obj.close()
-
-
 class OpenFileOSUtils(object):
 
     def get_file_size(self, fileobj):
@@ -181,6 +167,7 @@ class ReadOpenFileChunk(ReadFileChunk):
     def __init__(self, fileobj, start_byte, chunk_size, full_file_size, *args, **kw):
 
         class FakeFile:
+
             def seek(self, pos):
                 pass
 

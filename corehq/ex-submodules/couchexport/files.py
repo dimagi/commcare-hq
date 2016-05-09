@@ -9,12 +9,14 @@ def Temp(tmp):
 
 
 class TempBase(object):
+
     @property
     def file(self):
         return open(self.path, 'rb')
 
 
 class PathTemp(TempBase):
+
     def __init__(self, path):
         self.path = path
 
@@ -26,7 +28,9 @@ class PathTemp(TempBase):
     def delete(self):
         os.remove(self.path)
 
+
 class StringIOTemp(TempBase):
+
     def __init__(self, buffer):
         self.buffer = buffer
         self._path = None
@@ -47,6 +51,7 @@ class StringIOTemp(TempBase):
     def delete(self):
         if self._path is not None:
             os.remove(self._path)
+
 
 class ExportFiles(object):
 

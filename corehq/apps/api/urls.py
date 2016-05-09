@@ -82,6 +82,7 @@ API_LIST = (
 
 
 class CommCareHqApi(Api):
+
     def top_level(self, request, api_name=None, **kwargs):
         return HttpResponseNotFound()
 

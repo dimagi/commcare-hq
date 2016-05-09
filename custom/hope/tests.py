@@ -13,6 +13,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from custom.hope.models import HOPECase
 
+
 class TestHOPECaseResource(TestCase):
     """
     Smoke test for the HOPECase wrapper on CommCareCase to make sure that the
@@ -112,7 +113,6 @@ class TestHOPECaseResource(TestCase):
         hope_case._HOPE_child_all_dpt2_opv2_hb2_doses_given
         hope_case._HOPE_child_all_dpt3_opv3_hb3_doses_given
         hope_case._HOPE_child_measles_dose_given
-
 
     def test_derived_properties(self):
         """

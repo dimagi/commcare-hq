@@ -35,6 +35,7 @@ LOCATION_KEYWORD = 'LOCATION'
 
 
 class StructuredSMSException(Exception):
+
     def __init__(self, *args, **kwargs):
         response_text = kwargs.pop("response_text", "")
         xformsresponse = kwargs.pop("xformsresponse", None)
@@ -628,6 +629,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             args = args[2:]
         else:
             args = args[1:]
+
     def cmp_fcn(a1, a2):
         a1_ss = (a1.action == METHOD_STRUCTURED_SMS)
         a2_ss = (a2.action == METHOD_STRUCTURED_SMS)

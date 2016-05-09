@@ -10,6 +10,7 @@ from corehq.util.test_utils import create_test_case
 
 
 class PhoneNumberLookupTestCase(TestCase):
+
     def assertNoMatch(self, phone_search, suffix_search, owner_id_search):
         self.assertIsNone(VerifiedNumber.by_phone(phone_search))
         self.assertIsNone(VerifiedNumber.by_suffix(suffix_search))

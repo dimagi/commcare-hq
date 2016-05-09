@@ -204,6 +204,7 @@ class DomainViewMixin(object):
 
 
 class LoginAndDomainMixin(object):
+
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
@@ -581,6 +582,7 @@ def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
+
 
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
@@ -1608,6 +1610,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
 
 class SubscriptionMixin(object):
+
     @property
     @memoized
     def subscription(self):
@@ -2156,7 +2159,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     dispatcher = DomainReportDispatcher
     ajax_pagination = True
     asynchronous = False
-    is_bootstrap3 = True
     sortable = False
 
     fields = [

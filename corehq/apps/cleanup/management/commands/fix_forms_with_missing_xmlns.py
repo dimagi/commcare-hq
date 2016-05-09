@@ -279,6 +279,7 @@ def get_saved_apps(app):
 
 
 class MultipleFormsMissingXmlns(Exception):
+
     def __init__(self, build_id):
         msg = "Multiple forms missing xmlns for build {}".format(
             build_id
@@ -287,6 +288,7 @@ class MultipleFormsMissingXmlns(Exception):
 
 
 class FormNameMismatch(Exception):
+
     def __init__(self, instance_id, instance_build_id, form_unique_id):
         msg = "xform {} name does not match form {} name in build {}".format(
             instance_id,

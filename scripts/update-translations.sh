@@ -26,6 +26,7 @@ then
     echo "It looks like you haven't yet configured transifex."
     echo "Please visit the wiki page for instructions on how to do so:"
     echo "https://confluence.dimagi.com/display/commcarehq/Internationalization+and+Localization+-+Transifex+Translations"
+    abort
 fi
 
 echo "Pulling translations from transifex"

@@ -41,6 +41,7 @@ class DotExpandedDict(dict):
     >>> DotExpandedDict({'c.1': 2, 'c.2': 3, 'c': 1})
     {'c': 1}
     """
+
     def __init__(self, key_to_list_mapping):
         for k, v in key_to_list_mapping.items():
             current = self

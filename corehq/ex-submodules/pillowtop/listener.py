@@ -43,7 +43,6 @@ RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
 
 
-
 class PillowtopIndexingError(Exception):
     pass
 

@@ -1,0 +1,86 @@
+{% extends "reports/standard/base_template.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block js %}{{ block.super }}
+    {% compress js %}
+    <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+    <script src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
+    <script src="{% new_static 'reports/ko/saved_reports.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+
+{% block reports-js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function() {
+            var defaultConfig = {{ default_config|JSON }};
+            {% if report.has_datespan %}
+                defaultConfig.date_range = 'last7';
+            {% else %}
+                defaultConfig.date_range = null;
+            {% endif %}
+            defaultConfig.has_ucr_datespan = false;
+            defaultConfig.datespan_filters = [];
+            defaultConfig.datespan_slug = null;
+
+            
+            var $savedReports = $("#savedReports");
+            if ($savedReports.length) {
+                $savedReports.reportConfigEditor({
+                    filterForm: $("#reportFilters"),
+                    items: {{ report_configs|JSON }},
+                    defaultItem: defaultConfig,
+                    saveUrl: '{% url "add_report_config" domain %}'
+                });
+            }
+
+            $('#email-enabled').tooltip({
+                placement: 'right',
+                html: true,
+                title: '{% trans "You can email a saved version<br />of this report." %}'
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block report_filter_actions %}
+<div id="savedReports"
+     class="{{ report_filter_form_action_css_class }}">
+    <button id="apply-filters" type="submit" class="filters btn disabled"
+        disabled="disabled"
+        data-loading-text="{% trans 'Generating Report...' %}"
+        data-standard-text="{% trans 'Apply' %}">
+        {% trans 'Apply' %}
+    </button>
+    {% if not report.is_admin %}
+        <div class="btn-group">
+            <button type="button" class="btn dropdown-toggle btn-default" data-toggle="dropdown">
+                {% trans 'Favorites' %} <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+                <li data-bind="ifnot: reportConfigs().length">
+                    <a href="#">{% trans "You don't have any favorites" %}</a>
+                </li>
+                <!-- ko foreach: reportConfigs -->
+                <li>
+                    <a href="#" tabindex="-1"
+                       data-bind="text: name, attr: { title: description }, click: $root.setConfigBeingViewed">
+                    </a>
+                </li>
+                <!-- /ko -->
+            </ul>
+        </div>
+
+        <button class="btn btn-default" data-bind="click: setConfigBeingEdited"
+                onclick="ga_track_event('Scheduled Reports', 'Configure a saved report', '-');">
+            {% trans "Save" %}...
+        </button>
+    {% endif %}
+    {% if report.is_emailable %}
+        <div style="display: inline-block; margin-left:0.5em;" class="label label-info" id="email-enabled">
+            <i class="fa fa-info-circle"></i> {% trans "Email Supported" %}
+        </div>
+    {% endif %}
+    {% include "reports/partials/save_reports_modal.html" %}
+</div>
+{% endblock %}

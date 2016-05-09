@@ -53,6 +53,10 @@ describe('NotificationsService Unit Tests', function() {
         assert.isFalse(viewModel.notifications()[1].isInfo());
         assert.isTrue(viewModel.notifications()[1].isAlert());
         assert.isFalse(viewModel.hasError());
+
+        viewModel.notifications()[0].markAsRead();
+        assert.isTrue(viewModel.notifications()[0].isRead());
+        assert.isFalse(viewModel.hasUnread());
     });
 
     it("Error", function () {

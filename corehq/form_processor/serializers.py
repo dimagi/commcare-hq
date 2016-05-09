@@ -58,7 +58,7 @@ class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
 
 class CaseTransactionActionSerializer(serializers.ModelSerializer):
     xform_id = serializers.CharField(source='form_id')
-    date = serializers.CharField(source='server_date')
+    date = serializers.DateTimeField(source='server_date')
 
     class Meta:
         model = CaseTransaction

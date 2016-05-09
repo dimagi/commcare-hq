@@ -65,6 +65,8 @@ More on this technique here: http://highscalability.com/blog/2012/4/5/big-data-c
 
 ## Example fully custom report
 ```python
+
+
 class MyBasicReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     name = "My Basic Report"
     slug = "my_basic_report"
@@ -89,6 +91,8 @@ class MyBasicReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 See SqlTabularReport for more detailed docs.
 
 ```python
+
+
 class DemoReport(SqlTabularReport, CustomProjectReport, DatespanMixin):
     name = "SQL Demo"
     slug = "sql_demo"

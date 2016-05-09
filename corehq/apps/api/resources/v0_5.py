@@ -339,7 +339,6 @@ class GroupResource(v0_4.GroupResource):
             bundle.data['error_message'] = ex.message
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
-
     def _update(self, bundle):
         should_save = False
         for key, value in bundle.data.items():
@@ -397,6 +396,7 @@ class GroupResource(v0_4.GroupResource):
 
 
 class DomainAuthorization(ReadOnlyAuthorization):
+
     def __init__(self, domain_key='domain', *args, **kwargs):
         self.domain_key = domain_key
 
@@ -416,6 +416,7 @@ class NoCountingPaginator(Paginator):
         * http://django-tastypie.readthedocs.org/en/latest/paginator.html
         * http://wiki.postgresql.org/wiki/Slow_Counting
     """
+
     def get_previous(self, limit, offset):
         if offset - limit < 0:
             return None
@@ -436,6 +437,7 @@ class NoCountingPaginator(Paginator):
 
 
 class DeviceReportResource(HqBaseResource, ModelResource):
+
     class Meta:
         queryset = DeviceReportEntry.objects.all()
         list_allowed_methods = ['get']

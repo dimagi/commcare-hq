@@ -12,6 +12,7 @@ from corehq.apps.tzmigration.test_utils import \
 
 
 class UIStringTest(SimpleTestCase):
+
     def test_ui_string(self):
         now = datetime.datetime.utcnow()
         user_time = ServerTime(now).user_time(pytz.FixedOffset(-4 * 60))
@@ -30,6 +31,7 @@ class UIStringTest(SimpleTestCase):
 
 
 class TimezoneConversionTest(SimpleTestCase):
+
     def test_server_to_user(self):
         cases = [
             ('2015-03-20T12:00:00', pytz.FixedOffset(-4 * 60),
@@ -90,6 +92,7 @@ class TimezoneConversionTest(SimpleTestCase):
 
 
 class CloudCareTimeTest(SimpleTestCase):
+
     def test_utc_phonetime(self):
         dt = datetime.datetime.utcnow()
         self.assertEqual(PhoneTime(dt, pytz.UTC)

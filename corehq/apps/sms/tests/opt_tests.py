@@ -13,6 +13,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends, FormProcess
 
 
 class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
+
     def setUp(self):
         super(OptTestCase, self).setUp()
         self.domain = 'opt-test'

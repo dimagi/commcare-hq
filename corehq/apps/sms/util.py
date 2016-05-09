@@ -29,6 +29,7 @@ def strip_plus(phone_number):
     else:
         return phone_number
 
+
 def clean_phone_number(text):
     """
     strip non-numeric characters and add '%2B' at the front
@@ -159,6 +160,7 @@ CLEAN_TEXT_REPLACEMENTS = (
     (u"\u2019", "'"), # Close single quote
     (u"\u2026", "..."), # Ellipsis
 )
+
 
 def clean_text(text):
     """

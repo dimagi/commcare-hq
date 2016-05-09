@@ -4,6 +4,7 @@ from corehq.apps.app_manager.xpath_validator.wrapper import XpathValidationRespo
 
 
 class XpathValidatorTest(SimpleTestCase):
+
     def test_simple_valid(self):
         self.assertEqual(
             validate_xpath('/data/node'),

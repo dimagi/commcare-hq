@@ -44,6 +44,7 @@ class ExportSchemaTest(TestCase):
 
 
 class SavedSchemaTest(TestCase):
+
     def setUp(self):
         self.db = get_db('couchexport')
         self.custom_export = SavedExportSchema.wrap({
@@ -162,6 +163,7 @@ class SavedSchemaTest(TestCase):
 
 
 class GetFormattedRowsTests(SimpleTestCase):
+
     def test(self):
         doc = {
             'gender': 'boy'
@@ -187,6 +189,7 @@ class GetFormattedRowsTests(SimpleTestCase):
 
 
 class ExportSchemaWrapTest(SimpleTestCase):
+
     def test_wrap_datetime_hippy(self):
         schema1 = ExportSchema(
             schema={},

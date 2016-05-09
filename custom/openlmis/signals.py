@@ -42,6 +42,7 @@ def supply_point_updated(sender, supply_point, created, **kwargs):
                 endpoint = OpenLMISEndpoint.from_config(project.commtrack_settings.openlmis_config)
                 sync_supply_point_to_openlmis(supply_point, endpoint, created)
 
+
 @receiver(requisition_approved)
 def approve_requisitions(sender, requisitions, **kwargs):
     if requisitions and requisitions[0].requisition_status == RequisitionStatus.APPROVED:

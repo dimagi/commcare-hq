@@ -8,6 +8,7 @@ from .api import EmwfOptionsView
 
 
 class CaseListFilterUtils(EmwfUtils):
+
     def sharing_group_tuple(self, g):
         return ("sg__%s" % g['_id'], '%s [case sharing]' % g['name'])
 
@@ -63,6 +64,7 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
 
 
 class CaseListFilterOptions(EmwfOptionsView):
+
     @property
     @memoized
     def utils(self):

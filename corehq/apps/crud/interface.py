@@ -1,5 +1,6 @@
 from corehq.apps.reports.generic import GenericTabularReport
 
+
 class BaseCRUDAdminInterface(GenericTabularReport):
     asynchronous = True
     hide_filters = True

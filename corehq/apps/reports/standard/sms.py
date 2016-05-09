@@ -62,7 +62,6 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         "This report will only show data for users whose phone numbers have "
         "been verified. Phone numbers can be verified from the Settings and "
         "Users tab.")
-    is_bootstrap3 = True
 
     @property
     def headers(self):
@@ -90,6 +89,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
             # NOTE: this currently counts all messages from the user, whether
             # or not they were from verified numbers
             counts = _sms_count(user, self.datespan.startdate_utc, self.datespan.enddate_utc)
+
             def _fmt(val):
                 return format_datatables_data(val, val)
             return [
@@ -130,7 +130,6 @@ def _sms_count(user, startdate, enddate):
 
 
 class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
-    is_bootstrap3 = True
 
     def _fmt(self, val):
         if val is None:
@@ -454,6 +453,7 @@ class MessageLogReport(BaseCommConnectLogReport):
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
+
     @property
     def export_table(self):
         # Ignore the BaseCommConnectLogReport export
@@ -1006,8 +1006,6 @@ class SurveyDetailReport(BaseMessagingEventReport):
 
 
 class SMSOptOutReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport):
-
-    is_bootstrap3 = True
 
     name = ugettext_noop("SMS Opt Out Report")
     slug = 'sms_opt_out'

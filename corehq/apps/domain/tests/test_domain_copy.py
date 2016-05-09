@@ -9,6 +9,7 @@ from corehq.apps.app_manager.const import APP_V2
 
 
 class DomainCopyTest(TestCase):
+
     def setUp(self):
         self.domain = Domain(name='test')
         self.domain.save()

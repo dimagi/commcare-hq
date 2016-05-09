@@ -17,6 +17,7 @@ CaseIndexInfo = namedtuple(
 
 
 class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
+
     @property
     def content_body(self):
         with self.content_stream as stream:
@@ -37,7 +38,7 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_forms(form_ids):
+    def get_forms(form_ids, ordered=False):
         raise NotImplementedError
 
     @abstractmethod
@@ -89,6 +90,7 @@ class FormAccessors(object):
     """
     Facade for Form DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -105,8 +107,13 @@ class FormAccessors(object):
     def get_form(self, form_id):
         return self.db_accessor.get_form(form_id)
 
-    def get_forms(self, form_ids):
-        return self.db_accessor.get_forms(form_ids)
+    def get_forms(self, form_ids, ordered=False):
+        """
+        :param form_ids: list of form_ids to fetch
+        :type ordered:   True if the list of returned forms should have the same order
+                         as the list of form_ids passed in
+        """
+        return self.db_accessor.get_forms(form_ids, ordered=ordered)
 
     def iter_forms(self, form_ids):
         for chunk in chunked(form_ids, 100):
@@ -233,6 +240,7 @@ class CaseAccessors(object):
     """
     Facade for Case DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -333,6 +341,7 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
 
 
 class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
+
     @abstractmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         raise NotImplementedError
@@ -353,7 +362,7 @@ class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError\
 
     @abstractmethod
-    def get_current_ledger_state(case_ids):
+    def get_current_ledger_state(case_ids, ensure_form_id=False):
         """
         Given a list of case IDs return a dict of all current ledger data of the following format:
         {
@@ -375,6 +384,7 @@ class LedgerAccessors(object):
     """
     Facade for Ledger DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -412,3 +422,6 @@ class LedgerAccessors(object):
         if not case_ids:
             return {}
         return self.db_accessor.get_current_ledger_state(case_ids)
+
+    def get_case_ledger_state(self, case_id, ensure_form_id=False):
+        return self.db_accessor.get_current_ledger_state([case_id], ensure_form_id=ensure_form_id)[case_id]

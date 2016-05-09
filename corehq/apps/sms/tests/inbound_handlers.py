@@ -14,6 +14,7 @@ class KeywordTestCase(TouchformsTestCase):
     """
     Must be run manually (see util.TouchformsTestCase)
     """
+
     def setUp(self):
         super(KeywordTestCase, self).setUp()
         self.app = self.load_app("app_source.json")

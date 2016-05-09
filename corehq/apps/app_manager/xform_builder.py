@@ -62,6 +62,7 @@ class XFormBuilder(object):
     """
     A utility class for adding questions to an XForm
     """
+
     def __init__(self, name='Untitled Form', source=None):
         """
         Initialises an XFormBuilder instance
@@ -346,6 +347,7 @@ class XFormBuilder(object):
 
 
 class Question(object):
+
     def __init__(self, name, xform, groups=None):
         self.name = name
         self.xform = xform
@@ -353,6 +355,7 @@ class Question(object):
 
 
 class QuestionGroup(object):
+
     def __init__(self, name, xform, parents=None):
         self.name = name
         self.xform = xform

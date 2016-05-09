@@ -15,8 +15,6 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
     slug = "block_level_month_wise"
     no_value = '--'
 
-    is_bootstrap3 = True
-
     @property
     def headers(self):
         date = self.report_config['startdate']

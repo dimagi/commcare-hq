@@ -4,6 +4,7 @@ from corehq.apps.userreports.expressions.getters import DictGetter, NestedDictGe
 
 class Foo(object):
     # helper class used in tests
+
     @property
     def foo(self):
         return 'success'

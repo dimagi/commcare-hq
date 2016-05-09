@@ -7,6 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class EntryInstances(PostProcessor):
+
     def update_suite(self):
         details_by_id = self.get_detail_mapping()
         relevance_by_menu, menu_by_command = self.get_menu_relevance_mapping()
@@ -92,6 +93,7 @@ get_instance_factory._factory_map = {}
 
 
 class register_factory(object):
+
     def __init__(self, *schemes):
         self.schemes = schemes
 

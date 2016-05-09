@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap3/tabular.html" %}
+{% extends "reports/async/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -85,7 +85,6 @@
                 $('#toggle-report-filters').css('display', 'none');
             }
         });
-
     </script>
     {% for thisreport in reports %}
         {% for chart in thisreport.charts %}

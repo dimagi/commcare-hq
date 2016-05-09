@@ -86,6 +86,7 @@ class LanguageField(forms.CharField):
     """
     Adds language code validation to a field
     """
+
     def __init__(self, *args, **kwargs):
         super(LanguageField, self).__init__(*args, **kwargs)
         self.min_length = 2
@@ -531,6 +532,7 @@ class MultipleSelectionForm(forms.Form):
 
 
 class SupplyPointSelectWidget(forms.Widget):
+
     def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
@@ -682,6 +684,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
 
 
 class SelfRegistrationForm(forms.Form):
+
     def __init__(self, *args, **kwargs):
         if 'domain' not in kwargs:
             raise Exception('Expected kwargs: domain')

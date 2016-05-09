@@ -225,6 +225,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
 
 
 class ExtensionCasesCreateOwnerID(SimpleTestCase):
+
     def test_advanced_xform_create_owner_id_with_without_extensions(self):
         """ Owner id should be automatically set if there are any non-extension indices"""
 

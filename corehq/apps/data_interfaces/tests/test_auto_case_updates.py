@@ -20,6 +20,7 @@ from corehq.util.context_managers import drop_connected_signals
 
 
 class AutomaticCaseUpdateTest(TestCase):
+
     def setUp(self):
         self.domain = 'auto-update-test'
         self.case_db = CaseAccessors(self.domain)

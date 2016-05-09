@@ -57,6 +57,7 @@ def require_permission(permission, data=None, login_decorator=login_and_domain_r
 require_can_edit_web_users = require_permission('edit_web_users')
 require_can_edit_commcare_users = require_permission('edit_commcare_users')
 
+
 def require_permission_to_edit_user(view_func):
     @wraps(view_func)
     def _inner(request, domain, couch_user_id, *args, **kwargs):

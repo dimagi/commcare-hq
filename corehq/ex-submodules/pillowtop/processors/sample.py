@@ -6,6 +6,7 @@ class NoopProcessor(PillowProcessor):
     """
     Processor that does absolutely nothing.
     """
+
     def process_change(self, pillow_instance, change, do_set_checkpoint):
         pass
 
@@ -14,6 +15,7 @@ class LoggingProcessor(PillowProcessor):
     """
     Processor that just logs things - useful in tests or debugging.
     """
+
     def __init__(self, logger=None):
         self.logger = logger or pillow_logging
 
@@ -25,6 +27,7 @@ class CountingProcessor(PillowProcessor):
     """
     Processor that just counts how many things it has processed
     """
+
     def __init__(self):
         self.count = 0
 

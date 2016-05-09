@@ -92,6 +92,7 @@ class UserDataFormat(TableDataFormat):
             else:
                 yield _empty_row(len(self.columns))
 
+
 class FacilityDataFormat(TableDataFormat):
 
     def __init__(self, columns, users):
@@ -143,6 +144,7 @@ class Section(object):
     """
     A way to represent sections in a report. I wonder if we should genericize/pull this out.
     """
+
     def __init__(self, report, section_def, format_class):
         self.report = report
         self.section_def = section_def
@@ -169,6 +171,7 @@ class SqlSection(Section, SqlData):
     """
     A sql-based implementation of sections
     """
+
     def __getattribute__(self, item):
         if item in ['table_name', 'group_by', 'filters', 'filter_values', 'keys']:
             return getattr(self.report, item)
@@ -207,7 +210,6 @@ class FormPropertySection(Section):
     @property
     def xmlns(self):
         return self.section_def['xmlns']
-
 
     @property
     @memoized
@@ -289,7 +291,6 @@ class McSqlData(SqlData):
         )
         return sorted(filtered_users, key=lambda u: u.username)
 
-
     @property
     def group_by(self):
         return ['user_id']
@@ -344,11 +345,11 @@ class McSqlData(SqlData):
     def get_user_ids(self):
         return [u._id for u in self.get_users()]
 
+
 class MCSectionedDataProvider(DataProvider):
 
     def __init__(self, sqldata):
         self.sqldata = sqldata
-
 
     def headers(self):
         return DataTablesHeader(DataTablesColumn(_('mc_header_indicator')),
@@ -380,7 +381,6 @@ class MCBase(ComposedTabularReport, CustomProjectReport, DatespanMixin):
     SECTIONS = None  # override
     format_class = None  # override
     extra_context_providers = [section_context]
-    is_bootstrap3 = True
     use_datatables = False
 
     @classmethod
@@ -428,6 +428,7 @@ class HeathFacilityMonthly(MCBase):
     SECTIONS = HF_MONTHLY_REPORT
     format_class = UserDataFormat
 
+
 class DistrictMonthly(MCBase):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -438,6 +439,7 @@ class DistrictMonthly(MCBase):
     SECTIONS = DISTRICT_MONTHLY_REPORT
     format_class = FacilityDataFormat
 
+
 class DistrictWeekly(MCBase):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -447,6 +449,7 @@ class DistrictWeekly(MCBase):
     name = ugettext_noop("mc_report_dist_weekly")
     SECTIONS = DISTRICT_WEEKLY_REPORT
     format_class = FacilityDataFormat
+
 
 def _int(str):
     try:
@@ -492,6 +495,7 @@ def hf_message_content(report):
     if report.needs_filters:
         return {}
     data_by_user = dict((d['user_id'], d) for d in report.data_provider.sqldata.get_data())
+
     def _user_section(user):
         user_data = data_by_user.get(user._id, None)
         return {

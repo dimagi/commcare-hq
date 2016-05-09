@@ -137,6 +137,7 @@ class TestExtensionCaseIds(TestCase):
 
 
 class TestIndexedCaseIds(TestCase):
+
     @classmethod
     def setUpClass(cls):
         delete_all_cases()
@@ -164,6 +165,7 @@ class TestIndexedCaseIds(TestCase):
 
 
 class TestReverseIndexedCases(TestCase):
+
     @classmethod
     def setUpClass(cls):
         delete_all_cases()

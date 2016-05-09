@@ -8,8 +8,10 @@ from sqlalchemy import cast, Float
 
 logger = logging.getLogger("sqlagg")
 
+
 class MeanColumnWithCasting(BaseColumn):
     aggregate_fn = lambda _, column: func.avg(cast(column, Numeric(4, 2)))
+
 
 class CustomMedianQueryMeta(MedianQueryMeta):
 
@@ -37,7 +39,6 @@ class CustomMedianQueryMeta(MedianQueryMeta):
 
         return median_table
 
-
     def _build_median_table(self, metadata):
         """
         CREATE TEMP TABLE temp_median (id serial PRIMARY KEY, user_name VARCHAR(50), value INT);
@@ -57,7 +58,6 @@ class CustomMedianQueryMeta(MedianQueryMeta):
         median_table.create()
 
         return median_table
-
 
     def _build_median_id_table(self, metadata):
         """
@@ -89,7 +89,6 @@ class CustomMedianQueryMeta(MedianQueryMeta):
             query.append_order_by(column)
 
         query.append_order_by(origin_table.c[self.key])
-
 
         # TODO: better way of escaping names
         columns = ["value"] + self.group_by

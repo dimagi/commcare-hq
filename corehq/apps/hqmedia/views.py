@@ -417,6 +417,7 @@ class RemoveLogoView(BaseMultimediaView):
             self.app.save()
         return HttpResponse()
 
+
 class CheckOnProcessingFile(BaseMultimediaView):
     name = "hqmedia_check_processing"
 

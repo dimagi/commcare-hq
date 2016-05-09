@@ -26,6 +26,7 @@ class GatewayConnectionError(Exception):
 
 
 class IVRResponseData(object):
+
     def __init__(self, ivr_responses, input_length, session):
         self.ivr_responses = ivr_responses
         self.input_length = input_length
@@ -39,6 +40,7 @@ def convert_media_path_to_hq_url(path, app):
     else:
         url_base = get_url_base()
         return url_base + media.url + "foo.wav"
+
 
 def validate_answer(answer, question):
     """
@@ -61,6 +63,7 @@ def validate_answer(answer, question):
             return True
         except AssertionError:
             return False
+
 
 def format_ivr_response(text, app):
     return {

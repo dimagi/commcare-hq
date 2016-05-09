@@ -6,6 +6,7 @@ from django.conf import settings
 
 GUNICORN_CMD = 'python manage.py run_gunicorn'
 
+
 class Command(LabelCommand):
     help = "Slay dangling gunicorn processes with no remorse."
     args = ""

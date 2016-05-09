@@ -13,10 +13,10 @@ from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.apps.products.models import SQLProduct
 from couchdbkit import ResourceNotFound
+
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 
 register = template.Library()
 
@@ -25,6 +25,7 @@ DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 
 
 class CaseDisplayWrapper(object):
+
     def __init__(self, case):
         self.case = case
 
@@ -136,6 +137,7 @@ class CaseDisplayWrapper(object):
 
 
 class SupplyPointDisplayWrapper(CaseDisplayWrapper):
+
     def to_full_dict(self):
         from corehq.apps.locations.models import SQLLocation
         data = super(SupplyPointDisplayWrapper, self).to_full_dict()
@@ -256,12 +258,12 @@ def render_case(case, options):
         except SQLProduct.DoesNotExist:
             return (_('Unknown Product ("{}")').format(product_id))
 
-    ledgers = get_current_ledger_transactions(case.case_id)
-    for section, product_map in ledgers.items():
+    ledger_map = LedgerAccessors(case.domain).get_case_ledger_state(case.case_id, ensure_form_id=True)
+    for section, product_map in ledger_map.items():
         product_tuples = sorted(
             (_product_name(product_id), product_map[product_id]) for product_id in product_map
         )
-        ledgers[section] = product_tuples
+        ledger_map[section] = product_tuples
 
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
@@ -281,7 +283,7 @@ def render_case(case, options):
             "get_case_url": get_case_url,
             "timezone": timezone
         },
-        "ledgers": ledgers,
+        "ledgers": ledger_map,
         "timezone_offset": tz_offset_ms,
         "show_transaction_export": show_transaction_export,
         "xform_api_url": reverse('single_case_forms', args=[case.domain, case.case_id]),
@@ -327,6 +329,7 @@ def sortkey(child, type_info=None):
             key.append(case.opened_on or datetime.datetime.min)
     return key
 
+
 def get_session_data(case, current_case, type_info):
     # this logic should ideally be implemented in subclasses of
     # CommCareCase
@@ -343,6 +346,7 @@ def get_session_data(case, current_case, type_info):
 
 
 TREETABLE_INDENT_PX = 19
+
 
 def process_case_hierarchy(case_output, get_case_url, type_info):
     current_case = case_output['case']

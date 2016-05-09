@@ -437,6 +437,7 @@ class TransferDomainForm(forms.ModelForm):
 
 
 class SubAreaMixin():
+
     def clean_sub_area(self):
         area = self.cleaned_data['area']
         sub_area = self.cleaned_data['sub_area']
@@ -952,13 +953,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
 
 
-
-
 ########################################################################################################
 
 min_pwd = 4
 max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
+
 
 def clean_password(txt):
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
@@ -1100,6 +1100,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
+
     def clean_email(self):
         try:
             return super(ConfidentialPasswordResetForm, self).clean_email()

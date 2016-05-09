@@ -17,6 +17,7 @@ from .models import (
 
 
 class LanguageSelect(forms.Select):
+
     class Media:
         js = ('reports/javascripts/language_field.js',)
 

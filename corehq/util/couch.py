@@ -147,6 +147,7 @@ class IterDB(object):
 
     `new_edits` param will be passed directly to db.bulk_save
     """
+
     def __init__(self, database, chunksize=100, throttle_secs=None,
                  new_edits=None):
         self.db = database
@@ -211,12 +212,14 @@ class IterDB(object):
 
 
 class IterUpdateError(Exception):
+
     def __init__(self, results, *args, **kwargs):
         self.results = results
         super(IterUpdateError, self).__init__(*args, **kwargs)
 
 
 class DocUpdate(object):
+
     def __init__(self, doc, delete=False):
         self.doc = doc
         self.delete = delete

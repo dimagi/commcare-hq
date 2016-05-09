@@ -58,7 +58,6 @@ class AdoptionDisaggregatedReport(CareBaseReport):
     def data_provider(self):
         return AdoptionDisaggregatedSqlData(domain=self.domain, config=self.report_config, request_params=self.request_params)
 
-
     @property
     def headers(self):
         columns = [DataTablesColumn(c.header, sortable=False) for c in self.data_provider.columns]

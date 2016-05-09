@@ -19,6 +19,7 @@ from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
 class ILSPieChart(PieChart):
+
     def __init__(self, title, key, values, color=None):
         super(ILSPieChart, self).__init__(title, key, values, color)
         self.data = values
@@ -218,8 +219,6 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
     exportable = False
     base_template = 'ilsgateway/base_template.html'
     emailable = False
-
-    is_bootstrap3 = True
 
     @use_nvd3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
@@ -442,7 +441,6 @@ class DetailsReport(MultiReport):
             self.request.GET.get('datespan_first', ''),
             self.request.GET.get('datespan_second', ''),
         ))
-
 
     @property
     def report_stockonhand_url(self):

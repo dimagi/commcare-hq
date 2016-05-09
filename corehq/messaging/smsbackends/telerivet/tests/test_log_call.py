@@ -5,6 +5,7 @@ from django.test import Client
 
 
 class TelerivetLogCallTestCase(util.LogCallTestCase):
+
     def setUp(self):
         super(TelerivetLogCallTestCase, self).setUp()
         self.backend = SQLTelerivetBackend(

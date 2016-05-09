@@ -25,7 +25,6 @@ from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.messaging.smsbackends.telerivet.urls import domain_specific as telerivet_urls
 
 
-
 urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^$', 'default', name='sms_default'),
     url(r'^post/?$', 'post', name='sms_post'),

@@ -14,6 +14,7 @@ class FormES(HQESQuery):
         'has_xmlns': {"not": {"missing": {"field": "xmlns"}}},
         'has_user': {"not": {"missing": {"field": "form.meta.userID"}}},
     }
+
     @property
     def builtin_filters(self):
         return [

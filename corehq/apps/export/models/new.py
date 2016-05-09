@@ -695,6 +695,7 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
 
 
 class ExportRow(object):
+
     def __init__(self, data):
         self.data = data
 

@@ -10,6 +10,7 @@ BUFFER = []
 
 
 class CacheMock(LocMemCache):
+
     def __init__(self, name, params):
         self.name = name
         super(CacheMock, self).__init__(name, params)
@@ -25,6 +26,7 @@ class CacheMock(LocMemCache):
 
 
 class CacheMockWithSet(CacheMock):
+
     def set(self, key, value, timeout=None, version=None):
         super(CacheMockWithSet, self).set(key, value, timeout, version)
         BUFFER.append('{} set'.format(self.name))
@@ -96,6 +98,7 @@ class QuickcacheTest(SimpleTestCase):
 
     def test_vary_on_attr(self):
         class Item(object):
+
             def __init__(self, id, name):
                 self.id = id
                 self.name = name

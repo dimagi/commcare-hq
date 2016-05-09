@@ -51,6 +51,7 @@ def get_utcnow():
 
 
 class MessageMetadata(object):
+
     def __init__(self, *args, **kwargs):
         self.workflow = kwargs.get("workflow", None)
         self.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)

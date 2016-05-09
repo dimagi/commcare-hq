@@ -55,6 +55,7 @@ class TruncatingCharField(models.CharField):
     """
     http://stackoverflow.com/a/3460942
     """
+
     def get_prep_value(self, value):
         value = super(TruncatingCharField, self).get_prep_value(value)
         if value:
@@ -63,6 +64,7 @@ class TruncatingCharField(models.CharField):
 
 
 class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
+
     @property
     @memoized
     def content(self):
@@ -82,6 +84,7 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
 
 
 class SaveStateMixin(object):
+
     def is_saved(self):
         return bool(self._get_pk_val())
 
@@ -127,6 +130,7 @@ class AttachmentMixin(SaveStateMixin):
 
 
 class DisabledDbMixin(object):
+
     def save(self, *args, **kwargs):
         raise AccessRestricted('Direct object save disabled.')
 
@@ -138,6 +142,7 @@ class DisabledDbMixin(object):
 
 
 class RestrictedManager(models.Manager):
+
     def get_queryset(self):
         if not getattr(settings, 'ALLOW_FORM_PROCESSING_QUERIES', False):
             raise AccessRestricted('Only "raw" queries allowed')
@@ -1212,6 +1217,7 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     section_id = models.CharField(max_length=100, db_index=True, default=None)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
+    last_modified_form_id = models.CharField(max_length=100, null=True)
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
 
     @property
@@ -1333,6 +1339,7 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):
+
     @property
     def is_stockout(self):
         from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND

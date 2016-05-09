@@ -71,7 +71,6 @@ class HNBCReportDisplay(CaseDisplay):
             else:
                 return _('Other')
 
-
     @property
     def case_link(self):
         case_id, case_name = self.case['_id'], self.case['mother_name']
@@ -93,6 +92,7 @@ class HNBCReportDisplay(CaseDisplay):
         else:
             return '---'
 
+
 class BaseHNBCReport(CustomProjectReport, CaseListReport):
 
     fields = ['custom.apps.crs_reports.fields.SelectBlockField',
@@ -103,7 +103,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     include_inactive = True
     module_name = 'crs_reports'
     report_template_name = None
-    is_bootstrap3 = True
 
     @property
     @memoized
@@ -177,7 +176,6 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
                 "report_name": _(self.name)
             }
         return self.name
-
 
     def base_filters(self):
         block = self.request_params.get('block', '')
