@@ -30,7 +30,7 @@ def create_stock_report(location, products_quantities, date=None):
         domain=sql_location.domain,
         type='balance',
         date=date,
-        server_date=datetime.utcnow()
+        server_date=date
     )
     for product_code, quantity in products_quantities.iteritems():
         StockTransaction(
