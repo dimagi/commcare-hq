@@ -2,13 +2,19 @@ import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.transforms.specs import CustomTransform, DateFormatTransform, NumberFormatTransform
+from corehq.apps.userreports.transforms.specs import (
+    CustomTransform,
+    DateFormatTransform,
+    IdMappingTransform,
+    NumberFormatTransform,
+)
 
 
 class TransformFactory(object):
     spec_map = {
         'custom': CustomTransform,
         'date_format': DateFormatTransform,
+        'id_mapping': IdMappingTransform,
         'number_format': NumberFormatTransform,
     }
 

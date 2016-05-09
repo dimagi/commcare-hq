@@ -1,5 +1,5 @@
 from decimal import Decimal
-from dimagi.ext.jsonobject import JsonObject, StringProperty
+from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.custom.date import get_month_display, days_elapsed_from_date
 from corehq.apps.userreports.transforms.custom.numeric import \
@@ -56,6 +56,18 @@ class DateFormatTransform(Transform):
                 return value.strftime(self.format)
             except Exception:
                 return value
+
+        return transform_function
+
+
+class IdMappingTransform(Transform):
+    type = TypeProperty('id_mapping')
+    mappings = DictProperty(required=True)
+
+    def get_transform_function(self):
+
+        def transform_function(value):
+            return self.mappings.get(value)
 
         return transform_function
 
