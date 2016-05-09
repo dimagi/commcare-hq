@@ -22,7 +22,7 @@ from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
 from corehq.form_processor import signals
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER, AbstractLedgerValue
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -1197,7 +1197,7 @@ class FormEditRebuild(CaseTransactionDetail):
     deprecated_form_id = StringProperty()
 
 
-class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
+class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges, AbstractLedgerValue):
     """
     Represents the current state of a ledger. Supercedes StockState
     """

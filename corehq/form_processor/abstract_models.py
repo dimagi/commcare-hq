@@ -1,10 +1,12 @@
 import collections
 import logging
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 import six as six
 from couchdbkit import ResourceNotFound
+from decimal import Decimal
 
+from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from dimagi.utils.decorators.memoized import memoized
 from couchforms import const
 
@@ -312,3 +314,66 @@ class CaseAttachmentMixin(IsImageMixin):
             return False
         else:
             return True
+
+
+class AbstractLedgerValue(object):
+    @property
+    def months_remaining(self):
+        from casexml.apps.stock.utils import months_of_stock_remaining
+        return months_of_stock_remaining(
+            self.stock_on_hand,
+            self.get_daily_consumption()
+        )
+
+    @property
+    def resupply_quantity_needed(self):
+        monthly_consumption = self.get_monthly_consumption()
+        if monthly_consumption is not None and self.sql_location is not None:
+            overstock = self.sql_location.location_type.overstock_threshold
+            needed_quantity = int(
+                monthly_consumption * overstock
+            )
+            return int(max(needed_quantity - self.stock_on_hand, 0))
+        else:
+            return None
+
+    @property
+    def stock_category(self):
+        from casexml.apps.stock.utils import state_stock_category
+        return state_stock_category(self)
+
+    @memoized
+    def get_domain(self):
+        from corehq.apps.domain.models import Domain
+        return Domain.get_by_name(
+            self.domain
+        )
+
+    def get_daily_consumption(self):
+        if self.daily_consumption is not None:
+            return self.daily_consumption
+        else:
+            monthly = self._get_default_monthly_consumption()
+            if monthly is not None:
+                return Decimal(monthly) / Decimal(DAYS_IN_MONTH)
+
+    def get_monthly_consumption(self):
+
+        if self.daily_consumption is not None:
+            return self.daily_consumption * Decimal(DAYS_IN_MONTH)
+        else:
+            return self._get_default_monthly_consumption()
+
+    def _get_default_monthly_consumption(self):
+        from casexml.apps.stock.consumption import compute_default_monthly_consumption
+        domain = self.get_domain()
+        if domain and domain.commtrack_settings:
+            config = domain.commtrack_settings.get_consumption_config()
+        else:
+            return None
+
+        return compute_default_monthly_consumption(
+            self.case_id,
+            self.product_id,
+            config
+        )

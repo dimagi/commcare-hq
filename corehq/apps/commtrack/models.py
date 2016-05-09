@@ -5,6 +5,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
+
+from corehq.form_processor.abstract_models import AbstractLedgerValue
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 
@@ -360,7 +362,7 @@ class ActiveManager(models.Manager):
             .exclude(sql_location__is_archived=True)
 
 
-class StockState(models.Model):
+class StockState(models.Model, AbstractLedgerValue):
     """
     Read only reporting model for keeping computed stock states per case/product
     """
@@ -389,61 +391,8 @@ class StockState(models.Model):
         return self.stock_on_hand
 
     @property
-    def months_remaining(self):
-        return months_of_stock_remaining(
-            self.stock_on_hand,
-            self.get_daily_consumption()
-        )
-
-    @property
-    def resupply_quantity_needed(self):
-        monthly_consumption = self.get_monthly_consumption()
-        if monthly_consumption is not None and self.sql_location is not None:
-            overstock = self.sql_location.location_type.overstock_threshold
-            needed_quantity = int(
-                monthly_consumption * overstock
-            )
-            return int(max(needed_quantity - self.stock_on_hand, 0))
-        else:
-            return None
-
-    @property
-    def stock_category(self):
-        return state_stock_category(self)
-
-    @memoized
-    def get_domain(self):
-        return Domain.get_by_name(
-            DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
-        )
-
-    def get_daily_consumption(self):
-        if self.daily_consumption is not None:
-            return self.daily_consumption
-        else:
-            monthly = self._get_default_monthly_consumption()
-            if monthly is not None:
-                return Decimal(monthly) / Decimal(DAYS_IN_MONTH)
-
-    def get_monthly_consumption(self):
-
-        if self.daily_consumption is not None:
-            return self.daily_consumption * Decimal(DAYS_IN_MONTH)
-        else:
-            return self._get_default_monthly_consumption()
-
-    def _get_default_monthly_consumption(self):
-        domain = self.get_domain()
-        if domain and domain.commtrack_settings:
-            config = domain.commtrack_settings.get_consumption_config()
-        else:
-            config = None
-
-        return compute_default_monthly_consumption(
-            self.case_id,
-            self.product_id,
-            config
-        )
+    def domain(self):
+        return DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
 
     class Meta:
         app_label = 'commtrack'
