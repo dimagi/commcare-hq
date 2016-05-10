@@ -1,6 +1,6 @@
 import logging
+from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from couchdbkit.exceptions import ResourceNotFound
-
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
@@ -329,7 +329,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
     def aggregated_data(self, stock_states):
         def _convert_to_daily(consumption):
-            return consumption / 30 if consumption is not None else None
+            return consumption / DAYS_IN_MONTH if consumption is not None else None
 
         if self._include_advanced_data():
             product_aggregation = {}
