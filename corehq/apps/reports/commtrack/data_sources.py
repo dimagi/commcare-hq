@@ -242,12 +242,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     @property
     @memoized
     def _slug_attrib_map(self):
-        @memoized
-        def product_name(product_id):
-            return Product.get(product_id).name
-
         raw_map = {
-            self.SLUG_PRODUCT_NAME: lambda s: product_name(s.product_id),
+            self.SLUG_PRODUCT_NAME: lambda s: self.get_product(s.product_id).name,
             self.SLUG_PRODUCT_ID: 'product_id',
             self.SLUG_CURRENT_STOCK: 'stock_on_hand',
         }
@@ -305,9 +301,13 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             else:
                 return self.raw_product_states(stock_states)
 
+    @memoized
+    def get_product(self, product_id):
+        return Product.get(product_id)
+
     def leaf_node_data(self, stock_states):
         for state in stock_states:
-            product = Product.get(state.product_id)
+            product = self.get_product(state.product_id)
 
             result = {
                 'product_id': product._id,
@@ -364,7 +364,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         _convert_to_daily(product['consumption'])
                     )
                 else:
-                    product = Product.get(state.product_id)
+                    product = self.get_product(state.product_id)
                     consumption = state.get_monthly_consumption()
 
                     product_aggregation[state.product_id] = {
