@@ -103,7 +103,7 @@ def _get_model_for_stock_transaction(report, transaction_helper, ledger_db):
 
     if report.domain:
         # set this as a shortcut for post save signal receivers
-        txn.domain = report.domain
+        txn.__domain = report.domain
 
     # update the ledger DB in case later transactions reference the same ledger item
     ledger_db.set_ledger(txn)
