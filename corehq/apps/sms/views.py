@@ -70,6 +70,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     require_superuser,
 )
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
