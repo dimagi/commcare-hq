@@ -52,7 +52,7 @@ def check_headers(user_specs):
     for (old_name, new_name) in old_headers.iteritems():
         if old_name in headers:
             messages.append(
-                _("'The column header '{old_name}' is illegel, please use '{new_name}' instead.").format(
+                _("'The column header '{old_name}' is deprecated, please use '{new_name}' instead.").format(
                     old_name=old_name, new_name=new_name
                 ))
             headers.discard(old_name)
