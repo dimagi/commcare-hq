@@ -21,7 +21,7 @@ class TwilioLogCallTestCase(util.LogCallTestCase):
         super(TwilioLogCallTestCase, self).tearDown()
 
     def test_401_response(self):
-        with self.create_case() as case:
+        with self.create_case():
             start_count = Call.by_domain(self.domain).count()
 
             response = Client().post('/twilio/ivr/xxxxx', {
