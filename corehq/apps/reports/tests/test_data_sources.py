@@ -1,6 +1,10 @@
 from datetime import datetime
+
+from django.test import TestCase
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
 from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.loosechange import map_reduce
@@ -16,13 +20,12 @@ LOCATION_ID = StockStatusDataSource.SLUG_LOCATION_ID
 TEST_DOMAIN = 'commtrack-test1'
 
 
-class DataSourceTest(object):
-    # fixme: need to make a test again
-
+class DataSourceTest(TestCase):
     @classmethod
     def setUpClass(cls):
 
         cls.domain = create_domain(TEST_DOMAIN)
+        cls.domain.convert_to_commtrack()
         cls.couch_user = WebUser.create(None, "report_test", "foobar")
         cls.couch_user.add_domain_membership(TEST_DOMAIN, is_admin=True)
         cls.couch_user.save()
@@ -53,10 +56,10 @@ class DataSourceTest(object):
         cls.regions = {}
         cls.districts = {}
         for region_name, districts in test_setup.items():
-            region = make_loc(region_name, type='region')
+            region = make_loc(region_name, domain=TEST_DOMAIN, type='region')
             cls.regions[region_name] = region
             for district_name, sites in districts.items():
-                district = make_loc(district_name, type='district', parent=region)
+                district = make_loc(district_name, domain=TEST_DOMAIN, type='district', parent=region)
                 cls.districts[district_name] = district
                 for site_name, products in sites.items():
                     site = make_loc(site_name, type='site', parent=district, domain=TEST_DOMAIN)
@@ -70,6 +73,8 @@ class DataSourceTest(object):
                             product_id=prod._id,
                             stock_on_hand=stock,
                             last_modified_date=datetime.utcnow(),
+                            sql_product=SQLProduct.objects.get(product_id=prod._id),
+                            sql_location=site.sql_location
                         )
 
     @classmethod
@@ -79,7 +84,8 @@ class DataSourceTest(object):
 
     def test_raw_cases(self):
         config = {
-            'domain': TEST_DOMAIN
+            'domain': TEST_DOMAIN,
+            'enddate': datetime.utcnow()
         }
         data = list(StockStatusDataSource(config).get_data())
         self.assertEqual(len(data), 6)
@@ -97,7 +103,8 @@ class DataSourceTest(object):
         location = self.districts['A-b']._id
         config = {
             'domain': TEST_DOMAIN,
-            'location_id': location
+            'location_id': location,
+            'enddate': datetime.utcnow()
         }
         data = list(StockStatusDataSource(config).get_data())
         self.assertEqual(len(data), 1)
@@ -110,7 +117,8 @@ class DataSourceTest(object):
         config = {
             'domain': TEST_DOMAIN,
             'location_id': location,
-            'aggregate': True
+            'aggregate': True,
+            'enddate': datetime.utcnow()
         }
         data = list(StockStatusDataSource(config).get_data())
         self.assertEqual(len(data), 2)
@@ -126,7 +134,8 @@ class DataSourceTest(object):
         config = {
             'domain': TEST_DOMAIN,
             'location_id': location,
-            'aggregate': True
+            'aggregate': True,
+            'enddate': datetime.utcnow()
         }
         data = list(StockStatusDataSource(config).get_data())
         self.assertEqual(len(data), 1)
