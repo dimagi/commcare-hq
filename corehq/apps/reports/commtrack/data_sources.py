@@ -297,7 +297,10 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             )
 
             if self.config.get('aggregate'):
-                return self.aggregated_data(stock_states)
+                if self._include_advanced_data():
+                    return self.aggregated_data_advanced(stock_states)
+                else:
+                    return self.aggregated_data_simple(stock_states)
             else:
                 return self.raw_product_states(stock_states)
 
@@ -327,64 +330,64 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             yield result
 
-    def aggregated_data(self, stock_states):
+    def aggregated_data_advanced(self, stock_states):
         def _convert_to_daily(consumption):
             return consumption / DAYS_IN_MONTH if consumption is not None else None
 
-        if self._include_advanced_data():
-            product_aggregation = {}
-            for state in stock_states:
-                if state.product_id in product_aggregation:
-                    product = product_aggregation[state.product_id]
-                    product['current_stock'] = format_decimal(
-                        product['current_stock'] + state.stock_on_hand
-                    )
+        product_aggregation = {}
+        for state in stock_states:
+            if state.product_id in product_aggregation:
+                product = product_aggregation[state.product_id]
+                product['current_stock'] = format_decimal(
+                    product['current_stock'] + state.stock_on_hand
+                )
 
-                    consumption = state.get_monthly_consumption()
-                    if product['consumption'] is None:
-                        product['consumption'] = consumption
-                    elif consumption is not None:
-                        product['consumption'] += consumption
+                consumption = state.get_monthly_consumption()
+                if product['consumption'] is None:
+                    product['consumption'] = consumption
+                elif consumption is not None:
+                    product['consumption'] += consumption
 
-                    product['count'] += 1
+                product['count'] += 1
 
-                    if state.sql_location is not None:
-                        location_type = state.sql_location.location_type
-                        product['category'] = stock_category(
-                            product['current_stock'],
-                            _convert_to_daily(product['consumption']),
-                            location_type.understock_threshold,
-                            location_type.overstock_threshold,
-                        )
-                    else:
-                        product['category'] = 'nodata'
-
-                    product['months_remaining'] = months_of_stock_remaining(
+                if state.sql_location is not None:
+                    location_type = state.sql_location.location_type
+                    product['category'] = stock_category(
                         product['current_stock'],
-                        _convert_to_daily(product['consumption'])
+                        _convert_to_daily(product['consumption']),
+                        location_type.understock_threshold,
+                        location_type.overstock_threshold,
                     )
                 else:
-                    product = self.get_product(state.product_id)
-                    consumption = state.get_monthly_consumption()
+                    product['category'] = 'nodata'
 
-                    product_aggregation[state.product_id] = {
-                        'product_id': product._id,
-                        'location_id': None,
-                        'product_name': product.name,
-                        'location_lineage': None,
-                        'resupply_quantity_needed': None,
-                        'current_stock': format_decimal(state.stock_on_hand),
-                        'count': 1,
-                        'consumption': consumption,
-                        'category': state_stock_category(state),
-                        'months_remaining': months_of_stock_remaining(
-                            state.stock_on_hand,
-                            _convert_to_daily(consumption)
-                        )
-                    }
+                product['months_remaining'] = months_of_stock_remaining(
+                    product['current_stock'],
+                    _convert_to_daily(product['consumption'])
+                )
+            else:
+                product = self.get_product(state.product_id)
+                consumption = state.get_monthly_consumption()
 
-            return product_aggregation.values()
-        else:
+                product_aggregation[state.product_id] = {
+                    'product_id': product._id,
+                    'location_id': None,
+                    'product_name': product.name,
+                    'location_lineage': None,
+                    'resupply_quantity_needed': None,
+                    'current_stock': format_decimal(state.stock_on_hand),
+                    'count': 1,
+                    'consumption': consumption,
+                    'category': state_stock_category(state),
+                    'months_remaining': months_of_stock_remaining(
+                        state.stock_on_hand,
+                        _convert_to_daily(consumption)
+                    )
+                }
+
+        return product_aggregation.values()
+
+    def aggregated_data_simple(self, stock_states):
             # If we don't need advanced data, we can
             # just do some orm magic.
             #
