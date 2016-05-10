@@ -28,7 +28,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             }
             else if(response.tree){
                 // form entry time, doggy
-                FormplayerFrontend.request('startForm', response);
+                FormplayerFrontend.request('startForm', response, this.app_id);
             }
         },
 
@@ -82,7 +82,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         options.data.selections = select_list;
                     }
 
-                    options.url = 'http://localhost:8080/navigate_menu';
+                    options.url = 'http://localhost:8090/navigate_menu';
                     options.type = 'POST';
                     options.dataType = "json";
                     options.contentType = "application/json";

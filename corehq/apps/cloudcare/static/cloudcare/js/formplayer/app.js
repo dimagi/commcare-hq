@@ -38,6 +38,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     var loadSession = function () {
+
         data.onLoading = tfLoading;
         data.onLoadingComplete = tfLoadingComplete;
         data.xform_url="/webforms/player_proxy";
@@ -49,12 +50,14 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
         data.onload = function (adapter, resp) {
             //cloudCare.dispatch.trigger("form:ready", form, caseModel);
         };
-        data.onsubmit = function (xml) {
-            window.mainView.router.view.dirty = false;
+        data.onsubmit = function (resp) {
+            // window.mainView.router.view.dirty = false;
             // post to receiver
+            var xml = resp.output;
+            var postUrl = resp.postUrl;
             $.ajax({
                 type: 'POST',
-                url: submitUrl,
+                url: postUrl,
                 data: xml,
                 success: function () {
                     //self._clearFormPlayer();
