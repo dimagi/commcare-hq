@@ -418,6 +418,32 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             }
 
 
+class StockStatusDataSourceNew(StockStatusDataSource):
+    @property
+    def product_ids(self):
+        if self.program_id:
+            return set(
+                SQLProduct.objects
+                .filter(domain=self.domain, program_id=self.program_id)
+                .values_list('product_id', flat=True)
+            )
+
+    def get_stock_states(self, supply_point_ids):
+        from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+        ledgers = LedgerAccessorSQL.get_ledger_values_for_cases(
+            supply_point_ids,
+            section_id=STOCK_SECTION_TYPE,
+            date_start=self.start_date,
+            date_end=self.end_date
+        )
+
+        if self.program_id:
+            product_ids = self.product_ids
+            ledgers = [ledger for ledger in ledgers if ledger.entry_id in product_ids]
+
+        return ledgers
+
+
 class StockStatusBySupplyPointDataSource(StockStatusDataSource):
 
     def get_data(self):
