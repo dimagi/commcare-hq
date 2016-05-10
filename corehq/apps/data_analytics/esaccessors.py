@@ -1,4 +1,4 @@
-from corehq.apps.es.aggregations import AggregationTerm, NestedAggregationHelper
+from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
 from corehq.apps.es.forms import FormES
 
 
@@ -13,4 +13,4 @@ def get_app_submission_breakdown_es(domain_name, monthspan):
         gte=monthspan.startdate,
         lt=monthspan.computed_enddate,
     )
-    return NestedAggregationHelper(base_query=query, terms=terms).get_data()
+    return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()

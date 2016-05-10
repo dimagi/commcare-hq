@@ -34,6 +34,7 @@ LEDGER_BLOCKS_INFERRED = """
 
 
 class RebuildStockStateTest(TestCase):
+
     def setUp(self):
         self.domain = 'asldkjf-domain'
         self.case = CaseFactory(domain=self.domain).create_case()

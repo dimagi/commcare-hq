@@ -1,6 +1,7 @@
 import collections
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from django_prbac.utils import has_privilege
 
 
@@ -33,3 +34,8 @@ def has_report_builder_access(request):
     beta_group_enabled = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
 
     return (builder_enabled and builder_privileges) or beta_group_enabled
+
+
+def add_event(request, event):
+    events = request.session.get(REPORT_BUILDER_EVENTS_KEY, [])
+    request.session[REPORT_BUILDER_EVENTS_KEY] = events + [event]

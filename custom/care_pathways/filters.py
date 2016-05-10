@@ -244,7 +244,6 @@ class DisaggregateByFilter(BaseSingleOptionFilter):
     def options(self):
         return [('group', 'Group Leadership'), ('sex', 'Sex of Members')]
 
-
     @property
     @memoized
     def selected(self):
@@ -265,6 +264,7 @@ class TableCardGroupByFilter(BaseSingleOptionFilter):
     @memoized
     def selected(self):
         return self.get_value(self.request, self.domain) or "group_name"
+
 
 class TableCardTypeFilter(TypeFilter):
     single_option_select_without_default_text = 1

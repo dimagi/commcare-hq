@@ -10,6 +10,7 @@ from mock import patch
 
 
 class UserLocMapTest(CommTrackTest):
+
     def setUp(self):
         super(UserLocMapTest, self).setUp()
 

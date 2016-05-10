@@ -1,11 +1,12 @@
 from unittest import TestCase
 
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
 
 
 class TestCaseSearchES(ElasticTestMixin, TestCase):
+
     def setUp(self):
         self.es = CaseSearchES()
 
@@ -139,3 +140,17 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                  .case_property_query("name", "redbeard")
                  .case_property_query("parrot_name", "polly", clause="should", fuzzy=True))
         self.checkQuery(query, json_output)
+
+    def test_flatten_result(self):
+        expected = {'name': 'blah', 'foo': 'bar', 'baz': 'buzz'}
+        self.assertEqual(
+            flatten_result(
+                {
+                    'name': 'blah',
+                    'case_properties': [
+                        {'key': 'foo', 'value': 'bar'},
+                        {'key': 'baz', 'value': 'buzz'}]
+                }
+            ),
+            expected
+        )

@@ -11,6 +11,7 @@ class PillowRuntimeContext(object):
     Runtime context for a pillow. Gets passed around during the processing methods
     so that other functions can use it without maintaining global state on the class.
     """
+
     def __init__(self, changes_seen=0, do_set_checkpoint=True):
         self.changes_seen = changes_seen
         self.do_set_checkpoint = do_set_checkpoint

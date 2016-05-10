@@ -20,7 +20,6 @@ from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
 
-from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceAlreadyCreatedError,
@@ -30,7 +29,6 @@ from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     Currency,
-    Invoice,
     StripePaymentMethod,
     Subscription,
     SubscriptionAdjustment,
@@ -53,6 +51,12 @@ from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.dates import get_previous_month_date_range
+from corehq.util.soft_assert import soft_assert
+
+_invoicing_complete_soft_assert = soft_assert(
+    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 @transaction.atomic
@@ -193,6 +197,9 @@ def generate_invoices(based_on_date=None):
                 "Error occurred while creating invoice for "
                 "domain %s: %s" % (domain.name, e)
             )
+
+    if not settings.UNIT_TESTING:
+        _invoicing_complete_soft_assert(False, "Invoicing is complete!")
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):

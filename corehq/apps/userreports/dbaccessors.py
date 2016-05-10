@@ -37,6 +37,7 @@ def get_datasources_for_domain(domain):
         key=lambda config: config.display_name
     )
 
+
 @unit_testing_only
 def get_all_report_configs():
     all_domains = Domain.get_all()

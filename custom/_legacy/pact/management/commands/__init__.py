@@ -16,7 +16,6 @@ class PactMigrateCommand(NoArgsCommand):
     option_list = NoArgsCommand.option_list + (
     )
 
-
     def get_credentials(self):
         self.username = raw_input("""\tEnter pact username: """)
         if self.username == "":

@@ -19,6 +19,7 @@ class MassachusettsTestCase(LocationHierarchyTestCase):
 
 
 class TestLocationsSetup(MassachusettsTestCase):
+
     def test_location_types(self):
         for lt_name in self.location_type_names:
             in_db = LocationType.objects.get(domain=self.domain, name=lt_name)
@@ -38,6 +39,7 @@ class TestLocationsSetup(MassachusettsTestCase):
 
 
 class TestGetLocationsAndChildren(MassachusettsTestCase):
+
     def test_get_locations_and_children(self):
         names = ['Middlesex', 'Somerville', 'Suffolk']
         result = get_locations_and_children([self.locations[name].location_id

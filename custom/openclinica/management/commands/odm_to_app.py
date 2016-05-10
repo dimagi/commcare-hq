@@ -44,6 +44,7 @@ class StudyObject(object):
     """
     Base class of objects defined from ODM metadata
     """
+
     def __init__(self, defn, meta):
         """
         Initialize

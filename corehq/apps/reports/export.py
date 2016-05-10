@@ -13,6 +13,7 @@ from couchexport.util import SerializableFunction
 
 from soil import DownloadBase
 
+
 class BulkExport(object):
 
     @property
@@ -111,6 +112,7 @@ class CustomBulkExport(BulkExport):
             headers.extend(export_object.get_table_headers(True))
         return headers
 
+
 class ApplicationBulkExport(BulkExport):
     export_id = None
 
@@ -200,6 +202,7 @@ class ApplicationBulkExportHelper(BulkExportHelper):
                 app_bulk_export.export_id = appid
                 self.bulk_files.append(app_bulk_export)
 
+
 class CustomBulkExportHelper(BulkExportHelper):
 
     @property
@@ -211,6 +214,7 @@ class CustomBulkExportHelper(BulkExportHelper):
         bulk_export.create(export_tags, export_filter, safe_only=self.safe_only)
         bulk_export.domain = self.domain
         self.bulk_files = [bulk_export]
+
 
 def save_metadata_export_to_tempfile(domain, format, datespan=None, user_ids=None):
     """

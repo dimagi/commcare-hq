@@ -31,7 +31,6 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     """
     Base class for all deployments reports
     """
-    is_bootstrap3 = True
    
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -255,7 +254,6 @@ class SyncHistoryReport(DeploymentsReport):
                     return u'{:.10}...'.format(sync_log.get_state_hash())
                 except SyncLogAssertionError as e:
                     return _(u'Error computing hash! {}').format(e)
-
 
             num_cases = sync_log.case_count()
             columns = [

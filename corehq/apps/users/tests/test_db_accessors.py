@@ -13,6 +13,7 @@ from corehq.apps.domain.models import Domain
 
 
 class AllCommCareUsersTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         delete_all_users()

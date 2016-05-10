@@ -2,28 +2,28 @@
 
 FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $, _) {
     MenuList.Controller = {
-        selectMenu: function (app_id, select_list) {
+        selectMenu: function (appId, stepList) {
 
-            var fetchingApps = FormplayerFrontend.request("app:select:menus", app_id, select_list);
+            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", appId, stepList);
 
-            $.when(fetchingApps).done(function (options) {
+            /*
+             Determine the next screen to display.  Could be
+             a list of commands (modules and/or forms)
+             a list of entities (cases) and their details
+             a form to trigger form entry with
+             */
+            $.when(fetchingNextMenu).done(function (menuResponse) {
                 var menuListView;
-                if (options.type === "commands") {
-                    menuListView = new MenuList.MenuListView({
-                        collection: options,
-                        title: options.title,
-                    });
-                    FormplayerFrontend.regions.main.show(menuListView.render());
+                var menuData = {collection: menuResponse, title: menuResponse.title};
+                if (menuResponse.type === "commands") {
+                    menuListView = new MenuList.MenuListView(menuData);
                 }
-                else if (options.type === "entities") {
-                    menuListView = new MenuList.CaseListView({
-                        collection: options,
-                        title: options.title,
-                    });
-                    FormplayerFrontend.regions.main.show(menuListView.render());
-                } else{
+                else if (menuResponse.type === "entities") {
+                    menuListView = new MenuList.CaseListView(menuData);
+                } else {
                     //TODO: error handle this, we didn't recognize the JSON resposne
                 }
+                FormplayerFrontend.regions.main.show(menuListView.render());
             });
         },
 
@@ -32,14 +32,14 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             var details = model.options.model.attributes.detail.details;
             var detailModel = [];
             // we need to map the details and headers JSON to a list for a Backbone Collection
-            for(var i = 0; i < headers.length; i++){
+            for (var i = 0; i < headers.length; i++) {
                 var obj = {};
                 obj.data = details[i];
                 obj.header = headers[i];
                 obj.id = i;
                 detailModel.push(obj);
             }
-            var lst = _.map(detailModel, function(val) {
+            var lst = _.map(detailModel, function (val) {
                 return {id: val.id, data: val.data, header: val.header};
             });
 
@@ -48,8 +48,8 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             var menuListView = new MenuList.DetailListView({
                 collection: detailCollection,
             });
-            $('#my-modal-body').html(menuListView.render().el);
-            $('#myModal').modal('toggle');
+            $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
+            $('#case-detail-modal').modal('toggle');
         },
     };
 });

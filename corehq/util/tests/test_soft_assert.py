@@ -65,6 +65,7 @@ class SoftAssertTest(SimpleTestCase):
 
 
 class SoftAssertHelpersTest(SimpleTestCase):
+
     def test_number_is_power_of_two(self):
         powers_of_two = [2**i for i in range(10)]
         for n in range(100):

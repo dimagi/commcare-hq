@@ -446,7 +446,6 @@ class HOPECase(CommCareCase):
         tt_dose_dates = [self.get_case_property('tt_%d_date' % (n+1)) for n in range(0, 4)]
         return self.bool_to_yesno(len([date for date in tt_dose_dates if bool(date)]) >= 2)
 
-
     #
     # Begin child event_attributes
     #
@@ -558,7 +557,6 @@ class HOPECase(CommCareCase):
     def _HOPE_child_measles_dose_given(self):
         return self.bool_to_yesno(bool(self.get_case_property('measles_date')))
 
-
     #
     # Custom help properties for both case types
     #
@@ -566,7 +564,6 @@ class HOPECase(CommCareCase):
     @property
     def _HOPE_area_indicator(self):
         return self.registration_form.form.get('area_indicator') if self.registration_form else None
-
 
     @property
     def _HOPE_delivery_nature(self):

@@ -67,6 +67,7 @@ class FormQuestionSchemaTest(SimpleTestCase, TestXmlMixin):
 
 
 class TestGetOrCreateSchema(SimpleTestCase):
+
     def setUp(self):
         self.db = FormQuestionSchema.get_db()
         self.fakedb = FakeCouchDb()

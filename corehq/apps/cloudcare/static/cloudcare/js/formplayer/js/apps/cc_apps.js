@@ -14,19 +14,19 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
         listApps: function () {
             AppSelect.AppList.Controller.listApps();
         },
-        selectApp: function (app_id) {
-            AppSelect.MenuList.Controller.selectMenu(app_id);
+        selectApp: function (appId) {
+            AppSelect.MenuList.Controller.selectMenu(appId);
         },
         storeApps: function (apps) {
             FormplayerFrontend.request("appselect:storeapps", apps);
         },
-        listMenus: function (app_id) {
+        listMenus: function (appId) {
             var currentFragment = Backbone.history.getFragment();
             var steps = Util.getSteps(currentFragment);
             if (steps && steps.length > 0) {
-                AppSelect.MenuList.Controller.selectMenu(app_id, steps);
+                AppSelect.MenuList.Controller.selectMenu(appId, steps);
             } else {
-                AppSelect.MenuList.Controller.selectMenu(app_id);
+                AppSelect.MenuList.Controller.selectMenu(appId);
             }
         },
         showDetail: function(model) {
@@ -43,9 +43,9 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
         API.listApps();
     });
 
-    FormplayerFrontend.on("app:select", function (app_id) {
-        FormplayerFrontend.navigate("apps/" + app_id);
-        API.selectApp(app_id);
+    FormplayerFrontend.on("app:select", function (appId) {
+        FormplayerFrontend.navigate("apps/" + appId);
+        API.selectApp(appId);
     });
 
     FormplayerFrontend.on("apps:storeapps", function (apps) {

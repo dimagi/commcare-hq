@@ -3,15 +3,11 @@
 <html>
     <head>
         <title>Doc {{ doc_id }} {{ es_info.status }}</title>
-        {% if less_debug %}
-            <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core-debug.less' %}"/>
-            <script src="{% static 'less/dist/less-1.3.1.min.js' %}"></script>
-            {% if less_watch %}<script>less.watch();</script>{% endif %}
-        {% else %}
-        {% compress css %}
-        <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
+        {% compress js %}
+            <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
+            <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
         {% endcompress %}
-        {% endif %}
     </head>
     <body>
         <div class="container-fluid">
@@ -21,27 +17,32 @@
                     <input name="id" type="text" style="width: 30em"/>
                     <input class="btn btn-primary" type="submit"/>
                 </form>
+                <div class="alert alert-warning">
+                    Hey there!  This page is primarily for comparing documents in elasticsearch and couch.
+                    Are you sure you don't want
+                    <a href="{% url "raw_couch" %}?id={{ doc_id }}">raw_couch</a>?
+                </div>
             </div>
             {% if doc_id %}
                 <h3>Doc {{ doc_id }} {{ es_info.status }}</h3>
                 <p>Doc type: {{ couch_info.doc_type }}</p>
                 {% for index, es_doc in es_info.found_indices.items %}
                     <p>Found in index: {{ index }}</p>
-                    <div class="row-fluid">
-                        <div class="span6">
+                    <div class="row">
+                        <div class="col-xs-6">
                             <h3>Elasticsearch Doc:</h3>
                             <pre>{{ es_doc }}</pre>
                         </div>
-                        <div class="span6">
+                        <div class="col-xs-6">
                             <h3>Couch Doc:</h3>
-                            <pre>{{ couch_info.doc }}</pre>
+                            <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
                         </div>
                     </div>
                 {% endfor %}
                 {% if not found_indices %}
-                    <div class="span6">
+                    <div class="col-xs-6">
                         <h3>Couch Doc:</h3>
-                        <pre>{{ couch_info.doc }}</pre>
+                        <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
                     </div>
                 {% endif %}
             {% endif %}

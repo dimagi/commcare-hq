@@ -10,6 +10,7 @@ migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
     'PL_PROXY_CLUSTER_NAME': settings.PL_PROXY_CLUSTER_NAME
 })
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -17,7 +18,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('get_ledger_values_for_case.sql'),
         migrator.get_migration('get_ledger_value.sql'),
         migrator.get_migration('save_ledger_values.sql'),
     ]

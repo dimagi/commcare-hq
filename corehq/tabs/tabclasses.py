@@ -212,7 +212,6 @@ class SetupTab(UITab):
 
         dropdown_items = []
 
-
         if self.project.commtrack_enabled:
             dropdown_items += [(_(view.page_title), view) for view in (
                 ProductListView,
@@ -835,7 +834,6 @@ class MessagingTab(UITab):
                 ]
             })
 
-
         return contacts_urls
 
     @property
@@ -1130,6 +1128,12 @@ class ProjectSettingsTab(UITab):
                 }
             ]
 
+            if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain):
+                administration.append({
+                    'title': _('Case Search'),
+                    'url': reverse('case_search_config', args=[self.domain])
+                })
+
             def forward_name(repeater_type=None, **context):
                 if repeater_type == 'FormRepeater':
                     return _("Forward Forms")
@@ -1259,6 +1263,7 @@ class ProjectSettingsTab(UITab):
 class MySettingsTab(UITab):
     title = ugettext_noop("My Settings")
     view = 'default_my_settings'
+    url_prefix_formats = ('/account/',)
 
     @property
     def _is_viewable(self):
@@ -1442,6 +1447,10 @@ class AdminTab(UITab):
                  'url': reverse(AuthenticateAs.urlname)},
                 {'title': _('Look up user by email'),
                  'url': reverse('web_user_lookup')},
+                {'title': _('View raw couch documents'),
+                 'url': reverse('raw_couch')},
+                {'title': _('Check Call Center UCR tables'),
+                 'url': reverse('callcenter_ucr_check')},
             ])
         return [
             (_('Administrative Reports'), [

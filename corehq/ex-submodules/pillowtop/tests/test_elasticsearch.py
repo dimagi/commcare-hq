@@ -190,6 +190,7 @@ def _send_doc_to_pillow(pillow, doc_id, doc):
 
 
 class TestSendToElasticsearch(SimpleTestCase):
+
     def setUp(self):
         self.pillow = TestElasticPillow(online=False)
         self.es = self.pillow.get_es_new()

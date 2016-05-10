@@ -4,6 +4,7 @@ from custom.m4change.constants import PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVE
 
 
 class AncRegistrationCalculator(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, form):
         if form.xmlns in BOOKING_FORMS:
@@ -11,6 +12,7 @@ class AncRegistrationCalculator(fluff.Calculator):
 
 
 class Anc4VisitsCalculator(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, form):
         if form.xmlns in BOOKING_FOLLOW_UP_AND_LAB_RESULTS_FORMS:
@@ -28,6 +30,7 @@ class FacilityDeliveryCctCalculator(fluff.Calculator):
 
 
 class PncAttendanceWithin6WeeksCalculator(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, form):
         if form.form.get("date_delivery", None) is not None:
@@ -38,6 +41,7 @@ class PncAttendanceWithin6WeeksCalculator(fluff.Calculator):
 
 
 class NumberOfFreeSimsGivenCalculator(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, form):
         if form.xmlns in BOOKING_FORMS and form.form.get("free_sim", "") == 'yes':
@@ -45,6 +49,7 @@ class NumberOfFreeSimsGivenCalculator(fluff.Calculator):
 
 
 class MnoCalculator(fluff.Calculator):
+
     def __init__(self, value):
         super(MnoCalculator, self).__init__()
         self.mno_type_value = value

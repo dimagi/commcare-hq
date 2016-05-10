@@ -11,6 +11,8 @@
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
+        var defaultCalculationOptions = ["Count per Choice", "Sum", "Average"];
+        var stringOnlyCalculationOptions = ["Count per Choice"];
         /**
          * Knockout view model representing a row in the filter property list
          * @constructor
@@ -24,6 +26,55 @@
             this.format = ko.observable("");
             this.calculation = ko.observable("Count per Choice");
             this.dataSourceField = ko.observable("");
+
+            var rawOptions = {{ property_options|JSON }};
+            this.propertyOptions = ko.observableArray(rawOptions);
+            this.optionsContainQuestions = _.any(rawOptions, function (o) {
+                return o.type == 'question';
+            });
+            if (!this.optionsContainQuestions){
+                this.propertyOptions = ko.observableArray(rawOptions);
+            } else {
+                // Munge the property_options into the form expected by the questionsSelect binding.
+                this.propertyOptions = ko.observableArray(
+                    _.compact(_.map(that.propertyOptions(), function (o) {
+                        if (o.type === 'question') {
+                            return o.source;
+                        } else if (o.type == 'meta') {
+                            return {
+                                value: o.source[0],
+                                label: o.text
+                            }
+                        }
+                    }))
+                )
+            }
+
+            this.dataType = ko.computed(function() {
+                // Returns type of Question, applicable only if optionsContainQuestions is true
+                var property = this.property();
+                var propertyObject = _.find(this.propertyOptions(), function(option){
+                    return option.value == property;
+                });
+                if (propertyObject !== undefined && propertyObject.hasOwnProperty("type"))
+                    return propertyObject.type;
+                else
+                    return undefined;
+            }, this);
+
+            this.calculationOptions = ko.observableArray(defaultCalculationOptions);
+            if (this.optionsContainQuestions) {
+                // If options are questions, calculationOptions should be limited based on the dataType
+                this.calculationOptions = ko.computed(function() {
+
+                    if (_.contains(["DataBindOnly", "Int", "Double", "Long"], this.dataType())){
+                        return defaultCalculationOptions;
+                    }
+                    else {
+                        return stringOnlyCalculationOptions;
+                    }
+                }, this);
+            }
 
             /**
              * Return a "plain" javascript object representing this view model
@@ -72,6 +123,11 @@
             options = options || {};
 
             this.buttonText = options.buttonText !== undefined ? options.buttonText : "Add property";
+            // True if at least one column is required.
+            this.requireColumns = options.requireColumns !== undefined ? options.requireColumns : false;
+            this.requireColumnsText = options.requireColumnsText !== undefined ? options.requireColumnsText: "Please select at least one property";
+            // This function will be called if a user tries to submit the form with no columns.
+            this.noColumnsValidationCallback = options.noColumnsValidationCallback !== undefined ? options.noColumnsValidationCallback : null;
             this.propertyHelpText = options.propertyHelpText !== undefined ? options.propertyHelpText : null;
             this.displayHelpText = options.displayHelpText !== undefined ? options.displayHelpText : null;
             this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
@@ -82,30 +138,6 @@
             this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
             this.hasCalculationCol = ko.observable(options.hasCalculationCol !== undefined ? options.hasCalculationCol : false);
             this.formatOptions = ko.observableArray(["Choice", "Date"]);
-            this.calculationOptions = ko.observableArray(["Count per Choice", "Sum", "Average"]);
-            this.propertyOptions = ko.observableArray({{ property_options|JSON }});
-            var rawOptions = {{ property_options|JSON }};
-            this.optionsContainQuestions = _.any(rawOptions, function (o) {
-                return o.type == 'question';
-            });
-            if (!this.optionsContainQuestions){
-                this.propertyOptions = ko.observableArray(rawOptions);
-            } else {
-                // Munge the property_options into the form expected by the questionsSelect binding.
-                this.propertyOptions = ko.observableArray(
-                    _.compact(_.map(that.propertyOptions(), function (o) {
-                        if (o.type === 'question') {
-                            return o.source;
-                        } else if (o.type == 'meta') {
-                            return {
-                                value: o.source[0],
-                                label: o.text
-                            }
-                        }
-                    }))
-                )
-            }
-
 
             this.columns = ko.observableArray(options.initialCols !== undefined ? options.initialCols : []);
             this.serializedProperties = ko.computed(function(){
@@ -116,7 +148,12 @@
             this.showWarnings = ko.observable(false);
             this.validate = function(){
                 that.showWarnings(true);
-                return !_.contains(_.map(that.columns(), function(c){return c.isValid()}), false);
+                var columnsValid = !_.contains(_.map(that.columns(), function(c){return c.isValid()}), false);
+                var columnLengthValid = !(that.requireColumns && !that.columns().length);
+                if (that.noColumnsValidationCallback && !columnLengthValid){
+                    that.noColumnsValidationCallback();
+                }
+                return columnsValid && columnLengthValid;
             };
             this.buttonHandler = function(){
                 this.columns.push(new PropertyListItem());
@@ -152,7 +189,16 @@
                 initialCols: initialColumns,
                 buttonText: 'Add Column',
                 analyticsAction: 'Add Column',
-                calcHelpText: '{{ calculation_help_text|escapejs }}'
+                calcHelpText: '{{ calculation_help_text|escapejs }}',
+                requireColumns: {% if report_type != "chart"%}true{% else %}false{% endif %},
+                requireColumnsText: "At least one column is required",
+                noColumnsValidationCallback: function(){
+                    window.analytics.usage(
+                        'Report Builder',
+                        'Click On Done (No Columns)',
+                        '{{ report_type }}'
+                    );
+                }
             });
             this.submitHandler = function(formElement){
                 var isValid = true;
@@ -168,10 +214,20 @@
                     }, formElement);
                 }
                 return isValid;
-            }
+            };
         };
         var formViewModel = new configForm();
         $("#report-config-form").koApplyBindings(formViewModel);
+
+        $(function () {
+            {% for event in report_builder_events %}
+                {# Track a usage events that were produced on the server #}
+                window.analytics.usage.apply(this, {{event|JSON}});
+            {% endfor %}
+            window.analytics.trackUsageLink(
+                "#delete-report-button", "Report Builder", "Delete a Repot", '{{ report_type }}'
+            );
+        });
 
     </script>
 {% endblock %}

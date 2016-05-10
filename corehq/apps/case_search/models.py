@@ -3,6 +3,12 @@ from django.db import models
 from jsonfield.fields import JSONField
 
 
+CLAIM_CASE_TYPE = 'claim'
+CALCULATED_DATA = 'calculated_data'  # Datum ID to mark a case as claimed
+MARK_AS_CLAIMED = 'claimed'  # Datum value to mark a case as claimed
+FUZZY_PROPERTIES = "fuzzy_properties"
+
+
 class FuzzyProperties(jsonobject.JsonObject):
     case_type = jsonobject.StringProperty()
     properties = jsonobject.ListProperty(unicode)
@@ -42,6 +48,18 @@ class CaseSearchConfigJSON(jsonobject.JsonObject):
         return []
 
 
+class GetOrNoneManager(models.Manager):
+    """
+    Adds get_or_none method to objects
+    """
+
+    def get_or_none(self, **kwargs):
+        try:
+            return self.get(**kwargs)
+        except self.model.DoesNotExist:
+            return None
+
+
 class CaseSearchConfig(models.Model):
     """
     Contains config for case search
@@ -58,6 +76,8 @@ class CaseSearchConfig(models.Model):
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
     _config = JSONField(default=dict)
+
+    objects = GetOrNoneManager()
 
     @classmethod
     def enabled_domains(cls):

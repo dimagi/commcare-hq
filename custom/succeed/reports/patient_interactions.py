@@ -25,8 +25,6 @@ class PatientInteractionsReport(PatientDetailsReport):
     slug = "patient_interactions"
     name = 'Patient Interactions'
 
-    is_bootstrap3 = True
-
     @property
     def report_context(self):
         self.report_template_path = "patient_interactions.html"
@@ -84,7 +82,6 @@ class PatientInteractionsReport(PatientDetailsReport):
             if visit['show_button']:
                 interaction['url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
                                                        visit['module_idx'], visit['xmlns'], ret['patient']['_id'])
-
 
             ret['interaction_table'].append(interaction)
 

@@ -12,6 +12,7 @@ class Filter(object):
 
 
 class NOTFilter(Filter):
+
     def __init__(self, filter):
         self._filter = filter
 
@@ -23,6 +24,7 @@ class ANDFilter(Filter):
     """
     Lets you construct AND operations on filters.
     """
+
     def __init__(self, filters):
         self.filters = filters
         assert len(self.filters) > 0
@@ -35,6 +37,7 @@ class ORFilter(Filter):
     """
     Lets you construct OR operations on filters.
     """
+
     def __init__(self, filters):
         self.filters = filters
         assert len(self.filters) > 0
@@ -49,6 +52,7 @@ class CustomFilter(Filter):
 
     e.g. CustomFilter(lambda f, context: f['gender'] in ['male', 'female'])
     """
+
     def __init__(self, filter):
         self._filter = filter
 

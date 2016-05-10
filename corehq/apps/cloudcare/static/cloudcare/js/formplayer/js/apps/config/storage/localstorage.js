@@ -1,5 +1,7 @@
 /*global FormplayerFrontend */
 
+// Taken from https://github.com/davidsulc/marionette-gentle-introduction/commit/53f0f05b95c440e376ef74a60b4c41bbf7227de8
+
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $, _) {
     var findStorageKey = function (entity) {
         // use a model's urlRoot value

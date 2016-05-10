@@ -53,6 +53,7 @@ def _get_user_fields_from_form_doc(form_doc):
 
 
 class UnknownUsersProcessor(PillowProcessor):
+
     def __init__(self):
         self._es = get_es_new()
 

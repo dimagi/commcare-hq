@@ -87,7 +87,6 @@ def invoice_column_cell(invoice):
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
     exportable = True
-    is_bootstrap3 = True
 
     item_name = None
     new_item_view = None
@@ -447,7 +446,6 @@ class InvoiceInterfaceBase(GenericTabularReport):
     dispatcher = AccountingAdminInterfaceDispatcher
     exportable = True
     export_format_override = Format.CSV
-    is_bootstrap3 = True
 
 
 class WireInvoiceInterface(InvoiceInterfaceBase):
@@ -611,6 +609,8 @@ class InvoiceInterface(InvoiceInterfaceBase):
         'corehq.apps.accounting.interface.IsHiddenFilter',
     ]
 
+    subscription = None
+
     @property
     def headers(self):
         header = DataTablesHeader(
@@ -754,6 +754,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
     def _invoices(self):
         queryset = Invoice.objects.all()
 
+        if self.subscription:
+            queryset = queryset.filter(subscription=self.subscription)
+
         account_name = NameFilter.get_value(self.request, self.domain)
         if account_name is not None:
             queryset = queryset.filter(
@@ -796,8 +799,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             SalesforceAccountIDFilter.get_value(self.request, self.domain)
         if salesforce_account_id is not None:
             queryset = queryset.filter(
-                subscription__account__salesforce_account_id=
-                salesforce_account_id,
+                subscription__account__salesforce_account_id=salesforce_account_id,
             )
 
         salesforce_contract_id = \
@@ -875,6 +877,9 @@ class InvoiceInterface(InvoiceInterfaceBase):
             'rows': self.rows,
         })
 
+    def filter_by_subscription(self, subscription):
+        self.subscription = subscription
+
 
 def _get_domain_from_payment_record(payment_record):
     credit_adjustments = CreditAdjustment.objects.filter(payment_record=payment_record)
@@ -900,7 +905,6 @@ class PaymentRecordInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
-    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -996,7 +1000,6 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
-    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.DomainFilter',
@@ -1063,7 +1066,6 @@ class CreditAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
-    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.NameFilter',

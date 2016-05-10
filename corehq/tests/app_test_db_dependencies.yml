@@ -110,6 +110,7 @@ corehq.apps.app_manager:
   - corehq.couchapps
   - corehq.apps.accounting
   - corehq.apps.builds
+  - corehq.apps.case_search
   - corehq.apps.custom_data_fields
   - corehq.apps.domain
   - corehq.apps.groups
@@ -121,6 +122,7 @@ corehq.apps.app_manager:
   - corehq.apps.reports
   - corehq.apps.reports_core
   - corehq.apps.style
+  - corehq.tabs
   - statici18n
   - tastypie
   # user.delete() needs these ones

@@ -86,6 +86,7 @@ class BaseRepeaterTest(TestCase):
 
 
 class RepeaterTest(BaseRepeaterTest):
+
     def setUp(self):
         self.domain = "test-domain"
         create_domain(self.domain)
@@ -235,6 +236,7 @@ class RepeaterTest(BaseRepeaterTest):
 
 
 class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
+
     @classmethod
     def setUpClass(cls):
         super(CaseRepeaterTest, cls).setUpClass()
@@ -296,7 +298,6 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.repeater.black_listed_users = ['black_listed_user']
         self.repeater.save()
         black_list_user_id = 'black_listed_user'
-
 
         # case-creations by black-listed users shouldn't be forwarded
         black_listed_user_case = CaseBlock(
@@ -409,6 +410,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
 
         @RegisterGenerator(FormRepeater, 'new_format', 'XML')
         class NewFormGenerator(BasePayloadGenerator):
+
             def get_payload(self, repeat_record, payload_doc):
                 raise IgnoreDocument
 
@@ -451,6 +453,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
 
         @RegisterGenerator(CaseRepeater, 'new_format', 'XML')
         class NewCaseGenerator(BasePayloadGenerator):
+
             def get_payload(self, repeat_record, payload_doc):
                 return cls.payload
 
@@ -475,6 +478,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
         with self.assertRaises(DuplicateFormatException):
             @RegisterGenerator(CaseRepeater, 'case_xml', 'XML', is_default=False)
             class NewCaseGenerator(BasePayloadGenerator):
+
                 def get_payload(self, repeat_record, payload_doc):
                     return self.payload
 
@@ -482,6 +486,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
         with self.assertRaises(DuplicateFormatException):
             @RegisterGenerator(CaseRepeater, 'rubbish', 'XML', is_default=True)
             class NewCaseGenerator(BasePayloadGenerator):
+
                 def get_payload(self, repeat_record, payload_doc):
                     return self.payload
 

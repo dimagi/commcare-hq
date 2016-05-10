@@ -323,6 +323,10 @@ class RebuildStockStateView(BaseCommTrackManageView):
     page_title = ugettext_noop("Rebuild Stock State")
     template_name = 'commtrack/manage/rebuild_stock_state.html'
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(RebuildStockStateView, self).dispatch(request, *args, **kwargs)
+
     @memoized
     def get_server_date_by_form_id(self, form_id):
         try:

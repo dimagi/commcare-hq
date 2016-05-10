@@ -18,6 +18,7 @@ def _load_reports(report_module):
 
 
 class ReportModuleSuiteHelper(object):
+
     def __init__(self, report_module):
         assert isinstance(report_module, ReportModule)
         self.report_module = report_module
@@ -225,6 +226,7 @@ def _get_data_detail(config):
 
 
 class _MobileSelectFilterHelpers(object):
+
     @staticmethod
     def get_options_nodeset(config, filter_slug):
         return (

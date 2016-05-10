@@ -137,6 +137,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
         return self._submit_and_verify(doc_id, final_xform, dict_attachments,
                                 sync_token, date=date)
 
+
 class CaseMultimediaTest(BaseCaseMultimediaTest):
     """
     Tests new attachments for cases and case properties

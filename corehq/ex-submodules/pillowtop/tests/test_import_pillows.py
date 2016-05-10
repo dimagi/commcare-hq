@@ -62,6 +62,7 @@ PILLOWTOPS_OVERRIDE = {
     ]
 }
 
+
 @override_settings(PILLOWTOPS=PILLOWTOPS_OVERRIDE)
 class PillowFactoryFunctionTestCase(SimpleTestCase):
 

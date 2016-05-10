@@ -82,7 +82,6 @@ class CallCenterLocationOwnerTest(TestCase):
         self.user.save()
         self.assertCallCenterCaseOwner("")
 
-
     def test_ancestor_location_sync(self):
         # Alter config
         original_setting = self.domain.call_center_config.user_location_ancestor_level

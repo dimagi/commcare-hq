@@ -25,6 +25,7 @@ def prepend_newline_if_not_empty(string):
 
 
 class PdfLineItem(object):
+
     def __init__(self, description, quantity, unit_cost, subtotal, credits, total):
         self.description = description
         self.quantity = quantity
@@ -35,6 +36,7 @@ class PdfLineItem(object):
 
 
 class Address(object):
+
     def __init__(
         self,
         name='',
@@ -95,6 +97,7 @@ def midpoint(x1, x2):
 
 
 class InvoiceTemplate(object):
+
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
                  from_address=Address(**settings.INVOICE_FROM_ADDRESS),
                  to_address=None, project_name='',

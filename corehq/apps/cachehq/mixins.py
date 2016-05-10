@@ -7,6 +7,7 @@ from dimagi.utils.couch.cache import cache_core
 
 
 class _InvalidateCacheMixin(object):
+
     def clear_caches(self):
         invalidate_document(self, couch_db=self.get_db())
 
@@ -54,6 +55,7 @@ def dont_cache_docs(*args, **kwargs):
 
 
 class QuickCachedDocumentMixin(_InvalidateCacheMixin):
+
     def clear_caches(self):
         super(QuickCachedDocumentMixin, self).clear_caches()
         if getattr(self, '_id', False):

@@ -15,9 +15,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     Entities.configureStorage("FormplayerFrontend.Entities.AppSelectCollection");
 
     var storeApps = function (apps) {
-        var old_apps = new Entities.AppSelectCollection();
+        var oldApps = new Entities.AppSelectCollection();
         var defer = $.Deferred();
-        old_apps.fetch({
+        oldApps.fetch({
             success: function (data) {
                 defer.resolve(data);
             },

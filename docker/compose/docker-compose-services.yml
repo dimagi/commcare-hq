@@ -43,7 +43,7 @@ kafka:
     - "2181:2181"
     - "9092:9092"
   environment:
-    ADVERTISED_HOST: localhost
+    ADVERTISED_HOST: ${KAFKA_ADVERTISED_HOST_NAME}
   volumes:
     - ${DOCKER_DATA_HOME}/kafka:/tmp/kafka-logs
     - ${DOCKER_DATA_HOME}/zookeeper:/var/lib/zookeeper

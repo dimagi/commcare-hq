@@ -63,6 +63,7 @@ def get_product_name(product_id):
 
 
 class PPSRegistered(fluff.Calculator):
+
     @fluff.date_emitter
     def total_for_region(self, form):
         loc = get_location_by_type(form=form, type=u'r\xe9gion')
@@ -83,6 +84,7 @@ class PPSRegistered(fluff.Calculator):
 
 
 class PPSPlaned(fluff.Calculator):
+
     @fluff.date_emitter
     def total(self, form):
         yield {

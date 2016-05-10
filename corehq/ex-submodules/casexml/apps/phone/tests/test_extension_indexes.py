@@ -41,6 +41,7 @@ def test_generator(test_name, skip=False):
 
 
 class TestSequenceMeta(type):
+
     def __new__(mcs, name, bases, dict):
         tests_to_run = get_test_file_json('case_relationship_tests')
         run_single_tests = filter(lambda t: t.get('only', False), tests_to_run)

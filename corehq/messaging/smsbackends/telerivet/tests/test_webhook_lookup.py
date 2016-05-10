@@ -3,6 +3,7 @@ from django.test import TestCase
 
 
 class TelerivetWebhookLookupTestCase(TestCase):
+
     def setUp(self):
         self.backend1 = SQLTelerivetBackend(
             name='TELERIVET1',

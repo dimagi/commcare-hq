@@ -17,6 +17,7 @@ WEEKLY_SUMMARY_XMLNS = 'http://openrosa.org/formdesigner/7EFB54F1-337B-42A7-9C6A
 
 get_user_id = lambda form: form.metadata.userID
 
+
 def _filtered_calc_alias(xmlns=None, property_path=None, property_value=None,
                          operator=xcalculators.EQUAL, indicator_calculator=None,
                          window=timedelta(days=1)):
@@ -31,12 +32,14 @@ def _filtered_calc_alias(xmlns=None, property_path=None, property_value=None,
         window=window
     )
 
+
 def _or_alias(calculators):
     return SimpleCalculator(
         date_provider=xcalculators.default_date,
         filter=ORFilter([calc._filter for calc in calculators if calc._filter]),
         window=timedelta(days=1)
     )
+
 
 def _and_alias(calculators):
     return SimpleCalculator(

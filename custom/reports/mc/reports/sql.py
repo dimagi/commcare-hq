@@ -127,7 +127,6 @@ class McMixin(object):
 class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, ProjectReportParametersMixin):
     report_template_path = "mc/reports/sectioned_tabular.html"
     section = None
-    is_bootstrap3 = True
     use_datatables = False
 
     @property
@@ -616,6 +615,7 @@ class WeeklyForms(SqlData):
         for row in sorted(data, key=lambda x: x['date']):
             last_submisions.update({row['user_id']: row})
         weekly = {}
+
         def update_row(row1, row2):
             for key, value in row1.iteritems():
                 if key not in ['date', 'user_id', 'hf', 'district']:

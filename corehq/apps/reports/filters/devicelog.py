@@ -9,7 +9,7 @@ class DeviceLogTagFilter(BaseReportFilter):
     slug = "logtag"
     label = ugettext_noop("Filter Logs by Tag")
     errors_only_slug = "errors_only"
-    template = "reports/filters/bootstrap2/devicelog_tags.html"
+    template = "reports/filters/devicelog_tags.html"
 
     @property
     @quickcache(['self.domain'], timeout=10 * 60)
@@ -44,12 +44,12 @@ class DeviceLogDomainFilter(BaseSingleOptionFilter):
 
 class BaseDeviceLogFilter(BaseReportFilter):
     slug = "logfilter"
-    template = "reports/filters/bootstrap2/devicelog_filter.html"
+    template = "reports/filters/devicelog_filter.html"
     field = None
     label = ugettext_noop("Filter Logs By")
     url_param_map = {'Unknown': None}
 
-    @quickcache(['self.domain', 'selected'], timeout=10 * 60)
+    @quickcache(['self.domain', 'self.field', 'selected'], timeout=10 * 60)
     def get_filters(self, selected):
         show_all = bool(not selected)
         values = fast_distinct_in_domain(DeviceReportEntry, self.field, self.domain)

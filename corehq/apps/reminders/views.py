@@ -91,6 +91,7 @@ survey_reminders_permission = lambda *args, **kwargs: (
     )
 )
 
+
 def get_project_time_info(domain):
     timezone = get_timezone_for_user(None, domain)
     now = pytz.utc.localize(datetime.utcnow())

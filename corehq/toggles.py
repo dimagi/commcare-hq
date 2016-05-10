@@ -16,6 +16,7 @@ ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, T
 
 
 class StaticToggle(object):
+
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None):
         self.slug = slug
@@ -197,7 +198,7 @@ APP_AWARE_SYNC = PredictablyRandomToggle(
     'App-aware Sync',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.1
+    randomness=0.3
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -352,12 +353,27 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SYNC_SEARCH_CASE_CLAIM = StaticToggle(
+    'search_claim',
+    'Enable synchronous mobile searching and case claiming',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '
     '(for custom forms that Vellum breaks)',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+VELLUM_BETA = PredictablyRandomToggle(
+    'vellum_beta',
+    'Use Vellum beta version',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    randomness=0.1
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
