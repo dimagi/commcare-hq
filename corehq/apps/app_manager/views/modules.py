@@ -33,7 +33,8 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
 )
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.models import ReportConfiguration, \
+    StaticReportConfiguration
 from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
@@ -184,7 +185,8 @@ def _get_report_module_context(app, module):
             'filter_structure': report.filters,
         }
 
-    all_reports = ReportConfiguration.by_domain(app.domain)
+    all_reports = ReportConfiguration.by_domain(app.domain) + \
+                  StaticReportConfiguration.by_domain(app.domain)
     warnings = []
     validity = module.check_report_validity()
 
