@@ -57,6 +57,18 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
     def rebuild_ledger_state(self, case_id, section_id, entry_id):
         rebuild_stock_state(case_id, section_id, entry_id)
 
+    def process_form_archived(self, form):
+        StockReport.objects.filter(form_id=form.form_id).delete()
+
+    def process_form_unarchived(self, form):
+        from corehq.apps.commtrack.processing import process_stock
+        from casexml.apps.case.models import CommCareCase
+        result = process_stock([form])
+        result.populate_models()
+        result.commit()
+        result.finalize()
+        CommCareCase.get_db().bulk_save(result.relevant_cases)
+
 
 def _get_model_for_stock_report(domain, stock_report_helper):
     return StockReport(
