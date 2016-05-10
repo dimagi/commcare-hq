@@ -168,7 +168,9 @@
     </script>
 
     <script type="text/template" id="menu-view-item">
-        <td><%- displayText %></td>
+        <td><%- displayText ? displayText : "" %></td>
+        <td><%- audioUri ? audioUri : "" %></td>
+        <td><%- imageUri ? imageUri : ""%></td>
     </script>
 
     <script type="text/template" id="case-view-list">
