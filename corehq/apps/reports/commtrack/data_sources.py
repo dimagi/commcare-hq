@@ -1,10 +1,11 @@
 import logging
 from couchdbkit.exceptions import ResourceNotFound
+
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
 from corehq.apps.commtrack.models import SupplyPointCase, StockState, SQLLocation
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
@@ -21,11 +22,15 @@ from django.db.models import Sum
 
 
 def format_decimal(d):
-    # https://docs.python.org/2/library/decimal.html#decimal-faq
+    """Remove exponent and trailing zeros.
+
+        >>> format_decimal(Decimal('5E+3'))
+        Decimal('5000')
+
+        https://docs.python.org/2/library/decimal.html#decimal-faq
+    """
     if d is not None:
         return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
-    else:
-        return None
 
 
 def _location_map(location_ids):
@@ -105,27 +110,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         return datetime(date.year, date.month, date.day, 23, 59, 59)
 
     def get_data(self):
-        if self.active_location:
-            current_location = self.active_location.sql_location
-
-            if current_location.supply_point_id:
-                locations = [current_location]
-            else:
-                locations = []
-
-            locations += list(
-                current_location.get_descendants().filter(
-                    is_archived=False,
-                    supply_point_id__isnull=False
-                )
-            )
-        else:
-            locations = SQLLocation.objects.filter(
-                domain=self.domain,
-                is_archived=False,
-                supply_point_id__isnull=False
-            )
-
+        locations = self.locations()
         # locations at this point will only have location objects
         # that have supply points associated
         for loc in locations[:self.config.get('max_rows', 100)]:
@@ -150,6 +135,68 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
             )
 
             yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results})
+
+    def locations(self):
+        if self.active_location:
+            current_location = self.active_location.sql_location
+
+            if current_location.supply_point_id:
+                locations = [current_location]
+            else:
+                locations = []
+
+            locations += list(
+                current_location.get_descendants().filter(
+                    is_archived=False,
+                    supply_point_id__isnull=False
+                )
+            )
+        else:
+            locations = SQLLocation.objects.filter(
+                domain=self.domain,
+                is_archived=False,
+                supply_point_id__isnull=False
+            )
+
+        return locations
+
+
+class SimplifiedInventoryDataSourceNew(SimplifiedInventoryDataSource):
+
+    @property
+    @memoized
+    def product_ids(self):
+        if self.program_id:
+            return SQLProduct.objects\
+                .filter(domain=self.domain, program_id=self.program_id)\
+                .values_list('product_id', flat=True)
+
+    def get_data(self):
+        from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+        locations = self.locations()
+
+        # locations at this point will only have location objects
+        # that have supply points associated
+        for loc in locations[:self.config.get('max_rows', 100)]:
+            # TODO: this is very inefficient since it loads ALL the transactions up to the supplied
+            # date but only requires the most recent one. Should rather use a window function.
+            transactions = LedgerAccessorSQL.get_ledger_transactions_in_window(
+                case_id=loc.supply_point_id,
+                section_id=SECTION_TYPE_STOCK,
+                entry_id=None,
+                window_start=datetime.min,
+                window_end=self.datetime()
+            )
+
+            if self.program_id:
+                transactions = (
+                    tx for tx in transactions
+                    if tx.entry_id in self.product_ids
+                )
+
+            stock_results = sorted(transactions, key=lambda tx: tx.report_date, reverse=False)
+
+            yield (loc.name, {tx.entry_id: tx.updated_balance for tx in stock_results})
 
 
 class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
