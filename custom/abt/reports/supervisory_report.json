@@ -22,16 +22,16 @@
         "title": "Supervisory Report",
         "sort_expression": [
             {
-                "field": "form_name",
+                "field": "timeEnd",
+                "order": "DESC"
+            },
+            {
+                "field": "username",
                 "order": "ASC"
             },
             {
                 "field": "level_4",
                 "order": "ASC"
-            },
-            {
-                "field": "timeEnd",
-                "order": "DESC"
             }
         ],
         "filters": [

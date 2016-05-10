@@ -1,13 +1,24 @@
 from corehq.apps.commtrack.models import StockState
+from casexml.apps.stock.models import StockReport
 from corehq.util.translation import localize
-from custom.ilsgateway.tanzania.reminders import LOSS_ADJUST_CONFIRM, SOH_CONFIRM
+from custom.ilsgateway.tanzania.reminders import LOSS_ADJUST_CONFIRM, SOH_CONFIRM, LOSS_ADJUST_NO_SOH
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class ILSLossesAdjustmentsTest(ILSTestScript):
 
-    def setUp(self):
-        super(ILSLossesAdjustmentsTest, self).setUp()
+    def tearDown(self):
+        StockReport.objects.all().delete()
+        StockState.objects.all().delete()
+
+    def test_losses_adjustments_without_soh(self):
+        with localize('sw'):
+            response = unicode(LOSS_ADJUST_NO_SOH)
+        script = """
+            5551234 > um ID -3 dp -5 IP 13
+            5551234 < {0}
+        """.format(response % {'products_list': 'dp, id, ip'})
+        self.run_script(script)
 
     def test_losses_adjustments(self):
         with localize('sw'):

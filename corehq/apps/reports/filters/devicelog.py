@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter, BaseTagsFilter
 from corehq.util.queries import fast_distinct, fast_distinct_in_domain
 from corehq.util.quickcache import quickcache
 from phonelog.models import DeviceReportEntry
@@ -17,7 +17,7 @@ class DeviceLogTagFilter(BaseReportFilter):
         errors_only = bool(self.request.GET.get(self.errors_only_slug, False))
         selected_tags = self.request.GET.getlist(self.slug)
         show_all = bool(not selected_tags)
-        values = fast_distinct(DeviceReportEntry, 'type')
+        values = fast_distinct_in_domain(DeviceReportEntry, 'type', self.domain)
         tags = [{
             'name': value,
             'show': bool(show_all or value in selected_tags)
@@ -40,6 +40,12 @@ class DeviceLogDomainFilter(BaseSingleOptionFilter):
     @quickcache([], timeout=60 * 60)
     def options(self):
         return [(d, d) for d in fast_distinct(DeviceReportEntry, 'domain')]
+
+
+class DeviceLogCommCareVersionFilter(BaseTagsFilter):
+    slug = "commcare_version"
+    label = ugettext_lazy("Filter Logs by CommCareVersion")
+    placeholder = ugettext_lazy("Enter the CommCare Version you want e.g '2.28.1'")
 
 
 class BaseDeviceLogFilter(BaseReportFilter):

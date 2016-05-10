@@ -38,7 +38,7 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_forms(form_ids):
+    def get_forms(form_ids, ordered=False):
         raise NotImplementedError
 
     @abstractmethod
@@ -107,8 +107,13 @@ class FormAccessors(object):
     def get_form(self, form_id):
         return self.db_accessor.get_form(form_id)
 
-    def get_forms(self, form_ids):
-        return self.db_accessor.get_forms(form_ids)
+    def get_forms(self, form_ids, ordered=False):
+        """
+        :param form_ids: list of form_ids to fetch
+        :type ordered:   True if the list of returned forms should have the same order
+                         as the list of form_ids passed in
+        """
+        return self.db_accessor.get_forms(form_ids, ordered=ordered)
 
     def iter_forms(self, form_ids):
         for chunk in chunked(form_ids, 100):

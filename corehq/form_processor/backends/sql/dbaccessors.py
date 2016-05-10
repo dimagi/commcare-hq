@@ -175,7 +175,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         assert isinstance(form_ids, list)
         deletion_date = deletion_date or datetime.utcnow()
-        with get_cursor(CommCareCaseSQL) as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
                 'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
                 [domain, form_ids, deletion_date, deletion_id]
@@ -772,6 +772,43 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             sections[value.entry_id] = value
 
         return ret
+
+    @staticmethod
+    def delete_ledger_transactions_for_form(case_ids, form_id):
+        """
+        Delete LedgerTransactions for form.
+        :param case_ids: list of case IDs which ledger transactions belong to (required for correct sharding)
+        :param form_id:  ID of the form
+        :return: number of transactions deleted
+        """
+        assert isinstance(case_ids, list)
+        with get_cursor(LedgerTransaction) as cursor:
+            cursor.execute(
+                "SELECT delete_ledger_transactions_for_form(%s, %s) as deleted_count",
+                [case_ids, form_id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.deleted_count for result in results])
+
+    @staticmethod
+    def delete_ledger_values(case_id, section_id=None, entry_id=None):
+        """
+        Delete LedgerValues marching passed in args
+        :param case_id:    ID of the case
+        :param section_id: section ID or None
+        :param entry_id:   entry ID or None
+        :return: number of values deleted
+        """
+        try:
+            with get_cursor(LedgerValue) as cursor:
+                cursor.execute(
+                    "SELECT delete_ledger_values(%s, %s, %s) as deleted_count",
+                    [case_id, section_id, entry_id]
+                )
+                results = fetchall_as_namedtuple(cursor)
+                return sum([result.deleted_count for result in results])
+        except InternalError as e:
+            raise LedgerSaveError(e)
 
 
 def _order_list(id_list, object_list, id_property):

@@ -327,6 +327,10 @@ class ProductImportStatusView(BaseCommTrackManageView):
     urlname = 'product_import_status'
     page_title = ugettext_noop('Product Import Status')
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProductImportStatusView, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         context = super(ProductImportStatusView, self).main_context
         context.update({
@@ -337,7 +341,7 @@ class ProductImportStatusView(BaseCommTrackManageView):
             'progress_text': _("Importing your data. This may take some time..."),
             'error_text': _("Problem importing data! Please try again or report an issue."),
         })
-        return render(request, 'style/bootstrap2/soil_status_full.html', context)
+        return render(request, 'style/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -484,7 +488,7 @@ class ProductFieldsView(CustomDataModelMixin, BaseCommTrackManageView):
     urlname = 'product_fields_view'
     field_type = 'ProductFields'
     entity_string = _("Product")
-    template_name = "custom_data_fields/bootstrap3/custom_data_fields.html"
+    template_name = "custom_data_fields/custom_data_fields.html"
 
     @use_bootstrap3
     @use_jquery_ui

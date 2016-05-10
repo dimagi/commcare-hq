@@ -23,7 +23,7 @@ class CaseDBFixture(object):
     def fixture(self):
         """For a list of cases, return a fixture with all case properties
 
-        <fixture id="case">
+        <results id="case">
             <case case_id="" case_type="" owner_id="" status="">
                 <case_name/>
                 <date_opened/>
@@ -39,12 +39,12 @@ class CaseDBFixture(object):
             <case>
             ...
             </case>
-        </fixture>
+        </results>
 
         https://github.com/dimagi/commcare/wiki/casedb
         https://github.com/dimagi/commcare/wiki/fixtures
         """
-        element = safe_element("fixture")
+        element = safe_element("results")
         element.attrib = {'id': self.id}
 
         for case in self.cases:

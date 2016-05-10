@@ -105,7 +105,7 @@ class GenderFilter(BaseSingleOptionFilter):
     @property
     @memoized
     def selected(self):
-        return self.get_value(self.request, self.domain) or "2" if self.domain == 'pathways-india-mis' else ''
+        return self.get_value(self.request, self.domain) or ("2" if self.domain == 'pathways-india-mis' else '')
 
 
 class GroupLeadershipFilter(BaseSingleOptionFilter):
@@ -122,15 +122,21 @@ class GroupLeadershipFilter(BaseSingleOptionFilter):
     @property
     @memoized
     def selected(self):
-        return self.get_value(self.request, self.domain) or "2" if self.domain == 'pathways-india-mis' else ''
+        return self.get_value(self.request, self.domain) or ("2" if self.domain == 'pathways-india-mis' else '')
 
 
 class CBTNameFilter(BaseSingleOptionFilter):
     slug = 'cbt_name'
-    label = ugettext_noop('CBT Name')
     default_text = "All"
     template = "care_pathways/filters/single_option_with_helper.html"
     help_text = "Community Based Trainer"
+
+    @property
+    def label(self):
+        if self.domain == 'care-macf-malawi':
+            return 'FFT Name'
+        else:
+            return 'CBT NAME'
 
     @property
     def options(self):
