@@ -125,7 +125,8 @@ def process_ui_translation_upload(app, trans_file):
     for row in translations:
         if row["property"] not in commcare_ui_strings:
             # Add a warning for  unknown properties, but still add them to the translation dict
-            warnings.append(row["property"] + " is not a known CommCare UI string, but we added it anyway")
+            warnings.append(row["property"] + " is not a known CommCare UI string and so is not updated")
+            continue
         for lang in app.langs:
             if row.get(lang):
                 all_parameters = re.findall("\$.*?}", row[lang])

@@ -51,7 +51,6 @@ class BulkUiTranslation(SimpleTestCase):
 
         f = self._build_translation_download_file(headers, data)
         translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
-
         self.assertEqual(
             dict(translations),
             {
@@ -59,13 +58,11 @@ class BulkUiTranslation(SimpleTestCase):
                     u'date.tomorrow': u'wobble',
                     u'entity.sort.title': u'wabble',
                     u'home.start.demo': u'Ding',
-                    u'unknown_string': u'Ding',
                 },
                 u'fra': {
                     u'activity.locationcapture.Longitude': u'wibble',
                     u'entity.sort.title': u'wubble',
                     u'home.start.demo': u'Dong',
-                    u'unknown_string': u'Dong',
                 }
             }
 
