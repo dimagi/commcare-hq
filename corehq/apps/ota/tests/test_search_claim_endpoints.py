@@ -87,7 +87,7 @@ class ClaimCaseTests(TestCase):
     @run_with_all_backends
     def test_search_endpoint(self):
         known_result = (
-            '<fixture id="case">'  # (this is not the case type)
+            '<results id="case">'  # ("case" is not the case type)
                 '<case case_id="{case_id}" '
                       'case_type="{case_type}" '
                       'owner_id="{owner_id}" '
@@ -98,7 +98,7 @@ class ClaimCaseTests(TestCase):
                     '<location_id>None</location_id>'
                     '<referrals>None</referrals>'
                 '</case>'
-            '</fixture>'.format(
+            '</results>'.format(
                 case_id=self.case_id,
                 case_name=CASE_NAME,
                 case_type=CASE_TYPE,
