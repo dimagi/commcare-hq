@@ -15,7 +15,7 @@ def form_requires_input(form):
 def process_sms_form_complete(session, form, completed):
     resp, xform, cases = submit_form_locally(form, session.domain, app_id=session.app_id)
     session.end(completed=completed)
-    session.submission_id = xform.get_id
+    session.submission_id = xform.form_id
     session.save()
 
     if not completed:
