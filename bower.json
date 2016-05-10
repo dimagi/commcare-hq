@@ -61,6 +61,8 @@
   "resolutions": {
     "jquery": "1.11.1",
     "bootstrap": "3.3.6",
-    "select2": "4.0.0"
+    "select2": "4.0.0",
+    "underscore": "1.6.0",
+    "backbone": "0.9.1"
   }
 }
