@@ -347,20 +347,24 @@ def get_session_schema(form):
     """Get form session schema definition
     """
     structure = {}
-    # TODO handle advanced modules with more than one case
-    if hasattr(form, 'get_module'):
-        case_type = form.get_module().case_type
-    else:
-        case_type = None
+    cases = []
+    # TODO handle advanced modules with more than one use of the same case
+    if form.doc_type == "AdvancedForm":
+        for action in form.actions.load_update_cases:
+            cases.append((action.case_type, action.case_session_var))
+    elif hasattr(form, 'get_module'):
+        if form.get_module().case_type:
+            cases.append((form.get_module().case_type, 'case_id'))
 
-    if case_type:
-        structure["case_id"] = {
+    for case in cases:
+        structure[case[1]] = {
             "reference": {
                 "source": "casedb",
-                "subset": case_type,
+                "subset": case[0],
                 "key": "@case_id",
             },
         }
+
     return {
         "id": "commcaresession",
         "uri": "jr://instance/session",

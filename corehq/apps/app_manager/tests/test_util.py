@@ -1,7 +1,9 @@
 import corehq.apps.app_manager.util as util
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
-    Application, Module, OpenCaseAction, OpenSubCaseAction)
+    Application, Module, AdvancedModule, OpenCaseAction, OpenSubCaseAction,
+    LoadUpdateAction
+)
 from django.test.testcases import SimpleTestCase
 from mock import patch
 
@@ -81,6 +83,43 @@ class SchemaTest(SimpleTestCase):
             },
         })
 
+    def test_get_session_schema_for_advanced_form_without_cases(self):
+        app = self.make_app()
+        form = self.add_advanced_form(app)
+        schema = util.get_session_schema(form)
+        self.assertDictEqual(schema["structure"], {})
+
+    def test_get_session_schema_for_advanced_form_with_one_case(self):
+        app = self.make_app()
+        form = self.add_advanced_form(app, ["village"])
+        schema = util.get_session_schema(form)
+        self.assertDictEqual(schema["structure"]["case_id_load_village_0"], {
+            "reference": {
+                "source": "casedb",
+                "subset": "village",
+                "key": "@case_id",
+            },
+        })
+
+    def test_get_session_schema_for_advanced_form_with_multiple_case(self):
+        app = self.make_app()
+        form = self.add_advanced_form(app, ["village", "family"])
+        schema = util.get_session_schema(form)
+        self.assertDictEqual(schema["structure"]["case_id_load_village_0"], {
+            "reference": {
+                "source": "casedb",
+                "subset": "village",
+                "key": "@case_id",
+            },
+        })
+        self.assertDictEqual(schema["structure"]["case_id_load_family_0"], {
+            "reference": {
+                "source": "casedb",
+                "subset": "family",
+                "key": "@case_id",
+            },
+        })
+
     # -- helpers --
 
     def assert_has_kv_pairs(self, test_dict, expected_dict):
@@ -91,6 +130,18 @@ class SchemaTest(SimpleTestCase):
         """
         for key, value in expected_dict.items():
             self.assertEqual(test_dict[key], value)
+
+    def add_advanced_form(self, app, case_types=list(), module_id=None):
+        if module_id is None:
+            module_id = len(app.modules)
+            app.add_module(AdvancedModule.new_module('Advanced Module{}'.format(module_id), lang='en'))
+        form = app.new_form(module_id, 'form {}'.format(', '.join(case_types)), lang='en')
+        form.actions.load_update_cases = []
+        for case_type in case_types:
+            form.actions.load_update_cases.append(
+                LoadUpdateAction(case_type=case_type, case_tag='load_' + case_type + '_0')
+            )
+        return form
 
     def add_form(self, app, case_type=None, module_id=None):
         if module_id is None:
