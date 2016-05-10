@@ -1370,7 +1370,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             if group_name == 'no_group':
                 continue
 
-            case_sharing_groups = set(reduce(operator.add, [u['group_ids'] for u in users], []))
+            case_sharing_groups = set(reduce(operator.add, [u['group_ids'] + [u['location_id']] for u in users], []))
             active_cases = sum([int(report_data.active_cases_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
                 sum([int(report_data.active_cases_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
             total_cases = sum([int(report_data.total_cases_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
@@ -1504,7 +1504,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     def _total_row(self, rows, report_data):
         total_row = [_("Total")]
-        summing_cols = [1, 2, 4, 5, 6, 7]
+        summing_cols = [1, 2, 4, 5]
 
         for col in range(1, len(self.headers)):
             if col in summing_cols:
@@ -1513,7 +1513,17 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 )
             else:
                 total_row.append('---')
-
+        num = len(filter(lambda row: row[3] != _(self.NO_FORMS_TEXT), rows))
+        case_owners = set()
+        for user in self.users_to_iterate:
+            case_owners = case_owners.union((user.user_id, user.location_id))
+            case_owners = case_owners.union(user.group_ids)
+        total_row[6] = sum(
+            [int(report_data.active_cases_by_owner.get(id, 0))
+             for id in case_owners])
+        total_row[7] = sum(
+            [int(report_data.total_cases_by_owner.get(id, 0))
+             for id in case_owners])
         if self.view_by_groups:
             active_users = set()
             all_users = set()
@@ -1524,18 +1534,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     all_users.add(user['user_id'])
             total_row[3] = '%s / %s' % (len(active_users), len(all_users))
         else:
-            num = len(filter(lambda row: row[3] != _(self.NO_FORMS_TEXT), rows))
-            case_owners = set()
-            for user in self.users_to_iterate:
-                case_owners = case_owners.union((user.user_id, user.location_id))
-                case_owners = case_owners.union(user.group_ids)
             total_row[3] = '%s / %s' % (num, len(rows))
-            total_row[6] = sum(
-                [int(report_data.active_cases_by_owner.get(id, 0))
-                 for id in case_owners])
-            total_row[7] = sum(
-                [int(report_data.total_cases_by_owner.get(id, 0))
-                 for id in case_owners])
         return total_row
 
     @property
