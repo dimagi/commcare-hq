@@ -1,12 +1,13 @@
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.users.models import Permissions
+from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.web import json_request
 from django.core.exceptions import ObjectDoesNotExist
 from tastypie import fields
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource
+from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, StockStatusDataSourceNew
 
 
 class ReportResource(HqBaseResource):
@@ -35,7 +36,10 @@ class ReportResource(HqBaseResource):
         domain = Domain.get_by_name(domain)
         if domain.commtrack_enabled:
             if slug == StockStatusDataSource.slug:
-                return self._init_data_source(StockStatusDataSource, request, domain)
+                if should_use_sql_backend(domain.name):
+                    return self._init_data_source(StockStatusDataSourceNew, request, domain)
+                else:
+                    return self._init_data_source(StockStatusDataSource, request, domain)
 
     def _init_data_source(self, data_source, request, domain):
         config = json_request(request.GET)
