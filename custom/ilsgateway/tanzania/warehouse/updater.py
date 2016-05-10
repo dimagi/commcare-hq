@@ -222,6 +222,10 @@ def _get_test_locations(domain):
 
 
 def populate_report_data(start_date, end_date, domain, runner, locations=None, strict=True):
+    if runner.updating_historical_data:
+        update_historical_data(domain)
+        return
+
     # first populate all the warehouse tables for all facilities
     # hard coded to know this is the first date with data
     start_date = max(start_date, default_start_date())
@@ -271,6 +275,7 @@ def populate_report_data(start_date, end_date, domain, runner, locations=None, s
         res.get()
 
     runner.location = None
+    runner.updating_historical_data = True
     runner.save()
 
 

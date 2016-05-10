@@ -415,6 +415,7 @@ class ReportRun(models.Model):
     complete = models.BooleanField(default=False)
     has_error = models.BooleanField(default=False)
     domain = models.CharField(max_length=60)
+    updating_historical_data = models.BooleanField(default=False)
     location = models.ForeignKey(SQLLocation, null=True, on_delete=models.PROTECT)
 
     class Meta:
