@@ -1175,6 +1175,34 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'first_name',
                 'last_name',
                 crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Div(
+                    crispy.Div(
+                        css_class='col-sm-3 col-md-2'
+                    ),
+                    crispy.Div(
+                        crispy.HTML(self.initial['email_list']),
+                        css_class='col-sm-9 col-md-8 col-lg-6'
+                    ),
+                    css_id='emails-text',
+                    css_class='collapse form-group'
+                ),
+                crispy.Div(
+                    crispy.Div(
+                        css_class='col-sm-3 col-md-2'
+                    ),
+                    crispy.Div(
+                        StrictButton(
+                            _("Show contact emails as text"),
+                            type="button",
+                            css_class='btn btn-default',
+                            css_id='show_emails'
+                        ),
+                        crispy.HTML('<p class="help-block">%s</p>' %
+                                    _('Useful when you want to copy contact emails')),
+                        css_class='col-sm-9 col-md-8 col-lg-6'
+                    ),
+                    css_class='form-group'
+                ),
                 'phone_number',
             ),
             crispy.Fieldset(
