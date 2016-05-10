@@ -76,6 +76,7 @@ class StockPayloadGenerator(object):
                             self._consumption_entry(case_id, product_id, state)
                         )
 
+                consumption_entries = filter(lambda e: e is not None, consumption_entries)
                 if consumption_entries:
                     yield self.elem_maker.balance(
                         *consumption_entries,
