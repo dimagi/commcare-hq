@@ -1,0 +1,121 @@
+{
+    "domain": "icds-test",
+    "doc_type": "DataSourceConfiguration",
+    "referenced_doc_type": "XFormInstance",
+    "table_id": "sample-repeat",
+    "display_name": "ICDS Sample",
+    "base_item_expression": {
+        "type": "iterator",
+        "expressions": [
+            -90,
+            -60,
+            -30,
+            0,
+            30,
+            60,
+            90
+        ]
+    },
+    "configured_filter": {
+    },
+    "configured_indicators": [
+        {
+            "type": "expression",
+            "expression": {
+                "type": "identity"
+            },
+            "column_id": "offset",
+            "datatype": "integer",
+            "display_name": "month offset"
+        },
+        {
+            "type": "expression",
+            "expression": {
+                "type": "named",
+                "name": "received_on"
+            },
+            "column_id": "received_on",
+            "datatype": "date",
+            "display_name": "received on"
+        },
+        {
+            "type": "expression",
+            "expression": {
+                "type": "named",
+                "name": "offset_date"
+            },
+            "column_id": "offset_date",
+            "datatype": "date",
+            "display_name": "offset date"
+        },
+        {
+            "type": "boolean",
+            "column_id": "was_open",
+            "filter": {
+                "type": "and",
+                "filters": [
+                    {
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "named",
+                            "name": "case_opened_on"
+                        },
+                        "operator": "lt",
+                        "property_value": {
+                            "type": "named",
+                            "name": "offset_date"
+                        }
+                    },
+                    {
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "named",
+                            "name": "case_closed_on"
+                        },
+                        "operator": "gt",
+                        "property_value": {
+                            "type": "named",
+                            "name": "offset_date"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "named_expressions": {
+        "received_on": {
+            "type": "root_doc",
+            "expression": {
+                "type": "property_name",
+                "property_name": "received_on"
+            }
+        },
+        "case_opened_on": {
+            "type": "root_doc",
+            "expression": {
+                "type": "property_name",
+                "property_name": "case_opened_on"
+            }
+        },
+        "case_closed_on": {
+            "type": "root_doc",
+            "expression": {
+                "type": "property_name",
+                "property_name": "case_closed_on"
+            }
+        },
+        "offset_date": {
+            "type": "add_days",
+            "date_expression": {
+                "type": "root_doc",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "received_on"
+                }
+            },
+            "count_expression": {
+                "type": "identity"
+            }
+        }
+    }
+}
