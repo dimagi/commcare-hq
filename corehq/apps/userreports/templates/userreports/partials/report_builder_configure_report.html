@@ -7,7 +7,12 @@
     <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
 {% endblock %}
 
-{% block page_title %}{% trans "Step 2 of 2 - Configure Report Settings" %}{% endblock page_title %}
+{% block page_title %}
+    {% if not editing_existing_report %}
+    {% trans "Step 2 of 2" %} -
+    {% endif %}
+    {% trans "Configure Report Settings" %}
+{% endblock page_title %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
