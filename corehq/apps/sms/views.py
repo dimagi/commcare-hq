@@ -457,7 +457,7 @@ def api_send_sms(request, domain):
             chat_workflow = False
 
         if chat_workflow:
-            chat_user_id = request.couch_user._id
+            chat_user_id = request.couch_user.get_id
         else:
             chat_user_id = None
 
@@ -706,12 +706,12 @@ class ChatOverSMSView(BaseMessagingSectionView):
 
 def get_case_contact_info(domain_obj, case_ids):
     data = {}
-    for doc in iter_docs(CommCareCase.get_db(), case_ids):
+    for case in CaseAccessors(domain_obj.name).iter_cases(case_ids):
         if domain_obj.custom_case_username:
-            name = doc.get(domain_obj.custom_case_username)
+            name = case.get_case_property(domain_obj.custom_case_username)
         else:
-            name = doc.get('name')
-        data[doc['_id']] = [name or _('(unknown)')]
+            name = case.name
+        data[case.case_id] = [name or _('(unknown)')]
     return data
 
 
@@ -901,13 +901,7 @@ class ChatMessageHistory(View, DomainViewMixin):
     @property
     @memoized
     def contact_name(self):
-        if is_commcarecase(self.contact):
-            if self.domain_object.custom_case_username:
-                return self.contact.get_case_property(self.domain_object.custom_case_username)
-            else:
-                return self.contact.name
-        else:
-            return self.contact.first_name or self.contact.raw_username
+        return get_contact_name_for_chat(self.contact, self.domain_object)
 
     @quickcache(['user_id'], timeout=60 * 60, memoize_timeout=5 * 60)
     def get_chat_user_name(self, user_id):

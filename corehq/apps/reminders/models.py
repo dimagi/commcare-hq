@@ -162,24 +162,6 @@ def property_references_parent(case_property):
     return isinstance(case_property, basestring) and case_property.startswith("parent/")
 
 
-def get_case_property(case, case_property):
-    """
-    case                the case
-    case_property       the name of the case property (can be 'parent/property' to lookup
-                        on the parent, or 'property' to lookup on the case)
-    """
-    if case_property is None or case is None:
-        return None
-    elif property_references_parent(case_property):
-        parent_case = case.parent
-        if parent_case is None:
-            return None
-        else:
-            return parent_case.get_case_property(case_property[7:])
-    else:
-        return case.get_case_property(case_property)
-
-
 def case_matches_criteria(case, match_type, case_property, value_to_match):
     if not case_property:
         return False
@@ -316,20 +298,6 @@ class CaseReminderEvent(DocumentSchema):
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()
-
-
-def get_case_ids(domain):
-    """
-    Had to add this because this query kept intermittently raising
-    "NoMoreData: Can't parse headers" exceptions.
-    """
-    max_tries = 5
-    for i in range(max_tries):
-        try:
-            return get_case_ids_in_domain(domain)
-        except Exception:
-            if i == (max_tries - 1):
-                raise
 
 
 class CaseReminderHandler(Document):
