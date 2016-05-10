@@ -385,6 +385,10 @@ class StockState(models.Model, AbstractLedgerValue):
         return self.stock_on_hand
 
     @property
+    def location_id(self):
+        return self.sql_location.location_id
+
+    @property
     def domain(self):
         return DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
 
