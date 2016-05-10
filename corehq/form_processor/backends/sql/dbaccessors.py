@@ -675,6 +675,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
+    @staticmethod
+    def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
+        assert isinstance(case_ids, list)
+        return RawQuerySetWrapper(LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
+            [case_ids, section_id, entry_id, date_start, date_end]
+        ))
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
