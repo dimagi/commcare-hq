@@ -31,9 +31,11 @@ class LossAndAdjustment(KeywordHandler):
             self.respond(LOSS_ADJUST_BAD_FORMAT)
             return True
 
+        now = datetime.utcnow()
         report = StockReport.objects.create(
             form_id='ilsgateway-xform',
-            date=datetime.utcnow(),
+            date=now,
+            server_date=now,
             type='balance',
             domain=self.domain
         )

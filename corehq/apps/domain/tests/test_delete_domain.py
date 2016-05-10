@@ -23,7 +23,8 @@ class TestDeleteDomain(TestCase):
             type='balance',
             domain=domain_name,
             form_id='fake',
-            date=datetime.utcnow()
+            date=datetime.utcnow(),
+            server_date=datetime.utcnow(),
         )
 
         StockTransaction.objects.create(

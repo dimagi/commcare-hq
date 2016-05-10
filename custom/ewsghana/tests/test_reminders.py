@@ -22,13 +22,15 @@ from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_
 TEST_DOMAIN = 'ews-reminders-test-domain'
 
 
-def create_stock_report(location, products_quantities, date=datetime.utcnow()):
+def create_stock_report(location, products_quantities, date=None):
+    date = date or datetime.utcnow()
     sql_location = location.sql_location
     report = StockReport.objects.create(
         form_id='ews-reminders-test',
         domain=sql_location.domain,
         type='balance',
-        date=date
+        date=date,
+        server_date=date
     )
     for product_code, quantity in products_quantities.iteritems():
         StockTransaction(
