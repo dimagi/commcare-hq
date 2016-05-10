@@ -276,6 +276,19 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def get_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
+        stock_states = self.get_stock_states(sp_ids)
+        if len(sp_ids) == 1:
+            return self.leaf_node_data(stock_states)
+        else:
+            if self.config.get('aggregate'):
+                if self._include_advanced_data():
+                    return self.aggregated_data_advanced(stock_states)
+                else:
+                    return self.aggregated_data_simple(stock_states)
+            else:
+                return self.raw_product_states(stock_states)
+
+    def get_stock_states(self, supply_point_ids):
         stock_states = StockState.objects.filter(
             section_id=STOCK_SECTION_TYPE,
             last_modified_date__lte=self.end_date,
@@ -285,24 +298,14 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         if self.program_id:
             stock_states = stock_states.filter(sql_product__program_id=self.program_id)
 
-        if len(sp_ids) == 1:
-            stock_states = stock_states.filter(
-                case_id=sp_ids[0],
+        if len(supply_point_ids) == 1:
+            return stock_states.filter(
+                case_id=supply_point_ids[0],
             )
-
-            return self.leaf_node_data(stock_states)
         else:
-            stock_states = stock_states.filter(
-                case_id__in=sp_ids,
+            return stock_states.filter(
+                case_id__in=supply_point_ids,
             )
-
-            if self.config.get('aggregate'):
-                if self._include_advanced_data():
-                    return self.aggregated_data_advanced(stock_states)
-                else:
-                    return self.aggregated_data_simple(stock_states)
-            else:
-                return self.raw_product_states(stock_states)
 
     @memoized
     def get_product(self, product_id):
