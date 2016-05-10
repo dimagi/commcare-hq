@@ -42,7 +42,10 @@ class ClaimCaseTests(TestCase):
             case_id=self.case_id,
             case_type=CASE_TYPE,
             case_name=CASE_NAME,
+            external_id=CASE_NAME,
+            user_id=OWNER_ID,
             owner_id=OWNER_ID,
+            update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
         get_case_search_reindexer(DOMAIN).reindex()
 
@@ -86,6 +89,7 @@ class ClaimCaseTests(TestCase):
 
     @run_with_all_backends
     def test_search_endpoint(self):
+        # NOTE: Requires `ALLOW_FORM_PROCESSING_QUERIES = True` in localsettings.py
         known_result = (
             '<results id="case">'  # ("case" is not the case type)
                 '<case case_id="{case_id}" '
@@ -95,6 +99,7 @@ class ClaimCaseTests(TestCase):
                     '<case_name>{case_name}</case_name>'
                     '<date_opened>2016-04-17T10:13:06.588694Z</date_opened>'
                     '<last_modified>2016-04-17T10:13:06.588694Z</last_modified>'
+                    '<external_id>Jamie Hand</external_id>'
                     '<location_id>None</location_id>'
                     '<referrals>None</referrals>'
                 '</case>'
