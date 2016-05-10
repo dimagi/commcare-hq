@@ -1,0 +1,96 @@
+{% extends "cloudcare/base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block title %}
+    {% if request.couch_user.is_web_user %}
+        {% trans "Preview Form" %}
+    {% else %}
+        {% trans "Formplayer" %}
+    {% endif %}
+{% endblock %}
+
+{% block head %}
+    {{ block.super }}
+    {% include "imports/proptable.html" %}
+    {% include "imports/fancy-code.html" %}
+
+    <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
+
+{% endblock %}
+
+{% block js %} {{ block.super }}
+    {% compress js %}
+        <script src="{% static 'json2/json2.js' %}"></script>
+        <script src="{% static 'underscore/underscore.js' %}"></script>
+        <script src="{% static 'backbone/backbone-min.js' %}"></script>
+        <script src="{% static 'backbone.babysitter/lib/backbone.babysitter.js' %}"></script>
+        <script src="{% static 'backbone.wreqr/lib/backbone.wreqr.js' %}"></script>
+        <script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
+        <script src="{% static 'backbone.localStorage/backbone.localStorage.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/apps/config/storage/localstorage.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/entities/app_selection.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/apps/cc_apps.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_controller.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_view.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script>
+        //var formPlayer = hqImport('cloudcare/js/formplayer/app.js');
+        var apps = {{ apps|JSON }};
+        console.log(apps)
+        FormplayerFrontend.start(apps);
+    </script>
+{% endblock %}
+
+{% block page_navigation %}
+    <div class="nav-input" id="sync-container">
+        <button
+                class="btn btn-block btn-success"
+                type="button"
+                id="sync-button">
+            {% trans "Sync Data" %}
+        </button>
+        <small>
+            <i class="fa fa-info-circle"></i>&nbsp;
+            {% trans "Click to refresh the data and process all recently submitted cases" %}
+        </small>
+    </div>
+    <section id="app-main">
+        <nav id="app-list"></nav>
+        {% if sessions_enabled %}
+            <nav id="sessions"></nav>
+        {% endif %}
+    </section>
+{% endblock %}
+
+{% block page_content %}
+<div id="app-container">
+    <div id="main-region" class="container">
+        <p>Here is static content in the web page. You'll notice that it gets replaced by our app as soon as we start
+            it.</p>
+    </div>
+</div>
+
+    <script type="text/template" id="app-select-list">
+    <thead>
+    <tr>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</script>
+
+<script type="text/template" id="app-select-list-item">
+    <td><%- name %></td>
+    <td><%- _id %></td>
+</script>
+{% endblock %}
