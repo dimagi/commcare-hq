@@ -311,6 +311,7 @@ class CaseActionData(models.Model):
     class Meta:
         app_label = 'sofabed'
         unique_together = ("case", "index")
+        index_together = [['domain', 'date']]
 
 
 class CaseIndexData(models.Model):
