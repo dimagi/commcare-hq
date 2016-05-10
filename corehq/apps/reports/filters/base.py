@@ -28,6 +28,7 @@ class BaseReportFilter(object):
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
                  css_label=None, css_field=None):
+        self.domain = domain
         if self.slug is None:
             raise NotImplementedError("slug is required")
         if self.template is None:
@@ -35,7 +36,6 @@ class BaseReportFilter(object):
         if self.label is None:
             raise NotImplementedError("label is required")
         self.request = request
-        self.domain = domain
         self.timezone = timezone
         self.parent_report = parent_report
         self.css_label = css_label or DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER

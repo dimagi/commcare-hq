@@ -127,10 +127,16 @@ class GroupLeadershipFilter(BaseSingleOptionFilter):
 
 class CBTNameFilter(BaseSingleOptionFilter):
     slug = 'cbt_name'
-    label = ugettext_noop('CBT Name')
     default_text = "All"
     template = "care_pathways/filters/single_option_with_helper.html"
     help_text = "Community Based Trainer"
+
+    @property
+    def label(self):
+        if self.domain == 'care-macf-malawi':
+            return 'FFT Name'
+        else:
+            return 'CBT NAME'
 
     @property
     def options(self):
