@@ -29,6 +29,8 @@ def format_decimal(d):
 
         https://docs.python.org/2/library/decimal.html#decimal-faq
     """
+    if isinstance(d, int):
+        return d
     if d is not None:
         return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
 
