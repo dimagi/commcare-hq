@@ -17,13 +17,12 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
                 var menuData = {collection: menuResponse, title: menuResponse.title};
                 if (menuResponse.type === "commands") {
                     menuListView = new MenuList.MenuListView(menuData);
+                    FormplayerFrontend.regions.main.show(menuListView.render());
                 }
                 else if (menuResponse.type === "entities") {
                     menuListView = new MenuList.CaseListView(menuData);
-                } else {
-                    //TODO: error handle this, we didn't recognize the JSON resposne
+                    FormplayerFrontend.regions.main.show(menuListView.render());
                 }
-                FormplayerFrontend.regions.main.show(menuListView.render());
             });
         },
 

@@ -55,7 +55,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "username": "test",
                         "password": "123",
                         "domain": "test",
-                        "appId": collection.appId,
+                        "app_id": collection.appId,
                         "selections": stepList,
                     });
 
