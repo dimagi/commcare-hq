@@ -296,11 +296,6 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
         self.state |= self.DELETED
 
-    def set_partial_submission(self):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        FormAccessorSQL.set_partial_submission(self)
-        self.partial_submission = True
-
     def to_json(self):
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self)

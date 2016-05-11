@@ -98,9 +98,6 @@ class AbstractXFormInstance(object):
     def soft_delete(self):
         raise NotImplementedError()
 
-    def set_partial_submission(self):
-        raise NotImplementedError()
-
     def to_json(self):
         raise NotImplementedError()
 
