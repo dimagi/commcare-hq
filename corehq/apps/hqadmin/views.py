@@ -936,7 +936,7 @@ class CallcenterUCRCheck(BaseAdminSectionView):
                 stat['ucr_class'] = 'success'
                 percent = None
                 for name in stat_names:
-                    percent = int(100 * stat[name] / total)
+                    percent = 0 if total == 0 else int(100 * stat[name] / total)
                     stat[name + '_percent'] = percent
                     for range in scale:
                         if percent <= range[0]:
