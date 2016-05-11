@@ -361,7 +361,7 @@ class FormAccessorsTests(TestCase):
     def test_set_partial_submission(self):
         meta = TestFormMetadata(domain=DOMAIN)
         f1 = get_simple_wrapped_form('f1', metadata=meta)
-        f2 = get_simple_wrapped_form('f2', metadata=meta)
+        get_simple_wrapped_form('f2', metadata=meta)
         f1.set_partial_submission()
 
         accessors = FormAccessors(DOMAIN)
