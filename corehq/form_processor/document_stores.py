@@ -3,7 +3,7 @@ from collections import defaultdict
 from corehq.blobs import Error as BlobError
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, LedgerValueNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from dimagi.utils.decorators.memoized import memoized
