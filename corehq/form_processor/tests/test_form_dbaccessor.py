@@ -357,6 +357,17 @@ class FormAccessorsTests(TestCase):
         form = accessors.get_form('f3')
         self.assertFalse(form.is_deleted)
 
+    @run_with_all_backends
+    def test_set_partial_submission(self):
+        meta = TestFormMetadata(domain=DOMAIN)
+        f1 = get_simple_wrapped_form('f1', metadata=meta)
+        f2 = get_simple_wrapped_form('f2', metadata=meta)
+        f1.set_partial_submission()
+
+        accessors = FormAccessors(DOMAIN)
+        self.assertTrue(accessors.get_form('f1').partial_submission)
+        self.assertFalse(accessors.get_form('f2').partial_submission)
+
 
 def _simulate_form_edit():
     existing_form = create_form_for_test(DOMAIN, save=False)
