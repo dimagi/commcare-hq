@@ -34,9 +34,11 @@ import json
 import types
 import re
 import datetime
+import uuid
 from collections import defaultdict, namedtuple
 from functools import wraps
 from copy import deepcopy
+from mimetypes import guess_type
 from urllib2 import urlopen
 from urlparse import urljoin
 
@@ -56,6 +58,7 @@ from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
+from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
@@ -74,7 +77,6 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
@@ -944,17 +946,18 @@ class FormBase(DocumentSchema):
     def get_version(self):
         return self.version if self.version else self.get_app().version
 
-    def add_stuff_to_xform(self, xform):
+    def add_stuff_to_xform(self, xform, build_profile_id=None):
         app = self.get_app()
-        xform.exclude_languages(app.build_langs)
-        xform.set_default_language(app.build_langs[0])
+        langs = app.get_build_langs(build_profile_id)
+        xform.exclude_languages(langs)
+        xform.set_default_language(langs[0])
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
 
-    def render_xform(self):
+    def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
-        self.add_stuff_to_xform(xform)
+        self.add_stuff_to_xform(xform, build_profile_id)
         return xform.render()
 
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
@@ -1010,7 +1013,7 @@ class FormBase(DocumentSchema):
         app = self.get_app()
         return trans(
             self.name,
-            [app.default_language] + app.build_langs,
+            [app.default_language] + app.langs,
             include_lang=False
         )
 
@@ -1280,8 +1283,8 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
 
-    def add_stuff_to_xform(self, xform):
-        super(Form, self).add_stuff_to_xform(xform)
+    def add_stuff_to_xform(self, xform, build_profile_id=None):
+        super(Form, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta(self)
 
     def all_other_forms_require_a_case(self):
@@ -1928,7 +1931,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         app = self.get_app()
         return trans(
             self.name,
-            [app.default_language] + app.build_langs,
+            [app.default_language] + app.langs,
             include_lang=False
         )
 
@@ -2319,7 +2322,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                               "that there are no issues with this module.".format(error=e, form_id=self.unique_id))
                 pass
 
-    def add_stuff_to_xform(self, xform):
+    def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(AdvancedForm, self).add_stuff_to_xform(xform)
         xform.add_case_and_meta_advanced(self)
 
@@ -3019,7 +3022,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             return super(CareplanForm, cls).wrap(data)
 
-    def add_stuff_to_xform(self, xform):
+    def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(CareplanForm, self).add_stuff_to_xform(xform)
         xform.add_care_plan(self)
 
@@ -3829,7 +3832,146 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return errors
 
 
-class VersionedDoc(LazyAttachmentDoc):
+class LazyBlobDoc(BlobMixin):
+    """LazyAttachmentDoc for blob db
+
+    Cache blobs in local memory (for this request)
+    and in django cache (for the next few requests)
+    and commit to couchdb.
+
+    See also `dimagi.utils.couch.lazy_attachment_doc.LazyAttachmentDoc`
+
+    Cache strategy:
+    - on fetch, check in local memory, then cache
+      - if both are a miss, fetch from couchdb and store in both
+    - before an attachment is committed to couchdb, clear cache
+      (allowing the next fetch to go all the way through).
+      Clear rather than write new value, in case something
+      goes wrong with the save.
+    """
+
+    migrating_blobs_from_couch = True
+
+    def __init__(self, *args, **kwargs):
+        super(LazyBlobDoc, self).__init__(*args, **kwargs)
+        self._LAZY_ATTACHMENTS = {}
+        # to cache fetched attachments
+        # these we do *not* send back down upon save
+        self._LAZY_ATTACHMENTS_CACHE = {}
+
+    @classmethod
+    def wrap(cls, data):
+        if "_attachments" in data:
+            data = data.copy()
+            attachments = data.pop("_attachments").copy()
+            if cls.migrating_blobs_from_couch:
+                # preserve stubs so couch attachments don't get deleted on save
+                stubs = {}
+                for name, value in list(attachments.items()):
+                    if "stub" in value:
+                        stubs[name] = attachments.pop(name)
+                if stubs:
+                    data["_attachments"] = stubs
+        else:
+            attachments = None
+        self = super(LazyBlobDoc, cls).wrap(data)
+        if attachments:
+            for name, attachment in attachments.items():
+                if isinstance(attachment, basestring):
+                    info = {"content": attachment}
+                else:
+                    raise ValueError("Unknown attachment format: {!r}"
+                                     .format(attachment))
+                self.lazy_put_attachment(name=name, **info)
+        return self
+
+    def __attachment_cache_key(self, name):
+        return u'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
+
+    def __set_cached_attachment(self, name, content):
+        cache.set(self.__attachment_cache_key(name), content, timeout=60 * 60 * 24)
+
+    def __get_cached_attachment(self, name):
+        return cache.get(self.__attachment_cache_key(name))
+
+    def __remove_cached_attachment(self, name):
+        cache.delete(self.__attachment_cache_key(name))
+
+    def __store_lazy_attachment(self, content, name=None, content_type=None,
+                                content_length=None):
+        info = {
+            'content': content,
+            'content_type': content_type,
+            'content_length': content_length,
+        }
+        self._LAZY_ATTACHMENTS[name] = info
+        return info
+
+    def put_attachment(self, content, name=None, *args, **kw):
+        self.__remove_cached_attachment(name)
+        return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
+
+    def lazy_put_attachment(self, content, name=None, content_type=None,
+                            content_length=None):
+        """
+        Ensure the attachment is available through lazy_fetch_attachment
+        and that upon self.save(), the attachments are put to the doc as well
+
+        """
+        self.__store_lazy_attachment(content, name, content_type, content_length)
+
+    def lazy_fetch_attachment(self, name):
+        # it has been put/lazy-put already during this request
+        if name in self._LAZY_ATTACHMENTS and 'content' in self._LAZY_ATTACHMENTS[name]:
+            content = self._LAZY_ATTACHMENTS[name]['content']
+        # it has been fetched already during this request
+        elif name in self._LAZY_ATTACHMENTS_CACHE:
+            content = self._LAZY_ATTACHMENTS_CACHE[name]
+        else:
+            content = self.__get_cached_attachment(name)
+
+            if not content:
+                try:
+                    content = self.fetch_attachment(name)
+                except ResourceNotFound as e:
+                    # django cache will pickle this exception for you
+                    # but e.response isn't picklable
+                    if hasattr(e, 'response'):
+                        del e.response
+                    content = e
+                    raise
+                finally:
+                    self.__set_cached_attachment(name, content)
+                    self._LAZY_ATTACHMENTS_CACHE[name] = content
+            else:
+                self._LAZY_ATTACHMENTS_CACHE[name] = content
+
+        if isinstance(content, ResourceNotFound):
+            raise content
+
+        return content
+
+    def lazy_list_attachments(self):
+        keys = set()
+        keys.update(getattr(self, '_LAZY_ATTACHMENTS', None) or {})
+        keys.update(self.blobs or {})
+        return keys
+
+    def save(self, **params):
+        def super_save():
+            super(LazyBlobDoc, self).save(**params)
+        if self._LAZY_ATTACHMENTS:
+            with self.atomic_blobs(super_save):
+                for name, info in self._LAZY_ATTACHMENTS.items():
+                    if not info['content_type']:
+                        info['content_type'] = ';'.join(filter(None, guess_type(name)))
+                    self.__remove_cached_attachment(name)
+                    super(LazyBlobDoc, self).put_attachment(name=name, **info)
+        else:
+            super_save()
+
+
+class VersionedDoc(LazyBlobDoc):
     """
     A document that keeps an auto-incrementing version number, knows how to make copies of itself,
     delete a copy of itself, and revert back to an earlier copy of itself.
@@ -3868,7 +4010,7 @@ class VersionedDoc(LazyAttachmentDoc):
             copy = copies[0]
         else:
             copy = deepcopy(self.to_json())
-            bad_keys = ('_id', '_rev', '_attachments',
+            bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
                         'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
 
             for bad_key in bad_keys:
@@ -3902,8 +4044,8 @@ class VersionedDoc(LazyAttachmentDoc):
         app['_id'] = self._id
         app['version'] = self.version
         app['copy_of'] = None
-        if '_attachments' in app:
-            del app['_attachments']
+        app.pop('_attachments', None)
+        app.pop('external_blobs', None)
         cls = self.__class__
         app = cls.wrap(app)
         app.copy_attachments(copy)
@@ -3934,9 +4076,13 @@ class VersionedDoc(LazyAttachmentDoc):
         _attachments = {}
         for name in self.lazy_list_attachments():
             if re.match(ATTACHMENT_REGEX, name):
+                # FIXME loss of metadata (content type, etc.)
                 _attachments[name] = self.lazy_fetch_attachment(name)
 
+        # the '_attachments' value is a dict of `name: blob_content`
+        # pairs, and is part of the exported (serialized) app interface
         source['_attachments'] = _attachments
+        source.pop("external_blobs", None)
         source = self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
@@ -3977,6 +4123,15 @@ def absolute_url_property(method):
     def _inner(self):
         return "%s%s" % (self.url_base, method(self))
     return property(_inner)
+
+
+class BuildProfile(DocumentSchema):
+    name = StringProperty()
+    langs = StringListProperty()
+
+
+class MediaList(DocumentSchema):
+    media_refs = StringListProperty()
 
 
 class ApplicationBase(VersionedDoc, SnapshotMixin,
@@ -4032,8 +4187,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
 
     langs = StringListProperty()
-    # only the languages that go in the build
-    build_langs = StringListProperty()
+
     secure_submissions = BooleanProperty(default=False)
 
     # metadata for data platform
@@ -4063,8 +4217,15 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
 
+    build_profiles = SchemaDictProperty(BuildProfile)
+
+    # each language is a key and the value is a list of multimedia referenced in that language
+    media_language_map = SchemaDictProperty(MediaList)
+
+
     @classmethod
     def wrap(cls, data):
+        should_save = False
         # scrape for old conventions and get rid of them
         if 'commcare_build' in data:
             version, build_number = data['commcare_build'].split('/')
@@ -4082,7 +4243,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 data['text_input'] = 'native' if data['native_input'] else 'roman'
             del data['native_input']
 
-        should_save = False
+        if 'build_langs' in data:
+            if (data['build_langs'] != data['langs']) and ('build_profiles' not in data):
+                data['build_profiles'] = {uuid.uuid4().hex : BuildProfile(name=', '.join(data['build_langs']), langs=data['build_langs'])}
+                should_save = True
+            del data['build_langs']
+
+
         if data.has_key('original_doc'):
             data['copy_history'] = [data.pop('original_doc')]
             should_save = True
@@ -4313,9 +4480,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             settings['Build-Number'] = self.version
         return settings
 
-    def create_build_files(self, save=False):
+    def create_build_files(self, save=False, build_profile_id=None):
         built_on = datetime.datetime.utcnow()
-        all_files = self.create_all_files()
+        all_files = self.create_all_files(build_profile_id)
         if save:
             self.built_on = built_on
             self.built_with = BuildRecord(
@@ -4339,7 +4506,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             except (ResourceError, KeyError):
                 all_files = {
                     filename[len('files/'):]: self.lazy_fetch_attachment(filename)
-                    for filename in self._attachments if filename.startswith('files/')
+                    for filename in self.blobs if filename.startswith('files/')
                 }
                 all_files = {
                     name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
@@ -4410,7 +4577,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def odk_media_profile_display_url(self):
         return self.short_odk_media_url or self.odk_media_profile_url
 
-    def get_odk_qr_code(self, with_media=False):
+    def get_odk_qr_code(self, with_media=False, build_profile_id=None):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
             return self.lazy_fetch_attachment("qrcode.png")
@@ -4418,7 +4585,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
-            code.add_data(self.odk_profile_url if not with_media else self.odk_media_profile_url)
+            url = self.odk_profile_url if not with_media else self.odk_media_profile_url
+            if build_profile_id:
+                url += '?profile={profile_id}'.format(profile_id=build_profile_id)
+            code.add_data(url)
 
             # "Level L" error correction with a 0 pixel margin
             code.set_ec('L', 0)
@@ -4476,13 +4646,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         copy.set_media_versions(previous_version)
         copy.create_build_files(save=True)
 
-        try:
-            # since this hard to put in a test
-            # I'm putting this assert here if copy._id is ever None
-            # which makes tests error
-            assert copy._id
-        except AssertionError:
-            raise
+        # since this hard to put in a test
+        # I'm putting this assert here if copy._id is ever None
+        # which makes tests error
+        assert copy._id
 
         copy.build_comment = comment
         copy.comment_from = user_id
@@ -4519,6 +4686,22 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def set_media_versions(self, previous_version):
         pass
 
+    def update_mm_map(self):
+        if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
+            for lang in self.langs:
+                self.media_language_map[lang] = MediaList()
+            for form in self.get_forms(bare=False):
+                xml = XForm(form['form'].source)
+                for lang in self.langs:
+                    self.media_language_map[lang].media_refs.extend(xml.all_references(lang))
+        else:
+            self.media_language_map = {}
+
+    def get_build_langs(self, build_profile_id=None):
+        if build_profile_id:
+            return self.build_profiles[build_profile_id].langs
+        else:
+            return self.langs
 
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
@@ -4553,7 +4736,7 @@ class SavedAppBuild(ApplicationBase):
 
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
-        for key in ('modules', 'user_registration',
+        for key in ('modules', 'user_registration', 'external_blobs',
                     '_attachments', 'profile', 'translations'
                     'description', 'short_description'):
             data.pop(key, None)
@@ -4618,8 +4801,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
                 if not module['referral_label'].get(lang):
                     module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
-        if not data.get('build_langs'):
-            data['build_langs'] = data['langs']
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         self = super(Application, cls).wrap(data)
 
@@ -4678,12 +4859,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @property
     def default_language(self):
-        return self.build_langs[0] if len(self.build_langs) > 0 else "en"
+        return self.langs[0] if len(self.langs) > 0 else "en"
 
-    def fetch_xform(self, module_id=None, form_id=None, form=None):
+    def fetch_xform(self, module_id=None, form_id=None, form=None, build_profile_id=None):
         if not form:
             form = self.get_module(module_id).get_form(form_id)
-        return form.validate_form().render_xform().encode('utf-8')
+        return form.validate_form().render_xform(build_profile_id).encode('utf-8')
 
     def set_form_versions(self, previous_version):
         """
@@ -4776,7 +4957,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         })
         return s
 
-    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml'):
+    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml', build_profile_id=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -4831,7 +5012,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'include_media_suite': with_media,
             'uniqueid': self.copy_of or self.id,
             'name': self.name,
-            'descriptor': u"Profile File"
+            'descriptor': u"Profile File",
+            'build_profile_id': build_profile_id
         }).encode('utf-8')
 
     @property
@@ -4844,40 +5026,43 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def set_custom_suite(self, value):
         self.put_attachment(value, 'custom_suite.xml')
 
-    def create_suite(self):
+    def create_suite(self, build_profile_id=None):
         if self.application_version == APP_V1:
             template='app_manager/suite-%s.xml' % self.application_version
+            langs = self.get_build_langs(build_profile_id)
             return render_to_string(template, {
                 'app': self,
-                'langs': ["default"] + self.build_langs
+                'langs': ["default"] + langs
             })
         else:
-            return SuiteGenerator(self).generate_suite()
+            return SuiteGenerator(self, build_profile_id).generate_suite()
 
-    def create_media_suite(self):
-        return MediaSuiteGenerator(self).generate_suite()
+    def create_media_suite(self, build_profile_id=None):
+        return MediaSuiteGenerator(self, build_profile_id).generate_suite()
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
 
-    def create_all_files(self):
+    def create_all_files(self, build_profile_id=None):
+        prefix = '' if not build_profile_id else build_profile_id + '/'
         files = {
-            'profile.xml': self.create_profile(is_odk=False),
-            'profile.ccpr': self.create_profile(is_odk=True),
-            'media_profile.xml': self.create_profile(is_odk=False, with_media=True),
-            'media_profile.ccpr': self.create_profile(is_odk=True, with_media=True),
-            'suite.xml': self.create_suite(),
-            'media_suite.xml': self.create_media_suite(),
+            '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile_id=build_profile_id),
+            '{}profile.ccpr'.format(prefix): self.create_profile(is_odk=True, build_profile_id=build_profile_id),
+            '{}media_profile.xml'.format(prefix): self.create_profile(is_odk=False, with_media=True, build_profile_id=build_profile_id),
+            '{}media_profile.ccpr'.format(prefix): self.create_profile(is_odk=True, with_media=True, build_profile_id=build_profile_id),
+            '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
+            '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
 
-        for lang in ['default'] + self.build_langs:
-            files["%s/app_strings.txt" % lang] = self.create_app_strings(lang)
+        langs_for_build = self.get_build_langs(build_profile_id)
+        for lang in ['default'] + langs_for_build:
+            files["{prefix}{lang}/app_strings.txt".format(prefix=prefix, lang=lang)] = self.create_app_strings(lang)
         for form_stuff in self.get_forms(bare=False):
-            filename = self.get_form_filename(**form_stuff)
+            filename = prefix + self.get_form_filename(**form_stuff)
             form = form_stuff['form']
             try:
-                files[filename] = self.fetch_xform(form=form)
+                files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
             except XFormException as e:
                 raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files
@@ -4929,7 +5114,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, application_version, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang], build_langs=[lang], application_version=application_version)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
         return app
 
     def add_module(self, module):
@@ -5293,9 +5478,9 @@ class RemoteApp(ApplicationBase):
         app = cls(domain=domain, name=name, langs=[lang])
         return app
 
-    def create_profile(self, is_odk=False):
+    def create_profile(self, is_odk=False, langs=None):
         # we don't do odk for now anyway
-        return remote_app.make_remote_profile(self)
+        return remote_app.make_remote_profile(self, langs)
 
     def strip_location(self, location):
         return remote_app.strip_location(self.profile_url, location)
@@ -5311,6 +5496,13 @@ class RemoteApp(ApplicationBase):
 
         return location, content
 
+    def get_build_langs(self):
+        if self.build_profiles:
+            # return first profile, generated as part of lazy migration
+            return self.build_profiles[self.build_profiles.keys()[0]].langs
+        else:
+            return self.langs
+
     @classmethod
     def get_locations(cls, suite):
         for resource in suite.findall('*/resource'):
@@ -5324,9 +5516,10 @@ class RemoteApp(ApplicationBase):
     def SUITE_XPATH(self):
         return 'suite/resource/location[@authority="local"]'
 
-    def create_all_files(self):
+    def create_all_files(self, build_profile_id=None):
+        langs_for_build = self.get_build_langs()
         files = {
-            'profile.xml': self.create_profile(),
+            'profile.xml': self.create_profile(langs=langs_for_build),
         }
         tree = _parse_xml(files['profile.xml'])
 
@@ -5364,17 +5557,18 @@ class RemoteApp(ApplicationBase):
 
             for tag, location in self.get_locations(suite_xml):
                 location, data = self.fetch_file(location)
-                if tag == 'xform' and self.build_langs:
+                if tag == 'xform' and langs_for_build:
                     try:
                         xform = XForm(data)
                     except XFormException as e:
                         raise XFormException('In file %s: %s' % (location, e))
-                    xform.exclude_languages(whitelist=self.build_langs)
+                    xform.exclude_languages(whitelist=langs_for_build)
                     data = xform.render()
                 files.update({location: data})
         return files
 
     def make_questions_map(self):
+        langs_for_build = self.get_build_langs()
         if self.copy_of:
             xmlns_map = {}
 
@@ -5390,7 +5584,7 @@ class RemoteApp(ApplicationBase):
                 if tag == 'xform':
                     xform = XForm(fetch(location))
                     xmlns = xform.data_node.tag_xmlns
-                    questions = xform.get_questions(self.build_langs)
+                    questions = xform.get_questions(langs_for_build)
                     xmlns_map[xmlns] = questions
             return xmlns_map
         else:
@@ -5443,17 +5637,16 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     app = cls.from_source(source, domain)
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
-    app.save()
+    with app.atomic_blobs():
+        for name, attachment in attachments.items():
+            if re.match(ATTACHMENT_REGEX, name):
+                app.put_attachment(attachment, name)
 
     if not app.is_remote_app():
         for _, m in app.get_media_objects():
             if domain not in m.valid_domains:
                 m.valid_domains.append(domain)
                 m.save()
-
-    for name, attachment in attachments.items():
-        if re.match(ATTACHMENT_REGEX, name):
-            app.put_attachment(attachment, name)
 
     if not app.is_remote_app() and any(module.uses_usercase() for module in app.get_modules()):
         from corehq.apps.app_manager.util import enable_usercase
