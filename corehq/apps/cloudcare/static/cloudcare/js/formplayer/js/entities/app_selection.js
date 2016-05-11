@@ -15,12 +15,10 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         getAppEntities: function () {
             var appsJson = FormplayerFrontend.request('currentUser').apps;
             var apps = new Entities.AppCollection(appsJson);
-            debugger;
             return apps;
         },
         getAppEntity: function (app_id) {
-            var apps = new Entities.AppCollection();
-            apps.fetch();
+            var apps = API.getAppEntities();
             return apps.get(app_id);
         },
     };
