@@ -89,7 +89,6 @@ class ClaimCaseTests(TestCase):
 
     @run_with_all_backends
     def test_search_endpoint(self):
-        # NOTE: Requires `ALLOW_FORM_PROCESSING_QUERIES = True` in localsettings.py
         known_result = (
             '<results id="case">'  # ("case" is not the case type)
                 '<case case_id="{case_id}" '
