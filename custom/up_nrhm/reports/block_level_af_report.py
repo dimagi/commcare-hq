@@ -13,8 +13,6 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
     name = ugettext_noop("Format-4 Block Consolidation of the functionality status")
     slug = "block_level_month_wise"
 
-    is_bootstrap3 = True
-
     def get_afs_for_block(self):
         afs = []
         for location in HierarchySqlData(config={'domain': self.domain}).get_data():

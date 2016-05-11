@@ -84,7 +84,7 @@ class DataTablesColumnGroup(object):
     @property
     def render_html(self):
         template = '<th%(css_class)s colspan="%(colspan)d"><strong>%(title)s</strong></th>'
-        css_class = ' class="span%d"' % self.css_span if self.css_span > 0 else ''
+        css_class = ' class="col-sm-%d"' % self.css_span if self.css_span > 0 else ''
         return template % dict(title=self.html, css_class=css_class, colspan=len(self.columns)) if self.columns else ""
 
     @property

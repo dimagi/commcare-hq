@@ -401,12 +401,13 @@ def get_instances_for_module(app, module, additional_xpaths=None):
 class CaseTileHelper(object):
     tile_fields = ["header", "top_left", "sex", "bottom_left", "date"]
 
-    def __init__(self, app, module, detail, detail_type):
+    def __init__(self, app, module, detail, detail_type, build_profile_id):
         self.app = app
         self.module = module
         self.detail = detail
         self.detail_type = detail_type
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
+        self.build_profile_id = build_profile_id
 
     def build_case_tile_detail(self):
         """

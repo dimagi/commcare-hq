@@ -47,7 +47,6 @@ class SMSBillablesInterface(GenericTabularReport):
         'corehq.apps.smsbillables.interface.HasGatewayFeeFilter',
         'corehq.apps.smsbillables.interface.GatewayTypeFilter',
     ]
-    is_bootstrap3 = True
 
     @property
     def headers(self):
@@ -206,7 +205,6 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
         'corehq.apps.smsbillables.interface.DirectionFilter',
         'corehq.apps.smsbillables.interface.CountryCodeFilter',
     ]
-    is_bootstrap3 = True
 
     @property
     def headers(self):

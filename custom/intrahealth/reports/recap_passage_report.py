@@ -14,8 +14,6 @@ class RecapPassageReport(MonthYearMixin, MultiReport):
     default_rows = 10
     fields = [FRMonthFilter, FRYearFilter, RecapPassageLocationFilter]
 
-    is_bootstrap3 = True
-
     def config_update(self, config):
         if self.location and self.location.location_type.lower() == 'pps':
             config['location_id'] = self.location.location_id

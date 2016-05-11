@@ -1,7 +1,6 @@
 from collections import defaultdict
-from casexml.apps.stock.consumption import compute_consumption_or_default, compute_default_monthly_consumption, \
+from casexml.apps.stock.consumption import compute_default_monthly_consumption, \
     ConsumptionConfiguration
-from casexml.apps.stock.utils import get_current_ledger_state
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from dimagi.utils.decorators.memoized import memoized

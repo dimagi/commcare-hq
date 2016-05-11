@@ -30,6 +30,7 @@ from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
+from corehq.apps.es import CaseES, aggregations
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_bootstrap3, use_nvd3, use_nvd3_v3
@@ -844,3 +845,105 @@ def _get_submodules():
         line.strip()[1:].split()[1]
         for line in git.submodule()
     ]
+
+
+class CallcenterUCRCheck(BaseAdminSectionView):
+    urlname = 'callcenter_ucr_check'
+    page_title = ugettext_lazy("Check Callcenter UCR tables")
+    template_name = "hqadmin/call_center_ucr_check.html"
+
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CallcenterUCRCheck, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        from corehq.apps.callcenter.data_source import get_call_center_domains
+        from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain
+        from corehq.apps.es import FormES, filters
+
+        if 'domain' not in self.request.GET:
+            return {}
+
+        domain = self.request.GET.get('domain', None)
+        if domain:
+            domains = [domain]
+        else:
+            domains = [dom.name for dom in get_call_center_domains()]
+
+        domains_to_forms = FormES()\
+            .filter(filters.term('domain', domains))\
+            .domain_aggregation()\
+            .size(0)\
+            .run() \
+            .aggregations.domain.counts_by_bucket()
+
+        actions_agg = aggregations.NestedAggregation('actions', 'actions')
+        aggregation = aggregations.TermsAggregation('domain', 'domain').aggregation(actions_agg)
+        results = CaseES()\
+            .filter(filters.term('domain', domains))\
+            .aggregation(aggregation)\
+            .size(0)\
+            .run()
+
+        domains_to_cases = results.aggregations.domain.buckets_dict
+
+        context = {
+            'data': [],
+            'domain': domain
+        }
+        for domain in domains:
+            domain_context = {
+                'name': domain,
+                'stats': []
+            }
+            context['data'].append(domain_context)
+            try:
+                adapters = get_sql_adapters_for_domain(domain)
+                domain_cases = domains_to_cases.get(domain, 0)
+                domain_context['stats'] = [
+                    {
+                        'name': 'forms',
+                        'ucr': adapters.forms.get_query_object().count(),
+                        'es': domains_to_forms.get(domain, 0)
+                    },
+                    {
+                        'name': 'cases',
+                        'ucr': adapters.cases.get_query_object().count(),
+                        'es': domain_cases.doc_count if domain_cases else 0
+                    },
+                    {
+                        'name': 'case_actions',
+                        'ucr': adapters.case_actions.get_query_object().count(),
+                        'es': domain_cases.actions.doc_count if domain_cases else 0
+                    }
+                ]
+            except Exception as e:
+                domain_context['error'] = str(e)
+
+        scale = [
+            (40, 'warning'),
+            (30, 'danger'),
+        ]
+
+        stat_names = ['es', 'ucr']
+        for info in context['data']:
+            for stat in info['stats']:
+                total = sum([stat[name] for name in stat_names])
+                stat['total'] = total
+                stat['es_class'] = 'info'
+                stat['ucr_class'] = 'success'
+                percent = None
+                for name in stat_names:
+                    percent = int(100 * stat[name] / total)
+                    stat[name + '_percent'] = percent
+                    for range in scale:
+                        if percent <= range[0]:
+                            stat[name + '_class'] = range[1]
+
+                if 5 >= percent or percent >= 95:
+                    stat['es_class'] = 'danger'
+                    stat['ucr_class'] = 'danger'
+
+        return context
