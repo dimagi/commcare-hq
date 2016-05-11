@@ -82,6 +82,7 @@ MAX_PRIVILEGES = [
     DATA_CLEANUP,
     TEMPLATED_INTENTS,
     CUSTOM_INTENTS,
+    ADVANCED_DOMAIN_SECURITY,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
