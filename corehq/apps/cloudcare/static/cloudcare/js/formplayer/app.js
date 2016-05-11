@@ -116,7 +116,6 @@ FormplayerFrontend.on("start", function (apps, language) {
     FormplayerFrontend.request('currentUser').apps = apps;
     if (Backbone.history) {
         Backbone.history.start();
-        FormplayerFrontend.trigger("apps:storeapps", apps);
         var user = FormplayerFrontend.request('currentUser');
         // will be the same for every domain. TODO: get domain/username/pass from django
         user.domain = apps[0].domain;
