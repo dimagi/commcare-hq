@@ -13,7 +13,7 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
     checkpoint = PillowCheckpoint(
         'ledger-to-elasticsearch',
     )
-    case_processor = ElasticProcessor(
+    processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=LEDGER_INDEX_INFO
     )
@@ -21,7 +21,7 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.LEDGER], group_id='ledgers-to-es'),
-        processor=case_processor,
+        processor=processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100
         ),
