@@ -62,7 +62,7 @@ class LedgerPillowTest(TestCase):
 
         # send to elasticsearch
         self.pillow.process_changes(since=kafka_seq, forever=False)
-        self.elasticsearch.indices.refresh(LEDGER_INDEX_INFO)
+        self.elasticsearch.indices.refresh(LEDGER_INDEX_INFO.index)
 
         # confirm change made it to elasticserach
         results = self.elasticsearch.search(
@@ -77,8 +77,9 @@ class LedgerPillowTest(TestCase):
                 }
             }
         )
-        self.assertEqual(1, results.total)
-        ledger_doc = results.hits[0]
+        import pprint; pprint.pprint(results)
+        self.assertEqual(1, results['hits']['total'])
+        ledger_doc = results['hits']['hits'][0]['_source']
         self.assertEqual(self.domain, ledger_doc['domain'])
         self.assertEqual(ref.case_id, ledger_doc['case_id'])
         self.assertEqual(ref.section_id, ledger_doc['section_id'])
