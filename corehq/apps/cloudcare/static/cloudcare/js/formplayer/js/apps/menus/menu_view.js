@@ -17,9 +17,10 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         templateHelpers: function () {
             var imageUri = this.options.model.attributes.imageUri;
             var audioUri = this.options.model.attributes.audioUri;
+            var appId = this.model.collection.appId;
             return {
-                imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri) : "",
-                audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri) : "",
+                imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
+                audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri, appId) : "",
             };
         }
     });

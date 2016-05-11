@@ -31,9 +31,8 @@ FormplayerFrontend.getCurrentRoute = function () {
     return Backbone.history.fragment;
 };
 
-FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path) {
-
-    var currentApp = FormplayerFrontend.request('currentApp').model;
+FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app_id) {
+    var currentApp = FormplayerFrontend.request('currentApp', app_id);
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
     } else if (currentApp.attributes.hasOwnProperty("multimedia_map") &&
@@ -51,10 +50,9 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return new FormplayerFrontend.Entities.UserModel();
 });
 
-FormplayerFrontend.reqres.setHandler('currentApp', function () {
-    if (FormplayerFrontend.currentApp) return FormplayerFrontend.currentApp;
-    FormplayerFrontend.currentApp = new FormplayerFrontend.Entities.AppModel();
-    return FormplayerFrontend.currentApp;
+FormplayerFrontend.reqres.setHandler('currentApp', function (app_id) {
+    var fetchingApp = FormplayerFrontend.request("appselect:getApp", app_id);
+    return fetchingApp;
 });
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
@@ -62,7 +60,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
 
         data.onLoading = tfLoading;
         data.onLoadingComplete = tfLoadingComplete;
-        data.xform_url="/webforms/player_proxy";
+        data.xform_url = "/webforms/player_proxy";
         data.domain = "test"
         data.onerror = function (resp) {
             showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
@@ -93,7 +91,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
                         message = translatedStrings.unknownError + status + " " + resp.status;
                         if (resp.status === 0) {
                             message = (message + ". "
-                                + translatedStrings.unknownErrorDetail + " (" + submitUrl + ")");
+                            + translatedStrings.unknownErrorDetail + " (" + submitUrl + ")");
                         }
                     }
                     data.onerror({message: message});

@@ -11,7 +11,6 @@ FormplayerFrontend.module("AppSelect.AppList", function (AppList, FormplayerFron
 
         rowClick: function(e){
             e.preventDefault();
-            FormplayerFrontend.request('currentApp').model = this.model;
             FormplayerFrontend.trigger("app:select", this.model.attributes._id);
         },
     });

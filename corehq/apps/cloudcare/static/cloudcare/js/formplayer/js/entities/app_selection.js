@@ -3,6 +3,7 @@
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
     Entities.AppModel = Backbone.Model.extend({
         urlRoot: "appSelects",
+        idAttribute: "_id",
     });
 
     Entities.configureStorage("FormplayerFrontend.Entities.AppModel");
@@ -50,6 +51,11 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         storeApps: function (apps) {
             storeApps(apps);
         },
+        getAppEntity: function (app_id) {
+            var apps = new Entities.AppCollection();
+            apps.fetch();
+            return apps.get(app_id);
+        },
     };
 
     FormplayerFrontend.reqres.setHandler("appselect:apps", function () {
@@ -58,5 +64,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     FormplayerFrontend.reqres.setHandler("appselect:storeapps", function (apps) {
         return API.storeApps(apps);
+    });
+
+    FormplayerFrontend.reqres.setHandler("appselect:getApp", function (app_id) {
+        return API.getAppEntity(app_id);
     });
 });
