@@ -4,7 +4,7 @@ from corehq.apps.app_manager.models import ReportModule, ReportGraphConfig, \
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
-    ConfigurationItem, GraphTemplate, Graph, Xpath
+    ConfigurationItem, GraphTemplate, Graph, Xpath, XpathVariable
 from corehq.util.quickcache import quickcache
 
 
@@ -206,6 +206,54 @@ def _get_summary_details(config, domain):
 
 def _get_data_detail(config, domain):
     def _column_to_field(column):
+        def _get_xpath(col):
+            def _get_conditional(condition, if_true, if_false):
+                return 'if({condition}, {if_true}, {if_false})'.format(
+                    condition=condition,
+                    if_true=if_true,
+                    if_false=if_false,
+                )
+
+            def _get_word_eval(word_translations, default_value):
+                word_eval = default_value
+                for lang_translation_pair in word_translations:
+                    lang = lang_translation_pair[0]
+                    translation = lang_translation_pair[1]
+                    word_eval = _get_conditional(
+                        "$lang = '{lang}'".format(
+                            lang=lang,
+                        ),
+                        "'{translation}'".format(
+                            translation=translation.replace("'", "''"),
+                        ),
+                        word_eval
+                    )
+                return word_eval
+
+            transform = col['transform']
+            if transform.get('type') == 'translation':
+                default_val = "column[@id='{column_id}']"
+                xpath_function = default_val
+                for word, translations in transform['translations'].items():
+                    xpath_function = _get_conditional(
+                        "{value} = '{word}'".format(
+                            value=default_val,
+                            word=word,
+                        ),
+                        _get_word_eval(translations, default_val),
+                        xpath_function
+                    )
+                return Xpath(
+                    function=xpath_function.format(
+                        column_id=col.column_id
+                    ),
+                    variables=[XpathVariable(name='lang', locale_id='lang.current')],
+                )
+            else:
+                return Xpath(
+                    function="column[@id='{}']".format(col.column_id),
+                )
+
         return Field(
             header=Header(
                 text=Text(
@@ -216,7 +264,8 @@ def _get_data_detail(config, domain):
             ),
             template=Template(
                 text=Text(
-                    xpath=Xpath(function="column[@id='{}']".format(column.column_id)))
+                    xpath=_get_xpath(column),
+                )
             ),
         )
 
