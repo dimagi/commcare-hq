@@ -169,8 +169,12 @@
 
     <script type="text/template" id="menu-view-item">
         <td><%- displayText ? displayText : "" %></td>
-        <td><%- audioUri ? audioUri : "" %></td>
-        <td><%- imageUri ? imageUri : ""%></td>
+        <td>
+            <audio controls>
+                <source src="<%- audioUrl ? audioUrl : '' %>" type="audio/mpeg">
+            </audio>
+        </td>
+        <td><img src="<%- imageUrl ? imageUrl : '' %>"/></td>
     </script>
 
     <script type="text/template" id="case-view-list">

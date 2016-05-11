@@ -31,9 +31,30 @@ FormplayerFrontend.getCurrentRoute = function () {
     return Backbone.history.fragment;
 };
 
+FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path) {
+
+    var currentApp = FormplayerFrontend.request('currentApp').model;
+    if (resource_path.substring(0, 7) === 'http://') {
+        return resource_path;
+    } else if (currentApp.attributes.hasOwnProperty("multimedia_map") &&
+        currentApp.attributes.multimedia_map.hasOwnProperty(resource_path)) {
+        var resource = currentApp.attributes.multimedia_map[resource_path];
+        var id = resource.multimedia_id;
+        var media_type = resource.media_type;
+        var name = _.last(resource_path.split('/'));
+        return '/hq/multimedia/file/' + media_type + '/' + id + '/' + name;
+    }
+});
+
 FormplayerFrontend.reqres.setHandler('currentUser', function () {
     if (FormplayerFrontend.currentUser) return FormplayerFrontend.currentUser;
     return new FormplayerFrontend.Entities.UserModel();
+});
+
+FormplayerFrontend.reqres.setHandler('currentApp', function () {
+    if (FormplayerFrontend.currentApp) return FormplayerFrontend.currentApp;
+    FormplayerFrontend.currentApp = new FormplayerFrontend.Entities.AppModel();
+    return FormplayerFrontend.currentApp;
 });
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {

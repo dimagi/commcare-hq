@@ -14,6 +14,14 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             var model = this.model;
             FormplayerFrontend.trigger("menu:select", model.get('index'), model.collection.appId);
         },
+        templateHelpers: function () {
+            var imageUri = this.options.model.attributes.imageUri;
+            var audioUri = this.options.model.attributes.audioUri;
+            return {
+                imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri) : "",
+                audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri) : "",
+            };
+        }
     });
 
     MenuList.MenuListView = Marionette.CompositeView.extend({
