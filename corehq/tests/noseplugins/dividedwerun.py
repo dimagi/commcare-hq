@@ -6,6 +6,7 @@ from unittest import SkipTest
 from nose.case import Test, FunctionTestCase
 from nose.plugins import Plugin
 from nose.suite import ContextSuite
+from nose.util import transplant_func
 
 log = logging.getLogger(__name__)
 
@@ -71,7 +72,20 @@ class DividedWeRunPlugin(Plugin):
             def skip():
                 raise SkipTest("divided-we-run: {} not in range {}".format(
                                bucket, self.divided_we_run))
-            desc = test.context if isinstance(test, ContextSuite) else test.test
+            if isinstance(test, ContextSuite):
+                if hasattr(test.context, "__module__"):
+                    desc = test.context
+                else:
+                    # FunctionTestCase expects descriptor to be a function
+                    desc = skip
+                    name = test.context.__name__
+                    if "." in name:
+                        name, skip.__name__ = name.rsplit(".", 1)
+                    else:
+                        skip.__name__ = "*"
+                    skip.__module__ = name
+            else:
+                desc = test.test
             return Test(
                 FunctionTestCase(skip, descriptor=desc),
                 getattr(test, 'config', None),
