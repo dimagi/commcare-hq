@@ -31,6 +31,7 @@
               href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
         <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
         <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
+        <link rel="stylesheet" href="{% static 'cloudcare/css/formplayer.css' %}">
         <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"/>
     {% endcompress %}
 {% endblock %}
@@ -157,6 +158,29 @@
         <td><%- name %></td>
     </script>
 
+    <script id="grid-template" type="text/template">
+        <div>
+            <h1>Applications</h1>
+        </div>
+
+        <table>
+            <col width="300px" />
+            <col width="300px" />
+            <col width="300px" />
+            <tbody></tbody>
+        </table>
+    </script>
+
+    <script id="row-template" type="text/template">
+        <div style="text-align: center">
+            <h3><%- name %></h3>
+            <image style="max-height:150px" src="{% static 'cloudcare/images/cc_flower.png' %}"/>
+        </div>
+    </script>
+
+    <div id="grid">
+    </div>
+
     <script type="text/template" id="menu-view-list">
         <p><%- title %></p>
         <table class="table table-hover table-striped table-bordered">
@@ -166,7 +190,8 @@
     </script>
 
     <script type="text/template" id="menu-view-item-audio">
-        <td><img style ="max-height:50px" src="<%- imageUrl ? imageUrl : '{% static 'cloudcare/images/avatar_form.png' %}' %>"/></td>
+        <td><img style="max-height:50px"
+                 src="<%- imageUrl ? imageUrl : '{% static 'cloudcare/images/avatar_form.png' %}' %>"/></td>
         <td><%- displayText ? displayText : "" %></td>
         <td>
             <audio style="width: 200px;" controls>
@@ -176,7 +201,7 @@
     </script>
 
     <script type="text/template" id="menu-view-item">
-        <td><img style ="max-height:50px" src="{% static 'cloudcare/images/avatar_form.png' %}"/></td>
+        <td><img style="max-height:50px" src="{% static 'cloudcare/images/avatar_form.png' %}"/></td>
         <td><%- displayText ? displayText : "" %></td>
     </script>
 

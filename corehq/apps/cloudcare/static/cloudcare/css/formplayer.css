@@ -1,0 +1,9 @@
+table, tr, td, th, thead {
+    padding: 5px;
+    margin: 5px;
+    border: 2px solid #ccc;
+}
+
+thead {
+    color: #555;
+}

@@ -11,7 +11,11 @@ FormplayerFrontend.module("AppSelect.AppList", function(AppList, FormplayerFront
                     collection: apps,
                 });
 
-                FormplayerFrontend.regions.main.show(appListView);
+                var appGridView = new AppList.GridView({
+                    collection: apps,
+                });
+
+                FormplayerFrontend.regions.main.show(appGridView);
             });
         },
     };
