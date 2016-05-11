@@ -190,6 +190,11 @@ class SimplifiedUserInfo(
     def group_ids(self):
         return Group.by_user(self.user_id, False)
 
+    @property
+    @memoized
+    def location_id(self):
+        return CommCareUser.get_by_user_id(self.user_id).location_id
+
 
 def _report_user_dict(user):
     """

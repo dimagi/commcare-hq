@@ -368,14 +368,6 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-VELLUM_BETA = PredictablyRandomToggle(
-    'vellum_beta',
-    'Use Vellum beta version',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    randomness=0.1
-)
-
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     'hipaa_compliance_checkbox',
     'Show HIPAA compliance checkbox',

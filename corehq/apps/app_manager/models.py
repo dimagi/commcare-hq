@@ -3628,11 +3628,10 @@ class ReportAppConfig(DocumentSchema):
 
         return super(ReportAppConfig, cls).wrap(doc)
 
-    @property
-    def report(self):
-        from corehq.apps.userreports.models import ReportConfiguration
+    def report(self, domain):
         if self._report is None:
-            self._report = ReportConfiguration.get(self.report_id)
+            from corehq.apps.userreports.models import get_report_config
+            self._report = get_report_config(self.report_id, domain)[0]
         return self._report
 
 
@@ -3650,11 +3649,8 @@ class ReportModule(ModuleBase):
     @property
     @memoized
     def reports(self):
-        from corehq.apps.userreports.models import ReportConfiguration
-        return [
-            ReportConfiguration.wrap(doc) for doc in
-            get_docs(ReportConfiguration.get_db(), [r.report_id for r in self.report_configs])
-        ]
+        from corehq.apps.userreports.models import get_report_configs
+        return get_report_configs([r.report_id for r in self.report_configs], self.get_app().domain)
 
     @classmethod
     def new_module(cls, name, lang):
