@@ -2,8 +2,6 @@ import logging
 
 from django.middleware.csrf import CsrfViewMiddleware, REASON_NO_CSRF_COOKIE, REASON_BAD_TOKEN
 from django.conf import settings
-from django.contrib import messages
-from django.utils.translation import ugettext as _
 
 from corehq.util.soft_assert import soft_assert
 
@@ -13,7 +11,6 @@ logger = logging.getLogger('')
 class HQCsrfViewMiddleWare(CsrfViewMiddleware):
 
     def _reject(self, request, reason):
-        messages.error(request, _('If cookies are enabled and you still see this error, please report an issue'))
         request_url = request.path
         referring_url = request.META.get('HTTP_REFERER', 'Unknown URL')
         warning = "Request at {url} doesn't contain a csrf token. "\
@@ -27,11 +24,10 @@ class HQCsrfViewMiddleWare(CsrfViewMiddleware):
         _assert = soft_assert('{}@{}'.format('sreddy+logs', 'dimagi.com'), exponential_backoff=False)
         _assert(False, warning)
 
-        if '/login/' in request_url:
-            # exempt login URLs from csrf, but still get failure logs
+        if ('/login/' in request_url and
+           settings.CSRF_SOFT_MODE and
+           reason in [REASON_NO_CSRF_COOKIE, REASON_BAD_TOKEN]):
+            # exempt login URLs from csrf if CSRF_SOFT_MODE is on
             self._accept(request)
 
-        if settings.CSRF_SOFT_MODE and reason in [REASON_NO_CSRF_COOKIE, REASON_BAD_TOKEN]:
-            return self._accept(request)
-        else:
-            return super(HQCsrfViewMiddleWare, self)._reject(request, reason)
+        return super(HQCsrfViewMiddleWare, self)._reject(request, reason)
