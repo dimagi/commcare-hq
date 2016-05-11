@@ -71,6 +71,16 @@ function FormDateHistogram(data) {
     self.form_count = ko.observable(data.count);
 };
 
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 function XFormListViewModel() {
     var self = this;
 
@@ -91,6 +101,20 @@ function XFormListViewModel() {
 
     var api_url = CASE_DETAILS.xform_api_url;
 
+
+    var init = function() {
+        var hash = window.location.hash.split('?');
+        if (hash[0] !== '#!history') {
+            return;
+        }
+
+        var formId = getParameterByName('form_id', window.location.hash);
+        if (formId) {
+            self.get_xform_data(formId);
+            self.selected_xform_doc_id(formId);
+        }
+    };
+
     self.get_xform_data = function(xform_id) {
         //method for getting individual xform via GET
         $.cachedAjax({
@@ -109,13 +133,20 @@ function XFormListViewModel() {
         })
     };
 
+    init();
+
     self.xform_history_cb = function(data) {
         self.total_rows(CASE_DETAILS.xform_ids.length);
         var mapped_xforms = $.map(data, function (item) {
             return new XFormDataModel(item);
         });
         self.xforms(mapped_xforms);
-        self.selected_xform_idx(-1);
+        var xformId = self.selected_xform_doc_id();
+        if (xformId) {
+            self.selected_xform_idx(self.xforms.indexOf());
+        } else {
+            self.selected_xform_idx(-1);
+        }
     };
 
     self.all_rows_loaded = ko.computed(function() {
@@ -178,6 +209,7 @@ function XFormListViewModel() {
             self.selected_xforms([]);
             self.selected_xforms.push(self.xforms()[self.selected_xform_idx()]);
         }
+        window.history.pushState({}, '', '#!history?form_id=' + self.selected_xform_doc_id());
     };
 
     self.page_start_num = ko.computed(function() {

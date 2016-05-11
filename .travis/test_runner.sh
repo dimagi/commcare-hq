@@ -15,7 +15,9 @@ COMMAND="coverage run manage.py test --noinput --failfast --traceback --verbosit
 /moto-s3/env/bin/moto_server s3 &
 
 if [ -z ${COMMAND_OVERRIDE} ]; then
+    echo "Running tests: $@"
     $COMMAND "$@"
 else
+    echo "Running command: $COMMAND_OVERRIDE"
     $COMMAND_OVERRIDE
 fi
