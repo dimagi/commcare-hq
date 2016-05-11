@@ -4,8 +4,6 @@ import os
 
 from docker.dockersettings import *
 
-TEST_RUNNER = 'testrunner.TwoStageTestRunner'
-
 USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == 'yes'
 PARTITION_DATABASE_CONFIG = get_partitioned_database_config(USE_PARTITIONED_DATABASE)
 
