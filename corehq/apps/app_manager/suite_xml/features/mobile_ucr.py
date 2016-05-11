@@ -224,7 +224,7 @@ def _get_data_detail(config, domain):
                             lang=lang,
                         ),
                         "'{translation}'".format(
-                            translation=translation,
+                            translation=translation.replace("'", "''"),
                         ),
                         word_eval
                     )
