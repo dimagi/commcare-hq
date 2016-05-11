@@ -10,6 +10,7 @@ COUCH = 'couch'
 FORM_SQL = 'form-sql'
 CASE_SQL = 'case-sql'
 SMS = 'sms'
+LEDGER = 'sms'
 
 
 def get_document_store(data_source_type, data_source_name, domain):
@@ -27,6 +28,8 @@ def get_document_store(data_source_type, data_source_name, domain):
         return ReadonlyCaseDocumentStore(domain)
     elif data_source_type == SMS:
         return ReadonlySMSDocumentStore()
+    elif data_source_type == LEDGER:
+        return ReadonlyLedgerDocumentStore()
     else:
         raise UnknownDocumentStore(
             'getting document stores for backend {} is not supported!'.format(data_source_type)

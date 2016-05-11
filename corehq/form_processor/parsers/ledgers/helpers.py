@@ -10,7 +10,13 @@ from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.products.models import Product
 
 
-UniqueLedgerReference = namedtuple('UniqueLedgerReference', ['case_id', 'section_id', 'entry_id'])
+class UniqueLedgerReference(namedtuple('UniqueLedgerReference', ['case_id', 'section_id', 'entry_id'])):
+    def as_id(self):
+        return '{ref.case_id}_{ref.section_id}_{ref.entry_id}'.format(ref=self)
+
+    @classmethod
+    def from_id(cls, id_string):
+        return UniqueLedgerReference(*id_string.split('_'))
 
 
 class StockReportHelper(jsonobject.JsonObject):

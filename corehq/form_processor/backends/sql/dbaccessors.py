@@ -677,6 +677,20 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
+    def get_all_ledgers_modified_since(modified_since=None, chunk_size=500):
+        return _batch_iterate(
+            batch_fn=LedgerAccessorSQL.get_ledgers_modified_since,
+            next_start_from_fn=lambda ledger: ledger.last_updated,
+            start_from=modified_since,
+            chunk_size=chunk_size
+        )
+
+    @staticmethod
+    def get_ledgers_modified_since(modified_since=None, limit=500):
+        # todo
+        raise NotImplementedError
+
+    @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.raw(
             'SELECT * FROM get_ledger_values_for_cases(%s)',
