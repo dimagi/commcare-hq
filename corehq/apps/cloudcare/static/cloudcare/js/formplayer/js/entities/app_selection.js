@@ -38,14 +38,10 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
         getAppEntities: function () {
-            var apps = new Entities.AppCollection();
-            var defer = $.Deferred();
-            apps.fetch({
-                success: function (request) {
-                    defer.resolve(request);
-                },
-            });
-            return defer.promise();
+            var appsJson = FormplayerFrontend.request('currentUser').apps;
+            var apps = new Entities.AppCollection(appsJson);
+            debugger;
+            return apps;
         },
 
         storeApps: function (apps) {

@@ -46,8 +46,10 @@ FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app
 });
 
 FormplayerFrontend.reqres.setHandler('currentUser', function () {
-    if (FormplayerFrontend.currentUser) return FormplayerFrontend.currentUser;
-    return new FormplayerFrontend.Entities.UserModel();
+    if (!FormplayerFrontend.currentUser) {
+        FormplayerFrontend.currentUser = new FormplayerFrontend.Entities.UserModel();
+    }
+    return FormplayerFrontend.currentUser;
 });
 
 FormplayerFrontend.reqres.setHandler('currentApp', function (app_id) {
@@ -57,6 +59,8 @@ FormplayerFrontend.reqres.setHandler('currentApp', function (app_id) {
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     var loadSession = function () {
+
+        $('#app-container').html("");
 
         data.onLoading = tfLoading;
         data.onLoadingComplete = tfLoadingComplete;
@@ -79,9 +83,9 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
                 url: postUrl,
                 data: xml,
                 success: function () {
-                    //self._clearFormPlayer();
-                    //self.showModule(selectedModule);
-                    //cloudCare.dispatch.trigger("form:submitted");
+                    $('#webforms').html("");
+                    // TODO form linking
+                    FormplayerFrontend.trigger("apps:list");
                     showSuccess(translatedStrings.saved, $("#cloudcare-notifications"), 2500);
                 },
                 error: function (resp, status, message) {
@@ -109,6 +113,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
 
 FormplayerFrontend.on("start", function (apps, language) {
     FormplayerFrontend.request('currentUser').language = language;
+    FormplayerFrontend.request('currentUser').apps = apps;
     if (Backbone.history) {
         Backbone.history.start();
         FormplayerFrontend.trigger("apps:storeapps", apps);

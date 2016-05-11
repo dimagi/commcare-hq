@@ -7,6 +7,8 @@ FormplayerFrontend.module("AppSelect.AppList", function(AppList, FormplayerFront
 
             $.when(fetchingApps).done(function (apps) {
 
+                debugger;
+
                 var appListView = new AppList.AppSelectView({
                     collection: apps,
                 });
