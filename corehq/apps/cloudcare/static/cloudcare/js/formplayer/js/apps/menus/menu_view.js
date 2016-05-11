@@ -9,6 +9,14 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             "click": "rowClick",
         },
 
+        getTemplate: function () {
+            if (this.model.attributes.audioUri) {
+                return "#menu-view-item-audio";
+            } else {
+                return "#menu-view-item";
+            }
+        },
+
         rowClick: function (e) {
             e.preventDefault();
             var model = this.model;
