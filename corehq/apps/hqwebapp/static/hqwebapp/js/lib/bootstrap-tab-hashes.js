@@ -1,7 +1,9 @@
-// https://gist.github.com/josheinstein/5586469
+// Modified https://gist.github.com/josheinstein/5586469
 $(function () {
     if (location.hash.substr(0,2) == "#!") {
-        $("a[href='#" + location.hash.substr(2) + "']").tab("show");
+        var hash = location.hash.substr(2);
+        hash = hash.split('?')[0];
+        $("a[href='#" + hash + "']").tab("show");
     }
 
     $("a[data-toggle='tab']").on("shown", function (e) {

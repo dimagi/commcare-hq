@@ -34,7 +34,9 @@
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
             hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
             download_zip: '{% url "download_ccz" app.domain '___' %}',
-            download_multimedia: '{% url "download_multimedia_zip" app.domain '___' %}'
+            download_multimedia: '{% url "download_multimedia_zip" app.domain '___' %}',
+            application_errors: ('{% url "project_report_dispatcher" app.domain 'application_error' %}'
+                                 + '?app={{ app.id }}&version_number=___'),
         };
         var o = {
             urls: urls,
@@ -110,6 +112,9 @@
                         <th></th>
                         <th></th>
                         <th>{% trans "Comments" %}</th>
+                        {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
+                            <th>Errors</th>
+                        {% endif %}
                         <th>
                             {% trans "Released" %}
                                         <span class="hq-help-template"
@@ -238,6 +243,12 @@
                                 </h6>
                             {% endif %}
                         </td>
+                        {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
+                        <td>
+                            <a data-bind="text: num_errors,
+                                          attr: {href: $root.url('application_errors', version())}" />
+                        </td>
+                        {% endif %}
                         <td class="build-is-released">
                             <div data-bind="starred: is_released, click: $root.toggleRelease"></div>
                         </td>
@@ -308,16 +319,16 @@
                         </div>
                     </div>
                 </script>
-                <script type="text/html" id="deploy-build-modal-template">
-                    {% include 'app_manager/partials/releases_deploy_modal.html' %}
-                </script>
+    <script type="text/html" id="deploy-build-modal-template">
+        {% include 'app_manager/partials/releases_deploy_modal.html' %}
+    </script>
             </div>
 {% if build_profile_access %}
         </div>
         <div id="profiles-tab" class="tab-pane">
             {% include 'app_manager/partials/build_profiles.html' %}
         </div>
-    </div>
+     </div>
 </div>
 {% endif %}
 

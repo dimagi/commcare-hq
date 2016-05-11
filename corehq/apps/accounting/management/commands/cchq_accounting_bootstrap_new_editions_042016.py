@@ -9,7 +9,6 @@ from optparse import make_option
 
 # Django imports
 from django.apps import apps as default_apps
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.exceptions import AccountingError
@@ -193,7 +192,7 @@ def _ensure_features(dry_run, verbose, apps):
                         logger.info("Feature '%s' already exists. Using "
                                     "existing feature to add rate."
                                     % feature.name)
-                except ObjectDoesNotExist:
+                except Feature.DoesNotExist:
                     feature.save()
                     if verbose:
                         logger.info("Creating Feature: %s" % feature)

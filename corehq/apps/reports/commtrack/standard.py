@@ -1,4 +1,7 @@
-from corehq.apps.reports.commtrack.data_sources import StockStatusDataSource, ReportingStatusDataSource, SimplifiedInventoryDataSource
+from corehq.apps.reports.commtrack.data_sources import (
+    StockStatusDataSource, ReportingStatusDataSource,
+    SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
+)
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState
@@ -6,6 +9,7 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.filters.commtrack import SelectReportingType
+from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.decorators.memoized import memoized
@@ -247,7 +251,10 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
             'max_rows': 100
         }
 
-        data = SimplifiedInventoryDataSource(config).get_data()
+        if should_use_sql_backend(self.domain):
+            data = SimplifiedInventoryDataSourceNew(config).get_data()
+        else:
+            data = SimplifiedInventoryDataSource(config).get_data()
 
         for loc_name, loc_data in data:
             yield [loc_name] + [

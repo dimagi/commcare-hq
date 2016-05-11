@@ -4,7 +4,7 @@
 
 ES_CLUSTER_NAME=$(hostname)
 PROJECT_NAME=hqservice
-if [ `uname` == 'Darwin' ]; then
+if [ `uname` == 'Darwin' -a "$DOCKER_BETA" != "true" ]; then
     # use boot2docker host ip
     KAFKA_ADVERTISED_HOST_NAME=$(docker-machine ip $DOCKER_MACHINE_NAME)
 else

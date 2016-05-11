@@ -228,7 +228,7 @@
                 <p>{% trans "This action:" %}</p>
                 <ul>
                     <li>
-                        {% blocktrans with couch_user.human_friendly_name as friendly_name %}Will delete {{ friendly_name }}.{% endblocktrans %}
+                        {% blocktrans with couch_user.human_friendly_name as friendly_name %}Will delete {{ friendly_name }}. They will no longer be able to sync or submit any data from their mobile devices.{% endblocktrans %}
                     </li>
                     <li>{% blocktrans with couch_user.human_friendly_name as friendly_name %}
                         Will delete <strong>all</strong> of {{ friendly_name }}'s form submissions.

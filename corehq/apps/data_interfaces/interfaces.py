@@ -25,7 +25,7 @@ from .dispatcher import EditDataInterfaceDispatcher
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
     section_name = ugettext_noop("Data")
-    base_template = "reports/bootstrap2/standard/base_template.html"
+    base_template = "reports/standard/base_template.html"
     asynchronous = True
     dispatcher = EditDataInterfaceDispatcher
     exportable = False
@@ -39,8 +39,6 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     name = ugettext_noop("Reassign Cases")
     slug = "reassign_cases"
     report_template_path = 'data_interfaces/interfaces/case_management.html'
-
-    is_bootstrap3 = True
 
     @property
     @memoized
@@ -173,8 +171,6 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
     name = ugettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
     report_template_path = 'data_interfaces/interfaces/archive_forms.html'
-
-    is_bootstrap3 = True
 
     def __init__(self, request, **kwargs):
         super(BulkFormManagementInterface, self).__init__(request, **kwargs)

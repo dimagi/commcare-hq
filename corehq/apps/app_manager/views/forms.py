@@ -12,6 +12,7 @@ from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.core.urlresolvers import reverse
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
@@ -58,7 +59,7 @@ from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
-    login_or_digest,
+    login_or_digest, api_domain_view
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
@@ -207,10 +208,20 @@ def edit_careplan_form_actions(request, domain, app_id, module_id, form_id):
     return json_response(response_json)
 
 
-@no_conflict_require_POST
+@csrf_exempt
+@api_domain_view
+def edit_form_attr_api(request, domain, app_id, unique_form_id, attr):
+    return _edit_form_attr(request, domain, app_id, unique_form_id, attr)
+
+
 @login_or_digest
-@require_permission(Permissions.edit_apps, login_decorator=None)
 def edit_form_attr(request, domain, app_id, unique_form_id, attr):
+    return _edit_form_attr(request, domain, app_id, unique_form_id, attr)
+
+
+@no_conflict_require_POST
+@require_permission(Permissions.edit_apps, login_decorator=None)
+def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
 

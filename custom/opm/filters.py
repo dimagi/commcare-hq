@@ -11,7 +11,7 @@ from .utils import user_sql_data
 
 class OpmBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
     single_option_select = -1
-    template = "common/bootstrap2/drilldown_options.html"
+    template = "common/drilldown_options.html"
 
     @property
     def selected(self):

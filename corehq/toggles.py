@@ -368,14 +368,6 @@ NO_VELLUM = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-VELLUM_BETA = PredictablyRandomToggle(
-    'vellum_beta',
-    'Use Vellum beta version',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    randomness=0.1
-)
-
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     'hipaa_compliance_checkbox',
     'Show HIPAA compliance checkbox',
@@ -604,6 +596,13 @@ CLOUDCARE_CACHE = StaticToggle(
     'Aggresively cache case list, can result in stale data',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+APPLICATION_ERROR_REPORT = StaticToggle(
+    'application_error_report',
+    'Show Application Error Report',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
 )
 
 OPENLMIS = StaticToggle(
