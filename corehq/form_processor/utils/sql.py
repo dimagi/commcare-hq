@@ -155,6 +155,8 @@ def ledger_value_adapter(ledger_value):
         adapt(ledger_value.balance).getquoted(),
         adapt(ledger_value.last_modified).getquoted(),
         adapt(ledger_value.case_id).getquoted(),
+        adapt(ledger_value.daily_consumption).getquoted(),
+        adapt(ledger_value.last_modified_form_id).getquoted(),
     ]
     return _adapt_fields(fields, LedgerValue_DB_TABLE)
 

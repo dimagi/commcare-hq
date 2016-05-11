@@ -1,4 +1,5 @@
 import mock
+from couchdbkit import ResourceNotFound
 
 
 def mock_report_configurations(report_configurations_by_id):
@@ -8,9 +9,15 @@ def mock_report_configurations(report_configurations_by_id):
 
 
 def mock_report_configuration_get(report_configurations_by_id):
+    def get_report_config(_id, domain):
+        try:
+            return (report_configurations_by_id[_id], False)
+        except KeyError:
+            raise ResourceNotFound
     return mock.patch(
-        'corehq.apps.userreports.models.ReportConfiguration.get',
-        classmethod(lambda self, _id: report_configurations_by_id[_id]))
+        'corehq.apps.app_manager.fixtures.mobile_ucr.get_report_config',
+        get_report_config
+    )
 
 
 def mock_report_data(data):

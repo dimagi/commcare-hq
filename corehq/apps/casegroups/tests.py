@@ -7,6 +7,7 @@ from corehq.util.test_utils import DocTestMixin
 
 
 class DBAccessorsTest(TestCase, DocTestMixin):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'skbanskdjoasdkng'

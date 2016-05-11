@@ -50,7 +50,6 @@ class TestDueList(TestCase):
         due_list = list(get_due_list_by_task_name(datetime.utcnow(), case_es=es))
         self.assertEquals(due_list, [('foo', 10)])
 
-
     def test_get_due_list_records(self):
         '''
         Basic sanity check that the function does not crash and decomposes

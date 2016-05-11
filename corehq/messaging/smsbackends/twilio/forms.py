@@ -12,6 +12,7 @@ class TwilioBackendForm(BackendForm, LoadBalancingBackendFormMixin):
     auth_token = TrimmedCharField(
         label=_("Auth Token"),
     )
+
     @property
     def gateway_specific_fields(self):
         return crispy.Fieldset(

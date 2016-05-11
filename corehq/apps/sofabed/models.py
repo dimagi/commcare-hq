@@ -11,6 +11,7 @@ MISSING_APP_ID = '_MISSING_APP_ID'
 
 
 class BaseDataIndex(models.Model):
+
     @classmethod
     def get_instance_id(cls, item):
         raise NotImplementedError()

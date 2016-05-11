@@ -13,7 +13,6 @@ require_can_edit_data = require_permission(Permissions.edit_data)
 require_form_management_privilege = requires_privilege_with_fallback(privileges.DATA_CLEANUP)
 
 
-
 class DataInterfaceDispatcher(ProjectReportDispatcher):
     prefix = 'data_interface'
     map_name = 'DATA_INTERFACES'

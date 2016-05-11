@@ -4,6 +4,12 @@
 
 ES_CLUSTER_NAME=$(hostname)
 PROJECT_NAME=hqservice
+if [ `uname` == 'Darwin' -a "$DOCKER_BETA" != "true" ]; then
+    # use boot2docker host ip
+    KAFKA_ADVERTISED_HOST_NAME=$(docker-machine ip $DOCKER_MACHINE_NAME)
+else
+    KAFKA_ADVERTISED_HOST_NAME=localhost
+fi
 
 function usage() {
     echo "Helper script to start and stop services for CommCare HQ"
@@ -16,14 +22,11 @@ function usage() {
 }
 
 function runner() {
-    if [ `uname` == 'Linux' ]; then
-        sudo \
-            env ES_CLUSTER_NAME=$ES_CLUSTER_NAME DOCKER_DATA_HOME=$DOCKER_DATA_HOME \
-            docker-compose -f $DOCKER_DIR/compose/docker-compose-services.yml -p $PROJECT_NAME $@
-    else
-        env ES_CLUSTER_NAME=$ES_CLUSTER_NAME DOCKER_DATA_HOME=$DOCKER_DATA_HOME \
-            docker-compose -f $DOCKER_DIR/compose/docker-compose-services.yml -p $PROJECT_NAME $@
-    fi
+    $UDO \
+        env ES_CLUSTER_NAME=$ES_CLUSTER_NAME \
+        KAFKA_ADVERTISED_HOST_NAME=$KAFKA_ADVERTISED_HOST_NAME \
+        DOCKER_DATA_HOME=$DOCKER_DATA_HOME \
+        docker-compose -f $DOCKER_DIR/compose/docker-compose-services.yml -p $PROJECT_NAME $@
 }
 
 while [[ $# > 0 ]]; do

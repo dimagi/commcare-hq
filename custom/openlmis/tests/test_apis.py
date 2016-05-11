@@ -12,6 +12,7 @@ from custom.openlmis.tests.mock_api import MockOpenLMISEndpoint
 ISO_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 TEST_DOMAIN_API = "commtrack-api-test"
 
+
 class FeedApiTest(TestCase):
 
     def setUp(self):
@@ -111,7 +112,6 @@ class FeedApiTest(TestCase):
         self.assertEqual("RELEASED", requisition.order_status)
         self.assertEqual("F10", requisition.supplying_facility_code)
 
-
     def testParseRequisitionStatus(self):
         with open(os.path.join(self.datapath, 'requisition_status_feed.rss')) as f:
             recent = list(get_requisition_statuses(f.read()))
@@ -120,7 +120,6 @@ class FeedApiTest(TestCase):
         self.assertEqual(2, len(recent))
         for f in recent:
             self.assertEqual(RequisitionStatus, type(f))
-
 
         #Sanity CheckList for two events
         self.assertEqual('tag:atomfeed.ict4h.org:f4fa4edf-60be-4b4b-abfc-624a0d32f3ca', r1.rss_meta.id)

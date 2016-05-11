@@ -464,7 +464,6 @@ class PayloadGeneratorTest(SimpleTestCase):
     @patch('casexml.apps.case.xform.cases_referenced_by_xform')
     @patch('custom.dhis2.payload_generators.Dhis2Settings')
     def test_get_payload_ignores_registration(self, Dhis2SettingsPatch, cases_referenced_by_xform, push_case):
-
         """
         get_payload should raise IgnoreDocument given a registration form
         """

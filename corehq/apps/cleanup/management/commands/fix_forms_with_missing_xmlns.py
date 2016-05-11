@@ -221,7 +221,9 @@ def set_xmlns_on_form(form_id, xmlns, app_build, log_file, dry_run):
     except FormNotFoundException:
         return
 
-    if form_in_build.xmlns == "undefined":
+    if form_in_build.xmlns == "undefined" or form_in_build.source.count('xmlns="undefined"') > 0:
+        if form_in_build.xmlns != "undefined":
+            assert form_in_build.xmlns == xmlns
         xml = form_in_build.source
         wrapped_xml = XForm(xml)
 
@@ -277,6 +279,7 @@ def get_saved_apps(app):
 
 
 class MultipleFormsMissingXmlns(Exception):
+
     def __init__(self, build_id):
         msg = "Multiple forms missing xmlns for build {}".format(
             build_id
@@ -285,6 +288,7 @@ class MultipleFormsMissingXmlns(Exception):
 
 
 class FormNameMismatch(Exception):
+
     def __init__(self, instance_id, instance_build_id, form_unique_id):
         msg = "xform {} name does not match form {} name in build {}".format(
             instance_id,

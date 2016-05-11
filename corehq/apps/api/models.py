@@ -12,6 +12,7 @@ from corehq.util.hash_compat import make_password
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
 
+
 class ApiUser(Document):
     password = StringProperty()
     permissions = ListProperty(StringProperty)
@@ -67,11 +68,13 @@ class ApiUser(Document):
         except ResourceNotFound:
             return False
 
+
 def _require_api_user(permission=None):
     def _outer2(fn):
         from django.views.decorators.http import require_POST
         if settings.DEBUG:
             return fn
+
         @require_POST
         @wraps(fn)
         def _outer(request, *args, **kwargs):

@@ -16,7 +16,8 @@ def get_instance_from_data(SerializerClass, data):
     # you always want to save(). This function does everything ModelSerializer.save() does, just without saving.
     ModelClass = SerializerClass.Meta.model
     serializer = SerializerClass(data=data)
-    assert serializer.is_valid(), 'Unable to deserialize data while creating {}'.format(ModelClass)
+    if not serializer.is_valid():
+        raise ValueError('Unable to deserialize data while creating {}: {}'.format(ModelClass, serializer.errors))
     return ModelClass(**serializer.validated_data)
 
 
@@ -28,7 +29,7 @@ class DeletableModelSerializer(serializers.ModelSerializer):
 
     def __init__(self, instance=None, *args, **kwargs):
         super(DeletableModelSerializer, self).__init__(instance=instance, *args, **kwargs)
-        if not instance.is_deleted:
+        if instance is not None and not instance.is_deleted:
             self.fields.pop('deletion_id')
             self.fields.pop('deleted_on')
 
@@ -58,7 +59,7 @@ class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
 
 class CaseTransactionActionSerializer(serializers.ModelSerializer):
     xform_id = serializers.CharField(source='form_id')
-    date = serializers.CharField(source='server_date')
+    date = serializers.DateTimeField(source='server_date')
 
     class Meta:
         model = CaseTransaction

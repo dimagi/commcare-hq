@@ -233,6 +233,7 @@ You may access your project by following this link: {registration_link}
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
+
 def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain", is_new_user=False, is_confirming=False):
     entity_texts = {"domain": ["project space", "Project"],
                    "org": ["organization", "Organization"]}[entity_type]

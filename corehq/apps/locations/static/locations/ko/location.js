@@ -13,7 +13,7 @@ $(function() {
     var url = form_node.prop('action');
 
     $('#new_user').on('show', function() {
-        form_node.html('<i class="icon-refresh icon-spin"></i>');
+        form_node.html('<i class="fa fa-refresh fa-spin"></i>');
         $.get(url, function(data) {
             form_node.html(data.form_html);
         });

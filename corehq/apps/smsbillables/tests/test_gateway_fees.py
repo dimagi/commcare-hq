@@ -21,6 +21,7 @@ from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
 
 class TestGatewayFee(TestCase):
+
     def setUp(self):
         self.currency_usd = init_default_currency()
 

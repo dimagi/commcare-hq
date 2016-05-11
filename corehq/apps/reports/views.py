@@ -6,6 +6,8 @@ import json
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
+    REPORT_BUILDER_ACCESS
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.tabs.tabclasses import ProjectReportsTab
@@ -176,6 +178,8 @@ datespan_default = datespan_in_request(
 
 require_form_export_permission = require_permission(
     Permissions.view_report, FORM_EXPORT_PERMISSION, login_decorator=None)
+require_form_deid_export_permission = require_permission(
+    Permissions.view_report, DEID_EXPORT_PERMISSION, login_decorator=None)
 require_case_export_permission = require_permission(
     Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
@@ -234,7 +238,18 @@ class MySavedReportsView(BaseProjectReportSectionView):
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
+        self._init_tours()
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
+
+    def _init_tours(self):
+        """
+        Add properties to the request for any tour that might be active
+        """
+        tours = ((REPORT_BUILDER_ACCESS, 1), (REPORT_BUILDER_NO_ACCESS, 2))
+        for tour, step in tours:
+            if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
+                self.request.guided_tour = tour.get_tour_data(self.request, step)
+                break  # Only one of these tours may be active.
 
     @property
     def language(self):
@@ -519,31 +534,46 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
-    export = SavedBasicExport.get(export_id)
+    saved_export = SavedBasicExport.get(export_id)
+    return _download_saved_export(req, domain, saved_export)
+
+
+@csrf_exempt
+@login_or_digest_or_basic_or_apikey(default='digest')
+@require_form_deid_export_permission
+@require_GET
+def hq_deid_download_saved_export(req, domain, export_id):
+    saved_export = SavedBasicExport.get(export_id)
+    if not saved_export.is_safe:
+        raise Http404()
+    return _download_saved_export(req, domain, saved_export)
+
+
+def _download_saved_export(req, domain, saved_export):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
-    assert domain == export.configuration.index[0]
-    if should_update_export(export.last_accessed):
+    assert domain == saved_export.configuration.index[0]
+    if should_update_export(saved_export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
             try:
                 group_config = HQGroupExportConfiguration.get(group_id)
                 assert domain == group_config.domain
                 all_config_indices = [schema.index for schema in group_config.all_configs]
-                list_index = all_config_indices.index(export.configuration.index)
+                list_index = all_config_indices.index(saved_export.configuration.index)
                 schema = next(itertools.islice(group_config.all_export_schemas,
                                                list_index,
                                                list_index+1))
-                rebuild_export_async.delay(export.configuration, schema)
+                rebuild_export_async.delay(saved_export.configuration, schema)
             except Exception:
                 notify_exception(req, 'Failed to rebuild export during download')
 
-    export.last_accessed = datetime.utcnow()
-    export.save()
+    saved_export.last_accessed = datetime.utcnow()
+    saved_export.save()
 
-    payload = export.get_payload(stream=True)
+    payload = saved_export.get_payload(stream=True)
     return build_download_saved_export_response(
-        payload, export.configuration.format, export.configuration.filename
+        payload, saved_export.configuration.format, saved_export.configuration.filename
     )
 
 
@@ -593,6 +623,7 @@ def export_all_form_metadata(req, domain):
     tmp_path = save_metadata_export_to_tempfile(domain, format=format)
 
     return export_response(open(tmp_path), format, "%s_forms" % domain)
+
 
 @login_or_digest
 @require_form_export_permission
@@ -1103,6 +1134,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "report_type": _("once off report") if once else _("scheduled report"),
     }), excel_attachments
 
+
 @login_and_domain_required
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
@@ -1202,7 +1234,7 @@ def case_forms(request, domain, case_id):
         }
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
-    forms = FormAccessors(domain).get_forms(slice)
+    forms = FormAccessors(domain).get_forms(slice, ordered=True)
     return json_response([
         form_to_json(form) for form in forms
     ])
@@ -1365,6 +1397,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         case_ids = get_open_case_ids_in_domain(domain)
 
     class stream_cases(object):
+
         def __init__(self, all_case_ids):
             self.all_case_ids = all_case_ids
 
@@ -1584,7 +1617,6 @@ def download_form(request, domain, instance_id):
     instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
-    instance = XFormInstance.get(instance_id)
     response = HttpResponse(content_type='application/xml')
     response.write(instance.get_xml())
     return response

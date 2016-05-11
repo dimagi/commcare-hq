@@ -148,9 +148,14 @@ class ExportsPermissionsMixin(object):
 
 
 class BaseExportView(BaseProjectDataView):
-    template_name = 'export/bootstrap2/customize_export.html'
+    template_name = 'export/customize_export_old.html'
     export_type = None
     is_async = True
+
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, *args, **kwargs):
+        return super(BaseExportView, self).dispatch(*args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -989,13 +994,18 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         }
 
     def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
-                                has_file=False, saved_basic_export=None):
+                                has_file=False, saved_basic_export=None, is_safe=False):
         """
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to an Angular controller.
         """
         file_data = {}
         if has_file:
+            if is_safe:
+                saved_download_url = 'hq_deid_download_saved_export'
+            else:
+                saved_download_url = 'hq_download_saved_export'
+
             file_data = self._fmt_emailed_export_fileData(
                 has_file,
                 saved_basic_export.get_id,
@@ -1003,7 +1013,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
                 saved_basic_export.last_updated,
                 saved_basic_export.last_accessed,
                 '{}?group_export_id={}'.format(
-                    reverse('hq_download_saved_export', args=[
+                    reverse(saved_download_url, args=[
                         self.domain, saved_basic_export.get_id
                     ]),
                     group_id
@@ -1053,7 +1063,8 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             group_id=emailed_export.group_id,
             index=emailed_export.config.index,
             has_file=emailed_export.saved_version is not None and emailed_export.saved_version.has_file(),
-            saved_basic_export=emailed_export.saved_version
+            saved_basic_export=emailed_export.saved_version,
+            is_safe=export.is_safe,
         )
 
     def _get_daily_saved_export_metadata(self, export):
@@ -1254,7 +1265,6 @@ class FormExportListView(BaseExportListView):
             view_cls = DownloadNewFormExportView
         return reverse(view_cls.urlname, args=(self.domain, export_id))
 
-
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
         if self.is_deid:
@@ -1402,7 +1412,7 @@ class CaseExportListView(BaseExportListView):
 
 
 class BaseNewExportView(BaseExportView):
-    template_name = 'export/bootstrap3/customize_export.html'
+    template_name = 'export/customize_export_new.html'
 
     @use_bootstrap3
     @use_jquery_ui

@@ -14,6 +14,7 @@ from xml.sax.saxutils import escape
 
 
 class SQLKooKooBackend(SQLIVRBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True

@@ -1,7 +1,9 @@
 from django.test.testcases import TestCase
 from corehq.messaging.smsbackends.sislog.util import convert_raw_string
 
+
 class GSM0338Portuguese(TestCase):
+
     def test_decode(self):
         raw_to_clean = {
             # basic character test

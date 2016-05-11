@@ -18,8 +18,6 @@ class FixtureInterface(FixtureViewMixIn, GenericReportView):
     exportable = False
     needs_filters = False
 
-    is_bootstrap3 = True
-
 
 class FixtureSelectFilter(BaseSingleOptionFilter):
     slug = "table_id"

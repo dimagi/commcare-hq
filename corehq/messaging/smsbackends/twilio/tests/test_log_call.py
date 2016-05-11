@@ -7,6 +7,7 @@ from django.test import Client
 
 
 class TwilioLogCallTestCase(util.LogCallTestCase):
+
     def setUp(self):
         super(TwilioLogCallTestCase, self).setUp()
         self.backend = SQLTwilioBackend.objects.create(

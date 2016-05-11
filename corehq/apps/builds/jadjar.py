@@ -1,15 +1,31 @@
-from StringIO import StringIO
 import itertools
-from zipfile import ZipFile, ZIP_DEFLATED
-from django.conf import settings
+import os
 import shlex
+from StringIO import StringIO
 from subprocess import PIPE
 from tempfile import NamedTemporaryFile
-import os
+from zipfile import ZipFile, ZIP_DEFLATED
+
+from django.conf import settings
+from lxml import etree
+
 from dimagi.utils.subprocess_manager import subprocess_context
+
+CONVERTED_PATHS = set(['profile.xml', 'media_profile.xml', 'media_profile.ccpr', 'profile.ccpr'])
+
+
+def _make_address_j2me_safe(address):
+    if settings.J2ME_ADDRESS:
+        return address.replace(
+            settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1
+        ).replace(
+            "https://%s" % settings.J2ME_ADDRESS, "http://%s" % settings.J2ME_ADDRESS
+        )
+    return address
 
 
 class JadDict(dict):
+
     @classmethod
     def from_jad(cls, jad_contents):
         sep = ": "
@@ -36,6 +52,7 @@ class JadDict(dict):
                         'MIDlet-Certificate-1-4']
         unordered = [key for key in self.keys() if key not in ordered_start and key not in ordered_end]
         props = itertools.chain(ordered_start, sorted(unordered), ordered_end)
+        self["MIDlet-Jar-URL"] = _make_address_j2me_safe(self["MIDlet-Jar-URL"])
         lines = ['%s: %s%s' % (key, self[key], self.line_ending) for key in props if self.get(key) is not None]
         return "".join(lines)
 
@@ -109,7 +126,33 @@ def sign_jar(jad, jar):
     return jad.render()
 
 
+def convert_XML_To_J2ME(file, path):
+    if path in CONVERTED_PATHS:
+        tree = etree.fromstring(file)
+
+        tree.set('update', _make_address_j2me_safe(tree.attrib['update']))
+
+        properties = [
+            'ota-restore-url',
+            'ota-restore-url-testing',
+            'PostURL',
+            'PostTestURL',
+            'key_server',
+        ]
+        for prop in properties:
+            prop_elem = tree.find("property[@key='" + prop + "']")
+            if prop_elem:
+                prop_elem.set('value', _make_address_j2me_safe(prop_elem.get('value')))
+
+        for remote in tree.findall("suite/resource/location[@authority='remote']"):
+            remote.text = _make_address_j2me_safe(remote.text)
+
+        return etree.tostring(tree)
+    return file
+
+
 class JadJar(object):
+
     def __init__(self, jad, jar, version=None, build_number=None, signed=False):
         jad, jar = [j.read() if hasattr(j, 'read') else j for j in (jad, jar)]
         self._jad = jad
@@ -121,6 +164,7 @@ class JadJar(object):
     @property
     def jad(self):
         return self._jad
+
     @property
     def jar(self):
         return self._jar
@@ -131,8 +175,8 @@ class JadJar(object):
         # pack files into jar
         buffer = StringIO(self.jar)
         with ZipFile(buffer, 'a', ZIP_DEFLATED) as zipper:
-            for path in files:
-                zipper.writestr(path, files[path])
+            for path, f in files.items():
+                zipper.writestr(path, convert_XML_To_J2ME(f, path))
         buffer.flush()
         jar = buffer.getvalue()
         buffer.close()

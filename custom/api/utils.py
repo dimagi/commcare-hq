@@ -13,6 +13,7 @@ def apply_updates(doc, update_dict):
 
 
 class EndpointMixin(object):
+
     @classmethod
     def from_config(cls, config):
         return cls(config.url, config.username, config.password)

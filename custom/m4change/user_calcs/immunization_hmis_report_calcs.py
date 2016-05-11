@@ -30,6 +30,7 @@ def _check_immunization_value_tuple(form, field_name, values):
 
 
 class PncImmunizationCalculator(fluff.Calculator):
+
     def __init__(self, value):
         super(PncImmunizationCalculator, self).__init__()
         self.immunization_given_value = value

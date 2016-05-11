@@ -93,6 +93,7 @@ class DateColumnMixin(object):
 
 
 class FilterMixin(object):
+
     @property
     def filters(self):
         if not self.group_by_district:

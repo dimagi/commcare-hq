@@ -108,6 +108,8 @@ from corehq.apps.app_manager.util import (
     update_unique_ids,
     app_callout_templates,
     use_app_aware_sync,
+    xpath_references_case,
+    xpath_references_user_case,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -223,6 +225,7 @@ class IndexedSchema(DocumentSchema):
     and need to know their own position within that list.
 
     """
+
     def with_id(self, i, parent):
         self._i = i
         self._parent = parent
@@ -236,6 +239,7 @@ class IndexedSchema(DocumentSchema):
         return other and (self.id == other.id) and (self._parent == other._parent)
 
     class Getter(object):
+
         def __init__(self, attr):
             self.attr = attr
 
@@ -545,6 +549,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
 
 class AdvancedFormActions(DocumentSchema):
     load_update_cases = SchemaListProperty(LoadUpdateAction)
+
     open_cases = SchemaListProperty(AdvancedOpenCaseAction)
 
     get_load_update_actions = IndexedSchema.Getter('load_update_cases')
@@ -620,6 +625,7 @@ class AdvancedFormActions(DocumentSchema):
 
 
 class FormSource(object):
+
     def __get__(self, form, form_cls):
         if not form:
             return self
@@ -656,6 +662,7 @@ class FormSource(object):
 
 
 class CachedStringProperty(object):
+
     def __init__(self, key):
         self.get_key = key
 
@@ -973,6 +980,7 @@ class FormBase(DocumentSchema):
         except XFormException as e:
             # punt on invalid xml (sorry, no rich attachments)
             valid_paths = {}
+
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
                 return u"{}{}".format(ATTACHMENT_PREFIX, key)
@@ -1053,6 +1061,7 @@ class FormBase(DocumentSchema):
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
+
     def get_app(self):
         return self._parent._parent
 
@@ -1652,6 +1661,7 @@ class DetailColumn(IndexedSchema):
             'month': 30.4375,
             'year': 365.25
         }
+
         @classmethod
         def get_from_old_format(cls, format):
             if format == 'years-ago':
@@ -2030,6 +2040,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
 
 class ModuleDetailsMixin():
+
     @classmethod
     def wrap_details(cls, data):
         if 'details' in data:
@@ -2467,7 +2478,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_tag=action.case_tag
             ))
 
-        if self.form_filter:
+        form_filter_references_case = (
+            xpath_references_case(self.form_filter) or
+            xpath_references_user_case(self.form_filter)
+        )
+
+        if form_filter_references_case:
             if not any(action for action in self.actions.load_update_cases if not action.auto_select):
                 errors.append({'type': "filtering without case"})
 
@@ -3313,6 +3329,7 @@ class ReportGraphConfig(DocumentSchema):
 
 
 class ReportAppFilter(DocumentSchema):
+
     @classmethod
     def wrap(cls, data):
         if cls is ReportAppFilter:
@@ -3539,6 +3556,7 @@ class CustomMonthFilter(ReportAppFilter):
 
 
 class MobileSelectFilter(ReportAppFilter):
+
     def get_filter_value(self, user, ui_filter):
         return None
 
@@ -3608,11 +3626,10 @@ class ReportAppConfig(DocumentSchema):
 
         return super(ReportAppConfig, cls).wrap(doc)
 
-    @property
-    def report(self):
-        from corehq.apps.userreports.models import ReportConfiguration
+    def report(self, domain):
         if self._report is None:
-            self._report = ReportConfiguration.get(self.report_id)
+            from corehq.apps.userreports.models import get_report_config
+            self._report = get_report_config(self.report_id, domain)[0]
         return self._report
 
 
@@ -3630,11 +3647,8 @@ class ReportModule(ModuleBase):
     @property
     @memoized
     def reports(self):
-        from corehq.apps.userreports.models import ReportConfiguration
-        return [
-            ReportConfiguration.wrap(doc) for doc in
-            get_docs(ReportConfiguration.get_db(), [r.report_id for r in self.report_configs])
-        ]
+        from corehq.apps.userreports.models import get_report_configs
+        return get_report_configs([r.report_id for r in self.report_configs], self.get_app().domain)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -5230,6 +5244,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 form.update_app_case_meta(meta)
 
         seen_types = []
+
         def get_children(case_type):
             seen_types.append(case_type)
             return [type_.name for type_ in meta.case_types if type_.relationships.get('parent') == case_type]

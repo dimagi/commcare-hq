@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap3/tabular.html" %}
+{% extends "reports/async/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -32,7 +32,7 @@
 
 {% block reporttable %}
 {% if report.needs_filters %}
-    {% include 'reports/bootstrap2/partials/description.html' %}
+    {% include 'reports/partials/description.html' %}
 {% else %}
     <div class={{ report.slug }}>
         {% for thisreport in reports %}
@@ -81,7 +81,7 @@
                 {% endif %}
 
                 {% if report_table.bad_request_error_text %}
-                    badRequestErrorText: "<span class='label label-important'>Sorry!</span> {{ report_table.bad_request_error_text }}",
+                    badRequestErrorText: "<span class='label label-danger'>Sorry!</span> {{ report_table.bad_request_error_text }}",
                 {% endif %}
 
                 {% if report_table.left_col.is_fixed %}

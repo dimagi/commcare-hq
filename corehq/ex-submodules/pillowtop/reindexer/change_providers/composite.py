@@ -6,6 +6,7 @@ from pillowtop.reindexer.change_providers.interface import ChangeProvider
 class CompositeChangeProvider(ChangeProvider):
     """Change Provider of Change Providers
     """
+
     def __init__(self, change_providers):
         self.change_providers = change_providers
 

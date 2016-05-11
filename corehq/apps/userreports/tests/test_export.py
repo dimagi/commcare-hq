@@ -7,6 +7,7 @@ from ..views import process_url_params
 
 
 class ParameterTest(SimpleTestCase):
+
     def setUp(self):
         config = get_sample_data_source()
         self.columns = get_indicator_table(config).columns

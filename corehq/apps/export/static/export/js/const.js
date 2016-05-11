@@ -1,8 +1,15 @@
-/*
+/* globals Exports
+ *
  * Some of these constants need correspond to constants set in corehq/apps/exports/const.py
  * so if changing a value, ensure that both places reflect the change
  */
 Exports.Constants.TAG_DELETED = 'deleted';
+Exports.Constants.MULTISELECT_SPLIT_TYPE = 'multi-select';
+Exports.Constants.PLAIN_SPLIT_TYPE = 'plain';
+Exports.Constants.USER_DEFINED_SPLIT_TYPES = [
+    Exports.Constants.PLAIN_SPLIT_TYPE,
+    Exports.Constants.MULTISELECT_SPLIT_TYPE,
+];
 Exports.Constants.SAVE_STATES = {
     SAVING: 'saving',
     ERROR: 'error',

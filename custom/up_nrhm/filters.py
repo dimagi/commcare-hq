@@ -10,6 +10,7 @@ from corehq.apps.reports.standard import DatespanMixin
 
 
 class HierarchySqlData(SqlData):
+
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], 'location_hierarchy')

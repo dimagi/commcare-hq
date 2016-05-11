@@ -720,6 +720,7 @@ class UserInvitationView(object):
         user.add_as_web_user(invitation.domain, role=invitation.role,
                              location_id=invitation.supply_point, program_id=invitation.program)
 
+
 @sensitive_post_parameters('password')
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)

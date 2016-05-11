@@ -22,6 +22,7 @@ from django.core.validators import MaxLengthValidator
 
 NEW_USERNAME_LENGTH = 128
 
+
 def monkey_patch_username(model, field):
     username = model._meta.get_field(field)
     username.max_length = NEW_USERNAME_LENGTH

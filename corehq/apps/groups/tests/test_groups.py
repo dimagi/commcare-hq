@@ -9,6 +9,7 @@ DOMAIN = 'test-domain'
 
 
 class GroupTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.active_user = CommCareUser.create(domain=DOMAIN, username='activeguy', password='secret')

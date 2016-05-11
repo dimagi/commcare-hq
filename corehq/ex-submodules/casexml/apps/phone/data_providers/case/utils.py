@@ -10,6 +10,7 @@ class CaseSyncUpdate(object):
     """
     The record of how a case should sync
     """
+
     def __init__(self, case, sync_token, required_updates=None):
         self.case = case
         self.sync_token = sync_token

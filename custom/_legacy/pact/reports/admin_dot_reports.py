@@ -19,6 +19,7 @@ class PactDOTAdminPatientField(PactDOTPatientField):
 COUCH_CHUNK_LIMIT = 500
 COUCH_MAX_LIMIT = 1000
 
+
 class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
     fields = ['pact.reports.admin_dot_reports.PactDOTAdminPatientField',
               'corehq.apps.reports.filters.dates.DatespanFilter']
@@ -27,8 +28,6 @@ class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
     emailable = True
     exportable = True
     report_template_path = "pact/admin/pact_dot_admin.html"
-
-    is_bootstrap3 = True
 
     def tabular_data(self, mode, case_id, start_date, end_date):#, limit=50, skip=0):
         try:

@@ -7,7 +7,7 @@ from nose.tools import nottest
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.parsers.form import process_xform_xml
@@ -43,6 +43,21 @@ class FormProcessorTestUtils(object):
     @staticmethod
     def delete_all_sql_cases(domain=None):
         CaseAccessorSQL.delete_all_cases(domain)
+
+    @staticmethod
+    def delete_all_ledgers(domain):
+        for case_id in CaseAccessorSQL.get_case_ids_in_domain(domain):
+            transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
+            form_ids = {tx.form_id for tx in transactions}
+            for form_id in form_ids:
+                LedgerAccessorSQL.delete_ledger_transactions_for_form([case_id], form_id)
+            LedgerAccessorSQL.delete_ledger_values(case_id)
+
+        from casexml.apps.stock.models import StockReport
+        from casexml.apps.stock.models import StockTransaction
+        stock_report_ids = StockReport.objects.filter(domain=domain).values_list('id', flat=True)
+        StockReport.objects.filter(domain=domain).delete()
+        StockTransaction.objects.filter(report_id__in=stock_report_ids).delete()
 
     @classmethod
     @unit_testing_only

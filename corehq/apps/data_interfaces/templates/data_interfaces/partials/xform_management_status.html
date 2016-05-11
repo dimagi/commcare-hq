@@ -16,7 +16,7 @@
                 {% endif %}
             </div>
         {% if result.errors %}
-            <div class="alert alert-error">
+            <div class="alert alert-danger">
             <h3>{% trans "However, we ran into the following problems:" %}</h3>
                 {% for e in result.errors %}
                 <p>{{ e }}</p>
@@ -24,7 +24,7 @@
             </div>
         {% endif %}
         {% else %}
-            <div class="alert alert-error">
+            <div class="alert alert-danger">
                 <h3>{{ mode.fail_text }}</h3>
                     {% for e in result.errors %}
                     <p>{{ e }}</p>
@@ -41,5 +41,5 @@
     <legend>
         {{ mode.progress_text }}
     </legend>
-    {% include 'soil/partials/bootstrap2/download_in_progress.html' %}
+    {% include 'soil/partials/bootstrap3/download_in_progress.html' %}
 {% endif %}

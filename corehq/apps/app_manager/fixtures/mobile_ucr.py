@@ -6,14 +6,11 @@ from lxml.builder import E
 from django.conf import settings
 
 from corehq import toggles
-from corehq.apps.app_manager.models import (
-    Application,
-    ReportModule,
-)
+from corehq.apps.app_manager.models import ReportModule
 from corehq.util.xml_utils import serialize
 
 from corehq.apps.userreports.exceptions import UserReportsError, BadReportConfigurationError
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
@@ -60,7 +57,7 @@ class ReportFixturesProvider(object):
     def _report_config_to_fixture(report_config, user):
         report_elem = E.report(id=report_config.uuid)
         try:
-            report = ReportConfiguration.get(report_config.report_id)
+            report = get_report_config(report_config.report_id, user.domain)[0]
         except ResourceNotFound as err:
             # ReportConfiguration not found
             raise BadReportConfigurationError('Error getting ReportConfiguration with ID "{}": {}'.format(

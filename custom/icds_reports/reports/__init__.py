@@ -16,7 +16,6 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     report_template_path = "icds_reports/multi_report.html"
     flush_layout = True
     exportable = True
-    is_bootstrap3 = True
 
     fields = [AsyncLocationFilter, MonthFilter, YearFilter]
 

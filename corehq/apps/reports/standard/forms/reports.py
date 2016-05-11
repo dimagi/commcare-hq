@@ -37,6 +37,7 @@ class SubmissionErrorReport(DeploymentsReport):
         return headers
 
     _submitfilter = None
+
     @property
     def submitfilter(self):
         if self._submitfilter is None:

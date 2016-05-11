@@ -2,6 +2,7 @@ from django.utils.safestring import mark_safe
 from dimagi.utils.data.crud import TabularCRUDManager, BaseCRUDForm
 from dimagi.utils.decorators.memoized import memoized
 
+
 class BaseAdminHQTabularCRUDManager(TabularCRUDManager):
     """
         All Tabular CRUD Managers for CoreHQ-based CRUD should extend this.

@@ -39,6 +39,7 @@ class _Writer(object):
     """
     An object that provides a friendlier interface to couchexport.ExportWriters.
     """
+
     def __init__(self, writer):
         # An instance of a couchexport.ExportWriter
         self.writer = writer

@@ -4,6 +4,7 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
@@ -11,12 +12,10 @@ class Migration(SchemaMigration):
         # Adding field 'PillowError.change'
         db.add_column(u'pillow_retry_pillowerror', 'change', self.gf('django.db.models.fields.TextField')(null=True), keep_default=False)
 
-
     def backwards(self, orm):
         
         # Deleting field 'PillowError.change'
         db.delete_column(u'pillow_retry_pillowerror', 'change')
-
 
     models = {
         u'pillow_retry.pillowerror': {
