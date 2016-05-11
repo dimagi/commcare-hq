@@ -46,18 +46,19 @@ class FormProcessorTestUtils(object):
 
     @staticmethod
     def delete_all_ledgers(domain):
-        for case_id in CaseAccessorSQL.get_case_ids_in_domain(domain):
-            transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
-            form_ids = {tx.form_id for tx in transactions}
-            for form_id in form_ids:
-                LedgerAccessorSQL.delete_ledger_transactions_for_form([case_id], form_id)
-            LedgerAccessorSQL.delete_ledger_values(case_id)
-
-        from casexml.apps.stock.models import StockReport
-        from casexml.apps.stock.models import StockTransaction
-        stock_report_ids = StockReport.objects.filter(domain=domain).values_list('id', flat=True)
-        StockReport.objects.filter(domain=domain).delete()
-        StockTransaction.objects.filter(report_id__in=stock_report_ids).delete()
+        if should_use_sql_backend(domain):
+            for case_id in CaseAccessorSQL.get_case_ids_in_domain(domain):
+                transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
+                form_ids = {tx.form_id for tx in transactions}
+                for form_id in form_ids:
+                    LedgerAccessorSQL.delete_ledger_transactions_for_form([case_id], form_id)
+                LedgerAccessorSQL.delete_ledger_values(case_id)
+        else:
+            from casexml.apps.stock.models import StockReport
+            from casexml.apps.stock.models import StockTransaction
+            stock_report_ids = StockReport.objects.filter(domain=domain).values_list('id', flat=True)
+            StockReport.objects.filter(domain=domain).delete()
+            StockTransaction.objects.filter(report_id__in=stock_report_ids).delete()
 
     @classmethod
     @unit_testing_only
