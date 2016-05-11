@@ -1233,6 +1233,11 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
             case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
         )
 
+    def to_json(self):
+        from .serializers import LedgerValueSerializer
+        serializer = LedgerValueSerializer(self)
+        return serializer.data
+
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
