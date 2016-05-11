@@ -58,6 +58,7 @@ from corehq.apps.hqadmin.escheck import (
     check_case_es_index,
     check_reportxform_es_index
 )
+from corehq.apps.hqadmin.management.commands.check_services import service_tests
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health
 from corehq.apps.hqadmin.reporting.reports import (
     get_project_spaces,
@@ -67,7 +68,6 @@ from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.blobs import get_blob_db
 from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
 from dimagi.utils.couch.database import get_db, is_bigcouch
@@ -270,17 +270,11 @@ def system_ajax(request):
 
 
 @require_superuser_or_developer
-def test_blobdb(request):
-    """Save something to the blobdb and try reading it back."""
-    db = get_blob_db()
-    contents = "It takes Pluto 248 Earth years to complete one orbit!"
-    info = db.put(StringIO(contents))
-    with db.get(info.identifier) as fh:
-        res = fh.read()
-    db.delete(info.identifier)
-    if res == contents:
-        return HttpResponse("Successfully saved a file to the blobdb")
-    return HttpResponse("Did not successfully save a file to the blobdb")
+def check_services(request):
+    return HttpResponse("".join(
+        "{}: {}<br/>".format(service_test.__name__, service_test().msg)
+        for service_test in service_tests
+    ))
 
 
 class SystemInfoView(BaseAdminSectionView):
