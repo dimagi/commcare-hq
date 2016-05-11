@@ -17,7 +17,7 @@ def test_blobdb():
     db.delete(info.identifier)
     if res == contents:
         return ServiceStatus(True, "Successfully saved a file to the blobdb")
-    return ServiceStatus(False, "Did not successfully save a file to the blobdb")
+    return ServiceStatus(False, "Failed to save a file to the blobdb")
 
 
 service_tests = (test_blobdb,)
