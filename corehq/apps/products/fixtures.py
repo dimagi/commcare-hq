@@ -55,7 +55,7 @@ class ProductFixturesProvider(object):
 
         def get_products():
             return sorted(
-                Product.by_domain(user.domain, include_archived=True),
+                SQLProduct.by_domain(user.domain),
                 key=lambda product: product.code
             )
 
