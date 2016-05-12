@@ -5,6 +5,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
+
+from corehq.form_processor.change_publishers import publish_stock_state_saved
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 
@@ -553,6 +555,11 @@ def update_domain_mapping(sender, instance, *args, **kwargs):
             domain_name=domain_name,
         )
         mapping.save()
+
+
+@receiver(post_save, sender=StockState)
+def publish_stock_state_to_kafka(sender, instance, *args, **kwargs):
+    publish_stock_state_saved(instance)
 
 
 @receiver(xform_archived)
