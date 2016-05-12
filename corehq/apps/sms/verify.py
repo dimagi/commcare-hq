@@ -28,7 +28,7 @@ def initiate_sms_verification_workflow(contact, phone_number):
     with CriticalSection(['verifying-phone-number-%s' % phone_number]):
         vn = VerifiedNumber.by_phone(phone_number, include_pending=True)
         if vn:
-            if vn.owner_id != contact._id:
+            if vn.owner_id != contact.get_id:
                 return VERIFICATION__ALREADY_IN_USE
             if vn.verified:
                 return VERIFICATION__ALREADY_VERIFIED
