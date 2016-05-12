@@ -17,6 +17,7 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
 
+        var formatOptions = ["Choice", "Date"];
         var defaultCalculationOptions = ["Count per Choice", "Sum", "Average"];
         var nonNumericPropertyCalculationOptions = ["Count per Choice"];
         var propertyOptions = {{ property_options|JSON }};
@@ -194,10 +195,8 @@
             this.analyticsAction = getOrDefault(options, 'analyticsAction', null);
             this.analyticsLabel = getOrDefault(options, 'analyticsLabel', '{{ report_type }}');
 
-            // TODO: Any reason for this to be an observable?
             this.hasFormatCol = ko.observable(getOrDefault(options, 'hasFormatCol', true));
             this.hasCalculationCol = ko.observable(getOrDefault(options, 'hasCalculationCol', false));
-            this.formatOptions = ko.observableArray(["Choice", "Date"]);
 
             this.columns = ko.observableArray(getOrDefault(options, 'initialCols', []));
             this.serializedProperties = ko.computed(function(){
