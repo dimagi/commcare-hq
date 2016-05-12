@@ -64,9 +64,20 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         template: "#case-view-list",
         childView: MenuList.CaseView,
         childViewContainer: "tbody",
+
+        onRender: function(){
+            var headerHtml = ""
+            var headers = this.options.headers;
+            for(var i=0; i < headers.length; i++) {
+                headerHtml += "<td>" + headers[i] + "</td>";
+            }
+            this.options.headerHtml = headerHtml;
+            $("#case-list-header").append(headerHtml);
+        },
+
         templateHelpers: function () {
             return {
-                title: this.options.collection.title,
+                title: this.options.collection.title
             };
         },
     });

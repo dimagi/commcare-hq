@@ -14,7 +14,10 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
                 var menuListView;
-                var menuData = {collection: menuResponse, title: menuResponse.title};
+                var menuData = {collection: menuResponse,
+                    title: menuResponse.title,
+                    headers: menuResponse.headers,
+                    widthHints: menuResponse.widthHints};
                 if (menuResponse.type === "commands") {
                     menuListView = new MenuList.MenuListView(menuData);
                     FormplayerFrontend.regions.main.show(menuListView.render());

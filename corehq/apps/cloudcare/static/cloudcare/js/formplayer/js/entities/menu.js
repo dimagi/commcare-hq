@@ -24,6 +24,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.type = "entities";
                 this.action = response.action;
                 this.styles = response.styles;
+                this.headers = response.headers;
+                this.widthHints = response.widthHints;
                 return response.entities;
             }
             else if(response.tree){
