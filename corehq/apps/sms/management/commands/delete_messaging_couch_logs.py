@@ -158,7 +158,7 @@ class Command(BaseCommand):
             try:
                 self.clean_doc(doc)
                 couch_obj = couch_model.wrap(doc)
-            except Exception as e:
+            except Exception:
                 log_file.write('ERROR: Could wrap %s %s\n' % (couch_model.__name__, doc.get('_id')))
                 continue
 
