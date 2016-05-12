@@ -42,6 +42,15 @@
             }));
         }
 
+
+        var getOrDefault = function(options, key, default_) {
+            if (options[key] === undefined) {
+                return default_
+            } else {
+                return options[key]
+            }
+        };
+
         /**
          * Knockout view model representing a row in the filter property list
          * @constructor
@@ -146,8 +155,8 @@
         PropertyListItem.wrap = function(o){
             var i = new PropertyListItem();
             i.existsInCurrentVersion(o.exists_in_current_version);
-            i.property(o.property !== undefined ? o.property : "");
-            i.dataSourceField(o.data_source_field !== undefined ? o.data_source_field : null);
+            i.property(getOrDefault(o, 'property', ""));
+            i.dataSourceField(getOrDefault(o, 'data_source_field', null));
             i.displayText(o.display_text);
             i.calculation(o.calculation);
             i.format(o.format);
@@ -161,24 +170,25 @@
             var self = this;
             options = options || {};
 
-            this.buttonText = options.buttonText !== undefined ? options.buttonText : "Add property";
+            this.buttonText = getOrDefault(options, 'buttonText', 'Add property');
             // True if at least one column is required.
-            this.requireColumns = options.requireColumns !== undefined ? options.requireColumns : false;
-            this.requireColumnsText = options.requireColumnsText !== undefined ? options.requireColumnsText: "Please select at least one property";
+            this.requireColumns = getOrDefault(options, 'requireColumns', false);
+            this.requireColumnsText = getOrDefault(options, 'requireColumnsText', "Please select at least one property");
             // This function will be called if a user tries to submit the form with no columns.
-            this.noColumnsValidationCallback = options.noColumnsValidationCallback !== undefined ? options.noColumnsValidationCallback : null;
-            this.propertyHelpText = options.propertyHelpText !== undefined ? options.propertyHelpText : null;
-            this.displayHelpText = options.displayHelpText !== undefined ? options.displayHelpText : null;
-            this.formatHelpText = options.formatHelpText !== undefined ? options.formatHelpText : null;
-            this.calcHelpText = options.calcHelpText !== undefined ? options.calcHelpText : null;
-            this.analyticsAction = options.analyticsAction !== undefined ? options.analyticsAction : null;
-            this.analyticsLabel = options.analyticsLabel !== undefined ? options.analyticsLabel : '{{ report_type }}';
+            this.noColumnsValidationCallback = getOrDefault(options, 'noColumnsValidationCallback', null);
+            this.propertyHelpText = getOrDefault(options, 'propertyHelpText', null);
+            this.displayHelpText = getOrDefault(options, 'displayHelpText', null);
+            this.formatHelpText = getOrDefault(options, 'formatHelpText', null);
+            this.calcHelpText = getOrDefault(options, 'calcHelpText', null);
+            this.analyticsAction = getOrDefault(options, 'analyticsAction', null);
+            this.analyticsLabel = getOrDefault(options, 'analyticsLabel', '{{ report_type }}');
 
-            this.hasFormatCol = ko.observable(options.hasFormatCol !== undefined ? options.hasFormatCol : true);
-            this.hasCalculationCol = ko.observable(options.hasCalculationCol !== undefined ? options.hasCalculationCol : false);
+            // TODO: Any reason for this to be an observable?
+            this.hasFormatCol = ko.observable(getOrDefault(options, 'hasFormatCol', true));
+            this.hasCalculationCol = ko.observable(getOrDefault(options, 'hasCalculationCol', false));
             this.formatOptions = ko.observableArray(["Choice", "Date"]);
 
-            this.columns = ko.observableArray(options.initialCols !== undefined ? options.initialCols : []);
+            this.columns = ko.observableArray(getOrDefault(options, 'initialCols', []));
             this.serializedProperties = ko.computed(function(){
                 return JSON.stringify(
                     _.map(self.columns(), function(c){return c.toJS()})
