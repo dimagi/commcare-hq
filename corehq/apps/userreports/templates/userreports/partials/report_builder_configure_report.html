@@ -141,28 +141,11 @@
                 return !self.existsInCurrentVersion();
             });
 
-            /**
-             * Return a "plain" javascript object representing this view model
-             * suitable for sending to the server.
-             */
-            this.toJS = function(){
-                return {
-                    property: this.property(),
-                    display_text: this.displayText(),
-                    format: this.format(),
-                    calculation: this.calculation()
-                };
-            };
-
             // True if validation messages should be shown on any and all fields
             this.showWarnings = ko.observable(false);
             this.isValid = ko.computed(function(){
                 return Boolean(self.property() && self.existsInCurrentVersion() && self.displayText());
             });
-            this.validate = function() {
-                self.showWarnings(true);
-                return self.isValid();
-            };
         };
         PropertyListItem.wrap = function(o){
             var i = new PropertyListItem();
@@ -174,6 +157,27 @@
             i.format(o.format);
             return i;
         };
+        /**
+         * Return a "plain" javascript object representing this view model
+         * suitable for sending to the server.
+         */
+        PropertyListItem.prototype.toJS = function () {
+            return {
+                property: this.property(),
+                display_text: this.displayText(),
+                format: this.format(),
+                calculation: this.calculation()
+            };
+        };
+        /**
+         *  Return True if the item is valid, and start showing warnings if
+         *  we weren't already.
+         */
+        PropertyListItem.prototype.validate = function() {
+            this.showWarnings(true);
+            return this.isValid();
+        };
+
 
         /**
          * Knockout view model controlling the filter property list.
