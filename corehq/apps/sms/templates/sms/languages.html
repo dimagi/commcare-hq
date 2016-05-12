@@ -28,14 +28,12 @@
 <script>
     $(function () {
         var langs = {{ sms_langs|JSON }};
-        var buildLangs = {{ sms_langs|JSON }};
         var saveURL = "{% url "edit_sms_languages" domain %}";
         var edit = true;
         var validate = true;
         var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
         var sl = new SupportedLanguages({
             langs: langs,
-            buildLangs: buildLangs,
             saveURL: saveURL,
             edit: edit,
             validate: validate

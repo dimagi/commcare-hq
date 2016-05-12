@@ -1,6 +1,7 @@
 import uuid
 from django.http import HttpRequest
 from django.test import TestCase
+from django.test.utils import override_settings
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.users.models import WebUser
@@ -38,6 +39,7 @@ def _make_request(path=BLANK, domain=BLANK, user=BLANK):
     return request
 
 
+@override_settings(CACHE_REPORTS=True)
 class ReportCacheTest(TestCase):
     # note: this is pretty tightly coupled with the internals of the cache
     # but this is probably ok since that's what it's designed to test

@@ -1,10 +1,14 @@
 import json
+import uuid
 
-from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
+from django.views.generic import View
+from django.utils.decorators import method_decorator
+from django_prbac.decorators import requires_privilege
+from django.contrib import messages
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy
@@ -24,10 +28,12 @@ from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
-from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
+from corehq.apps.app_manager.models import BuildProfile
+from corehq.apps.users.models import CommCareUser
+from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
 from corehq.apps.app_manager.exceptions import ModuleIdMissingException
@@ -86,6 +92,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
+    build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
         'release_manager': True,
@@ -95,6 +102,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
+        'build_profile_access': build_profile_access
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
@@ -149,6 +157,7 @@ def save_copy(request, domain, app_id):
     track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
+    app.update_mm_map()
     try:
         errors = app.validate_app()
     except ModuleIdMissingException:
@@ -222,22 +231,30 @@ def delete_copy(request, domain, app_id):
 def odk_install(request, domain, app_id, with_media=False):
     app = get_app(domain, app_id)
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
+    build_profile_id = request.GET.get('profile')
+    profile_url = app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url
+    if build_profile_id:
+        profile_url += '?profile={profile}'.format(profile=build_profile_id)
     context = {
         "domain": domain,
         "app": app,
-        "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view, args=[domain, app_id]),
-        "profile_url": app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url,
+        "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view,
+                           args=[domain, app_id],
+                           params={'profile': build_profile_id}),
+        "profile_url": profile_url,
     }
     return render(request, "app_manager/odk_install.html", context)
 
 
 def odk_qr_code(request, domain, app_id):
-    qr_code = get_app(domain, app_id).get_odk_qr_code()
+    profile = request.GET.get('profile')
+    qr_code = get_app(domain, app_id).get_odk_qr_code(build_profile_id=profile)
     return HttpResponse(qr_code, content_type="image/png")
 
 
 def odk_media_qr_code(request, domain, app_id):
-    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True)
+    profile = request.GET.get('profile')
+    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True, build_profile_id=profile)
     return HttpResponse(qr_code, content_type="image/png")
 
 
@@ -352,3 +369,28 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.first_app_id, self.second_app_id])
+
+class LanguageProfilesView(View):
+    urlname = 'build_profiles'
+
+    @method_decorator(require_can_edit_apps)
+    @method_decorator(requires_privilege(privileges.BUILD_PROFILES))
+    def dispatch(self, request, *args, **kwargs):
+        return super(LanguageProfilesView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, domain, app_id, *args, **kwargs):
+        profiles = json.loads(request.body).get('profiles')
+        app = Application.get(app_id)
+        build_profiles = {}
+        if profiles:
+            for profile in profiles:
+                id = profile.get('id')
+                if not id:
+                    id = uuid.uuid4().hex
+                build_profiles[id] = BuildProfile(langs=profile['langs'], name=profile['name'])
+        app.build_profiles = build_profiles
+        app.save()
+        return HttpResponse()
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse()
