@@ -1146,6 +1146,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         self.account = account
         self.domain = domain
         self.creating_user = creating_user
+        is_ops_user = kwargs.pop('is_ops_user', False)
 
         try:
             self.current_country = self.account.billingcontactinfo.country
@@ -1168,14 +1169,49 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        fields = [
+            'company_name',
+            'first_name',
+            'last_name',
+            crispy.Field('email_list', css_class='input-xxlarge'),
+            'phone_number'
+        ]
+
+        if is_ops_user:
+            fields.insert(4, crispy.Div(
+                crispy.Div(
+                    css_class='col-sm-3 col-md-2'
+                ),
+                crispy.Div(
+                    crispy.HTML(self.initial['email_list']),
+                    css_class='col-sm-9 col-md-8 col-lg-6'
+                ),
+                css_id='emails-text',
+                css_class='collapse form-group'
+            ))
+
+            fields.insert(5, crispy.Div(
+                crispy.Div(
+                    css_class='col-sm-3 col-md-2'
+                ),
+                crispy.Div(
+                    StrictButton(
+                        _("Show contact emails as text"),
+                        type="button",
+                        css_class='btn btn-default',
+                        css_id='show_emails'
+                    ),
+                    crispy.HTML('<p class="help-block">%s</p>' %
+                                _('Useful when you want to copy contact emails')),
+                    css_class='col-sm-9 col-md-8 col-lg-6'
+                ),
+                css_class='form-group'
+            ))
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
-                'company_name',
-                'first_name',
-                'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
-                'phone_number',
+                *fields
             ),
             crispy.Fieldset(
                 _("Mailing Address"),
