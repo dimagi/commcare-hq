@@ -192,7 +192,9 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         user = CommCareUser(username=normalize_username(username, domain),
                             domain=domain)
         user.domain_membership = DomainMembership(domain=domain)
-        UserESFake.save_doc(user._doc)
+        doc = user._doc
+        doc['username.exact'] = doc['username']
+        UserESFake.save_doc(doc)
         return user
 
     @classmethod
@@ -201,7 +203,9 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         domains = [domain]
         user = WebUser(username=email, domains=domains)
         user.domain_memberships = [DomainMembership(domain=cls.domain)]
-        UserESFake.save_doc(user._doc)
+        doc = user._doc
+        doc['username.exact'] = doc['username']
+        UserESFake.save_doc(doc)
         return user
 
     @classmethod
