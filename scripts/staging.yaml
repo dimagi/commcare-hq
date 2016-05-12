@@ -57,7 +57,6 @@ branches:
   - b3-app-multimedia  # Biyeun 4/27
   - notifications-perms-change # j$ 5/11
   - calculatedIcons # Sravan 3/2
-  - fix-dashboard-500 # Nick P 5/12
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
