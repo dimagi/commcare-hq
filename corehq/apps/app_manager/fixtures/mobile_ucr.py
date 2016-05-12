@@ -53,9 +53,11 @@ class ReportFixturesProvider(object):
         root.append(reports_elem)
         return [root]
 
-    @classmethod
-    def _report_config_to_fixture(cls, report_config, user):
-        report, data_source = cls._get_report_and_data_source(report_config.report_id, user.domain)
+    @staticmethod
+    def _report_config_to_fixture(report_config, user):
+        report, data_source = ReportFixturesProvider._get_report_and_data_source(
+            report_config.report_id, user.domain
+        )
 
         all_filter_values = {
             filter_slug: filter.get_filter_value(user, report.get_ui_filter(filter_slug))
@@ -74,20 +76,20 @@ class ReportFixturesProvider(object):
         data_source.defer_filters(defer_filters)
         filter_options_by_field = defaultdict(set)
 
-        rows_elem = cls._get_report_elem(
+        rows_elem = ReportFixturesProvider._get_report_elem(
             data_source,
             {ui_filter.field for ui_filter in defer_filters.values()},
             filter_options_by_field
         )
-        filters_elem = cls._get_filters_elem(defer_filters, filter_options_by_field)
+        filters_elem = ReportFixturesProvider._get_filters_elem(defer_filters, filter_options_by_field)
 
         report_elem = E.report(id=report_config.uuid)
         report_elem.append(filters_elem)
         report_elem.append(rows_elem)
         return report_elem
 
-    @classmethod
-    def _get_report_and_data_source(cls, report_id, domain):
+    @staticmethod
+    def _get_report_and_data_source(report_id, domain):
         try:
             report = get_report_config(report_id, domain)[0]
         except ResourceNotFound as err:
@@ -98,8 +100,8 @@ class ReportFixturesProvider(object):
 
         return report, data_source
 
-    @classmethod
-    def _get_filters_elem(cls, defer_filters, filter_options_by_field):
+    @staticmethod
+    def _get_filters_elem(defer_filters, filter_options_by_field):
         filters_elem = E.filters()
         for filter_slug, ui_filter in defer_filters.items():
             # @field is maybe a bad name for this attribute,
@@ -114,8 +116,8 @@ class ReportFixturesProvider(object):
             filters_elem.append(filter_elem)
         return filters_elem
 
-    @classmethod
-    def _get_report_elem(cls, data_source, deferred_fields, filter_options_by_field):
+    @staticmethod
+    def _get_report_elem(data_source, deferred_fields, filter_options_by_field):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
