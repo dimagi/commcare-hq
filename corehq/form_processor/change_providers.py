@@ -103,37 +103,3 @@ def _ledger_v1_to_change(stock_state):
         metadata=change_meta_from_ledger_v1(stock_state),
         document_store=None,
     )
-
-
-class DjangoModelChangeProvider(ChangeProvider):
-
-    def __init__(self, model_class, model_to_change_fn, chunk_size=500):
-        self.model_class = model_class
-        self.model_to_change_fn = model_to_change_fn
-        self.chunk_size = chunk_size
-
-    def iter_all_changes(self, start_from=None):
-        from django.core.paginator import Paginator
-        from django.core.paginator import EmptyPage
-
-        model_list = self.model_class.objects.all()
-        paginator = Paginator(model_list, self.chunk_size)
-
-        page = 1
-        while True:
-            try:
-                for model in paginator.page(page):
-                    yield self.model_to_change_fn(model)
-            except EmptyPage:
-                return
-
-
-def _stock_state_to_change(stock_state):
-    return Change(
-        id=stock_state.pk,
-        sequence_id=None,
-        document=stock_state.to_json(),
-        deleted=False,
-        metadata=change_meta_from_stock_state(stock_state),
-        document_store=None,
-    )
