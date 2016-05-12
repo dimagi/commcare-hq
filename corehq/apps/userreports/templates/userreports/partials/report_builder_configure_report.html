@@ -199,8 +199,8 @@
             this.analyticsAction = getOrDefault(options, 'analyticsAction', null);
             this.analyticsLabel = getOrDefault(options, 'analyticsLabel', '{{ report_type }}');
 
-            this.hasFormatCol = ko.observable(getOrDefault(options, 'hasFormatCol', true));
-            this.hasCalculationCol = ko.observable(getOrDefault(options, 'hasCalculationCol', false));
+            this.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
+            this.hasCalculationCol = getOrDefault(options, 'hasCalculationCol', false);
 
             this.columns = ko.observableArray(getOrDefault(options, 'initialCols', []));
             this.serializedProperties = ko.computed(function(){
