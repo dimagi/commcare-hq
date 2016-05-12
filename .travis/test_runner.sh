@@ -10,14 +10,13 @@
 
 set -e
 
-TESTS="$@"
 COMMAND="coverage run manage.py test --noinput --failfast --traceback --verbosity=2"
 
 /moto-s3/env/bin/moto_server s3 &
 
 if [ -z ${COMMAND_OVERRIDE} ]; then
-    echo "Running tests: $TESTS"
-    $COMMAND $TESTS
+    echo "Running tests: $@"
+    $COMMAND "$@"
 else
     echo "Running command: $COMMAND_OVERRIDE"
     $COMMAND_OVERRIDE
