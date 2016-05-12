@@ -396,7 +396,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'a5288',
     'captcha',
     'couchdbkit.ext.django',
-    'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
