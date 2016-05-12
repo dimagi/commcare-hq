@@ -1,21 +1,16 @@
-import uuid
 from django.test import TestCase, override_settings
+from elasticsearch.exceptions import ConnectionError
 
 from casexml.apps.case.mock import CaseFactory
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
-from corehq.apps.es import CaseES
 from corehq.elastic import get_es_new
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.case import CasePillow, get_sql_case_to_elasticsearch_pillow
 from corehq.pillows.ledger import get_ledger_to_elasticsearch_pillow
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
-from corehq.util.elastic import delete_es_index, ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
-from elasticsearch.exceptions import ConnectionError
-
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
@@ -77,7 +72,6 @@ class LedgerPillowTest(TestCase):
                 }
             }
         )
-        import pprint; pprint.pprint(results)
         self.assertEqual(1, results['hits']['total'])
         ledger_doc = results['hits']['hits'][0]['_source']
         self.assertEqual(self.domain, ledger_doc['domain'])
