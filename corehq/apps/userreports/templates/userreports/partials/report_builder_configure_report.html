@@ -17,7 +17,7 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
 
-        var REPORT_TYPE = '{{ report_type }}';
+        var REPORT_TYPE = {{ report_type|JSON }};
         var INITIAL_FILTERS = {{ initial_filters|JSON }};
         var INITIAL_COLUMNS = {{ initial_columns|JSON }};
         var SOURCE_TYPE = {{ form.source_type|JSON }};
