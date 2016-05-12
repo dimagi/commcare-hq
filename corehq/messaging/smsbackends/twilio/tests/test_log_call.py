@@ -21,16 +21,17 @@ class TwilioLogCallTestCase(util.LogCallTestCase):
         super(TwilioLogCallTestCase, self).tearDown()
 
     def test_401_response(self):
-        start_count = Call.by_domain(self.domain).count()
+        with self.create_case():
+            start_count = Call.by_domain(self.domain).count()
 
-        response = Client().post('/twilio/ivr/xxxxx', {
-            'From': self.phone_number,
-            'CallSid': 'xyz',
-        })
-        self.assertEqual(response.status_code, 401)
+            response = Client().post('/twilio/ivr/xxxxx', {
+                'From': self.phone_number,
+                'CallSid': 'xyz',
+            })
+            self.assertEqual(response.status_code, 401)
 
-        end_count = Call.by_domain(self.domain).count()
-        self.assertEqual(start_count, end_count)
+            end_count = Call.by_domain(self.domain).count()
+            self.assertEqual(start_count, end_count)
 
     def simulate_inbound_call(self, phone_number):
         url = '/twilio/ivr/%s' % self.backend.inbound_api_key
