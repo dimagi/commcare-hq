@@ -1,6 +1,7 @@
 from corehq.apps.reports.commtrack.data_sources import (
     StockStatusDataSource, ReportingStatusDataSource,
-    SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
+    SimplifiedInventoryDataSource, StockStatusDataSourceNew,
+    SimplifiedInventoryDataSourceNew
 )
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -324,7 +325,10 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
             'aggregate': True,
             'advanced_columns': self.showing_advanced_columns(),
         }
-        return list(StockStatusDataSource(config).get_data())
+        if should_use_sql_backend(self.domain):
+            return list(StockStatusDataSourceNew(config).get_data())
+        else:
+            return list(StockStatusDataSource(config).get_data())
 
     @property
     def rows(self):

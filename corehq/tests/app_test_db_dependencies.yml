@@ -463,3 +463,35 @@ corehq.apps.notifications:
   - corehq.apps.tour
   - corehq.apps.dropbox
   - touchforms.formplayer
+corehq.apps.reports:
+  - auditcare
+  - phonelog
+  - django_digest
+  - casexml.apps.case
+  - casexml.apps.phone
+  - casexml.apps.stock
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
+  - corehq.apps.commtrack
+  - corehq.apps.consumption
+  - corehq.apps.domain
+  - corehq.apps.hqcase
+  - corehq.apps.fixtures
+  - corehq.apps.groups
+  - corehq.apps.locations
+  - corehq.apps.products
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - custom.logistics
+  - custom.ilsgateway
+  - custom.ewsghana
+  - django_prbac
+  - django.contrib.admin
+  - tastypie
+  - corehq.apps.accounting
+  - corehq.apps.dropbox
+  - touchforms.formplayer
+  - corehq.apps.tour

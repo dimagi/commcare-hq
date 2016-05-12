@@ -1,6 +1,6 @@
 import logging
+from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from couchdbkit.exceptions import ResourceNotFound
-
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
@@ -29,6 +29,8 @@ def format_decimal(d):
 
         https://docs.python.org/2/library/decimal.html#decimal-faq
     """
+    if isinstance(d, int):
+        return d
     if d is not None:
         return d.quantize(Decimal(1)) if d == d.to_integral() else d.normalize()
 
@@ -58,7 +60,8 @@ class CommtrackDataSourceMixin(object):
     @property
     @memoized
     def active_location(self):
-        return Location.get_in_domain(self.domain, self.config.get('location_id'))
+        if self.config.get('location_id'):
+            return Location.get_in_domain(self.domain, self.config.get('location_id'))
 
     @property
     @memoized
@@ -242,22 +245,14 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     @property
     @memoized
     def _slug_attrib_map(self):
-        @memoized
-        def product_name(product_id):
-            return Product.get(product_id).name
-
-        @memoized
-        def supply_point_location(case_id):
-            return SupplyPointCase.get(case_id).location_id
-
         raw_map = {
-            self.SLUG_PRODUCT_NAME: lambda s: product_name(s.product_id),
+            self.SLUG_PRODUCT_NAME: lambda s: self.get_product(s.product_id).name,
             self.SLUG_PRODUCT_ID: 'product_id',
             self.SLUG_CURRENT_STOCK: 'stock_on_hand',
         }
         if self._include_advanced_data():
             raw_map.update({
-                self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
+                self.SLUG_LOCATION_ID: lambda s: s.location_id,
                 self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
                 self.SLUG_MONTHS_REMAINING: 'months_remaining',
                 self.SLUG_CATEGORY: 'stock_category',
@@ -284,6 +279,19 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def get_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
 
+        stock_states = self.get_stock_states(sp_ids)
+        if len(sp_ids) == 1:
+            return self.leaf_node_data(stock_states)
+        else:
+            if self.config.get('aggregate'):
+                if self._include_advanced_data():
+                    return self.aggregated_data_advanced(stock_states)
+                else:
+                    return self.aggregated_data_simple(stock_states)
+            else:
+                return self.raw_product_states(stock_states)
+
+    def get_stock_states(self, supply_point_ids):
         stock_states = StockState.objects.filter(
             section_id=STOCK_SECTION_TYPE,
             last_modified_date__lte=self.end_date,
@@ -293,25 +301,22 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         if self.program_id:
             stock_states = stock_states.filter(sql_product__program_id=self.program_id)
 
-        if len(sp_ids) == 1:
-            stock_states = stock_states.filter(
-                case_id=sp_ids[0],
+        if len(supply_point_ids) == 1:
+            return stock_states.filter(
+                case_id=supply_point_ids[0],
             )
-
-            return self.leaf_node_data(stock_states)
         else:
-            stock_states = stock_states.filter(
-                case_id__in=sp_ids,
+            return stock_states.filter(
+                case_id__in=supply_point_ids,
             )
 
-            if self.config.get('aggregate'):
-                return self.aggregated_data(stock_states)
-            else:
-                return self.raw_product_states(stock_states)
+    @memoized
+    def get_product(self, product_id):
+        return Product.get(product_id)
 
     def leaf_node_data(self, stock_states):
         for state in stock_states:
-            product = Product.get(state.product_id)
+            product = self.get_product(state.product_id)
 
             result = {
                 'product_id': product._id,
@@ -321,7 +326,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             if self._include_advanced_data():
                 result.update({
-                    'location_id': SupplyPointCase.get(state.case_id).location_id,
+                    'location_id': state.location_id,
                     'location_lineage': None,
                     'category': state.stock_category,
                     'consumption': state.get_monthly_consumption(),
@@ -331,64 +336,64 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             yield result
 
-    def aggregated_data(self, stock_states):
+    def aggregated_data_advanced(self, stock_states):
         def _convert_to_daily(consumption):
-            return consumption / 30 if consumption is not None else None
+            return consumption / DAYS_IN_MONTH if consumption is not None else None
 
-        if self._include_advanced_data():
-            product_aggregation = {}
-            for state in stock_states:
-                if state.product_id in product_aggregation:
-                    product = product_aggregation[state.product_id]
-                    product['current_stock'] = format_decimal(
-                        product['current_stock'] + state.stock_on_hand
-                    )
+        product_aggregation = {}
+        for state in stock_states:
+            if state.product_id in product_aggregation:
+                product = product_aggregation[state.product_id]
+                product['current_stock'] = format_decimal(
+                    product['current_stock'] + state.stock_on_hand
+                )
 
-                    consumption = state.get_monthly_consumption()
-                    if product['consumption'] is None:
-                        product['consumption'] = consumption
-                    elif consumption is not None:
-                        product['consumption'] += consumption
+                consumption = state.get_monthly_consumption()
+                if product['consumption'] is None:
+                    product['consumption'] = consumption
+                elif consumption is not None:
+                    product['consumption'] += consumption
 
-                    product['count'] += 1
+                product['count'] += 1
 
-                    if state.sql_location is not None:
-                        location_type = state.sql_location.location_type
-                        product['category'] = stock_category(
-                            product['current_stock'],
-                            _convert_to_daily(product['consumption']),
-                            location_type.understock_threshold,
-                            location_type.overstock_threshold,
-                        )
-                    else:
-                        product['category'] = 'nodata'
-
-                    product['months_remaining'] = months_of_stock_remaining(
+                if state.sql_location is not None:
+                    location_type = state.sql_location.location_type
+                    product['category'] = stock_category(
                         product['current_stock'],
-                        _convert_to_daily(product['consumption'])
+                        _convert_to_daily(product['consumption']),
+                        location_type.understock_threshold,
+                        location_type.overstock_threshold,
                     )
                 else:
-                    product = Product.get(state.product_id)
-                    consumption = state.get_monthly_consumption()
+                    product['category'] = 'nodata'
 
-                    product_aggregation[state.product_id] = {
-                        'product_id': product._id,
-                        'location_id': None,
-                        'product_name': product.name,
-                        'location_lineage': None,
-                        'resupply_quantity_needed': None,
-                        'current_stock': format_decimal(state.stock_on_hand),
-                        'count': 1,
-                        'consumption': consumption,
-                        'category': state_stock_category(state),
-                        'months_remaining': months_of_stock_remaining(
-                            state.stock_on_hand,
-                            _convert_to_daily(consumption)
-                        )
-                    }
+                product['months_remaining'] = months_of_stock_remaining(
+                    product['current_stock'],
+                    _convert_to_daily(product['consumption'])
+                )
+            else:
+                product = self.get_product(state.product_id)
+                consumption = state.get_monthly_consumption()
 
-            return product_aggregation.values()
-        else:
+                product_aggregation[state.product_id] = {
+                    'product_id': product._id,
+                    'location_id': None,
+                    'product_name': product.name,
+                    'location_lineage': None,
+                    'resupply_quantity_needed': None,
+                    'current_stock': format_decimal(state.stock_on_hand),
+                    'count': 1,
+                    'consumption': consumption,
+                    'category': state_stock_category(state),
+                    'months_remaining': months_of_stock_remaining(
+                        state.stock_on_hand,
+                        _convert_to_daily(consumption)
+                    )
+                }
+
+        return product_aggregation.values()
+
+    def aggregated_data_simple(self, stock_states):
             # If we don't need advanced data, we can
             # just do some orm magic.
             #
@@ -414,6 +419,32 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             yield {
                 slug: f(state) for slug, f in self._slug_attrib_map.items()
             }
+
+
+class StockStatusDataSourceNew(StockStatusDataSource):
+    @property
+    def product_ids(self):
+        if self.program_id:
+            return set(
+                SQLProduct.objects
+                .filter(domain=self.domain, program_id=self.program_id)
+                .values_list('product_id', flat=True)
+            )
+
+    def get_stock_states(self, supply_point_ids):
+        from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+        ledgers = LedgerAccessorSQL.get_ledger_values_for_cases(
+            supply_point_ids,
+            section_id=STOCK_SECTION_TYPE,
+            date_start=self.start_date,
+            date_end=self.end_date
+        )
+
+        if self.program_id:
+            product_ids = self.product_ids
+            ledgers = [ledger for ledger in ledgers if ledger.entry_id in product_ids]
+
+        return ledgers
 
 
 class StockStatusBySupplyPointDataSource(StockStatusDataSource):

@@ -1,21 +1,14 @@
 from decimal import Decimal
 
+from couchdbkit.exceptions import ResourceNotFound
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils.translation import ugettext as _
-from couchdbkit.exceptions import ResourceNotFound
-from dimagi.ext.couchdbkit import *
-from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import get_case_updates
-from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
-from casexml.apps.stock.models import StockReport, DocDomainMapping
-from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
-from couchexport.models import register_column_type, ComplexExportColumn
-from couchforms.signals import xform_archived, xform_unarchived
+from casexml.apps.stock.consumption import (ConsumptionConfiguration)
+from casexml.apps.stock.models import DocDomainMapping
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
@@ -23,12 +16,15 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
+from corehq.form_processor.abstract_models import AbstractLedgerValue
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.util.quickcache import quickcache
+from couchexport.models import register_column_type, ComplexExportColumn
+from couchforms.signals import xform_archived, xform_unarchived
+from dimagi.ext.couchdbkit import *
+from dimagi.utils.decorators.memoized import memoized
 from . import const
-from .const import StockActions, RequisitionActions, DAYS_IN_MONTH
-
+from .const import StockActions, RequisitionActions
 
 STOCK_ACTION_ORDER = [
     StockActions.RECEIPTS,
@@ -360,7 +356,7 @@ class ActiveManager(models.Manager):
             .exclude(sql_location__is_archived=True)
 
 
-class StockState(models.Model):
+class StockState(models.Model, AbstractLedgerValue):
     """
     Read only reporting model for keeping computed stock states per case/product
     """
@@ -389,61 +385,12 @@ class StockState(models.Model):
         return self.stock_on_hand
 
     @property
-    def months_remaining(self):
-        return months_of_stock_remaining(
-            self.stock_on_hand,
-            self.get_daily_consumption()
-        )
+    def location_id(self):
+        return self.sql_location.location_id
 
     @property
-    def resupply_quantity_needed(self):
-        monthly_consumption = self.get_monthly_consumption()
-        if monthly_consumption is not None and self.sql_location is not None:
-            overstock = self.sql_location.location_type.overstock_threshold
-            needed_quantity = int(
-                monthly_consumption * overstock
-            )
-            return int(max(needed_quantity - self.stock_on_hand, 0))
-        else:
-            return None
-
-    @property
-    def stock_category(self):
-        return state_stock_category(self)
-
-    @memoized
-    def get_domain(self):
-        return Domain.get_by_name(
-            DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
-        )
-
-    def get_daily_consumption(self):
-        if self.daily_consumption is not None:
-            return self.daily_consumption
-        else:
-            monthly = self._get_default_monthly_consumption()
-            if monthly is not None:
-                return Decimal(monthly) / Decimal(DAYS_IN_MONTH)
-
-    def get_monthly_consumption(self):
-
-        if self.daily_consumption is not None:
-            return self.daily_consumption * Decimal(DAYS_IN_MONTH)
-        else:
-            return self._get_default_monthly_consumption()
-
-    def _get_default_monthly_consumption(self):
-        domain = self.get_domain()
-        if domain and domain.commtrack_settings:
-            config = domain.commtrack_settings.get_consumption_config()
-        else:
-            config = None
-
-        return compute_default_monthly_consumption(
-            self.case_id,
-            self.product_id,
-            config
-        )
+    def domain(self):
+        return DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
 
     class Meta:
         app_label = 'commtrack'
@@ -536,7 +483,7 @@ def sync_supply_point(location):
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
     try:
-        domain_name = instance.domain
+        domain_name = instance.__domain
         if not domain_name:
             raise ValueError()
     except (AttributeError, ValueError):
