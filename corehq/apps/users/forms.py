@@ -1,3 +1,4 @@
+from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -99,6 +100,17 @@ class LanguageField(forms.CharField):
 
 
 class BaseUpdateUserForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        super(BaseUpdateUserForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     @property
     def direct_properties(self):
@@ -307,6 +319,20 @@ class RoleForm(forms.Form):
         self.fields['role'].choices = role_choices
 
 
+class SetUserPasswordForm(SetPasswordForm):
+
+    def __init__(self, *args, **kwargs):
+        super(SetUserPasswordForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+
 class CommCareAccountForm(forms.Form):
     """
     Form for CommCareAccounts
@@ -489,7 +515,7 @@ class MultipleSelectionForm(forms.Form):
             return form
 
         # template.html
-        <script src="{% static 'style/js/bootstrap2/ui-element.js' %}"></script>
+        <script src="{% static 'style/js/bootstrap3/ui-element.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
 
@@ -573,6 +599,14 @@ class CommtrackUserForm(forms.Form):
             self.fields['program_id'].choices = choices
         else:
             self.fields['program_id'].widget = forms.HiddenInput()
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self, user):
         location_id = self.cleaned_data['location']
