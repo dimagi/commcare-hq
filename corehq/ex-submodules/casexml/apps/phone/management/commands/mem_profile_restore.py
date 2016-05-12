@@ -3,7 +3,7 @@ from django.core.management import BaseCommand
 from corehq.apps.users.models import CommCareUser
 from casexml.apps.phone.restore import RestoreParams, RestoreCacheSettings, RestoreConfig
 from casexml.apps.case.xml import V2
-import resource
+from dimagi.utils.decorators.profile import resident_set_size
 
 
 class Command(BaseCommand):
@@ -41,6 +41,6 @@ class Command(BaseCommand):
                 overwrite_cache=False,
             )
         )
-        print 'Memory usage: %s (kb)' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        restore_config.get_payload()
-        print 'Memory usage: %s (kb)' % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+
+        with resident_set_size():
+            restore_config.get_payload()
