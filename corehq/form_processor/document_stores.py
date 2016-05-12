@@ -6,6 +6,7 @@ from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, Ledger
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
+from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import ReadOnlyDocumentStore
@@ -70,7 +71,7 @@ class ReadonlyNewLedgerDocumentStore(ReadOnlyDocumentStore):
             raise DocumentNotFoundError(e)
 
     @property
-    @memoized
+    @quickcache(['self.domain'], timeout=30 * 60)
     def product_ids(self):
         from corehq.apps.products.models import Product
         return Product.ids_by_domain(self.domain)
