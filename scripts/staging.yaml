@@ -48,7 +48,7 @@ branches:
   - vellum-staging # J$ 11/13
   - show-form-case-refs-in-summary # j$ 1/29
 #  - revamp-multimedia # Jenny 2/16
-#  - app-blobs-testing+lang-profiles # Cal 5/4
+  - app-blobs-testing+lang-profiles # Cal 5/4
   - inline-editing+lang-profiles # Cal 5/4
   - lang-profiles  # Cal 5/4
   - inline-editing # Jenny 4/9
