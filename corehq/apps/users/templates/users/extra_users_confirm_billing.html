@@ -17,12 +17,12 @@
             $('#id_confirm_product_agreement').click(function () {
                 var $submit = $('#submit-button-pa'),
                     $helpText = $('#submit-button-help-qa');
-                if ($(this).attr('checked')) {
-                    $submit.removeAttr('disabled');
+                if ($(this).prop('checked')) {
+                    $submit.removeProp('disabled');
                     $submit.removeClass('disabled');
                     $helpText.addClass('hide');
                 } else {
-                    $submit.attr('disabled', 'disabled');
+                    $submit.prop('disabled', true);
                     $submit.addClass('disabled');
                     $helpText.removeClass('hide');
                 }

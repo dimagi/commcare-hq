@@ -197,7 +197,7 @@ class BaseUserInfoForm(forms.Form):
         required=False,
         help_text=mark_safe_lazy(
             ugettext_lazy(
-                "<i class=\"icon-info-sign\"></i> "
+                "<i class=\"fa fa-info-circle\"></i> "
                 "Becomes default language seen in CloudCare and reports (if applicable), "
                 "but does not affect mobile applications. "
                 "Supported languages for reports are en, fr (partial), and hin (partial)."
@@ -291,7 +291,7 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.fields['role'].help_text = _(mark_safe(
-            "<i class=\"icon-info-sign\"></i> "
+            "<i class=\"fa fa-info-circle\"></i> "
             "Only applies to mobile workers that will be entering data using "
             "<a href='https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry'>"
             "CloudCare</a>"
@@ -693,10 +693,13 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 crispy.Field('country', css_class="input-large",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
-            crispy.Field('confirm_product_agreement'),
+            hqcrispy.B3MultiField(
+                '',
+                crispy.Field('confirm_product_agreement'),
+            ),
             hqcrispy.FormActions(
                 crispy.HTML(
-                    '<a href="%(user_list_url)s" class="btn">%(text)s</a>' % {
+                    '<a href="%(user_list_url)s" class="btn btn-default">%(text)s</a>' % {
                         'user_list_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
                         'text': _("Back to Mobile Workers List")
                     }
