@@ -2,7 +2,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import (
-    LedgerV2ChangeProvider, DjangoModelChangeProvider, _stock_state_to_change
+    LedgerV2ChangeProvider, DjangoModelChangeProvider, _ledger_v1_to_change
 )
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
@@ -39,11 +39,11 @@ def get_ledger_v2_reindexer():
     )
 
 
-def get_stock_state_reindexer():
+def get_ledger_v1_reindexer():
     from corehq.apps.commtrack.models import StockState
     return ElasticPillowReindexer(
         pillow=get_ledger_to_elasticsearch_pillow(),
-        change_provider=DjangoModelChangeProvider(StockState, _stock_state_to_change),
+        change_provider=DjangoModelChangeProvider(StockState, _ledger_v1_to_change),
         elasticsearch=get_es_new(),
         index_info=LEDGER_INDEX_INFO,
     )

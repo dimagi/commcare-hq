@@ -1,7 +1,7 @@
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.change_publishers import (
     change_meta_from_sql_case, change_meta_from_sql_form,
-    change_meta_from_ledger_v2, change_meta_from_stock_state
+    change_meta_from_ledger_v2, change_meta_from_ledger_v1
 )
 from pillowtop.feed.interface import Change
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
@@ -93,12 +93,12 @@ class DjangoModelChangeProvider(ChangeProvider):
                 return
 
 
-def _stock_state_to_change(stock_state):
+def _ledger_v1_to_change(stock_state):
     return Change(
         id=stock_state.pk,
         sequence_id=None,
         document=stock_state.to_json(),
         deleted=False,
-        metadata=change_meta_from_stock_state(stock_state),
+        metadata=change_meta_from_ledger_v1(stock_state),
         document_store=None,
     )

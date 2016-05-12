@@ -97,7 +97,7 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
                 yield ledger_value.to_json()
 
 
-class StockStateDocumentStore(DjangoDocumentStore):
+class LedgerV1DocumentStore(DjangoDocumentStore):
 
     def __init__(self, domain):
         from corehq.apps.commtrack.models import StockState
@@ -107,4 +107,4 @@ class StockStateDocumentStore(DjangoDocumentStore):
         def _doc_gen_fn(obj):
             return obj.to_json()
 
-        super(StockStateDocumentStore, self).__init__(StockState, _doc_gen_fn)
+        super(LedgerV1DocumentStore, self).__init__(StockState, _doc_gen_fn)

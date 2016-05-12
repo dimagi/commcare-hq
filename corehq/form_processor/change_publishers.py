@@ -68,14 +68,14 @@ def change_meta_from_ledger_v2(ledger_value):
     )
 
 
-def publish_stock_state_saved(stock_state):
-    producer.send_change(topics.LEDGER, change_meta_from_stock_state(stock_state))
+def publish_ledger_v1_saved(stock_state):
+    producer.send_change(topics.LEDGER, change_meta_from_ledger_v1(stock_state))
 
 
-def change_meta_from_stock_state(stock_state):
+def change_meta_from_ledger_v1(stock_state):
     return ChangeMeta(
         document_id=stock_state.pk,
-        data_source_type=data_sources.LEDGER_OLD,
+        data_source_type=data_sources.LEDGER_V1,
         data_source_name='ledger',  # todo: this isn't really needed.
         domain=stock_state.domain,
         is_deletion=False,
