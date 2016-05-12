@@ -672,6 +672,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         ) % {'pa_url': reverse('product_agreement')}
 
         from corehq.apps.users.views.mobile import MobileWorkerListView
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -692,7 +694,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             crispy.Field('confirm_product_agreement'),
-            FormActions(
+            hqcrispy.FormActions(
                 crispy.HTML(
                     '<a href="%(user_list_url)s" class="btn">%(text)s</a>' % {
                         'user_list_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),

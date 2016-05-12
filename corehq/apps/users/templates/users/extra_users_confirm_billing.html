@@ -4,12 +4,7 @@
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
-{% endblock %}
-
-{% block head %}{{ block.super }}
-    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -36,7 +31,7 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <div class="alert alert-info">
         <h3>{% trans 'Notice of Additional Monthly Charges for Mobile Workers' %}</h3>
         <p>
