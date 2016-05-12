@@ -20,19 +20,36 @@ from dimagi.utils.parsing import string_to_datetime
 PagedResult = namedtuple('PagedResult', 'total hits')
 
 
-def get_last_submission_time_for_user(domain, user_id, datespan):
-    form_query = FormES() \
-        .domain(domain) \
-        .user_id([user_id]) \
-        .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
-        .sort("form.meta.timeEnd", desc=True) \
-        .size(1)
-    results = form_query.run().hits
-
+def get_last_submission_time_for_user(domain, user_ids, datespan):
     def convert_to_date(date):
         return string_to_datetime(date).date() if date else None
 
-    return convert_to_date(results[0]['form']['meta']['timeEnd'] if results else None)
+    query = (
+        FormES()
+        .domain(domain)
+        .user_id(user_ids)
+        .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date())
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                TopHitsAggregation(
+                    'top_hits_last_form_submissions',
+                    'form.meta.timeEnd',
+                    is_ascending=False,
+                    include='form.meta.timeEnd',
+                )
+            )
+        )
+        .size(0)
+    )
+
+    aggregations = query.run().aggregations
+
+    buckets_dict = aggregations.user_id.buckets_dict
+    result = {}
+    for user_id, bucket in buckets_dict.iteritems():
+        result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['form']['meta']['timeEnd'])
+
+    return result
 
 
 def get_active_case_counts_by_owner(domain, datespan, case_types=None):

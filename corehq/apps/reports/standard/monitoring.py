@@ -1235,10 +1235,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         """
         Creates a dict of userid => date of last submission
         """
-        return {
-            u["user_id"]: get_last_submission_time_for_user(self.domain, u["user_id"], self.datespan)
-            for u in self.users_to_iterate
-        }
+        return get_last_submission_time_for_user(self.domain,
+                [u["user_id"] for u in self.users_to_iterate],
+                self.datespan)
 
     @staticmethod
     def _dates_for_linked_reports(datespan, case_list=False):
