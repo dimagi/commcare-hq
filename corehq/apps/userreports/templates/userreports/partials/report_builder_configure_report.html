@@ -72,7 +72,7 @@
             // True if the property exists in the current version of the app
             this.existsInCurrentVersion = ko.observable(true);
 
-            // The header for the column in the report
+            // The header for the column or filter in the report
             this.displayText = ko.observable("");
 
             // True if the display text has been modified by the user at least once
@@ -87,12 +87,16 @@
             });
             this.displayText.subscribe(function(value){
                 if (!value) {
+                    // If the display text has been cleared, go back to inherting
+                    // it from the property
                     self.inheritDisplayText(true);
                 }
             });
 
             // A proxy for displayText that will let us know when displayText
-            // has been modified by the user (by updating inheritDisplayText)
+            // has been modified by the user (by updating inheritDisplayText).
+            // This is useful because sometimes the displayText is changed
+            // programatically when the user changes this.property.
             this.inputBoundDisplayText = ko.computed({
                 read: function() {
                     return self.displayText();
@@ -115,8 +119,12 @@
                 return !self.displayTextIsValid() && (self.displayTextModifiedByUser() || self.showWarnings());
             });
 
-
+            // The format of the filter. This field is not used if the
+            // PropertyListItem is representing columns
             this.format = ko.observable("");
+            // The aggregation type for this column. This field is not used if
+            // the PropertyListItem represents columns in a non-aggregated report
+            // or a filter
             this.calculation = ko.observable("Count per Choice");
             this.calculationOptions = ko.pureComputed(function(){
                 if (self.propertyIsNonNumeric()) {
@@ -124,6 +132,9 @@
                 }
                 return defaultCalculationOptions;
             });
+            // If this PropertyListItem represents a property that no longer
+            // exists in the app, then dataSourceField will be the name of the
+            // property that no longer exists
             this.dataSourceField = ko.observable("");
             this.isEditable = ko.pureComputed(function(){
                 return !self.existsInCurrentVersion();
