@@ -11,8 +11,9 @@ from datetime import datetime, date
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (run_with_all_backends, FormProcessorTestUtils,
-    set_case_property_directly, set_parent_case as set_actual_parent_case)
+    set_case_property_directly)
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 from django.test import TestCase
 from mock import patch
 
@@ -413,7 +414,7 @@ def _update_case(domain, case_id, server_modified_on, last_visit_date=None):
 
 def set_parent_case(domain, child_case, parent_case):
     server_modified_on = child_case.server_modified_on
-    set_actual_parent_case(child_case, parent_case)
+    set_actual_parent_case(domain, child_case, parent_case)
 
     child_case = CaseAccessors(domain).get_case(child_case.case_id)
     child_case.server_modified_on = server_modified_on

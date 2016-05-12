@@ -10,7 +10,7 @@ def user_db():
 
 
 def get_owner_id(case):
-    return case.owner_id or case.user_id
+    return case.owner_id or case.modified_by
 
 
 def get_wrapped_owner(owner_id):

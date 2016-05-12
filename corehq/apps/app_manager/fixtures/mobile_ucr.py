@@ -55,14 +55,9 @@ class ReportFixturesProvider(object):
 
     @staticmethod
     def _report_config_to_fixture(report_config, user):
-        report_elem = E.report(id=report_config.uuid)
-        try:
-            report = get_report_config(report_config.report_id, user.domain)[0]
-        except ResourceNotFound as err:
-            # ReportConfiguration not found
-            raise BadReportConfigurationError('Error getting ReportConfiguration with ID "{}": {}'.format(
-                report_config.report_id, err))
-        data_source = ReportFactory.from_spec(report)
+        report, data_source = ReportFixturesProvider._get_report_and_data_source(
+            report_config.report_id, user.domain
+        )
 
         all_filter_values = {
             filter_slug: filter.get_filter_value(user, report.get_ui_filter(filter_slug))
@@ -79,37 +74,34 @@ class ReportFixturesProvider(object):
         }
         data_source.set_filter_values(filter_values)
         data_source.defer_filters(defer_filters)
-
-        rows_elem = E.rows()
-
-        deferred_fields = {ui_filter.field for ui_filter in defer_filters.values()}
         filter_options_by_field = defaultdict(set)
 
-        def _row_to_row_elem(row, index, is_total_row=False):
-            row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
-            for k in sorted(row.keys()):
-                value = serialize(row[k])
-                row_elem.append(E.column(value, id=k))
-                if not is_total_row and k in deferred_fields:
-                    filter_options_by_field[k].add(value)
-            return row_elem
+        rows_elem = ReportFixturesProvider._get_report_elem(
+            data_source,
+            {ui_filter.field for ui_filter in defer_filters.values()},
+            filter_options_by_field
+        )
+        filters_elem = ReportFixturesProvider._get_filters_elem(defer_filters, filter_options_by_field)
 
-        for i, row in enumerate(data_source.get_data()):
-            rows_elem.append(_row_to_row_elem(row, i))
+        report_elem = E.report(id=report_config.uuid)
+        report_elem.append(filters_elem)
+        report_elem.append(rows_elem)
+        return report_elem
 
-        if data_source.has_total_row:
-            total_row = data_source.get_total_row()
-            rows_elem.append(_row_to_row_elem(
-                dict(
-                    zip(
-                        map(lambda column_config: column_config.column_id, data_source.column_configs),
-                        map(str, total_row)
-                    )
-                ),
-                data_source.get_total_records(),
-                is_total_row=True,
-            ))
+    @staticmethod
+    def _get_report_and_data_source(report_id, domain):
+        try:
+            report = get_report_config(report_id, domain)[0]
+        except ResourceNotFound as err:
+            # ReportConfiguration not found
+            raise BadReportConfigurationError('Error getting ReportConfiguration with ID "{}": {}'.format(
+                report_id, err))
+        data_source = ReportFactory.from_spec(report)
 
+        return report, data_source
+
+    @staticmethod
+    def _get_filters_elem(defer_filters, filter_options_by_field):
         filters_elem = E.filters()
         for filter_slug, ui_filter in defer_filters.items():
             # @field is maybe a bad name for this attribute,
@@ -122,9 +114,35 @@ class ReportFixturesProvider(object):
                 option_elem = E.option(choice.display, value=choice.value)
                 filter_elem.append(option_elem)
             filters_elem.append(filter_elem)
+        return filters_elem
 
-        report_elem.append(filters_elem)
-        report_elem.append(rows_elem)
-        return report_elem
+    @staticmethod
+    def _get_report_elem(data_source, deferred_fields, filter_options_by_field):
+        def _row_to_row_elem(row, index, is_total_row=False):
+            row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
+            for k in sorted(row.keys()):
+                value = serialize(row[k])
+                row_elem.append(E.column(value, id=k))
+                if not is_total_row and k in deferred_fields:
+                    filter_options_by_field[k].add(value)
+            return row_elem
+
+        rows_elem = E.rows()
+        for i, row in enumerate(data_source.get_data()):
+            rows_elem.append(_row_to_row_elem(row, i))
+        if data_source.has_total_row:
+            total_row = data_source.get_total_row()
+            rows_elem.append(_row_to_row_elem(
+                dict(
+                    zip(
+                        map(lambda column_config: column_config.column_id, data_source.column_configs),
+                        map(str, total_row)
+                    )
+                ),
+                data_source.get_total_records(),
+                is_total_row=True,
+            ))
+        return rows_elem
+
 
 report_fixture_generator = ReportFixturesProvider()

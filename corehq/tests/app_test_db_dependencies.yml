@@ -463,3 +463,6 @@ corehq.apps.notifications:
   - corehq.apps.tour
   - corehq.apps.dropbox
   - touchforms.formplayer
+corehq.blobs:
+  - corehq.couchapps
+  - couchexport
