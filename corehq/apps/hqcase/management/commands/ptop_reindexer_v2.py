@@ -5,7 +5,7 @@ from corehq.pillows.case_search import get_case_search_reindexer
 from corehq.pillows.domain import get_domain_reindexer
 from corehq.pillows.group import get_group_reindexer
 from corehq.pillows.groups_to_user import get_groups_to_user_reindexer
-from corehq.pillows.ledger import get_ledger_reindexer
+from corehq.pillows.ledger import get_ledger_v2_reindexer
 from corehq.pillows.user import get_user_reindexer
 from corehq.pillows.xform import get_couch_form_reindexer, get_sql_form_reindexer
 
@@ -40,7 +40,7 @@ class Command(BaseCommand):
             'sql-case': get_sql_case_reindexer,
             'sql-form': get_sql_form_reindexer,
             'case-search': get_case_search_reindexer,
-            'ledger': get_ledger_reindexer,
+            'ledger-v2': get_ledger_v2_reindexer,
         }
         if index not in reindex_fns:
             raise CommandError('Supported indices to reindex are: {}'.format(','.join(reindex_fns.keys())))

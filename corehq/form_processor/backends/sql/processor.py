@@ -10,7 +10,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.change_publishers import (
-    publish_form_saved, publish_case_saved, publish_new_ledger_saved
+    publish_form_saved, publish_case_saved, publish_ledger_v2_saved
 )
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
@@ -92,7 +92,7 @@ class FormProcessorSQL(object):
 
         if stock_result:
             for ledger in stock_result.models_to_save:
-                publish_new_ledger_saved(ledger)
+                publish_ledger_v2_saved(ledger)
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
