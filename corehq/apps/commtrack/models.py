@@ -413,11 +413,24 @@ class StockState(models.Model):
     def stock_category(self):
         return state_stock_category(self)
 
+    @property
+    @memoized
+    def domain(self):
+        try:
+            domain_name = self.__domain
+            if domain_name:
+                return domain_name
+        except AttributeError:
+            pass
+
+        try:
+            return DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
+        except DocDomainMapping.DoesNotExist:
+            return CommCareCase.get(self.case_id).domain
+
     @memoized
     def get_domain(self):
-        return Domain.get_by_name(
-            DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
-        )
+        return Domain.get_by_name(self.domain)
 
     def get_daily_consumption(self):
         if self.daily_consumption is not None:

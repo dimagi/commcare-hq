@@ -77,6 +77,6 @@ def change_meta_from_stock_state(stock_state):
         document_id=stock_state.pk,
         data_source_type=data_sources.LEDGER_OLD,
         data_source_name='ledger',  # todo: this isn't really needed.
-        domain=stock_state.get_domain(),
+        domain=stock_state.domain,
         is_deletion=False,
     )
