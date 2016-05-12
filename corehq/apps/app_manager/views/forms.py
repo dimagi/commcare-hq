@@ -490,6 +490,9 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'case_xpath_substring_matches': CASE_XPATH_SUBSTRING_MATCHES,
         'user_case_xpath_pattern_matches': USER_CASE_XPATH_PATTERN_MATCHES,
         'user_case_xpath_substring_matches': USER_CASE_XPATH_SUBSTRING_MATCHES,
+        'is_module_filter_enabled': (feature_previews.MODULE_FILTER.enabled(request.domain) and
+                                     app.enable_module_filtering),
+        'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
     }
 
     if tours.NEW_APP.is_enabled(request.user):
