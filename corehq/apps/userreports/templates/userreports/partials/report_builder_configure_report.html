@@ -182,7 +182,7 @@
         /**
          * Knockout view model controlling the filter property list.
          */
-        var propertyList = function(options) {
+        var PropertyList = function(options) {
             var self = this;
             options = options || {};
 
@@ -210,7 +210,7 @@
             });
             this.showWarnings = ko.observable(false);
         };
-        propertyList.prototype.validate = function () {
+        PropertyList.prototype.validate = function () {
             this.showWarnings(true);
             var columnsValid = !_.contains(
                 _.map(
@@ -225,14 +225,15 @@
             }
             return columnsValid && columnLengthValid;
         };
-        propertyList.prototype.buttonHandler = function () {
+        PropertyList.prototype.buttonHandler = function () {
             this.columns.push(new PropertyListItem());
             if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
                 window.analytics.usage("Report Builder", this.analyticsAction, this.analyticsLabel);
                 window.analytics.workflow("Clicked " + this.analyticsAction + " in Report Builder");
             }
-        // TODO: CammelCase these "classes"
-        var configForm = function(){
+        };
+
+        var ConfigForm = function(){
             var self = this;
             var initialFilters = _.map({{ initial_filters|JSON }}, function(i){
                 return PropertyListItem.wrap(i);
@@ -241,7 +242,7 @@
                 return PropertyListItem.wrap(i);
             });
             // TODO: Pass help texts from template so that they can be translated.
-            this.filtersList = new propertyList({
+            this.filtersList = new PropertyList({
                 hasFormatCol: {% if form.source_type == "case" %}true{% else %}false{% endif %},
                 hasCalculationCol: false,
                 initialCols: initialFilters,
@@ -251,7 +252,7 @@
                 displayHelpText: '{{ filter_display_help_text|escapejs }}',
                 formatHelpText: '{{ filter_format_help_text|escapejs }}'
             });
-            this.columnsList = new propertyList({
+            this.columnsList = new PropertyList({
                 hasFormatCol: false,
                 hasCalculationCol: {% if report_type == "table" or report_type == "worker" %}true{% else %}false{% endif %},
                 initialCols: initialColumns,
@@ -269,7 +270,7 @@
                 }
             });
         };
-        configForm.prototype.submitHandler = function (formElement) {
+        ConfigForm.prototype.submitHandler = function (formElement) {
             var isValid = true;
             isValid = this.filtersList.validate() && isValid;
             isValid = this.columnsList.validate() && isValid;
@@ -285,7 +286,7 @@
             return isValid;
         };
 
-        $("#report-config-form").koApplyBindings(new configForm());
+        $("#report-config-form").koApplyBindings(new ConfigForm());
 
         $(function () {
             {% for event in report_builder_events %}
