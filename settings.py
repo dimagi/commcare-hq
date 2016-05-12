@@ -30,7 +30,7 @@ LESS_WATCH = False
 VELLUM_DEBUG = None
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
@@ -75,7 +75,7 @@ MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
 STATIC_CDN = ''
 
-FILEPATH = os.path.abspath(os.path.dirname(__file__))
+FILEPATH = BASE_DIR
 SERVICE_DIR = os.path.join(FILEPATH, 'deployment', 'commcare-hq-deploy', 'fab', 'services', 'templates')
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
@@ -396,7 +396,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'a5288',
     'captcha',
     'couchdbkit.ext.django',
-    'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',

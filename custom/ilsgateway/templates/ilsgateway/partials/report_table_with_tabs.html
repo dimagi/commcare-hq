@@ -115,6 +115,7 @@
                 showAllRowsOption: {{ report_table.show_all_rows|JSON }},
                 useBootstrap3: true,
                 paginationType: 'bs_normal',
+                {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
                 loadingTemplateSelector: '#js-template-loading-report'
             });
             if (typeof standardHQReport !== 'undefined') {

@@ -2,6 +2,8 @@ import uuid
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.smsforms.util import process_sms_form_complete
+from corehq.apps.users.models import CouchUser
+from corehq.form_processor.utils import is_commcarecase
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
 from datetime import datetime
 from touchforms.formplayer.api import (
@@ -45,17 +47,17 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
 
     # since the API user is a superuser, force touchforms to query only
     # the contact's cases by specifying it as an additional filter
-    if contact.doc_type == "CommCareCase" and form.requires_case():
+    if is_commcarecase(contact) and form.requires_case():
         session_data["additional_filters"] = {
             "case_id": case_id,
             "footprint": "true" if form.uses_parent_case() else "false",
         }
-    elif contact.doc_type in ("CommCareUser", "WebUser"):
+    elif isinstance(contact, CouchUser):
         session_data["additional_filters"] = {
             "user_id": contact.get_id,
             "footprint": "true"
         }
-    
+
     if app and form:
         session_data.update(get_cloudcare_session_data(domain, form, contact))
 
@@ -64,7 +66,7 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
                           language=language,
                           session_data=session_data,
                           auth=AUTH)
-    
+
     now = datetime.utcnow()
 
     # just use the contact id as the connection id

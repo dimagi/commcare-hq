@@ -110,7 +110,7 @@ def update_stock_state_for_transaction(instance):
             )
         )
         instance = latest_transaction
-    state.last_modified_date = instance.report.date
+    state.last_modified_date = instance.report.server_date
     state.last_modified_form_id = instance.report.form_id
     state.stock_on_hand = instance.stock_on_hand
 

@@ -85,6 +85,7 @@ MAX_PRIVILEGES = [
     TEMPLATED_INTENTS,
     CUSTOM_INTENTS,
     BUILD_PROFILES,
+    ADVANCED_DOMAIN_SECURITY,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion

@@ -697,8 +697,8 @@ def _report_soh(soh_reports, case_id, domain):
         )
         for report in soh_reports
     ]
-    submit_case_blocks(balance_blocks, domain)
-    return report_date
+    form_id = submit_case_blocks(balance_blocks, domain)
+    return json_format_datetime(FormAccessors(domain).get_form(form_id).received_on)
 
 
 def _get_ota_balance_blocks(project, user):

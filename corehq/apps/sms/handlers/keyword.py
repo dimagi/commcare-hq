@@ -24,9 +24,11 @@ from corehq.apps.reminders.models import (
 )
 from corehq.apps.reminders.util import create_immediate_reminder
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.app_manager.models import Form
+from corehq.form_processor.utils import is_commcarecase
 
 
 LOCATION_KEYWORD = 'LOCATION'
@@ -326,9 +328,9 @@ def log_error(error, logged_subevent=None):
 
 def get_case_id(contact, case=None):
     if case:
-        case_id = case._id
-    elif contact.doc_type == "CommCareCase":
-        case_id = contact._id
+        case_id = case.case_id
+    elif is_commcarecase(contact):
+        case_id = contact.case_id
     else:
         case_id = None
     return case_id
@@ -385,7 +387,7 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         logged_subevent = logged_event.create_structured_sms_subevent(case_id)
 
     domain = contact.domain
-    contact_id = contact._id
+    contact_id = contact.get_id
 
     if text_args is not None:
         args = text_args
@@ -546,7 +548,7 @@ def get_case_by_external_id(domain, external_id, user):
 
 
 def user_is_owner(user, case):
-    return case.owner_id == user._id
+    return case.owner_id == user.get_id
 
 
 def case_is_shared(user, case):
@@ -603,10 +605,10 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
     SQLXFormsSession.close_all_open_sms_sessions(verified_number.domain,
         verified_number.owner_id)
 
-    if sender.doc_type == "CommCareCase":
+    if is_commcarecase(sender):
         case = sender
         args = args[1:]
-    elif sender.doc_type == "CommCareUser":
+    elif isinstance(sender, CommCareUser):
         if keyword_uses_form_that_requires_case(survey_keyword):
             if len(args) > 1:
                 external_id = args[1]
@@ -641,7 +643,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
             return 0
 
     if case:
-        subevent.case_id = case.get_id
+        subevent.case_id = case.case_id
         subevent.save()
 
     # Process structured sms actions first
@@ -650,7 +652,7 @@ def process_survey_keyword_actions(verified_number, survey_keyword, text, msg):
         if survey_keyword_action.recipient == RECIPIENT_SENDER:
             contact = sender
         elif survey_keyword_action.recipient == RECIPIENT_OWNER:
-            if sender.doc_type == "CommCareCase":
+            if is_commcarecase(sender):
                 contact = get_wrapped_owner(get_owner_id(sender))
             else:
                 contact = None

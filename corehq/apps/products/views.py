@@ -488,7 +488,7 @@ class ProductFieldsView(CustomDataModelMixin, BaseCommTrackManageView):
     urlname = 'product_fields_view'
     field_type = 'ProductFields'
     entity_string = _("Product")
-    template_name = "custom_data_fields/bootstrap3/custom_data_fields.html"
+    template_name = "custom_data_fields/custom_data_fields.html"
 
     @use_bootstrap3
     @use_jquery_ui

@@ -3,7 +3,8 @@ from django.test import SimpleTestCase
 from mock import Mock, patch
 from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProvider
 from corehq.apps.app_manager.models import ReportAppConfig, StaticChoiceListFilter
-from corehq.apps.app_manager.tests import TestXmlMixin, MAKE_REPORT_CONFIG
+from corehq.apps.app_manager.tests import TestXmlMixin, MAKE_REPORT_CONFIG, \
+    mock_report_configuration_get
 
 
 class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
@@ -30,10 +31,9 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
         )
         user = Mock()
 
-        with patch('corehq.apps.app_manager.fixtures.mobile_ucr.ReportConfiguration') as report_config_patch, \
+        with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
                 patch('corehq.apps.app_manager.fixtures.mobile_ucr.ReportFactory') as report_factory_patch:
 
-            report_config_patch.get.return_value = MAKE_REPORT_CONFIG('test_domain', report_id)
             report_factory_patch.from_spec.return_value = self.get_data_source_mock()
             report = provider._report_config_to_fixture(report_app_config, user)
             self.assertEqual(

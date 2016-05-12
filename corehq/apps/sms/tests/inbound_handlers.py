@@ -1,3 +1,4 @@
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
@@ -5,9 +6,8 @@ from corehq.apps.reminders.models import (RECIPIENT_OWNER, RECIPIENT_USER_GROUP)
 from corehq.apps.sms.messages import *
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from datetime import date, time
-
-from corehq.form_processor.tests.utils import set_case_property_directly
 
 
 class KeywordTestCase(TouchformsTestCase):
@@ -663,9 +663,9 @@ class KeywordTestCase(TouchformsTestCase):
 
         # Test initator filters
         case = self.get_case("pid1237")
-        set_case_property_directly(case, "contact_phone_number", "999124")
-        set_case_property_directly(case, "contact_phone_number_is_verified", "1")
-        case.save()
+        update_case(self.domain, case.case_id,
+            case_properties={'contact_phone_number': '999124', 'contact_phone_number_is_verified': '1'})
+        case = CaseAccessors(self.domain).get_case(case.case_id)
 
         incoming("999123", "for_user", "TEST")
         self.assertLastOutboundSMSEquals(self.user1, "This message is for users")
@@ -715,8 +715,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user2, "This message is for the group")
 
         case = self.get_case("pid1237")
-        case.owner_id = self.group1._id
-        case.save()
+        self.update_case_owner(case, self.group1)
         incoming("999124", "for_owner", "TEST")
         self.assertLastOutboundSMSEquals(self.user1, "This message is for the case owner")
         self.assertLastOutboundSMSEquals(self.user2, "This message is for the case owner")
@@ -786,7 +785,7 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
 
         session = SQLXFormsSession.objects.get(pk=session.pk)
         self.assertFalse(session.is_open)
-        self.assertEqual(session.submission_id, form._id)
+        self.assertEqual(session.submission_id, form.form_id)
 
         # Start a modify form, and submit a partial submission without case side effects
         incoming("999123", "mod pid123", "TEST")
@@ -804,4 +803,4 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
 
         session = SQLXFormsSession.objects.get(pk=session.pk)
         self.assertFalse(session.is_open)
-        self.assertEqual(session.submission_id, form._id)
+        self.assertEqual(session.submission_id, form.form_id)
