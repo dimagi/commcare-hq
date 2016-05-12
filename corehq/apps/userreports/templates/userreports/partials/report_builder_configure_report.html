@@ -158,7 +158,7 @@
          * Knockout view model controlling the filter property list.
          */
         var propertyList = function(options) {
-            var that = this;
+            var self = this;
             options = options || {};
 
             this.buttonText = options.buttonText !== undefined ? options.buttonText : "Add property";
@@ -181,22 +181,22 @@
             this.columns = ko.observableArray(options.initialCols !== undefined ? options.initialCols : []);
             this.serializedProperties = ko.computed(function(){
                 return JSON.stringify(
-                    _.map(that.columns(), function(c){return c.toJS()})
+                    _.map(self.columns(), function(c){return c.toJS()})
                 );
             });
             this.showWarnings = ko.observable(false);
             this.validate = function(){
-                that.showWarnings(true);
+                self.showWarnings(true);
                 var columnsValid = !_.contains(
                     _.map(
-                        that.columns(),
+                        self.columns(),
                         function(c){return c.validate()}
                     ),
                     false
                 );
-                var columnLengthValid = !(that.requireColumns && !that.columns().length);
-                if (that.noColumnsValidationCallback && !columnLengthValid){
-                    that.noColumnsValidationCallback();
+                var columnLengthValid = !(self.requireColumns && !self.columns().length);
+                if (self.noColumnsValidationCallback && !columnLengthValid){
+                    self.noColumnsValidationCallback();
                 }
                 return columnsValid && columnLengthValid;
             };
