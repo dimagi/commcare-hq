@@ -2,7 +2,7 @@ from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (SMSLog, SMS, CallLog, LastReadMessage,
     ExpectedCallbackEventLog, ExpectedCallback)
 from custom.fri.models import FRISMSLog
-from dimagi.utils.couch.database import iter_docs_with_retry
+from dimagi.utils.couch.database import iter_docs_with_retry, iter_bulk_delete_with_doc_type_verification
 from django.core.management.base import BaseCommand
 from optparse import make_option
 
@@ -187,7 +187,19 @@ class Command(BaseCommand):
                 self.get_expected_callback_compare_fields(), f)
 
     def delete_models(self):
-        pass
+        print 'Deleting SMSLogs...'
+        iter_bulk_delete_with_doc_type_verification(SMSLog.get_db(), self.get_sms_couch_ids(), 'SMSLog')
+
+        print 'Deleting CallLogs...'
+        iter_bulk_delete_with_doc_type_verification(CallLog.get_db(), self.get_call_couch_ids(), 'CallLog')
+
+        print 'Deleting ExpectedCallbackEventLogs...'
+        iter_bulk_delete_with_doc_type_verification(ExpectedCallbackEventLog.get_db(),
+            self.get_callback_couch_ids(), 'ExpectedCallbackEventLog')
+
+        print 'Deleting LastReadMessages...'
+        iter_bulk_delete_with_doc_type_verification(LastReadMessage.get_db(),
+            self.get_lastreadmessage_couch_ids(), 'LastReadMessage')
 
     def handle(self, *args, **options):
         if options['verify']:
