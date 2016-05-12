@@ -18,6 +18,8 @@ class FundamentalCaseTests(TestCase):
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
 
+    tearDownClass = setUpClass
+
     def setUp(self):
         self.interface = FormProcessorInterface()
         self.casedb = CaseAccessors()

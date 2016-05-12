@@ -31,8 +31,15 @@
 {% else %}
     {% for thisreport in reports %}
         <br/>
-        <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
-        {% include 'icds_reports/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
+        <h4 class="media-heading">{{ thisreport.report_table.title }}</h4><br/>
+            {% for subtitle in thisreport.report_table.subtitle %}
+                <h4>{{ subtitle }}</h4>
+            {% endfor %}
+        {% if thisreport.has_sections %}
+            {% include 'icds_reports/partials/sections_report_table.html' with report_table=thisreport.report_table%}
+        {%  else %}
+        {% include 'icds_reports/partials/report_table.html' with report_table=thisreport.report_table%}
+        {% endif %}
         <br/>
     {% endfor %}
 {% endif %}

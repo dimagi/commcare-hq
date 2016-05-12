@@ -229,3 +229,15 @@ Refer to these resources which provide good information on memory profiling:
 * `Memory usage graphs with ps <http://brunogirin.blogspot.com.au/2010/09/memory-usage-graphs-with-ps-and-gnuplot.html>`_
     * `while true; do ps -C python -o etimes=,pid=,%mem=,vsz= >> mem.txt; sleep 1; done`
 
+* You can also use the "resident_set_size" decorator and context manager to print the amount of memory allocated to python before and after the method you think is causing memory leaks::
+
+        from dimagi.utils.decorators.profile import resident_set_size
+
+        @resident_set_size()
+        def function_that_uses_a_lot_of_memory:
+            [u'{}'.format(x) for x in range(1,100000)]
+
+        def somewhere_else():
+            with resident_set_size(enter_debugger=True):
+                # the enter_debugger param will enter a pdb session after your method has run so you can do more exploration
+                # do memory intensive things
