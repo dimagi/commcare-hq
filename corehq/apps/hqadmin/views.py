@@ -271,10 +271,16 @@ def system_ajax(request):
 
 @require_superuser_or_developer
 def check_services(request):
-    return HttpResponse("".join(
-        "{}: {}<br/>".format(service_test.__name__, service_test().msg)
-        for service_test in service_tests
-    ))
+
+    def run_test(test):
+        result = test()
+        return "{} {}: {}<br/>".format(
+            "SUCCESS" if result.success else "FAILURE",
+            test.__name__,
+            result.msg,
+        )
+
+    return HttpResponse("<pre>" + "".join(map(run_test, service_tests)) + "</pre>")
 
 
 class SystemInfoView(BaseAdminSectionView):

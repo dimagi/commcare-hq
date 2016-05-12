@@ -7,6 +7,42 @@ from corehq.blobs import get_blob_db
 ServiceStatus = namedtuple("ServiceStatus", "success msg")
 
 
+def test_pillowtop():
+    return ServiceStatus(False, "Not implemented")
+
+
+def test_kafka():
+    return ServiceStatus(False, "Not implemented")
+
+
+def test_redis():
+    return ServiceStatus(False, "Not implemented")
+
+
+def test_postgres():
+    return ServiceStatus(False, "Not implemented")
+
+
+def test_couch():
+    return ServiceStatus(False, "Not implemented")
+
+
+def test_celery():
+    return ServiceStatus(False, "Not implemented")
+
+
+def test_touchforms():
+    return ServiceStatus(False, "Not implemented")
+
+
+def test_elasticsearch():
+    return ServiceStatus(False, "Not implemented")
+
+
+def test_shared_dir():
+    return ServiceStatus(False, "Not implemented")
+
+
 def test_blobdb():
     """Save something to the blobdb and try reading it back."""
     db = get_blob_db()
@@ -20,7 +56,18 @@ def test_blobdb():
     return ServiceStatus(False, "Failed to save a file to the blobdb")
 
 
-service_tests = (test_blobdb,)
+service_tests = (
+    test_pillowtop,
+    test_kafka,
+    test_redis,
+    test_postgres,
+    test_couch,
+    test_celery,
+    test_touchforms,
+    test_elasticsearch,
+    test_shared_dir,
+    test_blobdb,
+)
 
 
 class Command(BaseCommand):
