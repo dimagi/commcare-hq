@@ -17,6 +17,10 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
 
+        var REPORT_TYPE = '{{ report_type }}';
+        var INITIAL_FILTERS = {{ initial_filters|JSON }};
+        var INITIAL_COLUMNS = {{ initial_columns|JSON }};
+        var SOURCE_TYPE = {{ form.source_type|JSON }};
         var formatOptions = ["Choice", "Date"];
         var defaultCalculationOptions = ["Count per Choice", "Sum", "Average"];
         var nonNumericPropertyCalculationOptions = ["Count per Choice"];
@@ -186,6 +190,7 @@
             var self = this;
             options = options || {};
 
+            this.reportType = options.reportType;
             this.buttonText = getOrDefault(options, 'buttonText', 'Add property');
             // True if at least one column is required.
             this.requireColumns = getOrDefault(options, 'requireColumns', false);
@@ -197,7 +202,7 @@
             this.formatHelpText = getOrDefault(options, 'formatHelpText', null);
             this.calcHelpText = getOrDefault(options, 'calcHelpText', null);
             this.analyticsAction = getOrDefault(options, 'analyticsAction', null);
-            this.analyticsLabel = getOrDefault(options, 'analyticsLabel', '{{ report_type }}');
+            this.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType);
 
             this.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
             this.hasCalculationCol = getOrDefault(options, 'hasCalculationCol', false);
@@ -233,41 +238,42 @@
             }
         };
 
-        var ConfigForm = function(){
+        var ConfigForm = function(reportType, sourceType, columns, filters){
             var self = this;
-            var initialFilters = _.map({{ initial_filters|JSON }}, function(i){
+            var initialFilters = _.map(filters, function(i){
                 return PropertyListItem.wrap(i);
             });
-            var initialColumns = _.map({{ initial_columns|JSON }}, function(i){
+            var initialColumns = _.map(columns, function(i){
                 return PropertyListItem.wrap(i);
             });
-            // TODO: Pass help texts from template so that they can be translated.
             this.filtersList = new PropertyList({
-                hasFormatCol: {% if form.source_type == "case" %}true{% else %}false{% endif %},
+                hasFormatCol: sourceType == "case",
                 hasCalculationCol: false,
                 initialCols: initialFilters,
                 buttonText: 'Add Filter',
                 analyticsAction: 'Add Filter',
-                propertyHelpText: '{{ filter_property_help_text|escapejs}}',
-                displayHelpText: '{{ filter_display_help_text|escapejs }}',
-                formatHelpText: '{{ filter_format_help_text|escapejs }}'
+                propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
+                displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
+                formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
+                reportType: reportType,
             });
             this.columnsList = new PropertyList({
                 hasFormatCol: false,
-                hasCalculationCol: {% if report_type == "table" or report_type == "worker" %}true{% else %}false{% endif %},
+                hasCalculationCol: reportType == "table" || reportType == "worker",
                 initialCols: initialColumns,
                 buttonText: 'Add Column',
                 analyticsAction: 'Add Column',
-                calcHelpText: '{{ calculation_help_text|escapejs }}',
-                requireColumns: {% if report_type != "chart"%}true{% else %}false{% endif %},
+                calcHelpText: django.gettext("Column format selection will determine how each row's value is calculated."),
+                requireColumns: reportType != "chart",
                 requireColumnsText: "At least one column is required",
                 noColumnsValidationCallback: function(){
                     window.analytics.usage(
                         'Report Builder',
                         'Click On Done (No Columns)',
-                        '{{ report_type }}'
+                        reportType
                     );
-                }
+                },
+                reportType: reportType,
             });
         };
         ConfigForm.prototype.submitHandler = function (formElement) {
@@ -286,7 +292,9 @@
             return isValid;
         };
 
-        $("#report-config-form").koApplyBindings(new ConfigForm());
+        $("#report-config-form").koApplyBindings(
+            new ConfigForm(REPORT_TYPE, SOURCE_TYPE, INITIAL_COLUMNS, INITIAL_FILTERS)
+        );
 
         $(function () {
             {% for event in report_builder_events %}
@@ -294,7 +302,7 @@
                 window.analytics.usage.apply(this, {{event|JSON}});
             {% endfor %}
             window.analytics.trackUsageLink(
-                "#delete-report-button", "Report Builder", "Delete a Repot", '{{ report_type }}'
+                "#delete-report-button", "Report Builder", "Delete a Repot", REPORT_TYPE
             );
         });
 
