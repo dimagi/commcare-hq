@@ -199,10 +199,11 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     # The time at which the server has received the form
     received_on = models.DateTimeField()
 
-    # Used to tag forms that were forcefully submitted
-    # without a touchforms session completing normally
     auth_context = JSONField(lazy=True, default=dict)
     openrosa_headers = JSONField(lazy=True, default=dict)
+
+    # Used to tag forms that were forcefully submitted
+    # without a touchforms session completing normally
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
