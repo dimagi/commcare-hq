@@ -54,14 +54,14 @@ def publish_case_deleted(domain, case_id):
     ))
 
 
-def publish_ledger_saved(ledger_value):
+def publish_new_ledger_saved(ledger_value):
     producer.send_change(topics.LEDGER, change_meta_from_ledger_value(ledger_value))
 
 
 def change_meta_from_ledger_value(ledger_value):
     return ChangeMeta(
         document_id=ledger_value.ledger_reference.as_id(),
-        data_source_type=data_sources.LEDGER,
+        data_source_type=data_sources.LEDGER_NEW,
         data_source_name='ledger',  # todo: this isn't really needed.
         domain=ledger_value.domain,
         is_deletion=False,

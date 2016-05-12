@@ -47,17 +47,17 @@ def _sql_form_to_change(form):
     )
 
 
-class LedgerChangeProvider(ChangeProvider):
+class NewLedgerChangeProvider(ChangeProvider):
 
     def __init__(self, chunk_size=500):
         self.chunk_size = chunk_size
 
     def iter_all_changes(self, start_from=None):
         for ledger in LedgerAccessorSQL.get_all_ledgers_modified_since(start_from, chunk_size=self.chunk_size):
-            yield _ledger_to_change(ledger)
+            yield _ledger_value_to_change(ledger)
 
 
-def _ledger_to_change(ledger_value):
+def _ledger_value_to_change(ledger_value):
     return Change(
         id=ledger_value.ledger_reference.as_id(),
         sequence_id=None,

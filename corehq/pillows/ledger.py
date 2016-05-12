@@ -1,7 +1,7 @@
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
-from corehq.form_processor.change_providers import LedgerChangeProvider
+from corehq.form_processor.change_providers import NewLedgerChangeProvider
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
@@ -31,7 +31,7 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
 def get_ledger_reindexer():
     return ElasticPillowReindexer(
         pillow=get_ledger_to_elasticsearch_pillow(),
-        change_provider=LedgerChangeProvider(),
+        change_provider=NewLedgerChangeProvider(),
         elasticsearch=get_es_new(),
         index_info=LEDGER_INDEX_INFO,
     )

@@ -7,7 +7,7 @@ from django.db import transaction
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
-from corehq.form_processor.change_publishers import publish_form_saved, publish_case_saved, publish_ledger_saved
+from corehq.form_processor.change_publishers import publish_form_saved, publish_case_saved, publish_new_ledger_saved
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from couchforms.const import ATTACHMENT_NAME
@@ -88,7 +88,7 @@ class FormProcessorSQL(object):
 
         if stock_result:
             for ledger in stock_result.models_to_save:
-                publish_ledger_saved(ledger)
+                publish_new_ledger_saved(ledger)
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):

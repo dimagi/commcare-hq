@@ -53,7 +53,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
             yield wrapped_case.to_json()
 
 
-class ReadonlyLedgerDocumentStore(ReadOnlyDocumentStore):
+class ReadonlyNewLedgerDocumentStore(ReadOnlyDocumentStore):
 
     def __init__(self, domain):
         assert should_use_sql_backend(domain), "Only SQL backend supported"
