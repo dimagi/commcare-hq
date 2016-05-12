@@ -596,26 +596,19 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         def _assert_initial_state():
             if should_use_sql_backend(self.domain.name):
                 self.assertEqual(3, LedgerTransaction.objects.filter(form_id=second_form_id).count())
-                ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
-                self.assertEqual(3, len(ledger_values))
-                for lv in ledger_values:
-                    self.assertEqual(50, lv.stock_on_hand)
-                    # TODO: hook up consumption for LedgerValues
-                    # self.assertEqual(
-                    #     round(float(lv.daily_consumption), 2),
-                    #     1.67
-                    # )
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
                 # 6 = 3 stockonhand and 3 inferred consumption txns
                 self.assertEqual(6, StockTransaction.objects.filter(report__form_id=second_form_id).count())
-                self.assertEqual(3, StockState.objects.filter(case_id=self.sp.case_id).count())
-                for state in StockState.objects.filter(case_id=self.sp.case_id):
-                    self.assertEqual(Decimal(50), state.stock_on_hand)
-                    self.assertEqual(
-                        round(float(state.daily_consumption), 2),
-                        1.67
-                    )
+
+            ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
+            self.assertEqual(3, len(ledger_values))
+            for lv in ledger_values:
+                self.assertEqual(50, lv.stock_on_hand)
+                self.assertEqual(
+                    round(float(lv.daily_consumption), 2),
+                    1.67
+                )
 
         # check initial setup
         _assert_initial_state()
@@ -627,13 +620,6 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         if should_use_sql_backend(self.domain.name):
             self.assertEqual(0, LedgerTransaction.objects.filter(form_id=second_form_id).count())
-            ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
-            self.assertEqual(3, len(ledger_values))
-            for lv in ledger_values:
-                # balance should be reverted to 100 in the StockState
-                self.assertEqual(100, lv.stock_on_hand)
-                # consumption should be none since there will only be 1 data point
-                self.assertIsNone(lv.daily_consumption)
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
             self.assertEqual(0, StockTransaction.objects.filter(report__form_id=second_form_id).count())
