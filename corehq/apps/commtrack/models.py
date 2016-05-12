@@ -445,6 +445,11 @@ class StockState(models.Model):
             config
         )
 
+    def to_json(self):
+        from corehq.form_processor.serializers import StockStateSerializer
+        serializer = StockStateSerializer(self)
+        return serializer.data
+
     class Meta:
         app_label = 'commtrack'
         unique_together = ('section_id', 'case_id', 'product_id')

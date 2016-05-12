@@ -7,6 +7,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAcce
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.util.quickcache import quickcache
+from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import ReadOnlyDocumentStore
 
@@ -93,4 +94,17 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
             section_id, entry_id = section_entry
             results = self.ledger_accessors.get_ledger_values_for_cases(case_ids, section_id, entry_id)
             for ledger_value in results:
-                yield ledger_value
+                yield ledger_value.to_json()
+
+
+class OldLedgerDocumentStore(DjangoDocumentStore):
+
+    def __init__(self, domain):
+        from corehq.apps.commtrack.models import StockState
+        assert not should_use_sql_backend(domain), "Only non-SQL backend supported"
+        self.domain = domain
+
+        def _doc_gen_fn(obj):
+            return obj.to_json()
+
+        super(OldLedgerDocumentStore, self).__init__(StockState, _doc_gen_fn)
