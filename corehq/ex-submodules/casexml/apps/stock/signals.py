@@ -74,8 +74,6 @@ def update_stock_state_for_transaction(instance):
     except AttributeError:
         domain_name = sql_product.domain
 
-    domain = Domain.get_by_name(domain_name)
-
     try:
         sql_location = SQLLocation.objects.get(supply_point_id=instance.case_id)
     except SQLLocation.DoesNotExist:
@@ -114,22 +112,9 @@ def update_stock_state_for_transaction(instance):
     state.last_modified_form_id = instance.report.form_id
     state.stock_on_hand = instance.stock_on_hand
 
-    if domain and domain.commtrack_settings:
-        consumption_calc = domain.commtrack_settings.get_consumption_config()
-    else:
-        consumption_calc = None
-
-    state.daily_consumption = compute_daily_consumption(
-        domain_name,
-        instance.case_id,
-        instance.product_id,
-        instance.report.date,
-        'stock',
-        consumption_calc
-    )
     # so you don't have to look it up again in the signal receivers
-    if domain:
-        state.__domain = domain.name
+    if domain_name:
+        state.__domain = domain_name
     state.save()
 
 

@@ -162,6 +162,7 @@ corehq.apps.commtrack:
   - corehq.apps.hqcase
   - corehq.apps.fixtures
   - corehq.apps.groups
+  - corehq.apps.notifications
   - corehq.apps.locations
   - corehq.apps.products
   - corehq.apps.reminders
