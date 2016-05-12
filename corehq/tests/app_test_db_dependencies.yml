@@ -26,10 +26,14 @@ testapps.test_pillowtop:
   - django_digest
   - django_prbac
   - casexml.apps.case
+  - casexml.apps.stock
   - corehq.apps.accounting
+  - corehq.apps.commtrack
   - corehq.apps.domain
   - corehq.apps.hqadmin
   - corehq.apps.hqcase
+  - corehq.apps.locations
+  - corehq.apps.products
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
