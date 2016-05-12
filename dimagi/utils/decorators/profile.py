@@ -1,7 +1,9 @@
 import hotshot
+import resource
 import os
 from datetime import datetime
 from django.conf import settings
+from corehq.util.decorators import ContextDecorator
 
 try:
     PROFILE_LOG_BASE = settings.PROFILE_LOG_BASE
@@ -9,6 +11,7 @@ except Exception:
     PROFILE_LOG_BASE = "/tmp"
 
 # Source: http://code.djangoproject.com/wiki/ProfilingDjango
+
 
 def profile(log_file):
     """Profile some callable.
@@ -18,10 +21,10 @@ def profile(log_file):
     for later processing and examination.
 
     It takes one argument, the profile log name. If it's a relative path, it
-    places it under the PROFILE_LOG_BASE. It also inserts a time stamp into the 
-    file name, such that 'my_view.prof' become 'my_view-20100211T170321.prof', 
-    where the time stamp is in UTC. This makes it easy to run and compare 
-    multiple trials.     
+    places it under the PROFILE_LOG_BASE. It also inserts a time stamp into the
+    file name, such that 'my_view.prof' become 'my_view-20100211T170321.prof',
+    where the time stamp is in UTC. This makes it easy to run and compare
+    multiple trials.
     """
 
     if not os.path.isabs(log_file):
@@ -108,3 +111,34 @@ except ImportError:
                 return func(*args, **kwargs)
             return nothing
         return inner
+
+
+class resident_set_size(ContextDecorator):
+    """Shows how much memory was allocated to the python process (the resident set
+    size) before and after the function this wraps. Can also be used as a context manager.
+
+    Can be used to debug memory leaks.
+
+    `man getrusage` for more information
+    """
+    def __init__(self, enter_debugger=False):
+        self.initial_size = 0
+        self.enter_debugger = enter_debugger
+
+    def __enter__(self):
+        self.initial_size = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        print 'Resident Set Size before: {}kb'.format(self.initial_size)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        final_size = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        print 'Resident Set Size after: {}kb'.format(final_size)
+        print 'Resident Set Size total: {}kb'.format(final_size - self.initial_size)
+        if self.enter_debugger:
+            try:
+                import ipdb
+                # NOTE: hit 'u' when debugger starts to enter the previous frame
+                ipdb.set_trace()
+            except ImportError:
+                import pdb
+                # NOTE: hit 'u' when debugger starts to enter the previous frame
+                pdb.set_trace()
