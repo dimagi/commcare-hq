@@ -184,7 +184,7 @@ class XFormBuilder(object):
 
         >>> XFormBuilder.get_data_ref('foo')
         '/data/foo'
-        >>> XFormBuilder.get_text_id('foo', ['bar'])
+        >>> XFormBuilder.get_data_ref('foo', ['bar'])
         '/data/bar/foo'
         >>> XFormBuilder.get_data_ref('foo', ['bar', 'baz'])
         '/data/bar/baz/foo'

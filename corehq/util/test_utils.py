@@ -420,6 +420,8 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
         else:
             case.delete()
 
+create_test_case.__test__ = False
+
 
 def set_parent_case(domain, child_case, parent_case):
     """
