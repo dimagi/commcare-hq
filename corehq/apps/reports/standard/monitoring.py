@@ -17,7 +17,7 @@ from corehq.apps.es.aggregations import (
 )
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
-    get_last_submission_time_for_user,
+    get_last_submission_time_for_users,
     get_submission_counts_by_user,
     get_completed_counts_by_user,
     get_submission_counts_by_date,
@@ -1239,7 +1239,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         """
         Creates a dict of userid => date of last submission
         """
-        return get_last_submission_time_for_user(self.domain, self.user_ids, self.datespan)
+        return get_last_submission_time_for_users(self.domain, self.user_ids, self.datespan)
 
     @staticmethod
     def _dates_for_linked_reports(datespan, case_list=False):

@@ -665,7 +665,7 @@ class TestFormESAccessorsSQL(TestFormESAccessors):
             sequence_id='123',
             document=form_pair.json_form,
         )
-        self.pillow.processor(change, do_set_checkpoint=False)
+        self.pillow.process_change(change)
 
 
 class TestUserESAccessors(SimpleTestCase):
@@ -950,7 +950,7 @@ class TestCaseESAccessorsSQL(TestCaseESAccessors):
             sequence_id='123',
             document=case.to_json(),
         )
-        self.pillow.processor(change, do_set_checkpoint=False)
+        self.pillow.process_change(change)
         es = get_es_new()
         es.indices.refresh(CASE_INDEX)
         return case

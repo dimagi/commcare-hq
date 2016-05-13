@@ -18,7 +18,8 @@ default:
   - couchforms
   - corehq.apps.users
 fluff: []
-pillow_retry: []
+pillow_retry:
+  - pillowtop
 pillowtop: []
 testapps.test_elasticsearch: []
 testapps.test_pillowtop:
@@ -30,8 +31,11 @@ testapps.test_pillowtop:
   - corehq.apps.accounting
   - corehq.apps.commtrack
   - corehq.apps.domain
+  - corehq.apps.groups
   - corehq.apps.hqadmin
   - corehq.apps.hqcase
+  - corehq.apps.sms
+  - corehq.apps.smsforms
   - corehq.apps.locations
   - corehq.apps.products
   - corehq.couchapps
