@@ -205,7 +205,7 @@ to `hqDefine` instead of being called directly.
 If you're working on a page that doesn't inherit
 from the main template, you'll have to include
 ```html
-<script src="{% new_static 'hqwebapp/js/hqModules.js' %}"></script>
+<script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
 ```
 to use `hqDefine` and `hqImport`.
 
@@ -216,7 +216,7 @@ in order to use a module, it still needs to be included
 as a `<script>` on your html page:
 
 ```html
-<script src="{% new_static 'myapp/js/myModule.js' %}"></script>
+<script src="{% static 'myapp/js/myModule.js' %}"></script>
 ```
 
 In fact, `hqImport` and `hqDefine`
