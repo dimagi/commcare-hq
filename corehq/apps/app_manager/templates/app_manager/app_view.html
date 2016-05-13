@@ -14,7 +14,12 @@
     <script src="{% new_static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
     <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
+
     <script src="{% new_static 'app_manager/js/language-profiles.js' %}"></script>
+
+    {# for references.html #}
+    <script type="text/javascript" src="{% new_static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
+    <script type="text/javascript" src="{% new_static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
@@ -51,36 +56,6 @@
 
         {% if not app.is_remote_app %}
         $(function () {
-            var multimedia_tab = (function () {
-                var self = {};
-                self.load_state = ko.observable(null);
-                self.multimedia_page_html = ko.observable('');
-                self.load_if_necessary = function () {
-                    if (!self.load_state() || self.load_state() === 'error') {
-                        self.load_state('loading');
-                        $.ajax({
-                            url: '{% url 'app_multimedia_ajax' domain app.get_id %}'
-                        }).success(function (content) {
-                            self.load_state('loaded');
-                            self.multimedia_page_html(content);
-                        }).error(function () {
-                            alert('Oops, there was a problem loading this section. Please try again.');
-                            self.load_state('error');
-                        });
-                    }
-                };
-                return self;
-            }());
-            $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#demand-multimedia').on('show.bs.tab', function () {
-                if (multimedia_tab.load_state() === null) {
-                    multimedia_tab.load_if_necessary();
-                }
-            });
-        });
-        {% endif %}
-
-        $(function () {
             var state = "",
                 $main = $("#releases"),
                 $loading = $main.find(".hq-loading").remove(),
@@ -114,8 +89,9 @@
                 });
             });
         });
-
+        {% endif %}
     </script>
+    {% include 'app_manager/partials/multimedia_manager_js.html' %}
     {% include 'hqmedia/partials/multimedia_init.html' %}
     <script type="text/javascript">
         var refs = {{ refs|JSON }};
@@ -238,15 +214,19 @@
         {% include 'app_manager/languages.html' %}
 
         {% if app.get_doc_type == "Application" %}
-            <div class="tab-pane multimedia" id="multimedia">
-                <div data-bind="if: load_state() === 'loading'">
+            <div class="tab-pane multimedia" id="multimedia" data-slug="main">
+                <script type="text/html" class="hq-loading">
                     <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                    {% trans "Loading ..." %}
-                </div>
-                <div data-bind="html: multimedia_page_html"></div>
-                <div data-bind="if: load_state() === 'error'">
-                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
-                </div>
+                    {% trans "Loading..." %}
+                </script>
+                <script type="text/html" class="hq-loading-error">
+                    <div class="alert alert-danger">
+                        {% trans "Oops, there was a problem loading this section. Please try again." %}
+                    </div>
+                    <button class="btn btn-primary reload">
+                        {% trans "Try again" %}
+                    </button>
+                </script>
             </div>
 
         {% endif %}
