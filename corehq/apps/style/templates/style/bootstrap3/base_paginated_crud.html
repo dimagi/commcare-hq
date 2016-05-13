@@ -4,13 +4,12 @@
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/ko/crud_paginated_list.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/ko/b3_crud_paginated_list.js' %}"></script>
+    <script src="{% static 'hqwebapp/ko/crud_paginated_list.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var paginatedListModel = new B3CRUDPaginatedListModel(
+        var paginatedListModel = new CRUDPaginatedListModel(
             {{ pagination.total }},
             {{ pagination.limit }},
             {{ pagination.page }},

@@ -1,7 +1,7 @@
 import uuid
 from django.test import SimpleTestCase
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
-from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.users.models import CommCareUser, WebUser
 
 
@@ -44,7 +44,7 @@ class SessionUtilsTest(SimpleTestCase):
         self.assertTrue(isinstance(data['user_data'], dict))
 
     def test_load_session_data_for_commconnect_case(self):
-        user = CommConnectCase(
+        user = CommCareCase(
             name='A case',
             _id=uuid.uuid4().hex
         )

@@ -1,33 +1,14 @@
-{% extends "reports/async/bootstrap3/default.html" %}
+{% extends "reports/async/default.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% new_static 'hqstyle/js/jquery/plugins/jquery.ba-jqmq.min.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'mvp/ko/mvp.async_indicators.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        $(function(){
-            window.queue = $.jqmq({
-                delay: -1,
-                batch: 1,
-                callback: function( item ) {
-                    item.loading_text("Loading...");
-                    item.is_loading(true);
-                    $.ajax({
-                        url: item.load_url+window.location.search.replace( "?", "&" ),
-                        dataType: 'json',
-                        success: item.load_success,
-                        error: item.load_error
-                    });
-                },
-                complete: function(){
-                    // done
-                }
-            });
+        $.when(
+            $.getScript("{% static 'mvp/js/mvp.indicatorQueue.js' %}"),
+            $.getScript("{% static 'mvp/ko/mvp.async_indicators.js' %}")
+        ).done(function () {
 
             $('#mvp_mvis_indicators').asyncIndicators({
                 categories: {{ report|JSON }}

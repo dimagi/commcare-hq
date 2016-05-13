@@ -30,6 +30,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         return mark_safe(u'<label class="checkbox"><input%s /> %s</label>' %
                          (flatatt(final_attrs), self.inline_label))
 
+
 class BootstrapRadioInput(RadioInput):
 
     def __unicode__(self):
@@ -61,6 +62,7 @@ class BootstrapAddressField(MultiValueField):
         The original for this was found here:
         http://stackoverflow.com/questions/7437108/saving-a-form-model-with-using-multiwidget-and-a-multivaluefield
     """
+
     def __init__(self,num_lines=3,*args,**kwargs):
         fields = tuple([CharField(widget=TextInput(attrs={'class':'input-xxlarge'})) for _ in range(0, num_lines)])
         self.widget = BootstrapAddressFieldWidget(widgets=[field.widget for field in fields])
@@ -87,6 +89,7 @@ class BootstrapAddressFieldWidget(MultiWidget):
 #        except Exception:
 #            return ''
 
+
 class BootstrapDisabledInput(Input):
     input_type = 'hidden'
 
@@ -100,6 +103,7 @@ class BootstrapDisabledInput(Input):
         return mark_safe(u'<span class="uneditable-input %s">%s</span><input%s />' %
                          (attrs.get('class', ''), value, flatatt(final_attrs)))
 
+
 class BootstrapPhoneNumberInput(Input):
     input_type = 'text'
 
@@ -107,7 +111,6 @@ class BootstrapPhoneNumberInput(Input):
         return mark_safe(u"""<div class="input-prepend">
         <span class="add-on">+</span>%s
         </div>""" % super(BootstrapPhoneNumberInput, self).render(name, value, attrs))
-
 
 
 class AutocompleteTextarea(forms.Textarea):
@@ -122,11 +125,12 @@ class AutocompleteTextarea(forms.Textarea):
             output = mark_safe("""
 <script>
 $(function() {
-    $("#%s").multiTypeahead({
-        source: %s
+    $("#%s").select2({
+        multiple: true,
+        tags: %s
     });
 });
-</script>\n""" % (attrs['id'], json.dumps(self.choices)))
+</script>\n""" % (attrs['id'], json.dumps(map(lambda c: {'text': c, 'id': c}, self.choices))))
 
         else:
             output = mark_safe("")

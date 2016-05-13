@@ -9,6 +9,12 @@ from pillowtop.utils import get_all_pillow_configs
 
 @override_settings(DEBUG=True)
 class PillowtopSettingsTest(TestCase, TestFileMixin):
+    dependent_apps = [
+        'pillowtop',
+        'casexml.apps.case',
+        'corehq.apps.domain',
+        'corehq.apps.app_manager',
+    ]
     file_path = ('data',)
     root = os.path.dirname(__file__)
     maxDiff = None
@@ -35,7 +41,7 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
     def get_expected_meta(self):
         expected_meta = self.get_json('all-pillow-meta')
         for pillow, meta in expected_meta.items():
-            if 'couchdb_uri' in meta:
+            if meta.get('couchdb_uri') is not None:
                 meta['couchdb_uri'] = meta['couchdb_uri'].format(COUCH_SERVER_ROOT=settings.COUCH_SERVER_ROOT)
         return expected_meta
 

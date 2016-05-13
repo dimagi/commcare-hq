@@ -60,7 +60,8 @@ From Couch
 
 Publishing changes from couch is easy since couch already has a great change feed implementation with the ``_changes`` API.
 For any database that you want to publish changes from the steps are very simple.
-Just create an instance of a ``ChangeFeedPillow`` pointed at the database you wish to publish from.
+Just create a ``ConstructedPillow`` with a ``CouchChangeFeed`` feed pointed at the database you wish to publish from and a ``KafkaProcessor`` to publish the changes.
+There is a utility function (``get_change_feed_pillow_for_db``) which creates this pillow object for you.
 
 
 From SQL

@@ -5,6 +5,7 @@ from fluff import TYPE_INTEGER
 
 
 class Column(object):
+
     def __init__(self, id, datatype, is_nullable=True, is_primary_key=False):
         self.id = id
         self.datatype = datatype
@@ -19,7 +20,7 @@ class Column(object):
         return truncate_value(self.id)
 
     def __repr__(self):
-        return self.id
+        return "Column('{}', '{}')".format(self.id, self.datatype)
 
 
 class ColumnValue(object):
@@ -29,7 +30,7 @@ class ColumnValue(object):
         self.value = value
 
     def __repr__(self):
-        return '{0}: {1}'.format(self.column, self.value)
+        return "ColumnValue({}, {})".format(self.column.id, self.value)
 
 
 class ConfigurableIndicatorMixIn(object):
@@ -76,6 +77,7 @@ class RawIndicator(SingleColumnIndicator):
     """
     Pass whatever's in the column through to the database
     """
+
     def __init__(self, display_name, column, getter):
         super(RawIndicator, self).__init__(display_name, column)
         self.getter = getter
@@ -88,6 +90,7 @@ class CompoundIndicator(ConfigurableIndicator):
     """
     An indicator that wraps other indicators.
     """
+
     def __init__(self, display_name, indicators):
         super(CompoundIndicator, self).__init__(display_name)
         self.indicators = indicators
@@ -100,6 +103,7 @@ class CompoundIndicator(ConfigurableIndicator):
 
 
 class LedgerBalancesIndicator(ConfigurableIndicator):
+
     def __init__(self, spec):
         self.product_codes = spec.product_codes
         self.column_id = spec.column_id

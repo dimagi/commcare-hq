@@ -53,6 +53,8 @@ class KafkaChangeFeed(ChangeFeed):
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
         if not start_from_latest:
             if isinstance(since, dict):
+                if not since:
+                    since = {topic: 0 for topic in self._topics}
                 self._processed_topic_offsets = copy(since)
             else:
                 # single topic
@@ -68,8 +70,8 @@ class KafkaChangeFeed(ChangeFeed):
                     offset = 0
                 self._processed_topic_offsets = {single_topic: offset}
 
-            offsets = [(topic, self._partition, self._processed_topic_offsets.get(topic, 0))
-                       for topic in self._topics]
+            offsets = [(topic, self._partition, self._processed_topic_offsets[topic])
+                       for topic in self._topics if topic in self._processed_topic_offsets]
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
         try:
@@ -138,7 +140,7 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
         self.change_feed = change_feed
         # todo: do this somewhere smarter?
         checkpoint_doc = self.checkpoint.get_or_create_wrapped().document
-        if checkpoint_doc.sequence_format != 'json':
+        if checkpoint_doc.sequence_format != 'json' or checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
             checkpoint_doc.sequence_format = 'json'
             # convert initial default to json default
             if checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:

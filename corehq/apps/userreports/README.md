@@ -92,6 +92,19 @@ month_start_date| First day in the month of a date | `2015-01-20` -> `2015-01-01
 month_end_date  | Last day in the month of a date | `2015-01-20` -> `2015-01-31`
 diff_days       | A way to get duration in days between two dates | `(to_date - from-date).days`
 evaluator       | A way to do arithmetic operations | `a + b*c / d`
+base_iteration_number | Used with [`base_item_expression`](#saving-multiple-rows-per-caseform) - a way to get the current iteration number (starting from 0). | `loop.index`
+
+
+Following expressions act on a list of objects or a list of lists (for e.g. on a repeat list) and return another list or value. These expressions can be combined to do complex aggregations on list data.
+
+Expression Type | Description  | Example
+--------------- | ------------ | ------
+filter_items    | Filter a list of items to make a new list | `[1, 2, 3, -1, -2, -3] -> [1, 2, 3]`  (filter numbers greater than zero)
+map_items       | Map one list to another list | `[{'name': 'a', gender: 'f'}, {'name': 'b, gender: 'm'}]` -> `['a', 'b']`  (list of names from list of child data)
+sort_items      | Sort a list based on an expression | `[{'name': 'a', age: 5}, {'name': 'b, age: 3}]` -> `[{'name': 'b, age: 3}, {'name': 'a', age: 5}]`  (sort child data by age)
+reduce_items    | Aggregate a list of items into one value | sum on `[1, 2, 3]` -> `6`
+flatten_items   | Flatten multiple lists of items into one list | `[[1, 2], [4, 5]]` -> `[1, 2, 4, 5]`
+
 
 
 ### JSON snippets for expressions
@@ -245,6 +258,16 @@ You can add a `test` attribute to filter rows from what is emitted - if you don'
 This can be used/combined with the `base_item_expression` to emit multiple rows per document.
 
 
+#### Base iteration number expressions
+
+These are very simple expressions with no config. They return the index of the repeat item starting from 0 when used with a `base_item_expression`.
+
+```json
+{
+    "type": "base_iteration_number"
+}
+```
+
 #### Related document expressions
 
 This can be used to lookup a property in another document. Here's an example that lets you look up `form.case.owner_id` from a form.
@@ -378,12 +401,25 @@ The from_date_expression and to_date_expression can be any valid expressions, or
 ```
 This returns 25 (1 + 20 - 2 + 6).
 
-`statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power opertor are available for use.
+`statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power operator are available for use.
 
 `context_variables` is a dictionary of Expressions where keys are names of variables used in the `statement` and values are expressions to generate those variables.
-Variables can be any valid numbers (Python datatypes `int`, `float`, and `long` are considered valid numbers.) or also expressions that return numbers.
+Variables can be any valid numbers (Python datatypes `int`, `float` and `long` are considered valid numbers.) or also expressions that return numbers. In addition to numbers the following types are supported:
 
-More examples can be found on practical [examples page](examples/examples.md#evaluator-examples).
+* `date`
+* `datetime`
+
+#### Function calls within evaluator expressions
+Only the following functions are permitted:
+
+* `rand()`: generate a random number between 0 and 1
+* `randint(max)`: generate a random integer beween 0 and `max`
+* `int(value)`: convert `value` to an int. Value can be a number or a string representation of a number
+* `float(value)`: convert `value` to a floating point number
+* `str(value)`: convert `value` to a string
+* `timedelta_to_seconds(time_delta)`: convert a TimeDelta object into seconds. This is useful for getting the number of seconds between two dates.
+  * e.g. `timedelta_to_seconds(time_end - time_start)`
+
 
 #### "Month Start Date" and "Month End Date" expressions
 
@@ -400,6 +436,125 @@ The `date_expression` can be any valid expression, or simply constant
     },
 }
 ```
+
+
+#### Filter, Sort, Map and Reduce Expressions
+
+We have following expressions that act on a list of objects or list of lists. The list to operate on is specified by `items_expression`. This can be any valid expression that returns a list. If the `items_expression` doesn't return a valid list, these might either fail or return one of empty list or `None` value.
+
+##### map_items Expression
+
+`map_items` performs a calculation specified by `map_expression` on each item of the list specified by `items_expression` and returns a list of the calculation results. The `map_expression` is evaluated relative to each item in the list and not relative to the parent document from which the list is specified. For e.g. if `items_expression` is a path to repeat-list of children in a form document, `map_expression` is a path relative to the repeat item.
+
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+
+`map_expression` can be any valid expression relative to the items in above list.
+
+```json
+{
+    "type": "map_items",
+    "items_expression": {
+        "type": "property_path",
+        "property_path": ["form", "child_repeat"]
+    },
+    "map_expression": {
+        "type": "property_path",
+        "property_path": ["age"]
+    },
+}
+```
+Above returns list of ages. Note that the `property_path` in `map_expression` is relative to the repeat item rather than to the form.
+
+
+##### filter_items Expression
+
+`filter_items` performs filtering on given list and returns a new list. If the boolean expression specified by `filter_expression` evaluates to a `True` value, the item is included in the new list and if not, is not included in the new list.
+
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+
+`filter_expression` can be any valid boolean expression relative to the items in above list.
+
+```json
+{
+    "type": "filter_items",
+    "items_expression": {
+        "type": "property_name",
+        "property_name": "family_repeat"
+    },
+    "filter_expression": {
+       "type": "boolean_expression",
+        "expression": {
+            "type": "property_name",
+            "property_name": "gender"
+        },
+        "operator": "eq",
+        "property_value": "female"
+    }
+}
+```
+
+##### sort_items Expression
+
+`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is speicifed by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
+
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+
+`sort_expression` can be any valid expression relative to the items in above list, that returns a value to be used as sort value.
+
+```json
+{
+    "type": "sort_items",
+    "items_expression": {
+        "type": "property_path",
+        "property_path": ["form", "child_repeat"]
+    },
+    "sort_expression": {
+        "type": "property_path",
+        "property_path": ["age"]
+    },
+}
+```
+
+##### reduce_items Expression
+
+`reduce_items` returns aggregate value of the list specified by `aggregation_fn`.
+
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list, `aggregation_fn` will be applied on an empty list
+
+`aggregation_fn` is one of following supported functions names.
+
+
+Function Name  | Example
+-------------- | -----------
+`count`        | `['a', 'b']` -> 2
+`sum`          | `[1, 2, 4]` -> 7
+`first_item`   | `['a', 'b']` -> 'a'
+`last_item`    | `['a', 'b']` -> 'b'
+
+```json
+{
+    "type": "filter_items",
+    "items_expression": {
+        "type": "property_name",
+        "property_name": "family_repeat"
+    },
+    "aggregation_fn": "count"
+}
+```
+This returns number of family members
+
+##### flatten_items expression
+
+`flatten_items` takes list of list of objects specified by `items_expression` and returns one list of all objects.
+
+`items_expression` is any valid expression that returns a list of lists. It this doesn't evaluate to a list of lists an empty list is returned.
+```json
+{
+    "type": "flatten_items",
+    "items_expression": {},
+}
+```
+
 
 #### Named Expressions
 
@@ -698,7 +853,8 @@ All indicators output single values. Though fractional indicators are common, th
 ## Saving Multiple Rows per Case/Form
 
 You can save multiple rows per case/form by specifying a root level `base_item_expression` that describes how to get the repeat data from the main document.
-You can also use the `root_doc` expression type to reference parent properties.
+You can also use the `root_doc` expression type to reference parent properties
+and the `base_iteration_number` expression type to reference the current index of the item.
 This can be combined with the `iterator` expression type to do complex data source transforms.
 This is not described in detail, but the following sample (which creates a table off of a repeat element called "time_logs" can be used as a guide).
 There are also additional examples in the [examples](examples/examples.md):
@@ -1290,6 +1446,43 @@ Field should refer to report column IDs, not database fields.
 ]
 ```
 
+# Mobile UCR
+
+Mobile UCR is a beta feature that enables you to make application modules and charts linked to UCRs on mobile.
+It also allows you to send down UCR data from a report as a fixture which can be used in standard case lists and forms throughout the mobile application.
+
+The documentation for Mobile UCR is very sparse right now.
+
+## Filters
+
+On mobile UCR, filters can be automatically applied to the mobile reports based on hardcoded or user-specific data, or can be displayed to the user.
+
+The documentation of mobile UCR filters is incomplete. However some are documented below.
+
+### Custom Calendar Month
+
+When configuring a report within a module, you can filter a date field by the 'CustomMonthFilter'.  The choice includes the following options:
+- Start of Month (a number between 1 and 28)
+- Period (a number between 0 and n with 0 representing the current month). 
+
+Each custom calendar month will be "Start of the Month" to ("Start of the Month" - 1).  For example, if the start of the month is set to 21, then the period will be the 21th of the month -> 20th of the next month. 
+
+Examples:
+Assume it was May 15:
+Period 0, day 21, you would sync April 21-May 15th
+Period 1, day 21, you would sync March 21-April 20th
+Period 2, day 21, you would sync February 21 -March 20th
+
+Assume it was May 20:
+Period 0, day 21, you would sync April 21-May 20th
+Period 1, day 21, you would sync March 21-April 20th
+Period 2, day 21, you would sync February 21-March 20th
+
+Assume it was May 21:
+Period 0, day 21, you would sync May 21-May 21th
+Period 1, day 21, you would sync April 21-May 20th
+Period 2, day 21, you would sync March 21-April 20th
+
 # Export
 
 A UCR data source can be exported, to back an excel dashboard, for instance.
@@ -1423,6 +1616,7 @@ Following are some custom expressions that are currently available.
 
 - `location_type_name`:  A way to get location type from a location document id.
 - `location_parent_id`:  A shortcut to get a location's parent ID a location id.
+- `get_case_forms`: A way to get list of forms submitted for a case.
 
 You can find examples of these in [practical examples](examples/examples.md).
 

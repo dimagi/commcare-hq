@@ -1,16 +1,12 @@
 from decimal import Decimal
-import logging
-from couchdbkit import ResourceNotFound
 
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
+from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.sislog.models import SQLSislogBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-
-
-logger = logging.getLogger('accounting')
 
 
 def bootstrap_moz_gateway(apps):
@@ -120,7 +116,7 @@ def bootstrap_moz_gateway(apps):
         criteria_class=sms_gateway_fee_criteria_class,
     )
 
-    logger.info("Updated Moz gateway fees.")
+    log_smsbillables_info("Updated Moz gateway fees.")
 
 
 class Command(LabelCommand):

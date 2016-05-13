@@ -9,7 +9,8 @@
         "airszimbabwe",
         "airstanzania",
         "airsghana",
-        "airsbenin"
+        "airsbenin",
+        "airs-testing"
     ],
     "report_id": "supervisory_report",
     "data_source_table": "supervisory-005",
@@ -21,16 +22,16 @@
         "title": "Supervisory Report",
         "sort_expression": [
             {
-                "field": "form_name",
+                "field": "timeEnd",
+                "order": "DESC"
+            },
+            {
+                "field": "username",
                 "order": "ASC"
             },
             {
                 "field": "level_4",
                 "order": "ASC"
-            },
-            {
-                "field": "timeEnd",
-                "order": "DESC"
             }
         ],
         "filters": [

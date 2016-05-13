@@ -33,7 +33,7 @@ from phonelog.utils import process_device_log
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
-    'case_result, case_models, stock_result, stock_models'
+    'case_result, case_models, stock_result'
 )
 
 
@@ -44,7 +44,8 @@ class SubmissionPost(object):
     def __init__(self, instance=None, attachments=None, auth_context=None,
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
-                 last_sync_token=None, received_on=None, date_header=None):
+                 last_sync_token=None, received_on=None, date_header=None,
+                 partial_submission=False):
         assert domain, domain
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -64,6 +65,7 @@ class SubmissionPost(object):
         self.path = path
         self.interface = FormProcessorInterface(domain)
         self.formdb = FormAccessors(domain)
+        self.partial_submission = partial_submission
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -84,6 +86,7 @@ class SubmissionPost(object):
         xform.app_id = self.app_id
         xform.build_id = self.build_id
         xform.export_tag = ["domain", "xmlns"]
+        xform.partial_submission = self.partial_submission
         return xform
 
     def _handle_known_error(self, error, instance, xforms):
@@ -173,7 +176,7 @@ class SubmissionPost(object):
             self.interface.save_processed_models(
                 xforms,
                 case_stock_result.case_models,
-                case_stock_result.stock_models
+                case_stock_result.stock_result
             )
 
             unfinished_submission_stub.saved = True
@@ -200,13 +203,12 @@ class SubmissionPost(object):
             stock_result = process_stock(xforms, case_db)
 
             cases = case_db.get_cases_for_saving(instance.received_on)
-            stock_models = stock_result.get_models_to_save()
+            stock_result.populate_models()
 
         return CaseStockProcessingResult(
             case_result=case_result,
             case_models=cases,
             stock_result=stock_result,
-            stock_models=stock_models
         )
 
     def get_response(self):

@@ -13,7 +13,8 @@ from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import InvalidDate
-from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper, StockReportHelper
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper, StockReportHelper, \
+    UniqueLedgerReference
 from corehq.form_processor.utils import adjust_datetimes
 from couchforms.models import XFormInstance
 from xml2json.lib import convert_xml_to_json
@@ -27,6 +28,7 @@ class LedgerFormat(object):
 
 class CaseActionIntent(namedtuple('CaseActionIntent',
                                   ['case_id', 'form_id', 'is_deprecation', 'action_type', 'form'])):
+
     def get_couch_action(self):
         assert self.action_type == CASE_ACTION_COMMTRACK
         return CommCareCaseAction.from_parsed_action(
@@ -46,6 +48,25 @@ LedgerInstruction = namedtuple(
      # for transfer instructions
      'src', 'dest', 'type']
 )
+
+
+def get_case_ids_from_stock_transactions(xform):
+    stock_report_helpers = list(_get_all_stock_report_helpers_from_form(xform))
+    case_ids = {
+        transaction_helper.case_id
+        for stock_report_helper in stock_report_helpers
+        for transaction_helper in stock_report_helper.transactions
+    }
+    return case_ids
+
+
+def get_ledger_references_from_stock_transactions(xform):
+    stock_report_helpers = list(_get_all_stock_report_helpers_from_form(xform))
+    return {
+        UniqueLedgerReference(tx_helper.case_id, tx_helper.section_id, tx_helper.product_id)
+        for stock_report_helper in stock_report_helpers
+        for tx_helper in stock_report_helper.transactions
+    }
 
 
 def get_stock_actions(xform):

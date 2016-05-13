@@ -1,6 +1,6 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.models import CommCareCaseSQL
 from casexml.apps.case.signals import case_post_save
-from casexml.apps.case.xform import is_device_report
 from couchforms.signals import successful_form_received
 
 
@@ -30,3 +30,4 @@ def create_repeat_records(repeater_cls, payload):
 successful_form_received.connect(create_form_repeat_records)
 successful_form_received.connect(create_short_form_repeat_records)
 case_post_save.connect(create_case_repeat_records, CommCareCase)
+case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)

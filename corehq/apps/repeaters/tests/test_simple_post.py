@@ -8,7 +8,7 @@ from django.test import SimpleTestCase
 from corehq.apps.repeaters.models import simple_post_with_cached_timeout
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 
-MockResponse = namedtuple('MockResponse', 'status_code')
+MockResponse = namedtuple('MockResponse', 'status_code reason')
 
 
 class SimplePostCacheTest(SimpleTestCase):
@@ -22,7 +22,7 @@ class SimplePostCacheTest(SimpleTestCase):
     def test_simple_post_with_cached_timeout_success(self):
         with patch(
                 'corehq.apps.repeaters.models.simple_post',
-                side_effect=[MockResponse(status_code=200)]) as mock_post:
+                side_effect=[MockResponse(status_code=200, reason='No reason')]) as mock_post:
 
             resp = simple_post_with_cached_timeout('abc', 'http://google.com')
 
@@ -52,7 +52,7 @@ class SimplePostCacheTest(SimpleTestCase):
         """
         with patch(
                 'corehq.apps.repeaters.models.simple_post',
-                side_effect=[MockResponse(status_code=400)]) as mock_post:
+                side_effect=[MockResponse(status_code=400, reason='Ugly')]) as mock_post:
 
             with self.assertRaises(RequestConnectionError):
                 simple_post_with_cached_timeout('abc', 'http://google.com')

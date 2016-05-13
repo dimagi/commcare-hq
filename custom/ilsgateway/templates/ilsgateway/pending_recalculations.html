@@ -1,0 +1,23 @@
+{% extends 'style/bootstrap3/two_column.html' %}
+
+{% block page_content %}
+    <table id="recalculations" class="table table-bordered">
+        <thead>
+            <tr>
+               <th>Location</th>
+               <th>Type</th>
+               <th>Data</th>
+            </tr>
+        </thead>
+        {% for recalculation in recalculations %}
+            <tr>
+                <td>{{ recalculation.sql_location.name }}</td>
+                <td>{{ recalculation.type }}</td>
+                <td>{{ recalculation.data }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <script>
+        $('#recalculations').dataTable();
+    </script>
+{% endblock %}

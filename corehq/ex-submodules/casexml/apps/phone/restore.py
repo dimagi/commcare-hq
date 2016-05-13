@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from io import FileIO
 import os
 from uuid import uuid4
@@ -18,7 +20,7 @@ from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LO
     get_sync_log_class_by_format
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
-from casexml.apps.phone import xml
+from casexml.apps.phone import xml as xml_util
 from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.openrosa_response import (
@@ -30,6 +32,8 @@ from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
 from wsgiref.util import FileWrapper
+from xml.etree import ElementTree
+
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +103,7 @@ class RestoreResponse(object):
         if isinstance(xml_element, basestring):
             self.response_body.write(xml_element)
         else:
-            self.response_body.write(xml.tostring(xml_element))
+            self.response_body.write(xml_util.tostring(xml_element))
 
     def extend(self, iterable):
         for element in iterable:
@@ -234,6 +238,7 @@ class CachedPayload(object):
 
 
 class CachedResponse(object):
+
     def __init__(self, payload):
         self.payload = payload
 
@@ -480,6 +485,13 @@ class RestoreConfig(object):
             normal_providers = get_restore_providers()
             for provider in normal_providers:
                 for element in provider.get_elements(self.restore_state):
+                    if element.tag == 'fixture' and len(element) == 0:
+                        # There is a bug on mobile versions prior to 2.27 where
+                        # a parsing error will cause mobile to ignore the element
+                        # after this one if this element is empty.
+                        # So we have to add a dummy empty_element child to prevent
+                        # this element from being empty.
+                        ElementTree.SubElement(element, 'empty_element')
                     response.append(element)
 
             # in the future these will be done asynchronously so keep them separate

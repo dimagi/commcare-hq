@@ -16,6 +16,7 @@ ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, T
 
 
 class StaticToggle(object):
+
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None):
         self.slug = slug
@@ -192,11 +193,12 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
-APP_AWARE_SYNC = StaticToggle(
+APP_AWARE_SYNC = PredictablyRandomToggle(
     'app_aware_sync',
     'App-aware Sync',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    randomness=0.3
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -348,6 +350,13 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
     'Enable extension syncing',
     TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+SYNC_SEARCH_CASE_CLAIM = StaticToggle(
+    'search_claim',
+    'Enable synchronous mobile searching and case claiming',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -511,13 +520,6 @@ CUSTOM_PROPERTIES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BULK_SMS_VERIFICATION = StaticToggle(
-    'bulk_sms_verification',
-    'Allow initiating the SMS phone verification workflow for all users in a group.',
-    TAG_ONE_OFF,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
@@ -596,6 +598,13 @@ CLOUDCARE_CACHE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+APPLICATION_ERROR_REPORT = StaticToggle(
+    'application_error_report',
+    'Show Application Error Report',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
@@ -608,14 +617,6 @@ CUSTOM_MENU_BAR = StaticToggle(
     "Hide Dashboard and Applications from top menu bar "
     "for non-admin users",
     TAG_ONE_OFF,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
-LINK_SUPPLY_POINT = StaticToggle(
-    'link_supply_point',
-    'Add a "Supply Point" tab to location pages.  This is feature flagged '
-    'because this is not a great way to display additional information.',
-    TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -667,6 +668,13 @@ USE_FORMPLAYER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+FORMPLAYER_EXPERIMENT = StaticToggle(
+    'use_formplayer_experiment',
+    'Do formplayer experimenting with Science',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -700,6 +708,13 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     'telerivet_setup_walkthrough',
     'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+)
+
+ABT_REMINDER_RECIPIENT = StaticToggle(
+    'abt_reminder_recipient',
+    "Ability to send a reminder to the case owner's location's parent location",
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
 
@@ -781,12 +796,6 @@ TF_USES_SQLITE_BACKEND = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SECURE_SESSIONS_CHECKBOX = StaticToggle(
-    'secure_sessions_checkbox',
-    'Show secure sessions checkbox',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
@@ -814,7 +823,7 @@ NOTIFICATIONS = StaticToggle(
 
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
-    'Shows the project health dashboard in the reports navigation',
+    'Shows the project performance dashboard in the reports navigation',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

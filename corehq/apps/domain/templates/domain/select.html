@@ -6,10 +6,7 @@
 
 {% block login-content %}
 <div class="row">
-    <div class="page-header">
-        <h1>{% trans "Select a Project" %}</h1>
-    </div>
-    <div class="span4">
+    <div class="col-sm-4">
         <h2>{% trans "My Projects" %}</h2>
             <ul class="nav nav-pills nav-stacked">
             {% for domain in domains_for_user %}
@@ -18,10 +15,10 @@
             </ul>
         {% if open_invitations %}
         <h2>{% trans "Project Invitations" %}</h2>
-            <ul class="unstyled">
+            <ul class="list-unstyled">
             {% for invitation in open_invitations %}
                 <li style="padding-bottom: 6px;">
-                    <a href="{% url "domain_accept_invitation" invitation.domain invitation.get_id %}" class="btn btn-success btn-mini">
+                    <a href="{% url "domain_accept_invitation" invitation.domain invitation.get_id %}" class="btn btn-success btn-xs">
                         Accept
                     </a>
                     {{  invitation.domain }}
@@ -30,9 +27,9 @@
             </ul>
         {% endif %}
     </div>
-    <div class="span4">
+    <div class="col-sm-4">
     </div>
-    <div class="span4">
+    <div class="col-sm-4">
         <aside class="well">
             <h3>{% trans "Have a new idea?" %}</h3>
             <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>

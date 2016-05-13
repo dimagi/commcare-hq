@@ -111,4 +111,4 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         subscriptions = self.invoice_factory._get_subscriptions()
         self.assertEqual(len(subscriptions), 0)
         community_ranges = self.invoice_factory._get_community_ranges(subscriptions)
-        self.assertEqual(len(community_ranges), 1)
+        self.assertEqual(community_ranges, [(self.invoice_start, self.invoice_end + datetime.timedelta(days=1))])

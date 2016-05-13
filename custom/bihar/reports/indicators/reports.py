@@ -24,6 +24,7 @@ class IndicatorNav(GroupReferenceMixIn, BiharNavReport):
     report_template_path = "bihar/team_listing_tabular.html"
     
     extra_context_providers = [shared_bihar_context, summary_context, team_member_context]
+
     @property
     def reports(self):
         return [IndicatorClientSelectNav, IndicatorSummaryReport]
@@ -121,7 +122,6 @@ class MyPerformanceReport(BiharSummaryReport):
         return [_nav_link(i) for i in self.data_provider.summary_indicators]
 
 
-
 class IndicatorCharts(MockEmptyReport):
     name = ugettext_noop("Charts")
     slug = "indicatorcharts"
@@ -182,6 +182,7 @@ class ClientListBase(GroupReferenceMixIn, ConvenientBaseMixIn,
     # "abstract" class for client list reports
     report_template_path = "bihar/client_listing.html"
 
+
 class IndicatorClientList(ClientListBase, IndicatorMixIn):
     is_cacheable = True
     slug = "indicatorclientlist"
@@ -230,6 +231,7 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
     def rows(self):
         results = self.verbose_results[self.indicator.fluff_calculator.primary]
         numerators = self.verbose_results['numerator']
+
         def _reconcile(numerators, denominators):
             def _is_match(num, denom):
                 return num['id'] == denom['id'] and num['key'][-1] == denom['key'][-1]
@@ -245,7 +247,6 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
             if num_copy:
                 logging.error('expected no indicators left in the numerator but found some')
 
-
         def _key(result):
             return (result['in_num'], result['key'][-1])
 
@@ -259,6 +260,7 @@ class IndicatorClientList(ClientListBase, IndicatorMixIn):
             self.indicator.as_row(cases[result['id']], self.fluff_results, fluff_row=result)
             for result in results
         ]
+
 
 class MyPerformanceList(IndicatorClientList):
     slug = "myperformancelist"

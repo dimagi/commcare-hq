@@ -6,6 +6,7 @@ class DocumentTransform():
     # with its attachments so that we can properly deal with it
     # across databases.
     # We also need the source database to fetch the attachment
+
     def __init__(self, doc, database, exclude_attachments=False):
         self._attachments = {}
         self.attachments = {}

@@ -9,7 +9,8 @@
         "airszimbabwe",
         "airstanzania",
         "airsghana",
-        "airsbenin"
+        "airsbenin",
+        "airs-testing"
     ],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"spray-progress-report-level-4",

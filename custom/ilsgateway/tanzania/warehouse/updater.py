@@ -31,7 +31,9 @@ def _is_valid_status(facility, date, status_type):
     if status_type not in const.NEEDED_STATUS_TYPES:
         return False
 
-    code = facility.metadata['group']
+    code = facility.metadata.get('group')
+    if not code:
+        return False
     dg = DeliveryGroups(date.month)
     if status_type == SupplyPointStatusTypes.R_AND_R_FACILITY:
         return dg.current_submitting_group() == code
@@ -570,7 +572,7 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner=N
             product_data.total = sub_prod.get('total_sum', 0)
             if strict:
                 assert product_data.total == total_orgs, \
-                    "total should match number of sub facilities"
+                    "total should match number of sub facilities %s-%s" % (product_data.total, total_orgs)
             product_data.with_stock = sub_prod.get('with_stock_sum', 0)
             product_data.without_stock = sub_prod.get('without_stock_sum', 0)
             product_data.without_data = product_data.total - product_data.with_stock - product_data.without_stock

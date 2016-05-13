@@ -1,1 +1,107 @@
-{% include "users/accept_invite_base.html" with invite_type=invite_type invite_to=domain %}
+{% extends login_template %}
+{% load i18n %}
+{% load field_tags %}
+{% load hq_shared_tags %}
+
+{% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
+
+{% block js-inline  %}{{ block.super }}
+    {% url "eula_basic" as eula_url %}
+    {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+    {% if not hide_password_feedback %}
+    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+    <script src="{% static 'registration/js/password.js' %}"></script>
+    {% endif %}
+{% endblock %}
+
+{% block login-content %}
+    <div class="row">
+        {% if request.user.is_authenticated %}
+            <div class="col-sm-8">
+                {% if not mobile_user %}
+                    <form name="form" method="post" action="" class="form-horizontal">
+                        {% csrf_token %}
+                        {{ form.as_table }}
+                        <fieldset>
+                            <legend>{% trans "Accept Invitation?" %}</legend>
+                            <p>{% if invited_user %}<strong>{% trans "Note:" %}</strong>
+                            {% blocktrans %}
+                            You are signed in with an email different from the invited email, {{ invited_user }}. Are you sure you want
+                            {% endblocktrans %}
+                            {% else %}
+                            {% trans "Would you like" %}
+                            {% endif %}
+                            {% blocktrans with user.username as username %}
+                            to accept the invitation to join the CommCare HQ {{ invite_type }} <strong>{{ invite_to }}</strong> as <strong>{{ username }}</strong>?</p>
+                            {% endblocktrans %}
+                        </fieldset>
+                        <button type="submit" class="btn btn-primary btn-lg">{% trans "Accept Invitation" %}</button>
+                    </form>
+                {% else %}
+                    <p><strong>{% trans 'Note' %}:</strong>
+                    {% trans "You are signed in as a mobile user, but to accept this invitation, you must be a web user." %}</p>
+                    <p>
+                        {% trans 'Please' %}
+                        <a href="?switch=true" class="btn btn-default">{% trans 'switch accounts' %}</a>
+                        {% trans 'or' %}
+                        <a href="?create=true" class="btn btn-default">{% trans "create a web account" %}</a>
+                    </p>
+                {% endif %}
+            </div>
+            <div class="col-sm-4">
+                <aside class="well">
+                    <h3>{% blocktrans with formatted_username|safe as username %}Not {{ username }}?{% endblocktrans %}</h3>
+                    <a href="?create=true" class="btn btn-info">{% trans "Create an Account" %}</a><br />
+                    {% trans "or" %}<br />
+                    <a href="?switch=true" class="btn btn-info">{% trans "Switch Accounts" %}</a>
+                </aside>
+            </div>
+        {% else %}
+            {% blocktrans %}
+                <div class="help-block">To accept this {{ invite_type|lower }} invitation, you must create an account.</div>
+            {% endblocktrans %}
+            <div class="col-sm-8">
+                <form name="form" method="post" action="" class="form-horizontal">
+                    {% csrf_token %}
+                    {% for global_error in form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ global_error }}
+                        </div>
+                    {% endfor %}
+                    <fieldset>
+                        {% if create_domain %}
+                            <legend>{% trans 'New user information' %}</legend>
+                        {% endif %}
+                        {% include "users/partial/field.html" with field=form.full_name %}
+                        {% include "users/partial/field.html" with field=form.email %}
+                        {% include "users/partial/field.html" with field=form.password %}
+                        {% include "users/partial/field.html" with field=form.eula_confirmed %}
+                        {% if create_domain %}
+                            <legend>{% trans "Create your first project" %}</legend>
+                            {% include "registration/partials/field.html" with field=form.hr_name %}
+                        {% endif %}
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                    </fieldset>
+                    <div class="form-actions">
+                        <div class="col-sm-offset-4 col-sm-4">
+                            <button type="submit" class="btn btn-primary">{% trans 'Create Account' %}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-sm-4">
+                <aside class="well">
+                    <h3>{% trans 'Already have an account?' %}</h3>
+                    <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-primary btn-lg">
+                        {% trans 'Sign In Now' %}
+                    </a>
+                </aside>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+{% block modals %}{{ block.super }}
+    {% include 'registration/partials/eula_modal.html' %}
+{% endblock %}

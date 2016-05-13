@@ -7,6 +7,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from corehq.apps.style.decorators import use_nvd3
 from couchexport.models import Format
 from custom.common import ALL_OPTION
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
@@ -17,6 +18,13 @@ from custom.ilsgateway.tanzania.reports.utils import make_url
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 
+class ILSPieChart(PieChart):
+
+    def __init__(self, title, key, values, color=None):
+        super(ILSPieChart, self).__init__(title, key, values, color)
+        self.data = values
+
+
 class ILSData(object):
     show_table = False
     show_chart = True
@@ -25,6 +33,7 @@ class ILSData(object):
     subtitle = None
     default_rows = 10
     searchable = False
+    use_datatables = False
 
     chart_config = {
         'on_time': {
@@ -105,7 +114,7 @@ class ILSData(object):
                     entry['description'] = "%.1f%% (%d) %s (%s)" % params
 
                     ret.append(entry)
-        chart = PieChart('', '', ret, color=colors)
+        chart = ILSPieChart('', '', ret, color=colors)
         chart.marginLeft = 10
         chart.marginRight = 10
         chart.height = 500
@@ -210,6 +219,10 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
     exportable = False
     base_template = 'ilsgateway/base_template.html'
     emailable = False
+
+    @use_nvd3
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(MultiReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):
@@ -337,10 +350,10 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
                 title=data_provider.title,
                 title_url=data_provider.title_url,
                 title_url_name=data_provider.title_url_name,
+                datatables=data_provider.use_datatables,
                 slug=data_provider.slug,
                 headers=headers,
                 rows=rows,
-                datatables=self.use_datatables,
                 total_row=total_row,
                 start_at_row=0,
                 subtitle=data_provider.subtitle,
@@ -428,7 +441,6 @@ class DetailsReport(MultiReport):
             self.request.GET.get('datespan_first', ''),
             self.request.GET.get('datespan_second', ''),
         ))
-
 
     @property
     def report_stockonhand_url(self):

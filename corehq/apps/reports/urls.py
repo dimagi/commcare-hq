@@ -20,9 +20,19 @@ from corehq.apps.userreports.views import (
     EditReportInBuilder,
     ReportBuilderDataSourceSelect,
     ReportBuilderTypeSelect,
-)
+    ReportBuilderPaywall, ReportBuilderPaywallPricing,
+    ReportBuilderPaywallActivatingTrial,
+    ReportBuilderPaywallActivatingSubscription)
 from .filters import urls as filter_urls
-from .views import EditFormInstance, AddSavedReportConfigView
+from .views import (
+    EditFormInstance,
+    AddSavedReportConfigView,
+    FormDataView,
+    CaseDetailsView,
+    CaseAttachmentsView,
+    MySavedReportsView,
+    ScheduledReportsView,
+)
 
 
 custom_report_urls = patterns('',
@@ -32,6 +42,14 @@ custom_report_urls = patterns('',
 urlpatterns = patterns('corehq.apps.reports.views',
     ConfigurableReport.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
+
+    url(r'builder/subscribe/$', ReportBuilderPaywall.as_view(), name=ReportBuilderPaywall.urlname),
+    url(r'builder/subscribe/pricing/$', ReportBuilderPaywallPricing.as_view(),
+        name=ReportBuilderPaywallPricing.urlname),
+    url(r'builder/subscribe/activating_trial/$', ReportBuilderPaywallActivatingTrial.as_view(),
+        name=ReportBuilderPaywallActivatingTrial.urlname),
+    url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
+        name=ReportBuilderPaywallActivatingSubscription.urlname),
 
     url(r'^builder/select_type/$', ReportBuilderTypeSelect.as_view(), name=ReportBuilderTypeSelect.urlname),
     url(r'^builder/(?P<report_type>list|chart|table|worker|map)/select_source/$', ReportBuilderDataSourceSelect.as_view(), name='report_builder_select_source'),
@@ -43,12 +61,13 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^builder/edit/(?P<report_id>[\w\-]+)/$', EditReportInBuilder.as_view(), name='edit_report_in_builder'),
 
     url(r'^$', "default", name="reports_home"),
-    url(r'^saved/', "saved_reports", name="saved_reports"),
+    url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved_reports', 'old_saved_reports'),
 
-    url(r'^case_data/(?P<case_id>[\w\-]+)/$', 'case_details', name="case_details"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDetailsView.as_view(), name=CaseDetailsView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/forms/$', 'case_forms', name="single_case_forms"),
-    url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$', 'case_attachments', name="single_case_attachments"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$',
+        CaseAttachmentsView.as_view(), name=CaseAttachmentsView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/view/xml/$', 'case_xml', name="single_case_xml"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', 'rebuild_case_view', name="rebuild_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/resave/$', 'resave_case', name="resave_case"),
@@ -59,7 +78,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', 'case_form_data', name="case_form_data"),
 
     # Download and view form data
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', 'form_data', name='render_form_data'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/$', FormDataView.as_view(), name=FormDataView.urlname),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/download/$', 'download_form', name='download_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/edit/$', EditFormInstance.as_view(), name='edit_form_instance'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', 'restore_edit', name='restore_edit'),
@@ -70,6 +89,10 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', 'archive_form', name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', 'unarchive_form', name='unarchive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', 'resave_form', name='resave_form'),
+
+    # project health ajax
+    url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', 'project_health_user_details',
+        name='project_health_user_details'),
 
     # export API
     url(r"^export/$", 'export_data'),
@@ -84,6 +107,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^export/bulk/download/$", "export_default_or_custom_data", name="export_bulk_download", kwargs=dict(bulk_export=True)),
     # saved
     url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", "hq_download_saved_export", name="hq_download_saved_export"),
+    url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", "hq_deid_download_saved_export", name="hq_deid_download_saved_export"),
     url(r"^export/saved/update/$", "hq_update_saved_export", name="hq_update_saved_export"),
 
     # Full Excel export
@@ -101,7 +125,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
 
     # Scheduled reports
     url(r'^scheduled_reports/(?P<scheduled_report_id>[\w-]+)?$',
-        'edit_scheduled_report', name="edit_scheduled_report"),
+        ScheduledReportsView.as_view(), name=ScheduledReportsView.urlname),
     url(r'^scheduled_report/(?P<scheduled_report_id>[\w-]+)/delete$',
         'delete_scheduled_report', name='delete_scheduled_report'),
     url(r'^send_test_scheduled_report/(?P<scheduled_report_id>[\w-]+)/$',

@@ -1,9 +1,11 @@
 from __future__ import print_function, unicode_literals
 
+from bs4 import BeautifulSoup
 from django.core.urlresolvers import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.client import Client
+from mock import patch
 
 from corehq import toggles
 from corehq.apps.users.models import WebUser
@@ -12,7 +14,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import Application, APP_V1
 from corehq.apps.domain.views import CreateNewExchangeSnapshotView
 
+
 class TestDomainViews(TestCase):
+
     def setUp(self):
         self.client = Client()
 
@@ -122,3 +126,30 @@ class TestDomainViews(TestCase):
         self.assertEqual(len(snapshots), 2)
         self.assertEqual(snapshots[0].documentation_file_path, filename)
         self.assertEqual(snapshots[1].documentation_file_path, filename)
+
+
+class BaseAutocompleteTest(TestCase):
+
+    def verify(self, autocomplete_enabled, view_path, *fields):
+        flag = not autocomplete_enabled
+        setting_path = 'django.conf.settings.ENABLE_DRACONIAN_SECURITY_FEATURES'
+        # HACK use patch to work around bug in override_settings
+        # https://github.com/django-compressor/django-appconf/issues/30
+        with patch(setting_path, flag):
+            response = self.client.get(view_path)
+            soup = BeautifulSoup(response.content)
+            for field in fields:
+                tag = soup.find("input", attrs={"name": field})
+                self.assertTrue(tag, "field not found: " + field)
+                print(tag)
+                is_enabled = tag.get("autocomplete") != "off"
+                self.assertEqual(is_enabled, autocomplete_enabled)
+
+
+class TestPasswordResetFormAutocomplete(BaseAutocompleteTest):
+
+    def test_autocomplete_enabled(self):
+        self.verify(True, "/accounts/password_reset_email/", "email")
+
+    def test_autocomplete_disabled(self):
+        self.verify(False, "/accounts/password_reset_email/", "email")

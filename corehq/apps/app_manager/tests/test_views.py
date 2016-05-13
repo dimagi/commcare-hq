@@ -38,7 +38,7 @@ class TestViews(TestCase):
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
-        cls.app = Application.new_app(cls.domain.name, "TestApp", application_version=APP_V1)
+        cls.app = Application.new_app(cls.domain.name, "TestApp", application_version=APP_V2)
         cls.app.build_spec = BuildSpec.from_string('2.7.0/latest')
         toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.domain.name), True)
 

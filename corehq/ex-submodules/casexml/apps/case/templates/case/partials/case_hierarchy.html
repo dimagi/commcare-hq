@@ -1,9 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% include 'cloudcare/includes/touchforms-inline.html' %}
-
-<script src="{% static "case/js/lib/jquery-treetable/jquery.treetable.js" %}"></script>
 <link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.css" %}">
 <link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.theme.default.css" %}">
 
@@ -39,7 +36,9 @@
 </style>
 
 <script>
-    $(function () {
+    $.when(
+        $.getScript('{% static "case/js/lib/jquery-treetable/jquery.treetable.js" %}')
+    ).done(function () {
         var tree = $("#related_cases").treetable({
             expandable: true,
             initialState: "expanded"
@@ -84,7 +83,7 @@
 
                 {% if case.add_child_data and case.add_child_data.edit_form_id != None %}
                 {% with case.add_child_data as data %}
-                <a href="#" class="btn btn-small touchforms-link"
+                <a href="#" class="btn btn-sm btn-default touchforms-link"
                     data-target="#edit_{{ case.get_id }}"
                     data-app-id="{{ data.app_id }}"
                     data-module-id="{{ data.create_module_id }}"
@@ -92,7 +91,7 @@
                     data-session-data='{{ data.session_data|JSON }}'
                     data-submit-url-root='{{ data.submit_url_root }}'
                     data-form-url-root='{{ data.form_url_root }}'>
-                    <i class="icon-edit"></i> {{ data.link_text }}
+                    <i class="fa fa-edit"></i> {{ data.link_text }}
                 </a>
                 {% endwith %}
                 {% endif %}
@@ -100,7 +99,7 @@
                 <div class="pull-right btn-group">
                     {% if case.edit_data.edit_form_id != None and not case.closed %}
                     {% with case.edit_data as data %}
-                    <a href="#" class="btn btn-small touchforms-link"
+                    <a href="#" class="btn btn-sm btn-default touchforms-link"
                         data-target="#edit_{{ case.get_id }}"
                         data-app-id="{{ data.app_id }}"
                         data-module-id="{{ data.edit_module_id }}"
@@ -108,14 +107,14 @@
                         data-session-data='{{ data.session_data|JSON }}'
                         data-submit-url-root='{{ data.submit_url_root }}'
                         data-form-url-root='{{ data.form_url_root }}'>
-                        <i class="icon-edit"></i> {% trans "Edit" %}
+                        <i class="fa fa-edit"></i> {% trans "Edit" %}
                     </a>
                     {% endwith %}
                     {% endif %}
                     
                     {% if show_view_buttons and case.case_id != current_case.case_id %}
-                    <a class="btn btn-small" href="{{ case.edit_data.view_url }}">
-                        <i class="icon-eye-open"></i> {% trans "View" %}
+                    <a class="btn btn-sm btn-default" href="{{ case.edit_data.view_url }}">
+                        <i class="fa fa-eye"></i> {% trans "View" %}
                     </a>
                     {% endif %}
                 </div>
@@ -131,9 +130,10 @@
                 {% if case.edit_data.edit_form_id != None or case.add_child_data.create_form_id != None %}
                 <br style="line-height:0">
                 <span class="indenter" style="line-height:0; padding-left:{{ case.edit_data.indent_px }}px"></span>
-                <div class="touchforms-inline" id="edit_{{ case.get_id }}"></div>
+                <div class="touchforms-inline" id="edit_{{ case.get_id }}">
+                    <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+                </div>
                 {% endif %}
-            </div>
             </td>
 
             {% for column in case.columns %}

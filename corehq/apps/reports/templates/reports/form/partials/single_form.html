@@ -23,10 +23,6 @@ requires imports/proptable.html to be included in the main template
 .form-data-raw {
     display: none;
 }
-.form-data-table, .form-data-group-table {
-    overflow: scroll;
-    width: 800px;
-}
 .hq-help {
     /* TODO: does .hq-help really need to be width 0 by default? */
     width: auto;
@@ -115,7 +111,7 @@ requires imports/proptable.html to be included in the main template
 </style>
 
 {% if is_archived %}
-<div class="alert alert-full alert-block">
+<div class="alert alert-info alert-full alert-block">
     {% blocktrans %}
     This form is archived and will not be included in reports. 
     {% endblocktrans %}
@@ -128,7 +124,7 @@ requires imports/proptable.html to be included in the main template
 </div>
 {% endif %}
 {% if edit_info.was_edited %}
-<div class="alert alert-full alert-block">
+<div class="alert alert-info alert-full alert-block">
     {% url "render_form_data" domain edit_info.latest_version as latest_version_url %}
     {% blocktrans %}
     This form has been edited. The latest version can be viewed <a href="{{ latest_version_url }}">here</a>.
@@ -136,7 +132,7 @@ requires imports/proptable.html to be included in the main template
 </div>
 {% endif %}
 {% if edit_info.is_edit %}
-<div class="alert alert-full alert-block">
+<div class="alert alert-warning alert-full alert-block">
     {% url "render_form_data" domain edit_info.previous_version as previous_version_url %}
     {% blocktrans with when=edit_info.edit_on|naturaltime %}
         This submission was edited from a previous version {{ when }}. You can view the previous version <a href="{{ previous_version_url }}">here</a>.
@@ -146,7 +142,7 @@ requires imports/proptable.html to be included in the main template
 <div class="clearfix">
     <div class="pull-right">
         {% if auth_context.authenticated %}
-            <i class="icon-lock"></i>
+            <i class="fa fa-lock"></i>
             {% if user_info.id != auth_user_info.id %}
             {% blocktrans with auth_user=auth_user_info|pretty_doc_info user=user_info|pretty_doc_info %}
                 Submitted by {{ auth_user }} on behalf of {{ user }}
@@ -159,7 +155,7 @@ requires imports/proptable.html to be included in the main template
             {% endif %}
         {% endif %}
         {% if not auth_context.authenticated %}
-            <i class="icon-unlock"></i>
+            <i class="fa fa-unlock"></i>
             {% blocktrans with user=user_info|pretty_doc_info %}
             Submitted as {{ user }}
             {% endblocktrans %}
@@ -201,19 +197,19 @@ requires imports/proptable.html to be included in the main template
         </a>
     </li>
 </ul>
-<div class="tab-content form-details" style="overflow:visible">
+<div class="tab-content form-details" style="overflow:visible; margin-top: 10px;">
     <div class="tab-pane active" id="form-data">
         <div class="btn-toolbar row" id='form-actions-toolbar'>
             {% if context_case_id %}
-                <a class="btn"
+                <a class="btn btn-default"
                     href="{% url "render_form_data" instance.domain instance.form_id %}">
                     {% trans "View standalone form" %}
                 </a>
             {% endif %}
             {% if show_edit_options %}
                 {% if show_edit_submission %}
-                        <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" class="btn btn-primary" id="edit-form">
-                            <i class="icon-edit"></i> {% trans "Edit this form" %}
+                        <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" class="btn btn-default" id="edit-form">
+                            <i class="fa fa-edit"></i> {% trans "Edit this form" %}
                         </a>
                 {% endif %}
                 {% if not is_archived and not edit_info.was_edited %}
@@ -222,10 +218,11 @@ requires imports/proptable.html to be included in the main template
                         data-title="{% trans "Archiving Forms" %}"
                         data-content="{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}"
                         data-placement="left"
+                        data-bootstrap3="true"
                     ></span>
                     <button type="submit" class="btn btn-danger" id="archive-form-btn">
                         {% trans "Archive this form" %}
-                        <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
+                        <i class="fa fa-refresh fa-spin" id="archive-spinner" style="display:none"></i>
                     </button>
                 </form>
                 {% elif edit_info.was_edited %}
@@ -234,10 +231,11 @@ requires imports/proptable.html to be included in the main template
                         data-title="{% trans "Restoring Edited Forms" %}"
                         data-content="{% trans "Restoring an edited form will undo any later edits made. This operation is reversible." %}"
                         data-placement="left"
+                        data-bootstrap3="true"
                     ></span>
                     <button type="submit" class="btn btn-danger" id="archive-form-btn">
                         {% trans "Restore this version" %}
-                        <i class="icon-refresh icon-spin" id="archive-spinner" style="display:none"></i>
+                        <i class="fa fa-refresh fa-spin" id="archive-spinner" style="display:none"></i>
                     </button>
                 </form>
                 {% endif %}
@@ -249,9 +247,9 @@ requires imports/proptable.html to be included in the main template
                         data-content="{% trans "Restoring this form will cause it to show up in reports again." %}"
                         data-placement="left"
                     ></span>
-                    <button type="submit" class="btn btn-primary" id="unarchive-form-btn">
+                    <button type="submit" class="btn btn-default" id="unarchive-form-btn">
                         {% trans "Restore this form" %}
-                        <i class="icon-refresh icon-spin" id="unarchive-spinner" style="display:none"></i>
+                        <i class="fa fa-refresh fa-spin" id="unarchive-spinner" style="display:none"></i>
                    </button>
                 </form>
                 {% endif %}
@@ -263,9 +261,9 @@ requires imports/proptable.html to be included in the main template
                         data-content="{% trans "Resaving a form can manually cause it to be reincluded in reports if something went wrong during initial processing." %}"
                         data-placement="left"
                     ></span>
-                    <button type="submit" class="btn" id="resave-form-btn">
+                    <button type="submit" class="btn btn-default" id="resave-form-btn">
                         {% trans "Resave this form" %}
-                        <i class="icon-refresh icon-spin" id="resave-spinner" style="display:none"></i>
+                        <i class="fa fa-refresh fa-spin" id="resave-spinner" style="display:none"></i>
                     </button>
                 </form>
                 {% endif %}
@@ -279,12 +277,12 @@ requires imports/proptable.html to be included in the main template
     <div class="tab-pane" id="form-case-data">
         <div class="accordion">
             {% for case_data in cases %}
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <span class="accordion-toggle">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title accordion-toggle">
                         <a data-toggle="collapse" 
                             href="#form-case-acc-{{ forloop.counter }}">
-                            {% if case_data.valid_case %}
+                            {% if case_data.valid_case and case_data.name %}
                             {{ case_data.name }}
                             {% else %}
                             ({% trans "Unknown/Deleted Case" %})
@@ -292,19 +290,19 @@ requires imports/proptable.html to be included in the main template
                         </a>
 
                         {% if case_data.valid_case %}
-                        <span style="float: right">
+                        <span class="pull-right">
                             {% if case_data.is_current_case %}
                             <strong class="muted">{% trans "(this case)" %}</strong>
                             {% else %}
-                            <a class="btn-small btn-primary" href="{{ case_data.url }}">
+                            <a class="btn btn-sm btn-primary" href="{{ case_data.url }}" style="margin-top: -6px;">
                                 {% trans "View" %}
                             </a>
                             {% endif %}
                         </span>
                         {% endif %}
-                    </span>
+                    </h4>
                 </div>
-                <div class="accordion-body collapse 
+                <div class="panel-body collapse
                     {% if cases|length == 1 %}in{% endif %}" 
                     id="form-case-acc-{{ forloop.counter }}">
                     <div class="accordion-inner">
@@ -339,7 +337,7 @@ requires imports/proptable.html to be included in the main template
     {% endif %}
     <div class="tab-pane" id="form-xml">
         <p>
-            <a class="btn" href="{% url "download_form" domain instance.form_id %}" target="_blank">
+            <a class="btn btn-default" href="{% url "download_form" domain instance.form_id %}" target="_blank">
                 {% trans "Open XML in New Window" %}
             </a>
         </p>

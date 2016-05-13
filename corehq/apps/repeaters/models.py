@@ -16,11 +16,10 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
 import hashlib
 
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 
-from couchforms.models import XFormInstance
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
@@ -69,7 +68,7 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False,
         raise RequestConnectionError(e.message)
 
     if not 200 <= resp.status_code < 300:
-        message = 'HTTP response not a 200 or 300'
+        message = u'Status Code {}: {}'.format(resp.status_code, resp.reason)
         cache.set(key, message, expiry)
         raise RequestConnectionError(message)
     return resp
@@ -337,7 +336,7 @@ class FormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.get(repeat_record.payload_id)
+        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
 
     def allowed_to_forward(self, payload):
         return payload.xmlns != DEVICE_LOG_XMLNS
@@ -378,17 +377,16 @@ class CaseRepeater(Repeater):
 
     def allowed_to_forward(self, payload):
         allowed_case_type = not self.white_listed_case_types or payload.type in self.white_listed_case_types
-        allowed_user = self.payload_user(payload) not in self.black_listed_users
+        allowed_user = self.payload_user_id(payload) not in self.black_listed_users
         return allowed_case_type and allowed_user
 
-    @classmethod
-    def payload_user(cls, payload):
+    def payload_user_id(self, payload):
         # get the user_id who submitted the payload, note, it's not the owner_id
         return payload.actions[-1].user_id
 
     @memoized
     def payload_doc(self, repeat_record):
-        return CommCareCase.get(repeat_record.payload_id)
+        return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
 
     def get_headers(self, repeat_record):
         headers = super(CaseRepeater, self).get_headers(repeat_record)
@@ -412,7 +410,7 @@ class ShortFormRepeater(Repeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.get(repeat_record.payload_id)
+        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
 
     def allowed_to_forward(self, payload):
         return payload.xmlns != DEVICE_LOG_XMLNS
@@ -430,6 +428,7 @@ class ShortFormRepeater(Repeater):
 
 @register_repeater_type
 class AppStructureRepeater(Repeater):
+
     def payload_doc(self, repeat_record):
         return None
 

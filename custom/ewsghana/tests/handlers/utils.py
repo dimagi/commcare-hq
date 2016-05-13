@@ -26,6 +26,7 @@ TEST_DOMAIN = 'ewsghana-test'
 
 
 class EWSTestCase(TestCase):
+
     @classmethod
     def tearDownClass(cls):
         cls.sms_backend_mapping.delete()
@@ -42,6 +43,7 @@ class EWSScriptTest(EWSTestCase, TestScript):
         report = StockReport(
             form_id=xform._id,
             date=(now - datetime.timedelta(days=10)).replace(second=0, microsecond=0),
+            server_date=now,
             type='balance',
             domain=TEST_DOMAIN
         )

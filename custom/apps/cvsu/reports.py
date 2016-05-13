@@ -1,6 +1,7 @@
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import calculate_total_row, TableDataFormat, DataFormatter
+from corehq.apps.style.decorators import use_nvd3_v3
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport, ProjectReportParametersMixin
 from .filters import AgeFilter, GenderFilter, GroupUserFilter, GroupFilter, ALL_CVSU_GROUP
@@ -22,7 +23,10 @@ class MultiReportPage(CustomProjectReport, ProjectReportParametersMixin, Datespa
     title = ''
     report_template_path = "cvsu/multi_report.html"
     flush_layout = True
-    is_bootstrap3 = True
+
+    @use_nvd3_v3
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        return super(MultiReportPage, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     @memoized

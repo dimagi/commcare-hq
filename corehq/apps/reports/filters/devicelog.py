@@ -1,5 +1,5 @@
-from django.utils.translation import ugettext_noop
-from corehq.apps.reports.filters.base import BaseReportFilter
+from django.utils.translation import ugettext_noop, ugettext_lazy
+from corehq.apps.reports.filters.base import BaseReportFilter, BaseSingleOptionFilter, BaseTagsFilter
 from corehq.util.queries import fast_distinct, fast_distinct_in_domain
 from corehq.util.quickcache import quickcache
 from phonelog.models import DeviceReportEntry
@@ -9,7 +9,7 @@ class DeviceLogTagFilter(BaseReportFilter):
     slug = "logtag"
     label = ugettext_noop("Filter Logs by Tag")
     errors_only_slug = "errors_only"
-    template = "reports/filters/bootstrap2/devicelog_tags.html"
+    template = "reports/filters/devicelog_tags.html"
 
     @property
     @quickcache(['self.domain'], timeout=10 * 60)
@@ -17,7 +17,7 @@ class DeviceLogTagFilter(BaseReportFilter):
         errors_only = bool(self.request.GET.get(self.errors_only_slug, False))
         selected_tags = self.request.GET.getlist(self.slug)
         show_all = bool(not selected_tags)
-        values = fast_distinct(DeviceReportEntry, 'type')
+        values = fast_distinct_in_domain(DeviceReportEntry, 'type', self.domain)
         tags = [{
             'name': value,
             'show': bool(show_all or value in selected_tags)
@@ -32,14 +32,30 @@ class DeviceLogTagFilter(BaseReportFilter):
         return context
 
 
+class DeviceLogDomainFilter(BaseSingleOptionFilter):
+    slug = "domain"
+    label = ugettext_lazy("Filter Logs by Domain")
+
+    @property
+    @quickcache([], timeout=60 * 60)
+    def options(self):
+        return [(d, d) for d in fast_distinct(DeviceReportEntry, 'domain')]
+
+
+class DeviceLogCommCareVersionFilter(BaseTagsFilter):
+    slug = "commcare_version"
+    label = ugettext_lazy("Filter Logs by CommCareVersion")
+    placeholder = ugettext_lazy("Enter the CommCare Version you want e.g '2.28.1'")
+
+
 class BaseDeviceLogFilter(BaseReportFilter):
     slug = "logfilter"
-    template = "reports/filters/bootstrap2/devicelog_filter.html"
+    template = "reports/filters/devicelog_filter.html"
     field = None
     label = ugettext_noop("Filter Logs By")
     url_param_map = {'Unknown': None}
 
-    @quickcache(['self.domain', 'selected'], timeout=10 * 60)
+    @quickcache(['self.domain', 'self.field', 'selected'], timeout=10 * 60)
     def get_filters(self, selected):
         show_all = bool(not selected)
         values = fast_distinct_in_domain(DeviceReportEntry, self.field, self.domain)

@@ -2,13 +2,11 @@
 
 {% include 'app_manager/partials/case_config_shared.html' %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $('#case-action-select').change(function() {
-            ga_track_event('Case Management', 'Form Level', 'Case Action');
-        })
-    </script>
-{% endblock %}
+<script>
+    $('#case-action-select').change(function() {
+        ga_track_event('Case Management', 'Form Level', 'Case Action');
+    })
+</script>
 
 <script type="text/html" id="remove-subcase-modal-template">
     <div class="modal-dialog">

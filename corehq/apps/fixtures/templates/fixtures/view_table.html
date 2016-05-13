@@ -3,87 +3,100 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% if not table_not_selected %}
-{% block title %}
-    {% blocktrans %}Viewing Table {% endblocktrans %}'{{ selected_table }}'
+{% block page_title %}
+    {% if not table_not_selected %}
+    {% blocktrans %}
+        Viewing Table
+    {% endblocktrans %}
+    <strong>'{{ selected_table }}'</strong>
+    {% else %}
+    {% blocktrans %}
+        View Tables
+    {% endblocktrans %}
+    {% endif%}
 {% endblock %}
-{% endif %}
 
-{% block main_column %}
-<header>
-    <div class="row-fluid">
-        <div class="span8">
-            <h3>
-                {% if not table_not_selected %}
-                {% blocktrans %}
-                    Viewing Table 
-                {% endblocktrans %}
-                <strong>'{{ selected_table }}'</strong>
-                {% else %}
-                {% blocktrans %}
-                    View Tables
-                {% endblocktrans %}
-                {% endif%}
-            </h3>
-        </div>
-    </div>
-</header>
+{% block page_content %}
 {% block reportcontent %}
 {% block reporttable %}
-<form>
-    {% for field in report_filters %}
-        <fieldset id="fieldset_{{ field.slug }}">
-            <div id="group_{{ field.slug }}" class="control-group">
-                {{ field.field|safe }}
-            </div>
-        </fieldset>
-    {% endfor %}
-    {% block report_filter_actions %}
-    <button type="submit" class="btn btn-primary" style="margin-top: 5px" data-standard-text="Apply">
-        {% trans "Apply" %}
-    </button>
-    {% endblock %}
-</form>
-{% if not table_not_selected %}
-<table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
-    <thead>
-    {%  if report_table.headers.complex %}
-        {{ report_table.headers.render_html|safe }}
-    {% else %}
-        {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
-        <tr>
-            {% for header in report_table.headers %}
-                <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
-                    <i class="icon-white"></i>
-                    {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
-                    {% if header.help_text %}
-                        <i class="icon-white icon-question-sign header-tooltip" title="{{ header.help_text }}"></i>
-                    {% endif %}
-                </th>
-            {% endfor %}
-        </tr>
+
+ <div class="panel panel-default">
+    <div id="reportFilters" class="panel-body">
+        <div class="accordion-inner">
+            <form method="get" id="paramSelectorForm" class="form-horizontal">
+                <fieldset>
+                    <legend><span data-bind="text: filterHeadingName">{% trans "Select Table to View" %}</span></legend>
+                    {% for field in report_filters %}
+                        <fieldset id="fieldset_{{ field.slug }}">
+                            <div class="form-group" id="group_{{ field.slug }}">
+                                {{ field.field|safe }}
+                            </div>
+                        </fieldset>
+                    {% endfor %}
+                </fieldset>
+                <div class="form-actions">
+                    {% block report_filter_actions %}
+                        <div class="{{ report_filter_form_action_css_class }}">
+                            <button type="submit" class="btn btn-primary"
+                                    id="apply-btn">
+                                {% trans "View Table" %}
+                            </button>
+                        </div>
+                    {% endblock %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+    {% if not table_not_selected %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h2 class="panel-title">
+                {% blocktrans %}Table {% endblocktrans %}'{{ selected_table }}'
+            </h2>
+        </div>
+        <div class="panel-body-datatable">
+            <table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
+                <thead>
+                {%  if report_table.headers.complex %}
+                    {{ report_table.headers.render_html|safe }}
+                {% else %}
+                    {# This method is depricated and will likely be removed once Legacy Custom Reports are moved over. #}
+                    <tr>
+                        {% for header in report_table.headers %}
+                            <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                                <i class="dt-sort-icon"></i>
+                                {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
+                                {% if header.help_text %}
+                                    <i class="fa fa-question-circle header-tooltip" title="{{ header.help_text }}"></i>
+                                {% endif %}
+                            </th>
+                        {% endfor %}
+                    </tr>
+                {% endif %}
+                </thead>
+                <tbody>
+                {% block tabular-body %}
+                {% if report_table.pagination.is_on %}
+                    <tr>
+                        <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
+                            {% trans "Fetching additional data, please wait..." %}
+                        </td>
+                    </tr>
+                {% endif %}
+                {% for row in report_table.rows %}
+                    <tr>
+                        {% for col in row %}
+                            {% include 'reports/async/partials/tabular_cell.html' %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+                {% endblock %}
+                </tbody>
+            </table>
+        </div>
+    </div>
     {% endif %}
-    </thead>
-    <tbody>
-    {% block tabular-body %}
-    {% if report_table.pagination.is_on %}
-        <tr>
-            <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
-                {% trans "Fetching additional data, please wait..." %}
-            </td>
-        </tr>
-    {% endif %}
-    {% for row in report_table.rows %}
-        <tr>
-            {% for col in row %}
-                {% include 'reports/async/partials/tabular_cell.html' %}
-            {% endfor %}
-        </tr>
-    {% endfor %}
-    {% endblock %}
-    </tbody>
-</table>
-{% endif %}
 {% endblock %}
 {% block posttable %}{% endblock %}
 {% endblock %}
@@ -98,6 +111,8 @@
                 defaultRows: {{ report_table.default_rows|default:10 }},
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},
                 showAllRowsOption: {{ report_table.show_all_rows|JSON }},
+                useBootstrap3: true,
+                paginationType: 'bs_normal',
 
                 {% if report_table.headers.render_aoColumns %}aoColumns: {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
                 autoWidth: {{ report_table.headers.auto_width|JSON }},
@@ -121,7 +136,7 @@
         {% endif %}
 
         $(function() {
-            $('.header-popover').popout({
+            $('.header-popover').popover({
                 trigger: 'hover',
                 placement: 'bottom'
             });

@@ -1,16 +1,17 @@
 import copy
+import logging
 from collections import namedtuple
 from urllib import unquote
 from elasticsearch import Elasticsearch
 from django.conf import settings
 from elasticsearch.exceptions import ElasticsearchException, RequestError
-from elasticsearch.helpers import scan
 
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
@@ -78,6 +79,7 @@ ES_META = {
     "sms": EsMeta(SMS_INDEX, 'sms'),
     "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
     "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
+    "case_search": EsMeta(CASE_SEARCH_INDEX, 'case')
 }
 
 ADD_TO_ES_FILTER = {
@@ -142,10 +144,78 @@ def scroll_query(index_name, q):
             index=es_meta.index,
             doc_type=es_meta.type,
             query=q,
-            preserve_order=True  # This makes it a scroll query, not a scan
         )
     except RequestError as e:
         raise ESError(e)
+
+
+class ScanResult(object):
+
+    def __init__(self, count, iterator):
+        self._iterator = iterator
+        self.count = count
+
+    def __iter__(self):
+        for x in self._iterator:
+            yield x
+
+
+def scan(client, query=None, scroll='5m', **kwargs):
+    """
+    This is a copy of elasticsearch.helpers.scan, except this function returns
+    a ScanResult (which includes the total number of documents), and removes
+    some options from scan that we aren't using.
+
+    Simple abstraction on top of the
+    :meth:`~elasticsearch.Elasticsearch.scroll` api - a simple iterator that
+    yields all hits as returned by underlining scroll requests.
+
+    :arg client: instance of :class:`~elasticsearch.Elasticsearch` to use
+    :arg query: body for the :meth:`~elasticsearch.Elasticsearch.search` api
+    :arg scroll: Specify how long a consistent view of the index should be
+        maintained for scrolled search
+
+    Any additional keyword arguments will be passed to the initial
+    :meth:`~elasticsearch.Elasticsearch.search` call::
+
+        scan(es,
+            query={"match": {"title": "python"}},
+            index="orders-*",
+            doc_type="books"
+        )
+
+    """
+    kwargs['search_type'] = 'scan'
+    # initial search
+    initial_resp = client.search(body=query, scroll=scroll, **kwargs)
+
+    def fetch_all(initial_response):
+
+        resp = initial_response
+        scroll_id = resp.get('_scroll_id')
+        if scroll_id is None:
+            return
+
+        while True:
+            resp = client.scroll(scroll_id, scroll=scroll)
+
+            for hit in resp['hits']['hits']:
+                yield hit
+
+            # check if we have any errrors
+            if resp["_shards"]["failed"]:
+                logging.getLogger('elasticsearch.helpers').warning(
+                    'Scroll request has failed on %d shards out of %d.',
+                    resp['_shards']['failed'], resp['_shards']['total']
+                )
+
+            scroll_id = resp.get('_scroll_id')
+            # end of scroll
+            if scroll_id is None or not resp['hits']['hits']:
+                break
+
+    count = initial_resp.get("hits", {}).get("total", None)
+    return ScanResult(count, fetch_all(initial_resp))
 
 
 def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
@@ -183,6 +253,8 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
 
 
 SIZE_LIMIT = 1000000
+
+
 def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_at=None, size=None, dict_only=False,
              fields=None, facet_size=None):
     if terms is None:

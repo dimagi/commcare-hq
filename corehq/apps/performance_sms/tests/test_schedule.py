@@ -10,6 +10,7 @@ from corehq.apps.performance_sms.schedule import get_message_configs_at_this_hou
 
 
 class TestSchedule(TestCase):
+    dependent_apps = ['corehq.couchapps']
     domain = uuid.uuid4().hex
 
     @classmethod

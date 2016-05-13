@@ -1,4 +1,4 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -48,129 +48,127 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
 <div class="row">
-    <div class="span12">
-        <article id="subscriptionSummary">
+    <div class="col-sm-12">
+        <article id="subscriptionSummary" class="form-horizontal">
             <legend>{% trans 'Current Subscription' %}</legend>
-            <div class="form form-horizontal">
-                <div class="control-group">
-                    <label class="control-label">{% trans 'Plan' %}</label>
-                    <div class="controls">
-                        <div class="{{ plan.css_class }}">
-                            <h4>{% if plan.is_trial %}{% trans '30 Day Trial' %}{% else %}{{ plan.name }}{% endif %}</h4>
-                            <p><i class="icon-info-sign"></i>
-                                {% if plan.is_trial %}
-                                    {% blocktrans with plan.name as pn %}
-                                        The 30 Day Trial includes all the features present in the {{ pn }} Software Plan,
-                                        which is our full set of features.
-                                    {% endblocktrans %}
-                                {% else %}{{ plan.description }}{% endif %}</p>
-                        </div>
-                        {% if plan.do_not_invoice %}
-                            <div class="alert alert-info">
-                            {% blocktrans %}
-                                <strong>Note:</strong> This subscription will not be invoiced.
-                            {% endblocktrans %}
-                            </div>
-                        {% endif %}
-                        <p>
-                            <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
-                                {% trans "Change Plan" %}
-                            </a>
-                        </p>
-                        {% if plan.is_trial %}
-                            <div class="alert alert-info">
-                                <i class="icon-info-sign"></i>
-                                {% blocktrans with plan.date_end as date_end %}
-                                    Your trial expires on {{ date_end }}.
+            <div class="form-group">
+                <label class="control-label col-sm-2">{% trans 'Plan' %}</label>
+                <div class="col-sm-10">
+                    <div class="{{ plan.css_class }}">
+                        <h4>{% if plan.is_trial %}{% trans '30 Day Trial' %}{% else %}{{ plan.name }}{% endif %}</h4>
+                        <p><i class="fa fa-info-circle"></i>
+                            {% if plan.is_trial %}
+                                {% blocktrans with plan.name as pn %}
+                                    The 30 Day Trial includes all the features present in the {{ pn }} Software Plan,
+                                    which is our full set of features.
                                 {% endblocktrans %}
-                            </div>
-                        {% endif %}
+                            {% else %}{{ plan.description }}{% endif %}</p>
+                    </div>
+                    {% if plan.do_not_invoice %}
+                        <div class="alert alert-info">
+                        {% blocktrans %}
+                            <strong>Note:</strong> This subscription will not be invoiced.
+                        {% endblocktrans %}
+                        </div>
+                    {% endif %}
+                    <p>
+                        <a class="btn btn-primary" style="margin-top:10px;" href="{{ change_plan_url }}">
+                            {% trans "Change Plan" %}
+                        </a>
+                    </p>
+                    {% if plan.is_trial %}
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"></i>
+                            {% blocktrans with plan.date_end as date_end %}
+                                Your trial expires on {{ date_end }}.
+                            {% endblocktrans %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if not plan.is_trial %}
+                {% if plan.date_start %}
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">{% trans 'Date Started' %}</label>
+                        <div class="col-sm-10">
+                            <p class="form-control-text">{{ plan.date_start }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+                {% if plan.date_end %}
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">{% trans 'Date Ending' %}</label>
+                        <div class="col-sm-10">
+                            <p class="form-control-text">{{ plan.date_end }}</p>
+                            {% if plan.next_subscription.can_renew %}
+                                <a href="{{ plan.next_subscription.renew_url }}"
+                                   class="btn btn-success">
+                                    {% trans "Renew Plan" %}
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                <div data-bind="foreach: products">
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">{% trans 'Current Price' %}</label>
+                        <div class="col-sm-10">
+                            <p class="form-control-text"
+                               data-bind="text: monthlyFee"></p>
+                        </div>
                     </div>
                 </div>
-                {% if not plan.is_trial %}
-                    {% if plan.date_start %}
-                        <div class="control-group">
-                            <label class="control-label">{% trans 'Date Started' %}</label>
-                            <div class="controls">
-                                <p class="control-group-text">{{ plan.date_start }}</p>
-                            </div>
-                        </div>
-                    {% endif %}
-                    {% if plan.date_end %}
-                        <div class="control-group">
-                            <label class="control-label">{% trans 'Date Ending' %}</label>
-                            <div class="controls">
-                                <p class="control-group-text">{{ plan.date_end }}</p>
-                                {% if plan.next_subscription.can_renew %}
-                                    <a href="{{ plan.next_subscription.renew_url }}"
-                                       class="btn btn-success">
-                                        {% trans "Renew Plan" %}
-                                    </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endif %}
-                    <div data-bind="foreach: products">
-                        <div class="control-group">
-                            <label class="control-label">{% trans 'Current Price' %}</label>
-                            <div class="controls">
-                                <p class="control-group-text"
-                                   data-bind="text: monthlyFee"></p>
-                            </div>
+                {% if plan.next_subscription.exists %}
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">
+                            {% trans "Next Subscription Begins" %}
+                        </label>
+                        <div class="col-sm-10">
+                            <p class="form-control-text">
+                                {{ plan.next_subscription.date_start }}
+                            </p>
                         </div>
                     </div>
-                    {% if plan.next_subscription.exists %}
-                        <div class="control-group">
-                            <label class="control-label">
-                                {% trans "Next Subscription Begins" %}
-                            </label>
-                            <div class="controls">
-                                <p class="control-group-text">
-                                    {{ plan.next_subscription.date_start }}
-                                </p>
-                            </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">
+                            {% trans "Next Subscription Plan" %}
+                        </label>
+                        <div class="col-sm-10">
+                            <p class="form-control-text">
+                                {{ plan.next_subscription.name }}
+                            </p>
                         </div>
-                        <div class="control-group">
-                            <label class="control-label">
-                                {% trans "Next Subscription Plan" %}
-                            </label>
-                            <div class="controls">
-                                <p class="control-group-text">
-                                    {{ plan.next_subscription.name }}
-                                </p>
-                            </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">
+                            {% trans "Next Subscription Price" %}
+                        </label>
+                        <div class="col-sm-10">
+                            <p class="form-control-text">
+                                {{ plan.next_subscription.price }}
+                            </p>
                         </div>
-                        <div class="control-group">
-                            <label class="control-label">
-                                {% trans "Next Subscription Price" %}
-                            </label>
-                            <div class="controls">
-                                <p class="control-group-text">
-                                    {{ plan.next_subscription.price }}
-                                </p>
-                            </div>
-                        </div>
-                    {% endif %}
+                    </div>
                 {% endif %}
-            </div>
+            {% endif %}
             {% if not plan.is_trial %}
                 {% if plan.has_account_level_credit %}
                 <legend>{% trans 'Subscription Credit' %}</legend>
                 {% endif %}
                 <div class="form form-horizontal">
                     <div data-bind="foreach: products">
-                        <div class="control-group">
-                            <label class="control-label">{% trans 'Plan Credit' %}</label>
-                            <div class="controls">
-                                <p class="control-group-text" data-bind="text: amount"></p>
+                        <div class="form-group">
+                            <label class="control-label col-sm-2">{% trans 'Plan Credit' %}</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-text" data-bind="text: amount"></p>
                             </div>
                         </div>
                     </div>
                     {% if plan.general_credit and plan.general_credit.is_visible %}
-                    <div class="control-group">
-                        <label class="control-label">
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">
                             {% trans 'General Credit' %}
                             <div class="hq-help">
                                 <a href="#"
@@ -179,19 +177,20 @@
                                     these credits for you."
                                    data-title="General Credit"
                                    data-original-title=""
+                                   data-bootstrap3="true"
                                    title="">
-                                    <i class="icon-question-sign"></i>
+                                    <i class="fa fa-question-circle"></i>
                                 </a>
                             </div>
                         </label>
-                        <div class="controls">
-                            <p class="control-group-text">{{ plan.general_credit.amount }}</p>
+                        <div class="col-sm-10">
+                            <p class="form-control-text">{{ plan.general_credit.amount }}</p>
                         </div>
                     </div>
                     {% endif %}
                     <div data-bind="with: prepayments">
-                        <div class="control-group">
-                            <div class="controls">
+                        <div class="form-group">
+                            <div class="col-sm-10 col-sm-offset-2">
                                 {% if can_purchase_credits and not plan.is_trial %}
                                 <button type="button"
                                 class="btn btn-success"
@@ -210,8 +209,8 @@
                                 {% trans 'Prepay by Wire' %}
                                 </button>
                                 {% else %}
-                                <span class="label">
-                                    <i class="icon-info-sign"></i>
+                                <span class="label label-default">
+                                    <i class="fa fa-info-circle"></i>
                                     {% trans "Not Billing Admin, Can't Add Credit" %}
                                 </span>
                                 {% endif %}
@@ -223,28 +222,29 @@
                 <legend>{% trans 'Account Credit' %}</legend>
                 <div class="form form-horizontal">
                     <div data-bind="foreach: products">
-                        <div class="control-group" data-bind="visible: isAccountVisible">
-                            <label class="control-label">
+                        <div class="form-group" data-bind="visible: isAccountVisible">
+                            <label class="control-label col-sm-2">
                                 {% trans 'Plan Credit' %}
                                 <div class="hq-help">
                                     <a href="#"
                                        data-content="This is credit that can be applied to your software plan.
                                         It's likely that someone from Dimagi added these credits for you."
                                        data-title="Account Plan Credit"
+                                       data-bootstrap3="true"
                                        data-original-title=""
                                        title="">
-                                        <i class="icon-question-sign"></i>
+                                        <i class="fa fa-question-circle"></i>
                                     </a>
                                 </div>
                             </label>
-                            <div class="controls">
-                                <p class="control-group-text" data-bind="text: accountAmount"></p>
+                            <div class="col-sm-10">
+                                <p class="form-control-text" data-bind="text: accountAmount"></p>
                             </div>
                         </div>
                     </div>
                     {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
-                    <div class="control-group">
-                        <label class="control-label">
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">
                             {% trans 'General Credit' %}
                             <div class="hq-help">
                                 <a href="#"
@@ -254,12 +254,12 @@
                                    data-title="Account General Credit"
                                    data-original-title=""
                                    title="">
-                                    <i class="icon-question-sign"></i>
+                                    <i class="fa fa-question-circle"></i>
                                 </a>
                             </div>
                         </label>
-                        <div class="controls">
-                            <p class="control-group-text">{{ plan.account_general_credit.amount }}</p>
+                        <div class="col-sm-10">
+                            <p class="form-control-text">{{ plan.account_general_credit.amount }}</p>
                         </div>
                     </div>
                     {% endif %}
@@ -307,27 +307,27 @@
                 {% trans 'Prepayment Amount' %}
             </legend>
 
-            <div class="control-group">
+            <div class="alert alert-info">
                 One credit is equivalent to one USD.
             </div>
             <div data-bind="foreach: products">
-                <div class="control-group">
-                    <label class="control-label">
+                <div class="form-group">
+                    <label class="control-label col-sm-2">
                         {% trans 'Software Plan' %}
                     </label>
-                    <div class="controls">
-                        <div class="input-prepend">
-                            <span class="add-on">$</span>
+                    <div class="col-sm-10">
+                        <div class="input-group">
+                            <span class="input-group-addon">$</span>
                             <input type="text"
-                                   class="input-small"
+                                   class="form-control"
                                    name="product_credits"
                                    data-bind="
                                    attr:{name: creditType},
                                    value: addAmount" />
                         </div>
-                        <div class="alert alert-error"
+                        <div class="alert alert-danger"
                         data-bind="visible: !addAmountValid()">
-                           <i class="icon-warning-sign"></i>
+                           <i class="fa fa-exclamation-triangle"></i>
                            <span>
                                {% blocktrans %}
                                Please enter an amount that's either $0 or  greater than $0.5
@@ -339,22 +339,22 @@
             </div>
 
             <div data-bind="foreach: features">
-                <div class="control-group">
-                    <label class="control-label">
+                <div class="form-group">
+                    <label class="control-label col-sm-2">
                         <span data-bind="text: name"></span>
                     </label>
-                    <div class="controls">
-                        <div class="input-prepend">
-                            <span class="add-on">$</span>
+                    <div class="col-sm-10">
+                        <div class="input-group">
+                            <span class="input-group-addon">$</span>
                             <input type="text"
-                                   class="input-small"
+                                   class="form-control"
                                    data-bind="
                                    attr:{name: creditType},
                                    value: addAmount" />
                         </div>
-                        <div class="alert alert-error"
+                        <div class="alert alert-danger"
                         data-bind="visible: !addAmountValid()">
-                           <i class="icon-warning-sign"></i>
+                           <i class="fa fa-exclamation-triangle"></i>
                            <span>
                                {% blocktrans %}
                                Please enter an amount that's either $0 or  greater than $0.5
@@ -365,12 +365,12 @@
                 </div>
             </div>
 
-            <div class="control-group">
-                <label class="control-label">
+            <div class="form-group">
+                <label class="control-label col-sm-2">
                     {% trans 'Total Credits' %}
                 </label>
-                <div class="controls">
-                    <p class="control-group-text" data-bind="text: ('$ ' + amount())"></p>
+                <div class="col-sm-10">
+                    <p class="form-control-text" data-bind="text: ('$ ' + amount())"></p>
                 </div>
             </div>
             <input type="hidden" name="amount" data-bind="value: amount" />
@@ -378,16 +378,12 @@
     </script>
 
     <script type="text/html" id="payment-method-modal-title">
-        <h3>
-            <span>
-                <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.CREDIT_CARD -->
-                {% trans 'Prepay by Credit Card' %}
-                <!-- /ko -->
-                <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.WIRE -->
-                {% trans 'Prepay by Wire' %}
-                <!-- /ko -->
-            </span>
-        </h3>
+        <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.CREDIT_CARD -->
+        {% trans 'Prepay by Credit Card' %}
+        <!-- /ko -->
+        <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.WIRE -->
+        {% trans 'Prepay by Wire' %}
+        <!-- /ko -->
     </script>
 
     <script type="text/html" id="payment-complete-template">

@@ -11,7 +11,9 @@
             {% trans "Enable case list search callout" %}
         </label>
         <div class="col-sm-4 checkbox">
-            <input type="checkbox" data-bind="checked: lookup_enabled"/>
+            <label>
+                <input type="checkbox" data-bind="checked: lookup_enabled"/>
+            </label>
         </div>
     </div>
     <div data-bind="visible: lookup_enabled">

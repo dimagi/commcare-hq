@@ -2,9 +2,23 @@
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load compress %}
+{% load menu_tags %}
 
-{% block head %}{{ block.super }}
-     <link rel="stylesheet" href="{% static 'accounting/style/table-pricing.css' %}"/>
+{% block stylesheets %}{{ block.super }}
+{% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'accounting/less/pricing.debug.less' %}" />
+{% else %}
+    {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'accounting/less/pricing.less' %}" />
+    {% endcompress %}
+{% endif %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
@@ -24,143 +38,244 @@
     {{ lead_text|safe }}
 </p>
 <p>
+<i class="fa fa-info-circle"></i>
 {% blocktrans %}
-    Hovering over the <i class="icon-info-sign"></i> icon will provide use cases for each plan. You may also
-    <a href="https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details" target="_blank">visit the Help Site
+    <a href="https://wiki.commcarehq.org/display/commcarepublic/CommCare+Plan+Details" target="_blank">Visit the Help Site
     to learn more</a> about each plan.
 {% endblocktrans %}
 </p>
-<div class="row" style="margin-top: 20px;">
-    <div class="span12">
-        <article id="pricing-table">
-            <form
-                {% if is_renewal %}
-                    action="{% url 'domain_subscription_renewal_confirmation' domain %}"
-                {% else %}
-                    action="{% url 'confirm_selected_plan' domain %}"
-                {% endif %}
-                method="post"
-                class="form"
-            >{% csrf_token %}
-                {% if is_renewal %}
-                <input type="hidden" name="from_plan_page" value="true">
-                {% endif %}
-                <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
-                <div class="form-actions" data-bind="visible: isSubmitVisible">
-                    <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>
+<div class="row">
+    <div class="col-sm-12" id="pricing-table">
+        <form
+            {% if is_renewal %}
+                action="{% url 'domain_subscription_renewal_confirmation' domain %}"
+            {% else %}
+                action="{% url 'confirm_selected_plan' domain %}"
+            {% endif %}
+            method="post"
+            class="form"
+        >{% csrf_token %}
+            {% if is_renewal %}
+            <input type="hidden" name="from_plan_page" value="true">
+            {% endif %}
+            <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
+            {% if is_non_ops_superuser %}
+            <div class="alert alert-info" data-bind="visible: isSuperuserNoticeVisible">
+                {% blocktrans %}
+                    <p>
+                        <strong>Hey there, Dimagi!</strong>
+                    </p>
+                    <p>
+                        Sorry, but you can only sign up projects for
+                        Community or the Dimagi Enterprise Plan
+                        <strong>(internal projects only, please!)</strong>.
+                    </p>
+                    <p>
+                        If you want to sign this project space up for a
+                        different plan, please have one of the non-Dimagi
+                        project admins sign up or talk to someone on
+                        the Operations Team to deal with contracts.
+                    </p>
+                    <p>
+                        Thanks! <3
+                    </p>
+                {% endblocktrans %}
+            </div>
+            {% endif %}
+
+            <div class="pricing-table-bg-container">
+                <div class="pricing-table-bg">
+                    <div class="row">
+                        <div class="col-sm-10 col-sm-offset-2 col-bg"></div>
+                    </div>
                 </div>
-                {% if is_non_ops_superuser %}
-                <div class="alert alert-info" data-bind="visible: isSuperuserNoticeVisible">
-                    {% blocktrans %}
-                        <p>
-                            <strong>Hey there, Dimagi!</strong>
-                        </p>
-                        <p>
-                            Sorry, but you can only sign up projects for
-                            Community or the Dimagi Enterprise Plan
-                            <strong>(internal projects only, please!)</strong>.
-                        </p>
-                        <p>
-                            If you want to sign this project space up for a
-                            different plan, please have one of the non-Dimagi
-                            project admins sign up or talk to someone on
-                            the Operations Team to deal with contracts.
-                        </p>
-                        <p>
-                            Thanks! <3
-                        </p>
-                    {% endblocktrans %}
+            </div>
+            <div class="row">
+                <div class="col-xs-2 col-xs-offset-2 pricing-col-community">
+                    <h3 class="pricing-header text-uppercase">
+                        {% trans 'Community' %}
+                    </h3>
                 </div>
-                {% endif %}
-                <table class="table-pricing">
-                <thead>
-                    <tr>
-                        <td></td>
-                        <th class="th-feature"><h1 data-bind="text: title"></h1></th>
-                        <!-- ko foreach: editions -->
-                        <th data-bind="attr: {class: col_css, 'data-edition': slug}">
-                            <div class="edition-heading" data-bind="attr: {'data-title': description}">
-                                <span data-bind="text: name"></span>
-                                <i class="icon-info-sign corner-icon"></i>
-                            </div>
-                        </th>
-                        <!-- /ko -->
-                    </tr>
-                </thead>
-                <tbody data-bind="template: { name: 'select-plan-template', data: {
-                    pt: $data,
-                    radio_group_name: 'select_plan_top'
-                }}"></tbody>
-                <!-- ko foreach: sections -->
-                <tbody data-bind="foreach: features, attr: { class: tbody_css }">
-                    <tr>
-                        <!-- ko if: $index() == 0 && $parent.show_header() -->
-                        <th class="th-feature-section" data-bind="attr: {rowspan: $parent.features().length}">
-                            <h2>
-                                <a data-bind="attr: {href: $parent.url}" target="_blank">
-                                    <span data-bind="text: $parent.title"></span>
-                                    <i class="icon-info-sign"></i>
-                                    <span class="learn-more" data-bind="text: $root.visit_wiki_text"></span>
-                                </a>
-                            </h2>
-                        </th>
-                        <!-- /ko -->
-                        <!-- ko ifnot: $parent.show_header -->
-                        <td></td>
-                        <!-- /ko -->
-                        <th class="th-feature" data-bind="html: title"></th>
-                        <!-- ko foreach: columns -->
-                        <td data-bind="html: content_html,
-                            attr: {class: col_css, 'data-edition': edition}"></td>
-                        <!-- /ko -->
-                    </tr>
-                </tbody>
-                <!-- /ko -->
-                <tbody data-bind="template: { name: 'select-plan-template', data: {
-                    pt: $data,
-                    radio_group_name: 'select_plan_bottom'
-                }}"></tbody>
-                <tfoot>
-                    <td colspan="2">
-                        <div></div>
-                    </td>
-                    <!-- ko foreach: editions -->
-                    <th data-bind="text: name, attr: {class: col_css, 'data-edition': slug}"></th>
-                    <!-- /ko -->
-                </tfoot>
-            </table>
-                <ul class="pricing-footnotes" data-bind="foreach: footer">
-                    <li data-bind="html: $data"></li>
-                </ul>
-                <div class="form-actions" data-bind="visible: isSubmitVisible">
-                    <button type="submit" class="btn btn-primary btn-large">{% trans 'Next' %}</button>
+                <div class="col-xs-2 pricing-col-standard">
+                    <h3 class="pricing-header text-uppercase">
+                        {% trans 'Standard' %}
+                    </h3>
                 </div>
-            </form>
-        </article>
+                <div class="col-xs-2 pricing-col-pro">
+                    <h3 class="pricing-header text-uppercase">
+                        {% trans 'Pro' %}
+                    </h3>
+                </div>
+                <div class="col-xs-2 pricing-col-advanced">
+                    <h3 class="pricing-header text-uppercase">
+                        {% trans 'Advanced' %}
+                    </h3>
+                </div>
+                <div class="col-xs-2 pricing-col-enterprise">
+                    <h3 class="pricing-header text-uppercase">
+                        {% trans 'Enterprise' %}
+                    </h3>
+                </div>
+            </div>
+            <div class="row pricing-row pricing-row-lead pricing-row-select">
+                <div class="col-xs-2">
+                    <h4>{% trans 'Select Plan' %}</h4>
+                </div>
+                <div data-bind="template: { name: 'select-plan-template', data: {
+                    pt: $data
+                }}"></div>
+            </div>
+            <div class="row pricing-row">
+                <div class="col-xs-2">
+                    <h4>{% trans 'Pricing' %}</h4>
+                </div>
+                <div class="col-xs-2 pricing-col-community">
+                    <div class="pricing-cost text-uppercase">
+                        {% trans 'Free' %}
+                    </div>
+                </div>
+                <div class="col-xs-2 pricing-col-standard">
+                    <div class="pricing-cost">
+                        {% trans '$100 /month' %}
+                    </div>
+                </div>
+                <div class="col-xs-2 pricing-col-pro">
+                    <div class="pricing-cost">
+                        {% trans '$500 /month' %}
+                    </div>
+                </div>
+                <div class="col-xs-2 pricing-col-advanced">
+                    <div class="pricing-cost">
+                        {% trans '$1,000 /month' %}
+                    </div>
+                </div>
+                <div class="col-xs-2 pricing-col-enterprise">
+                    <div class="pricing-cost">
+                        {% trans 'Contact Us' %}
+                    </div>
+                </div>
+            </div>
+            <div class="row pricing-row pricing-row-lead pricing-row-summary">
+                <div class="col-xs-2">
+                    <h4>{% trans 'Feature Summary' %}</h4>
+                </div>
+                <div class="col-xs-2">
+                    <div class="pricing-info pricing-info-summary">
+                        <ul>
+                            <li>{% trans 'Up to 50 users' %}</li>
+                            <li>{% trans 'CommCare App Builder' %}</li>
+                            <li>{% trans 'Case Management' %}</li>
+                            <li>{% trans 'Pre-Built Reports' %}</li>
+                            <li>{% trans 'Online Learning Resources' %}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-xs-2">
+                    <div class="pricing-info pricing-info-summary">
+                        <ul>
+                            <li>{% trans 'Up to 100 users' %}</li>
+                            <li>{% trans 'Lookup Tables' %}</li>
+                            <li>{% trans 'Case Importer' %}</li>
+                            <li>{% trans 'API Access' %}</li>
+                            <li>{% trans 'One-way SMS' %}*</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-xs-2">
+                    <div class="pricing-info pricing-info-summary">
+                        <ul>
+                            <li>{% trans 'Up to 500 users' %}</li>
+                            <li>{% trans 'Report builder' %}</li>
+                            <li>{% trans 'Data management tools' %}</li>
+                            <li>{% trans 'Web-based applications' %}</li>
+                            <li>{% trans 'Two-way SMS' %}*</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-xs-2">
+                    <div class="pricing-info pricing-info-summary">
+                        <ul>
+                            <li>{% trans 'Up to 1,000 users' %}</li>
+                            <li>{% trans 'Custom branding' %}</li>
+                            <li>{% trans 'HIPAA compliance assurance' %}</li>
+                            <li>{% trans 'External app integration framework' %}</li>
+                            <li>{% trans 'Priority Support' %}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-xs-2">
+                    <div class="pricing-info pricing-info-summary">
+                        <ul>
+                            <li>{% trans '1,000+ users' %}</li>
+                            <li>{% trans 'Custom pricing is available for large scale projects.' %}</li>
+                            <li>{% trans 'Dedicated Account Manager' %}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="row pricing-row pricing-row-more">
+                <div class="col-xs-2 col-xs-offset-2">
+                    <div class="pricing-more">
+                        <a target="_blank" href="{% prelogin_url 'public_pricing' %}">See More...</a>
+                    </div>
+                </div>
+                <div class="col-xs-2">
+                    <div class="pricing-more">
+                        <a target="_blank" href="{% prelogin_url 'public_pricing' %}">See More...</a>
+                    </div>
+                </div>
+                <div class="col-xs-2">
+                    <div class="pricing-more">
+                        <a target="_blank" href="{% prelogin_url 'public_pricing' %}">See More...</a>
+                    </div>
+                </div>
+                <div class="col-xs-2">
+                    <div class="pricing-more">
+                        <a target="_blank" href="{% prelogin_url 'public_pricing' %}">See More...</a>
+                    </div>
+                </div>
+                <div class="col-xs-2">
+                    <div class="pricing-more">
+                        <a target="_blank" href="{% prelogin_url 'public_pricing' %}">See More...</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions" data-bind="visible: isSubmitVisible">
+                <div class="col-xs-offset-2">
+                    <button type="submit" class="btn btn-primary btn-lg">{% trans 'Next' %}</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
+
 <script type="text/html" id="select-plan-template">
-    <tr class="blank-row" data-bind="template: {name: 'blank-row-template'}"></tr>
-    <tr class="select-plan">
-        <td></td>
-        <th class="th-feature">
-            <strong>{% trans 'Select Plan' %}</strong>
-        </th>
-        <!-- ko foreach: pt.editions -->
-        <td data-bind="attr: {class: col_css, 'data-edition': slug}">
+    <!-- ko foreach: pt.editions -->
+    <div class="col-xs-2"
+         data-bind="css: {
+            'pricing-col-community': isCommunity(),
+            'pricing-col-standard': isStandard(),
+            'pricing-col-pro': isPro(),
+            'pricing-col-advanced': isAdvanced(),
+            'pricing-col-enterprise': isEnterprise()
+        }">
+        <label class="pricing-select-plan-radio pricing-header"
+               data-bind="visible: $parent.pt.isRenewal||notCurrentEdition">
             <input type="radio" data-bind="
                 attr: {value: slug, name: $parent.radio_group_name},
-                checked: $parent.pt.selected_edition,
-                visible: $parent.pt.isRenewal||notCurrentEdition
+                checked: $parent.pt.selected_edition
             " >
-            <strong data-bind="visible: currentEdition">
+        </label>
+        <div data-bind="visible: !$parent.pt.isRenewal">
+            <div class="pricing-current-plan pricing-header"
+                 data-bind="visible: currentEdition, click: $root.selectCurrentPlan()">
                 {% trans 'Current Plan' %}
-            </strong>
-        </td>
-        <!-- /ko -->
-    </tr>
-    <tr class="blank-row" data-bind="template: {name: 'blank-row-template'}"></tr>
+            </div>
+        </div>
+    </div>
+    <!-- /ko -->
 </script>
 
 <script type="text/html" id="blank-row-template">

@@ -5,11 +5,11 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
-from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -22,8 +22,6 @@ from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pillow
-from corehq.pillows.user import UserPillow
-from corehq.pillows.group import GroupPillow
 from corehq.pillows.case import CasePillow, get_sql_case_to_elasticsearch_pillow
 from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
@@ -43,10 +41,10 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_for_users,
     get_last_form_submission_for_xmlns,
     guess_form_name_from_submissions_using_xmlns,
-    get_active_case_count
 )
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
+from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change
 
 
@@ -656,6 +654,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestFormESAccessorsSQL(TestFormESAccessors):
+
     def get_pillow(self):
         XFormPillow()  # initialize index
         return get_sql_xform_to_elasticsearch_pillow()
@@ -669,17 +668,21 @@ class TestFormESAccessorsSQL(TestFormESAccessors):
         self.pillow.processor(change, do_set_checkpoint=False)
 
 
-class TestUserESAccessors(BaseESAccessorsTest):
-
-    pillow_class = UserPillow
-    es_index = USER_INDEX
+class TestUserESAccessors(SimpleTestCase):
 
     def setUp(self):
-        super(TestUserESAccessors, self).setUp()
         self.username = 'superman'
         self.first_name = 'clark'
         self.last_name = 'kent'
         self.doc_type = 'CommCareUser'
+        self.domain = 'user-esaccessors-test'
+        self.es = get_es_new()
+        ensure_index_deleted(USER_INDEX)
+        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(USER_INDEX)
 
     def _send_user_to_es(self, _id=None, is_active=True):
         user = CommCareUser(
@@ -690,8 +693,8 @@ class TestUserESAccessors(BaseESAccessorsTest):
             first_name=self.first_name,
             last_name=self.last_name,
         )
-        self.pillow.change_transport(user.to_json())
-        self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
+        send_to_elasticsearch('users', user.to_json())
+        self.es.indices.refresh(USER_INDEX)
         return user
 
     def test_active_user_query(self):
@@ -723,16 +726,14 @@ class TestUserESAccessors(BaseESAccessorsTest):
         })
 
 
-class TestGroupESAccessors(BaseESAccessorsTest):
-
-    pillow_class = GroupPillow
-    es_index = GROUP_INDEX
+class TestGroupESAccessors(SimpleTestCase):
 
     def setUp(self):
-        super(TestGroupESAccessors, self).setUp()
         self.group_name = 'justice league'
+        self.domain = 'group-esaccessors-test'
         self.reporting = True
         self.case_sharing = False
+        self.es = get_es_new()
 
     def _send_group_to_es(self, _id=None):
         group = Group(
@@ -742,8 +743,8 @@ class TestGroupESAccessors(BaseESAccessorsTest):
             reporting=self.reporting,
             _id=_id or uuid.uuid4().hex,
         )
-        self.pillow.change_transport(group.to_json())
-        self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
+        send_to_elasticsearch('groups', group.to_json())
+        self.es.indices.refresh(GROUP_INDEX)
         return group
 
     def test_group_query(self):
@@ -909,32 +910,10 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
         self.assertEqual(results, {})
 
-    def test_get_all_active_cases(self):
-        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
-        opened_on = datetime(2013, 7, 15)
-        opened_before = datetime(2013, 6, 25)
-
-        self._send_case_to_es(opened_on=opened_on)
-        self._send_case_to_es(opened_on=opened_before)
-
-        results = get_active_case_count(self.domain, datespan, []).total
-
-        self.assertEqual(results, 1)
-
-    def test_get_total_active_cases(self):
-        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
-        opened_on = datetime(2013, 7, 15)
-        opened_before = datetime(2013, 6, 25)
-
-        self._send_case_to_es(opened_on=opened_on)
-        self._send_case_to_es(opened_on=opened_before)
-
-        results = get_active_case_count(self.domain, datespan, [], True).total
-
-        self.assertEqual(results, 2)
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestCaseESAccessorsSQL(TestCaseESAccessors):
+
     def get_pillow(self):
         CasePillow()  # initialize index
         return get_sql_case_to_elasticsearch_pillow()

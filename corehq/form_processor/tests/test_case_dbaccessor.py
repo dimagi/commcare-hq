@@ -414,6 +414,22 @@ class CaseAccessorTestsSQL(TestCase):
         case_ids = CaseAccessorSQL.get_case_ids_in_domain_by_owners(DOMAIN, ["user1", "user3"])
         self.assertEqual(set(case_ids), set([case1.case_id, case2.case_id, case4.case_id]))
 
+    def test_get_case_ids_by_owners_closed(self):
+        case1 = _create_case(user_id="user1")
+        case2 = _create_case(user_id="user1", closed=True)
+        case3 = _create_case(user_id="user2")
+        case4 = _create_case(user_id="user3", closed=True)
+
+        case_ids = CaseAccessorSQL.get_case_ids_in_domain_by_owners(DOMAIN, ["user1", "user3"], closed=True)
+        self.assertEqual(set(case_ids), set([case2.case_id, case4.case_id]))
+
+        case_ids = CaseAccessorSQL.get_case_ids_in_domain_by_owners(
+            DOMAIN,
+            ["user1", "user2", "user3"],
+            closed=False
+        )
+        self.assertEqual(set(case_ids), set([case1.case_id, case3.case_id]))
+
     def test_get_open_case_ids(self):
         case1 = _create_case(user_id="user1")
         case2 = _create_case(user_id="user1")
@@ -709,7 +725,7 @@ class CaseAccessorsTests(TestCase):
         self.assertFalse(case.is_deleted)
 
 
-def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
+def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed=False):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -740,6 +756,7 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None):
             modified_on=utcnow,
             modified_by=user_id,
             server_modified_on=utcnow,
+            closed=closed or False
         )
         case.track_create(CaseTransaction.form_transaction(case, form))
         cases = [case]

@@ -1,15 +1,13 @@
 import csv
-import logging
 import xlrd
 
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
+from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-
-logger = logging.getLogger('accounting')
 
 
 def bootstrap_twilio_gateway(apps, twilio_rates_filename):
@@ -36,7 +34,7 @@ def bootstrap_twilio_gateway(apps, twilio_rates_filename):
                         twilio_data[iso] = {}
                     twilio_data[iso][provider] = rate
                 except IndexError:
-                    logger.info("Twilio index error %s:" % row)
+                    log_smsbillables_info("Twilio index error %s:" % row)
         twilio_file.close()
         return twilio_data
 
@@ -56,7 +54,7 @@ def bootstrap_twilio_gateway(apps, twilio_rates_filename):
                 try:
                     subscribers = int(mach_table.cell_value(row, 10).replace('.', ''))
                 except ValueError:
-                    logger.info("Incomplete subscriber data for country code %d" % country_code)
+                    log_smsbillables_info("Incomplete subscriber data for country code %d" % country_code)
                 if not(iso in mach_data):
                     mach_data[iso] = {}
                 mach_data[iso][network] = (country_code, subscribers)
@@ -105,7 +103,7 @@ def bootstrap_twilio_gateway(apps, twilio_rates_filename):
                     criteria_class=sms_gateway_fee_criteria_class,
                 )
         else:
-            logger.info("%s not in mach_data" % iso)
+            log_smsbillables_info("%s not in mach_data" % iso)
 
     # https://www.twilio.com/help/faq/sms/will-i-be-charged-if-twilio-encounters-an-error-when-sending-an-sms
     SmsGatewayFee.create_new(
@@ -118,7 +116,7 @@ def bootstrap_twilio_gateway(apps, twilio_rates_filename):
         criteria_class=sms_gateway_fee_criteria_class,
     )
 
-    logger.info("Updated Twilio gateway fees.")
+    log_smsbillables_info("Updated Twilio gateway fees.")
 
 
 class Command(LabelCommand):

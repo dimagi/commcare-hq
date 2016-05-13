@@ -13,6 +13,7 @@ class DataProvider(object):
     def rows(self):
         return []
 
+
 class ComposedTabularReport(GenericTabularReport):
 
     data_provider = DataProvider()

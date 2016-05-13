@@ -1,4 +1,4 @@
-{% extends 'reports/async/bootstrap2/tabular.html' %}
+{% extends 'reports/async/tabular.html' %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -13,10 +13,10 @@
 
     function enable_disable_button(count){
         if (count == 0) {
-            $("#submitForms").attr('disabled', true);
+            $("#submitForms").prop('disabled', true);
         }
         else {
-            $("#submitForms").attr('disabled', false);
+            $("#submitForms").removeProp('disabled');
         }
     }
 
@@ -29,8 +29,8 @@
 
             // bindings for 'all' button
             $XFormManagement.find('a.select-visible').click(function () {
-                $allFormsButton.attr('checked', false);
-                $checkboxes.attr('checked', true).change();
+                $allFormsButton.removeProp('checked');
+                $checkboxes.prop('checked', true).change();
                 return false;
             });
 
@@ -39,8 +39,8 @@
                 selectNone(); return false;
             });
             function selectNone() {
-                $XFormManagement.find('input.xform-checkbox:checked').attr('checked', false).change();
-                $allFormsButton.attr('checked', false);
+                $XFormManagement.find('input.xform-checkbox:checked').removeProp('checked').change();
+                $allFormsButton.removeProp('checked');
             }
 
             // bindings for form checkboxes
@@ -48,15 +48,15 @@
                 // updates text like '3 of 5 selected'
                 updateFormCounts();
                 $indicator.show();
-            })
+            });
             $checkboxes.on('click', function(){
-                $allFormsButton.attr('checked', false);
-            })
+                $allFormsButton.removeProp('checked');
+            });
 
             // bindings for 'Select all' checkboxe
             $allFormsButton.on('click', function(){
                 if (this.checked) {
-                    $checkboxes.attr('checked', true).change();
+                    $checkboxes.prop('checked', true).change();
                     $indicator.hide();
                     enable_disable_button(1);
                     $(".selectedCount").text({{ total_xForms }});
@@ -67,7 +67,7 @@
                     $XFormManagement.find('a.select-none').click();
                     enable_disable_button(0);
                 }
-            })
+            });
 
             $('#submitForms').click(function() {
                 if ($allFormsButton[0].checked) {
@@ -95,11 +95,10 @@
 
 {% block reportcontent %}
     <div id="form-management">
-        <p class="alert fade in hide page-level-alert alert-error" id="errorMessage">
+        <p class="alert fade in hide page-level-alert alert-danger" id="errorMessage">
             {% blocktrans %}
                 Something went wrong! There was an error. If you see this error repeatedly please report it as issue.
             {% endblocktrans %}
-            </span>
         </p>
         <form method="post"
               action="{% url 'xform_management' domain %}"
@@ -109,13 +108,15 @@
                 <div id ="form_options" class="well form-inline" style="marging: 1em">
                     <div>
                         <button id="submitForms" disabled="true" class="btn {{ mode.button_class }}">{{ mode.button_text }}</button>
-                        <input type="checkbox" name="select_all" value="{{ form_query_string|urlencode }}" style="margin-left: 1em;">
-                        <label for="select_all" >
-                            Select all {{ total_xForms }} forms
+                        <label class="checkbox" >
+                            <input type="checkbox" name="select_all" value="{{ form_query_string|urlencode }}" style="margin-left: 1em;">
+                            {% blocktrans %}Select all {{ total_xForms }} forms{% endblocktrans %}
                         </label>
                     </div>
                     <div id="count_indicator">
-                        (<span class="selectedCount">0</span> forms selected)
+                        <span class="label label-default">
+                        {% blocktrans %}(<span class="selectedCount ">0</span> forms selected){% endblocktrans %}
+                        </span>
                     </div>
                     <input type="hidden" name="mode" value="{{ mode.mode_name }}">
                 </div>

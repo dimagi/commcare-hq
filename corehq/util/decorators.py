@@ -1,6 +1,7 @@
 from celery.task import task
 from functools import wraps
 import logging
+import requests
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.global_request import get_request
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -14,6 +15,7 @@ class ContextDecorator(object):
     A base class that enables a context manager to also be used as a decorator.
     https://docs.python.org/3/library/contextlib.html#contextlib.ContextDecorator
     """
+
     def __call__(self, fn):
         @wraps(fn)
         def decorated(*args, **kwds):
@@ -47,6 +49,7 @@ class change_log_level(ContextDecorator):
     Temporarily change the log level of a specific logger.
     Can be used as either a context manager or decorator.
     """
+
     def __init__(self, logger, level):
         self.logger = logging.getLogger(logger)
         self.new_level = level
@@ -60,6 +63,7 @@ class change_log_level(ContextDecorator):
 
 
 class require_debug_true(ContextDecorator):
+
     def __enter__(self):
         if not settings.DEBUG:
             raise Exception("This can only be called in DEBUG mode.")
@@ -111,6 +115,7 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
         # register task with celery.  Note that this still happens on import
         @task(bind=True, queue=queue, ignore_result=True,
               default_retry_delay=default_retry_delay, max_retries=max_retries)
+        @wraps(fn)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis
                 fn(*args, **kwargs)
@@ -132,6 +137,31 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
                 msg = "Could not aquire lock '{}' for task '{}'.".format(
                     key, fn.__name__)
                 self.retry(exc=CouldNotAqcuireLock(msg))
+        return _inner
+    return decorator
+
+
+def analytics_task(default_retry_delay=10, max_retries=3, queue='background_queue'):
+    '''
+        defines a task that posts data to one of our analytics endpoints. It retries the task
+        up to 3 times if the post returns with a status code indicating an error with the post
+        that is not our fault.
+    '''
+    def decorator(func):
+        @task(bind=True, queue=queue, ignore_result=True, acks_late=True,
+              default_retry_delay=default_retry_delay, max_retries=max_retries)
+        @wraps(func)
+        def _inner(self, *args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except requests.exceptions.HTTPError as e:
+                # if its a bad request, raise the exception because it is our fault
+                res = e.response
+                status_code = res.status_code if isinstance(res, requests.models.Response) else res.status
+                if status_code == 400:
+                    raise
+                else:
+                    self.retry(exc=e)
         return _inner
     return decorator
 

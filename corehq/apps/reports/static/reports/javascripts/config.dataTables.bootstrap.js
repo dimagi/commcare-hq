@@ -241,8 +241,8 @@ function HQReportDataTables(options) {
                 $inputLabel.html($('<i />').addClass("icon-search"));
             }
 
-            var $dataTablesLength = $(".dataTables_length"),
-                $dataTablesInfo = $(".dataTables_info");
+            var $dataTablesLength = $(self.dataTableElem).parents('.dataTables_wrapper').find(".dataTables_length"),
+                $dataTablesInfo = $(self.dataTableElem).parents('.dataTables_wrapper').find(".dataTables_info");
             if($dataTablesLength && $dataTablesInfo) {
                 var $selectField = $dataTablesLength.find("select"),
                     $selectLabel = $dataTablesLength.find("label");

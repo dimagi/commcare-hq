@@ -36,6 +36,7 @@ class OpenRosaResponse(object):
     https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaRequest
 
     """
+
     def __init__(self, message, nature, status):
         self.message = message
         self.nature = nature

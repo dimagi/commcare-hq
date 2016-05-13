@@ -1,7 +1,9 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
+from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
 
-XFORM_INDEX = es_index("xforms_20150403-1728")
+
+XFORM_INDEX = es_index("xforms_2016-03-02")
 
 
 XFORM_MAPPING = {
@@ -13,6 +15,8 @@ XFORM_MAPPING = {
     },
     "properties": {
         'doc_type': {'type': 'string'},
+        'inserted_at': {"type": "date", "format": DATE_FORMATS_STRING},
+        'user_type': {'type': 'string', "index": "not_analyzed", "null_value": NULL_VALUE},
         "domain": {
             "type": "multi_field",
             "fields": {
@@ -89,7 +93,7 @@ XFORM_MAPPING = {
                             "type": "date",
                             "format": DATE_FORMATS_STRING
                         },
-                        "userID": {"type": "string", "index": "not_analyzed"},
+                        "userID": {"type": "string", "index": "not_analyzed", "null_value": NULL_VALUE},
                         "deviceID": {"type": "string", "index": "not_analyzed"},
                         "instanceID": {"type": "string", "index": "not_analyzed"},
                         "username": {"type": "string", "index": "not_analyzed"},

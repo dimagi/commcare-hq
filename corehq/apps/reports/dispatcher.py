@@ -23,6 +23,7 @@ datespan_default = datespan_in_request(
 
 _ = lambda message: ugettext(message) if message is not None else None
 
+
 class ReportDispatcher(View):
     """
         The ReportDispatcher is responsible for dispatching the correct reports or interfaces
@@ -138,10 +139,9 @@ class ReportDispatcher(View):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:
-                if report.is_bootstrap3:
-                    report.bootstrap3_dispatcher(
-                        request, domain=domain, report_slug=report_slug, *args, **kwargs
-                    )
+                report.bootstrap3_dispatcher(
+                    request, domain=domain, report_slug=report_slug, *args, **kwargs
+                )
                 return getattr(report, '%s_response' % render_as)
             except BadRequestError, e:
                 return HttpResponseBadRequest(e)
@@ -174,16 +174,12 @@ class ReportDispatcher(View):
         return ['json', 'async', 'filters', 'export', 'mobile', 'email', 'partial', 'print']
 
     @classmethod
-    def navigation_sections(cls, context):
-        request = context.get('request')
-        domain = context.get('domain') or getattr(request, 'domain', None)
+    def navigation_sections(cls, request, domain):
         project = getattr(request, 'project', None)
         couch_user = getattr(request, 'couch_user', None)
-        
         nav_context = []
 
         dispatcher = cls()  # uhoh
-        current_slug = context.get('report',{}).get('slug','')
 
         reports = dispatcher.get_reports(domain)
         for section_name, report_group in reports:
@@ -196,18 +192,14 @@ class ReportDispatcher(View):
                     and cls.toggles_enabled(report, request)
                     and report.show_in_navigation(domain=domain, project=project, user=couch_user)
                 ):
-                    if hasattr(report, 'override_navigation_list'):
-                        report_contexts.extend(report.override_navigation_list(context))
-                    else:
-                        report_contexts.append({
-                            'is_active': report.slug == current_slug,
-                            'url': report.get_url(domain=domain, request=request),
-                            'description': _(report.description),
-                            'icon': report.icon,
-                            'title': _(report.name),
-                            'subpages': report.get_subpages(),
-                            'show_in_dropdown': report.display_in_dropdown(project=project),
-                        })
+                    report_contexts.append({
+                        'url': report.get_url(domain=domain, request=request),
+                        'description': _(report.description),
+                        'icon': report.icon,
+                        'title': _(report.name),
+                        'subpages': report.get_subpages(),
+                        'show_in_dropdown': report.display_in_dropdown(project=project),
+                    })
             if report_contexts:
                 if hasattr(section_name, '__call__'):
                     section_name = section_name(project, couch_user)

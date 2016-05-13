@@ -1,6 +1,6 @@
 import json
-from couchdbkit.exceptions import ResourceNotFound
 from simpleeval import InvalidExpression
+from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
@@ -9,9 +9,11 @@ from corehq.apps.userreports.expressions.getters import (
     DictGetter,
     NestedDictGetter,
     TransformedGetter,
-    transform_from_datatype, transform_date, transform_int)
+    transform_from_datatype)
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
 from corehq.util.quickcache import quickcache
 
@@ -21,6 +23,13 @@ class IdentityExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         return item
+
+
+class IterationNumberExpressionSpec(JsonObject):
+    type = TypeProperty('base_iteration_number')
+
+    def __call__(self, item, context=None):
+        return context.iteration
 
 
 class ConstantGetterSpec(JsonObject):
@@ -199,15 +208,17 @@ class RelatedDocExpressionSpec(JsonObject):
 
     @quickcache(['self._vary_on', 'doc_id'])
     def get_value(self, doc_id, context):
+
         try:
-            doc = get_db_by_doc_type(self.related_doc_type).get(doc_id)
-            # ensure no cross-domain lookups of different documents
             assert context.root_doc['domain']
+            document_store = get_document_store(context.root_doc['domain'], self.related_doc_type)
+            doc = document_store.get_document(doc_id)
+            # ensure no cross-domain lookups of different documents
             if context.root_doc['domain'] != doc.get('domain'):
                 return None
             # explicitly use a new evaluation context since this is a new document
             return self._value_expression(doc, EvaluationContext(doc, 0))
-        except ResourceNotFound:
+        except DocumentNotFoundError:
             return None
 
 
@@ -263,3 +274,33 @@ class EvalExpressionSpec(JsonObject):
             for slug, variable_expression in self._context_variables.items()
         }
         return var_dict
+
+
+class FormsExpressionSpec(JsonObject):
+    type = TypeProperty('get_case_forms')
+    case_id_expression = DefaultProperty(required=True)
+
+    def configure(self, case_id_expression):
+        self._case_id_expression = case_id_expression
+
+    def __call__(self, item, context=None):
+        case_id = self._case_id_expression(item, context)
+
+        if not case_id:
+            return []
+
+        assert context.root_doc['domain']
+        return self._get_forms(case_id, context)
+
+    def _get_forms(self, case_id, context):
+        domain = context.root_doc['domain']
+
+        cache_key = (self.__class__.__name__, case_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
+        xforms = [f.to_json() for f in xforms if f.domain == domain]
+
+        context.set_cache_value(cache_key, xforms)
+        return xforms

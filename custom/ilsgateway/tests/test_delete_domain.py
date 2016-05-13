@@ -4,7 +4,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import LocationType, Location
 from corehq.apps.products.models import Product
 from custom.ilsgateway.models import ProductAvailabilityData, DeliveryGroupReport, Alert, OrganizationSummary, \
-    GroupSummary, SupplyPointStatus, HistoricalLocationGroup, ReportRun, ILSNotes, SupervisionDocument
+    GroupSummary, SupplyPointStatus, ReportRun, ILSNotes, SupervisionDocument
 
 
 class TestDeleteDomain(TestCase):
@@ -55,12 +55,6 @@ class TestDeleteDomain(TestCase):
             location_id=location.get_id,
             status_type='del_fac',
             status_value='received'
-        )
-
-        HistoricalLocationGroup.objects.create(
-            location_id=location.sql_location,
-            group='A',
-            date=datetime.utcnow().date()
         )
 
         ReportRun.objects.create(
@@ -123,13 +117,6 @@ class TestDeleteDomain(TestCase):
 
         self.assertEqual(SupplyPointStatus.objects.filter(location_id=self.locations['test']).count(), 0)
         self.assertEqual(SupplyPointStatus.objects.filter(location_id=self.locations['test2']).count(), 1)
-
-        self.assertEqual(HistoricalLocationGroup.objects.filter(
-            location_id__location_id=self.locations['test']
-        ).count(), 0)
-        self.assertEqual(HistoricalLocationGroup.objects.filter(
-            location_id__location_id=self.locations['test2']
-        ).count(), 1)
 
         self.assertEqual(ReportRun.objects.filter(domain='test').count(), 0)
         self.assertEqual(ReportRun.objects.filter(domain='test2').count(), 1)

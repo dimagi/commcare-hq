@@ -15,6 +15,7 @@ def import_location(domain, loc_type, data):
 
 
 class LocationImportTest(CommTrackTest):
+
     def setUp(self):
         super(LocationImportTest, self).setUp()
         # set up a couple locations that make tests a little more DRY

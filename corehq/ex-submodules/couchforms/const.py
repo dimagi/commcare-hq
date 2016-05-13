@@ -19,6 +19,7 @@ RESERVED_WORDS = [TAG_TYPE, TAG_XML, TAG_VERSION, TAG_UIVERSION, TAG_NAMESPACE,
 
 
 class BadRequest(object):
+
     def __init__(self, message):
         self.message = message
 

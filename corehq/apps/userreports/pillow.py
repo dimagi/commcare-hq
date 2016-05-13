@@ -124,7 +124,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                 # only bother getting the document if we have a domain match from the metadata
                 doc = change.get_document()
                 if table.config.filter(doc):
-                    table.save(doc)
+                    # best effort will swallow errors in the table
+                    table.best_effort_save(doc)
                 elif table.config.deleted_filter(doc):
                     table.delete(doc)
 
@@ -143,7 +144,6 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         )
         super(ConfigurableReportKafkaPillow, self).__init__(
             name=pillow_name,
-            document_store=None,
             change_feed=change_feed,
             processor=processor,
             checkpoint=checkpoint,

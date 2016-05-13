@@ -44,9 +44,9 @@ class ILSTestScript(TestScript):
                                  domain=domain.name, parent=region)
         cls.district3 = make_loc(code="d10102", name="TESTDISTRICT", type="DISTRICT",
                                  domain=domain.name, parent=region)
-        facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
+        cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
                             domain=domain.name, parent=cls.district, metadata={'group': 'A'})
-        cls.facility_sp_id = facility.sql_location.supply_point_id
+        cls.facility_sp_id = cls.facility.sql_location.supply_point_id
         facility2 = make_loc(code="loc2", name="Test Facility 2", type="FACILITY",
                              domain=domain.name, parent=cls.district, metadata={'group': 'B'})
         cls.facility3 = make_loc(
@@ -54,7 +54,7 @@ class ILSTestScript(TestScript):
             metadata={'group': 'C'}
         )
         cls.user1 = bootstrap_user(
-            facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
+            cls.facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
             first_name='stella', last_name='Test', language='sw'
         )
         bootstrap_user(facility2, username='bella', domain=domain.name, home_loc='loc2', phone_number='5555678',

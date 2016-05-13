@@ -77,9 +77,9 @@ def get_default_contact_for_location(domain, location_id):
 
 def get_span(submitted):
     if submitted:
-        return '<span class="icon-ok" style="color:green"/>%s'
+        return '<span class="fa fa-ok" style="color:green"/>%s'
     else:
-        return '<span class="icon-warning-sign" style="color:orange"/>%s'
+        return '<span class="fa fa-exclamation-triangle" style="color:orange"/>%s'
 
 
 def make_url(report_class, domain, string_params, args):
@@ -106,7 +106,7 @@ def link_format(text, url):
 
 def decimal_format(value):
     if value == 0:
-        return '<span class="icon-remove" style="color:red"/> %.0f' % value
+        return '<span class="fa fa-remove" style="color:red"/> %.0f' % value
     elif not value:
         return '<span style="color:grey"/> No Data'
     else:
@@ -115,7 +115,7 @@ def decimal_format(value):
 
 def float_format(value):
     if value == 0:
-        return '<span class="icon-remove" style="color:red"/> %.2f' % value
+        return '<span class="fa fa-remove" style="color:red"/> %.2f' % value
     elif not value:
         return '<span style="color:grey">No Data</span>'
     else:

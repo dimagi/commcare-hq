@@ -4,6 +4,7 @@ from custom.intrahealth.reports.tableu_de_board_report import MultiReport
 from custom.intrahealth.sqldata import RecapPassageData, DateSource
 from dimagi.utils.decorators.memoized import memoized
 
+
 class RecapPassageReport(MonthYearMixin, MultiReport):
     title = "Recap Passage"
     name = "Recap Passage"

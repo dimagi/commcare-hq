@@ -6,6 +6,7 @@ from custom.intrahealth.filters import FicheLocationFilter
 from custom.intrahealth.reports import IntraHealtMixin
 from custom.intrahealth.sqldata import FicheData
 
+
 class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularReport, CustomProjectReport):
     name = "Fiche Consommation"
     slug = 'fiche_consommation'
@@ -14,7 +15,6 @@ class FicheConsommationReport(IntraHealtMixin, DatespanMixin, GenericTabularRepo
     exportable = True
     col_names = ['actual_consumption', 'billed_consumption', 'consommation-non-facturable']
     export_format_override = 'csv'
-
 
     @property
     def model(self):

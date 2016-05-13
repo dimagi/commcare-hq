@@ -11,18 +11,30 @@ from corehq.apps.export.filters import (
     GroupOwnerFilter,
     IsClosedFilter,
     OwnerFilter,
-    OR)
+    OR,
+    FormSubmittedByFilter,
+)
 from corehq.apps.export.models.new import (
     CaseExportInstance,
+    FormExportInstance)
+from corehq.apps.export.tests.util import (
+
+    DEFAULT_USER,
+    DEFAULT_CASE_TYPE,
+    DEFAULT_XMLNS,
+    DEFAULT_APP_ID,
+    DOMAIN,
+    new_case,
+    new_form,
 )
-from corehq.apps.export.tests.util import new_case, DEFAULT_USER, DOMAIN, \
-    DEFAULT_CASE_TYPE
 from corehq.apps.groups.models import Group
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.case import CasePillow
-from corehq.pillows.group import GroupPillow
+from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
+from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
-from pillowtop.es_utils import completely_initialize_pillow_index
+from pillowtop.es_utils import completely_initialize_pillow_index, initialize_index_and_mapping
 
 
 class ExportFilterTest(SimpleTestCase):
@@ -43,13 +55,15 @@ class ExportFilterResultTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        form_pillow = XFormPillow(online=False)
         case_pillow = CasePillow(online=False)
-        group_pillow = GroupPillow(online=False)
-        cls.pillows = [case_pillow, group_pillow]
+        cls.pillows = [form_pillow, case_pillow]
 
+        es = get_es_new()
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
             for pillow in cls.pillows:
                 completely_initialize_pillow_index(pillow)
+            initialize_index_and_mapping(es, GROUP_INDEX_INFO)
 
         case = new_case(closed=True)
         case_pillow.send_robust(case.to_json())
@@ -64,11 +78,24 @@ class ExportFilterResultTest(SimpleTestCase):
         case_pillow.send_robust(case.to_json())
 
         group = Group(_id=uuid.uuid4().hex, users=["foo", "bar"])
-        cls.group_id = group.get_id
-        group_pillow.send_robust(group.to_json())
+        cls.group_id = group._id
+        send_to_elasticsearch('groups', group.to_json())
+
+        form = new_form(form={"meta": {"userID": None}})
+        form_pillow.send_robust(form.to_json())
+
+        form = new_form(form={"meta": {"userID": ""}})
+        form_pillow.send_robust(form.to_json())
+
+        form = new_form(form={"meta": {"deviceID": "abc"}})
+        form_pillow.send_robust(form.to_json())
+
+        form = new_form(form={"meta": {"userID": uuid.uuid4().hex}})
+        form_pillow.send_robust(form.to_json())
 
         for pillow in cls.pillows:
             pillow.get_es_new().indices.refresh(pillow.es_index)
+        es.indices.refresh(GROUP_INDEX_INFO.index)
 
     @classmethod
     def tearDownClass(cls):
@@ -96,3 +123,14 @@ class ExportFilterResultTest(SimpleTestCase):
         q = get_case_export_base_query(DOMAIN, DEFAULT_CASE_TYPE)
         result = q.run()
         self.assertEqual(4, len(result.hits))
+
+    def test_form_submitted_by_none_filter(self):
+        """
+        Confirm that the FormSubmittedByFilter works when None is one of the
+        arguments.
+        """
+        doc_generator = _get_export_documents(
+            FormExportInstance(domain=DOMAIN, app_id=DEFAULT_APP_ID, xmlns=DEFAULT_XMLNS),
+            [FormSubmittedByFilter([uuid.uuid4().hex, None, uuid.uuid4().hex])]
+        )
+        self.assertEqual(1, len([x for x in doc_generator]))

@@ -1,20 +1,24 @@
 from datetime import datetime, timedelta
 import json
 import warnings
-from dimagi.utils.make_uuid import random_hex
-from django import template
+
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.datastructures import SortedDict
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
+from django import template
+from django.core.urlresolvers import reverse
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+
+from dimagi.utils.make_uuid import random_hex
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
+from corehq.apps.hqwebapp.models import MaintenanceAlert
 
 
 register = template.Library()
@@ -134,7 +138,6 @@ def domains_for_user(context, request, selected_domain=None):
     ctxt = {
         'domain_list': domain_list,
         'current_domain': selected_domain,
-        'DOMAIN_TYPE': context['DOMAIN_TYPE'],
         'can_publish_to_exchange': (
             selected_domain is not None and selected_domain != 'public'
             and request.couch_user and request.couch_user.can_edit_apps() and
@@ -346,6 +349,7 @@ def do_captureas(parser, token):
 
 
 class CaptureasNode(template.Node):
+
     def __init__(self, nodelist, varname):
         self.nodelist = nodelist
         self.varname = varname
@@ -362,6 +366,34 @@ def chevron(value):
     Displays a green up chevron if value > 0, and a red down chevron if value < 0
     """
     if value > 0:
-        return '<span class="glyphicon glyphicon-chevron-up" style="color: #006400;"></span>'
+        return '<span class="fa fa-chevron-up" style="color: #006400;"></span>'
     elif value < 0:
-        return '<span class="glyphicon glyphicon-chevron-down" style="color: #8b0000;"> </span>'
+        return '<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>'
+    else:
+        return ''
+
+
+@register.simple_tag
+def maintenance_alert():
+    try:
+        alert = (MaintenanceAlert.objects
+                 .filter(active=True)
+                 .order_by('-modified'))[0]
+    except IndexError:
+        return ''
+    else:
+        return format_html(
+            '<div class="alert alert-warning" style="text-align: center; margin-bottom: 0;">{}</div>',
+            mark_safe(alert.html),
+        )
+
+
+@register.simple_tag(takes_context=True)
+def prelogin_url(context, urlname):
+    """
+    A prefix aware url tag replacement for prelogin URLs
+    """
+    if context.get('url_uses_prefix', False) and context.get('LANGUAGE_CODE', False):
+        return reverse(urlname, args=[context['LANGUAGE_CODE']])
+    else:
+        return reverse(urlname)

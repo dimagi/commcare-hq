@@ -30,10 +30,6 @@ def normalize_domain_name(domain):
     return domain
 
 
-def get_domained_url(domain, path):
-    return '/a/%s/%s' % (domain, path)
-
-
 def get_domain_from_url(path):
     try:
         domain, = re.compile(r'^/a/(?P<domain>%s)/' % legacy_domain_re).search(path).groups()
@@ -60,13 +56,6 @@ def domain_restricts_superusers(domain):
     if not domain:
         return False
     return domain.restrict_superusers
-
-
-def get_dummy_domain(domain_type=None):
-    domain_type = domain_type or 'commcare'
-    dummy_domain = Domain()
-    dummy_domain.commtrack_enabled = (domain_type == 'commtrack')
-    return dummy_domain
 
 
 def user_has_custom_top_menu(domain_name, couch_user):

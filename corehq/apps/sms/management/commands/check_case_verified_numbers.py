@@ -2,8 +2,8 @@ from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
-from corehq.apps.sms.models import CommConnectCase
 from corehq.apps.sms.mixin import InvalidFormatException, PhoneNumberInUseException
+
 
 class Command(BaseCommand):
     args = "<domain1 domain2 ... >"
@@ -30,7 +30,7 @@ class Command(BaseCommand):
                 contact_backend_id = case.get_case_property("contact_backend_id")
                 contact_ivr_backend_id = case.get_case_property("contact_ivr_backend_id")
                 
-                contact = CommConnectCase.wrap(case.to_json())
+                contact = case
                 verified_numbers = contact.get_verified_numbers(include_pending=True)
                 
                 should_have_entry = contact_phone_number_is_verified and contact_phone_number is not None and contact_phone_number != "" and str(contact_phone_number) != "0" and not case.closed

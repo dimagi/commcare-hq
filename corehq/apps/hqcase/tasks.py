@@ -1,12 +1,10 @@
 import uuid
 from celery.task import task
-from dimagi.utils.couch.database import iter_docs
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.apps.hqcase.utils import submit_case_blocks, make_creating_casexml
 from corehq.apps.users.models import CommCareUser
-from casexml.apps.case.models import CommCareCase
 from soil import DownloadBase
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 @task
@@ -23,11 +21,10 @@ def explode_cases(user_id, domain, factor, task=None):
 
     old_to_new = dict()
     child_cases = list()
+    accessor = CaseAccessors(domain)
 
-    case_ids = get_case_ids_in_domain_by_owner(
-        domain, owner_id__in=user.get_owner_ids(), closed=False)
-    cases = (CommCareCase.wrap(doc)
-             for doc in iter_docs(CommCareCase.get_db(), case_ids))
+    case_ids = accessor.get_case_ids_by_owners(user.get_owner_ids(), closed=False)
+    cases = accessor.iter_cases(case_ids)
 
     # copy parents
     for case in cases:
@@ -38,11 +35,11 @@ def explode_cases(user_id, domain, factor, task=None):
         if case.indices:
             child_cases.append(case)
             continue
-        old_to_new[case._id] = list()
+        old_to_new[case.case_id] = list()
         for i in range(factor - 1):
             new_case_id = uuid.uuid4().hex
             # add new parent ids to the old to new id mapping
-            old_to_new[case._id].append(new_case_id)
+            old_to_new[case.case_id].append(new_case_id)
             submit_case(case, new_case_id, domain)
             count += 1
             if task:
@@ -73,12 +70,12 @@ def explode_cases(user_id, domain, factor, task=None):
         if not can_process:
             continue
 
-        old_to_new[case._id] = list()
+        old_to_new[case.case_id] = list()
         for i in range(factor - 1):
             # grab the parents for this round of exploding
             parents = {k: v[i] for k, v in parent_ids.items()}
             new_case_id = uuid.uuid4().hex
-            old_to_new[case._id].append(new_case_id)
+            old_to_new[case.case_id].append(new_case_id)
             submit_case(case, new_case_id, domain, parents)
             count += 1
             if task:

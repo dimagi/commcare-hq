@@ -1,5 +1,6 @@
 from .general import (
     should_use_sql_backend,
+    is_commcarecase,
 )
 
 from .xform import (

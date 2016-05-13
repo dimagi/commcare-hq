@@ -41,27 +41,3 @@ class TestFilterFormESExportDownloadForm(SimpleTestCase):
         group_filter = form._get_group_filter()
         self.assertEqual(group_filter.group_id, 'some_group_id')
         self.assertEqual(group_filter.base_filter, FormSubmittedByFilter)
-
-    def test_get_user_filter(self):
-        """
-        Confirm that FilterFormESExportDownloadForm._get_user_filter()
-        returns a FormSubmittedByFilter with the correct user ids. This test
-        DOES NOT verify that BaseFilterExportDownloadForm._get_filtered_users()
-        retrieves the correct user ids from the database.
-        """
-        form_data = {
-            'type_or_group': 'type',
-            'user_types': ['mobile', 'unknown'],
-            'group': '',
-            'date_range': '2015-06-25 to 2016-02-19',
-        }
-
-        def mock_users_matching_filter(domain, user_filters):
-            return [None, "some_user_id", "some_other_user_id"]
-
-        form = FilterFormESExportDownloadForm(self.project, pytz.utc, form_data)
-
-        self.assertTrue(form.is_valid(), "Form had the following errors: {}".format(form.errors))
-        with patch("corehq.apps.export.forms.users_matching_filter", mock_users_matching_filter):
-            user_filter = form._get_user_filter()
-        self.assertEqual(user_filter.submitted_by, [None, "some_user_id", "some_other_user_id"])

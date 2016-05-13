@@ -1,47 +1,39 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/bootstrap3/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
     {% block reports-js %}
-    {% include "imports/datatables.html" %}
     <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
-    <script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
     {% endblock %}
 {% endblock %}
 
-{% block head %}
-    {{ block.super }}
-    {% block reports-css %}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    {% endblock %}
-{% endblock %}
+{% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}\
 
-{% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}
-
-{% block page-title %}
-    <ul class="breadcrumb">
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
-            <a href="{{ report.url_root }}"><strong>{% trans report.section_name|default:"Lookup Tables" %}</strong></a> <span class="divider">&gt;</span>
+            <a href="{% url 'data_interfaces_default' domain %}"><strong>{% trans "Data" %}</strong></a>
+        </li>
+        <li>
+            <a href="{{ report.url_root }}">{% trans report.section_name|default:"Lookup Tables" %}</a>
         </li>
         {% if report.breadcrumbs %}
             {% for crumb in report.breadcrumbs %}
                 <li>
-                    <a href="{{ crumb.link }}">{{ crumb.title }}</a> <span class="divider">&gt;</span>
+                    <a href="{{ crumb.link }}">{{ crumb.title }}</a>
                 </li>
             {% endfor %}
         {% endif %}
         <li class="active">
-            <div id="report-title"><a href="{{ report.url }}">{% trans report.title|safe %}</a></div>
+            <a href="{{ report.url }}" id="report-title">{% trans report.title|safe %}</a>
         </li>
-    </ul>
+    </ol>
 {% endblock %}
-{% block main_column %}
-    <div id="report-content">
 
-            {% block reportcontent %}
-            {% endblock %}
+{% block page_content %}
+    <div id="report-content">
+    {% block reportcontent %}
+    {% endblock %}
     </div>
 {% endblock %}
 

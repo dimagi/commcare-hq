@@ -5,7 +5,7 @@ from xml.etree import ElementTree
 from casexml.apps.case import const
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
-    safe_element
+    safe_element, CaseDBXMLGenerator
 
 USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
 USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
@@ -13,11 +13,13 @@ VALID_USER_REGISTRATION_XMLNSES = [USER_REGISTRATION_XMLNS_DEPRECATED, USER_REGI
 
 SYNC_XMLNS = "http://commcarehq.org/sync"
 
+
 def escape(o):
     if o is None:
         return ""
     else:
         return saxutils.escape(unicode(o))
+
 
 def tostring(element):
     # save some typing, force UTF-8
@@ -83,6 +85,31 @@ def get_case_element(case, updates, version=V1):
 def get_case_xml(case, updates, version=V1):
     check_version(version)
     return tostring(get_case_element(case, updates, version))
+
+
+def get_casedb_element(case):
+    """
+    Returns a case element as in the casedb
+
+    <case case_id="" case_type="" owner_id="" status="">
+        <case_name/>
+        <date_opened/>
+        <last_modified/>
+        <case_property />
+        <index>
+            <parent case_type="" relationship="">id</parent>
+        </index>
+        <attachment>
+            <a12345 />
+        </attachment>
+    </case>
+    https://github.com/dimagi/commcare/wiki/casedb
+    """
+    return CaseDBXMLGenerator(case).get_element()
+
+
+def get_casedb_xml(case):
+    return tostring(get_casedb_element(case))
 
 
 def get_registration_element(user):

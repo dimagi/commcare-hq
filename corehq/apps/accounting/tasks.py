@@ -20,7 +20,6 @@ from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
 
-from corehq.apps.accounting import utils
 from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceAlreadyCreatedError,
@@ -30,7 +29,6 @@ from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     Currency,
-    Invoice,
     StripePaymentMethod,
     Subscription,
     SubscriptionAdjustment,
@@ -53,6 +51,12 @@ from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.dates import get_previous_month_date_range
+from corehq.util.soft_assert import soft_assert
+
+_invoicing_complete_soft_assert = soft_assert(
+    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 @transaction.atomic
@@ -80,7 +84,10 @@ def activate_subscriptions(based_on_date=None):
         starting_subscriptions
     )
     for subscription in starting_subscriptions:
-        _activate_subscription(subscription)
+        try:
+            _activate_subscription(subscription)
+        except Exception as e:
+            log_accounting_error(e.message)
 
 
 @transaction.atomic
@@ -118,7 +125,10 @@ def deactivate_subscriptions(based_on_date=None):
         is_active=True,
     )
     for subscription in ending_subscriptions:
-        _deactivate_subscription(subscription, ending_date)
+        try:
+            _deactivate_subscription(subscription, ending_date)
+        except Exception as e:
+            log_accounting_error(e.message)
 
 
 def warn_subscriptions_still_active(based_on_date=None):
@@ -187,6 +197,9 @@ def generate_invoices(based_on_date=None):
                 "Error occurred while creating invoice for "
                 "domain %s: %s" % (domain.name, e)
             )
+
+    if not settings.UNIT_TESTING:
+        _invoicing_complete_soft_assert(False, "Invoicing is complete!")
 
 
 def send_bookkeeper_email(month=None, year=None, emails=None):
@@ -272,7 +285,7 @@ def remind_dimagi_contact_subscription_ending_40_days():
 def send_subscription_reminder_emails(num_days, exclude_trials=True):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days)
+    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days, do_not_email=False)
     if exclude_trials:
         ending_subscriptions = ending_subscriptions.filter(is_trial=False)
     for subscription in ending_subscriptions:
@@ -290,6 +303,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
     ending_subscriptions = (Subscription.objects
                             .filter(is_active=True)
                             .filter(date_end=date_in_n_days)
+                            .filter(do_not_email=False)
                             .filter(account__dimagi_contact__isnull=False))
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
@@ -307,7 +321,6 @@ def create_wire_credits_invoice(domain_name,
     account = BillingAccount.get_or_create_account_by_domain(
         domain_name,
         created_by=account_created_by,
-        created_by_invoicing=True,
         entry_point=account_entry_point
     )[0]
     wire_invoice = WirePrepaymentInvoice.objects.create(
@@ -321,10 +334,14 @@ def create_wire_credits_invoice(domain_name,
     wire_invoice.items = invoice_items
 
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
-    try:
-        record.send_email(contact_emails=contact_emails)
-    except Exception as e:
-        log_accounting_error(e.message)
+    if record.should_send_email:
+        try:
+            record.send_email(contact_emails=contact_emails)
+        except Exception as e:
+            log_accounting_error(e.message)
+    else:
+        record.skipped_email = True
+        record.save()
 
 
 @task(ignore_result=True)
@@ -518,4 +535,4 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
                 'rate': currency.rate_to_default,
             })
     except Exception as e:
-        log_accounting_error(e.message)
+        log_accounting_error("Error updating exchange rates: %s" % e.message)

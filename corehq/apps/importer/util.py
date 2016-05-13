@@ -24,6 +24,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.soft_assert import soft_assert
+from couchexport.export import SCALAR_NEVER_WAS
 
 
 class ImporterConfig(object):
@@ -211,6 +212,7 @@ class ExcelFile(object):
         if sheet:
             return self._row_values(sheet, index)
 
+
 def convert_custom_fields_to_struct(config):
     excel_fields = config.excel_fields
     case_fields = config.case_fields
@@ -230,6 +232,7 @@ def convert_custom_fields_to_struct(config):
                 field_map[field]['field_name'] = custom_fields[i]
 
     return field_map
+
 
 class ImportErrorDetail(object):
 
@@ -328,6 +331,7 @@ def parse_search_id(config, columns, row):
 
     return convert_field_value(search_id)
 
+
 def get_key_column_index(config, columns):
     key_column = config.key_column
     try:
@@ -337,6 +341,7 @@ def get_key_column_index(config, columns):
 
     return key_column_index
 
+
 def get_value_column_index(config, columns):
     value_column = config.value_column
     try:
@@ -345,6 +350,7 @@ def get_value_column_index(config, columns):
         value_column_index = False
 
     return value_column_index
+
 
 def lookup_case(search_field, search_id, domain, case_type):
     """
@@ -377,6 +383,7 @@ def lookup_case(search_field, search_id, domain, case_type):
     else:
         return (None, LookupErrors.NotFound)
 
+
 def populate_updated_fields(config, columns, row, datemode):
     """
     Returns a dict map of fields that were marked to be updated
@@ -402,7 +409,12 @@ def populate_updated_fields(config, columns, row, datemode):
             # nothing was selected so don't add this value
             continue
 
-        if update_value is not None:
+        if isinstance(update_value, basestring) and update_value.strip() == SCALAR_NEVER_WAS:
+            # If we find any instances of blanks ('---'), convert them to an
+            # actual blank value without performing any data type validation.
+            # This is to be consistent with how the case export works.
+            update_value = ''
+        elif update_value is not None:
             if field_map[key]['type_field'] == 'date':
                 try:
                     update_value = parse_excel_date(update_value, datemode)
@@ -490,7 +502,7 @@ def get_id_from_name(name, domain, cache):
 def get_case_properties_for_case_type(domain, case_type):
     if should_use_sql_backend(domain):
         from corehq.apps.export.models import CaseExportDataSchema
-        from corehq.apps.export.const import MAIN_TABLE
+        from corehq.apps.export.models.new import MAIN_TABLE
         schema = CaseExportDataSchema.generate_schema_from_builds(
             domain,
             case_type,

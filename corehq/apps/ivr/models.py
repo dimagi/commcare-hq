@@ -1,6 +1,6 @@
+from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.sms.mixin import UnrecognizedBackendException
-from corehq.apps.sms.models import SQLMobileBackend, Log, CallLog, OUTGOING
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
+from corehq.apps.sms.models import SQLMobileBackend, Log, OUTGOING
 from django.db import models
 
 
@@ -9,6 +9,7 @@ class UnrecognizedIVRBackendException(UnrecognizedBackendException):
 
 
 class SQLIVRBackend(SQLMobileBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True
@@ -44,7 +45,9 @@ class SQLIVRBackend(SQLMobileBackend):
         )
 
 
-class Call(SyncSQLToCouchMixin, Log):
+class Call(UUIDGeneratorMixin, Log):
+    UUIDS_TO_GENERATE = ['couch_id']
+
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     """ Call Metadata """
@@ -100,46 +103,6 @@ class Call(SyncSQLToCouchMixin, Log):
 
     class Meta:
         app_label = 'ivr'
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            'answered',
-            'duration',
-            'gateway_session_id',
-            'submit_partial_form',
-            'include_case_side_effects',
-            'max_question_retries',
-            'current_question_retry_count',
-            'xforms_session_id',
-            'error_message',
-            'use_precached_first_response',
-            'first_response',
-            'case_id',
-            'case_for_case_submission',
-            'form_unique_id',
-            'domain',
-            'date',
-            'couch_recipient_doc_type',
-            'couch_recipient',
-            'phone_number',
-            'direction',
-            'error',
-            'system_error_message',
-            'system_phone_number',
-            'backend_api',
-            'backend_id',
-            'billed',
-            'workflow',
-            'xforms_session_couch_id',
-            'reminder_id',
-            'location_id',
-            'messaging_subevent_id',
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return CallLog
 
     @classmethod
     def by_gateway_session_id(cls, gateway_session_id):

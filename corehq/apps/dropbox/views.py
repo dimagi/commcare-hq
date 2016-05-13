@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.views.generic import View
 
-from .utils import get_dropbox_auth_flow
+from .utils import get_dropbox_auth_flow, DROPBOX_CSRF_TOKEN
 
 DROPBOX_ACCESS_TOKEN = 'dropbox_access_token'
 
@@ -22,7 +22,12 @@ class DropboxAuthCallback(View):
 
     def get(self, request, *args, **kwargs):
         try:
-            access_token, user_id, url_state = get_dropbox_auth_flow(request.session).finish(request.GET)
+            if DROPBOX_CSRF_TOKEN not in request.session:
+                # workaround for library raising a KeyError in this situation.
+                # http://manage.dimagi.com/default.asp?222132
+                return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
+            else:
+                access_token, user_id, url_state = get_dropbox_auth_flow(request.session).finish(request.GET)
         except DropboxOAuth2Flow.BadRequestException, e:
             return HttpResponse(e, status=400)
         except DropboxOAuth2Flow.BadStateException:

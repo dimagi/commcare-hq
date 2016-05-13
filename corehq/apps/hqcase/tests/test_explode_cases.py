@@ -9,15 +9,15 @@ from mock import patch
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseAttachment
-from casexml.apps.case.tests.util import delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.xml import V2
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
-    get_cases_in_domain
 from corehq.apps.hqcase.tasks import explode_cases
 from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 TESTS = (
@@ -75,6 +75,7 @@ TESTS = (
 def mock_fetch_case_attachment(case_id, attachments):
 
     class MockCachedObject(object):
+
         def __init__(self, attachment_file):
             self.attachment_file = attachment_file
 
@@ -116,14 +117,21 @@ class ExplodeCasesDbTest(TestCase):
         cls.user = CommCareUser.create(cls.domain.name, 'somebody', 'password')
         cls.user_id = cls.user._id
 
-    def setUp(cls):
+    def setUp(self):
+        self.accessor = CaseAccessors(self.domain.name)
         delete_all_cases()
+        delete_all_xforms()
+
+    def tearDown(self):
+        delete_all_cases()
+        delete_all_xforms()
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain.delete()
 
+    @run_with_all_backends
     def test_simple(self):
         caseblock = CaseBlock(
             create=True,
@@ -133,13 +141,16 @@ class ExplodeCasesDbTest(TestCase):
             case_type='exploder-type',
         ).as_string()
         submit_case_blocks([caseblock], self.domain.name)
-        self.assertEqual(1, len(get_case_ids_in_domain(self.domain.name)))
+        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
         explode_cases(self.user_id, self.domain.name, 10)
-        cases_back = list(get_cases_in_domain(self.domain.name))
+
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases_back = list(self.accessor.iter_cases(case_ids))
         self.assertEqual(10, len(cases_back))
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
 
+    @run_with_all_backends
     def test_skip_user_case(self):
         caseblock = CaseBlock(
             create=True,
@@ -149,13 +160,16 @@ class ExplodeCasesDbTest(TestCase):
             case_type='commcare-user',
         ).as_string()
         submit_case_blocks([caseblock], self.domain.name)
-        self.assertEqual(1, len(get_case_ids_in_domain(self.domain.name)))
+        self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
         explode_cases(self.user_id, self.domain.name, 10)
-        cases_back = list(get_cases_in_domain(self.domain.name))
+
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases_back = list(self.accessor.iter_cases(case_ids))
         self.assertEqual(1, len(cases_back))
         for case in cases_back:
             self.assertEqual(self.user_id, case.owner_id)
 
+    @run_with_all_backends
     def test_parent_child(self):
         parent_id = uuid.uuid4().hex
         parent_type = 'exploder-parent-type'
@@ -178,12 +192,13 @@ class ExplodeCasesDbTest(TestCase):
         ).as_string()
 
         submit_case_blocks([parent_block, child_block], self.domain.name)
-        self.assertEqual(2, len(get_case_ids_in_domain(self.domain.name)))
+        self.assertEqual(2, len(self.accessor.get_case_ids_in_domain()))
 
         explode_cases(self.user_id, self.domain.name, 5)
-        cases_back = list(get_cases_in_domain(self.domain.name))
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases_back = list(self.accessor.iter_cases(case_ids))
         self.assertEqual(10, len(cases_back))
-        parent_cases = {p._id: p for p in filter(lambda case: case.type == parent_type, cases_back)}
+        parent_cases = {p.case_id: p for p in filter(lambda case: case.type == parent_type, cases_back)}
         self.assertEqual(5, len(parent_cases))
         child_cases = filter(lambda case: case.type == 'exploder-child-type', cases_back)
         self.assertEqual(5, len(child_cases))

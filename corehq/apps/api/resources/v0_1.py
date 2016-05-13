@@ -38,7 +38,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
 # API imports
 from corehq.apps.api.serializers import CustomXMLSerializer, XFormInstanceSerializer
-from corehq.apps.api.util import get_object_or_not_exist
+from corehq.apps.api.util import get_object_or_not_exist, get_obj
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -80,6 +80,7 @@ class LoginAndDomainAuthentication(Authentication):
 
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'
+
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
 
@@ -105,6 +106,7 @@ class LoginAndDomainAuthentication(Authentication):
 
 
 class RequirePermissionAuthentication(LoginAndDomainAuthentication):
+
     def __init__(self, permission, *args, **kwargs):
         super(RequirePermissionAuthentication, self).__init__(*args, **kwargs)
         self.permission = permission
@@ -149,6 +151,7 @@ class AdminAuthentication(LoginAndDomainAuthentication):
 
 
 class HQThrottle(CacheThrottle):
+
     def should_be_throttled(self, identifier, **kwargs):
         if API_THROTTLE_WHITELIST.enabled(identifier):
             return False
@@ -207,27 +210,28 @@ class CommCareUserResource(UserResource):
                 .domain(bundle.request.domain)
                 .user_id([bundle.obj._id])
             )
+
             extras['submitted_last_30'] = (form_es_base
                 .submitted(gte=now - datetime.timedelta(days=30),
                            lte=now)
-                .run()
+                .size(0).run()
             ).total
             extras['completed_last_30'] = (form_es_base
                 .completed(gte=now - datetime.timedelta(days=30),
                            lte=now)
-                .run()
+                .size(0).run()
             ).total
             first_of_this_month = datetime.datetime(now.year, now.month, 1)
             first_of_last_month = (first_of_this_month - datetime.timedelta(days=1)).replace(day=1)
             extras['submitted_last_month'] = (form_es_base
                 .submitted(gte=first_of_last_month,
                            lte=first_of_this_month)
-                .run()
+                .size(0).run()
             ).total
             extras['completed_last_month'] = (form_es_base
                 .completed(gte=first_of_last_month,
                            lte=first_of_this_month)
-                .run()
+                .size(0).run()
             ).total
             bundle.data['extras'] = extras
         return super(UserResource, self).dehydrate(bundle)
@@ -273,7 +277,7 @@ class WebUserResource(UserResource):
         return list(WebUser.by_domain(domain))
 
 
-class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
+class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     type = "case"
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     user_id = fields.CharField(attribute='user_id')
@@ -288,10 +292,10 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     indices = fields.ListField(null=True)
 
     def dehydrate_properties(self, bundle):
-        return bundle.obj.get_json()['properties']
+        return bundle.obj.to_api_json()['properties']
 
     def dehydrate_indices(self, bundle):
-        return bundle.obj.get_json()['indices']
+        return bundle.obj.to_api_json()['indices']
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(CommCareCase, kwargs['pk'],
@@ -327,17 +331,22 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         resource_name = 'case'
 
 
-class XFormInstanceResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
     type = "form"
-    id = fields.CharField(attribute='get_id', readonly=True, unique=True)
+    id = fields.CharField(attribute='form_id', readonly=True, unique=True)
 
-    form = fields.DictField(attribute='form')
+    form = fields.DictField(attribute='form_data')
     type = fields.CharField(attribute='type')
     version = fields.CharField(attribute='version')
     uiversion = fields.CharField(attribute='uiversion')
     metadata = fields.DictField(attribute='metadata', null=True)
     received_on = fields.DateTimeField(attribute="received_on")
     md5 = fields.CharField(attribute='xml_md5')
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'pk': get_obj(bundle_or_obj).form_id
+        }
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(XFormInstance, kwargs['pk'], kwargs['domain'])
@@ -350,6 +359,7 @@ class XFormInstanceResource(CouchResourceMixin, HqBaseResource, DomainSpecificRe
         resource_name = 'form'
         ordering = ['received_on']
         serializer = XFormInstanceSerializer(formats=['json'])
+
 
 def _safe_bool(bundle, param, default=False):
     try:

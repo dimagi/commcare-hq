@@ -1,0 +1,31 @@
+{% load i18n %}
+
+{% if thisreport.show_chart %}
+    {% if thisreport.charts %}
+        <div class="{{ thisreport.css_class }} {{ b3_class }}">
+            <h4 class="media-heading">{{ thisreport.report_table.title }}</h4>
+            {% if report_table.subtitle %}
+                <span style="color: slategray">{{ report_table.subtitle }}</span>
+            {% endif %}
+            {% for chart in thisreport.charts %}
+                {% if chart.data.0.values %}
+                    {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
+                    <div id='{{ chart_id }}' class="col-sm-{{ chart_span }} collapse">
+                        <svg style='height: {{ chart.height }}px'> </svg>
+                    </div>
+                    {% include chart.template_partial with chart=chart chart_id=chart_id %}
+                {% else %}
+                    <span>{% trans "No facilities are due to submit data in this month" %}</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endif %}
+{% if thisreport.show_table %}
+    {% if thisreport.report_table.datatables %}
+        {% include 'ilsgateway/partials/report_table_with_tabs.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
+    {% else %}
+        {% include 'ilsgateway/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span b3_class=b3_class%}
+    {% endif %}
+{% endif %}
+

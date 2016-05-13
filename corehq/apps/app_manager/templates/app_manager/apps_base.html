@@ -19,12 +19,6 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
-    <script src="{% new_static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
-    <script src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-    <script src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
-    <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
-
     <!--
         jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
         tooltip widgets conflict. The B3 base template takes care of that when you use the
@@ -45,7 +39,7 @@
     <script src="{% new_static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
     <script src="{% new_static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
 
-    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% new_static 'style/js/bootstrap2/ui-element.js' %}"></script>
     <script src="{% new_static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 {% endblock %}

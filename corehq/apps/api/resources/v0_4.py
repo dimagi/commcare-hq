@@ -8,6 +8,7 @@ from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
     _safe_bool
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from couchforms.models import doc_types
 from casexml.apps.case.models import CommCareCase
@@ -60,8 +61,12 @@ class XFormInstanceResource(SimpleSortableResourceMixin, v0_3.XFormInstanceResou
         attribute='initial_processing_complete', null=True)
     problem = fields.CharField(attribute='problem', null=True)
 
-    cases = UseIfRequested(ToManyDocumentsField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
-                                                attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)))
+    cases = UseIfRequested(
+        ToManyDocumentsField(
+            'corehq.apps.api.resources.v0_4.CommCareCaseResource',
+            attribute=lambda xform: casexml_xform.cases_referenced_by_xform(xform)
+        )
+    )
 
     attachments = fields.DictField(readonly=True, null=True)
 
@@ -203,8 +208,21 @@ def group_by_dict(objs, fn):
     return result
 
 
-class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
+def _child_cases_attribute(case):
+    return {
+        index.identifier: CaseAccessors(case.domain).get_case(index.referenced_id)
+        for index in case.reverse_indices
+    }
 
+
+def _parent_cases_attribute(case):
+    return {
+        index.identifier: CaseAccessors(case.domain).get_case(index.referenced_id)
+        for index in case.indices
+    }
+
+
+class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
     xforms_by_name = UseIfRequested(ToManyListDictField(
         'corehq.apps.api.resources.v0_4.XFormInstanceResource',
         attribute=lambda case: group_by_dict(case.get_forms(), lambda form: form.name)
@@ -215,11 +233,19 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         attribute=lambda case: group_by_dict(case.get_forms(), lambda form: form.xmlns)
     ))
 
-    child_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
-                                                 attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.indices])))
+    child_cases = UseIfRequested(
+        ToManyDictField(
+            'corehq.apps.api.resources.v0_4.CommCareCaseResource',
+            attribute=_child_cases_attribute
+        )
+    )
 
-    parent_cases = UseIfRequested(ToManyDictField('corehq.apps.api.resources.v0_4.CommCareCaseResource',
-                                                  attribute=lambda case: dict([ (index.identifier, CommCareCase.get(index.referenced_id)) for index in case.reverse_indices])))
+    parent_cases = UseIfRequested(
+        ToManyDictField(
+            'corehq.apps.api.resources.v0_4.CommCareCaseResource',
+            attribute=_parent_cases_attribute
+        )
+    )
 
     domain = fields.CharField(attribute='domain')
 
@@ -340,6 +366,7 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
+    version = fields.IntegerField(attribute='version')
     modules = fields.ListField()
 
     def dehydrate_module(self, app, module, langs):
@@ -406,19 +433,6 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'application'
-
-
-def bool_to_yesno(value):
-    if value is None:
-        return None
-    elif value:
-        return 'yes'
-    else:
-        return 'no'
-
-
-def get_yesno(attribute):
-    return lambda obj: bool_to_yesno(getattr(obj, attribute, None))
 
 
 class HOPECaseResource(CommCareCaseResource):

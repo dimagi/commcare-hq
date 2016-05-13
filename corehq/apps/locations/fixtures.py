@@ -68,6 +68,8 @@ class LocationFixtureProvider(object):
         There is an admin feature flag that will make this generate
         a fixture with ALL locations for the domain.
         """
+        if not user.project.uses_locations:
+            return []
         if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
             locations = SQLLocation.active_objects.filter(domain=user.domain)
         else:
@@ -101,11 +103,9 @@ class LocationFixtureProvider(object):
             lambda loc: loc.parent is None, location_db.by_id.values()
         )
 
-        if not root_locations:
-            return []
-        else:
+        if root_locations:
             _append_children(root, location_db, root_locations)
-            return [root]
+        return [root]
 
 
 location_fixture_generator = LocationFixtureProvider()

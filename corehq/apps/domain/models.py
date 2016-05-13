@@ -18,10 +18,10 @@ from dimagi.ext.couchdbkit import (
     StringListProperty, SchemaListProperty, TimeProperty, DecimalProperty
 )
 from django.core.urlresolvers import reverse
-from django.db import models, connection
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
-from corehq.util.quickcache import skippable_quickcache
+from corehq.util.quickcache import quickcache, skippable_quickcache
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -51,8 +51,6 @@ DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 BUSINESS_UNITS = [
     "DSA",
     "DSI",
-    "DLAC",
-    "DMOZ",
     "DWA",
     "INC",
 ]
@@ -82,6 +80,7 @@ LICENSE_LINKS = {
     'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
 }
 
+
 def cached_property(method):
     def find_cached(self):
         try:
@@ -94,9 +93,11 @@ def cached_property(method):
 
 
 class UpdatableSchema():
+
     def update(self, new_dict):
         for kw in new_dict:
             self[kw] = new_dict[kw]
+
 
 class Deployment(DocumentSchema, UpdatableSchema):
     date = DateTimeProperty()
@@ -131,6 +132,7 @@ class LicenseAgreement(DocumentSchema):
     user_id = StringProperty()
     user_ip = StringProperty()
     version = StringProperty()
+
 
 class InternalProperties(DocumentSchema, UpdatableSchema):
     """
@@ -175,12 +177,14 @@ class CaseDisplaySettings(DocumentSchema):
 
     # todo: case list
 
+
 class DynamicReportConfig(DocumentSchema):
     """configurations of generic/template reports to be set up for this domain"""
     report = StringProperty()  # fully-qualified path to template report class
     name = StringProperty()  # report display name in sidebar
     kwargs = DictProperty()  # arbitrary settings to configure report
     previewers_only = BooleanProperty()
+
 
 class DynamicReportSet(DocumentSchema):
     """a set of dynamic reports grouped under a section header in the sidebar"""
@@ -189,6 +193,7 @@ class DynamicReportSet(DocumentSchema):
 
 
 LOGO_ATTACHMENT = 'logo.png'
+
 
 class DayTimeWindow(DocumentSchema):
     """
@@ -328,21 +333,13 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     default_mobile_worker_redirect = StringProperty(default=None)
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
-    # when turned on, users who enter the domain are logged out after 30 minutes of inactivity
+    # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
 
     two_factor_auth = BooleanProperty(default=False)
 
-    @property
-    def domain_type(self):
-        """
-        The primary type of this domain.  Used to determine site-specific
-        branding.
-        """
-        if self.commtrack_enabled:
-            return 'commtrack'
-        else:
-            return 'commcare'
+    requested_report_builder_trial = StringListProperty()
+    requested_report_builder_subscription = StringListProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -389,6 +386,12 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         """return a timezone object from self.default_timezone"""
         import pytz
         return pytz.timezone(self.default_timezone)
+
+    @staticmethod
+    @quickcache(['name'], timeout=24 * 60 * 60)
+    def is_secure_session_required(name):
+        domain = Domain.get_by_name(name)
+        return domain and domain.secure_sessions
 
     @staticmethod
     @skippable_quickcache(['couch_user._id', 'is_active'],
@@ -445,6 +448,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     def full_applications(self, include_builds=True):
         from corehq.apps.app_manager.models import Application, RemoteApp
         WRAPPERS = {'Application': Application, 'RemoteApp': RemoteApp}
+
         def wrap_application(a):
             return WRAPPERS[a['doc']['doc_type']].wrap(a['doc'])
 
@@ -488,9 +492,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     def all_users(self):
         from corehq.apps.users.models import CouchUser
         return CouchUser.by_domain(self.name)
-
-    def has_shared_media(self):
-        return False
 
     def recent_submissions(self):
         return domain_has_submission_in_last_30_days(self.name)
@@ -590,7 +591,11 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     @classmethod
     def get_all_names(cls):
-        return [d['key'] for d in Domain.get_all(include_docs=False)]
+        return [d['key'] for d in cls.get_all(include_docs=False)]
+
+    @classmethod
+    def get_all_ids(cls):
+        return [d['id'] for d in cls.get_all(include_docs=False)]
 
     @classmethod
     def get_names_by_prefix(cls, prefix):
@@ -807,9 +812,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             copy.save()
             return copy
 
-    def from_snapshot(self):
-        return not self.is_snapshot and self.original_doc is not None
-
     def snapshots(self):
         return Domain.view('domain/snapshots',
             startkey=[self._id, {}],
@@ -826,18 +828,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             if snapshot.published:
                 return snapshot
         return None
-
-    @classmethod
-    def published_snapshots(cls, include_unapproved=False, page=None, per_page=10):
-        skip = None
-        limit = None
-        if page:
-            skip = (page - 1) * per_page
-            limit = per_page
-        if include_unapproved:
-            return cls.view('domain/published_snapshots', startkey=[False, {}], include_docs=True, descending=True, limit=limit, skip=skip)
-        else:
-            return cls.view('domain/published_snapshots', endkey=[True], include_docs=True, descending=True, limit=limit, skip=skip)
 
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)
@@ -893,16 +883,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
-        self._delete_web_users_from_domain()
         apply_deletion_operations(self.name, dynamic_deletion_operations)
-
-    def _delete_web_users_from_domain(self):
-        from corehq.apps.users.models import WebUser
-        active_web_users = WebUser.by_domain(self.name)
-        inactive_web_users = WebUser.by_domain(self.name, is_active=False)
-        for web_user in list(active_web_users) + list(inactive_web_users):
-            web_user.delete_domain_membership(self.name)
-            web_user.save()
 
     def all_media(self, from_apps=None):  # todo add documentation or refactor
         from corehq.apps.hqmedia.models import CommCareMultimedia
@@ -1061,6 +1042,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         from .utils import domain_restricts_superusers
         super(Domain, self).clear_caches()
         self.get_by_name.clear(self.__class__, self.name)
+        self.is_secure_session_required.clear(self.name)
         domain_restricts_superusers.clear(self.name)
 
 

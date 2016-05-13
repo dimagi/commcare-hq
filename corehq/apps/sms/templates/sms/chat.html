@@ -3,20 +3,7 @@
     <head>
         <title>
         {% block title %}
-            Chat - 
-            {% if contact.doc_type == "CommCareCase" %}
-                {% if custom_case_username %}
-                    {{ contact|getattr:custom_case_username }}
-                {% else %}
-                    {{ contact.name }}
-                {% endif %}
-            {% else %}
-                {% if contact.first_name %}
-                    {{ contact.first_name }}
-                {% else %}
-                    {{ contact.raw_username }}
-                {% endif %}
-            {% endif %}
+            Chat - {{ contact_name }}
         {% endblock %}
         </title>
         {% compress css %}

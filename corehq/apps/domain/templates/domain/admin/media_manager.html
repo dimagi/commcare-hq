@@ -9,7 +9,10 @@
 
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
-    $('body').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
+(function () {
+    var MediaManager = hqImport('domain/js/media_manager.js').MediaManager;
+    $('#update-media-sharing-settings').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));
+}());
 </script>
 {% endblock %}
 
@@ -55,7 +58,7 @@
         <tbody data-bind="foreach: media">
             <tr>
                 <td data-bind="text: type"></td>
-                <td class="span3">
+                <td class="col-sm-3">
                 <div data-bind="if: image">
                     <a data-bind="attr: {href: url}" class="thumbnail" target="_blank"><img data-bind="attr: {src: url}" /></a>
                 </div>

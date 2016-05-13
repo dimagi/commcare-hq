@@ -6,9 +6,12 @@ ignore = */migrations/*
          localsettings.py
 
 [tools]
-linters = flake8, jshint
+linters = flake8, eslint
 
 [tool_flake8]
 max-line-length = 115
 # http://pep8.readthedocs.org/en/latest/intro.html#error-codes
 ignore = E128,E265,F403
+
+[tool_eslint]
+config = ./.eslintrc.js

@@ -29,6 +29,7 @@ def strip_plus(phone_number):
     else:
         return phone_number
 
+
 def clean_phone_number(text):
     """
     strip non-numeric characters and add '%2B' at the front
@@ -160,6 +161,7 @@ CLEAN_TEXT_REPLACEMENTS = (
     (u"\u2026", "..."), # Ellipsis
 )
 
+
 def clean_text(text):
     """
     Performs the replacements in CLEAN_TEXT_REPLACEMENTS on text.
@@ -169,20 +171,21 @@ def clean_text(text):
     return text
 
 
-def get_contact(contact_id):
-    from corehq.apps.sms.models import CommConnectCase
+def get_contact(domain, contact_id):
+    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+    from corehq.form_processor.exceptions import CaseNotFound
     contact = None
     try:
-        contact = CommConnectCase.get(contact_id)
-    except ResourceNotFound:
+        contact = CaseAccessors(domain).get_case(contact_id)
+    except (ResourceNotFound, CaseNotFound):
         pass
 
-    if contact and contact.doc_type == 'CommCareCase':
+    if contact and contact.doc_type == 'CommCareCase' and contact.domain == domain:
         return contact
 
     contact = None
     try:
-        contact = CouchUser.get_by_user_id(contact_id)
+        contact = CouchUser.get_by_user_id(contact_id, domain=domain)
     except CouchUser.AccountTypeError:
         pass
 

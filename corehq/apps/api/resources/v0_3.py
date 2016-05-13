@@ -9,6 +9,9 @@ from corehq.apps.api.resources import v0_2, v0_1
 from corehq.apps.api.resources import DomainSpecificResourceMixin
 from corehq.apps.api.util import object_does_not_exist
 import couchforms
+from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, \
+    FormAccessors
 from couchforms.models import XFormArchived
 
 
@@ -37,6 +40,7 @@ class CaseListFilters(object):
         if 'order_by' in self.filters:
             del self.filters['order_by']
 
+
 class CommCareCaseResource(v0_2.CommCareCaseResource, DomainSpecificResourceMixin):
     
     # in v2 this can't be null, but in v3 it can
@@ -45,13 +49,17 @@ class CommCareCaseResource(v0_2.CommCareCaseResource, DomainSpecificResourceMixi
     # in v2 the bundle.obj is not actually a CommCareCase object but just a dict_object around a CaseAPIResult
     # so there is no 'get_json'
     def dehydrate_properties(self, bundle):
-        return bundle.obj.get_json(lite=True)['properties']
+        return bundle.obj.get_properties_in_api_format()
 
     def dehydrate_indices(self, bundle):
-        return bundle.obj.get_json(lite=True)['indices']
+        return bundle.obj.get_index_map()
 
     def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(CommCareCase, kwargs['pk'], kwargs['domain'])
+        case_id = kwargs['pk']
+        try:
+            return CaseAccessors(kwargs['domain']).get_case(case_id)
+        except CaseNotFound:
+            raise object_does_not_exist("CommCareCase", case_id)
     
     def obj_get_list(self, bundle, domain, **kwargs):
         filters = CaseListFilters(bundle.request.GET)
@@ -62,22 +70,11 @@ class XFormInstanceResource(v0_1.XFormInstanceResource, DomainSpecificResourceMi
     archived = fields.CharField(readonly=True)
 
     def dehydrate_archived(self, bundle):
-        return isinstance(bundle.obj, XFormArchived)
+        return bundle.obj.is_archived
     
     def obj_get(self, bundle, **kwargs):
-        domain = kwargs['domain']
-        doc_id = kwargs['pk']
-        doc_type = 'XFormInstance'
-        # Logic borrowed from util.get_object_or_not_exist
+        instance_id = kwargs['pk']
         try:
-            doc = couchforms.fetch_and_wrap_form(doc_id)
-            if doc and doc.domain == domain:
-                return doc
-        except (ResourceNotFound, couchforms.UnexpectedDeletedXForm):
-            pass  # covered by the below
-        except AttributeError:
-            # there's a weird edge case if you reference a form with a case id
-            # that explodes on the "version" property. might as well swallow that
-            # too.
-            pass
-        raise object_does_not_exist(doc_type, doc_id)
+            return FormAccessors(kwargs['domain']).get_form(instance_id)
+        except XFormNotFound:
+            raise object_does_not_exist("XFormInstance", instance_id)

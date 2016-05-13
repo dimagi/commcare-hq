@@ -2,7 +2,8 @@ from copy import copy
 import decimal
 import uuid
 from django.test import TestCase, SimpleTestCase, override_settings
-from mock import patch
+from kafka.common import KafkaUnavailableError
+from mock import patch, MagicMock
 from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -17,9 +18,9 @@ from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
-    doc_to_change
+    doc_to_change, domain_lite
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
 from testapps.test_pillowtop.utils import get_current_kafka_seq
 
@@ -92,6 +93,8 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         super(IndicatorPillowTest, self).setUp()
         self.pillow = get_kafka_ucr_pillow()
         self.pillow.bootstrap(configs=[self.config])
+        with trap_extra_setup(KafkaUnavailableError):
+            self.pillow.get_change_feed().get_current_offsets()
 
     def test_stale_rebuild(self):
         later_config = copy(self.config)
@@ -177,6 +180,7 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
 class StaticKafkaIndicatorPillowTest(TestCase):
     dependent_apps = ['pillowtop']
 
+    @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[domain_lite('cc1')]))
     def test_bootstrap_can_be_called(self):
         get_kafka_ucr_static_pillow().bootstrap()
 

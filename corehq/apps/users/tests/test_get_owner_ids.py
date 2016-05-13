@@ -9,6 +9,7 @@ class OwnerIDTestCase(TestCase):
     @staticmethod
     def _mock_user(id):
         class FakeUser(CommCareUser):
+
             @property
             def project(self):
                 return Domain()

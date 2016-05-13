@@ -35,14 +35,14 @@ def get_doc_ids_in_domain_by_type(domain, doc_type, database=None):
 
 
 def iterate_doc_ids_in_domain_by_type(domain, doc_type, chunk_size=10000,
-                                      database=None, startkey_docid=None):
+                                      database=None, startkey=None, startkey_docid=None):
 
     if not database:
         database = get_db_by_doc_type(doc_type)
 
     view_kwargs = {
         'reduce': False,
-        'startkey': [domain, doc_type],
+        'startkey': startkey if startkey else [domain, doc_type],
         'endkey': [domain, doc_type, {}],
         'include_docs': False
     }
@@ -74,6 +74,8 @@ def get_docs_in_domain_by_class(domain, doc_class):
         'Invitation',
         'PerformanceConfiguration',
         'ReportConfiguration',
+        'SurveyKeyword',
+        'CaseReminderHandler',
     ]
     doc_type = doc_class.__name__
     assert doc_type in whitelist

@@ -13,6 +13,7 @@ class CouchConfig(object):
     from the one specified by COUCH_DATABASE
 
     """
+
     def __init__(self, db_uri=None):
         if db_uri:
             self._settings_helper = (

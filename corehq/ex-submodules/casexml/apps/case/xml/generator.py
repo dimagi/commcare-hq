@@ -34,6 +34,7 @@ def get_dynamic_element(key, val):
         element.text = unicode(val)
     return element
 
+
 class CaseXMLGeneratorBase(object):
     # The breakdown of functionality here is a little sketchy, but basically
     # everything that changed from v1 to v2 gets a split. The rest is
@@ -89,6 +90,7 @@ class CaseXMLGeneratorBase(object):
     def add_indices(self, element):
         self._ni()
 
+
 class V1CaseXMLGenerator(CaseXMLGeneratorBase):
 
     def get_root_element(self):
@@ -125,7 +127,9 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_attachments(self, element):
         pass
 
+
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
+
     def get_root_element(self):
         root = safe_element("case")
         root.attrib = {
@@ -176,6 +180,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
                 attachment_elem.append(aroot)
             element.append(attachment_elem)
 
+
 def get_generator(version, case):
     check_version(version)
     return GENERATOR_MAP[version](case)
@@ -185,3 +190,34 @@ GENERATOR_MAP = {
     V2: V2CaseXMLGenerator,
     V3: V2CaseXMLGenerator
 }
+
+
+class CaseDBXMLGenerator(V2CaseXMLGenerator):
+
+    def __init__(self, case):
+        self.case = case
+
+    def get_root_element(self):
+        from corehq.apps.users.cases import get_owner_id
+        root = safe_element("case")
+        root.attrib = {
+            "case_id": self.case.case_id,
+            "case_type": self.case.type,
+            "owner_id": get_owner_id(self.case),
+            "status": "closed" if self.case.closed else "open",
+        }
+        return root
+
+    def add_base_properties(self, element):
+        element.append(self.get_case_name_element())
+        element.append(safe_element("date_opened", json_format_datetime(self.case.opened_on)))
+        if self.case.modified_on:
+            element.append(safe_element("last_modified", json_format_datetime(self.case.modified_on)))
+
+    def get_element(self):
+        element = self.get_root_element()
+        self.add_base_properties(element)
+        self.add_custom_properties(element)
+        self.add_indices(element)
+        self.add_attachments(element)
+        return element

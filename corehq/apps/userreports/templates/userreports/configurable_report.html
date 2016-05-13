@@ -18,7 +18,6 @@
             $applyFiltersButton.click(function(){
                 window.analytics.usage("Report Viewer", "Apply Filters", '{{ report.spec.report_meta.builder_report_type }}');
             });
-
             gaTrackLink($editReportButton, 'Report Builder', 'Edit Report', '{{ report.spec.report_meta.builder_report_type }}');
             window.analytics.trackWorkflowLink($editReportButton, "Clicked Edit to enter the Report Builder");
             window.analytics.usage("Report Viewer", "View Report", '{{ report.spec.report_meta.builder_report_type }}');
@@ -26,6 +25,10 @@
             {% else %}
             gaTrackLink($editReportButton, 'Edit UCR', 'Edit UCR');
             {% endif %}
+
+            {% for event in report_builder_events %}
+            window.analytics.usage.apply(this, {{ event|JSON }});
+            {% endfor %}
         });
     </script>
     {% if not report.is_static %}
@@ -126,17 +129,14 @@
 {% endblock %}
 
 {% block page_actions %}
-    {% if request|toggle_enabled:"USER_CONFIGURABLE_REPORTS" and not report.spec.report_meta.created_by_builder or request|toggle_enabled:"REPORT_BUILDER" and report.spec.report_meta.created_by_builder or request|toggle_enabled:"REPORT_BUILDER_BETA_GROUP" and report.spec.report_meta.created_by_builder %}
-    <a id="edit-report-link" class="btn btn-primary" href="
-        {% if report.spec.report_meta.created_by_builder %}
-            {% url 'edit_report_in_builder' domain report.report_config_id %}
-        {% else %}
-            {% url 'edit_configurable_report' domain report.report_config_id %}
-        {% endif %}
-    ">
-        <i class="fa fa-pencil"></i>&nbsp;
-        {% trans "Edit Report" %}
+
+    {% if has_report_builder_trial %}
+    <a class="btn btn-success" href="{% url 'report_builder_paywall_pricing' domain %}">
+        {% trans "Subscribe to Report Builder" %}
     </a>
+    {% endif %}
+    {% if can_edit_report %}
+        {% include 'userreports/partials/edit_report_button.html' %}
     {% endif %}
 {% endblock %}
 
@@ -147,8 +147,9 @@
             <button id="apply-filters"
                     type="submit"
                     class="filters btn btn-primary"
-                data-loading-text="{% trans 'Generating Report...' %}"
-                data-standard-text="{% trans 'Apply' %}">
+                    data-loading-text="{% trans 'Generating Report...' %}"
+                    data-standard-text="{% trans 'Apply' %}"
+                    disabled >
                 {% trans 'Apply' %}
             </button>
         </div>

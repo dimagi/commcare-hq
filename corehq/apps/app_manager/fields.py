@@ -196,6 +196,7 @@ class ApplicationDataRMIHelper(object):
             possibilities = self._get_unknown_form_possibilities()
 
             class AppCache(dict):
+
                 def __init__(self, domain):
                     super(AppCache, self).__init__()
                     self.domain = domain

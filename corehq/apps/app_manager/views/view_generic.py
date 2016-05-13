@@ -31,6 +31,7 @@ from corehq.apps.app_manager.util import (
     get_usercase_properties,
 )
 from corehq.apps.style.decorators import use_bootstrap3
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
@@ -71,6 +72,14 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
 
+    if app and app.application_version == '1.0':
+        _assert = soft_assert(to=['droberts' + '@' + 'dimagi.com'])
+        _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
+        return render(request, 'app_manager/no_longer_supported.html', {
+            'domain': domain,
+            'app': app,
+        })
+
     context = get_apps_base_context(request, domain, app)
     if app and app.copy_of:
         # don't fail hard.
@@ -110,7 +119,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         template = get_module_template(module)
         # make sure all modules have unique ids
         app.ensure_module_unique_ids(should_save=True)
-        module_context = get_module_view_context(app, module)
+        module_context = get_module_view_context(app, module, lang)
         context.update(module_context)
     elif app:
         template = "app_manager/app_view.html"

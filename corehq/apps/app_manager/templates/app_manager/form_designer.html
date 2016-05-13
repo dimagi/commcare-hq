@@ -9,12 +9,12 @@
 
 {% block js-inline %}{{ block.super }}
     {% if not vellum_debug %}
-        <link href="{% new_static 'app_manager/js/vellum/style.css' %}" type="text/css" rel="stylesheet"/>
+        <link href="{% new_static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
     {% elif vellum_debug == "dev-min" %}
         <link href="{% new_static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
     {% endif %}
     <script>
-        var CKEDITOR_BASEPATH = "{% new_static 'app_manager/js/vellum/lib/ckeditor/' %}";
+        var CKEDITOR_BASEPATH = "{% new_static "app_manager/js/vellum/lib/ckeditor/" %}";
 
         var VELLUM_OPTIONS = {
             plugins: {{ plugins|JSON }},
@@ -44,6 +44,7 @@
                     "meta/timeEnd",
                     "meta/location"
                 ].concat({{ scheduler_data_nodes|JSON }}),
+                activityUrl: '{% url "ping" %}',
                 onFormSave: function (data) {
                     var app_manager = hqImport('app_manager/js/app_manager.js')
                     app_manager.updateDOM(data.update);
@@ -112,7 +113,7 @@
                 * set settings.VELLUM_DEBUG to "dev" or "dev-min"
             {% endcomment %}
             {% if not vellum_debug %}
-            baseUrl: "{% new_static 'app_manager/js/vellum/src' %}",
+            baseUrl: "{% new_static "app_manager/js/vellum/src" %}",
             {% elif vellum_debug == "dev-min" %}
             baseUrl: "{% new_static 'formdesigner/_build/src' %}",
             {% else %}

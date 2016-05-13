@@ -2,12 +2,13 @@ from collections import defaultdict
 from copy import deepcopy
 import functools
 import json
-import itertools
 import os
 import uuid
 import yaml
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.quickcache import quickcache
@@ -35,14 +36,67 @@ from dimagi.utils.make_uuid import random_hex
 
 logger = logging.getLogger(__name__)
 
+CASE_XPATH_PATTERN_MATCHES = [
+    DOT_INTERPOLATE_PATTERN
+]
 
-def get_app_id(form):
-    """
-    Given an XForm instance, try to grab the app id, returning
-    None if not available. This is just a shortcut since the app_id
-    might not always be set.
-    """
-    return getattr(form, "app_id", None)
+CASE_XPATH_SUBSTRING_MATCHES = [
+    "instance('casedb')",
+    'session/data/case_id',
+    "#case",
+    "#parent",
+    "#host",
+]
+
+
+USER_CASE_XPATH_PATTERN_MATCHES = []
+
+USER_CASE_XPATH_SUBSTRING_MATCHES = [
+    "#user",
+    UserCaseXPath().case(),
+]
+
+
+def _prepare_xpath_for_validation(xpath):
+    prepared_xpath = xpath.lower()
+    prepared_xpath = prepared_xpath.replace('"', "'")
+    prepared_xpath = re.compile('\s').sub('', prepared_xpath)
+    return prepared_xpath
+
+
+def _check_xpath_for_matches(xpath, substring_matches=None, pattern_matches=None):
+    prepared_xpath = _prepare_xpath_for_validation(xpath)
+
+    substring_matches = substring_matches or []
+    pattern_matches = pattern_matches or []
+
+    return any([
+        re.compile(pattern).search(prepared_xpath) for pattern in pattern_matches
+    ] + [
+        substring in prepared_xpath for substring in substring_matches
+    ])
+
+
+def xpath_references_case(xpath):
+    # We want to determine here if the xpath references any cases other
+    # than the user case. To determine if the xpath references the user
+    # case, see xpath_references_user_case()
+    for substring in USER_CASE_XPATH_SUBSTRING_MATCHES:
+        xpath = xpath.replace(substring, '')
+
+    return _check_xpath_for_matches(
+        xpath,
+        substring_matches=CASE_XPATH_SUBSTRING_MATCHES,
+        pattern_matches=CASE_XPATH_PATTERN_MATCHES
+    )
+
+
+def xpath_references_user_case(xpath):
+    return _check_xpath_for_matches(
+        xpath,
+        substring_matches=USER_CASE_XPATH_SUBSTRING_MATCHES,
+        pattern_matches=USER_CASE_XPATH_PATTERN_MATCHES,
+    )
 
 
 def split_path(path):
@@ -84,26 +138,33 @@ def save_xform(app, form, xml):
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 
-def is_valid_case_type(case_type):
-    """
-    >>> is_valid_case_type('foo')
-    True
-    >>> is_valid_case_type('foo-bar')
-    True
-    >>> is_valid_case_type('foo bar')
-    False
-    >>> is_valid_case_type('')
-    False
-    >>> is_valid_case_type(None)
-    False
-    >>> is_valid_case_type('commcare-user')
-    False
 
+def is_valid_case_type(case_type, module):
     """
-    return bool(_case_type_regex.match(case_type or '')) and case_type != USERCASE_TYPE
+    >>> from corehq.apps.app_manager.models import Module, AdvancedModule
+    >>> is_valid_case_type('foo', Module())
+    True
+    >>> is_valid_case_type('foo-bar', Module())
+    True
+    >>> is_valid_case_type('foo bar', Module())
+    False
+    >>> is_valid_case_type('', Module())
+    False
+    >>> is_valid_case_type(None, Module())
+    False
+    >>> is_valid_case_type('commcare-user', Module())
+    False
+    >>> is_valid_case_type('commcare-user', AdvancedModule())
+    True
+    """
+    from corehq.apps.app_manager.models import AdvancedModule
+    matches_regex = bool(_case_type_regex.match(case_type or ''))
+    prevent_usercase_type = (case_type != USERCASE_TYPE or isinstance(module, AdvancedModule))
+    return matches_regex and prevent_usercase_type
 
 
 class ParentCasePropertyBuilder(object):
+
     def __init__(self, app, defaults=(), per_type_defaults=None):
         self.app = app
         self.defaults = defaults
@@ -140,7 +201,6 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_other_case_sharing_apps_in_domain(self):
-        from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
         apps = get_apps_in_domain(self.app.domain, include_remote=False)
         return [a for a in apps if a.case_sharing and a.id != self.app.id]
 
@@ -532,6 +592,16 @@ def prefix_usercase_properties(properties):
     return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
 
 
+def module_offers_search(module):
+    from corehq.apps.app_manager.models import AdvancedModule, Module
+
+    return (
+        isinstance(module, (Module, AdvancedModule)) and
+        module.search_config and
+        module.search_config.properties
+    )
+
+
 def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
@@ -582,11 +652,6 @@ def update_unique_ids(app_source):
             if reference.value in id_changes:
                 jsonpath_update(reference, id_changes[reference.value])
 
-    for module in app_source['modules']:
-        if module['module_type'] == 'report':
-            for report_config in module['report_configs']:
-                report_config['uuid'] = random_hex()
-
     return app_source
 
 
@@ -616,3 +681,29 @@ def use_app_aware_sync(app):
     Determines whether OTA restore should sync only cases/ledgers/fixtures of the given app where possible
     """
     return toggles.APP_AWARE_SYNC.enabled(app.domain)
+
+
+def purge_report_from_mobile_ucr(report_config):
+    """
+    Called when a report is deleted, this will remove any references to it in
+    mobile UCR modules.
+    """
+    if not toggles.MOBILE_UCR.enabled(report_config.domain):
+        return False
+
+    did_purge_something = False
+    for app in get_apps_in_domain(report_config.domain):
+        save_app = False
+        for module in app.modules:
+            if module.module_type == 'report':
+                valid_report_configs = [
+                    app_config for app_config in module.report_configs
+                    if app_config.report_id != report_config._id
+                ]
+                if len(valid_report_configs) != len(module.report_configs):
+                    module.report_configs = valid_report_configs
+                    save_app = True
+        if save_app:
+            app.save()
+            did_purge_something = True
+    return did_purge_something

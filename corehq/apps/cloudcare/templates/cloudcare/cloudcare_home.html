@@ -1,6 +1,7 @@
 {% extends "cloudcare/base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load compress %}
 
 {% block title %}
     {% if request.couch_user.is_web_user %}
@@ -15,48 +16,52 @@
     {% include "imports/proptable.html" %}
     {% include "imports/fancy-code.html" %}
 
-    <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
-    <script src="{% new_static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
+    <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}
-    <link rel="stylesheet" href="{% new_static 'nprogress/nprogress.css' %}">
-    <link rel="stylesheet" href="{% new_static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
+    <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
     <link type="text/css"
           rel="stylesheet"
           media="all"
-          href="{% new_static 'datatables/media/css/jquery.dataTables.min.css ' %}" />
-    <link rel="stylesheet" href="{% new_static 'formplayer/style/webforms.css' %}">
-    <link rel="stylesheet" href="{% new_static 'cloudcare/css/cloudcare.css' %}">
-    <link rel="stylesheet" href="{% new_static 'codemirror/lib/codemirror.css' %}" />
+          href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
+    <link rel="stylesheet" href="{% static 'cloudcare/css/cloudcare.css' %}">
+    <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
+    {% endcompress %}
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% new_static 'nprogress/nprogress.js' %}"></script>
+    {% compress js %}
+    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% static 'nprogress/nprogress.js' %}"></script>
+    <script src="{% static 'moment/min/moment.min.js' %}"></script>
 
-    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% new_static 'case/js/cheapxml.js' %}"></script>
-    <script src="{% new_static 'case/js/casexml.js' %}"></script>
-    <script src="{% new_static 'backbone/backbone-min.js' %}"></script>
-    <script src="{% new_static 'cloudcare/js/util.js' %}"></script>
-    <script src="{% new_static 'cloudcare/js/backbone/shared.js' %}"></script>
-    <script src="{% new_static 'cloudcare/js/backbone/apps.js' %}"></script>
-    <script src="{% new_static 'cloudcare/js/backbone/cases.js' %}"></script>
-    <script src="{% new_static 'cloudcare/js/post.js' %}"></script>
+    <script src="{% static 'style/js/bootstrap2/ui-element.js' %}"></script>
+    <script src="{% static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% static 'case/js/casexml.js' %}"></script>
+    <script src="{% static 'backbone/backbone-min.js' %}"></script>
+    <script src="{% static 'cloudcare/js/util.js' %}"></script>
+    <script src="{% static 'cloudcare/js/backbone/shared.js' %}"></script>
+    <script src="{% static 'cloudcare/js/backbone/apps.js' %}"></script>
+    <script src="{% static 'cloudcare/js/backbone/cases.js' %}"></script>
 
-    <script src="{% new_static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
-    <script src="{% new_static 'formplayer/script/vendor/purify.js' %}"></script>
-    <script src="{% new_static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
-    <script src="{% new_static 'formplayer/script/vendor/shortcut.js' %}"></script>
-    <script src="{% new_static 'formplayer/script/webformsession.js' %}"></script>
-    <script src="{% new_static 'formplayer/script/formnav-all.js' %}"></script>
-    <script src="{% new_static 'formplayer/script/entrycontrols_full.js' %}"></script>
-    <script src="{% new_static 'formplayer/script/fullform-ui.js' %}"></script>
-    <script src="{% new_static 'formplayer/script/utils.js' %}"></script>
+    <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
+    <script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
+    <script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
+    <script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
+    <script src="{% static 'formplayer/script/webformsession.js' %}"></script>
+    <script src="{% static 'formplayer/script/formnav-all.js' %}"></script>
+    <script src="{% static 'formplayer/script/entrycontrols_full.js' %}"></script>
+    <script src="{% static 'formplayer/script/fullform-ui.js' %}"></script>
+    <script src="{% static 'formplayer/script/utils.js' %}"></script>
 
-    <script src="{% new_static 'codemirror/lib/codemirror.js' %}"></script>
-    <script src="{% new_static 'codemirror/mode/xml/xml.js' %}"></script>
+    <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+    <script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -76,8 +81,13 @@
         deleteSuccess: "{% trans "Form was deleted." %}",
         deleteError:  "{% trans "Error deleting form. Please try again and report an issue if this problem persists." %}",
         caseListError: "{% trans "Unable to load the case list. If you are using a filter expression please double check the syntax and try again. Please report an issue if this problem persists." %}",
+    {% if request.couch_user.is_web_user %}
+        navigateDirty: "{% trans "You have not submitted this form. Click ‘Stay on this Page’ to continue working on this form. If you click 'Leave this Page' any data you have entered will not be saved." %}",
+        sidebarDirty: "{% trans "You have not submitted this form. Click ‘Cancel’ to continue working on this form. If you click 'OK' any data you have entered will not be saved." %}",
+    {% else %}
         navigateDirty: "{% trans "You have not submitted this form. Click ‘Stay on this Page’ to continue working on this form. If you click 'Leave this Page' you can resume work on this form later." %}",
         sidebarDirty: "{% trans "You have not submitted this form. Click ‘Cancel’ to continue working on this form. If you click 'OK' you can resume work on this form later." %}",
+    {% endif %}
         synced : "{% trans "User Data Successfully Synced" %}",
         errSyncing : "{% trans "Could not sync user data. Please try again and report a bug if issue persists." %}"
     };
@@ -101,7 +111,7 @@
                 instanceViewerEnabled = true;
         {% endif %}
         var username = "{{ request.user.username }}";
-
+        var cloudCare = hqImport('cloudcare/js/backbone/apps.js');
         window.mainView = new cloudCare.AppMainView({
             apps: apps,
             language: language,

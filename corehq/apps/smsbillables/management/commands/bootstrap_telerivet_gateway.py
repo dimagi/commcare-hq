@@ -1,5 +1,4 @@
 from decimal import Decimal
-import logging
 
 from django.conf import settings
 from django.core.management.base import LabelCommand
@@ -7,10 +6,8 @@ from django.core.management.base import LabelCommand
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
+from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
-
-
-logger = logging.getLogger('accounting')
 
 
 def bootstrap_telerivet_gateway(apps):
@@ -36,7 +33,7 @@ def bootstrap_telerivet_gateway(apps):
         criteria_class=sms_gateway_fee_criteria_class,
     )
 
-    logger.info("Updated Telerivet gateway fees.")
+    log_smsbillables_info("Updated Telerivet gateway fees.")
 
 
 class Command(LabelCommand):

@@ -1,16 +1,21 @@
 var CHWIndicatorTable = function (options) {
     'use strict';
     var self = this;
+    self.qIndex = -1;
 
     self.indicators = _.map(options.indicators, function(indicator){
         return new CHWIndicator(indicator);
     });
 
     self.init = function () {
-        // initialize all the indicators
-        for (var i=0; i < self.indicators.length; i++) {
-            self.indicators[i].init();
-        }
+        var _queue = new window.mvp.MVPIndicatorQueue(
+            options.indicators.length, function (ind, fnNext) {
+                return self.indicators[ind].updateIndicator()
+                    .done(fnNext)
+                    .fail(fnNext);
+            }
+        );
+        _queue.start();
     };
 
 };
@@ -24,7 +29,6 @@ var CHWIndicator = function (options) {
     self.index = options.index;
 
     self.is_loaded = false;
-    self.num_tries = 0;
 
     self.data = null;
     self.average = null;
@@ -32,11 +36,15 @@ var CHWIndicator = function (options) {
     self.total = null;
     self.std = null;
 
-    self.init = function () {
-        queue.add(self);
+    self.updateIndicator = function () {
+        var _updater = new window.mvp.MVPIndicatorUpdater(
+            self.load_url, self.loadSuccess, self.loadError
+        );
+        _updater.start();
+        return _updater.d;
     };
 
-    self.load_success = function (data) {
+    self.loadSuccess = function (data) {
         if (!data.error) {
             self.is_loaded = true;
             self.data = data.data;
@@ -49,21 +57,10 @@ var CHWIndicator = function (options) {
         } else {
             self.mark_as_error();
         }
-        queue.next(false);
     };
 
-    self.load_error = function (error) {
-        console.log("there was an error");
-        console.log(error);
-        queue.next(false);
-        if (self.num_tries <= 3) {
-            console.log("trying again");
-            // show retry message
-            queue.add(self);
-        } else {
-            self.mark_as_error();
-        }
-        self.num_tries += 1;
+    self.loadError = function (error) {
+        self.mark_as_error();
     };
     
     self.mark_as_error = function () {

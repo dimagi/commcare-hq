@@ -1,8 +1,13 @@
 from datetime import datetime
 
+from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
+from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.apps.sms.tests import setup_default_sms_test_backend, delete_domain_phone_numbers
+from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroups, SupplyPointStatusTypes, \
-    SupplyPointStatusValues
+    SupplyPointStatusValues, SLABConfig
+from custom.ilsgateway.slab.messages import REMINDER_STOCKOUT
+from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
 from custom.ilsgateway.tanzania.reminders import update_statuses
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
@@ -15,6 +20,7 @@ from custom.logistics.tests.utils import bootstrap_user
 
 
 class RemindersTest(ILSTestScript):
+
     @classmethod
     def setUpClass(cls):
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
@@ -24,6 +30,7 @@ class RemindersTest(ILSTestScript):
                                 domain=TEST_DOMAIN)
         cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
                                 domain=TEST_DOMAIN, parent=cls.district)
+        cls.facility_sp_id = cls.facility.sql_location.supply_point_id
         cls.user1 = bootstrap_user(
             cls.facility, username='test_user', domain=TEST_DOMAIN, home_loc='loc1', phone_number='5551234',
             first_name='test', last_name='Test'
@@ -217,3 +224,66 @@ class TestSOHThankYou(RemindersTest):
         people = list(SOHThankYouReminder(TEST_DOMAIN, now).get_people())
         self.assertEqual(len(people), 1)
         self.assertEqual(len(list(SOHThankYouReminder(TEST_DOMAIN, datetime.utcnow()).get_people())), 0)
+
+
+class TestStockOut(RemindersTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestStockOut, cls).setUpClass()
+        cls.facility2 = make_loc(code="loc2", name="Test Facility 2", type="FACILITY",
+                                 domain=TEST_DOMAIN, parent=cls.district)
+        cls.user2 = bootstrap_user(
+            cls.facility2, username='test_user2', domain=TEST_DOMAIN, home_loc='loc2', phone_number='5551235',
+            first_name='test', last_name='Test'
+        )
+        SLABConfig.objects.create(
+            is_pilot=True,
+            sql_location=cls.facility.sql_location
+        )
+
+        slab_config = SLABConfig.objects.create(
+            is_pilot=True,
+            sql_location=cls.facility2.sql_location
+        )
+        slab_config.closest_supply_points.add(cls.facility.sql_location)
+        slab_config.save()
+
+        config = CommtrackConfig.for_domain(TEST_DOMAIN)
+        config.use_auto_consumption = False
+        config.individual_consumption_defaults = True
+        config.consumption_config = ConsumptionConfig(
+            use_supply_point_type_default_consumption=True,
+            exclude_invalid_periods=True
+        )
+        config.save()
+
+        set_default_consumption_for_supply_point(TEST_DOMAIN, cls.id.get_id, cls.facility_sp_id, 100)
+        set_default_consumption_for_supply_point(TEST_DOMAIN, cls.dp.get_id, cls.facility_sp_id, 100)
+        set_default_consumption_for_supply_point(TEST_DOMAIN, cls.ip.get_id, cls.facility_sp_id, 100)
+
+    def test_reminder(self):
+        now = datetime.utcnow()
+        self.assertEqual(0, len(list(StockoutReminder(TEST_DOMAIN, now).get_people())))
+        script = """
+            5551234 > Hmk Id 400 Dp 620 Ip 678
+        """
+        self.run_script(script)
+        self.assertEqual(1, len(list(StockoutReminder(TEST_DOMAIN, now).get_people())))
+
+        script = """
+            5551235 > Hmk Id 0 Dp 0 Ip 0
+        """
+        self.run_script(script)
+
+        with localize('sw'):
+            reminder_stockout = unicode(REMINDER_STOCKOUT)
+
+        StockoutReminder(TEST_DOMAIN, now).send()
+        script = """
+            5551235 < %s
+        """ % reminder_stockout % {
+            'products_list': 'dp, id, ip',
+            'overstocked_list': 'Test Facility 1 (dp, ip)'
+        }
+        self.run_script(script)

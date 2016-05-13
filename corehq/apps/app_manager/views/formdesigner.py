@@ -70,7 +70,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
-    if toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain) and module and module.case_type:
+    if toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain) and module and module.case_type and form.requires_case():
         vellum_plugins.append("databrowser")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
@@ -103,7 +103,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
-
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
@@ -123,7 +122,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
 @require_GET
 @require_can_edit_apps
-def get_data_schema(request, domain, app_id=None, form_unique_id=None):
+def get_form_data_schema(request, domain, form_unique_id):
     """Get data schema
 
     One of `app_id` or `form_unique_id` is required. `app_id` is ignored
@@ -175,18 +174,17 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
     structure item may have a human readable "name".
     """
     data = []
-    if form_unique_id is None:
-        app = get_app(domain, app_id)
-        form = None
-    else:
-        try:
-            form, app = Form.get_form(form_unique_id, and_app=True)
-        except ResourceConflict:
-            raise Http404()
-        data.append(get_session_schema(form))
+
+    try:
+        form, app = Form.get_form(form_unique_id, and_app=True)
+    except ResourceConflict:
+        raise Http404()
+    data.append(get_session_schema(form))
+
     if app.domain != domain:
         raise Http404()
-    data.append(get_casedb_schema(app))  # TODO use domain instead of app
+    if form and form.requires_case():
+        data.append(get_casedb_schema(app))  # TODO use domain instead of app
     data.extend(
         sorted(item_lists_by_domain(domain), key=lambda x: x['name'].lower())
     )
@@ -194,3 +192,8 @@ def get_data_schema(request, domain, app_id=None, form_unique_id=None):
     if "pretty" in request.GET:
         kw["indent"] = 2
     return HttpResponse(json.dumps(data, **kw))
+
+
+@require_GET
+def ping(request):
+    return HttpResponse("pong")

@@ -33,9 +33,9 @@ from corehq.apps.app_manager.views.apps import (
     drop_user_case,
     edit_app_attr,
     edit_app_langs,
-    edit_app_translations,
+    edit_app_ui_translations,
     formdefs,
-    get_app_translations,
+    get_app_ui_translations,
     get_commcare_version,
     import_app,
     new_app,
@@ -74,6 +74,7 @@ from corehq.apps.app_manager.views.forms import (
     edit_careplan_form_actions,
     edit_form_actions,
     edit_form_attr,
+    edit_form_attr_api,
     form_casexml,
     get_form_datums,
     get_xform_source,
@@ -131,5 +132,5 @@ from corehq.apps.app_manager.views.translations import (
 )
 from corehq.apps.app_manager.views.formdesigner import (
     form_designer,
-    get_data_schema,
+    get_form_data_schema,
 )

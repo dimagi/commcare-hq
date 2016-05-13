@@ -1,13 +1,10 @@
-import logging
-
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
+from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.apps.sms.models import INCOMING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-
-logger = logging.getLogger('accounting')
 
 
 def bootstrap_twilio_gateway_incoming(apps):
@@ -26,7 +23,7 @@ def bootstrap_twilio_gateway_incoming(apps):
         criteria_class=sms_gateway_fee_criteria_class,
     )
 
-    logger.info("Updated INCOMING Twilio gateway fees.")
+    log_smsbillables_info("Updated INCOMING Twilio gateway fees.")
 
 
 class Command(LabelCommand):

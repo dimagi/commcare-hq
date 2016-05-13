@@ -126,7 +126,6 @@ class PactFormAPI(DomainAPI):
 
         res = self.xform_es.run_query(query)
 
-
         my_patients_ever_submitted_query = query_per_case_submissions_facet(PACT_DOMAIN, username)
         patients_res = self.xform_es.run_query(my_patients_ever_submitted_query)
 
@@ -156,30 +155,9 @@ class PactFormAPI(DomainAPI):
                     logging.error("for downloader: error fetching attachment: %s" % ex)
             yield "</restoredata>"
 
-        def return_tmpfile():
-            temp_xml = tempfile.TemporaryFile()
-            length = temp_xml.tell()
-            temp_xml.seek(0)
-            wrapper = FileWrapper(temp_xml)
-            response = HttpResponse(wrapper, content_type='text/xml')
-            response['Content-Length'] = length
-
         response = HttpResponse(return_iterator(), content_type='text/xml')
         return response
 
-
-
-html_escape_table = {
-    "&": "&amp;",
-    '"': "&quot;",
-    "'": "&apos;",
-    ">": "&gt;",
-    "<": "&lt;",
-    }
-
-def html_escape(text):
-    """Produce entities within text."""
-    return "".join(html_escape_table.get(c,c) for c in text)
 
 def sub_element(root, tag, val):
     sube = etree.SubElement(root, tag)
@@ -207,6 +185,7 @@ def generate_meta_block(couch_user, instance_id=None, timestart=None, timeend=No
 
 def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date):
     case_nsmap = {'n1': 'http://commcarehq.org/case/transaction/v2'}
+
     def make_update(update_elem, updates):
         for k,v in updates.items():
             if v is not None:
@@ -217,6 +196,7 @@ def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
     make_update(update_lxml, update_dict)
 
     return case_lxml
+
 
 def recompute_dots_casedata(casedoc, couch_user, submit_date=None, sync_token=None):
     """
@@ -231,6 +211,7 @@ def recompute_dots_casedata(casedoc, couch_user, submit_date=None, sync_token=No
 
         update_dict['dots'] = json.dumps(dots_data)
         submit_case_update_form(casedoc, update_dict, couch_user, submit_date=submit_date, xmlns=XMLNS_PATIENT_UPDATE_DOT, sync_token=sync_token)
+
 
 def submit_case_update_form(casedoc, update_dict, couch_user, submit_date=None, xmlns=XMLNS_PATIENT_UPDATE, sync_token=None):
     """
@@ -289,7 +270,6 @@ def get_all_providers(invalidate=False):
 #    cache.set('%s_casedoc' % self._id, json.dumps(self._case), PACT_CACHE_TIMEOUT)
 #        xml_ret = cache.get('%s_schedule_xml' % self._id, None)
         pass
-
 
 
 class PactAPI(DomainAPI):
@@ -422,8 +402,6 @@ class PactAPI(DomainAPI):
                 resp.status_code=500
             return resp
 
-
-
         elif self.method == "patient_edit":
             form = PactPatientForm(self.request, pdoc, data=self.request.POST)
             if form.is_valid():
@@ -438,7 +416,6 @@ class PactAPI(DomainAPI):
 
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
-
 
     @method_decorator(login_or_digest)
     def dispatch(self, *args, **kwargs):

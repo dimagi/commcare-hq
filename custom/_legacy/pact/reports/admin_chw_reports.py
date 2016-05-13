@@ -90,8 +90,6 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
                 # nopatient_row = [json_format_date(visit_date), username, 'nopatient']
                 # yield finish_row_blanks(nopatient_row)
 
-
-
     @property
     def rows(self):
         """

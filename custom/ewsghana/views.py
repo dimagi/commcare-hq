@@ -4,7 +4,6 @@ from django.core.exceptions import PermissionDenied
 from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404
-from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
@@ -14,24 +13,21 @@ from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption, \
     set_default_consumption_for_supply_point
 from corehq.apps.domain.decorators import (
-    domain_admin_required,
     login_and_domain_required,
 )
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
-from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
 from custom.ewsghana.handlers.web_submission_handler import WebSubmissionHandler
-from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension, EWSMigrationStats, \
-    EWSMigrationProblem
-from custom.ewsghana.tasks import set_send_to_owner_field_task
+from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension
 from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
-from custom.ewsghana.tasks import balance_migration_task, migrate_email_settings
 from custom.ewsghana.utils import make_url, has_input_stock_permissions, calculate_last_period, Msg
 from custom.ilsgateway.views import GlobalStats
 from custom.logistics.views import BaseConfigView
@@ -45,23 +41,13 @@ class EWSGlobalStats(GlobalStats):
     root_name = 'Country'
 
 
-class EWSConfigView(BaseConfigView):
-    config = EWSGhanaConfig
-    urlname = 'ews_config'
-    sync_urlname = 'sync_ewsghana'
-    sync_stock_url = 'ews_sync_stock_data'
-    clear_stock_url = 'ews_clear_stock_data'
-    page_title = ugettext_noop("EWS Ghana")
-    template_name = 'ewsghana/ewsconfig.html'
-    source = 'ewsghana'
-
-
 class InputStockView(BaseDomainView):
     section_name = 'Input stock data'
     section_url = ""
     template_name = 'ewsghana/input_stock.html'
 
     @method_decorator(login_and_domain_required)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         couch_user = self.request.couch_user
         site_code = kwargs['site_code']
@@ -183,27 +169,6 @@ class EWSUserExtensionView(BaseCommTrackManageView):
         return self.get(request, *args, **kwargs)
 
 
-@domain_admin_required
-@require_POST
-def balance_email_reports_migration(request, domain):
-    balance_migration_task.delay(domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def migrate_email_settings_view(request, domain):
-    migrate_email_settings.delay(domain)
-    return HttpResponse('OK')
-
-
-@domain_admin_required
-@require_POST
-def fix_email_reports(request, domain):
-    set_send_to_owner_field_task.delay(domain)
-    return HttpResponse('OK')
-
-
 @require_GET
 def inventory_management(request, domain):
 
@@ -284,42 +249,6 @@ def non_administrative_locations_for_select2(request, domain):
         locs = locs.filter(name__icontains=query)
 
     return json_response(map(loc_to_payload, locs[:10]))
-
-
-class BalanceMigrationView(BaseDomainView):
-
-    template_name = 'ewsghana/balance.html'
-    section_name = 'Balance'
-    section_url = ''
-
-    @property
-    def page_context(self):
-        return {
-            'stats': get_object_or_404(EWSMigrationStats, domain=self.domain),
-            'products_count': SQLProduct.objects.filter(domain=self.domain).count(),
-            'locations_count': SQLLocation.objects.filter(
-                domain=self.domain, location_type__administrative=True
-            ).exclude(is_archived=True).count(),
-            'supply_points_count': SQLLocation.objects.filter(
-                domain=self.domain, location_type__administrative=False
-            ).exclude(is_archived=True).count(),
-            'web_users_count': WebUser.by_domain(self.domain, reduce=True)[0]['value'],
-            'sms_users_count': CommCareUser.by_domain(self.domain, reduce=True)[0]['value'],
-            'problems': EWSMigrationProblem.objects.filter(domain=self.domain)
-        }
-
-
-class BalanceEmailMigrationView(BaseDomainView):
-
-    template_name = 'ewsghana/email_balance.html'
-    section_name = 'Email Balance'
-    section_url = ''
-
-    @property
-    def page_context(self):
-        return {
-            'problems': EWSMigrationProblem.objects.filter(domain=self.domain)
-        }
 
 
 class DashboardPageView(RedirectView):

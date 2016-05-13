@@ -1,0 +1,110 @@
+{% extends "style/bootstrap3/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'locations/ko/location_tree.async.js' %}"></script>
+{% endblock %}
+
+{% block stylesheets %}{{ block.super }}
+    <link rel="stylesheet" href="{% static 'locations/style/manage.css' %}">
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    var LOAD_LOCS_URL = '{{ api_root }}',
+        NEW_LOC_URL = '{% url "create_location" domain %}';
+
+    var locs = {{ locations|JSON }};
+    var can_edit_root = {{ can_edit_root|yesno:"true,false" }};
+    var selected_loc = {{ selected_id|JSON }};
+    var hierarchy = {{ hierarchy|JSON }};
+    var show_inactive = {{ show_inactive|yesno:"true,false" }};
+
+    function loc_edit_url(loc_id) {
+        var template = '{% url "slab_edit_location" domain "-locid-" %}';
+        return template.replace('-locid-', loc_id);
+    }
+
+    function loc_descendant_url(loc_id) {
+        var template = '{% url "location_descendants_count" domain "-locid-" %}';
+        return template.replace('-locid-', loc_id);
+    }
+
+    remove_elements_after_action = function(button) {
+        $(button).closest('.loc_section').remove();
+    };
+
+    $(function() {
+        var model = new LocationTreeViewModel(hierarchy);
+        $('#location_tree').koApplyBindings(model);
+        model.load(locs, selected_loc);
+    });
+</script>
+{% endblock %}
+
+{% block page_content %}
+
+{% if has_location_types %}
+    <script type="text/html" id="location-template">
+
+        <div class="loc_section">
+            <!-- header bar -->
+            <div class="loc_header" data-bind="if: name() != '_root'">
+                <div style="float:right;" data-bind="if: can_edit() && type() === 'FACILITY'">
+                    <a class="btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
+                        {% trans "Edit" %}
+                    </a>
+                </div>
+
+                <!-- want to make entire row clickable, but overrides click on 'edit' button -->
+                <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
+                    <span data-bind="if: can_have_children">
+                        <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }"></i>
+                    </span>
+                    <span class="loc_name" data-bind="text: name"></span>
+                    <span class="loc_type">(<span data-bind="text: type"></span>)</span>
+                </span>
+                <div style="clear: both;"></div>
+                <hr style="margin: 0;"/>
+            </div>
+
+            <!-- child content -->
+            <div class="loc_children" data-bind="visible: expanded, style: { borderColor: 'rgba(0, 0, 255, ' + Math.min(.08 * depth, .5) + ')' }">
+
+                <!-- ajax spinner -->
+                <div class="loc_section loc_child" data-bind="visible: children_status() == 'loading'">
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" /> Loading&hellip;
+                </div>
+
+                <!-- ajax content -->
+                <div data-bind="fadeVisible: children_status() == 'loaded'">
+
+                    <!-- child entries -->
+                    <div data-bind="foreach: children">
+                        <div class="loc_child" data-bind="template: { name: 'location-template' }"></div>
+                    </div>
+
+                    <!-- 'no children' message -->
+                    <div class="loc_child no_children alert alert-info" data-bind="visible: children().length == 0, text: no_children_caption"></div>
+
+                </div>
+            </div>
+        </div>
+
+    </script>
+{% else %}
+  <div class="loc_child no_children alert alert-info">
+    {% url "location_types" domain as location_types_url %}
+    {% blocktrans %}
+    Please define the organization levels
+    <a href="{{ location_types_url }}">here</a>
+    for your project before creating any locations.
+    {% endblocktrans %}
+  </div>
+{% endif %}
+
+<div id="location_tree">
+  <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
+</div>
+{% endblock %}

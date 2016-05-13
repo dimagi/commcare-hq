@@ -1,9 +1,9 @@
 from functools import wraps
 import logging
 from couchdbkit.exceptions import ResourceNotFound
-from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
-from psycopg2._psycopg import InterfaceError
+from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
+from django.db.utils import InterfaceError as DjangoInterfaceError
 from datetime import datetime, timedelta
 import hashlib
 import traceback
@@ -41,7 +41,6 @@ WAIT_HEARTBEAT = 10000
 CHANGES_TIMEOUT = 60000
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
-
 
 
 class PillowtopIndexingError(Exception):
@@ -184,7 +183,7 @@ class BasicPillow(PillowBase):
         try:
             # This breaks the module boundary by using a show function defined in commcare-hq
             # but it was decided that it wasn't worth the effort to maintain the separation.
-            meta = self.get_couch_db().show('domain/domain_date', change['id'])
+            meta = self.get_couch_db().show('domain_shows/domain_date', change['id'])
         except ResourceNotFound:
             # Show function does not exist
             meta = None
@@ -511,7 +510,7 @@ class AliasedElasticPillow(BasicPillow):
                     "tb": tb
                 }
             )
-            return None
+            raise
 
     def process_bulk(self, changes):
         if not changes:
@@ -608,7 +607,7 @@ def retry_on_connection_failure(fn):
             db.transaction.rollback()
             # re raise the exception for additional error handling
             raise
-        except InterfaceError:
+        except (Psycopg2InterfaceError, DjangoInterfaceError):
             # force closing the connection to prevent Django from trying to reuse it.
             # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
             db.connection.close()

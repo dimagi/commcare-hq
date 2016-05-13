@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<device_report xmlns="http://code.javarosa.org/devicereport">
+    <user_error_subreport version="1">
+        <user_error date="2016-03-23T12:27:33.681-04">
+            <type>error-config</type>
+            <msg>XPath evaluation: type mismatch It looks like this question contains a reference to path number which evaluated to instance(item-list:numbers)/numbers_list/numbers[1]/number which was not found. This often means you forgot to include the full path to the question -- e.g. /data/[node]</msg>
+            <user_id>65t2l8ga654k93z92j236e2h30jt048b</user_id>
+            <session>frame: (COMMAND_ID m1)</session>
+            <version>89</version>
+            <app_id>skj94l95tw0k6v8esdj9s2g4chfpup83</app_id>
+            <expr/>
+        </user_error>
+    </user_error_subreport>
+</device_report>

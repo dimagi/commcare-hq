@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/default.html" %}
+{% extends "reports/async/default.html" %}
 {% load i18n %}
 
 {% block reportcontent %}
@@ -13,7 +13,7 @@
     {% endblock patient_header %}
 
     {% block patient_content %}
-        <div class="span11">
+        <div class="col-md-11">
             {% block patient-content-tabs %}
                 <ul class="nav nav-pills">
                     {% block patient-tab %}

@@ -9,7 +9,6 @@ import mock
 from django.conf import settings
 from django.core.management import call_command
 
-from dimagi.utils.dates import add_months
 from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (
@@ -143,7 +142,7 @@ def get_start_date():
     start_date = datetime.date.today()
     (_, last_day) = calendar.monthrange(start_date.year, start_date.month)
     # make sure that the start_date does not fall on the first or last day of the month:
-    return start_date.replace(day=min(max(2, start_date.day), last_day-1))
+    return start_date.replace(day=min(max(2, start_date.day), last_day - 1))
 
 
 def arbitrary_domain():
@@ -153,20 +152,6 @@ def arbitrary_domain():
     )
     domain.save()
     return domain
-
-
-def arbitrary_domains_by_product_type():
-    domains = {}
-    for product_type, _ in SoftwareProductType.CHOICES:
-        domain = arbitrary_domain()
-        if product_type == SoftwareProductType.COMMTRACK:
-            domain.commtrack_enabled = True
-            domain.save()
-        if product_type == SoftwareProductType.COMMCONNECT:
-            domain.commconnect_enabled = True
-            domain.save()
-        domains[product_type] = domain
-    return domains
 
 
 def arbitrary_commcare_user(domain, is_active=True):
@@ -224,6 +209,7 @@ def create_excess_community_users(domain):
 
 
 class FakeStripeCard(mock.MagicMock):
+
     def __init__(self):
         super(FakeStripeCard, self).__init__()
         self._metadata = {}
@@ -243,6 +229,7 @@ class FakeStripeCard(mock.MagicMock):
 
 
 class FakeStripeCustomer(mock.MagicMock):
+
     def __init__(self, cards):
         super(FakeStripeCustomer, self).__init__()
         self.id = uuid.uuid4().hex.lower()[:25]

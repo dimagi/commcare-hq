@@ -153,13 +153,20 @@ hqDefine('app_manager/js/report-module.js', function () {
                     'filter_type',
                     'select_value',
                     'operator',
+                    'operand',
                     'date_number',
                     'date_number2',
                     'start_of_month',
-                    'period'
+                    'period',
+                    'ancestor_location_type_name'
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
-                    filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(filter.selectedValue[filterFields[filterFieldsIndex]] || '');
+                    startVal = filter.selectedValue[filterFields[filterFieldsIndex]];
+                    if (startVal === 0) {
+                        filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(0);
+                    } else {
+                        filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(startVal || '');
+                    }
                 }
                 filter.selectedValue.value = ko.observable(filter.selectedValue.value ? filter.selectedValue.value.join(select2Separator) : '');
 
@@ -192,7 +199,9 @@ hqDefine('app_manager/js/report-module.js', function () {
                         StaticChoiceFilter: ['select_value'],
                         StaticDatespanFilter: ['date_range'],
                         CustomDatespanFilter: ['operator', 'date_number', 'date_number2'],
-                        CustomMonthFilter: ['start_of_month', 'period']
+                        CustomMonthFilter: ['start_of_month', 'period'],
+                        AncestorLocationTypeFilter: ['ancestor_location_type_name'],
+                        NumericFilter: ['operator', 'operand'],
                     };
                     _.each(docTypeToField, function(field, docType) {
                         if(filter.selectedValue.doc_type() === docType) {
@@ -231,18 +240,20 @@ hqDefine('app_manager/js/report-module.js', function () {
             'CustomDataAutoFilter',
             'StaticChoiceListFilter',
             'StaticChoiceFilter',
-            'MobileSelectFilter'
+            'MobileSelectFilter',
+            'AncestorLocationTypeFilter',
+            'NumericFilter',
         ];
         this.autoFilterTypes = [
             'case_sharing_group',
             'location_id',
             'parent_location_id',
-            'ancestor_location_type_id',
             'username',
             'user_id'
         ];
         this.date_range_options = ['last7', 'last30', 'thismonth', 'lastmonth', 'lastyear'];
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
+        this.numeric_operators = ['=', '!=', '<', '<=', '>', '>='];
     }
 
     function ReportConfig(report_id, display,
@@ -275,7 +286,7 @@ hqDefine('app_manager/js/report-module.js', function () {
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
-            self.fullLocalizedDescription[self.lang] = self.localizedDescription();
+            self.fullLocalizedDescription[self.lang] = self.localizedDescription() || "";
             return {
                 report_id: self.reportId(),
                 graph_configs: self.graphConfig.toJSON(),
@@ -284,7 +295,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                 localized_description: self.fullLocalizedDescription,
                 xpath_description: self.xpathDescription(),
                 use_xpath_description: self.useXpathDescription(),
-                uuid: self.uuid
+                uuid: self.uuid,
             };
         };
     }

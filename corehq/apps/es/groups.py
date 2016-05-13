@@ -28,6 +28,7 @@ class GroupES(HQESQuery):
             is_case_sharing,
             is_reporting,
             group_ids,
+            not_deleted,
         ] + super(GroupES, self).builtin_filters
 
 
@@ -41,3 +42,7 @@ def is_reporting(value=True):
 
 def group_ids(group_ids):
     return filters.term("_id", list(group_ids))
+
+
+def not_deleted():
+    return filters.term("doc_type", "Group")

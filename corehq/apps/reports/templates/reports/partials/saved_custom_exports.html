@@ -30,7 +30,7 @@
         <tr class="{% cycle "odd" "even" %}">
             <td class="control-group form-inline">
                 {{ export.name|default:"[blank]" }}
-                {% if not deid and export.is_safe %}<span class="label">{% trans "de-identified" %}</span>{% endif %}
+                {% if not deid and export.is_safe %}<span class="label label-default">{% trans "de-identified" %}</span>{% endif %}
                 <p style="display:none; margin-top:1em;" class="controls">
                     <label>{% trans "Sheet Name" %} <i class="icon icon-info-sign sheet-name-info"></i>:</label>
                     <input data-bind="updateCustomSheetName: selected_exports, checkForUniqueSheetName: sheet_names, event: {keydown: checkCustomSheetNameLength, keyup: updateCustomSheetNameCharacterCount}"
@@ -43,7 +43,7 @@
                 <div><p class="help-inline">{{ export.formname }}</p></div>
             </td>
             <td class="cell-vertical-centered">
-                <a class="btn" href='{% url "export_custom_data" domain export.get_id %}?format=html&limit=50&{{ get_filter_params.urlencode|safe }}'>
+                <a class="btn btn-default" href='{% url "export_custom_data" domain export.get_id %}?format=html&limit=50&{{ get_filter_params.urlencode|safe }}'>
                     {% trans "Web Preview" %}
                 </a>
             </td>
@@ -85,7 +85,7 @@
                                 {% trans "Download " %} <br> ({{properties.size}})
                         </a>
                       {% else %}
-                          <span class="label">{% trans "No Multimedia" %}</span>
+                          <span class="label label-default">{% trans "No Multimedia" %}</span>
                       {% endif %}
                     {% endwith %}
                 </td>

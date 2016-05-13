@@ -59,6 +59,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
 
 def get_case_wrapper(data):
     from corehq.apps.commtrack.util import get_case_wrapper as commtrack_wrapper
+
     def pact_wrapper(data):
         if data['domain'] == 'pact' and data['type'] == 'cc_path_client':
             from pact.models import PactPatientCase
@@ -185,7 +186,7 @@ def assign_cases(caselist, owner_id, acting_user=None, update=None):
     if filtered_cases:
         caseblocks = [ElementTree.tostring(CaseBlock(
                 create=False,
-                case_id=c._id,
+                case_id=c.case_id,
                 owner_id=owner_id,
                 update=update,
             ).as_xml()) for c in filtered_cases
@@ -199,8 +200,8 @@ def assign_cases(caselist, owner_id, acting_user=None, update=None):
 
 def make_creating_casexml(domain, case, new_case_id, new_parent_ids=None):
     new_parent_ids = new_parent_ids or {}
-    old_case_id = case._id
-    case._id = new_case_id
+    old_case_id = case.case_id
+    case.case_id = new_case_id
     local_move_back = {}
     for index in case.indices:
         new = new_parent_ids[index.referenced_id]
@@ -211,7 +212,7 @@ def make_creating_casexml(domain, case, new_case_id, new_parent_ids=None):
         case_block = get_case_xml(case, (const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE), version='2.0')
         case_block, attachments = _process_case_block(domain, case_block, case.case_attachments, old_case_id)
     finally:
-        case._id = old_case_id
+        case.case_id = old_case_id
         for index in case.indices:
             index.referenced_id = local_move_back[index.referenced_id]
     return case_block, attachments

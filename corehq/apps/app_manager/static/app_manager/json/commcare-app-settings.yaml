@@ -182,6 +182,15 @@
   min_value: 1
   max_value: 100
 
+- id: experienced_threshold
+  name: 'Minimum months of use until experienced'
+  description: 'This field indicates the minimum number of months a user must submit forms to be considered experienced enough to generate a WAM. The default value is 3. Please see <a href="https://confluence.dimagi.com/display/internal/WAMs+and+PAMs">confluence</a> or the data team for further clarification.'
+  widget: number
+  preview: true
+  warning: 'The experienced threshold must be between 1 and 100'
+  min_value: 1
+  max_value: 100
+
 - id: comment
   name: 'Comment'
   description: >

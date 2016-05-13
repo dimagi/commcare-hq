@@ -1,8 +1,13 @@
 from decimal import Decimal
-from django.db import transaction
-import stripe
+
 from django.conf import settings
+from django.db import transaction
 from django.utils.translation import ugettext as _
+
+import stripe
+
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
@@ -10,7 +15,6 @@ from corehq.apps.accounting.models import (
     PaymentRecord,
     SoftwareProductType,
     FeatureType,
-    PaymentMethod,
     PreOrPostPay,
     StripePaymentMethod,
     LastPayment
@@ -23,7 +27,6 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.const import USER_DATE_FORMAT
-from dimagi.utils.decorators.memoized import memoized
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 
@@ -67,7 +70,8 @@ class BaseStripePaymentHandler(object):
         """
         raise NotImplementedError("you must implement update_credits")
 
-    def get_amount_in_cents(self, amount):
+    @staticmethod
+    def get_amount_in_cents(amount):
         amt_cents = amount * Decimal('100')
         return int(amt_cents.quantize(Decimal(10)))
 
@@ -75,7 +79,6 @@ class BaseStripePaymentHandler(object):
         account.last_payment_method = LastPayment.CC_ONE_TIME
         account.pre_or_post_pay = PreOrPostPay.POSTPAY
         account.save()
-
 
     def process_request(self, request):
         customer = None
@@ -102,10 +105,18 @@ class BaseStripePaymentHandler(object):
                     return {'success': True, 'removedCard': card, }
                 if save_card:
                     card = self.payment_method.create_card(card, billing_account, self.domain, autopay=autopay)
-            if save_card or is_saved_card:
-                customer = self.payment_method.customer
+                if save_card or is_saved_card:
+                    customer = self.payment_method.customer
 
-            charge = self.create_charge(amount, card=card, customer=customer)
+                payment_record = PaymentRecord.create_record(
+                    self.payment_method, 'temp', amount
+                )
+                self.update_credits(payment_record)
+
+                charge = self.create_charge(amount, card=card, customer=customer)
+
+            payment_record.transaction_id = charge.id
+            payment_record.save()
             self.update_payment_information(billing_account)
         except stripe.error.CardError as e:
             # card was declined
@@ -133,12 +144,6 @@ class BaseStripePaymentHandler(object):
                 }
             )
             return generic_error
-
-        with transaction.atomic():
-            payment_record = PaymentRecord.create_record(
-                self.payment_method, charge.id, amount
-            )
-            self.update_credits(payment_record)
 
         try:
             self.send_email(payment_record)
@@ -352,7 +357,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         account.pre_or_post_pay = PreOrPostPay.PREPAY
         account.save()
 
-
     def update_credits(self, payment_record):
         for feature in self.features:
             feature_amount = feature['amount']
@@ -380,7 +384,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     plan_amount,
                     account=self.account,
                     subscription=self.subscription,
-                    product_type=product['type'],
+                    product_type=SoftwareProductType.ANY,
                     payment_record=payment_record,
                 ))
             else:
@@ -412,6 +416,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
 
 class AutoPayInvoicePaymentHandler(object):
+
     def pay_autopayable_invoices(self, date_due):
         """ Pays the full balance of all autopayable invoices on date_due """
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
@@ -464,7 +469,8 @@ class AutoPayInvoicePaymentHandler(object):
         except:
             self._handle_email_failure(payment_record)
 
-    def _handle_card_declined(self, invoice, payment_method):
+    @staticmethod
+    def _handle_card_declined(invoice, payment_method):
         from corehq.apps.accounting.tasks import send_autopay_failed
         log_accounting_error(
             "[Autopay] An automatic payment failed for invoice: {} "
@@ -474,14 +480,16 @@ class AutoPayInvoicePaymentHandler(object):
         )
         send_autopay_failed.delay(invoice, payment_method)
 
-    def _handle_card_errors(self, invoice, e):
+    @staticmethod
+    def _handle_card_errors(invoice, e):
         log_accounting_error(
             "[Autopay] An automatic payment failed for invoice: {invoice} "
             "because the of {error}. This invoice will not be automatically paid."
             .format(invoice=invoice.id, error=e)
         )
 
-    def _handle_email_failure(self, payment_record):
+    @staticmethod
+    def _handle_email_failure(payment_record):
         log_accounting_error(
             "[Autopay] During an automatic payment, sending a payment receipt failed"
             " for Payment Record: {}. Everything else succeeded"

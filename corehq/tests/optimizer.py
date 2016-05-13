@@ -67,12 +67,6 @@ class AppAndTestMap(object):
 
     def __init__(self):
         self._dependencies = get_app_test_db_dependencies()
-        # these are permanently needed apps
-        self.required_apps = set([
-            'django.contrib.auth',
-            'django.contrib.contenttypes',
-            'django.contrib.sessions'
-        ])
         self.apps = set([])
         self.tests = []  # contains tuples of app_labels and test classes
 
@@ -84,7 +78,8 @@ class AppAndTestMap(object):
 
     def get_needed_installed_apps(self):
         try:
-            needed_apps = copy(self.required_apps)
+            needed_apps = set(copy(self.get_app_dependencies('default')))
+            needed_apps.remove('default')
             for app in self.apps:
                 needed_apps.update(self.get_app_dependencies(app))
 
@@ -105,7 +100,9 @@ class AppAndTestMap(object):
         dependencies = set([apps.get_app_config(app).name])
 
         def _extract_tests(test_suite_or_test):
-            if isinstance(test_suite_or_test, unittest.TestCase):
+            if isinstance(test_suite_or_test, unittest.TestCase) \
+                    or (isinstance(test_suite_or_test, type) and
+                        issubclass(test_suite_or_test, unittest.TestCase)):
                 return [test_suite_or_test]
             elif isinstance(test_suite_or_test, unittest.TestSuite):
                 return test._tests
@@ -127,7 +124,9 @@ class AppAndTestMap(object):
 def optimize_apps_for_test_labels(test_labels):
     test_map = AppAndTestMap()
     for label in test_labels:
-        if '.' in label:
+        if isinstance(label, tuple):
+            test_map.add_test(*label)
+        elif '.' in label:
             test_map.add_test(label.split('.')[0], build_test(label))
         else:
             test_map.add_app(label)

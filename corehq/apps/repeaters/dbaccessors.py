@@ -1,6 +1,7 @@
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.util.couch_helpers import paginate_view
+from corehq.util.test_utils import unit_testing_only
 
 from .const import RECORD_PENDING_STATE, RECORD_FAILURE_STATE, RECORD_SUCCESS_STATE
 
@@ -115,3 +116,16 @@ def iterate_repeat_records(due_before, chunk_size=10000, database=None):
             chunk_size,
             **view_kwargs):
         yield RepeatRecord.wrap(doc['doc'])
+
+
+@unit_testing_only
+def delete_all_repeat_records():
+    from .models import RepeatRecord
+    results = RepeatRecord.get_db().view('receiverwrapper/repeat_records_by_next_check', reduce=False).all()
+    for result in results:
+        try:
+            repeat_record = RepeatRecord.get(result['id'])
+        except Exception:
+            pass
+        else:
+            repeat_record.delete()

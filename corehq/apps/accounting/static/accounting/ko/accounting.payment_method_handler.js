@@ -453,7 +453,7 @@ var StripeCard = function () {
     self.newSavedCard = ko.observable(false);
 
     self.autopayCard = ko.computed(function(){
-        if (!self.newSavedCard){
+        if (!self.newSavedCard()){
             return false;
         }
     });

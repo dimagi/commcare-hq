@@ -44,6 +44,7 @@ class ExportSchemaTest(TestCase):
 
 
 class SavedSchemaTest(TestCase):
+
     def setUp(self):
         self.db = get_db('couchexport')
         self.custom_export = SavedExportSchema.wrap({
@@ -110,11 +111,11 @@ class SavedSchemaTest(TestCase):
 
     def test_split_column_missing(self):
         self.post_it()
-        self._test_split_column([[None, None, None, None, None]])
+        self._test_split_column([[SCALAR_NEVER_WAS] * 5])
 
     def test_split_column_missing_ignore_extras(self):
         self.post_it()
-        self._test_split_column([[None, None, None, None]], ignore_extras=True)
+        self._test_split_column([[SCALAR_NEVER_WAS] * 4], ignore_extras=True)
 
     def test_split_column_None_ignore_extras(self):
         self.post_it(multi=None)
@@ -162,6 +163,7 @@ class SavedSchemaTest(TestCase):
 
 
 class GetFormattedRowsTests(SimpleTestCase):
+
     def test(self):
         doc = {
             'gender': 'boy'
@@ -187,6 +189,7 @@ class GetFormattedRowsTests(SimpleTestCase):
 
 
 class ExportSchemaWrapTest(SimpleTestCase):
+
     def test_wrap_datetime_hippy(self):
         schema1 = ExportSchema(
             schema={},

@@ -4,6 +4,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
+from corehq.apps.style.decorators import use_nvd3
 from dimagi.utils.decorators.memoized import memoized
 from custom.intrahealth.filters import LocationFilter
 from custom.intrahealth.reports import IntraHealtMixin
@@ -16,6 +17,10 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
     report_template_path = "intrahealth/multi_report.html"
     flush_layout = True
     export_format_override = 'csv'
+
+    @use_nvd3
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(MultiReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     @memoized
@@ -137,6 +142,7 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
             table.append(_unformat_row(total_row))
 
         return [export_sheet_name, table]
+
 
 class TableuDeBoardReport(MultiReport):
     title = "Tableau De Bord"

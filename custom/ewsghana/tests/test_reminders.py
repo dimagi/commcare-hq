@@ -4,7 +4,6 @@ from decimal import Decimal
 from casexml.apps.stock.models import StockTransaction, StockReport
 
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.products.models import SQLProduct, Product
 from corehq.apps.sms.models import SMS
@@ -23,13 +22,15 @@ from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_
 TEST_DOMAIN = 'ews-reminders-test-domain'
 
 
-def create_stock_report(location, products_quantities, date=datetime.utcnow()):
+def create_stock_report(location, products_quantities, date=None):
+    date = date or datetime.utcnow()
     sql_location = location.sql_location
     report = StockReport.objects.create(
         form_id='ews-reminders-test',
         domain=sql_location.domain,
         type='balance',
-        date=date
+        date=date,
+        server_date=date
     )
     for product_code, quantity in products_quantities.iteritems():
         StockTransaction(
@@ -144,9 +145,6 @@ class TestReminders(EWSTestCase):
         sql_location1.save()
         sql_location2.save()
 
-        cls.loc1.save()
-        cls.loc2.save()
-
     def tearDown(self):
         SMS.objects.all().delete()
         StockState.objects.all().delete()
@@ -158,8 +156,8 @@ class TestReminders(EWSTestCase):
         cls.user1.delete()
         cls.user2.delete()
         cls.user3.delete()
+        cls.domain.delete()
         FacilityInCharge.objects.all().delete()
-        SQLLocation.objects.all().delete()
 
         super(TestReminders, cls).tearDownClass()
 

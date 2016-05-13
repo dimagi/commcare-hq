@@ -2,7 +2,7 @@ FROM postgres:9.4
 
 ENV PGVERSION 9.4
 
-RUN apt-get update && apt-get -y install \
+RUN apt-get update && apt-get -y install --no-upgrade \
     gcc \
     make \
     postgresql-$PGVERSION-plproxy \

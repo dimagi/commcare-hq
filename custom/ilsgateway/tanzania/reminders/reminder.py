@@ -24,7 +24,7 @@ class Reminder(object):
         raise NotImplemented()
 
     def get_sql_locations(self):
-        return SQLLocation.objects.filter(location_type__name=self.location_type)
+        return SQLLocation.objects.filter(domain=self.domain, location_type__name=self.location_type)
 
     def get_people(self):
         for sql_location in self.get_sql_locations():

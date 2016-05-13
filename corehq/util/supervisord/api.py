@@ -99,6 +99,7 @@ class SupervisorApi(object):
 
 
 class HQSupervisorApi(object):
+
     def __init__(self, inventory_group):
         self.inventory_group = inventory_group
         self.servers = {
@@ -145,6 +146,7 @@ class HQSupervisorApi(object):
 
 
 class PillowtopSupervisorApi(HQSupervisorApi):
+
     def __init__(self):
         super(PillowtopSupervisorApi, self).__init__('pillowtop')
 

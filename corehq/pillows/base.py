@@ -4,6 +4,25 @@ from django.conf import settings
 
 
 VALUE_TAG = '#value'
+DEFAULT_META = {
+    "settings": {
+        "analysis": {
+            "analyzer": {
+                "default": {
+                    "type": "custom",
+                    "tokenizer": "whitespace",
+                    "filter": ["lowercase"]
+                },
+                "sortable_exact": {
+                    "type": "custom",
+                    "tokenizer": "keyword",
+                    "filter": ["lowercase"]
+                }
+            }
+        }
+    }
+}
+
 
 def map_types(item, mapping, override_root_keys=None):
     if isinstance(item, dict):
@@ -12,6 +31,7 @@ def map_types(item, mapping, override_root_keys=None):
         return [map_types(x, mapping) for x in item]
     else:
         return {VALUE_TAG: item}
+
 
 def convert_property_dict(sub_dict, mapping, override_root_keys=None):
     """
@@ -33,6 +53,7 @@ def convert_property_dict(sub_dict, mapping, override_root_keys=None):
         if dynamic_mapping is not False:
             sub_dict[k] = map_types(v, sub_mapping, override_root_keys=override_root_keys)
     return sub_dict
+
 
 def restore_property_dict(report_dict_item):
     """
@@ -59,24 +80,7 @@ def restore_property_dict(report_dict_item):
 
 class HQPillow(AliasedElasticPillow):
     es_timeout = 60
-    es_meta = {
-        "settings": {
-            "analysis": {
-                "analyzer": {
-                    "default": {
-                        "type": "custom",
-                        "tokenizer": "whitespace",
-                        "filter": ["lowercase"]
-                    },
-                    "sortable_exact": {
-                        "type": "custom",
-                        "tokenizer": "keyword",
-                        "filter": ["lowercase"]
-                    }
-                }
-            }
-        }
-    }
+    es_meta = DEFAULT_META
 
     @classmethod
     @memoized

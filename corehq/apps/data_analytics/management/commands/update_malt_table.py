@@ -20,6 +20,6 @@ class Command(BaseCommand):
             month_year = dateutil.parser.parse(arg)
             datespan_list.append(DateSpan.from_month(month_year.month, month_year.year))
         generator = MALTTableGenerator(datespan_list)
-        print "Building Malt table..."
+        print "Building Malt table... for time range {}".format(datespan_list)
         generator.build_table()
         print "Finished!"

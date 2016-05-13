@@ -7,7 +7,7 @@ from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
 from corehq.apps.smsbillables.exceptions import SMSRateCalculatorError
 from corehq.apps.smsbillables.models import SmsGatewayFeeCriteria, SmsGatewayFee, SmsUsageFee
-from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty
+from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty, log_smsbillables_error
 from corehq.util.quickcache import quickcache
 
 
@@ -26,7 +26,7 @@ class SMSRatesAsyncHandler(BaseAsyncHandler):
         try:
             backend_api_id = SQLMobileBackend.get_backend_api_id(gateway, is_couch_id=True)
         except Exception as e:
-            log_accounting_error(
+            log_smsbillables_error(
                 "Failed to get backend for calculating an sms rate due to: %s"
                 % e
             )
@@ -48,6 +48,7 @@ class SMSRatesAsyncHandler(BaseAsyncHandler):
         return {
             'rate': _("%s per 160 character SMS") % fmt_dollar_amount(usd_total),
         }
+
 
 class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
     slug = 'sms_rate_calc'

@@ -11,11 +11,7 @@
 {% endblock js-inline %}
 {% endif %}
 
-{% block title %}Confirmation Email Sent{% endblock title %}
-
-{% block step-title %}
-    Confirm Account {% if alert_message %}<small>{{ alert_message }}</small>{% endif %}
-{% endblock %}
+{% block title %}{% trans "Confirmation Email Sent" %}{% endblock title %}
 
 {% block registration-content %}
     <div class="alert alert-info">
@@ -24,7 +20,7 @@
         {% endblocktrans %}</strong>
         {% blocktrans %}
             Please visit the link provided in the email to activate your account,
-            so you can start using your new {{ SITE_NAME }} project!
+            so you can start using your new CommCare HQ project!
         {% endblocktrans %}
     </div>
     {% include "registration/partials/confirmation_waiting_actions.html" %}

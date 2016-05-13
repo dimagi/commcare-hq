@@ -2,7 +2,7 @@ from dateutil import rrule
 from django.db.models.aggregates import Avg
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter, ILSAsyncLocationFilter
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
@@ -11,7 +11,6 @@ from custom.ilsgateway.tanzania.reports.mixins import DeliverySubmissionData
 from custom.ilsgateway.tanzania.reports.utils import make_url, link_format, latest_status_or_none,\
     get_this_lead_time, get_avg_lead_time
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from django.utils.translation import ugettext as _
 
 
@@ -21,6 +20,7 @@ class LeadTimeHistory(ILSData):
     slug = "lead_time_history"
     show_chart = False
     searchable = True
+    use_datatables = True
 
     @property
     def headers(self):
@@ -191,7 +191,7 @@ class DeliveryReport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter]
+        fields = [ILSAsyncLocationFilter, ILSDateFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields

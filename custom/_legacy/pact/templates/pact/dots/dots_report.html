@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/default.html" %}
+{% extends "reports/async/default.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block reportcontent %}
@@ -26,14 +26,14 @@
         });
     </script>
 
-    <div class="span11">
+    <div class="col-sm-11">
     {% for calendar in dot_calendar.calendars %}
         {{ calendar|safe }}
     {% endfor %}
     </div>
         <link type="text/css" rel="stylesheet" href="{% static 'pact/stylesheets/dots.css' %}"/>
 
-    <div class="span11">
+    <div class="col-sm-11">
     <hr>
     {% include "pact/dots/dots_report_visits.html" %}
     </div>

@@ -14,6 +14,7 @@
 			<bind nodeset="/data/question1" type="xsd:string" />
 			<bind nodeset="/data/question3" />
 			<bind nodeset="/data/question3/question4" type="xsd:string" />
+			<bind nodeset="/data/zendquestion" type="xsd:string"/>
 			<itext>
 				<translation lang="en" default="">
 					<text id="question1-label">
@@ -24,6 +25,9 @@
 					</text>
 					<text id="question3/question4-label">
 						<value>question4</value>
+					</text>
+					<text id="zendquestion-label">
+						<value>end question</value>
 					</text>
 				</translation>
 			</itext>
@@ -41,5 +45,8 @@
 				</input>
 			</repeat>
 		</group>
+		<input ref="/data/zendquestion">
+			<label ref="jr:itext('zendquestion-label')" />
+		</input>
 	</h:body>
 </h:html>

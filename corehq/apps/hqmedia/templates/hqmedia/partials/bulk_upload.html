@@ -27,11 +27,11 @@
         {% endblocktrans %}
     </div>
     <div class="btn-toolbar">
-        <div class="btn-group hqm-select-files-container">
+        <div class="btn-group hqm-select-files-container" style="display: inline-block;"><!--- TODO: necessary? -->
             <button class="hqm-select btn btn-primary" role="button">{% trans 'Select Files' %}</button>
         </div>
         <div class="btn-group">
-            <a class="hqm-upload hqm-upload-confirm btn btn-default disabled" data-toggle="modal">
+            <a class="hqm-upload hqm-upload-confirm btn btn-default disabled" data-toggle="modal" style="margin-right: 5px;"><!-- TODO: necessary? -->
                 <i class="fa fa-cloud-upload"></i> {% trans 'Begin Upload' %}
             </a>
         </div>

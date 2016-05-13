@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 import json
 from corehq.apps.api.es import ReportXFormES
+from corehq.apps.style.decorators import use_timeago
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from dimagi.utils import html
 from pact.enums import PACT_DOMAIN
@@ -27,6 +28,10 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
     }
 
     name = "Patient Info"
+
+    @use_timeago
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        return super(PactPatientInfoReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     def patient_id(self):
@@ -101,7 +106,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
             raise Http404
         return ret
 
-
     @property
     def headers(self):
         return DataTablesHeader(
@@ -166,7 +170,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         full_query['script_fields'] = pact_script_fields()
         res = self.xform_es.run_query(full_query)
         return res
-
 
     @property
     def rows(self):

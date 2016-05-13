@@ -6,7 +6,6 @@ from dimagi.ext.couchdbkit import (
     SchemaListProperty,
     StringProperty,
 )
-from django.core.cache import cache
 from corehq.apps.app_manager.models import Application
 from corehq.apps.groups.models import Group
 from dimagi.utils.decorators.memoized import memoized
@@ -34,7 +33,6 @@ class AppGroup(DocumentSchema):
             '_id': self.group.get_id,
             }
 
-
     @property
     @memoized
     def app(self):
@@ -52,18 +50,6 @@ class AppGroup(DocumentSchema):
             'name': self.app.name,
             '_id': self.app.get_id,
             }
-
-    @memoized
-    def get_collated(self):
-        cache_key = 'get_collated-%s-%s' % (self.app_id, self.group_id)
-        r = cache.get(cache_key)
-        if not r:
-            r = {
-                'app': self.app_stub,
-                'group': self.group_stub,
-                }
-            cache.set(cache_key, r, 15*60)
-        return r
 
 
 class ApplicationAccess(Document):
@@ -94,7 +80,6 @@ class ApplicationAccess(Document):
             return Group.user_in_group(user_id, app_group.group_id)
         else:
             return False
-
 
     @classmethod
     def get_template_json(cls, domain, apps):

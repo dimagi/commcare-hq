@@ -10,3 +10,9 @@ def should_use_sql_backend(domain):
             return override
 
     return USE_SQL_BACKEND.enabled(domain)
+
+
+def is_commcarecase(obj):
+    from casexml.apps.case.models import CommCareCase
+    from corehq.form_processor.models import CommCareCaseSQL
+    return isinstance(obj, (CommCareCase, CommCareCaseSQL))

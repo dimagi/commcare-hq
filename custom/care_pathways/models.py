@@ -9,6 +9,7 @@ from custom.utils.utils import flat_field
 
 
 class Numerator(fluff.Calculator):
+
     @fluff.null_emitter
     def numerator(self, case):
         yield None
@@ -19,16 +20,18 @@ class Property(fluff.Calculator):
     @fluff.date_emitter
     def value(self, case):
         config = get_domain_configuration(case.domain).by_type_hierarchy
+        val = (case.get_case_property('crop_id') or case.get_case_property('crop_name') or '')
         for chain in config:
-            if chain.val == (case['crop_id'] or '').lower():
+            if chain.val == val.lower():
                 for domain in chain.next:
                     for practice in domain.next:
                         ppt_prop = case.get_case_property(practice.val)
-                        yield {
-                            'date': case.opened_on,
-                            'value': 1 if ppt_prop == 'Y' else 0,
-                            'group_by': [case.domain, chain.val, domain.val, practice.val]
-                        }
+                        if ppt_prop:
+                            yield {
+                                'date': case.opened_on,
+                                'value': 1 if ppt_prop == 'Y' else 0,
+                                'group_by': [case.domain, chain.val, domain.val, practice.val]
+                            }
 
 
 def get_property(case, property):
@@ -66,8 +69,19 @@ def get_practices(case):
 
 
 def get_gender(case):
-    gender =case.get_case_property('farmer_gender')
+    gender = case.get_case_property('farmer_gender')
     return '1' if gender and gender[0].lower() == 'f' else '0'
+
+
+def get_ppt_year(case):
+    ppt_year = case.get_case_property('ppt_year')
+    return ppt_year.split('/')[0]
+
+
+def get_group_leadership(case):
+    if case.domain in ('care-macf-malawi', 'care-macf-bangladesh'):
+        return 'Y' if case.get_case_property('farmer_role') == 'office_bearer' else 'N'
+    return case.get_case_property('farmer_is_leader')
 
 
 def case_property(property):
@@ -111,13 +125,13 @@ class FarmerRecordFluff(fluff.IndicatorDocument):
     case_status = flat_field(lambda c: c.get_case_property('case_status'))
     group_id = flat_field(lambda c: c.get_case_property('group_id'))
     group_name = flat_field(lambda c: c.get_case_property('group_name'))
-    ppt_year = flat_field(lambda c: c.get_case_property('ppt_year'))
+    ppt_year = flat_field(lambda c: get_ppt_year(c))
     owner_id = flat_field(lambda c: c.get_case_property('owner_id'))
     gender = flat_field(lambda c: get_gender(c))
-    group_leadership = flat_field(lambda c: c.get_case_property('farmer_is_leader'))
+    group_leadership = flat_field(get_group_leadership)
+    real_or_test = flat_field(lambda c: c.get_case_property('test_or_real'))
     schedule = flat_field(lambda c: (c.get_case_property('farmer_social_category') or '').lower())
     prop = Property()
-
 
 
 GeographyFluffPillow = GeographyFluff.pillow()

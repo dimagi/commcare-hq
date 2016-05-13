@@ -60,4 +60,68 @@
   </log_subreport>
   <log_subreport></log_subreport>
   <log_subreport> </log_subreport>
+  <log_subreport>
+    <log date="2016-03-20T20:45:51.234+05:30">
+      <type>maintenance</type>
+      <msg>Logging out service login</msg>
+    </log>
+    <log date="2016-03-20T20:46:06.170+05:30">
+      <type>user</type>
+      <msg>Remote Auth Successful|someone.test</msg>
+    </log>
+    <log date="2016-03-20T20:46:08.614+05:30">
+      <type>user</type>
+      <msg>User Sync Successful|someone.test</msg>
+    </log>
+    <log date="2016-03-20T20:46:08.664+05:30">
+      <type>maintenance</type>
+      <msg>Logging out service login</msg>
+    </log>
+    <log date="2016-03-20T20:46:08.988+05:30">
+      <type>user</type>
+      <msg>login|someone.test|gxpg40k9lh9w7853w3gc91o1g7zu1wi8</msg>
+    </log>
+  </log_subreport>
+  <user_error_subreport version="1">
+    <user_error date="2016-03-23T12:27:33.681-04">
+      <type>error-config</type>
+      <msg>XPath evaluation: type mismatch It looks like this question contains a reference to path number which evaluated to instance(item-list:numbers)/numbers_list/numbers[1]/number which was not found. This often means you forgot to include the full path to the question -- e.g. /data/[node]</msg>
+      <user_id>65t2l8ga654k93z92j236e2h30jt048b</user_id>
+      <session>frame: (COMMAND_ID m1)</session>
+      <version>89</version>
+      <app_id>skj94l95tw0k6v8esdj9s2g4chfpup83</app_id>
+      <expr/>
+    </user_error>
+  </user_error_subreport>
+  <force_close_subreport/>
+  <force_close_subreport/>
+  <log_subreport/>
+  <log_subreport/>
+  <log_subreport>
+    <log date="2016-03-19T23:50:11.219+05:30">
+      <type>resources</type>
+      <msg>Staging Sandbox: 7t3iyx01dxnn49a5xqt32916q5u7epn0</msg>
+    </log>
+    <log date="2016-03-19T23:50:18.136+05:30">
+      <type>resources</type>
+      <msg>Staging Sandbox: 7t3iyx01dxnn49a5xqt32916q5u7epn0</msg>
+    </log>
+    <log date="2016-03-20T20:45:36.033+05:30">
+      <type>resources</type>
+      <msg>Staging Sandbox: 7t3iyx01dxnn49a5xqt32916q5u7epn0</msg>
+    </log>
+    <log date="2016-03-20T20:45:42.303+05:30">
+      <type>resources</type>
+      <msg>Staging Sandbox: 7t3iyx01dxnn49a5xqt32916q5u7epn0</msg>
+    </log>
+    <log date="2016-03-20T20:45:49.313+05:30">
+      <type>user</type>
+      <msg>Performing key record callout. Success is required for login</msg>
+    </log>
+    <log date="2016-03-20T20:45:50.653+05:30">
+      <type>user</type>
+      <msg>Key record request complete. Received: 1 key records from server</msg>
+    </log>
+  </log_subreport>
+
 </device_report>

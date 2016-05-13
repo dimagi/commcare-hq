@@ -1,4 +1,7 @@
 {% load i18n %}
+<script type="application/javascript">
+    gaTrackLink($('#mobile-link'), 'App Manager', 'Initiate Install', 'Mobile Browser Link')
+</script>
 <div class="modal-dialog modal-lg">
     <div class="modal-content">
         <div class="modal-header">
@@ -15,13 +18,13 @@
             </p>
             <p>
                 {% blocktrans %}
-                You can also click <strong><a href="{{ profile_url }}">here</a></strong> in your mobile browser.
+                You can also click <strong><a id="mobile-link" href="{{ profile_url }}">here</a></strong> in your mobile browser.
                 {% endblocktrans %}
             </p>
             <p>
-                {% trans "For more about CommCare on Android, visit" %}
-                <a href="https://confluence.dimagi.com/display/commcarepublic/Installing+CommCareODK+Android">
-                    {% trans "Installing CommCareODK Android" %}
+                {% trans "For help installing CommCare, visit " %}
+                <a href="https://help.commcarehq.org/display/commcarepublic/Install+CommCare+for+Android+Smartphones" target="_blank">
+                    {% trans "Install CommCare" %}
                 </a>
             </p>
         </div>

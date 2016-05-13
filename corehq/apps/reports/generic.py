@@ -124,8 +124,6 @@ class GenericReportView(object):
     report_title = None
     report_subtitles = []
 
-    is_bootstrap3 = False
-
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
@@ -187,8 +185,8 @@ class GenericReportView(object):
             context={}
         )
 
-
     _caching = False
+
     def __setstate__(self, state):
         """
             For unpickling a pickled report.
@@ -271,15 +269,14 @@ class GenericReportView(object):
     @memoized
     def template_async_base(self):
         return self._select_bootstrap_template(
-            (self.base_template_async or "reports/async/bootstrap2/default.html")
+            (self.base_template_async or "reports/async/default.html")
             if self.asynchronous else self.template_base
         )
-
 
     @property
     @memoized
     def template_report(self):
-        original_template = self.report_template_path or "reports/async/bootstrap2/basic.html"
+        original_template = self.report_template_path or "reports/async/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
             return self._select_bootstrap_template(self.override_template)
@@ -294,7 +291,7 @@ class GenericReportView(object):
     @memoized
     def template_filters(self):
         return self._select_bootstrap_template(
-            self.base_template_filters or "reports/async/bootstrap2/filters.html"
+            self.base_template_filters or "reports/async/filters.html"
         )
 
     @property
@@ -313,7 +310,7 @@ class GenericReportView(object):
             else:
                 klass = field
             filters.append(
-                klass(self.request, self.domain, self.timezone, is_bootstrap3=self.is_bootstrap3)
+                klass(self.request, self.domain, self.timezone)
             )
         return filters
 
@@ -412,7 +409,6 @@ class GenericReportView(object):
                 pass
         return are_filters_set
 
-
     @property
     def needs_filters(self):
         """
@@ -467,7 +463,7 @@ class GenericReportView(object):
                 is_emailable=self.emailable,
                 is_export_all = self.exportable_all,
                 is_printable=self.printable,
-                is_admin=self.is_admin_report,   # todo is this necessary???
+                is_admin=self.is_admin_report,
                 special_notice=self.special_notice,
                 report_title=self.report_title or self.rendered_report_title,
                 report_subtitles=self.report_subtitles,
@@ -724,8 +720,6 @@ class GenericReportView(object):
         pass
 
     def _select_bootstrap_template(self, template_path):
-        if self.is_bootstrap3 and template_path is not None:
-            template_path = template_path.replace('/bootstrap2/', '/bootstrap3/')
         return template_path
 
 
@@ -784,7 +778,7 @@ class GenericTabularReport(GenericReportView):
     sortable = True
 
     # override old class properties
-    report_template_path = "reports/async/bootstrap2/tabular.html"
+    report_template_path = "reports/async/tabular.html"
     flush_layout = True
 
     # set to a list of functions that take in a report object 
@@ -855,6 +849,7 @@ class GenericTabularReport(GenericReportView):
         return self.get_url(domain=self.domain, render_as='json')
 
     _pagination = None
+
     @property
     def pagination(self):
         if self._pagination is None:
@@ -924,6 +919,7 @@ class GenericTabularReport(GenericReportView):
         return None
 
     _export_sheet_name = None
+
     @property
     def export_sheet_name(self):
         if self._export_sheet_name is None:
@@ -1050,8 +1046,9 @@ def summary_context(report):
     # a summary_values attribute
     return {"summary_values": report.summary_values}
 
+
 class SummaryTablularReport(GenericTabularReport):
-    report_template_path = "reports/async/bootstrap2/summary_tabular.html"
+    report_template_path = "reports/async/summary_tabular.html"
     extra_context_providers = [summary_context]
 
     @property
@@ -1073,7 +1070,9 @@ class SummaryTablularReport(GenericTabularReport):
         assert (len(self.data) == len(headers))
         return zip(headers, self.data)
 
+
 class ProjectInspectionReportParamsMixin(object):
+
     @property
     def shared_pagination_GET_params(self):
         # This was moved from ProjectInspectionReport so that it could be included in CaseReassignmentInterface too
@@ -1107,6 +1106,7 @@ class PaginatedReportMixin(object):
             res.append(self.default_sort)
         return res
 
+
 class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
     """
     Tabular report that provides framework for doing elasticsearch backed tabular reports.
@@ -1136,6 +1136,7 @@ class ElasticTabularReport(GenericTabularReport, PaginatedReportMixin):
 
 
 class GetParamsMixin(object):
+
     @property
     def shared_pagination_GET_params(self):
         """

@@ -18,9 +18,11 @@ from jsonobject import StringProperty
 from jsonobject.properties import BooleanProperty
 from lxml import etree
 from uuidfield import UUIDField
-
+from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound, BadName
+from corehq.form_processor import signals
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.sql_db.routers import db_for_read_write
@@ -53,6 +55,7 @@ class TruncatingCharField(models.CharField):
     """
     http://stackoverflow.com/a/3460942
     """
+
     def get_prep_value(self, value):
         value = super(TruncatingCharField, self).get_prep_value(value)
         if value:
@@ -61,6 +64,7 @@ class TruncatingCharField(models.CharField):
 
 
 class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
+
     @property
     @memoized
     def content(self):
@@ -80,6 +84,7 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
 
 
 class SaveStateMixin(object):
+
     def is_saved(self):
         return bool(self._get_pk_val())
 
@@ -125,6 +130,7 @@ class AttachmentMixin(SaveStateMixin):
 
 
 class DisabledDbMixin(object):
+
     def save(self, *args, **kwargs):
         raise AccessRestricted('Direct object save disabled.')
 
@@ -136,6 +142,7 @@ class DisabledDbMixin(object):
 
 
 class RestrictedManager(models.Manager):
+
     def get_queryset(self):
         if not getattr(settings, 'ALLOW_FORM_PROCESSING_QUERIES', False):
             raise AccessRestricted('Only "raw" queries allowed')
@@ -192,10 +199,11 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     # The time at which the server has received the form
     received_on = models.DateTimeField()
 
-    # Used to tag forms that were forcefully submitted
-    # without a touchforms session completing normally
     auth_context = JSONField(lazy=True, default=dict)
     openrosa_headers = JSONField(lazy=True, default=dict)
+
+    # Used to tag forms that were forcefully submitted
+    # without a touchforms session completing normally
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
@@ -218,6 +226,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     def get_obj_by_id(cls, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         return FormAccessorSQL.get_form(form_id)
+
+    @property
+    def get_id(self):
+        return self.form_id
 
     @property
     def is_normal(self):
@@ -492,7 +504,7 @@ class SupplyPointCaseMixin(object):
 
 class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
-                      SupplyPointCaseMixin):
+                      SupplyPointCaseMixin, MessagingCaseContactMixin):
     objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -530,6 +542,10 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         return dt
 
     @property
+    def get_id(self):
+        return self.case_id
+
+    @property
     @memoized
     def xform_ids(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -555,6 +571,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def dynamic_case_properties(self):
         return OrderedDict(sorted(self.case_json.iteritems()))
 
+    def to_api_json(self, lite=False):
+        from .serializers import CommCareCaseSQLAPISerializer
+        serializer = CommCareCaseSQLAPISerializer(self, lite=lite)
+        return serializer.data
+
     def to_json(self):
         from .serializers import CommCareCaseSQLSerializer
         serializer = CommCareCaseSQLSerializer(self)
@@ -576,6 +597,18 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def reverse_indices(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_reverse_indices(self.case_id)
+
+    @memoized
+    def get_subcases(self, index_identifier=None):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        subcase_ids = [
+            ix.referenced_id for ix in self.reverse_indices
+            if (index_identifier is None or ix.identifier == index_identifier)
+        ]
+        return CaseAccessorSQL.get_cases(subcase_ids)
+
+    def get_reverse_index_map(self):
+        return self.get_index_map(True)
 
     @memoized
     def _saved_indices(self):
@@ -627,17 +660,22 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         transactions += self.get_tracked_models_to_create(CaseTransaction)
         return transactions
 
+    @property
+    def actions(self):
+        """For compatability with CommCareCase. Please use transactions when possible"""
+        return self.non_revoked_transactions
+
     def get_transaction_by_form_id(self, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
+        transactions = filter(
+            lambda t: t.form_id == form_id,
+            self.get_tracked_models_to_create(CaseTransaction)
+        )
+        assert len(transactions) <= 1
+        transaction = transactions[0] if transactions else None
 
         if not transaction:
-            transactions = filter(
-                lambda t: t.form_id == form_id,
-                self.get_tracked_models_to_create(CaseTransaction)
-            )
-            assert len(transactions) <= 1
-            transaction = transactions[0] if transactions else None
+            transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 
     @property
@@ -708,6 +746,32 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def get_obj_by_id(cls, case_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_case(case_id)
+
+    @memoized
+    def get_parent(self, identifier=None, relationship=None):
+        indices = self.indices
+
+        if identifier:
+            indices = filter(lambda index: index.identifier == identifier, indices)
+
+        if relationship:
+            indices = filter(lambda index: index.relationship_id == relationship, indices)
+
+        return [index.referenced_case for index in indices]
+
+    @property
+    def parent(self):
+        """
+        Returns the parent case if one exists, else None.
+        NOTE: This property should only return the first parent in the list
+        of indices. If for some reason your use case creates more than one,
+        please write/use a different property.
+        """
+        result = self.get_parent(
+            identifier=DEFAULT_PARENT_IDENTIFIER,
+            relationship=CommCareCaseIndexSQL.CHILD
+        )
+        return result[0] if result else None
 
     def __unicode__(self):
         return (
@@ -882,7 +946,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
         app_label = "form_processor"
 
 
-class CaseTransaction(DisabledDbMixin, models.Model):
+class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     objects = RestrictedManager()
 
     # types should be powers of 2
@@ -940,6 +1004,12 @@ class CaseTransaction(DisabledDbMixin, models.Model):
         return relevant
 
     @property
+    def user_id(self):
+        if self.form:
+            return self.form.user_id
+        return None
+
+    @property
     def form(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         if not self.form_id:
@@ -972,6 +1042,16 @@ class CaseTransaction(DisabledDbMixin, models.Model):
     @property
     def is_case_attachment(self):
         return bool(self.is_form_transaction and self.TYPE_CASE_ATTACHMENT & self.type)
+
+    @property
+    def is_case_rebuild(self):
+        return bool(
+            (self.TYPE_REBUILD_FORM_ARCHIVED & self.type) or
+            (self.TYPE_REBUILD_FORM_EDIT & self.type) or
+            (self.TYPE_REBUILD_USER_ARCHIVED & self.type) or
+            (self.TYPE_REBUILD_USER_REQUESTED & self.type) or
+            (self.TYPE_REBUILD_WITH_REASON & self.type)
+        )
 
     @property
     def readable_type(self):
@@ -1124,21 +1204,54 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     """
     objects = RestrictedManager()
 
-    # domain not included and assumed to be accessed through the foreign key to the case table. legit?
+    domain = models.CharField(max_length=255, null=False, default=None)
     case_id = models.CharField(max_length=255, db_index=True, default=None)  # remove foreign key until we're sharding this
+    location_id = models.CharField(max_length=255, null=True, default=None)
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
     entry_id = models.CharField(max_length=100, db_index=True, default=None)
     section_id = models.CharField(max_length=100, db_index=True, default=None)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
+    last_modified_form_id = models.CharField(max_length=100, null=True, default=None)
+    daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
+
+    @property
+    def last_modified_date(self):
+        return self.last_modified
+
+    @property
+    def product_id(self):
+        return self.entry_id
+
+    @property
+    def stock_on_hand(self):
+        return self.balance
+
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
+        )
+
+    @property
+    def sql_location(self):
+        from corehq.apps.locations.models import SQLLocation
+        if self.location_id:
+            return SQLLocation.by_location_id(self.location_id)
+
+    def to_json(self):
+        from .serializers import LedgerValueSerializer
+        serializer = LedgerValueSerializer(self)
+        return serializer.data
 
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
 
 
-class LedgerTransaction(DisabledDbMixin, models.Model):
+class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     TYPE_BALANCE = 1
     TYPE_TRANSFER = 2
     TYPE_CHOICES = (
@@ -1198,6 +1311,17 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
             if self.type == type_:
                 return type_slug
 
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
+        )
+
+    @property
+    def stock_on_hand(self):
+        return self.updated_balance
+
     def __unicode__(self):
         return (
             "LedgerTransaction("
@@ -1222,6 +1346,7 @@ class LedgerTransaction(DisabledDbMixin, models.Model):
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):
+
     @property
     def is_stockout(self):
         from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND

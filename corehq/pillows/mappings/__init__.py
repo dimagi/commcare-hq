@@ -9,3 +9,6 @@
 #CASE_INDEX = "hqcases_58bb9e522b9b6513e64cc6e69556c37b"
 #prod
 #CASE_INDEX = "hqcases_3f765bd72c844d353619408862556ebd"
+
+
+NULL_VALUE = "__NULL__"

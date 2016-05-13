@@ -723,6 +723,8 @@ class IntraHealthQueryMeta(QueryMeta):
     def __init__(self, table_name, filters, group_by, key):
         self.key = key
         super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by, [])
+        assert len(filters) > 0
+        self.filter = AND(self.filters) if len(self.filters) > 1 else self.filters[0]
 
     def execute(self, metadata, connection, filter_values):
         try:
@@ -743,7 +745,7 @@ class SumAndAvgQueryMeta(IntraHealthQueryMeta):
             sqlalchemy.select(
                 self.group_by + [sqlalchemy.func.sum(key_column).label('sum_col')] + [table.c.month],
                 group_by=self.group_by + [table.c.month],
-                whereclause=AND(self.filters).build_expression(table),
+                whereclause=self.filter.build_expression(table),
             ), name='s')
 
         return select(
@@ -761,7 +763,7 @@ class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
             sqlalchemy.select(
                 self.group_by + [sqlalchemy.func.count(sqlalchemy.distinct(key_column)).label('count_unique')],
                 group_by=self.group_by + [table.c.month],
-                whereclause=AND(self.filters).build_expression(table),
+                whereclause=self.filter.build_expression(table),
             ),
             name='cq')
 

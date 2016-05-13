@@ -21,6 +21,7 @@ class FeaturePreview(StaticToggle):
             and has_privilege(request, privileges.BETA_FEATURE):
         # do cool thing for BETA_FEATURE
     """
+
     def __init__(self, slug, label, description, help_link=None, privilege=None,
                  save_fn=None):
         self.privilege = privilege

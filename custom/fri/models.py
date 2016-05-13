@@ -21,6 +21,7 @@ PROFILE_DESC = {
     PROFILE_H : "H - Other",
 }
 
+
 class FRIMessageBankMessage(Document):
     """
     Defines a message in the message bank.
@@ -29,6 +30,7 @@ class FRIMessageBankMessage(Document):
     risk_profile = StringProperty(choices=PROFILES)
     message = StringProperty()
     fri_id = StringProperty()
+
 
 class FRIRandomizedMessage(Document):
     """
@@ -39,6 +41,7 @@ class FRIRandomizedMessage(Document):
     case_id = StringProperty() # Points to the _id of the CommCareCase who this message was randomized for
     message_bank_message_id = StringProperty() # Points to the _id of a MessageBankMessage
     order = IntegerProperty() # The order in which this message must be sent, from 0 - 279
+
 
 class FRIExtraMessage(Document):
     """
@@ -55,12 +58,9 @@ class FRIExtraMessage(Document):
                                     key=[domain, message_id],
                                     include_docs=True).one()
 
+
 class FRISMSLog(SMSLog):
     fri_message_bank_lookup_completed = BooleanProperty(default=False)
     fri_message_bank_message_id = StringProperty()
     fri_id = StringProperty()
     fri_risk_profile = StringProperty(choices=PROFILES)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return SMS._migration_get_fields()

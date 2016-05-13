@@ -37,9 +37,9 @@ class FormQuestion(JsonObject):
     @property
     def icon(self):
         try:
-            return VELLUM_TYPES[self.type]['icon']
+            return "{} {}".format(VELLUM_TYPES[self.type]['icon'], VELLUM_TYPES[self.type]['icon_bs3'])
         except KeyError:
-            return 'icon-question-sign'
+            return 'fa fa-question-circle'
 
     @property
     def relative_value(self):
@@ -358,7 +358,7 @@ def _html_interpolate_output_refs(itext_value, context):
                 processor=lambda x: underline_template % (
                     html.escape(x)
                     if x is not None
-                    else u'<i class="icon-question-sign"></i>'
+                    else u'<i class="fa fa-question-circle"></i>'
                 ),
                 escape=html.escape,
             )

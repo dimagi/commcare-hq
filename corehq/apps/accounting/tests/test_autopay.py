@@ -1,5 +1,3 @@
-import datetime
-import random
 import mock
 
 from stripe import Charge
@@ -15,6 +13,7 @@ from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 
 
 class TestBillingAutoPay(BaseInvoiceTestCase):
+
     def setUp(self):
         super(TestBillingAutoPay, self).setUp()
         self._generate_autopayable_entities()
@@ -79,7 +78,6 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         date_due = not_autopayable_invoice.first().date_due
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
         self.assertItemsEqual(autopayable_invoices, [])
-
 
     @mock.patch.object(StripePaymentMethod, 'customer')
     @mock.patch.object(Charge, 'create')

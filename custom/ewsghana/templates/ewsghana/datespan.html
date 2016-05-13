@@ -1,4 +1,4 @@
-{% extends 'reports/filters/bootstrap2/base.html' %}
+{% extends 'reports/filters/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
 <div id="0">
@@ -6,7 +6,7 @@
     <input type="hidden" name="enddate" data-bind="value: enddate">
     <div>
         <select id="date_span_type"
-            class="{{ css_class }}"
+            class="{{ css_class }} form-control"
             data-bind="options: select_params,
                        optionsText: 'text',
                        optionsValue: 'val',
@@ -19,7 +19,7 @@
     <br>
     <div>
         <select id="date_span_first"
-            class="{{ css_class }}"
+            class="{{ css_class }} form-control"
             data-bind="options: firstOptions,
                        optionsText: 'text',
                        optionsValue: 'val',
@@ -32,7 +32,7 @@
     <br>
     <div>
         <select id="date_span_second"
-            class="{{ css_class }}"
+            class="{{ css_class }} form-control"
             data-bind="options: secondOptions,
                        optionsText: 'text',
                        optionsValue: 'val',

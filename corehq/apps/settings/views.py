@@ -1,19 +1,21 @@
 import re
 from django.views.decorators.debug import sensitive_post_parameters
-from corehq.apps.hqwebapp.models import MySettingsTab
 from corehq.apps.settings.forms import (
     HQPasswordChangeForm, HQPhoneNumberMethodForm, HQDeviceValidationForm,
     HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
 )
 from corehq.apps.style.decorators import use_bootstrap3, use_select2
 from corehq.apps.users.forms import AddPhoneNumberForm
+from django.conf import settings
 from django.contrib import messages
 from django.views.decorators.http import require_POST
+from corehq.tabs.tabclasses import MySettingsTab
 import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy,
+    activate, LANGUAGE_SESSION_KEY)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required)
 from django.core.urlresolvers import reverse
@@ -35,9 +37,11 @@ from two_factor.views import (
 def default(request, domain):
     return HttpResponseRedirect(reverse("users_default", args=[domain]))
 
+
 @login_and_domain_required
 def redirect_users(request, domain, old_url=""):
     return HttpResponseRedirect(reverse("users_default", args=[domain]))
+
 
 @login_and_domain_required
 def redirect_domain_settings(request, domain, old_url=""):
@@ -203,9 +207,11 @@ class MyAccountSettingsView(BaseMyAccountView):
             old_lang = self.request.couch_user.language
             self.settings_form.update_user(existing_user=self.request.couch_user)
             new_lang = self.request.couch_user.language
-            # set language in the session so it takes effect immediately
             if new_lang != old_lang:
-                request.session['django_language'] = new_lang
+                # update the current session's language setting
+                request.session[LANGUAGE_SESSION_KEY] = new_lang
+                # and activate it for the current thread so the response page is translated too
+                activate(new_lang)
         return self.get(request, *args, **kwargs)
 
 
@@ -278,6 +284,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     def page_context(self):
         return {
             'form': self.password_change_form,
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
         }
 
     @method_decorator(sensitive_post_parameters())

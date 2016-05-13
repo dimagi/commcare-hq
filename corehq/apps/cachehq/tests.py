@@ -46,6 +46,7 @@ class BlogPost(CachedCouchDocumentMixin, Super):
 
 
 class TestCachedCouchDocumentMixin(SimpleTestCase):
+
     @patch.object(Super, 'get')
     def test_get(self, doc_get):
         blog_post = BlogPost(title="My favorite colors", body="blue")

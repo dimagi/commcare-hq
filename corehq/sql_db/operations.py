@@ -1,6 +1,8 @@
 import os
+import re
 
 from django.conf import settings
+from django.db import connection
 from django.db.migrations import RunPython
 from django.db.migrations.operations.special import RunSQL
 from django.template import Context
@@ -9,11 +11,16 @@ from django.template.loader import get_template_from_string
 from corehq.sql_db.routers import allow_migrate
 
 
+class IndexRenameOperationException(Exception):
+    pass
+
+
 class HqOpMixin(object):
     """
     Hack until we upgrade to Django 1.8 to allow selectively running custom operations
     on different DB's
     """
+
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
         db_alias = schema_editor.connection.alias
         if allow_migrate(db_alias, app_label):
@@ -50,6 +57,7 @@ class RunSqlLazy(RunSQL):
     Also supports reading the SQL as a Django template and rendering
     it with the provided template context.
     """
+
     def __init__(self, sql_template_path, reverse_sql_template_path, template_context=None):
         self.template_context = template_context or {}
         self.rendered_forwards = False
@@ -89,6 +97,7 @@ class RawSQLMigration(object):
         migrator = RawSQLMigration(('base', 'path'), {'variable': 'value'})
         migrator.get_migration('sql_template.sql')
     """
+
     def __init__(self, base_path_tuple, template_context=None):
         self.template_context = template_context
         self.base_path = os.path.join(*base_path_tuple)
@@ -112,3 +121,48 @@ class RawSQLMigration(object):
             reverse_path,
             self.template_context
         )
+
+
+def _validate_old_index_name(index_name, table_name):
+    if not index_name.startswith(table_name):
+        raise IndexRenameOperationException(
+            "Expected all indexes on table %s to start with the table name" % table_name
+        )
+
+
+def _validate_identifier(name):
+    allowed_chars = re.compile('^[\w\$]+$')
+    if not allowed_chars.match(name):
+        raise IndexRenameOperationException("Invalid identifier given: %s" % name)
+
+
+def _rename_table_indexes(from_table, to_table):
+    def fcn(apps, schema_editor):
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT indexname FROM pg_indexes WHERE tablename = %s', [from_table])
+            indexes = [row[0] for row in cursor.fetchall()]
+            for index_name in indexes:
+                _validate_old_index_name(index_name, from_table)
+                new_index_name = index_name.replace(from_table, to_table, 1)
+                _validate_identifier(index_name)
+                _validate_identifier(new_index_name)
+                cursor.execute('ALTER INDEX %s RENAME TO %s' % (index_name, new_index_name))
+
+    return fcn
+
+
+def rename_table_indexes(from_table, to_table):
+    """
+    Returns a migration operation to rename table indexes to prevent index name
+    collision when renaming models. This should be used in conjunction with a
+    migrations.RenameModel operation, with this operation being placed right before
+    it.
+
+    NOTE: Django unapplies migration operations in LIFO order. In order to
+    unapply this rename_table_indexes operation, we would have to unapply the
+    rename_table_indexes and rename table operation in FIFO order. So for
+    now, not allowing the reverse.
+    """
+    return HqRunPython(
+        _rename_table_indexes(from_table, to_table)
+    )

@@ -32,10 +32,9 @@
             {% trans "Menu Mode" %}
         </label>
         <div class="col-sm-4">
-            <select type="text" name="display_separately" class="form-control"
-                    data-value="{% if module.display_separately %}true{% else %}false{% endif %}">
+            <select type="text" name="display_separately" class="form-control">
                 <option value="false">{% trans "Display careplan inside attached module" %}</option>
-                <option value="true">{% trans "Display careplan separately" %}</option>
+                <option value="true"{% if module.display_separately %} selected{% endif %}>{% trans "Display careplan separately" %}</option>
             </select>
         </div>
     </div>

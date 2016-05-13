@@ -1,24 +1,17 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
-
-{% block js %}{{ block.super }}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
-    <link href="{% static 'ilsgateway/css/ilsgateway.css' %}" rel="stylesheet">
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
-{% endblock %}
 
 {% block reportcontent %}
 {% block pretable %}
     {% if not report.needs_filters %}
         {% if rendered_as == 'print' %}
             <div class="row">
-                <div class="span10">{% now "d M Y" %}</div>
+                <div class="col-sm-10">{% now "d M Y" %}</div>
             </div>
             <div class="row">
-                <div class="span10">
+                <div class="col-sm-10">
                     <h1 class="media-heading">{{ title }}<br/></h1>
                 </div>
             </div>
@@ -29,12 +22,12 @@
               </div>
             </div>
         {% endif %}
-    {% endif %}
+    {% endif %}{{ block.super }}
 {% endblock %}
 
 {% block reporttable %}
 {% if report.needs_filters %}
-    {% include 'reports/bootstrap2/partials/description.html' %}
+    {% include 'reports/bootstrap3/partials/description.html' %}
 {% else %}
     <br/>
     {% if with_tabs %}
@@ -52,7 +45,7 @@
                     {% for chart in thisreport.charts %}
                         {% if chart.data.0.values %}
                             {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
-                            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="span{{ chart_span }} hide">
+                            <div id='chart_{{ report.slug }}_{{ forloop.parentloop.counter }}{{ forloop.counter }}' class="col-sm-{{ chart_span }} collapse">
                                 <svg style='height: {{ chart.height }}px'> </svg>
                             </div>
                         {% else %}
@@ -63,7 +56,7 @@
             {% endif %}
         {% endif %}
         {% if thisreport.show_table %}
-            {% if thisreport.report_table.datatables %}
+            {% if thisreport.report_table.slug != 'district_summary' %}
                 {% include 'ilsgateway/partials/report_table_with_tabs.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
             {% else %}
                 {% include 'ilsgateway/partials/report_table.html' with report_table=thisreport.report_table charts=thisreport.charts chart_span=thisreport.chart_span%}
@@ -77,18 +70,21 @@
 {% endblock %}
 
 {% block js-inline %}
+    <script type="text/template" id="js-template-loading-report">
+        <div class="report-loading-container">
+            <div class="report-loading">
+                <h4>{% trans "Loading Report" %}</h4>
+                <i class="fa fa-spin fa-spinner"></i>
+            </div>
+        </div>
+    </script>
     <script>
         $(document).ajaxStop(function () {
-            $('#group_location_async select').first().css('display', 'none');
-            if ($('#group_location_async select').length === 5) {
-                $('#group_location_async select').last().css('display', 'none');
-            }
             if ($('#paramSelectorForm fieldset').children().length === 1) {
                 $('#reportFilters').css('display', 'none');
                 $('#toggle-report-filters').css('display', 'none');
             }
         });
-
     </script>
     {% for thisreport in reports %}
         {% for chart in thisreport.charts %}

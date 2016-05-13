@@ -8,7 +8,6 @@ from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_number_of_cases_per_domain
 from corehq.util.dates import iso_string_to_datetime
-from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.forms import FormES
@@ -32,11 +31,13 @@ def num_web_users(domain, *args):
     row = CouchUser.get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
     return row["value"] if row else 0
 
+
 def num_mobile_users(domain, *args):
     row = CouchUser.get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
+
 
 def active_mobile_users(domain, *args):
     """
@@ -95,6 +96,7 @@ def cases_in_last(domain, days):
     data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_index='cases', size=1)
     return data['hits']['total'] if data.get('hits') else 0
 
+
 def inactive_cases_in_last(domain, days):
     """
     Returns the number of open cases that have been modified in the last <days> days
@@ -124,6 +126,18 @@ def forms_in_last(domain, days):
     """
     then = datetime.utcnow() - timedelta(days=int(days))
     return FormES().domain(domain).submitted(gte=then).size(0).run().total
+
+
+def j2me_forms_in_last(domain, days):
+    """
+    Returns the number of forms submitted by j2me in the last given number of days
+    """
+    then = datetime.utcnow() - timedelta(days=int(days))
+    return FormES().domain(domain).j2me_submissions(gte=then).size(0).run().total
+
+
+def j2me_forms_in_last_bool(domain, days):
+    return j2me_forms_in_last(domain, days) > 0
 
 
 def _sms_helper(domain, direction=None, days=None):
@@ -194,12 +208,14 @@ def app_list(domain, *args):
     apps = domain.applications()
     return render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})
 
+
 def uses_reminders(domain, *args):
     handlers = CaseReminderHandler.get_handlers(domain)
     return len(handlers) > 0
 
+
 def not_implemented(domain, *args):
-    return '<p class="text-error">not implemented</p>'
+    return '<p class="text-danger">not implemented</p>'
 
 CALC_ORDER = [
     'num_web_users', 'num_mobile_users', 'forms', 'cases',
@@ -209,7 +225,8 @@ CALC_ORDER = [
     'last_form_submission', 'has_app', 'web_users', 'active_apps',
     'uses_reminders', 'sms--I', 'sms--O', 'sms_in_last', 'sms_in_last--30',
     'sms_in_last_bool', 'sms_in_last_bool--30', 'sms_in_in_last--30',
-    'sms_out_in_last--30',
+    'sms_out_in_last--30', 'j2me_forms_in_last--30', 'j2me_forms_in_last--60',
+    'j2me_forms_in_last--90', 'j2me_forms_in_last_bool--90',
 ]
 
 CALCS = {
@@ -239,6 +256,10 @@ CALCS = {
     'web_users': "list of web users",
     'active_apps': "list of active apps",
     'uses_reminders': "uses reminders",
+    'j2me_forms_in_last--30': "# j2me forms in last 30 days",
+    'j2me_forms_in_last--60': "# j2me forms in last 60 days",
+    'j2me_forms_in_last--90': "# j2me forms in last 90 days",
+    'j2me_forms_in_last_bool--90': "j2me forms in last 90 days",
 }
 
 CALC_FNS = {
@@ -263,6 +284,8 @@ CALC_FNS = {
     "web_users": not_implemented,
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
+    'j2me_forms_in_last': j2me_forms_in_last,
+    'j2me_forms_in_last_bool': j2me_forms_in_last_bool
 }
 
 
@@ -295,6 +318,7 @@ def _all_domain_stats():
             "commcare_users": commcare_counts,
             "forms": form_counts,
             "cases": case_counts}
+
 
 def total_distinct_users(domains=None):
     """

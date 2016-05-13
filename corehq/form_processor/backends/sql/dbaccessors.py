@@ -10,8 +10,8 @@ from corehq.form_processor.exceptions import (
     CaseNotFound,
     AttachmentNotFound,
     CaseSaveError,
-    LedgerSaveError
-)
+    LedgerSaveError,
+    LedgerValueNotFound)
 from corehq.form_processor.interfaces.dbaccessors import (
     AbstractCaseAccessor,
     AbstractFormAccessor,
@@ -164,16 +164,18 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def archive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, True)
+        form.state = XFormInstanceSQL.ARCHIVED
 
     @staticmethod
     def unarchive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
+        form.state = XFormInstanceSQL.NORMAL
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         assert isinstance(form_ids, list)
         deletion_date = deletion_date or datetime.utcnow()
-        with get_cursor(CommCareCaseSQL) as cursor:
+        with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute(
                 'SELECT soft_delete_forms(%s, %s, %s, %s) as affected_count',
                 [domain, form_ids, deletion_date, deletion_id]
@@ -267,6 +269,17 @@ class FormAccessorSQL(AbstractFormAccessor):
             user_id,
             True,
         )
+
+    @staticmethod
+    def get_form_ids_in_domain_by_type(domain, type_):
+        state = doc_type_to_state[type_]
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT form_id from get_form_ids_in_domain_by_type(%s, %s)',
+                [domain, state]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.form_id for result in results]
 
     @staticmethod
     def get_form_ids_for_user(domain, user_id):
@@ -480,9 +493,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_case_ids_in_domain_by_owners(domain, owner_ids):
+    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s)', [domain, owner_ids])
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
+                [domain, owner_ids, closed]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
 
@@ -639,23 +655,64 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        from corehq.form_processor.change_publishers import publish_case_deleted
+
         assert isinstance(case_ids, list)
-        deletion_date = deletion_date or datetime.utcnow()
+        utcnow = datetime.utcnow()
+        deletion_date = deletion_date or utcnow
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT soft_delete_cases(%s, %s, %s, %s) as affected_count',
-                [domain, case_ids, deletion_date, deletion_id]
+                'SELECT soft_delete_cases(%s, %s, %s, %s, %s) as affected_count',
+                [domain, case_ids, utcnow, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
+            affected_count = sum([result.affected_count for result in results])
+
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
+
+        return affected_count
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
+    def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
+        assert isinstance(case_ids, list)
+        return RawQuerySetWrapper(LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
+            [case_ids, section_id, entry_id, date_start, date_end]
+        ))
+
+    @staticmethod
+    def get_all_ledgers_modified_since(modified_since=None, chunk_size=500):
+        return _batch_iterate(
+            batch_fn=LedgerAccessorSQL.get_ledgers_modified_since,
+            next_start_from_fn=lambda ledger: ledger.last_modified,
+            start_from=modified_since,
+            chunk_size=chunk_size
+        )
+
+    @staticmethod
+    def get_ledgers_modified_since(modified_since=None, limit=500):
+        """
+        Iterate through all ledger_values in the entire database, optionally modified since
+        a specific date
+        """
+        if modified_since is None:
+            modified_since = datetime.min
+        results = RawQuerySetWrapper(LedgerValue.objects.raw(
+            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s)',
+            [modified_since, limit])
+        )
+        # sort and add additional limit in memory in case the sharded setup returns more than
+        # the requested number of ledgers
+        return sorted(results, key=lambda ledger: ledger.last_modified)[:limit]
+
+    @staticmethod
     def get_ledger_values_for_case(case_id):
         return list(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_case(%s)',
-            [case_id]
+            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            [[case_id]]
         ))
 
     @staticmethod
@@ -666,26 +723,26 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                 [case_id, section_id, entry_id]
             )[0]
         except IndexError:
-            raise LedgerValue.DoesNotExist
+            raise LedgerValueNotFound
 
     @staticmethod
-    def save_ledger_values(ledger_values):
+    def save_ledger_values(ledger_values, deprecated_form=None):
         if not ledger_values:
             return
 
-        for ledger_value in ledger_values:
-            transactions = ledger_value.get_tracked_models_to_create(LedgerTransaction)
+        deprecated_form_id = deprecated_form.orig_id if deprecated_form else None
 
-            ledger_value.last_modified = datetime.utcnow()
+        for ledger_value in ledger_values:
+            transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
             with get_cursor(LedgerValue) as cursor:
                 try:
                     cursor.execute(
-                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[])".format(
+                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[], %s)".format(
                             LedgerValue_DB_TABLE,
                             LedgerTransaction_DB_TABLE
                         ),
-                        [ledger_value.case_id, ledger_value, transactions]
+                        [ledger_value.case_id, ledger_value, transactions_to_save, deprecated_form_id]
                     )
                 except InternalError as e:
                     raise LedgerSaveError(e)
@@ -693,30 +750,97 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             ledger_value.clear_tracked_models()
 
     @staticmethod
-    def get_ledger_transactions_for_case(case_id, entry_id=None, section_id=None):
-        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
-            "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
-            [case_id, entry_id, section_id]
+    def get_ledger_values_for_product_ids(product_ids):
+        return list(LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_product_ids(%s)',
+            [product_ids]
         ))
 
     @staticmethod
-    def get_ledger_transactions_in_window(case_id, entry_id, section_id, window_start, window_end):
+    def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
+        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
+            "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
+            [case_id, section_id, entry_id]
+        ))
+
+    @staticmethod
+    def get_ledger_transactions_in_window(case_id, section_id, entry_id, window_start, window_end):
         return RawQuerySetWrapper(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s, %s, %s)",
-            [case_id, entry_id, section_id, window_start, window_end]
+            [case_id, section_id, entry_id, window_start, window_end]
         ))
 
     @staticmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         from corehq.apps.commtrack.consumption import should_exclude_invalid_periods
         transactions = LedgerAccessorSQL.get_ledger_transactions_in_window(
-            case_id, product_id, section_id, window_start, window_end
+            case_id, section_id, product_id, window_start, window_end
         )
         exclude_inferred_receipts = should_exclude_invalid_periods(domain)
         return itertools.chain.from_iterable([
             transaction.get_consumption_transactions(exclude_inferred_receipts)
             for transaction in transactions
         ])
+
+    @staticmethod
+    def get_latest_transaction(case_id, section_id, entry_id):
+        try:
+            return LedgerTransaction.objects.raw(
+                "SELECT * FROM get_latest_ledger_transaction(%s, %s, %s)",
+                [case_id, section_id, entry_id]
+            )[0]
+        except IndexError:
+            return None
+
+    @staticmethod
+    def get_current_ledger_state(case_ids, ensure_form_id=False):
+        ledger_values = LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_cases(%s)',
+            [case_ids]
+        )
+        ret = {case_id: {} for case_id in case_ids}
+        for value in ledger_values:
+            sections = ret[value.case_id].setdefault(value.section_id, {})
+            sections[value.entry_id] = value
+
+        return ret
+
+    @staticmethod
+    def delete_ledger_transactions_for_form(case_ids, form_id):
+        """
+        Delete LedgerTransactions for form.
+        :param case_ids: list of case IDs which ledger transactions belong to (required for correct sharding)
+        :param form_id:  ID of the form
+        :return: number of transactions deleted
+        """
+        assert isinstance(case_ids, list)
+        with get_cursor(LedgerTransaction) as cursor:
+            cursor.execute(
+                "SELECT delete_ledger_transactions_for_form(%s, %s) as deleted_count",
+                [case_ids, form_id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.deleted_count for result in results])
+
+    @staticmethod
+    def delete_ledger_values(case_id, section_id=None, entry_id=None):
+        """
+        Delete LedgerValues marching passed in args
+        :param case_id:    ID of the case
+        :param section_id: section ID or None
+        :param entry_id:   entry ID or None
+        :return: number of values deleted
+        """
+        try:
+            with get_cursor(LedgerValue) as cursor:
+                cursor.execute(
+                    "SELECT delete_ledger_values(%s, %s, %s) as deleted_count",
+                    [case_id, section_id, entry_id]
+                )
+                results = fetchall_as_namedtuple(cursor)
+                return sum([result.deleted_count for result in results])
+        except InternalError as e:
+            raise LedgerSaveError(e)
 
 
 def _order_list(id_list, object_list, id_property):
@@ -765,6 +889,7 @@ class RawQuerySetWrapper(object):
     Wrapper for RawQuerySet objects to make them behave more like
     normal QuerySet objects
     """
+
     def __init__(self, queryset):
         self.queryset = queryset
         self._result_cache = None

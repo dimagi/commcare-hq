@@ -4,6 +4,7 @@ from django import forms
 from django.template import Context
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -22,6 +23,7 @@ from .util import allowed_child_types, get_lineage_from_location_id
 
 
 class ParentLocWidget(forms.Widget):
+
     def render(self, name, value, attrs=None):
         return get_template(
             'locations/manage/partials/parent_loc_widget.html'
@@ -32,6 +34,7 @@ class ParentLocWidget(forms.Widget):
 
 
 class LocTypeWidget(forms.Widget):
+
     def render(self, name, value, attrs=None):
         return get_template(
             'locations/manage/partials/loc_type_widget.html'
@@ -43,36 +46,36 @@ class LocTypeWidget(forms.Widget):
 
 class LocationForm(forms.Form):
     parent_id = forms.CharField(
-        label=_('Parent'),
+        label=ugettext_lazy('Parent'),
         required=False,
         widget=ParentLocWidget(),
     )
     name = forms.CharField(
-        label=_('Name'),
+        label=ugettext_lazy('Name'),
         max_length=100,
     )
     location_type = forms.CharField(
-        label=_('Organization Level'),
+        label=ugettext_lazy('Organization Level'),
         required=False,
         widget=LocTypeWidget(),
     )
     coordinates = forms.CharField(
-        label=_('Coordinates'),
+        label=ugettext_lazy('Coordinates'),
         max_length=30,
         required=False,
-        help_text=_("enter as 'lat lon' or 'lat, lon' "
-                    "(e.g., '42.3652 -71.1029')"),
+        help_text=ugettext_lazy("enter as 'lat lon' or 'lat, lon' "
+                                "(e.g., '42.3652 -71.1029')"),
     )
     site_code = forms.CharField(
         label='Site Code',
         required=False,
-        help_text=_("A unique system code for this location. "
-                    "Leave this blank to have it auto generated"),
+        help_text=ugettext_lazy("A unique system code for this location. "
+                                "Leave this blank to have it auto generated"),
     )
     external_id = forms.CharField(
         label='External ID',
         required=False,
-        help_text=_("A number referencing this location on an external system")
+        help_text=ugettext_lazy("A number referencing this location on an external system")
     )
     external_id.widget.attrs['readonly'] = True
 
@@ -291,6 +294,7 @@ class LocationForm(forms.Form):
 
 
 class UsersAtLocationForm(MultipleSelectionForm):
+
     def __init__(self, domain_object, location, *args, **kwargs):
         self.domain_object = domain_object
         self.location = location

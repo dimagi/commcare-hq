@@ -1,4 +1,6 @@
+from captcha.fields import CaptchaField
 from django import forms
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
@@ -7,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
-from corehq.apps.domain.forms import clean_password, max_pwd
+from corehq.apps.domain.forms import clean_password, max_pwd, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
 
 
@@ -30,7 +32,8 @@ class DomainRegistrationForm(forms.Form):
     max_name_length = 25
 
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
-    hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length)
+    hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length,
+                                      widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
@@ -57,23 +60,30 @@ class DomainRegistrationForm(forms.Form):
         return self.cleaned_data
 
 
-class NewWebUserRegistrationForm(DomainRegistrationForm):
+class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
     full_name = forms.CharField(label=_('Full Name'),
                                 max_length=User._meta.get_field('first_name').max_length +
-                                           User._meta.get_field('last_name').max_length + 1)
+                                           User._meta.get_field('last_name').max_length + 1,
+                                widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.EmailField(label=_('Email Address'),
                              max_length=User._meta.get_field('email').max_length,
-                             help_text=_('You will use this email to log in.'))
+                             help_text=_('You will use this email to log in.'),
+                             widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_('Create Password'),
                                max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False,
-                                                          attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+                                                          attrs={
+                                                            'data-bind': "value: password, valueUpdate: 'input'",
+                                                            'class': 'form-control',
+                                                          }),
                                help_text=mark_safe("""
                                <span data-bind="text: passwordHelp, css: color">
                                """))
+    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+        captcha = CaptchaField(_("Type the letters in the box"))
     create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
@@ -87,7 +97,7 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
                                                </a>.""")))
 
     def __init__(self, *args, **kwargs):
-        super(DomainRegistrationForm, self).__init__(*args, **kwargs)
+        super(NewWebUserRegistrationForm, self).__init__(*args, **kwargs)
         initial_create_domain = kwargs.get('initial', {}).get('create_domain', True)
         data_create_domain = self.data.get('create_domain', "True")
         if not initial_create_domain or data_create_domain == "False":
@@ -130,6 +140,7 @@ class NewWebUserRegistrationForm(DomainRegistrationForm):
 # part of the distro
 
 class _BaseForm(object):
+
     def clean(self):
         for field in self.cleaned_data:
             if isinstance(self.cleaned_data[field], basestring):
@@ -165,6 +176,14 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             choices.insert(0, ('', ''))
             self.fields['program'].choices = choices
         self.excluded_emails = excluded_emails or []
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()

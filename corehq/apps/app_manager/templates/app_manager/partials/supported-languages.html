@@ -32,12 +32,13 @@
                 {% if hide_deploy_column %}
                     <input type="checkbox" checked="checked" data-bind="value: deploy, visible: false" />
                 {% else %}
-                    <span data-bind="editableBool: deploy"></span>
+                    <input type="checkbox" checked="checked" data-bind="checked: deploy" />
                 {% endif %}
             </td>
             <td class="col-sm-1">
-                <span class="form-inline"
-                      data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}">
+                <span class="form-inline">
+                      <input class="short form-control"
+                             data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}"/>
                 </span>
             </td>
             <td class="col-sm-1">

@@ -4,7 +4,7 @@
     <head>
         {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
         <title>
-            {% if title_block %}{{ title_block }} - {% endif %}{{ SITE_NAME }}
+            {% if title_block %}{{ title_block }} - {% endif %}CommCare HQ
         </title>
 
         <meta charset="utf-8">
@@ -142,6 +142,14 @@
         {% endcompress %}
         {% endif %}
 
+
+        {% if request.use_maps or request.use_maps_async %}
+        {% compress css %}
+        <link rel="stylesheet" href="{% static 'leaflet/dist/leaflet.css' %}" />
+        <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
+        {% endcompress %}
+        {% endif %}
+
         {% if request.guided_tour %}
             <link type="text/css"
                   rel="stylesheet"
@@ -219,13 +227,19 @@
     </head>
     <body>
         {% maintenance_alert %}
-        <div class="hq-container">
+        <!-- .hide used for A/B test of account creation page -->
+        <div class="hq-container{% if is_register_user_experiment %} hide{% endif %}">
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
                     <div class="navbar-header">
                         <a href="{% url "homepage" %}" class="navbar-brand">
-                            <img src="{{ LOGO_URL }}" alt="{{ SITE_NAME }} Logo" />
+                            {% if CUSTOM_LOGO_URL %}
+                                <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
+                            {% else %}
+                                <!-- navbar.less supplies the default logo -->
+                                <div></div>
+                            {% endif %}
                         </a>
                     </div>
                     <nav class="collapse navbar-collapse" role="navigation">
@@ -236,11 +250,10 @@
                         {% if request.user.is_authenticated %}
                             {% include 'style/includes/global_navigation_bar.html' %}
                         {% else %}
-                            <a href="{% url "login" DOMAIN_TYPE %}" class="btn btn-primary">{% trans 'Sign In' %}</a>
+                            <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
                         {% endif %}
                         </div>
                     </nav>
-                    {% format_subtab_menu %}
                 </div>
             </div>
             {% if request.project.is_snapshot %}
@@ -306,7 +319,7 @@
                                 is copyright &copy;
                             {% endblocktrans %}{% now "Y" %}
                             <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
-                            {% if user.is_authenticated %}
+                            {% if request.user.is_authenticated %}
                                 &nbsp;|&nbsp;
                                 <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>
                             {% endif %}
@@ -329,6 +342,7 @@
 
         <script style="text/javascript">
             var USE_BOOTSTRAP_3 = true;
+            window.USE_BOOTSTRAP_3 = true;
         </script>
 
         {# HQ Specific Libraries #}
@@ -466,6 +480,42 @@
         <script src="{% new_static 'tour/js/tour.utils.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+
+        {% if request.use_maps or request.use_maps_async %}
+        {% compress js %}
+        <script type="text/javascript" src="{% static 'jquery-color/jquery.color.js' %}"></script>
+        <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if reqeust.maps_prefer_canvas %}
+        <script>L_PREFER_CANVAS = true;</script>
+        {% endif %}
+
+        {% if request.use_maps %}
+        {% compress js %}
+        <script src="{% static 'reports/javascripts/maps.js' %}"></script>
+        <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_maps_async %}
+        {% compress js %}
+        <script src="{% static 'reports/javascripts/async_maps.js' %}"></script>
+        <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
+        {% endcompress %}
+        {% endif %}
+
+        {% if request.use_timeago %}
+        <script src="{% new_static 'jquery-timeago/jquery.timeago.js' %}"></script>
+        <script>
+            $(function () {
+                $.timeago.settings.allowFuture = true;
+                $(".timeago").timeago();
+            });
+        </script>
         {% endif %}
 
         {% block js %}{% endblock js %}

@@ -154,6 +154,7 @@ def add_metadata(sms, message_bank_messages):
     sms.fri_message_bank_lookup_completed = True
     try:
         sms.save()
+        sms.publish_change()
     except Exception:
         # No big deal, we'll just perform the lookup again the next time it's needed, and
         # try to save it again then.
@@ -194,10 +195,10 @@ def randomize_messages(case):
     order = 0
     for message in message_list:
         randomized_message = FRIRandomizedMessage(
-            domain = case.domain,
-            case_id = case._id,
-            message_bank_message_id = message._id,
-            order = order,
+            domain=case.domain,
+            case_id=case.case_id,
+            message_bank_message_id=message._id,
+            order=order,
         )
         randomized_message.save()
         order += 1
@@ -206,8 +207,8 @@ def randomize_messages(case):
 def already_randomized(case):
     any_message = FRIRandomizedMessage.view(
         "fri/randomized_message",
-        startkey=[case.domain, case._id],
-        endkey=[case.domain, case._id, {}],
+        startkey=[case.domain, case.case_id],
+        endkey=[case.domain, case.case_id, {}],
         include_docs=True
     ).first()
     return any_message is not None
@@ -216,7 +217,7 @@ def already_randomized(case):
 def get_randomized_message(case, order):
     if order >= 0 and order <= 279:
         client = get_redis_client()
-        lock = client.lock("fri-randomization-%s" % case._id, timeout=300)
+        lock = client.lock("fri-randomization-%s" % case.case_id, timeout=300)
 
         lock.acquire(blocking=True)
         if not already_randomized(case):
@@ -225,7 +226,7 @@ def get_randomized_message(case, order):
 
         message = FRIRandomizedMessage.view(
             "fri/randomized_message",
-            key=[case.domain, case._id, order],
+            key=[case.domain, case.case_id, order],
             include_docs=True
         ).one()
         return message

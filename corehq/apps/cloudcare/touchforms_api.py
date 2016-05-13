@@ -1,4 +1,4 @@
-from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from touchforms.formplayer.api import post_data
 import json
@@ -10,6 +10,7 @@ DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
 
 class BaseSessionDataHelper(object):
+
     def __init__(self, domain, couch_user):
         self.domain = domain
         self.couch_user = couch_user
@@ -48,8 +49,27 @@ class BaseSessionDataHelper(object):
 
         return json.loads(response)
 
+    def get_full_context(self, root_extras=None, session_extras=None):
+        """
+        Get the entire touchforms context for a given user/app/module/form/case
+        """
+        root_extras = root_extras or {}
+        session_extras = session_extras or {}
+        session_data = self.get_session_data()
+        # always tell touchforms to include footprinted cases in its case db
+        session_data["additional_filters"] = {"footprint": True}
+        session_data.update(session_extras)
+        online_url = reverse("xform_player_proxy")
+        ret = {
+            "session_data": session_data,
+            "xform_url": online_url,
+        }
+        ret.update(root_extras)
+        return ret
+
 
 class CaseSessionDataHelper(BaseSessionDataHelper):
+
     def __init__(self, domain, couch_user, case_id_or_case, app, form, delegation=False):
         super(CaseSessionDataHelper, self).__init__(domain, couch_user)
         self.form = form
@@ -65,7 +85,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
     @property
     def case(self):
         if not self._case:
-            self._case = CommCareCase.get(self.case_id)
+            self._case = CaseAccessors(self.domain).get_case(self.case_id)
         return self._case
 
     @property
@@ -105,31 +125,13 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
             session_var = datums[0].datum.id
         return session_var
 
-    def get_full_context(self, root_extras=None, session_extras=None):
-        """
-        Get the entire touchforms context for a given user/app/module/form/case
-        """
-        root_extras = root_extras or {}
-        session_extras = session_extras or {}
-        session_data = self.get_session_data()
-        # always tell touchforms to include footprinted cases in its case db
-        session_data["additional_filters"] = {"footprint": True}
-        session_data.update(session_extras)
-        online_url = reverse("xform_player_proxy")
-        ret = {
-            "session_data": session_data,
-            "xform_url": online_url,
-        }
-        ret.update(root_extras)
-        return ret
-
 
 def get_user_contributions_to_touchforms_session(couch_user_or_commconnect_case):
     return {
         'username': couch_user_or_commconnect_case.raw_username,
         'user_id': couch_user_or_commconnect_case.get_id,
         # This API is used by smsforms, so sometimes "couch_user" can be
-        # a CommConnectCase, in which case there is no user_data.
+        # a case, in which case there is no user_data.
         'user_data': (couch_user_or_commconnect_case.user_session_data
             if isinstance(couch_user_or_commconnect_case, CouchUser) else {}),
     }

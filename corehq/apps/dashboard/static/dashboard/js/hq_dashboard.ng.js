@@ -16,7 +16,9 @@
 
     var utils = {
         getTemplate: function (config, filename) {
-            return config.staticRoot + 'dashboard/ng_partials/' + filename;
+            // half-hearted caching: bust each week
+            var cacheBust = parseInt((new Date()).getTime() / (1000 * 60 * 60 * 24 * 7));
+            return config.staticRoot + 'dashboard/ng_partials/' + filename + '?' + cacheBust;
         }
     };
 
@@ -227,8 +229,9 @@
                     if (!_.isEmpty(currentVal.usage_label)) {
                         gaTrackLink(element, analyticsConfig.category, analyticsConfig.action, currentVal.usage_label);
                     }
-                    if (!_.isEmpty(currentVal.workflow_label)) {
-                        analytics.trackWorkflowLink(element, currentVal.workflow_label);
+                    for (var i in currentVal.workflow_labels) {
+                        var label = currentVal.workflow_labels[i];
+                        window.analytics.trackWorkflowLink(element, label);
                     }
                 }
             });

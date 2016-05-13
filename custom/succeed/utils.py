@@ -92,6 +92,7 @@ def format_date(date_string, OUTPUT_FORMAT, localize=None):
 
     return date_string.strftime(OUTPUT_FORMAT)
 
+
 def get_randomization_date(case):
     from custom.succeed.reports import INPUT_DATE_FORMAT
     rand_date = case.get_case_property("randomization_date")
@@ -100,6 +101,7 @@ def get_randomization_date(case):
         return date
     else:
         return EMPTY_FIELD
+
 
 def update_patient_target_dates(case):
     from custom.succeed.reports import VISIT_SCHEDULE

@@ -62,47 +62,46 @@ def json_error(f):
             return response
 
         except http.Http404 as e:
-            blob = json.dumps({
-                'error': 404,
-                'message': unicode(e),
-            })
-            logger.warning('Not found: %s', request.path,
-                           extra={
-                               'status_code': 404,
-                               'request': request,
-                           })
-            return http.HttpResponseNotFound(blob, content_type=JSON)
+            return _get_json_exception_response(404, request, e, log_message='Not found: %s')
         except PermissionDenied as e:
-            logger.warning(
-                'Forbidden (Permission denied): %s', request.path,
-                extra={
-                    'status_code': 403,
-                    'request': request,
-                })
-            blob = json.dumps({
-                'error': 403,
-                'message': unicode(e),
-            })
-            return http.HttpResponseForbidden(blob, content_type=JSON)
+            return _get_json_exception_response(403, request, e, log_message='Forbidden (Permission denied): %s')
         except BadRequest as e:
-            blob = json.dumps({
-                'error': 400,
-                'message': unicode(e),
-            })
-            return http.HttpResponseBadRequest(blob, content_type=JSON)
+            return _get_json_exception_response(400, request, e)
         except Exception as e:
-            data = {
-                'error': 500,
-                'message': unicode(e)
-            }
-            if settings.DEBUG:
-                data['traceback'] = traceback.format_exc()
-            return http.HttpResponse(
-                status=500,
-                content=json.dumps(data),
-                content_type=JSON
-            )
+            return _get_json_exception_response(500, request, e)
     return inner
+
+
+def _get_json_exception_response(code, request, exception, log_message=None):
+    if log_message:
+        logger.warning(
+            log_message, request.path,
+            extra={
+                'status_code': code,
+                'request': request,
+            })
+
+    data = _json_exception_response_data(code, exception)
+
+    return http.HttpResponse(
+        status=code,
+        content=json.dumps(data),
+        content_type=JSON
+    )
+
+
+def _json_exception_response_data(code, exception):
+    if isinstance(exception.message, unicode):
+        message = unicode(exception)
+    else:
+        message = str(exception).decode('utf-8')
+    data = {
+        'error': code,
+        'message': message
+    }
+    if code == 500 and settings.DEBUG:
+        data['traceback'] = traceback.format_exc()
+    return data
 
 
 def get_request():
@@ -124,16 +123,3 @@ def reverse(viewname, params=None, absolute=False, **kwargs):
 
 def absolute_reverse(*args, **kwargs):
     return reverse(*args, absolute=True, **kwargs)
-
-
-def expect_GET(request):
-    if request.method == 'GET':
-        return request.GET
-    else:
-        from corehq.util.soft_assert import soft_assert
-        _soft_assert = soft_assert(
-            to='{}@{}'.format('npellegrino', 'dimagi.com'),
-            exponential_backoff=True,
-        )
-        _soft_assert(False, "received POST when expecting GET")
-        return request.POST

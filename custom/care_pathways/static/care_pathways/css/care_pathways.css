@@ -1,32 +1,50 @@
-#fieldset_gender, #fieldset_group_leadership, #fieldset_cbt_name {
+#fieldset_gender,
+#fieldset_group_leadership,
+#fieldset_cbt_name,
+#fieldset_real_or_test {
     float: left;
-    width: 190px;
     margin-left: 10px;
 }
 
 #fieldset_year {
     float: left;
     width: 190px;
-    margin-left: 205px;
+    margin-left: 340px;
 }
 
-#fieldset_farmer_social_category {
+#fieldset_farmer_social_category, #fieldset_type {
     clear: left;
-    margin-left: 180px;
 }
 
-#fieldset_year label, #fieldset_gender label, #fieldset_group_leadership label, #fieldset_cbt_name label {
+#fieldset_year label,
+#fieldset_gender label,
+#fieldset_group_leadership label,
+#fieldset_cbt_name label,
+#fieldset_real_or_test label {
     width: 100%;
     height: 25px;
     text-align: left;
 }
 
-#fieldset_year .controls, #fieldset_gender .controls, #fieldset_group_leadership .controls, #fieldset_cbt_name .controls, #fieldset_farmer_social_category .controls {
+#fieldset_year .controls,
+#fieldset_gender .controls,
+#fieldset_group_leadership .controls,
+#fieldset_cbt_name .controls,
+#fieldset_farmer_social_category .controls,
+#fieldset_real_or_test .controls {
     width: 100%;
     margin-left: 0;
 }
 
-#fieldset_year .select2-container, #fieldset_gender .select2-container, #fieldset_group_leadership .select2-container,
-#fieldset_cbt_name .select2-container, #fieldset_farmer_social_category .select2-container {
+#fieldset_year .select2-container,
+#fieldset_gender .select2-container,
+#fieldset_group_leadership .select2-container,
+#fieldset_cbt_name .select2-container,
+#fieldset_farmer_social_category .select2-container,
+#fieldset_real_or_test .select2-container {
     width: 100%;
+}
+
+#fieldset_cbt_name {
+    width: 220px;
 }

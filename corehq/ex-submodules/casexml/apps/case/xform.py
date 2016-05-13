@@ -33,6 +33,7 @@ class CaseProcessingResult(object):
     """
     Lightweight class used to collect results of case processing
     """
+
     def __init__(self, domain, cases, dirtiness_flags, extensions_to_close=None):
         self.domain = domain
         self.cases = cases
@@ -139,6 +140,7 @@ def process_cases_with_casedb(xforms, case_db, config=None):
 
 
 class CaseProcessingConfig(object):
+
     def __init__(self, strict_asserts=True, case_id_blacklist=None):
         self.strict_asserts = strict_asserts
         self.case_id_blacklist = case_id_blacklist if case_id_blacklist is not None else []
@@ -282,8 +284,10 @@ def get_extensions_to_close(case, domain):
 def is_device_report(doc):
     """exclude device reports"""
     device_report_xmlns = "http://code.javarosa.org/devicereport"
+
     def _from_form_dict(doc):
         return isinstance(doc, dict) and "@xmlns" in doc and doc["@xmlns"] == device_report_xmlns
+
     def _from_xform_instance(doc):
         return getattr(doc, 'xmlns', None) == device_report_xmlns
 
@@ -366,16 +370,14 @@ def get_case_ids_from_form(xform):
 
 def cases_referenced_by_xform(xform):
     """
-    JSON repr of XFormInstance -> [CommCareCase]
+    Returns a list of CommCareCase or CommCareCaseSQL given a JSON
+    representation of an XFormInstance
     """
+    from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
     case_ids = get_case_ids_from_form(xform)
-
-    cases = [CommCareCase.wrap(doc)
-             for doc in iter_docs(CommCareCase.get_db(), case_ids)]
-
     domain = get_and_check_xform_domain(xform)
-    if domain:
-        for case in cases:
-            assert case.domain == domain
-
-    return cases
+    case_accessor = CaseAccessors(domain)
+    if domain is None:
+        assert case_accessor.db_accessor == CaseAccessorCouch
+    return case_accessor.get_cases(list(case_ids))

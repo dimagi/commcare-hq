@@ -10,7 +10,7 @@
         <div class="page-header">
             <h1>
                 {% if is_new_user %}
-                    {% blocktrans %}Welcome to {{ SITE_NAME }}!
+                    {% blocktrans %}Welcome to CommCare HQ!
                         <small>It's time to create your first project.</small>{% endblocktrans %}
                 {% else %}
                     {% blocktrans %}Create a New Project Space{% endblocktrans %}
@@ -23,12 +23,12 @@
                 {% if is_new_user %}
                     <p>
                         {% blocktrans with request.couch_user.first_name as first_name %}
-                            Congratulations, {{ first_name }}&mdash;you've successfully joined {{ SITE_NAME }}.
+                            Congratulations, {{ first_name }}&mdash;you've successfully joined CommCare HQ.
                         {% endblocktrans %}
                     </p>
                     <p>
                         {% blocktrans %}
-                            Your {{ SITE_NAME }} project will contain all form submissions from your CommCare
+                            Your CommCare HQ project will contain all form submissions from your CommCare
                             mobile applications, as well as tools that help you easily create, deploy, and monitor
                             your applications and workers.
                         {% endblocktrans %}

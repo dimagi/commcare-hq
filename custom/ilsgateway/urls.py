@@ -1,8 +1,15 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import patterns, url, include
 
+from corehq.apps.api.urls import CommCareHqApi
+from custom.ilsgateway.resources.v0_1 import ILSLocationResource
+from custom.ilsgateway.slab.views import SLABConfigurationView, SLABEditLocationView
 from custom.ilsgateway.views import SupervisionDocumentListView, SupervisionDocumentDeleteView, \
-    SupervisionDocumentView, ReportRunListView, ReportRunDeleteView, DashboardPageRedirect, GlobalStats
+    SupervisionDocumentView, ReportRunListView, ReportRunDeleteView, DashboardPageRedirect, GlobalStats, \
+    PendingRecalculationsListView
 from custom.ilsgateway.views import ILSConfigView
+
+hq_api = CommCareHqApi(api_name='v0.3')
+hq_api.register(ILSLocationResource())
 
 urlpatterns = patterns('custom.ilsgateway.views',
     url(r'^ils_dashboard_report/$', DashboardPageRedirect.as_view(), name='ils_dashboard_report'),
@@ -17,4 +24,12 @@ urlpatterns = patterns('custom.ilsgateway.views',
     url(r'^save_ils_note/$', 'save_ils_note', name='save_ils_note'),
     url(r'^report_runs/(?P<pk>\d+)/delete/$', ReportRunDeleteView.as_view(), name='delete_report_run'),
     url(r'^report_runs/$', ReportRunListView.as_view(), name='report_run_list'),
+    url(r'^recalculations/$', PendingRecalculationsListView.as_view(), name='recalculations'),
+    url(r'^slab_configuration/$', SLABConfigurationView.as_view(), name='slab_configuration'),
+    url(r'^slab_edit_location/(?P<location_id>[\w-]+)', SLABEditLocationView.as_view(), name='slab_edit_location'),
+    # one-off
+    url(r'^recalculate_moshi/$', 'recalculate_moshi_rural', name='recalculate_moshi_rural'),
+    url(r'^recalculate_non_facilities/$', 'recalculate_non_facilities', name='recalculate_non_facilities'),
+    # api
+    url(r'^', include(hq_api.urls)),
 )

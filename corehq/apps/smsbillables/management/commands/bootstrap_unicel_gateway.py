@@ -1,12 +1,10 @@
-import logging
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
+from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend
-
-logger = logging.getLogger('accounting')
 
 
 def bootstrap_unicel_gateway(apps):
@@ -22,7 +20,7 @@ def bootstrap_unicel_gateway(apps):
                              currency=currency,
                              fee_class=sms_gateway_fee_class,
                              criteria_class=sms_gateway_fee_criteria_class)
-    logger.info("Updated Unicel gateway fees.")
+    log_smsbillables_info("Updated Unicel gateway fees.")
 
 
 class Command(LabelCommand):

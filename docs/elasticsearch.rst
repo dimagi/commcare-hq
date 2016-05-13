@@ -43,8 +43,11 @@ pillowtop must be running::
 
 You can also run a once-off reindex for a specific index::
 
-    $ ./manage.py ptop_fast_reindex_users
+    $ ./manage.py ptop_fast_reindex_cases
 
+Or (for more recently updated pillows)::
+
+    $ ./manage.py ptop_reindexer_v2 user
 
 Changing a mapping or adding data
 ---------------------------------

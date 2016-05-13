@@ -5,6 +5,7 @@ from StringIO import StringIO
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.style.decorators import use_bootstrap3, \
     use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
@@ -33,7 +34,11 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
 )
-from corehq.apps.userreports.util import default_language, localize
+from corehq.apps.userreports.util import (
+    default_language,
+    has_report_builder_trial,
+    can_edit_report,
+)
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from couchexport.export import export_from_tables
@@ -182,7 +187,18 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request)
             self.content_type = None
-            self.add_warnings(self.request)
+            try:
+                self.add_warnings(self.request)
+            except UserReportsError as e:
+                self.template_name = 'userreports/report_error.html'
+                context = {
+                    'report': self,
+                    'error_message': _('It looks like there may be a problem with your report. '
+                                       'Please edit the report to fix this problem or report an issue. '),
+                    'details': unicode(e)
+                }
+                context.update(self.main_context)
+                return self.render_to_response(context)
             return super(ConfigurableReport, self).get(request, *args, **kwargs)
         else:
             raise Http403()
@@ -198,12 +214,25 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def page_context(self):
         context = {
             'report': self,
+            'report_table': {'default_rows': 25},
             'filter_context': self.filter_context,
             'url': self.url,
-            'headers': self.headers
+            'headers': self.headers,
+            'can_edit_report': can_edit_report(self.request, self),
+            'has_report_builder_trial': has_report_builder_trial(self.request),
         }
         context.update(self.saved_report_context_data)
+        context.update(self.pop_report_builder_context_data())
         return context
+
+    def pop_report_builder_context_data(self):
+        """
+        Pop any report builder data stored on the session and return a dict to
+        be included in the template context.
+        """
+        return {
+            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
+        }
 
     @property
     def saved_report_context_data(self):
@@ -259,7 +288,12 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 data_source.set_order_by(
                     [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
                 )
+
+            datatables_params = DatatablesParams.from_request_dict(request.GET)
+            page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+
             total_records = data_source.get_total_records()
+            total_row = data_source.get_total_row() if data_source.has_total_row else None
         except UserReportsError as e:
             if settings.DEBUG:
                 raise
@@ -284,20 +318,14 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 'warning': msg
             })
 
-        datatables_params = DatatablesParams.from_request_dict(request.GET)
-        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
-
         json_response = {
             'aaData': page,
             "sEcho": self.request_dict.get('sEcho', 0),
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
         }
-        if data_source.has_total_row:
-            # TODO - use sqlagg to get total_row
-            json_response.update({
-                "total_row": data_source.get_total_row(),
-            })
+        if total_row is not None:
+            json_response["total_row"] = total_row
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):

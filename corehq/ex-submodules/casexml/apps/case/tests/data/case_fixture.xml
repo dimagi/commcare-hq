@@ -1,0 +1,22 @@
+<results id="case">
+    <case case_id="redwoman" case_type="priestess" owner_id="lordoflight" status="open">
+        <case_name>melisandre</case_name>
+        <date_opened>2016-05-31T00:00:00.000000Z</date_opened>
+        <last_modified>2016-05-31T00:00:00.000000Z</last_modified>
+        <hometown>asshai</hometown>
+        <power>prophecy</power>
+        <index>
+            <advisor case_type="human" relationship="extension">stannis</advisor>
+        </index>
+    </case>
+    <case case_id="redwoman" case_type="priestess" owner_id="lordoflight" status="open">
+        <case_name>melisandre</case_name>
+        <date_opened>2016-05-31T00:00:00.000000Z</date_opened>
+        <last_modified>2016-05-31T00:00:00.000000Z</last_modified>
+        <hometown>asshai</hometown>
+        <power>prophecy</power>
+        <index>
+            <advisor case_type="human" relationship="extension">stannis</advisor>
+        </index>
+    </case>
+</results>

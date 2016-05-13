@@ -1,5 +1,6 @@
 import iso8601
 import pytz
+from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 import xml2json
 from datetime import datetime
 
@@ -17,10 +18,10 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
     xmlns="{xmlns}">
     <dalmation_count>yes</dalmation_count>
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
-        <n1:deviceID>DEV IL</n1:deviceID>
+        <n1:deviceID>{device_id}</n1:deviceID>
         <n1:timeStart>{time_start}</n1:timeStart>
         <n1:timeEnd>{time_end}</n1:timeEnd>
-        <n1:username>eve</n1:username>
+        <n1:username>{username}</n1:username>
         <n1:userID>{user_id}</n1:userID>
         <n1:instanceID>{uuid}</n1:instanceID>
         <n2:appVersion xmlns:n2="http://commcarehq.org/xforms"></n2:appVersion>
@@ -34,7 +35,9 @@ class TestFormMetadata(jsonobject.JsonObject):
     xmlns = jsonobject.StringProperty(default='http://openrosa.org/formdesigner/form-processor')
     app_id = jsonobject.StringProperty(default='123')
     form_name = jsonobject.StringProperty(default='New Form')
+    device_id = jsonobject.StringProperty(default='DEV IL')
     user_id = jsonobject.StringProperty(default='cruella_deville')
+    username = jsonobject.StringProperty(default='eve')
     time_end = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 52, 2))
     time_start = jsonobject.DateTimeProperty(default=datetime(2013, 4, 19, 16, 53, 2))
     # Set this property to fake the submission time
@@ -59,6 +62,7 @@ def get_simple_form_xml(form_id, case_id=None, metadata=None):
 def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
+    metadata = metadata or TestFormMetadata()
     xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
     form_json = convert_xform_to_json(xml)
     interface = FormProcessorInterface(domain=metadata.domain)
@@ -149,3 +153,13 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
+
+
+def add_couch_properties_to_sql_form_json(sql_form_json):
+    sql_form_json['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
+    sql_form_json['_id'] = sql_form_json['form_id']
+    return sql_form_json
+
+
+def _get_doc_type_from_state(state):
+    return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')

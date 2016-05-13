@@ -34,6 +34,7 @@ CTSIMS_ID = 'ff6c662bfc2a448dadc9084056a4abdf'
 
 
 class dotsSubmissionTests(TestCase):
+
     def setUp(self):
         for doc in get_all_forms_in_all_domains():
             # purge all xforms prior to start

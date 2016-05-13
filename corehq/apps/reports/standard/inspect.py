@@ -1,6 +1,6 @@
 import functools
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, get_language
 
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
@@ -30,7 +30,6 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     ajax_pagination = True
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
-    is_bootstrap3 = True
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
@@ -72,7 +71,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
     @property
     def default_datespan(self):
-        return datespan_from_beginning(self.domain, self.timezone)
+        return datespan_from_beginning(self.domain_object, self.timezone)
 
     def _es_extra_filters(self):
         if FormsByApplicationFilter.has_selections(self.request):
@@ -173,7 +172,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
 
 class SubmitHistory(SubmitHistoryMixin, ProjectReport):
-    is_bootstrap3 = True
 
     @property
     def show_extra_columns(self):
@@ -209,13 +207,14 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
         submissions = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
 
         for form in submissions:
-            display = FormDisplay(form, self)
+            display = FormDisplay(form, self, lang=get_language())
             row = [
                 display.form_data_link,
                 display.username,
                 display.submission_or_completion_time,
                 display.readable_form_name,
             ]
+
             if self.show_extra_columns:
                 row.append(form.get('last_sync_token', ''))
             yield row + display.other_columns

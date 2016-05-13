@@ -3,7 +3,6 @@ import uuid
 from dateutil.parser import parser
 import json
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
@@ -16,7 +15,6 @@ from pact.enums import (
     PACT_REGIMEN_CHOICES_FLAT_DICT,
     PACT_SCHEDULES_NAMESPACE,
     REGIMEN_CHOICES,
-    TIME_LABEL_LOOKUP,
 )
 from pact.regimen import regimen_string_from_doc
 
@@ -39,6 +37,7 @@ dp = parser()
 
 
 class DOTSubmission(XFormInstance):
+
     @property
     def has_pillbox_check(self):
         pillbox_check_str = self.form['pillbox_check'].get('check', '')
@@ -72,13 +71,9 @@ class DOTSubmission(XFormInstance):
 
 
 class PactPatientCase(CommCareCase):
+
     class Meta:
         app_label = 'pact'
-
-    @memoized
-    def get_user_map(self):
-        domain_users = CommCareUser.by_domain(enums.PACT_DOMAIN)
-        return dict((du.get_id, du.username_in_report) for du in domain_users)
 
     @property
     def gender_display(self):
@@ -275,10 +270,6 @@ class PactPatientCase(CommCareCase):
         from pact.reports.patient import PactPatientInfoReport
         return PactPatientInfoReport.get_url(*[PACT_DOMAIN]) + "?patient_id=%s" % self._id
 
-    def get_dot_url(self):
-        from pact.reports.dot import PactDOTReport
-        return PactDOTReport.get_url(*[PACT_DOMAIN]) + "?dot_patient=%s" % self._id
-
     @property
     def current_schedule(self):
         try:
@@ -417,20 +408,6 @@ class CDotWeeklySchedule(OldDocument):
         now = datetime.utcnow()
         return self.started <= now and (self.ended is None or self.ended > now)
 
-    def weekly_arr(self):
-        return [
-            "Sun: %s" % self.sunday,
-            "Mon: %s" % self.monday,
-            "Tue: %s" % self.tuesday,
-            "Wed: %s" % self.wednesday,
-            "Thu: %s" % self.thursday,
-            "Fri: %s" % self.friday,
-            "Sat: %s" % self.saturday,
-            "Deprecated: %s" % self.deprecated,
-            "Started: %s" % self.started,
-            "Ended: %s" % self.ended,
-        ]
-
     class Meta:
         app_label = 'pact'
 
@@ -496,18 +473,6 @@ class CObservation(OldDocument):
     def adinfo(self):
         """helper function to concatenate adherence and method to check for conflicts"""
         return ((self.is_art, self.dose_number, self.total_doses), "%s" % (self.adherence))
-
-    def get_time_label(self):
-        """
-        old style way
-        returns an English time label out of
-        'Dose', 'Morning', 'Noon', 'Evening', 'Bedtime'
-        """
-        return TIME_LABEL_LOOKUP[self.total_doses][self.dose_number]
-
-    @classmethod
-    def get_time_labels(cls, total_doses):
-        return TIME_LABEL_LOOKUP[total_doses]
 
     class Meta:
         app_label = 'pact'

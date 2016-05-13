@@ -7,7 +7,7 @@ from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, 
     DeliveryGroupReport
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import SUBMITTED_NOTIFICATION_MSD, SUBMITTED_CONFIRM, \
-    SUBMITTED_REMINDER_DISTRICT
+    SUBMITTED_REMINDER_DISTRICT, SUBMITTED_INVALID_QUANTITY
 
 
 class RandrHandler(KeywordHandler):
@@ -38,6 +38,14 @@ class RandrHandler(KeywordHandler):
                 self.respond(SUBMITTED_REMINDER_DISTRICT)
             else:
                 quantities = [self.args[1], self.args[3], self.args[5]]
+
+                for quantity in quantities:
+                    try:
+                        int(quantity)
+                    except ValueError:
+                        self.respond(SUBMITTED_INVALID_QUANTITY % {'number': quantity})
+                        return True
+
                 DeliveryGroupReport.objects.create(
                     location_id=location.get_id,
                     quantity=quantities[0],

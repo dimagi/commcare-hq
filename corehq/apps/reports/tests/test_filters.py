@@ -6,6 +6,7 @@ from corehq.apps.reports.tests import SetupSimpleAppMixin
 
 
 class TestEmwfPagination(SimpleTestCase):
+
     def make_data_source(self, options):
         def matching_objects(query):
             if not query:

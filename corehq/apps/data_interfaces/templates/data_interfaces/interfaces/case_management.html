@@ -1,17 +1,15 @@
-{% extends 'reports/async/bootstrap2/tabular.html' %}
+{% extends 'reports/async/tabular.html' %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'case/js/cheapxml.js' %}"></script>
-    <script type="text/javascript" src="{% static 'case/js/casexml.js' %}"></script>
-    <script type="text/javascript" src="{% static 'data_interfaces/ko/case_management.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-    (function () {
+    $.when(
+        $.getScript("{% static 'case/js/cheapxml.js' %}"),
+        $.getScript("{% static 'case/js/casexml.js' %}"),
+        $.getScript("{% static 'data_interfaces/ko/case_management.js' %}")
+    ).done(function () {
         var OPTIONS = {
             users: {{ users|JSON }},
             groups: {{ groups|JSON }},
@@ -28,7 +26,7 @@
             $caseManagement.koApplyBindings(caseManagementModel);
 
             $caseManagement.find('a.select-all').click(function () {
-                $caseManagement.find('input.selected-commcare-case').attr('checked', true).change();
+                $caseManagement.find('input.selected-commcare-case').prop('checked', true).change();
                 return false;
             });
 
@@ -37,7 +35,7 @@
             $caseManagement.find('.dataTables_length select').change(selectNone);
 
             function selectNone() {
-                $caseManagement.find('input.selected-commcare-case:checked').attr('checked', false).change();
+                $caseManagement.find('input.selected-commcare-case:checked').removeProp('checked').change();
             }
         }
 
@@ -55,37 +53,42 @@
                 window.reportTables.fnDrawCallback = applyCheckboxListeners;
             }
         }, 1000);
-    }());
+
+        $('#reassign_owner_select').select2();
+    });
     </script>
 {% endblock %}
 
 {% block reportcontent %}
     <div id="case-management">
-        <div class="row-fluid">
+        <div class="row">
             <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selected_cases">
                     <label for="reassign_owner_type_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
                     <select name="reassign_owner_type"
                             id="reassign_owner_type_select"
-                            class="span2"
+                            class="form-control"
                             data-bind="options: owner_types,
-                                        optionsCaption: '{% trans 'Select Type...' %}',
-                                        grabUniqueDefault: selected_owner_types,
-                                        event: {change: changeNewOwnerType}"></select>
+                                       grabUniqueDefault: selected_owner_types,
+                                       event: {change: changeNewOwnerType}"></select>
                     <label for="reassign_owner_select" class="inline" data-bind="visible: should_show_owners"> {% trans 'named' %} </label>
-                    <select name="reassign_owner"
-                            class="inline"
+                    <span data-bind="visible: should_show_owners">
+                        <select name="reassign_owner"
                             id="reassign_owner_select"
-                            data-bind="visible: should_show_owners,
-                                        grabUniqueDefault: selected_owners,
-                                        comboboxOptions: available_owners,
-                                        optionsText: 'name',
-                                        optionsValue: 'ownerid',
-                                        comboboxCaption: '{% trans 'Select New Owner...' %}',
-                                        event: {change: changeNewOwner},
-                                        combobox: true"></select>
+                            style="width: 300px;"
+                            data-bind="grabUniqueDefault: selected_owners,
+                                       options: available_owners,
+                                       optionsText: 'name',
+                                       optionsValue: 'ownerid',
+                                       optionsCaption: '{% trans 'Select New Owner...' %}',
+                                       event: {change: changeNewOwner}, ic"></select>
+                    </span>
                 <button type="submit"
-                        data-bind="hqbSubmitReady: is_submit_enabled, disabled: is_submit_enabled"
-                        class="btn disabled">{% trans 'Reassign' %}</button>
+                        data-bind="hqbSubmitReady: is_submit_enabled, visible: is_submit_enabled"
+                        class="btn btn-default disabled">{% trans 'Reassign' %}</button>
+                <button type="button"
+                        disabled="disabled"
+                        data-bind="visible: !is_submit_enabled()"
+                        class="btn btn-default">{% trans 'Reassign' %}</button>
                 <div class="help-block" data-bind="visible: is_only_user_reassign">{% trans 'Note: No groups with Case Sharing are available.' %}</div>
             </form>
         </div>
@@ -95,15 +98,19 @@
 
 {% block modals %} {{ block.super }}
     <div class="modal hide fade" id="caseManagementStatusModal">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h3>{% trans 'Case Reassignment' %}</h3>
-        </div>
-        <div class="modal-body">
-            --
-        </div>
-        <div class="modal-footer">
-            <button id="bug-report-cancel" class="btn" data-dismiss="modal">{% trans 'Close' %}</button>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>{% trans 'Case Reassignment' %}</h3>
+                </div>
+                <div class="modal-body">
+                    --
+                </div>
+                <div class="modal-footer">
+                    <button id="bug-report-cancel" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

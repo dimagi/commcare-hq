@@ -22,7 +22,6 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
 from corehq import toggles, privileges
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
-from corehq.apps.hqwebapp.models import ApplicationsTab
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
@@ -37,6 +36,7 @@ from corehq.apps.app_manager.util import (
     get_settings_values,
 )
 from corehq.apps.domain.models import Domain
+from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
 from corehq.apps.app_manager.xform import (
     XFormException, XForm)
@@ -69,7 +69,7 @@ from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from django_prbac.utils import has_privilege
-from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot, update_kissmetrics_properties
+from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot, identify
 from corehq.apps.analytics.utils import get_meta
 
 
@@ -115,7 +115,7 @@ def default_new_app(request, domain):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     if tours.NEW_APP.is_enabled(request.user):
-        update_kissmetrics_properties.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
+        identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(
         domain, _("Untitled Application"), lang=lang,
@@ -218,16 +218,7 @@ def clear_app_cache(request, domain):
         startkey=[domain],
         limit=1,
     ).all()
-    for is_active in True, False:
-        key = make_template_fragment_key('header_tab', [
-            domain,
-            None,  # tab.org should be None for any non org page
-            ApplicationsTab.view,
-            is_active,
-            request.couch_user.get_id,
-            get_language(),
-        ])
-        cache.delete(key)
+    ApplicationsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
 
 
 def get_apps_base_context(request, domain, app):
@@ -300,7 +291,7 @@ def app_from_template(request, domain, slug):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
     if tours.NEW_APP.is_enabled(request.user):
-        update_kissmetrics_properties.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
+        identify.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
     clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
@@ -490,11 +481,17 @@ def edit_app_langs(request, domain, app_id):
 
 @require_can_edit_apps
 @no_conflict_require_POST
-def edit_app_translations(request, domain, app_id):
+def edit_app_ui_translations(request, domain, app_id):
     params = json_request(request.POST)
     lang = params.get('lang')
     translations = params.get('translations')
     app = get_app(domain, app_id)
+
+    # Workaround for https://github.com/dimagi/commcare-hq/pull/10951#issuecomment-203978552
+    # auto-fill UI translations might have modules.m0 in the update originating from popular-translations docs
+    # since module.m0 is not a UI string, don't update modules.m0 in UI translations
+    translations.pop('modules.m0', None)
+
     app.set_translations(lang, translations)
     response = {}
     app.save(response)
@@ -502,7 +499,7 @@ def edit_app_translations(request, domain, app_id):
 
 
 @require_GET
-def get_app_translations(request, domain):
+def get_app_ui_translations(request, domain):
     params = json_request(request.GET)
     lang = params.get('lang', 'en')
     key = params.get('key', None)
@@ -587,6 +584,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('amplifies_workers', None),
         ('amplifies_project', None),
         ('minimum_use_threshold', None),
+        ('experienced_threshold', None),
         ('use_grid_menus', None),
         ('comment', None),
         ('custom_base_url', None),

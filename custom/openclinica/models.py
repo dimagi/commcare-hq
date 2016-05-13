@@ -23,6 +23,7 @@ class ItemGroup(object):
     complete one item group. When a second instance of a form type (identified by xmlns) is added to an
     item group, then the item group is closed and a new one opened.
     """
+
     def __init__(self, domain, oid):
         self.oid = oid
         self.completed_cc_forms = set([])
@@ -39,6 +40,7 @@ class StudyEvent(object):
     StudyEvent. In subsequent projects we should us a study_event subcase of
     the subject case type.
     """
+
     def __init__(self, domain, oid):
         self.oid = oid
         # Unused. We use SINGLE_EVENT_FORM_EVENT_INDEX in this project.
@@ -79,6 +81,7 @@ class Subject(object):
     """
     Manages data for a subject case
     """
+
     def __init__(self, subject_key, study_subject_id, domain):
         self.subject_key = subject_key
         self.study_subject_id = study_subject_id

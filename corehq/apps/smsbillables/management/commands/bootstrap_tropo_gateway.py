@@ -1,12 +1,10 @@
-import logging
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
+from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-
-logger = logging.getLogger('accounting')
 
 
 def bootstrap_tropo_gateway(apps):
@@ -48,7 +46,8 @@ def bootstrap_tropo_gateway(apps):
         criteria_class=sms_gateway_fee_criteria_class,
     )
 
-    logger.info("Updated Tropo gateway fees.")
+    log_smsbillables_info("Updated Tropo gateway fees.")
+
 
 class Command(LabelCommand):
     help = "bootstrap Tropo gateway fees"

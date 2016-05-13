@@ -41,7 +41,6 @@ class KafkaCheckpointTest(TestCase):
         processor = CountingProcessor()
         pillow = ConstructedPillow(
             name=pillow_name,
-            document_store=None,
             checkpoint=checkpoint,
             change_feed=feed,
             processor=processor,

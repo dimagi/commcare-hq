@@ -3,6 +3,8 @@ import random
 import string
 from django.conf import settings
 from django.core.exceptions import ValidationError
+
+from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from django.forms import forms
 from corehq.apps.users.util import format_username
@@ -10,11 +12,11 @@ from corehq.apps.users.util import format_username
 from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
 from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_backend_classes)
 from corehq.apps.sms.models import (OUTGOING, INCOMING,
-    PhoneNumber, SMS, SelfRegistrationInvitation, MessagingEvent,
+    PhoneBlacklist, SMS, SelfRegistrationInvitation, MessagingEvent,
     SQLMobileBackend, SQLSMSBackend, QueuedSMS)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
@@ -49,6 +51,7 @@ def get_utcnow():
 
 
 class MessageMetadata(object):
+
     def __init__(self, *args, **kwargs):
         self.workflow = kwargs.get("workflow", None)
         self.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)
@@ -117,7 +120,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
         text = text
     )
     if contact:
-        msg.couch_recipient = contact._id
+        msg.couch_recipient = contact.get_id
         msg.couch_recipient_doc_type = contact.doc_type
     add_msg_tags(msg, metadata)
 
@@ -216,6 +219,7 @@ def queue_outgoing_sms(msg):
     else:
         msg.processed = True
         msg_sent = send_message_via_backend(msg)
+        msg.publish_change()
         if msg_sent:
             create_billable_for_sms(msg)
         return msg_sent
@@ -240,7 +244,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
                  "  Please investigate why this function was called.") % msg.domain
             )
 
-        phone_obj = PhoneNumber.get_by_phone_number_or_none(msg.phone_number)
+        phone_obj = PhoneBlacklist.get_by_phone_number_or_none(msg.phone_number)
         if phone_obj and not phone_obj.send_sms:
             if msg.ignore_opt_out and phone_obj.can_opt_in:
                 # If ignore_opt_out is True on the message, then we'll still
@@ -504,10 +508,12 @@ def process_incoming(msg):
                 'verified with this domain'
             )
 
-    can_receive_sms = PhoneNumber.can_receive_sms(msg.phone_number)
+    can_receive_sms = PhoneBlacklist.can_receive_sms(msg.phone_number)
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
+    domain = v.domain if v else None
+
     if is_opt_message(msg.text, opt_out_keywords) and can_receive_sms:
-        if PhoneNumber.opt_out_sms(msg.phone_number):
+        if PhoneBlacklist.opt_out_sms(msg.phone_number, domain=domain):
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
             if v:
@@ -515,7 +521,7 @@ def process_incoming(msg):
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
     elif is_opt_message(msg.text, opt_in_keywords) and not can_receive_sms:
-        if PhoneNumber.opt_in_sms(msg.phone_number):
+        if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
             text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
             if v:
                 send_sms_to_verified_number(v, text)
@@ -571,4 +577,4 @@ def create_billable_for_sms(msg, delay=True):
         else:
             store_billable(msg)
     except Exception as e:
-        log_accounting_error("Errors Creating SMS Billable: %s" % e)
+        log_smsbillables_error("Errors Creating SMS Billable: %s" % e)

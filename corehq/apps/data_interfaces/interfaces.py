@@ -25,7 +25,7 @@ from .dispatcher import EditDataInterfaceDispatcher
 class DataInterface(GenericReportView):
     # overriding properties from GenericReportView
     section_name = ugettext_noop("Data")
-    base_template = "reports/bootstrap2/standard/base_template.html"
+    base_template = "reports/standard/base_template.html"
     asynchronous = True
     dispatcher = EditDataInterfaceDispatcher
     exportable = False
@@ -38,7 +38,6 @@ class DataInterface(GenericReportView):
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
     name = ugettext_noop("Reassign Cases")
     slug = "reassign_cases"
-
     report_template_path = 'data_interfaces/interfaces/case_management.html'
 
     @property
@@ -57,7 +56,10 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(mark_safe('Select  <a href="#" class="select-all btn btn-mini btn-inverse">all</a> <a href="#" class="select-none btn btn-mini btn-warning">none</a>'), sortable=False, span=2),
+            DataTablesColumn(mark_safe(
+                'Select  <a href="#" class="select-all btn btn-xs btn-info">all'
+                '</a> <a href="#" class="select-none btn btn-xs btn-default">'
+                'none</a>'), sortable=False, span=2),
             DataTablesColumn(_("Case Name"), span=3, prop_name="name.exact"),
             DataTablesColumn(_("Case Type"), span=2, prop_name="type.exact"),
             DataTablesColumn(_("Owner"), span=2, prop_name="owner_display", sortable=False),
@@ -168,7 +170,6 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
 class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
     name = ugettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
-
     report_template_path = 'data_interfaces/interfaces/archive_forms.html'
 
     def __init__(self, request, **kwargs):
@@ -195,8 +196,8 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
             DataTablesColumn(
                 mark_safe(
                     """
-                    Select  <a class="select-visible btn btn-mini btn-inverse">all</a>
-                    <a class="select-none btn btn-mini btn-warning">none</a>
+                    Select  <a class="select-visible btn btn-xs btn-info">all</a>
+                    <a class="select-none btn btn-xs btn-default">none</a>
                     """
                 ),
                 sortable=False, span=3

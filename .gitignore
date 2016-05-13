@@ -35,6 +35,7 @@ dump.rdb
 /staticmedia*
 .transifexrc
 python_env
+services
 
 submodules/formdesigner
 submodules/vellum/Vellum
@@ -55,3 +56,5 @@ celerybeat-schedule
 node_modules/
 /sharedfiles/
 docker/data
+*.lock
+fab/config.py

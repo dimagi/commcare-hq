@@ -1,5 +1,7 @@
 import copy
 import datetime
+import re
+from collections import defaultdict
 from decimal import Decimal
 import logging
 import json
@@ -25,15 +27,18 @@ from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
+
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
+from corehq.tabs.tabclasses import ProjectSettingsTab
 from custom.dhis2.forms import Dhis2SettingsForm
 from custom.dhis2.models import Dhis2Settings
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_jquery_ui,
@@ -81,7 +86,6 @@ from corehq.apps.accounting.user_text import (
     DESC_BY_EDITION,
     get_feature_recurring_interval,
 )
-from corehq.apps.hqwebapp.models import ProjectSettingsTab
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
 from corehq.apps.domain.decorators import (
     domain_admin_required, login_required, require_superuser, login_and_domain_required
@@ -93,7 +97,11 @@ from corehq.apps.domain.forms import (
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
     SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
     ContractedPartnerForm, DimagiOnlyEnterpriseForm)
-from corehq.apps.domain.models import Domain, LICENSES, TransferDomainRequest
+from corehq.apps.domain.models import (
+    Domain,
+    LICENSES,
+    TransferDomainRequest,
+)
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.domain.forms import ProjectSettingsForm
@@ -101,8 +109,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater, \
-    RepeatRecord, repeater_types, RegisterGenerator
+from corehq.apps.repeaters.models import Repeater, FormRepeater, CaseRepeater, ShortFormRepeater, \
+    AppStructureRepeater, RepeatRecord, repeater_types, RegisterGenerator
 from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
@@ -144,6 +152,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
     additional_context = {
         'domains_for_user': domains_for_user,
         'open_invitations': open_invitations,
+        'current_page': {'page_name': _('Select A Project')},
     }
 
     last_visited_domain = request.session.get('last_visited_domain')
@@ -168,20 +177,6 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
 
         del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
-
-
-@require_superuser
-def incomplete_email(request,
-                     incomplete_email_template='domain/incomplete_email.html'):
-    from corehq.apps.domain.tasks import (
-        incomplete_self_started_domains,
-        incomplete_domains_to_email
-    )
-    context = {
-        'self_started': incomplete_self_started_domains,
-        'dimagi_owned': incomplete_domains_to_email,
-    }
-    return render(request, incomplete_email_template, context)
 
 
 class DomainViewMixin(object):
@@ -209,6 +204,7 @@ class DomainViewMixin(object):
 
 
 class LoginAndDomainMixin(object):
+
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
@@ -295,7 +291,6 @@ class BaseProjectSettingsView(BaseDomainView):
         main_context.update({
             'active_tab': ProjectSettingsTab(
                 self.request,
-                self.urlname,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project
@@ -508,6 +503,10 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
     urlname = 'dhis2_settings'
     page_title = ugettext_lazy("DHIS2 API settings")
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditDhis2SettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def dhis2_settings_form(self):
@@ -535,9 +534,9 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
 @require_POST
 @require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
-    rep = FormRepeater.get(repeater_id)
+    rep = Repeater.get(repeater_id)
     rep.retire()
-    messages.success(request, "Form forwarding stopped!")
+    messages.success(request, "Forwarding stopped!")
     return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
 
 
@@ -584,6 +583,7 @@ def autocomplete_fields(request, field):
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
 
+
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
     if logo is None:
@@ -595,6 +595,7 @@ def logo(request, domain):
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -673,7 +674,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     self.account
                 ) if self.account else None
             )),
-            'css_class': "label-plan %s" % plan_version.plan.edition.lower(),
+            'css_class': "label-plan label-plan-%s" % plan_version.plan.edition.lower(),
             'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
             'date_start': (subscription.date_start.strftime(USER_DATE_FORMAT)
@@ -715,12 +716,12 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'type': product_type,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=product_type
+                    subscription, product_type=SoftwareProductType.ANY
                 ) if subscription else None
             )),
             'account_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_for_account(
-                    account, product_type=product_type
+                    account, product_type=SoftwareProductType.ANY
                 ) if account else None
             )),
         }
@@ -784,12 +785,16 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def billing_info_form(self):
+        is_ops_user = has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
         if self.request.method == 'POST':
             return EditBillingAccountInfoForm(
-                self.account, self.domain, self.request.couch_user.username, data=self.request.POST
+                self.account, self.domain, self.request.couch_user.username, data=self.request.POST,
+                is_ops_user=is_ops_user
             )
-        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username)
+        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username,
+                                          is_ops_user=is_ops_user)
 
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         if self.account is None:
             raise Http404()
@@ -940,10 +945,10 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 if invoice.is_paid:
                     payment_status = (_("Paid on %s.")
                                       % invoice.date_paid.strftime(USER_DATE_FORMAT))
-                    payment_class = "label label-inverse"
+                    payment_class = "label label-default"
                 else:
                     payment_status = _("Not Paid")
-                    payment_class = "label label-important"
+                    payment_class = "label label-danger"
                 date_due = (
                     (invoice.date_due.strftime(USER_DATE_FORMAT)
                      if not invoice.is_paid else _("Already Paid"))
@@ -1225,8 +1230,11 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(require_superuser)
-    def get(self, request, *args, **kwargs):
-        return super(InternalSubscriptionManagementView, self).get(request, *args, **kwargs)
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(InternalSubscriptionManagementView, self).dispatch(request, *args, **kwargs)
 
     @method_decorator(require_superuser)
     def post(self, request, *args, **kwargs):
@@ -1276,12 +1284,11 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             subscription_type = None
         else:
             plan = subscription.plan_version.plan
-            if subscription.service_type == SubscriptionType.CONTRACTED:
+            if subscription.service_type == SubscriptionType.IMPLEMENTATION:
                 subscription_type = ContractedPartnerForm.slug
             elif plan.edition == SoftwarePlanEdition.ENTERPRISE:
                 subscription_type = DimagiOnlyEnterpriseForm.slug
-            elif (plan.edition == SoftwarePlanEdition.ADVANCED
-                  and plan.visibility == SoftwarePlanVisibility.TRIAL_INTERNAL):
+            elif plan.edition == SoftwarePlanEdition.ADVANCED:
                 subscription_type = AdvancedExtendedTrialForm.slug
 
         return SelectSubscriptionTypeForm(
@@ -1375,6 +1382,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "allow_domain_requests": self.domain_object.allow_domain_requests,
             "hipaa_compliant": self.domain_object.hipaa_compliant,
             "secure_sessions": self.domain_object.secure_sessions,
+            "two_factor_auth": self.domain_object.two_factor_auth,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -1512,6 +1520,10 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(ConfirmBillingAccountInfoView, self).dispatch(request, *args, **kwargs)
+
     @property
     def steps(self):
         last_steps = super(ConfirmBillingAccountInfoView, self).steps
@@ -1601,6 +1613,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
 
 class SubscriptionMixin(object):
+
     @property
     @memoized
     def subscription(self):
@@ -2076,6 +2089,59 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+class CaseSearchConfigView(BaseAdminProjectSettingsView):
+    urlname = 'case_search_config'
+    page_title = ugettext_lazy('Case Search')
+    template_name = 'domain/admin/case_search.html'
+
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        def unpack_fuzzies(query_dict):
+            """
+            Builds an integer-keyed dictionary from POST request data, and returns a list of dictionaries that can
+            be wrapped by CaseSearchConfigJSON
+            """
+            # match "config[fuzzy_properties][0][case_type]" and "config[fuzzy_properties][0][properties][]" but
+            # not "enable"
+            pattern = re.compile(r'^config\[fuzzy_properties]\[(?P<index>\d+)]\[(?P<attr>\w+)](?:\[])?$')
+            fuzzy_dict = defaultdict(dict)
+            for key in query_dict:
+                match = pattern.match(key)
+                if match:
+                    i = int(match.group('index'))
+                    attr = match.group('attr')
+                    is_list = key.endswith('[]')  # i.e. "...[properties][]"
+                    fuzzy_dict[i][attr] = query_dict.getlist(key) if is_list else query_dict[key]
+            if not fuzzy_dict:
+                return []
+            return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
+
+        CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
+            'enabled': request.POST['enable'],
+            'config': CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
+        })
+        messages.success(request, _("Case search configuration updated successfully"))
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        apps = get_apps_in_domain(self.domain, include_remote=False)
+        case_types = {t for app in apps for t in app.get_case_types() if t}
+        current_values = CaseSearchConfig.objects.get_or_none(pk=self.domain)
+        return {
+            'case_types': sorted(list(case_types)),
+            'values': {
+                'enabled': current_values.enabled if current_values else False,
+                'config': current_values.config if current_values else {}
+            }
+        }
+
+
 class RepeaterMixin(object):
 
     @property
@@ -2096,7 +2162,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     dispatcher = DomainReportDispatcher
     ajax_pagination = True
     asynchronous = False
-    is_bootstrap3 = True
     sortable = False
 
     fields = [
@@ -2151,7 +2216,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         context.update({
             'active_tab': ProjectSettingsTab(
                 self.request,
-                self.slug,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
             )
@@ -2188,6 +2252,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             lambda record: [
                 self._make_state_label(record),
                 record.url if record.url else _(u'Unable to generate url for record'),
+                self._format_date(record.last_checked) if record.last_checked else None,
                 self._format_date(record.next_check) if record.next_check else None,
                 record.failure_reason if not record.succeeded else None,
                 self._make_view_payload_button(record.get_id),
@@ -2199,12 +2264,13 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn('Status'),
-            DataTablesColumn('URL'),
-            DataTablesColumn('Retry Date'),
-            DataTablesColumn('Failure Reason'),
-            DataTablesColumn('View payload'),
-            DataTablesColumn('Resend'),
+            DataTablesColumn(_('Status')),
+            DataTablesColumn(_('URL')),
+            DataTablesColumn(_('Last sent date')),
+            DataTablesColumn(_('Retry Date')),
+            DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('View payload')),
+            DataTablesColumn(_('Resend')),
         )
 
 
@@ -2579,6 +2645,10 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     urlname = 'pro_bono_static'
     use_domain_field = True
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoStaticView, self).dispatch(request, *args, **kwargs)
+
     @property
     def requesting_domain(self):
         return self.pro_bono_form.cleaned_data['domain']
@@ -2588,6 +2658,10 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
     use_domain_field = False
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def requesting_domain(self):
@@ -2732,6 +2806,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             return {'form': self.transfer_domain_form}
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
@@ -2859,6 +2934,11 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesSelect2AsyncHandler,
     ]
 
+    @use_bootstrap3
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def rate_calc_form(self):
@@ -2953,9 +3033,13 @@ class PasswordResetView(View):
     urlname = "password_reset_confirm"
 
     def get(self, request, *args, **kwargs):
+        extra_context = kwargs.setdefault('extra_context', {})
+        extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         return password_reset_confirm(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        extra_context = kwargs.setdefault('extra_context', {})
+        extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         response = password_reset_confirm(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)

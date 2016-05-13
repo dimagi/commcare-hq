@@ -1,10 +1,11 @@
+import uuid
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, SQLLastReadMessage, OUTGOING, INCOMING
 from corehq.apps.sms.views import ChatMessageHistory
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.tests.utils import set_case_property_directly
-from corehq.util.test_utils import softer_assert
+from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.util.test_utils import softer_assert, create_test_case
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
@@ -63,13 +64,8 @@ class ChatHistoryTestCase(TestCase):
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
 
-        cls.contact1 = CommCareCase(domain=cls.domain, name='test-case')
-        set_case_property_directly(cls.contact1, 'custom_name', 'custom-name')
-        cls.contact1.save()
-
-        cls.contact2 = CommCareCase(domain='another-domain')
-        cls.contact2.save()
-
+        cls.contact1_id = uuid.uuid4().hex
+        cls.contact2_id = uuid.uuid4().hex
         cls.contact3 = CommCareUser.create(cls.domain, 'user1', '123')
 
         cls.chat_user = CommCareUser.create(cls.domain, 'user2', '123')
@@ -80,8 +76,8 @@ class ChatHistoryTestCase(TestCase):
             domain=cls.domain,
             direction=OUTGOING,
             date=datetime(2016, 2, 18, 0, 0),
-            couch_recipient_doc_type=cls.contact1.doc_type,
-            couch_recipient=cls.contact1.get_id,
+            couch_recipient_doc_type='CommCareCase',
+            couch_recipient=cls.contact1_id,
             text='Remember your appointment tomorrow',
             chat_user_id=None,
             processed=True,
@@ -93,8 +89,8 @@ class ChatHistoryTestCase(TestCase):
             domain=cls.domain,
             direction=OUTGOING,
             date=datetime(2016, 2, 18, 1, 0),
-            couch_recipient_doc_type=cls.contact1.doc_type,
-            couch_recipient=cls.contact1.get_id,
+            couch_recipient_doc_type='CommCareCase',
+            couch_recipient=cls.contact1_id,
             text='Remember your appointment next week',
             chat_user_id=None,
             processed=False,
@@ -106,8 +102,8 @@ class ChatHistoryTestCase(TestCase):
             domain=cls.domain,
             direction=OUTGOING,
             date=datetime(2016, 2, 18, 2, 0),
-            couch_recipient_doc_type=cls.contact1.doc_type,
-            couch_recipient=cls.contact1.get_id,
+            couch_recipient_doc_type='CommCareCase',
+            couch_recipient=cls.contact1_id,
             text='How are you?',
             chat_user_id=cls.chat_user.get_id,
             processed=True,
@@ -119,8 +115,8 @@ class ChatHistoryTestCase(TestCase):
             domain=cls.domain,
             direction=INCOMING,
             date=datetime(2016, 2, 18, 3, 0),
-            couch_recipient_doc_type=cls.contact1.doc_type,
-            couch_recipient=cls.contact1.get_id,
+            couch_recipient_doc_type='CommCareCase',
+            couch_recipient=cls.contact1_id,
             text='Good',
             chat_user_id=None,
             processed=False,
@@ -132,8 +128,8 @@ class ChatHistoryTestCase(TestCase):
             domain=cls.domain,
             direction=INCOMING,
             date=datetime(2016, 2, 18, 4, 0),
-            couch_recipient_doc_type=cls.contact1.doc_type,
-            couch_recipient=cls.contact1.get_id,
+            couch_recipient_doc_type='CommCareCase',
+            couch_recipient=cls.contact1_id,
             text='x',
             chat_user_id=None,
             processed=True,
@@ -145,8 +141,8 @@ class ChatHistoryTestCase(TestCase):
             domain=cls.domain,
             direction=OUTGOING,
             date=datetime(2016, 2, 18, 5, 0),
-            couch_recipient_doc_type=cls.contact1.doc_type,
-            couch_recipient=cls.contact1.get_id,
+            couch_recipient_doc_type='CommCareCase',
+            couch_recipient=cls.contact1_id,
             text='Invalid Response',
             chat_user_id=None,
             processed=True,
@@ -158,8 +154,8 @@ class ChatHistoryTestCase(TestCase):
             domain=cls.domain,
             direction=INCOMING,
             date=datetime(2016, 2, 18, 6, 0),
-            couch_recipient_doc_type=cls.contact1.doc_type,
-            couch_recipient=cls.contact1.get_id,
+            couch_recipient_doc_type='CommCareCase',
+            couch_recipient=cls.contact1_id,
             text='1',
             chat_user_id=None,
             processed=True,
@@ -171,8 +167,8 @@ class ChatHistoryTestCase(TestCase):
             domain=cls.domain,
             direction=OUTGOING,
             date=datetime(2016, 2, 18, 7, 0),
-            couch_recipient_doc_type=cls.contact1.doc_type,
-            couch_recipient=cls.contact1.get_id,
+            couch_recipient_doc_type='CommCareCase',
+            couch_recipient=cls.contact1_id,
             text='Thank you for completing the survey',
             chat_user_id=None,
             processed=True,
@@ -189,8 +185,6 @@ class ChatHistoryTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.contact1.delete()
-        cls.contact2.delete()
         cls.contact3.delete()
         cls.chat_user.delete()
         cls.domain_obj.delete()
@@ -213,26 +207,37 @@ class ChatHistoryTestCase(TestCase):
         cls.domain_obj.show_invalid_survey_responses_in_chat = show_invalid_survey_responses_in_chat
         cls.domain_obj.save()
 
+    def create_contact1(self):
+        return create_test_case(self.domain, 'contact', 'test-case',
+            case_properties={'custom_name': 'custom-name'}, case_id=self.contact1_id)
+
+    def create_contact2(self):
+        return create_test_case('another-domain', 'contact', 'test-case2', case_id=self.contact2_id)
+
+    @run_with_all_backends
     def test_contact(self):
-        with self.patch_contact_id(self.contact1.get_id):
-            self.assertEqual(self.new_view.contact.get_id, self.contact1.get_id)
+        with self.create_contact1() as contact1, self.create_contact2() as contact2:
+            with self.patch_contact_id(contact1.case_id):
+                self.assertEqual(self.new_view.contact.get_id, contact1.case_id)
 
-        with self.patch_contact_id(self.contact2.get_id):
-            self.assertIsNone(self.new_view.contact)
+            with self.patch_contact_id(contact2.case_id):
+                self.assertIsNone(self.new_view.contact)
 
+    @run_with_all_backends
     def test_contact_name(self):
-        self.set_custom_case_username(None)
-        with self.patch_contact_id(self.contact1.get_id):
-            self.assertEqual(self.new_view.contact_name, 'test-case')
+        with self.create_contact1() as contact1:
+            self.set_custom_case_username(None)
+            with self.patch_contact_id(contact1.case_id):
+                self.assertEqual(self.new_view.contact_name, 'test-case')
 
-        self.set_custom_case_username('custom_name')
-        with self.patch_contact_id(self.contact1.get_id):
-            self.assertEqual(self.new_view.contact_name, 'custom-name')
+            self.set_custom_case_username('custom_name')
+            with self.patch_contact_id(contact1.case_id):
+                self.assertEqual(self.new_view.contact_name, 'custom-name')
 
-        with self.patch_contact_id(self.contact3.get_id):
-            self.assertEqual(self.new_view.contact_name, 'user1')
+            with self.patch_contact_id(self.contact3.get_id):
+                self.assertEqual(self.new_view.contact_name, 'user1')
 
-        self.set_custom_case_username(None)
+            self.set_custom_case_username(None)
 
     def test_get_chat_user_name(self):
         self.assertEqual(
@@ -263,7 +268,7 @@ class ChatHistoryTestCase(TestCase):
         """
         Note: This method is very specific to the data of this test and
         assumes that:
-            - the recipient is always self.contact1
+            - the recipient is always self.create_contact1()
             - chat_user_id always points to self.chat_user if present
             - the user requesting the chat history is always self.chat_user
         """
@@ -294,7 +299,7 @@ class ChatHistoryTestCase(TestCase):
 
     @classmethod
     def get_last_read_message(cls):
-        return SQLLastReadMessage.by_user(cls.domain, cls.chat_user.get_id, cls.contact1.get_id)
+        return SQLLastReadMessage.by_user(cls.domain, cls.chat_user.get_id, cls.contact1_id)
 
     @classmethod
     def get_last_read_message_count(cls):
@@ -305,59 +310,63 @@ class ChatHistoryTestCase(TestCase):
         self.assertEqual(lrm.message_id, sms.couch_id)
         self.assertEqual(lrm.message_timestamp, sms.date)
 
+    @run_with_all_backends
     def test_get_response_data(self):
-        with self.patch_contact_id(self.contact1.get_id):
+        with self.create_contact1() as contact1:
+            with self.patch_contact_id(contact1.case_id):
+                with self.patch_start_date(None):
+                    self.set_survey_filter_option(False, False)
+                    self.assertChatHistoryResponse([
+                        self.outgoing_from_system,
+                        self.outgoing_from_chat,
+                        self.incoming_not_processed,
+                        self.incoming_survey_answer1,
+                        self.outgoing_survey_response1,
+                        self.incoming_survey_answer2,
+                        self.outgoing_survey_response2,
+                    ])
 
-            with self.patch_start_date(None):
+                with self.patch_start_date('2016-02-18T03:00:00.000000Z'):
+                    self.assertChatHistoryResponse([
+                        self.incoming_survey_answer1,
+                        self.outgoing_survey_response1,
+                        self.incoming_survey_answer2,
+                        self.outgoing_survey_response2,
+                    ])
+
+                with self.patch_start_date('2016-02-18T07:00:00.000000Z'):
+                    self.assertChatHistoryResponse([])
+
+                with self.patch_start_date(None):
+                    self.set_survey_filter_option(True, False)
+                    self.assertChatHistoryResponse([
+                        self.outgoing_from_system,
+                        self.outgoing_from_chat,
+                        self.incoming_not_processed,
+                    ])
+
+                with self.patch_start_date(None):
+                    self.set_survey_filter_option(True, True)
+                    self.assertChatHistoryResponse([
+                        self.outgoing_from_system,
+                        self.outgoing_from_chat,
+                        self.incoming_not_processed,
+                        self.incoming_survey_answer1,
+                    ])
+
                 self.set_survey_filter_option(False, False)
-                self.assertChatHistoryResponse([
-                    self.outgoing_from_system,
-                    self.outgoing_from_chat,
-                    self.incoming_not_processed,
-                    self.incoming_survey_answer1,
-                    self.outgoing_survey_response1,
-                    self.incoming_survey_answer2,
-                    self.outgoing_survey_response2,
-                ])
 
-            with self.patch_start_date('2016-02-18T03:00:00.000000Z'):
-                self.assertChatHistoryResponse([
-                    self.incoming_survey_answer1,
-                    self.outgoing_survey_response1,
-                    self.incoming_survey_answer2,
-                    self.outgoing_survey_response2,
-                ])
-
-            with self.patch_start_date('2016-02-18T07:00:00.000000Z'):
-                self.assertChatHistoryResponse([])
-
-            with self.patch_start_date(None):
-                self.set_survey_filter_option(True, False)
-                self.assertChatHistoryResponse([
-                    self.outgoing_from_system,
-                    self.outgoing_from_chat,
-                    self.incoming_not_processed,
-                ])
-
-            with self.patch_start_date(None):
-                self.set_survey_filter_option(True, True)
-                self.assertChatHistoryResponse([
-                    self.outgoing_from_system,
-                    self.outgoing_from_chat,
-                    self.incoming_not_processed,
-                    self.incoming_survey_answer1,
-                ])
-
-            self.set_survey_filter_option(False, False)
-
+    @run_with_all_backends
     def test_update_last_read_message(self):
+        SQLLastReadMessage.objects.all().delete()
         self.assertEqual(self.get_last_read_message_count(), 0)
 
-        with self.patch_contact_id(self.contact1.get_id):
-            self.new_view.update_last_read_message(self.chat_user.get_id, self.outgoing_from_system)
-            self.assertEqual(self.get_last_read_message_count(), 1)
-            self.assertLastReadMessage(self.outgoing_from_system)
+        with self.create_contact1() as contact1:
+            with self.patch_contact_id(contact1.case_id):
+                self.new_view.update_last_read_message(self.chat_user.get_id, self.outgoing_from_system)
+                self.assertEqual(self.get_last_read_message_count(), 1)
+                self.assertLastReadMessage(self.outgoing_from_system)
 
-            self.new_view.update_last_read_message(self.chat_user.get_id, self.outgoing_from_chat)
-            self.assertEqual(self.get_last_read_message_count(), 1)
-            self.assertLastReadMessage(self.outgoing_from_chat)
+                self.new_view.update_last_read_message(self.chat_user.get_id, self.outgoing_from_chat)
+                self.assertEqual(self.get_last_read_message_count(), 1)
+                self.assertLastReadMessage(self.outgoing_from_chat)

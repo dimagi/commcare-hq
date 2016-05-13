@@ -47,7 +47,6 @@ class SMSBillablesInterface(GenericTabularReport):
         'corehq.apps.smsbillables.interface.HasGatewayFeeFilter',
         'corehq.apps.smsbillables.interface.GatewayTypeFilter',
     ]
-    is_bootstrap3 = True
 
     @property
     def headers(self):
@@ -55,6 +54,7 @@ class SMSBillablesInterface(GenericTabularReport):
             DataTablesColumn("Date of Message"),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Direction"),
+            DataTablesColumn("SMS parts"),
             DataTablesColumn("Gateway", sortable=False),
             DataTablesColumn("Gateway Fee", sortable=False),
             DataTablesColumn("Usage Fee", sortable=False),
@@ -69,10 +69,15 @@ class SMSBillablesInterface(GenericTabularReport):
             'date_sent',
             'domain',
             'direction',
+            'multipart_count',
+            None,
+            None,
+            None,
+            None,
+            None,
             'date_created',
         ]
-        sort_index = int(self.request.GET.get('iSortCol_0', 2))
-        sort_index = 1 if sort_index == 0 else sort_index - 1
+        sort_index = int(self.request.GET.get('iSortCol_0', 1))
         field = sort_fields[sort_index]
         sort_descending = self.request.GET.get('sSortDir_0', 'asc') == 'desc'
         return field if not sort_descending else '-{0}'.format(field)
@@ -131,10 +136,10 @@ class SMSBillablesInterface(GenericTabularReport):
                     INCOMING: "Incoming",
                     OUTGOING: "Outgoing",
                 }.get(sms_billable.direction, ""),
+                sms_billable.multipart_count,
                 sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
                 sms_billable.gateway_charge,
-                (sms_billable.usage_fee.amount
-                 if sms_billable.usage_fee is not None else ""),
+                sms_billable.usage_charge,
                 sms_billable.log_id,
                 sms_billable.is_valid,
                 sms_billable.date_created,
@@ -200,7 +205,6 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
         'corehq.apps.smsbillables.interface.DirectionFilter',
         'corehq.apps.smsbillables.interface.CountryCodeFilter',
     ]
-    is_bootstrap3 = True
 
     @property
     def headers(self):

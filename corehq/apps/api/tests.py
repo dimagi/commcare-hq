@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import datetime
 
 import dateutil.parser
@@ -6,6 +7,9 @@ import dateutil.parser
 from django.utils.http import urlencode
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from casexml.apps.case.mock import CaseBlock
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.form_processor.tests import run_with_all_backends
 from django_prbac.models import Role
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
@@ -72,6 +76,7 @@ def set_up_subscription(cls):
     cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan)
     cls.subscription.is_active = True
     cls.subscription.save()
+
 
 class APIResourceTest(TestCase):
     """
@@ -237,6 +242,7 @@ class TestXFormInstanceResource(APIResourceTest):
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         prior_run_query = fake_xform_es.run_query
         queries = []
+
         def mock_run_query(es_query):
             queries.append(es_query)
             return prior_run_query(es_query)
@@ -263,6 +269,29 @@ class TestXFormInstanceResource(APIResourceTest):
             {'term': {'domain.exact': 'qwerty'}},
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
+
+    @run_with_all_backends
+    def test_fetching_xform_cases(self):
+        # Create an xform that touches a case
+        case_id = uuid.uuid4().hex
+        form_id = submit_case_blocks(
+            CaseBlock(
+                case_id=case_id,
+                create=True,
+            ).as_string(),
+            self.domain.name
+        )
+
+        # Fetch the xform through the API
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.single_endpoint(form_id) + "?cases__full=true")
+        self.assertEqual(response.status_code, 200)
+        cases = json.loads(response.content)['cases']
+
+        # Confirm that the case appears in the resource
+        self.assertEqual(len(cases), 1)
+        self.assertEqual(cases[0]['id'], case_id)
+
 
 class TestCommCareCaseResource(APIResourceTest):
     """
@@ -305,6 +334,58 @@ class TestCommCareCaseResource(APIResourceTest):
 
         backend_case.delete()
 
+    @run_with_all_backends
+    def test_parent_and_child_cases(self):
+
+        # Create cases
+        parent_case_id = uuid.uuid4().hex
+        parent_type = 'parent_case_type'
+        submit_case_blocks(
+            CaseBlock(
+                case_id=parent_case_id,
+                create=True,
+                case_type=parent_type,
+            ).as_string(),
+            self.domain.name
+        )
+        child_case_id = uuid.uuid4().hex
+        submit_case_blocks(
+            CaseBlock(
+                case_id=child_case_id,
+                create=True,
+                index={'parent': (parent_type, parent_case_id)}
+            ).as_string(),
+            self.domain.name
+        )
+
+        # Fetch the child case through the API
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.single_endpoint(child_case_id) + "?parent_cases__full=true")
+        self.assertEqual(
+            response.status_code,
+            200,
+            "Status code was not 200. Response content was {}".format(response.content)
+        )
+        parent_cases = json.loads(response.content)['parent_cases'].values()
+
+        # Confirm that the case appears in the resource
+        self.assertEqual(len(parent_cases), 1)
+        self.assertEqual(parent_cases[0]['id'], parent_case_id)
+
+        # Fetch the parent case through the API
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.single_endpoint(parent_case_id) + "?child_cases__full=true")
+        self.assertEqual(
+            response.status_code,
+            200,
+            "Status code was not 200. Response content was {}".format(response.content)
+        )
+        child_cases = json.loads(response.content)['child_cases'].values()
+
+        # Confirm that the case appears in the resource
+        self.assertEqual(len(child_cases), 1)
+        self.assertEqual(child_cases[0]['id'], child_case_id)
+
     def test_no_subscription(self):
         """
         Tests authorization function properly blocks domains without proper subscription
@@ -334,6 +415,7 @@ class TestCommCareCaseResource(APIResourceTest):
 
         community_domain.delete()
         new_user.delete()
+
 
 class TestHOPECaseResource(APIResourceTest):
     """
@@ -517,7 +599,6 @@ class TestWebUserResource(APIResourceTest):
                      'edit_apps', 'view_reports']:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
 
-
     def test_get_list(self):
         self.client.login(username=self.username, password=self.password)
 
@@ -548,7 +629,6 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 200)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 0)
-
 
     def test_get_single(self):
         self.client.login(username=self.username, password=self.password)
@@ -624,6 +704,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(modified.last_name, "Admin")
         self.assertEqual(modified.email, "admin@example.com")
         modified.delete()
+
 
 class TestRepeaterResource(APIResourceTest):
     """
@@ -707,7 +788,6 @@ class TestRepeaterResource(APIResourceTest):
             self.assertEqual(repeater_json['url'], repeater_back.url)
             repeater_back.delete()
 
-
     def test_update(self):
         self.client.login(username=self.username, password=self.password)
 
@@ -730,7 +810,9 @@ class TestRepeaterResource(APIResourceTest):
             self.assertTrue('modified' in modified.url)
             repeater.delete()
 
+
 class TestReportPillow(TestCase):
+
     def test_xformPillowTransform(self):
         """
         Test to make sure report xform and reportxform pillows strip the appVersion dict to match the
@@ -814,6 +896,7 @@ class TestElasticAPIQuerySet(TestCase):
 
 
 class ToManySourceModel(object):
+
     def __init__(self, other_model_ids, other_model_dict):
         self.other_model_dict = other_model_dict
         self.other_model_ids = other_model_ids
@@ -822,10 +905,13 @@ class ToManySourceModel(object):
     def other_models(self):
         return [self.other_model_dict.get(id) for id in self.other_model_ids]
     
+
 class ToManyDestModel(object):
+
     def __init__(self, id):
         self.id = id
     
+
 class ToManySourceResource(Resource):
     other_model_ids = fields.ListField(attribute='other_model_ids')
     other_models = ToManyDocumentsField('corehq.apps.api.tests.ToManyDestResource', attribute='other_models')
@@ -845,6 +931,7 @@ class ToManySourceResource(Resource):
     class Meta:
         model_class = ToManySourceModel
 
+
 class ToManyDestResource(Resource):
     id = fields.CharField(attribute='id')
 
@@ -855,6 +942,7 @@ class ToManyDestResource(Resource):
         return {
             'pk': get_obj(bundle_or_obj).id
         }
+
 
 class TestToManyDocumentsField(TestCase):
     '''
@@ -888,6 +976,7 @@ class TestToManyDocumentsField(TestCase):
 
         
 class ToManyDictSourceModel(object):
+
     def __init__(self, other_model_ids, other_model_dict):
         self.other_model_dict = other_model_dict
         self.other_model_ids = other_model_ids
@@ -896,9 +985,12 @@ class ToManyDictSourceModel(object):
     def other_models(self):
         return dict([(key, self.other_model_dict.get(id)) for key, id in self.other_model_ids.items()])
     
+
 class ToManyDictDestModel(object):
+
     def __init__(self, id):
         self.id = id
+
 
 class ToManyDictSourceResource(Resource):
     other_model_ids = fields.ListField(attribute='other_model_ids')
@@ -919,6 +1011,7 @@ class ToManyDictSourceResource(Resource):
     class Meta:
         model_class = ToManyDictSourceModel
 
+
 class ToManyDictDestResource(Resource):
     id = fields.CharField(attribute='id')
 
@@ -929,6 +1022,7 @@ class ToManyDictDestResource(Resource):
 
     class Meta:
         model_class = ToManyDictDestModel
+
 
 class TestToManyDictField(TestCase):
     '''
@@ -963,8 +1057,8 @@ class TestToManyDictField(TestCase):
         self.assertEqual(dehydrated_bundle.data['other_models']['second_other']['id'], 'baz')
 
 
-
 class ToOneSourceModel(object):
+
     def __init__(self, other_model_id, other_model_dict):
         self.other_model_dict = other_model_dict
         self.other_model_id = other_model_id
@@ -973,10 +1067,13 @@ class ToOneSourceModel(object):
     def other_model(self):
         return self.other_model_dict.get(self.other_model_id)
     
+
 class ToOneDestModel(object):
+
     def __init__(self, id):
         self.id = id
     
+
 class ToOneSourceResource(Resource):
     other_model_id = fields.ListField(attribute='other_model_id')
     other_model = ToOneDocumentField('corehq.apps.api.tests.ToOneDestResource', attribute='other_model')
@@ -996,6 +1093,7 @@ class ToOneSourceResource(Resource):
     class Meta:
         model_class = ToOneSourceModel
 
+
 class ToOneDestResource(Resource):
     id = fields.CharField(attribute='id')
 
@@ -1006,6 +1104,7 @@ class ToOneDestResource(Resource):
 
     class Meta:
         model_class = ToOneDestModel
+
 
 class TestToOneDocumentField(TestCase):
     '''
@@ -1038,8 +1137,10 @@ class TestToOneDocumentField(TestCase):
 
         
 class UseIfRequestedModel(object):
+
     def __init__(self, id):
         self.id = id
+
 
 class UseIfRequestedTestResource(Resource):
     something = UseIfRequested(fields.CharField(attribute='id'))
@@ -1059,7 +1160,9 @@ class UseIfRequestedTestResource(Resource):
     class Meta:
         model_class = UseIfRequestedModel
 
+
 class TestUseIfRequested(TestCase):
+
     def test_requested_use_in(self):
         objs = [
             UseIfRequestedModel(id='foo'),
@@ -1150,6 +1253,7 @@ class TestSingleSignOnResource(APIResourceTest):
         response = self.client.post(self.list_endpoint, {'username': self.username})
         self.assertEqual(response.status_code, 400)
 
+
 class TestGroupResource(APIResourceTest):
 
     resource = v0_5.GroupResource
@@ -1239,6 +1343,7 @@ class TestGroupResource(APIResourceTest):
 
 
 class FakeUserES(object):
+
     def __init__(self):
         self.docs = []
         self.queries = []

@@ -2,6 +2,7 @@ from dateutil.parser import parse
 from dimagi.ext.couchdbkit import DateTimeProperty, Property
 import json
 
+
 def parse_date_string(datestring, precise=False):
     """
     >>> parse_date_string('2013-01-03T11:27:06.045000Z')
@@ -22,6 +23,7 @@ def parse_date_string(datestring, precise=False):
     # correct, at least it's consistent
     return date_with_tz.replace(tzinfo=None)
 
+
 class TimeStampProperty(DateTimeProperty):
     """
     A more precise version of the DateTime property.
@@ -30,6 +32,7 @@ class TimeStampProperty(DateTimeProperty):
     modes. Useful if you want to do comparisons with normal DateTimeProperties
     but still want to store the extra precision for potential future need.
     """
+
     def __init__(self, precise_reads=False, **kwargs):
         self.precise_reads = precise_reads
         super(TimeStampProperty, self).__init__(**kwargs)
@@ -47,6 +50,7 @@ class TimeStampProperty(DateTimeProperty):
         if value is None:
             return value
         return value.isoformat() + 'Z'
+
 
 class JsonProperty(Property):
     """

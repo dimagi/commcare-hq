@@ -6,6 +6,7 @@ from corehq.util.spreadsheets.excel import WorksheetNotFound, \
 from openpyxl.utils.exceptions import InvalidFileException
 from django.utils.translation import ugettext as _, ugettext_noop
 
+
 class MessageBankForm(Form):
     message_bank_file = FileField(required=False)
 

@@ -1,7 +1,6 @@
 from django.test import override_settings, SimpleTestCase, TestCase
 from pillowtop import get_all_pillow_instances, get_all_pillow_classes, get_pillow_by_name
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.dao.mock import MockDocumentStore
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.feed.mock import RandomChangeFeed
 from pillowtop.feed.interface import Change
@@ -44,10 +43,8 @@ class FakeConstructedPillow(ConstructedPillow):
 
 
 def make_fake_constructed_pillow(pillow_id):
-    fake_dao = MockDocumentStore()
     pillow = FakeConstructedPillow(
         name=pillow_id,
-        document_store=fake_dao,
         checkpoint=PillowCheckpoint('fake-constructed-pillow'),
         change_feed=RandomChangeFeed(10),
         processor=LoggingProcessor(),
@@ -64,6 +61,7 @@ PILLOWTOPS_OVERRIDE = {
         }
     ]
 }
+
 
 @override_settings(PILLOWTOPS=PILLOWTOPS_OVERRIDE)
 class PillowFactoryFunctionTestCase(SimpleTestCase):

@@ -7,8 +7,10 @@ from corehq.apps.performance_sms import parser
 from corehq.apps.performance_sms.exceptions import InvalidParameterException
 from corehq.apps.performance_sms.models import TemplateVariable, ScheduleConfiguration, SCHEDULE_CHOICES
 from corehq.apps.reports.daterange import get_simple_dateranges
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Layout
+import corehq.apps.style.crispy as hqcrispy
 
 
 class PerformanceMessageEditForm(forms.Form):
@@ -43,10 +45,26 @@ class PerformanceMessageEditForm(forms.Form):
         self.fields.update(data_source_fields)
 
         self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = "form-horizontal"
         self.helper.form_id = "performance-form"
+
         self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', _('Save Changes')))
+
+        form_layout = self.fields.keys()
+        form_layout.append(
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Save Changes"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+            )
+        )
+        self.helper.layout = Layout(
+            *form_layout
+        )
 
     def clean_template(self):
         template = self.cleaned_data['template']

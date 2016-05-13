@@ -18,8 +18,8 @@ import logging
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from corehq.util.soft_assert import soft_assert
 from corehq.toggles import deterministic_random
+from corehq.util.decorators import analytics_task
 
 from dimagi.utils.logging import notify_exception
 
@@ -36,7 +36,17 @@ HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID = "619daf02-e043-4617-8947-a23e4589935
 HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
 HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
 HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
+HUBSPOT_CLICKED_SIGNUP_FORM = "06b39b74-62b3-4387-b323-fe256dc92720"
 HUBSPOT_COOKIE = 'hubspotutk'
+
+
+def _raise_for_urllib3_response(response):
+    '''
+    this mimics the behavior of requests.response.raise_for_status so we can
+    treat kissmetrics requests and hubspot requests interchangeably in our retry code
+    '''
+    if 400 <= response.status < 600:
+        raise requests.exceptions.HTTPError(response=response)
 
 
 def _track_on_hubspot(webuser, properties):
@@ -100,7 +110,7 @@ def _hubspot_post(url, data):
             data=data,
             headers=headers
         )
-        _log_response(data, response)
+        _log_response('HS', data, response)
         response.raise_for_status()
 
 
@@ -129,7 +139,7 @@ def _get_client_ip(meta):
     return ip
 
 
-def _send_form_to_hubspot(form_id, webuser, cookies, meta):
+def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, email=False):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -142,33 +152,38 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta):
             form_id=form_id
         )
         data = {
-            'email': webuser.username,
-            'firstname': webuser.first_name,
-            'lastname': webuser.last_name,
+            'email': email if email else webuser.username,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
+        if webuser:
+            data.update({'firstname': webuser.first_name,
+                         'lastname': webuser.last_name,
+                         })
+        if extra_fields:
+            data.update(extra_fields)
 
         response = requests.post(
             url,
             data=data
         )
-        _log_response(data, response)
+        _log_response('HS', data, response)
         response.raise_for_status()
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task()
 def update_hubspot_properties(webuser, properties):
     vid = _get_user_hubspot_id(webuser)
     if vid:
         _track_on_hubspot(webuser, properties)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task()
 def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     if path.startswith(reverse("register_user")):
         tracking_dict = {
             'created_account_in_hq': True,
             'is_a_commcare_user': True,
+            'lifecyclestage': 'lead'
         }
         tracking_dict.update(get_ab_test_properties(webuser))
         _track_on_hubspot(webuser, tracking_dict)
@@ -176,7 +191,7 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task()
 def track_built_app_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -184,7 +199,7 @@ def track_built_app_on_hubspot(webuser):
         _track_on_hubspot(webuser, {'built_app': True})
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task()
 def track_confirmed_account_on_hubspot(webuser):
     vid = _get_user_hubspot_id(webuser)
     if vid:
@@ -200,39 +215,49 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_entered_form_builder_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_FORM_BUILDER_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_app_from_template_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_APP_TEMPLATE_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta)
+    ab = {
+        'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
+    }
+    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta, extra_fields=ab)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_sent_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
 
 
-@task(queue="background_queue", acks_late=True, ignore_result=True)
+@analytics_task()
 def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_NEW_USER_INVITE_FORM, webuser, cookies, meta)
+
+
+@analytics_task()
+def track_clicked_signup_on_hubspot(email, cookies, meta):
+    lifecycle = {'lifecyclestage': 'subscriber'}
+    if email:
+        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, extra_fields=lifecycle, email=email)
 
 
 def track_workflow(email, event, properties=None):
@@ -247,24 +272,18 @@ def track_workflow(email, event, properties=None):
     _track_workflow_task.delay(email, event, properties, timestamp)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@analytics_task()
 def _track_workflow_task(email, event, properties=None, timestamp=0):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        km.record(email, event, properties if properties else {}, timestamp)
-        # TODO: Consider adding some error handling for bad/failed requests.
+        res = km.record(email, event, properties if properties else {}, timestamp)
+        _log_response("KM", {'email': email, 'event': event, 'properties': properties, 'timestamp': timestamp}, res)
+        # TODO: Consider adding some better error handling for bad/failed requests.
+        _raise_for_urllib3_response(res)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
-def update_kissmetrics_properties(email, properties):
-    api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
-    if api_key:
-        km = KISSmetrics.Client(key=api_key)
-        km.set(email, properties)
-
-
-@task(queue='background_queue', ignore_result=True)
+@analytics_task()
 def identify(email, properties):
     """
     Set the given properties on a KISSmetrics user.
@@ -275,8 +294,10 @@ def identify(email, properties):
     api_key = settings.ANALYTICS_IDS.get("KISSMETRICS_KEY", None)
     if api_key:
         km = KISSmetrics.Client(key=api_key)
-        km.set(email, properties)
-        # TODO: Consider adding some error handling for bad/failed requests.
+        res = km.set(email, properties)
+        _log_response("KM", {'email': email, 'properties': properties}, res)
+        # TODO: Consider adding some better error handling for bad/failed requests.
+        _raise_for_urllib3_response(res)
 
 
 @periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
@@ -285,19 +306,15 @@ def track_periodic_data():
     Sync data that is neither event or page based with hubspot/Kissmetrics
     :return:
     """
-    start_time = datetime.now()
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
     users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email'])\
                                .run().hits
     # users_to_domains is a list of dicts
-    time_users_to_domains_query = datetime.now()
     domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
         .aggregations.domain.counts_by_bucket()
-    time_domains_to_forms_query = datetime.now()
     domains_to_mobile_users = UserES().mobile_users().terms_aggregation('domain', 'domain').size(0).run()\
                                       .aggregations.domain.counts_by_bucket()
-    time_domains_to_mobile_users_query = datetime.now()
 
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
@@ -331,28 +348,16 @@ def track_periodic_data():
                 {
                     'property': 'project_spaces_created_by_user',
                     'value': project_spaces_created,
+                },
+                {
+                    'property': 'over_300_form_submissions',
+                    'value': max_forms > 300
                 }
             ]
         }
         submit.append(user_json)
 
-    end_time = datetime.now()
     submit_json = json.dumps(submit)
-
-    processing_time = end_time - start_time
-    _soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com'))
-    #TODO: Update this soft assert to only trigger if the timing is longer than a threshold
-    msg = 'Periodic Data Timing: start: {}, users_to_domains: {}, domains_to_forms: {}, ' \
-          'domains_to_mobile_workers: {}, end: {}, size of string post to hubspot (bytes): {}'\
-        .format(
-            start_time,
-            time_users_to_domains_query,
-            time_domains_to_forms_query,
-            time_domains_to_mobile_users_query,
-            end_time,
-            sys.getsizeof(submit_json)
-        )
-    _soft_assert(processing_time.seconds < 100, msg)
 
     submit_data_to_hub_and_kiss(submit_json)
 
@@ -415,18 +420,20 @@ def _track_periodic_data_on_kiss(submit_json):
     os.remove(filename)
 
 
-def _log_response(data, response):
+def _log_response(target, data, response):
+    status_code = response.status_code if isinstance(response, requests.models.Response) else response.status
     try:
         response_text = json.dumps(response.json(), indent=2, sort_keys=True)
     except Exception:
-        response_text = response.status_code
+        response_text = status_code
 
-    message = 'Sent this data to HS: %s \nreceived: %s' % (
-        json.dumps(data, indent=2, sort_keys=True),
-        response_text
+    message = 'Sent this data to {target}: {data} \nreceived: {response}'.format(
+        target=target,
+        data=json.dumps(data, indent=2, sort_keys=True),
+        response=response_text
     )
 
-    if response.status_code != 200:
+    if status_code != 200:
         logger.error(message)
     else:
         logger.debug(message)

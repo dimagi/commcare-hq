@@ -7,9 +7,13 @@ var MVISIndicatorTable = function (options) {
     }));
 
     self.init = function () {
-
+        var _queue = new window.mvp.MVPIndicatorQueue(
+            options.categories.length, function (ind, fnNext) {
+                return self.categories()[ind].queueIndicators().then(fnNext);
+            }
+        );
+        _queue.start();
     };
-
 };
 
 var MVISCategory = function (category_data) {
@@ -25,6 +29,18 @@ var MVISCategory = function (category_data) {
         return indicator_obj;
     }));
 
+    self.queueIndicators = function () {
+        var _queue = new window.mvp.MVPIndicatorQueue(
+            self.indicators().length, function (ind, fnNext) {
+                return self.indicators()[ind].updateIndicator()
+                    .done(fnNext)
+                    .fail(fnNext);
+            }
+        );
+        _queue.start();
+        return _queue.d;
+    };
+
     self.show_category_title = function (index) {
         index = ko.utils.unwrapObservable(index);
         return index === 0;
@@ -34,23 +50,25 @@ var MVISCategory = function (category_data) {
         index = ko.utils.unwrapObservable(index);
         return index !== 0;
     };
+
 };
 
 var MVISIndicator = function (indicator) {
     'use strict';
     var self = this;
     self.load_url = indicator.load_url;
-    self.num_tries = 0;
 
     self.is_loaded = ko.observable(false);
     self.is_loading = ko.observable(false);
     self.show_loading = ko.computed(function () {
         return !self.is_loaded();
     });
+
     self.rowspan = indicator.rowspan;
     self.title = indicator.title;
     self.num_columns = indicator.table.numerators.length;
     self.loading_text = ko.observable("");
+
     self.default_loading_text = ko.computed(function () {
         return "Indicator " + self.loading_text();
     });
@@ -68,40 +86,33 @@ var MVISIndicator = function (indicator) {
     self.show_only_numerators = (self.rowspan === 1);
 
     self.init = function () {
-        self.loading_text("in queue.");
-        queue.add(self);
+        self.loading_text("In Queue");
     };
 
-    self.load_success = function (data) {
+    self.updateIndicator = function () {
+        var _updater = new window.mvp.MVPIndicatorUpdater(
+            self.load_url, self.loadSuccess, self.loadError
+        );
+        _updater.start();
+        self.is_loading(true);
+        return _updater.d;
+    };
+
+    self.loadSuccess = function (data) {
         if (!data.error) {
             self.percentages(data.table.percentages || []);
             self.numerators(data.table.numerators || []);
             self.denominators(data.table.denominators || []);
             self.is_loaded(true);
             $('.mvp-table').trigger('mvp.loaded');
+        } else {
+            console.log("ERROR: ", data.error);
         }
-        queue.next(false);
     };
 
-    self.load_error = function (error) {
-        console.log("there was an error");
-        console.log(error);
-        // check to see if this is a real error...
-        if (error.responseText && error.responseText.table) {
-            self.load_success(error.responseText);
-        }
-        var try_again = !!(self.num_tries <= 3);
-        queue.next(false);
+    self.loadError = function () {
         self.is_loading(false);
-        if (try_again) {
-            console.log("trying again");
-            queue.add(self);
-            self.loading_text("experienced a connection issue while loading, trying again after the rest of the indicators.");
-        } else {
-            self.loading_text("encountered errors while loading.");
-        }
-
-        self.num_tries += 1;
+        self.loading_text("encountered errors while loading.");
     };
 };
 

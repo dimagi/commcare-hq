@@ -9,3 +9,4 @@ from corehq.apps.export.tests.test_get_export_file import *
 from corehq.apps.export.tests.test_export_filters import *
 from corehq.apps.export.tests.test_export_conversion import *
 from corehq.apps.export.tests.test_export_forms import *
+from corehq.apps.export.tests.test_daily_saved_exports import *

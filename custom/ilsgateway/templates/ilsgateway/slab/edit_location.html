@@ -1,0 +1,36 @@
+{% extends "style/bootstrap3/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block stylesheets %} {{ block.super }}
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'style/js/bootstrap2/ui-element.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            $("#id_selected_ids").width(800).height(400).multiselect();
+        });
+
+        var LocationModelView = function() {
+            this.isPilot = ko.observable($('#id_is_pilot').get(0).checked);
+        };
+        ko.applyBindings(new LocationModelView(), document.getElementById('edit_locations'));
+    </script>
+{% endblock %}
+
+{% block page_content %}
+    <div>
+        <a class="btn btn-default" href="{% url 'slab_configuration' domain %}">Back to locations list</a>
+    </div>
+    <form class="form disable-on-submit" id="edit_locations" action="" method='post'>
+        <legend>{% trans 'SLAB Pilot Program' %}</legend>
+        {% crispy form %}
+    </form>
+{% endblock %}

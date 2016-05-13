@@ -24,6 +24,20 @@ def get_report_configs_for_domain(domain):
     )
 
 
+def get_datasources_for_domain(domain):
+    from corehq.apps.userreports.models import DataSourceConfiguration
+    return sorted(
+        DataSourceConfiguration.view(
+            'userreports/data_sources_by_build_info',
+            start_key=[domain],
+            end_key=[domain, {}],
+            reduce=False,
+            include_docs=True
+        ),
+        key=lambda config: config.display_name
+    )
+
+
 @unit_testing_only
 def get_all_report_configs():
     all_domains = Domain.get_all()

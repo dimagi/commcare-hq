@@ -3,7 +3,7 @@ from django.test import SimpleTestCase, RequestFactory
 from django.test.utils import override_settings
 from corehq.util.log import get_sanitized_request_repr
 from corehq.util.soft_assert.core import SoftAssert
-from corehq.util.soft_assert.api import _send_message
+from corehq.util.soft_assert.api import _send_message, soft_assert
 from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.test_utils import softer_assert
 
@@ -60,10 +60,12 @@ class SoftAssertTest(SimpleTestCase):
 
     @softer_assert
     def test_message_newlines(self):
-        self.soft_assert(False, "don't\ncrash")
+        _soft_assert = soft_assert(notify_admins=True)
+        _soft_assert(False, u"don't\ncrash")
 
 
 class SoftAssertHelpersTest(SimpleTestCase):
+
     def test_number_is_power_of_two(self):
         powers_of_two = [2**i for i in range(10)]
         for n in range(100):

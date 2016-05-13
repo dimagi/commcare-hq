@@ -42,7 +42,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     section_name = _("ADMINREPORT")
     asynchronous = False
     ajax_pagination = True
-    base_template = 'reports/bootstrap3/base_template.html'
+    base_template = 'reports/base_template.html'
     needs_filters = False
 
     fields = (
@@ -50,8 +50,6 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     )
 
     report_template_path = 'hqpillow_retry/pillow_errors.html'
-
-    is_bootstrap3 = True
 
     @property
     def headers(self):
@@ -146,11 +144,11 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
     def make_search_link(self, error):
         return (
             '{text}<a href="{search_url}?q={doc_id}" target="_blank" title="{search_title}">'
-            '<i class="icon-search"></i></a>'
+            '<i class="fa fa-search"></i></a>'
             '&nbsp;<a href="{raw_url}?id={doc_id}" target="_blank" title="{raw_title}">'
-            '<i class="icon-file"></i></a>'
+            '<i class="fa fa-file"></i></a>'
             '&nbsp;<a href="{error_url}?error={error_id}" target="_blank" title="{error_title}">'
-            '<i class="icon-share"></i></a>'
+            '<i class="fa fa-share"></i></a>'
         ).format(
             text='{}...'.format(error.doc_id[:5]),
             search_url=reverse("global_quick_find"),

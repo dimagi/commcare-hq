@@ -5,6 +5,7 @@ sorl-thumbnail
 Django==1.5.6
 django-crispy-forms
 jsonobject-couchdbkit==0.6.5.6
+jsonobject-couchdbkit==0.7.2.0
 jsonobject==0.6.3
 mailchimp
 south
@@ -13,4 +14,3 @@ GitPython
 gitdb
 django-kombu
 rawes
-pyzxcvbn

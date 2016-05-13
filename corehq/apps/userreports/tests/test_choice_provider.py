@@ -17,6 +17,7 @@ from corehq.apps.users.util import normalize_username
 
 
 class SearchableChoice(Choice):
+
     def __new__(cls, value, display, searchable_text=None):
         self = super(SearchableChoice, cls).__new__(cls, value, display)
         self.searchable_text = [text for text in searchable_text or []
@@ -51,6 +52,7 @@ class StaticChoiceProvider(ChoiceProvider):
 
 
 class StaticChoiceProviderTest(SimpleTestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.choice_provider = StaticChoiceProvider([Choice('1', 'One'), Choice('2', 'Two'), Choice('3', 'Three')])
@@ -129,6 +131,7 @@ class ChoiceProviderTestMixin(object):
         """
         pass
 
+
 class LocationChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
     dependent_apps = [
         'corehq.apps.commtrack', 'corehq.apps.locations', 'corehq.apps.products',
@@ -189,7 +192,9 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         user = CommCareUser(username=normalize_username(username, domain),
                             domain=domain)
         user.domain_membership = DomainMembership(domain=domain)
-        UserESFake.save_doc(user._doc)
+        doc = user._doc
+        doc['username.exact'] = doc['username']
+        UserESFake.save_doc(doc)
         return user
 
     @classmethod
@@ -198,7 +203,9 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         domains = [domain]
         user = WebUser(username=email, domains=domains)
         user.domain_memberships = [DomainMembership(domain=cls.domain)]
-        UserESFake.save_doc(user._doc)
+        doc = user._doc
+        doc['username.exact'] = doc['username']
+        UserESFake.save_doc(doc)
         return user
 
     @classmethod

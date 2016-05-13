@@ -3,7 +3,7 @@ from collections import defaultdict
 from itertools import islice
 from logging import Filter
 import traceback
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from pygments import highlight
 from pygments.lexers import PythonLexer
@@ -64,6 +64,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         }
     )
     """
+
     def get_context(self, record):
         try:
             request = record.request
@@ -175,6 +176,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
 
 
 class NotifyExceptionEmailer(HqAdminEmailHandler):
+
     def get_context(self, record):
         context = super(NotifyExceptionEmailer, self).get_context(record)
         context['subject'] = record.getMessage()
@@ -224,6 +226,7 @@ class SlowRequestFilter(Filter):
     Expects that LogRecords passed in will have a .duration property that is a timedelta.
     Intended to be used primarily with the couchdbkit request_logger
     """
+
     def __init__(self, name='', duration=5):
         self.duration_cutoff = timedelta(seconds=duration)
         super(SlowRequestFilter, self).__init__(name)
@@ -235,8 +238,16 @@ class SlowRequestFilter(Filter):
             return False
 
 
-def with_progress_bar(iterable, length=None):
-    """Turns 'iterable' into a generator which prints a progress bar"""
+def display_seconds(seconds):
+    return str(timedelta(seconds=int(round(seconds))))
+
+
+def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
+    """
+    Turns 'iterable' into a generator which prints a progress bar.
+    :param oneline: Set to False to print each update on a new line.
+        Useful if there will be other things printing to the terminal.
+    """
     if hasattr(iterable, "__len__"):
         length = len(iterable)
     elif length is None:
@@ -244,14 +255,34 @@ def with_progress_bar(iterable, length=None):
             "'{}' object has no len(), you must pass in the 'length' parameter"
             .format(type(iterable))
         )
-    granularity = 40
+
+    granularity = min(50, length)
+    start = datetime.now()
+
+    def draw(position):
+        percent = float(position) / length if length > 0 else 1
+        dots = int(round(percent * granularity))
+        spaces = granularity - dots
+        elapsed = (datetime.now() - start).total_seconds()
+        remaining = (display_seconds((elapsed / percent) * (1 - percent))
+                     if position > 0 else "-:--:--")
+
+        print prefix,
+        print "[{}{}]".format("." * dots, " " * spaces),
+        print "{}/{}".format(position, length),
+        print "{:.0%}".format(percent),
+        print "{} remaining".format(remaining),
+        print ("\r" if oneline else "\n"),
+        sys.stdout.flush()
+
+    print "Started at {:%Y-%m-%d %H:%M:%S}".format(start)
     checkpoints = {length*i/granularity for i in range(length)}
-    print 'Processing [' + ' '*granularity + ']',
-    print '\b' * (granularity + 2),
-    sys.stdout.flush()
     for i, x in enumerate(iterable):
         yield x
         if i in checkpoints:
-            print '\b.',
-            sys.stdout.flush()
-    print '\b] Done!'
+            draw(i)
+    draw(length)
+    print ""
+    end = datetime.now()
+    print "Finished at {:%Y-%m-%d %H:%M:%S}".format(end)
+    print "Elapsed time: {}".format(display_seconds((end - start).total_seconds()))

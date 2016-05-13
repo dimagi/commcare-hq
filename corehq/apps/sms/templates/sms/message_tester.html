@@ -1,22 +1,24 @@
-{% extends 'style/bootstrap2/two_column.html' %}
+{% extends 'style/bootstrap3/base_section.html' %}
 {% load i18n %}
 
-{% block main_column %}
-    <form class="form form-horizontal" action="{% url "corehq.apps.sms.views.message_test" domain phone_number %}" method="post">
+{% block page_content %}
+    <form class="form form-horizontal" action="{% url "message_test" domain phone_number %}" method="post">
         {% csrf_token %}
         <fieldset>
             <legend>{% trans "Simulate Inbound Message from" %} +{{ phone_number }}</legend>
-            <div class="control-group">
-                <label class="control-label" for="sms-message">{% trans "Message:" %}</label>
-                <div class="controls">
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="sms-message">{% trans "Message:" %}</label>
+                <div class="col-sm-9">
                     <div>
-                        <textarea id="sms-message" name="message" class="span12"></textarea>
+                        <textarea id="sms-message" name="message" class="form-control"></textarea>
                     </div>
                 </div>
             </div>
         </fieldset>
         <div class="form-actions">
-            <button type="submit" name="send_sms_button" class="btn btn-primary">{% trans "Send Message" %}</button>
+            <div class="col-sm-offset-2">
+                <button type="submit" name="send_sms_button" class="btn btn-primary">{% trans "Send Message" %}</button>
+            </div>
         </div>
     </form>
 {% endblock %}

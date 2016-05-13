@@ -3,6 +3,44 @@ from select import select
 
 from django.conf import settings
 from elasticsearch import TransportError
+from pillowtop.listener import AliasedElasticPillow
+
+
+class TestElasticPillow(AliasedElasticPillow):
+    es_alias = 'pillowtop_tests'
+    es_type = 'test_doc'
+    es_index = 'test_pillowtop_index'
+    # just for the sake of something being here
+    es_meta = {
+        "settings": {
+            "analysis": {
+                "analyzer": {
+                    "default": {
+                        "type": "custom",
+                        "tokenizer": "whitespace",
+                        "filter": ["lowercase"]
+                    },
+                }
+            }
+        }
+    }
+    default_mapping = {
+        '_meta': {
+            'comment': 'You know, for tests',
+            'created': '2015-10-07 @czue'
+        },
+        "properties": {
+            "doc_type": {
+                "index": "not_analyzed",
+                "type": "string"
+            },
+        }
+    }
+
+    @classmethod
+    def calc_meta(cls):
+        # must be overridden by subclasses of AliasedElasticPillow
+        return cls.es_index
 
 
 def get_doc_count(es, index, refresh_first=True):

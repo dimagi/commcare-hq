@@ -1,9 +1,11 @@
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.style.decorators import use_nvd3_v3
 from custom.care_pathways.utils import get_domain_configuration
 
 
 class CareReportMixin(object):
+
     @property
     def report_config(self):
         config = dict(
@@ -21,6 +23,7 @@ class CareReportMixin(object):
             all=2,
             test='test',
             duplicate='duplicate',
+            real_or_test=self.request.GET.get('real_or_test', '')
         )
         hierarchy_config = get_domain_configuration(self.domain).geography_hierarchy
         for k, v in sorted(hierarchy_config.iteritems(), reverse=True):
@@ -32,6 +35,10 @@ class CareReportMixin(object):
 
 
 class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, CareReportMixin):
+
+    @use_nvd3_v3
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(CareBaseReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

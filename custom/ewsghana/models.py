@@ -116,47 +116,6 @@ class EWSExtension(models.Model):
         app_label = 'ewsghana'
 
 
-class EWSMigrationStats(models.Model):
-    products_count = models.IntegerField(default=0)
-    locations_count = models.IntegerField(default=0)
-    supply_points_count = models.IntegerField(default=0)
-    sms_users_count = models.IntegerField(default=0)
-    web_users_count = models.IntegerField(default=0)
-    domain = models.CharField(max_length=128, db_index=True)
-    last_modified = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        app_label = 'ewsghana'
-
-
-class EWSMigrationProblem(models.Model):
-    domain = models.CharField(max_length=128, db_index=True)
-    object_id = models.CharField(max_length=128, null=True)
-    object_type = models.CharField(max_length=30)
-    description = models.CharField(max_length=128)
-    external_id = models.CharField(max_length=128)
-    last_modified = models.DateTimeField(auto_now=True)
-
-    @property
-    def object_url(self):
-        from corehq.apps.locations.views import EditLocationView
-
-        if self.object_type == 'smsuser':
-            return reverse(
-                EditCommCareUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
-            )
-        elif self.object_type == 'webuser':
-            return reverse(
-                EditWebUserView.urlname, kwargs={'domain': self.domain, 'couch_user_id': self.object_id}
-            )
-        elif self.object_type == 'location':
-            return reverse(EditLocationView.urlname, kwargs={'domain': self.domain, 'loc_id': self.object_id})
-        return
-
-    class Meta:
-        app_label = 'ewsghana'
-
-
 class SQLNotification(models.Model):
     domain = models.CharField(max_length=128)
     user_id = models.CharField(max_length=128)
@@ -173,7 +132,5 @@ def domain_pre_delete_receiver(domain, **kwargs):
     from corehq.apps.domain.deletion import ModelDeletion
     return [
         ModelDeletion('ewsghana', 'FacilityInCharge', 'location__domain'),
-        ModelDeletion('ewsghana', 'EWSExtension', 'domain'),
-        ModelDeletion('ewsghana', 'EWSMigrationStats', 'domain'),
-        ModelDeletion('ewsghana', 'EWSMigrationProblem', 'domain'),
+        ModelDeletion('ewsghana', 'EWSExtension', 'domain')
     ]

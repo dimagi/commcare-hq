@@ -3,15 +3,13 @@ from dateutil import rrule
 from corehq.apps.locations.dbaccessors import get_one_user_at_location
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.users.models import CommCareUser
-from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter, ILSAsyncLocationFilter
 from custom.ilsgateway.models import OrganizationSummary, GroupSummary, SupplyPointStatusTypes, DeliveryGroups
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData
 from custom.ilsgateway.tanzania.reports.utils import randr_value, get_span, \
     rr_format_percent, link_format, make_url
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
 from django.utils.translation import ugettext as _
@@ -23,6 +21,7 @@ class RRStatus(ILSData):
     slug = "rr_status"
     show_chart = False
     searchable = True
+    use_datatables = True
 
     @property
     def rows(self):
@@ -193,7 +192,7 @@ class RRreport(DetailsReport):
 
     @property
     def fields(self):
-        fields = [AsyncLocationFilter, ILSDateFilter, ProgramFilter]
+        fields = [ILSAsyncLocationFilter, ILSDateFilter, ProgramFilter]
         if self.location and self.location.location_type.name.upper() == 'FACILITY':
             fields = []
         return fields

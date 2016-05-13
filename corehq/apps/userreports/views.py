@@ -8,10 +8,10 @@ import tempfile
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
@@ -22,6 +22,14 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.accounting.models import Subscription
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.tour import tours
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.util import reverse
+from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -33,6 +41,7 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.domain.views import BaseDomainView
@@ -77,7 +86,9 @@ from corehq.apps.userreports.ui.forms import (
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
-from corehq.apps.userreports.util import has_report_builder_access
+from corehq.apps.userreports.util import has_report_builder_access, \
+    has_report_builder_add_on_privilege, add_event, \
+    allowed_report_builder_reports, number_of_report_builder_reports
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
@@ -138,6 +149,7 @@ def create_report(request, domain):
 
 class ReportBuilderView(BaseDomainView):
 
+    @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
     @use_bootstrap3
     @use_select2
@@ -146,8 +158,7 @@ class ReportBuilderView(BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
             report_type = kwargs.get('report_type', None)
-            domain = kwargs.get('domain', None)
-            if report_type != 'map' or REPORT_BUILDER_MAP_REPORTS.enabled(domain):
+            if report_type != 'map' or toggle_enabled(request, REPORT_BUILDER_MAP_REPORTS):
                 return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
             else:
                 raise Http404
@@ -163,6 +174,132 @@ class ReportBuilderView(BaseDomainView):
         return reverse(ReportBuilderTypeSelect.urlname, args=[self.domain])
 
 
+@quickcache(["domain"], timeout=0, memoize_timeout=4)
+def paywall_home(domain):
+    """
+    Return the url for the page in the report builder paywall that users
+    in the given domain should be directed to upon clicking "+ Create new report"
+    """
+    project = Domain.get_by_name(domain, strict=True)
+    if project.requested_report_builder_subscription:
+        return reverse(ReportBuilderPaywallActivatingSubscription.urlname, args=[domain])
+    elif project.requested_report_builder_trial:
+        return reverse(ReportBuilderPaywallActivatingTrial.urlname, args=[domain])
+    else:
+        return reverse(ReportBuilderPaywall.urlname, args=[domain])
+
+
+class ReportBuilderPaywallBase(BaseDomainView):
+    page_title = ugettext_lazy('Subscribe')
+
+    @use_bootstrap3
+    def dispatch(self, *args, **kwargs):
+        return super(ReportBuilderPaywallBase, self).dispatch(*args, **kwargs)
+
+    @property
+    def section_name(self):
+        return _("Report Builder")
+
+    @property
+    def section_url(self):
+        return paywall_home(self.domain)
+
+    @property
+    def page_context(self):
+        context = super(ReportBuilderPaywallBase, self).page_context
+        context.update({
+            'support_email': settings.SUPPORT_EMAIL
+        })
+        return context
+
+    @property
+    @memoized
+    def plan_name(self):
+        plan_version, _ = Subscription.get_subscribed_plan_by_domain(self.domain)
+        return plan_version.plan.name
+
+
+class ReportBuilderPaywall(ReportBuilderPaywallBase):
+    template_name = "userreports/paywall/paywall.html"
+    urlname = 'report_builder_paywall'
+
+    def dispatch(self, request, *args, **kwargs):
+        self._init_tour()
+        return super(ReportBuilderPaywall, self).dispatch(request, *args, **kwargs)
+
+    def _init_tour(self):
+        """
+        Add properties to the request if the tour should be active
+        """
+        tour = tours.REPORT_BUILDER_NO_ACCESS
+        step = 1
+        if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
+            self.request.guided_tour = tour.get_tour_data(self.request, step)
+
+
+class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
+    template_name = "userreports/paywall/activating_trial.html"
+    urlname = 'report_builder_paywall_activating_trial'
+    page_title = ugettext_lazy('Trial')
+
+    def post(self, request, domain, *args, **kwargs):
+        self.domain_object.requested_report_builder_trial.append(request.user.username)
+        self.domain_object.save()
+        send_mail_async.delay(
+            "Report Builder Trial Request: {}".format(domain),
+            "User {} in the {} domain has requested access to the "
+            "report builder trial. Current subscription is '{}'.".format(
+                request.user.username,
+                domain,
+                self.plan_name
+            ),
+            settings.DEFAULT_FROM_EMAIL,
+            [settings.REPORT_BUILDER_ADD_ON_EMAIL],
+        )
+        return self.get(request, domain, *args, **kwargs)
+
+
+class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
+    template_name = "userreports/paywall/pricing.html"
+    urlname = 'report_builder_paywall_pricing'
+    page_title = ugettext_lazy('Pricing')
+
+    @property
+    def page_context(self):
+        context = super(ReportBuilderPaywallPricing, self).page_context
+        if has_report_builder_access(self.request):
+            max_allowed_reports = allowed_report_builder_reports(self.request)
+            num_builder_reports = number_of_report_builder_reports(self.domain)
+            if num_builder_reports >= max_allowed_reports:
+                context.update({
+                    'at_report_limit': True,
+                    'max_allowed_reports': max_allowed_reports,
+
+                })
+        return context
+
+
+class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
+    template_name = "userreports/paywall/activating_subscription.html"
+    urlname = 'report_builder_paywall_activating_subscription'
+
+    def post(self, request, domain, *args, **kwargs):
+        self.domain_object.requested_report_builder_subscription.append(request.user.username)
+        self.domain_object.save()
+        send_mail_async.delay(
+            "Report Builder Subscription Request: {}".format(domain),
+            "User {} in the {} domain has requested a report builder subscription."
+            " Current subscription is '{}'.".format(
+                request.user.username,
+                domain,
+                self.plan_name
+            ),
+            settings.DEFAULT_FROM_EMAIL,
+            [settings.REPORT_BUILDER_ADD_ON_EMAIL],
+        )
+        return self.get(request, domain, *args, **kwargs)
+
+
 class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     template_name = "userreports/builder_report_type_select.html"
     urlname = 'report_builder_select_type'
@@ -170,6 +307,11 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
+        max_allowed_reports = allowed_report_builder_reports(self.request)
+        num_builder_reports = number_of_report_builder_reports(self.domain)
+        if num_builder_reports >= max_allowed_reports:
+            return redirect(ReportBuilderPaywallPricing.urlname, self.domain)
+
         return super(ReportBuilderTypeSelect, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -208,13 +350,16 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
     @property
     def tiles(self):
-        analytics_workflow_label = "Clicked on Report Builder Tile"
+        clicked_tile = "Clicked on Report Builder Tile"
         tiles = [
             TileConfiguration(
                 title=_('Chart'),
                 slug='chart',
                 analytics_usage_label="Chart",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Chart Tile",
+                ],
                 icon='fcc fcc-piegraph-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
@@ -225,7 +370,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Form or Case List'),
                 slug='form-or-case-list',
                 analytics_usage_label="List",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Form or Case List Tile"
+                ],
                 icon='fcc fcc-form-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'list']),
@@ -236,7 +384,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Worker Report'),
                 slug='worker-report',
                 analytics_usage_label="Worker",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Worker Report Tile",
+                ],
                 icon='fcc fcc-user-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'worker']),
@@ -247,7 +398,10 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Data Table'),
                 slug='data-table',
                 analytics_usage_label="Table",
-                analytics_workflow_label=analytics_workflow_label,
+                analytics_workflow_labels=[
+                    clicked_tile,
+                    "Clicked Data Table Tile"
+                ],
                 icon='fcc fcc-datatable-report',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'table']),
@@ -260,8 +414,8 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 title=_('Map'),
                 slug='map',
                 analytics_usage_label="Map",
-                analytics_workflow_label=analytics_workflow_label,
-                icon='fa fa-globe',
+                analytics_workflow_labels=[clicked_tile],
+                icon='fcc fcc-globe',
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'map']),
                 help_text=_('A map to show data from your cases or forms.'
@@ -291,9 +445,10 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     @property
     @memoized
     def form(self):
+        max_allowed_reports = allowed_report_builder_reports(self.request)
         if self.request.method == 'POST':
-            return DataSourceForm(self.domain, self.report_type, self.request.POST)
-        return DataSourceForm(self.domain, self.report_type)
+            return DataSourceForm(self.domain, self.report_type, max_allowed_reports, self.request.POST)
+        return DataSourceForm(self.domain, self.report_type, max_allowed_reports)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -318,8 +473,15 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 "Successfully submitted the first part of the Report Builder "
                 "wizard where you give your report a name and choose a data source"
             )
+
+            add_event(request, [
+                "Report Builder",
+                "Successful Click on Next (Data Source)",
+                app_source.source_type,
+            ])
+
             return HttpResponseRedirect(
-                reverse(url_name, args=[self.domain]) + '?' + urlencode(get_params)
+                reverse(url_name, args=[self.domain], params=get_params)
             )
         else:
             return self.get(request, *args, **kwargs)
@@ -373,6 +535,7 @@ class ConfigureChartReport(ReportBuilderView):
             },
             'report_type': self.report_type,
             'form': self.report_form,
+            'editing_existing_report': bool(self.existing_report),
             'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
             'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
             'initial_columns': [
@@ -381,7 +544,8 @@ class ConfigureChartReport(ReportBuilderView):
             'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
             'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
-            'calculation_help_text': _("Column format selection will determine how each row's value is calculated.")
+            'calculation_help_text': _("Column format selection will determine how each row's value is calculated."),
+            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
 
     @property
@@ -405,24 +569,86 @@ class ConfigureChartReport(ReportBuilderView):
             args.append(self.request.POST)
         return self.configuration_form_class(*args)
 
+    def _get_sum_avg_columns(self, columns):
+        """
+        Return a list of columns that have either sum or average aggregation types.
+        Items in the list are tuples of (column['field'], column['aggregation']).
+        """
+        return [
+            (col.get('field', None), col['aggregation'])
+            for col in columns
+            if col.get('aggregation', None) in ("sum", "average")
+        ]
+
+    def _track_invalid_form_events(self):
+        group_by_errors = self.report_form.errors.as_data().get('group_by', [])
+        if "required" in [e.code for e in group_by_errors]:
+            add_event(self.request, [
+                "Report Builder",
+                "Click on Done (No Group By Chosen)",
+                self.report_type,
+            ])
+
+    def _track_valid_form_events(self, existing_sum_avg_cols, report_configuration):
+        if self.report_type != "chart":
+            sum_avg_cols = self._get_sum_avg_columns(
+                report_configuration.columns)
+            # A column is "new" if there are no columns with the (property, agg) combo in the previous report
+            if not set(sum_avg_cols).issubset(set(existing_sum_avg_cols)):
+                add_event(self.request, [
+                    "Report Builder",
+                    "Changed Column Format to Sum or Average",
+                    self.report_type,
+                ])
+
+    def _track_new_report_events(self):
+        track_workflow(
+            self.request.user.email,
+            "Successfully created a new report in the Report Builder"
+        )
+        add_event(self.request, [
+            "Report Builder",
+            "Click On Done On New Report (Successfully)",
+            self.report_type,
+        ])
+
     def post(self, *args, **kwargs):
         if self.report_form.is_valid():
+            existing_sum_avg_cols = []
             if self.report_form.existing_report:
                 try:
+                    existing_sum_avg_cols = self._get_sum_avg_columns(
+                        self.report_form.existing_report.columns
+                    )
                     report_configuration = self.report_form.update_report()
                 except ValidationError as e:
                     messages.error(self.request, e.message)
                     return self.get(*args, **kwargs)
             else:
+                self._confirm_report_limit()
                 report_configuration = self.report_form.create_report()
-                track_workflow(
-                    self.request.user.email,
-                    "Successfully created a new report in the Report Builder"
-                )
+                self._track_new_report_events()
+
+            self._track_valid_form_events(existing_sum_avg_cols, report_configuration)
             return HttpResponseRedirect(
                 reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
             )
+        else:
+            self._track_invalid_form_events()
+
         return self.get(*args, **kwargs)
+
+    def _confirm_report_limit(self):
+        """
+        This method is used to confirm that the user is not creating more reports
+        than they are allowed.
+        The user is normally turned back earlier in the process, but this check
+        is necessary in case they navigated directly to this view either
+        maliciously or with a bookmark perhaps.
+        """
+        if (number_of_report_builder_reports(self.domain) >=
+                allowed_report_builder_reports(self.request)):
+            raise Http404()
 
 
 class ConfigureListReport(ConfigureChartReport):
@@ -482,8 +708,13 @@ def _edit_report_shared(request, domain, config, read_only=False):
     return render(request, "userreports/edit_report_config.html", context)
 
 
-@toggles.any_toggle_enabled(toggles.USER_CONFIGURABLE_REPORTS, toggles.REPORT_BUILDER, toggles.REPORT_BUILDER_BETA_GROUP)
 def delete_report(request, domain, report_id):
+    if not (toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
+            or toggle_enabled(request, toggles.REPORT_BUILDER)
+            or toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
+            or has_report_builder_add_on_privilege(request)):
+        raise Http404()
+
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.
@@ -498,7 +729,15 @@ def delete_report(request, domain, report_id):
             pass
 
     config.delete()
+    did_purge_something = purge_report_from_mobile_ucr(config)
+
     messages.success(request, _(u'Report "{}" deleted!').format(config.title))
+    if did_purge_something:
+        messages.warning(
+            request,
+            _(u"This report was used in one or more applications. "
+              "It has been removed from there too.")
+        )
     redirect = request.GET.get("redirect", None)
     if not redirect:
         redirect = reverse('configurable_reports_home', args=[domain])

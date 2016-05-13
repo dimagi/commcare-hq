@@ -1,16 +1,13 @@
 from decimal import Decimal
-import logging
 
 from django.conf import settings
 from django.core.management.base import LabelCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
+from corehq.apps.smsbillables.utils import log_smsbillables_info
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.smsbillables.models import SmsGatewayFee, SmsGatewayFeeCriteria
-
-
-logger = logging.getLogger('accounting')
 
 
 def bootstrap_test_gateway(apps):
@@ -36,7 +33,7 @@ def bootstrap_test_gateway(apps):
         criteria_class=sms_gateway_fee_criteria_class,
     )
 
-    logger.info("Updated Test gateway fees.")
+    log_smsbillables_info("Updated Test gateway fees.")
 
 bootstrap_test_gateway.__test__ = False
 

@@ -1,20 +1,23 @@
 import logging
 
+from collections import namedtuple
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.data_analytics.esaccessors import get_app_submission_breakdown_es
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
-from corehq.apps.sofabed.models import FormData, MISSING_APP_ID
+from corehq.apps.sofabed.models import MISSING_APP_ID
 from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
 from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
-from django.db.models import Count
 from django.http.response import Http404
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+MaltAppData = namedtuple('MaltAppData', 'wam pam use_threshold experienced_threshold is_app_deleted')
 
 
 class MALTTableGenerator(object):
@@ -39,25 +42,19 @@ class MALTTableGenerator(object):
                 except Exception as ex:
                     logger.error("Failed to get rows for domain {name}. Exception is {ex}".format
                                  (name=domain.name, ex=str(ex)), exc_info=True)
-            print malt_rows_to_save
             self._save_to_db(malt_rows_to_save, domain._id)
 
     def _get_malt_row_dicts(self, domain_name, monthspan, all_users_by_id):
         malt_row_dicts = []
-        forms_query = self._get_forms_queryset(domain_name, monthspan)
-        apps_submitted_for = forms_query.values('app_id', 'device_id', 'user_id', 'username').annotate(
-            num_of_forms=Count('instance_id')
-        )
-
-        for app_row_dict in apps_submitted_for:
-            app_id = app_row_dict['app_id']
-            num_of_forms = app_row_dict['num_of_forms']
-
+        apps_submitted_for = get_app_submission_breakdown_es(domain_name, monthspan)
+        for app_row in apps_submitted_for:
+            app_id = app_row.app_id
+            num_of_forms = app_row.doc_count
             try:
-                wam, pam, threshold, is_app_deleted = self._app_data(domain_name, app_id)
+                app_data = self._app_data(domain_name, app_id)
                 user_id, username, user_type, email = self._user_data(
-                    app_row_dict['user_id'],
-                    app_row_dict['username'],
+                    app_row.user_id,
+                    app_row.username,
                     all_users_by_id
                 )
             except Exception as ex:
@@ -73,12 +70,13 @@ class MALTTableGenerator(object):
                 'user_type': user_type,
                 'domain_name': domain_name,
                 'num_of_forms': num_of_forms,
-                'app_id': app_id,
-                'device_id': app_row_dict['device_id'],
-                'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(wam, MALTRow.NOT_SET),
-                'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(pam, MALTRow.NOT_SET),
-                'threshold': threshold,
-                'is_app_deleted': is_app_deleted,
+                'app_id': app_id or MISSING_APP_ID,
+                'device_id': app_row.device_id,
+                'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.wam, MALTRow.NOT_SET),
+                'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.pam, MALTRow.NOT_SET),
+                'use_threshold': app_data.use_threshold,
+                'experienced_threshold': app_data.experienced_threshold,
+                'is_app_deleted': app_data.is_app_deleted,
             }
             malt_row_dicts.append(malt_dict)
         return malt_row_dicts
@@ -123,28 +121,22 @@ class MALTTableGenerator(object):
                 str(ex)
             ), exc_info=True)
 
-    def _get_forms_queryset(self, domain_name, monthspan):
-        start_date = monthspan.computed_startdate
-        end_date = monthspan.computed_enddate
-
-        return FormData.objects.filter(
-            domain=domain_name,
-            received_on__range=(start_date, end_date)
-        )
-
     @classmethod
     @quickcache(['domain', 'app_id'])
     def _app_data(cls, domain, app_id):
+        defaults = MaltAppData(AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, 15, 3, False)
+        if not app_id:
+            return defaults
         try:
             app = get_app(domain, app_id)
         except Http404:
-            if app_id is not MISSING_APP_ID:
-                logger.debug("App not found %s" % app_id)
-            return (AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, 15, False)
-        return (getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
-                getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
-                getattr(app, 'minimum_use_threshold', 15),
-                app.is_deleted())
+            logger.debug("App not found %s" % app_id)
+            return defaults
+        return MaltAppData(getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
+                           getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
+                           getattr(app, 'minimum_use_threshold', 15),
+                           getattr(app, 'experienced_threshold', 3),
+                           app.is_deleted())
 
     @classmethod
     def _user_data(cls, user_id, username, all_users_by_id):

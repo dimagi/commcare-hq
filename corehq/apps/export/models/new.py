@@ -1,9 +1,15 @@
+from copy import copy
 from datetime import datetime
 from itertools import groupby
-from collections import defaultdict, OrderedDict
+from functools import partial
+from collections import defaultdict, OrderedDict, namedtuple
+
+from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
+from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
+from corehq import feature_previews
 from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_for_app_id,
@@ -11,8 +17,14 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_built_app_ids_and_versions,
 )
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import get_case_properties
+from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
+from corehq.apps.domain.models import Domain
+from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.blobs.mixin import BlobMixin
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.util.global_request import get_request
+from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
 from dimagi.ext.couchdbkit import (
@@ -22,46 +34,80 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     DateTimeProperty,
 )
-from corehq.apps.export.utils import (
-    is_valid_transform
-)
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
     PROPERTY_TAG_DELETED,
-    CASE_HISTORY_PROPERTIES,
-    CASE_HISTORY_TABLE,
-    MAIN_TABLE_PROPERTIES,
     FORM_EXPORT,
     CASE_EXPORT,
-    MAIN_TABLE,
     TRANSFORM_FUNCTIONS,
-    DEID_TRANSFORM_FUNCTIONS)
+    DEID_TRANSFORM_FUNCTIONS,
+    PROPERTY_TAG_ROW,
+    PROPERTY_TAG_CASE,
+    USER_DEFINED_SPLIT_TYPES,
+    PLAIN_USER_DEFINED_SPLIT_TYPE
+)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
+from corehq.apps.export.utils import is_occurrence_deleted
+
+
+DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
+
+
+class PathNode(DocumentSchema):
+
+    name = StringProperty(required=True)
+    is_repeat = BooleanProperty(default=False)
+
+    def __eq__(self, other):
+        return (
+            type(self) == type(other) and
+            self.doc_type == other.doc_type and
+            self.name == other.name and
+            self.is_repeat == other.is_repeat
+        )
 
 
 class ExportItem(DocumentSchema):
     """
     An item for export.
-
-    path: A question path like ["my_group", "q1"] or a case property name
-        like ["date_of_birth"].
-
+    path: A question path like [PathNode(name=("my_group"), PathNode(name="q1")]
+        or a case property name like [PathNode(name="date_of_birth")].
     label: The label of the corresponding form question, or the case property name
     tag: Denotes whether the property is a system, meta, etc
     last_occurrences: A dictionary that maps an app_id to the last version the export item was present
     """
-    path = ListProperty()
+    path = SchemaListProperty(PathNode)
     label = StringProperty()
     tag = StringProperty()
     last_occurrences = DictProperty()
+    transform = StringProperty(choices=TRANSFORM_FUNCTIONS.keys())
 
     @classmethod
-    def create_from_question(cls, question, app_id, app_version):
+    def wrap(cls, data):
+        if cls is ExportItem:
+            doc_type = data['doc_type']
+            if doc_type == 'ExportItem':
+                return super(ExportItem, cls).wrap(data)
+            elif doc_type == 'ScalarItem':
+                return ScalarItem.wrap(data)
+            elif doc_type == 'MultipleChoiceItem':
+                return MultipleChoiceItem.wrap(data)
+            elif doc_type == 'GeopointItem':
+                return GeopointItem.wrap(data)
+            elif doc_type == 'CaseIndexItem':
+                return CaseIndexItem.wrap(data)
+            else:
+                raise ValueError('Unexpected doc_type for export item', doc_type)
+        else:
+            return super(ExportItem, cls).wrap(data)
+
+    @classmethod
+    def create_from_question(cls, question, app_id, app_version, repeats):
         return cls(
-            path=_question_path_to_doc_path(question['value']),
+            path=_question_path_to_path_nodes(question['value'], repeats),
             label=question['label'],
             last_occurrences={app_id: app_version},
         )
@@ -72,6 +118,10 @@ class ExportItem(DocumentSchema):
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
         return item
 
+    @property
+    def readable_path(self):
+        return '.'.join(map(lambda node: node.name, self.path))
+
 
 class ExportColumn(DocumentSchema):
     item = SchemaProperty(ExportItem)
@@ -80,65 +130,80 @@ class ExportColumn(DocumentSchema):
     is_advanced = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
     tags = ListProperty()
+    help_text = StringProperty()
 
-    # A list of constants that map to functions to transform the column value
-    transforms = ListProperty(validators=is_valid_transform)
+    # A transforms that deidentifies the value
+    deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
 
-    def get_value(self, doc, base_path, transform_dates=False):
+    def get_value(self, doc, base_path, transform_dates=False, row_index=None, split_column=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
         when base_path is non empty, doc is a repeat group from a form submission.
         :param doc: A form submission or instance of a repeat group in a submission or case
-        :param base_path:
+        :param base_path: The PathNode list to the column
+        :param transform_dates: If set to True, will convert dates to be compatible with Excel
+        :param row_index: This is used for the RowExportColumn to determine what index the row is on
+        :param split_column: When True will split SplitExportColumn into multiple columns, when False, it will
+            not split the column
         :return:
         """
-        # Confirm the ExportItem's path starts with the base_path
-        assert base_path == self.item.path[:len(base_path)]
+        assert base_path == self.item.path[:len(base_path)], "ExportItem's path doesn't start with the base_path"
         # Get the path from the doc root to the desired ExportItem
-        path = self.item.path[len(base_path):]
-        return self._transform(NestedDictGetter(path)(doc), transform_dates)
+        path = [x.name for x in self.item.path[len(base_path):]]
+        return self._transform(NestedDictGetter(path)(doc), doc, transform_dates)
 
-    def _transform(self, value, transform_dates):
+    def _transform(self, value, doc, transform_dates):
         """
-        Transform the given value with the transforms specified in self.transforms.
+        Transform the given value with the transform specified in self.item.transform.
         Also transform dates if the transform_dates flag is true.
         """
-        # TODO: The functions in self.transforms might expect docs, not values, in which case this needs to move.
-
         if transform_dates:
-            value = couch_to_excel_datetime(value, None)
-        for transform in self.transforms:
-            value = TRANSFORM_FUNCTIONS[transform](value)
+            value = couch_to_excel_datetime(value, doc)
+        if self.item.transform:
+            value = TRANSFORM_FUNCTIONS[self.item.transform](value, doc)
+        if self.deid_transform:
+            value = DEID_TRANSFORM_FUNCTIONS[self.deid_transform](value, doc)
         return value
 
     @staticmethod
-    def create_default_from_export_item(group_schema_path, item, app_ids_and_versions):
+    def create_default_from_export_item(table_path, item, app_ids_and_versions):
         """Creates a default ExportColumn given an item
 
-        :param group_schema_path: The path of the group_schema that the item belongs to
+        :param table_path: The path of the table_path that the item belongs to
         :param item: An ExportItem instance
         :param app_ids_and_versions: A dictionary of app ids that map to latest build version
         :returns: An ExportColumn instance
         """
+        is_case_update = item.tag == PROPERTY_TAG_CASE and not isinstance(item, CaseIndexItem)
+        is_case_history_update = item.tag == PROPERTY_TAG_UPDATE
 
-        is_main_table = group_schema_path == MAIN_TABLE
+        is_main_table = table_path == MAIN_TABLE
+        constructor_args = {
+            "item": item,
+            "label": item.readable_path if not is_case_history_update else item.label,
+            "is_advanced": is_case_update or False,
+        }
 
-        column = ExportColumn(
-            item=item,
-            label=item.label,
-        )
+        if isinstance(item, GeopointItem):
+            column = SplitGPSExportColumn(**constructor_args)
+        elif isinstance(item, MultipleChoiceItem):
+            column = SplitExportColumn(**constructor_args)
+        elif isinstance(item, CaseIndexItem):
+            column = CaseIndexExportColumn(
+                help_text=_(u'The ID of the associated {} case type').format(item.case_type),
+                **constructor_args
+            )
+        elif feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
+            column = SplitUserDefinedExportColumn(**constructor_args)
+        else:
+            column = ExportColumn(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
-        column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table
+        column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table and not is_case_update
         return column
 
     def _is_deleted(self, app_ids_and_versions):
-        is_deleted = True
-        for app_id, version in app_ids_and_versions.iteritems():
-            if self.item.last_occurrences.get(app_id) == version:
-                is_deleted = False
-                break
-        return is_deleted
+        return is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions)
 
     def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
         """
@@ -154,29 +219,62 @@ class ExportColumn(DocumentSchema):
 
         if self.item.tag:
             tags.append(self.item.tag)
-        self.is_advanced = is_deleted
+        self.is_advanced = is_deleted or self.is_advanced
         self.tags = tags
 
     @property
     def is_deidentifed(self):
-        # TODO: Might be better if we set an is_deidentified flag on the model instead?
-        return bool(set(self.transforms) & set(DEID_TRANSFORM_FUNCTIONS))
+        return bool(self.deid_transform)
 
-    def get_headers(self):
-        # TODO: id columns need special treatment
-        # see couchexport.models.ExportTable#get_headers_row
+    def get_headers(self, split_column=False):
         if self.is_deidentifed:
             return [u"{} {}".format(self.label, "[sensitive]")]
         else:
             return [self.label]
 
+    @classmethod
+    def wrap(cls, data):
+        if cls is ExportColumn:
+            doc_type = data['doc_type']
+            if doc_type == 'ExportColumn':
+                return super(ExportColumn, cls).wrap(data)
+            elif doc_type == 'SplitExportColumn':
+                return SplitExportColumn.wrap(data)
+            elif doc_type == 'RowNumberColumn':
+                return RowNumberColumn.wrap(data)
+            elif doc_type == 'StockExportColumn':
+                return StockExportColumn.wrap(data)
+            elif doc_type == 'CaseIndexExportColumn':
+                return CaseIndexExportColumn.wrap(data)
+            elif doc_type == 'SplitUserDefinedExportColumn':
+                return SplitUserDefinedExportColumn.wrap(data)
+            elif doc_type == 'SplitGPSExportColumn':
+                return SplitGPSExportColumn.wrap(data)
+            else:
+                raise ValueError('Unexpected doc_type for export column', doc_type)
+        else:
+            return super(ExportColumn, cls).wrap(data)
+
+
+class DocRow(namedtuple("DocRow", ["doc", "row"])):
+    """
+    DocRow represents a document and its row index.
+    doc - doc is a dictionary representing a form or a subset of a form (like
+          a particular iteration of a repeat group)
+    row - row is a tuple representing the relationship between this doc and the
+          rows in other sheets. For example, if this doc represents the 3rd
+          iteration of a repeat group in the 1st form of the export, then this
+          DocRow would have a row of (0, 2).
+    """
+
 
 class TableConfiguration(DocumentSchema):
     # label saves the user's decision for the table name
     label = StringProperty()
-    path = ListProperty()
+    path = ListProperty(PathNode)
     columns = ListProperty(ExportColumn)
     selected = BooleanProperty(default=False)
+    is_deleted = BooleanProperty(default=False)
 
     def __hash__(self):
         return hash(tuple(self.path))
@@ -186,29 +284,36 @@ class TableConfiguration(DocumentSchema):
         """The columns that should be included in the export"""
         return [c for c in self.columns if c.selected]
 
-    def get_headers(self):
+    def get_headers(self, split_columns=False):
         """
         Return a list of column headers
         """
         headers = []
         for column in self.selected_columns:
-            headers.extend(column.get_headers())
+            headers.extend(column.get_headers(split_column=split_columns))
         return headers
 
-    def get_rows(self, document):
+    def get_rows(self, document, row_number, split_columns=False, transform_dates=False):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
+        :param row_number: number indicating this documents index in the sequence of all documents in the export
         :return: List of ExportRows
         """
-        # Note that sub_documents will be [document] if self.path is []
-        sub_documents = self._get_sub_documents(self.path, [document])
+        sub_documents = self._get_sub_documents(document, row_number)
         rows = []
-        for doc in sub_documents:
+        for doc_row in sub_documents:
+            doc, row_index = doc_row.doc, doc_row.row
 
             row_data = []
             for col in self.selected_columns:
-                val = col.get_value(doc, self.path)
+                val = col.get_value(
+                    doc,
+                    self.path,
+                    row_index=row_index,
+                    split_column=split_columns,
+                    transform_dates=transform_dates,
+                )
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
@@ -216,62 +321,83 @@ class TableConfiguration(DocumentSchema):
             rows.append(ExportRow(data=row_data))
         return rows
 
-    def get_column(self, item_path):
-        for column in self.columns:
-            if column.item.path == item_path:
-                return column
-        return None
+    def get_column(self, item_path, item_doc_type, column_transform):
+        """
+        Given a path and transform, will return the column and its index. If not found, will
+        return None, None
 
-    def _get_sub_documents(self, path, docs):
+        :param item_path: A list of path nodes that identify a column
+        :param item_doc_type: The doc type of the item (often just ExportItem)
+        :param column_transform: A transform that is applied on the column
+        :returns index, column: The index of the column in the list and an ExportColumn
+        """
+        for index, column in enumerate(self.columns):
+            if (column.item.path == item_path and
+                    column.item.transform == column_transform and
+                    column.item.doc_type == item_doc_type):
+                return index, column
+        return None, None
+
+    def _get_sub_documents(self, document, row_number):
+        return self._get_sub_documents_helper(self.path, [DocRow(row=(row_number,), doc=document)])
+
+    @staticmethod
+    def _get_sub_documents_helper(path, row_docs):
         """
         Return each instance of a repeat group at the path from the given docs.
         If path is [], just return the docs
 
-        >>> TableConfiguration()._get_sub_documents(['foo'], [{'foo': {'bar': 'a'}}, {'foo': {'bar': 'b'}}])
-        [{'bar': 'a'}, {'bar': 'b'}]
-        >>> TableConfiguration()._get_sub_documents(['foo', 'bar'], [{'foo': [{'bar': {'baz': 'a'}}, {'bar': {'baz': 'b'}},]}]
-        [{'baz': 'a'}, {'baz': 'b'}]
+        See corehq.apps.export.tests.test_table_configuration.TableConfigurationGetRowsTest.test_get_sub_documents
+        for examples
 
         :param path: A list of a strings
         :param docs: A list of dicts representing form submissions
         :return:
         """
         if len(path) == 0:
-            return docs
+            return row_docs
 
         new_docs = []
-        for doc in docs:
-            next_doc = doc.get(path[0], {})
-            if type(next_doc) == list:
-                new_docs.extend(next_doc)
+        for row_doc in row_docs:
+            doc = row_doc.doc
+            row_index = row_doc.row
+
+            next_doc = doc.get(path[0].name, {})
+            if path[0].is_repeat:
+                if type(next_doc) != list:
+                    # This happens when a repeat group has a single repeat iteration
+                    next_doc = [next_doc]
+                new_docs.extend([
+                    DocRow(row=row_index + (new_doc_index,), doc=new_doc)
+                    for new_doc_index, new_doc in enumerate(next_doc)
+                ])
             else:
-                new_docs.append(next_doc)
-        return self._get_sub_documents(path[1:], new_docs)
+                new_docs.append(DocRow(row=row_index, doc=next_doc))
+        return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
 
 
-class ExportInstance(Document):
+class ExportInstance(BlobMixin, Document):
     name = StringProperty()
-    type = StringProperty()
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
-    last_built = DateTimeProperty()
 
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
 
     # Whether to automatically convert dates to excel dates
-    transform_dates = BooleanProperty(default=False)
-
-    # Whether to include duplicates and other error'd forms in export
-    include_errors = BooleanProperty(default=False)
+    transform_dates = BooleanProperty(default=True)
 
     # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
-    is_daily_saved_export = BooleanProperty(default=False)
 
     # Keep reference to old schema id if we have converted it from the legacy infrastructure
     legacy_saved_export_schema_id = StringProperty()
+
+    is_daily_saved_export = BooleanProperty(default=False)
+    # daily saved export fields:
+    last_updated = DateTimeProperty()
+    last_accessed = DateTimeProperty()
 
     class Meta:
         app_label = 'export'
@@ -282,35 +408,18 @@ class ExportInstance(Document):
         return self.is_deidentified
 
     @property
-    def file_id(self):
-        return 'placeholder'
-
-    @property
-    def export_size(self):
-        return 'placeholder'
-
-    @property
-    def download_url(self):
-        return 'placeholder'
-
-    @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
+
+    @property
+    def selected_tables(self):
+        return filter(lambda t: t.selected, self.tables)
 
     def get_table(self, path):
         for table in self.tables:
             if table.path == path:
                 return table
         return None
-
-    def daily_saved_export_metadata(self):
-        return {
-            'fileId': self.file_id,
-            'size': self.export_size,
-            'lastUpdated': self.last_built,
-            'showExpiredWarning': False,
-            'downloadUrl': self.download_url,
-        }
 
     @classmethod
     def _new_from_schema(cls, schema):
@@ -336,35 +445,174 @@ class ExportInstance(Document):
                 label=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
-            columns = []
+            table.is_deleted = is_occurrence_deleted(
+                group_schema.last_occurrences,
+                latest_app_ids_and_versions,
+            )
+            prev_index = 0
             for item in group_schema.items:
-                column = table.get_column(item.path) or ExportColumn.create_default_from_export_item(
-                    table.path,
-                    item,
-                    latest_app_ids_and_versions,
+                index, column = table.get_column(
+                    item.path, item.doc_type, None
                 )
+                if not column:
+                    column = ExportColumn.create_default_from_export_item(
+                        table.path,
+                        item,
+                        latest_app_ids_and_versions,
+                    )
+                    if prev_index:
+                        # if it's a new column, insert it right after the previous column
+                        index = prev_index + 1
+                        table.columns.insert(index, column)
+                    else:
+                        table.columns.append(column)
 
                 # Ensure that the item is up to date
                 column.item = item
 
                 # Need to rebuild tags and other flags based on new build ids
                 column.update_properties_from_app_ids_and_versions(latest_app_ids_and_versions)
-                columns.append(column)
-            table.columns = columns
+                prev_index = index
+
+            cls._insert_system_properties(instance.domain, schema.type, table)
 
             if not instance.get_table(group_schema.path):
                 instance.tables.append(table)
 
         return instance
 
+    @classmethod
+    def _insert_system_properties(cls, domain, export_type, table):
+        from corehq.apps.export.system_properties import (
+            ROW_NUMBER_COLUMN,
+            TOP_MAIN_FORM_TABLE_PROPERTIES,
+            BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
+            TOP_MAIN_CASE_TABLE_PROPERTIES,
+            BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
+            CASE_HISTORY_PROPERTIES,
+            PARENT_CASE_TABLE_PROPERTIES,
+            STOCK_COLUMN,
+        )
+
+        nested_repeat_count = len([node for node in table.path if node.is_repeat])
+        column_initialization_data = {
+            'repeat': nested_repeat_count,  # Used for determining the proper row column
+            'domain': domain,  # Used for the StockExportColumn
+        }
+        if export_type == FORM_EXPORT:
+            if table.path == MAIN_TABLE:
+                cls.__insert_system_properties(
+                    table,
+                    TOP_MAIN_FORM_TABLE_PROPERTIES,
+                    **column_initialization_data
+                )
+                cls.__insert_system_properties(
+                    table,
+                    BOTTOM_MAIN_FORM_TABLE_PROPERTIES,
+                    top=False,
+                    **column_initialization_data
+                )
+            else:
+                cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **column_initialization_data)
+        elif export_type == CASE_EXPORT:
+            if table.path == MAIN_TABLE:
+                if Domain.get_by_name(domain).commtrack_enabled:
+                    top_properties = TOP_MAIN_CASE_TABLE_PROPERTIES + [STOCK_COLUMN]
+                else:
+                    top_properties = TOP_MAIN_CASE_TABLE_PROPERTIES
+                cls.__insert_system_properties(
+                    table,
+                    top_properties,
+                    **column_initialization_data
+                )
+                cls.__insert_system_properties(
+                    table,
+                    BOTTOM_MAIN_CASE_TABLE_PROPERTIES,
+                    top=False,
+                    **column_initialization_data
+                )
+            elif table.path == CASE_HISTORY_TABLE:
+                cls.__insert_system_properties(table, CASE_HISTORY_PROPERTIES, **column_initialization_data)
+            elif table.path == PARENT_CASE_TABLE:
+                cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES,
+                        **column_initialization_data)
+
+    @classmethod
+    def __insert_system_properties(cls, table, properties, top=True, **column_initialization_data):
+        """
+        Inserts system properties into the table configuration
+
+        :param table: A TableConfiguration instance
+        :param properties: A list of ExportColumn that represent system properties to be added to the table
+        :param top: When True inserts the columns at the top, when false at the bottom
+        :param column_initialization_data: Extra data to be passed to the column if needed on initialization
+        """
+        properties = map(copy, properties)
+        if top:
+            insert_fn = partial(table.columns.insert, 0)
+            properties = reversed(properties)
+        else:
+            insert_fn = table.columns.append
+
+        for static_column in properties:
+            index, existing_column = table.get_column(
+                static_column.item.path,
+                static_column.item.doc_type,
+                static_column.item.transform,
+            )
+            column = (existing_column or static_column)
+            if isinstance(column, RowNumberColumn):
+                column.update_nested_repeat_count(column_initialization_data.get('repeat'))
+            elif isinstance(column, StockExportColumn):
+                column.update_domain(column_initialization_data.get('domain'))
+
+            if not existing_column:
+                insert_fn(static_column)
+
+    @property
+    def file_size(self):
+        """
+        Return the size of the pre-computed export.
+        Only daily saved exports could have a pre-computed export.
+        """
+        try:
+            return self.blobs[DAILY_SAVED_EXPORT_ATTACHMENT_NAME].content_length
+        except KeyError:
+            return 0
+
+    @property
+    def filename(self):
+        return "%s.%s" % (self.name, Format.from_format(self.export_format).extension)
+
+    def has_file(self):
+        """
+        Return True if there is a pre-computed export saved for this instance.
+        Only daily saved exports could have a pre-computed export.
+        """
+        return DAILY_SAVED_EXPORT_ATTACHMENT_NAME in self.blobs
+
+    def set_payload(self, payload):
+        """
+        Set the pre-computed export for this instance.
+        Only daily saved exports could have a pre-computed export.
+        """
+        self.put_attachment(payload, DAILY_SAVED_EXPORT_ATTACHMENT_NAME)
+
+    def get_payload(self, stream=False):
+        """
+        Get the pre-computed export for this instance.
+        Only daily saved exports could have a pre-computed export.
+        """
+        return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream)
+
 
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
+    type = CASE_EXPORT
 
     @classmethod
     def _new_from_schema(cls, schema):
         return cls(
-            type=schema.type,
             domain=schema.domain,
             case_type=schema.case_type,
         )
@@ -373,6 +621,7 @@ class CaseExportInstance(ExportInstance):
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
     app_id = StringProperty()
+    type = FORM_EXPORT
 
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
@@ -384,7 +633,6 @@ class FormExportInstance(ExportInstance):
     @classmethod
     def _new_from_schema(cls, schema):
         return cls(
-            type=schema.type,
             domain=schema.domain,
             xmlns=schema.xmlns,
             app_id=schema.app_id,
@@ -425,7 +673,7 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
         if table_path == MAIN_TABLE:
             return _('Forms')
         else:
-            return _('Repeat: {}').format(_list_path_to_string(table_path))
+            return _('Repeat: {}').format((table_path[-1].name if len(table_path) else None) or "")
 
 
 class CaseExportInstanceDefaults(ExportInstanceDefaults):
@@ -436,6 +684,8 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
             return _('Cases')
         elif table_path == CASE_HISTORY_TABLE:
             return _('Case History')
+        elif table_path == PARENT_CASE_TABLE:
+            return _('Parent Cases')
         else:
             return _('Unknown')
 
@@ -445,6 +695,7 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
 
 
 class ExportRow(object):
+
     def __init__(self, data):
         self.data = data
 
@@ -452,6 +703,22 @@ class ExportRow(object):
 class ScalarItem(ExportItem):
     """
     A text, numeric, date, etc. question or case property
+    """
+
+
+class CaseIndexItem(ExportItem):
+    """
+    An item that refers to a case index
+    """
+
+    @property
+    def case_type(self):
+        return self.path[1].name
+
+
+class GeopointItem(ExportItem):
+    """
+    A GPS coordinate question
     """
 
 
@@ -474,8 +741,8 @@ class MultipleChoiceItem(ExportItem):
     options = SchemaListProperty(Option)
 
     @classmethod
-    def create_from_question(cls, question, app_id, app_version):
-        item = super(MultipleChoiceItem, cls).create_from_question(question, app_id, app_version)
+    def create_from_question(cls, question, app_id, app_version, repeats):
+        item = super(MultipleChoiceItem, cls).create_from_question(question, app_id, app_version, repeats)
 
         for option in question['options']:
             item.options.append(Option(
@@ -506,9 +773,9 @@ class ExportGroupSchema(DocumentSchema):
     An object representing the `ExportItem`s that would appear in a single export table, such as all the
     questions in a particular repeat group, or all the questions not in any repeat group.
     """
-    path = ListProperty()
+    path = SchemaListProperty(PathNode)
     items = SchemaListProperty(ExportItem)
-    last_occurrence = DictProperty()
+    last_occurrences = DictProperty()
 
 
 class ExportDataSchema(Document):
@@ -524,6 +791,7 @@ class ExportDataSchema(Document):
     last_app_versions = DictProperty()
     datatype_mapping = defaultdict(lambda: ScalarItem, {
         'MSelect': MultipleChoiceItem,
+        'Geopoint': GeopointItem,
     })
 
     class Meta:
@@ -541,6 +809,14 @@ class ExportDataSchema(Document):
         schema = cls()
 
         def resolvefn(group_schema1, group_schema2):
+
+            def keyfn(export_item):
+                return'{}:{}:{}'.format(
+                    _path_nodes_to_string(export_item.path),
+                    export_item.doc_type,
+                    export_item.transform,
+                )
+
             group_schema = ExportGroupSchema(
                 path=group_schema1.path,
                 last_occurrences=_merge_dicts(
@@ -552,7 +828,7 @@ class ExportDataSchema(Document):
             items = _merge_lists(
                 group_schema1.items,
                 group_schema2.items,
-                keyfn=lambda item: '{}:{}'.format(_list_path_to_string(item.path), item.doc_type),
+                keyfn=keyfn,
                 resolvefn=lambda item1, item2: item1.__class__.merge(item1, item2),
                 copyfn=lambda item: item.__class__(item.to_json()),
             )
@@ -564,7 +840,7 @@ class ExportDataSchema(Document):
             group_schemas = _merge_lists(
                 previous_group_schemas,
                 current_schema.group_schemas,
-                keyfn=lambda group_schema: _list_path_to_string(group_schema.path),
+                keyfn=lambda group_schema: _path_nodes_to_string(group_schema.path),
                 resolvefn=resolvefn,
                 copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
             )
@@ -617,9 +893,11 @@ class FormExportDataSchema(ExportDataSchema):
             xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
             if not xform:
                 continue
+            case_updates = xform.get_case_updates(xform.get_module().case_type)
             xform = xform.wrapped_xform()
             xform_schema = FormExportDataSchema._generate_schema_from_xform(
                 xform,
+                case_updates,
                 app.langs,
                 app.copy_of,
                 app.version,
@@ -638,34 +916,52 @@ class FormExportDataSchema(ExportDataSchema):
         return current_xform_schema
 
     @staticmethod
-    def _generate_schema_from_xform(xform, langs, app_id, app_version):
+    def _generate_schema_from_xform(xform, case_updates, langs, app_id, app_version):
         questions = xform.get_questions(langs)
+        repeats = [r['value'] for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat']
         schema = FormExportDataSchema()
+        question_keyfn = lambda q: q['repeat']
 
-        for group_path, group_questions in groupby(questions, lambda q: q['repeat']):
+        question_groups = [(x, list(y)) for x, y in groupby(
+            sorted(questions, key=question_keyfn), question_keyfn
+        )]
+        if None not in [x[0] for x in question_groups]:
+            # If there aren't any questions in the main table, a group for
+            # it anyways.
+            question_groups = [(None, [])] + question_groups
+
+        for group_path, group_questions in question_groups:
             # If group_path is None, that means the questions are part of the form and not a repeat group
             # inside of the form
             group_schema = ExportGroupSchema(
-                path=_question_path_to_doc_path(group_path),
+                path=_question_path_to_path_nodes(group_path, repeats),
                 last_occurrences={app_id: app_version},
             )
-            if group_path is None:
-                for system_prop in MAIN_TABLE_PROPERTIES:
-                    group_schema.items.append(ScalarItem(
-                        path=[system_prop.name],
-                        label=system_prop.name,
-                        tag=system_prop.tag,
-                        last_occurrences={app_id: app_version},
-                    ))
-
             for question in group_questions:
                 # Create ExportItem based on the question type
                 item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
                     question,
                     app_id,
                     app_version,
+                    repeats,
                 )
                 group_schema.items.append(item)
+
+            if group_path is None:
+                for case_update_field in case_updates:
+                    group_schema.items.append(
+                        ExportItem(
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='case'),
+                                PathNode(name='update'),
+                                PathNode(name=case_update_field)
+                            ],
+                            label="case.update.{}".format(case_update_field),
+                            tag=PROPERTY_TAG_CASE,
+                            last_occurrences={app_id: app_version},
+                        )
+                    )
 
             schema.group_schemas.append(group_schema)
 
@@ -722,22 +1018,31 @@ class CaseExportDataSchema(ExportDataSchema):
                 [case_type],
                 include_parent_properties=False
             )
-            case_schema = CaseExportDataSchema._generate_schema_from_case_property_mapping(
+            parent_types, _ = (
+                ParentCasePropertyBuilder(app)
+                .get_parent_types_and_contributed_properties(case_type)
+            )
+            case_schemas = []
+            case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
                 case_property_mapping,
+                parent_types,
                 app.copy_of,
                 app.version,
-            )
-            case_history_schema = CaseExportDataSchema._generate_schema_for_case_history(
-                case_property_mapping,
-                app.copy_of,
-                app.version,
-            )
+            ))
+            if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
+                case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
+                    app.copy_of,
+                    app.version,
+                ))
 
-            current_case_schema = CaseExportDataSchema._merge_schemas(
-                current_case_schema,
-                case_schema,
-                case_history_schema
-            )
+            case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
+                case_property_mapping,
+                app.copy_of,
+                app.version,
+            ))
+            case_schemas.append(current_case_schema)
+
+            current_case_schema = CaseExportDataSchema._merge_schemas(*case_schemas)
 
             current_case_schema.record_update(app.copy_of, app.version)
 
@@ -751,25 +1056,46 @@ class CaseExportDataSchema(ExportDataSchema):
         return current_case_schema
 
     @staticmethod
-    def _generate_schema_from_case_property_mapping(case_property_mapping, app_id, app_version):
-        """Generates the schema for the main Case tab on the export page"""
+    def _generate_schema_from_case_property_mapping(case_property_mapping, parent_types, app_id, app_version):
+        """
+        Generates the schema for the main Case tab on the export page
+        Includes system export properties for the case.
+        """
         assert len(case_property_mapping.keys()) == 1
         schema = CaseExportDataSchema()
 
+        group_schema = ExportGroupSchema(
+            path=MAIN_TABLE,
+            last_occurrences={app_id: app_version},
+        )
+
         for case_type, case_properties in case_property_mapping.iteritems():
-            group_schema = ExportGroupSchema(
-                path=MAIN_TABLE,
-                last_occurrences={app_id: app_version},
-            )
+
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(
-                    path=[prop],
+                    path=[PathNode(name=prop)],
                     label=prop,
                     last_occurrences={app_id: app_version},
                 ))
 
-            schema.group_schemas.append(group_schema)
+        for case_type, identifier in parent_types:
+            group_schema.items.append(CaseIndexItem(
+                path=[PathNode(name='indices'), PathNode(name=case_type)],
+                label='{}.{}'.format(identifier, case_type),
+                last_occurrences={app_id: app_version},
+                tag=PROPERTY_TAG_CASE,
+            ))
 
+        schema.group_schemas.append(group_schema)
+        return schema
+
+    @staticmethod
+    def _generate_schema_for_parent_case(app_id, app_version):
+        schema = CaseExportDataSchema()
+        schema.group_schemas.append(ExportGroupSchema(
+            path=PARENT_CASE_TABLE,
+            last_occurrences={app_id: app_version},
+        ))
         return schema
 
     @staticmethod
@@ -782,18 +1108,18 @@ class CaseExportDataSchema(ExportDataSchema):
             path=CASE_HISTORY_TABLE,
             last_occurrences={app_id: app_version},
         )
-        for system_prop in CASE_HISTORY_PROPERTIES:
-            group_schema.items.append(ScalarItem(
-                path=[system_prop.name],
-                label=system_prop.name,
-                tag=system_prop.tag,
-                last_occurrences={app_id: app_version},
-            ))
 
         for case_type, case_properties in case_property_mapping.iteritems():
             for prop in case_properties:
+                # Yeah... let's not hard code this list everywhere
+                # This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
+                if prop in ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]:
+                    path_start = PathNode(name="updated_known_properties")
+                else:
+                    path_start = PathNode(name="updated_unknown_properties")
+
                 group_schema.items.append(ScalarItem(
-                    path=[prop],
+                    path=CASE_HISTORY_TABLE + [path_start, PathNode(name=prop)],
                     label=prop,
                     tag=PROPERTY_TAG_UPDATE,
                     last_occurrences={app_id: app_version},
@@ -807,32 +1133,40 @@ def _string_path_to_list(path):
     return path if path is None else path[1:].split('/')
 
 
-def _question_path_to_doc_path(string_path):
+def _question_path_to_path_nodes(string_path, repeats):
     """
-    Convert a question path into the format expected by the export code,
-    specifically the logic in ExportColumn.get_value().
-    The export code will use this path to traverse the JSON representation of
-    the form that is stored in ElasticSearch.
+    Return a list of PathNodes suitable for a TableConfiguration or ExportGroupSchema
+    path, from the given path and list of repeats.
+    :param string_path: A path to a question or group, like "/data/group1"
+    :param repeats: A list of repeat groups, like ["/data/repeat1"]
+    :return: A list of PathNodes
+    """
+    if not string_path:
+        return []
 
-    E.g. "/data/question1/" is converted to ["form", "question1"]
-    """
-    path = _string_path_to_list(string_path)
-    if path is None:
-        path = []
-    else:
-        assert path[0] == "data"
-        path[0] = "form"
+    parts = string_path.split("/")
+    assert parts[0] == "", 'First part of path should be ""'
+    parts = parts[1:]
+
+    repeat_test_string = ""
+    path = []
+    for part in parts:
+        repeat_test_string += "/" + part
+        path.append(PathNode(name=part, is_repeat=repeat_test_string in repeats))
+
+    assert path[0] == PathNode(name="data"), 'First node should be "data"'
+    path[0].name = "form"
     return path
 
 
-def _list_path_to_string(path, separator='.'):
+def _path_nodes_to_string(path, separator=' '):
     if not path or (len(path) == 1 and path[0] is None):
         return ''
-    return separator.join(path)
+    return separator.join(["{}.{}".format(node.name, node.is_repeat) for node in path])
 
 
 def _merge_lists(one, two, keyfn, resolvefn, copyfn):
-    """Merges two lists. The alogorithm is to first iterate over the first list. If the item in the first list
+    """Merges two lists. The algorithm is to first iterate over the first list. If the item in the first list
     does not exist in the second list, add that item to the merged list. If the item does exist in the second
     list, resolve the conflict using the resolvefn. After the first list has been iterated over, simply append
     any items in the second list that have not already been added.
@@ -897,6 +1231,85 @@ def _merge_dicts(one, two, resolvefn):
     return merged
 
 
+class SplitUserDefinedExportColumn(ExportColumn):
+    split_type = StringProperty(
+        choices=USER_DEFINED_SPLIT_TYPES,
+        default=PLAIN_USER_DEFINED_SPLIT_TYPE
+    )
+    user_defined_options = ListProperty()
+
+    def get_value(self, doc, base_path, transform_dates=False, **kwargs):
+        """
+        Get the value of self.item of the given doc.
+        When base_path is [], doc is a form submission or case,
+        when base_path is non empty, doc is a repeat group from a form submission.
+        doc is a form submission or instance of a repeat group in a submission or case
+        """
+        value = super(SplitUserDefinedExportColumn, self).get_value(
+            doc,
+            base_path,
+            transform_dates=transform_dates
+        )
+        if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
+            return value
+
+        if not isinstance(value, basestring):
+            return [None] * len(self.user_defined_options) + [value]
+
+        selected = OrderedDict((x, 1) for x in value.split(" "))
+        row = []
+        for option in self.user_defined_options:
+            row.append(selected.pop(option, None))
+        row.append(" ".join(selected.keys()))
+        return row
+
+    def get_headers(self, **kwargs):
+        if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
+            return super(SplitUserDefinedExportColumn, self).get_headers()
+        header = self.label
+        header_template = header if '{option}' in header else u"{name} | {option}"
+        headers = []
+        for option in self.user_defined_options:
+            headers.append(
+                header_template.format(
+                    name=header,
+                    option=option
+                )
+            )
+        headers.append(
+            header_template.format(
+                name=header,
+                option='extra'
+            )
+        )
+        return headers
+
+
+class SplitGPSExportColumn(ExportColumn):
+    item = SchemaProperty(GeopointItem)
+
+    def get_headers(self, split_column=False):
+        if not split_column:
+            return super(SplitGPSExportColumn, self).get_headers()
+        header = self.label
+        header_templates = [
+            _(u'{}: latitude (meters)'),
+            _(u'{}: longitude (meters)'),
+            _(u'{}: altitude (meters)'),
+            _(u'{}: accuracy (meters)'),
+        ]
+        return map(lambda header_template: header_template.format(header), header_templates)
+
+    def get_value(self, doc, base_path, row_index=None, split_column=False, transform_dates=False):
+        value = super(SplitGPSExportColumn, self).get_value(doc, base_path, transform_dates=transform_dates)
+        if not split_column:
+            return value
+        values = [None] * 4
+        for index, coordinate in enumerate(value.split(' ')):
+            values[index] = coordinate
+        return values
+
+
 class SplitExportColumn(ExportColumn):
     """
     This class is used to split a value into multiple columns based
@@ -915,18 +1328,24 @@ class SplitExportColumn(ExportColumn):
 
     data_val = 'a c d'
     output = [1, '', 'c d']
+
+    Note: when split_column is set to False, SplitExportColumn will behave like a
+    normal ExportColumn.
     """
     item = SchemaProperty(MultipleChoiceItem)
-    ignore_unspecified_options = BooleanProperty()
+    ignore_unspecified_options = BooleanProperty(default=False)
 
-    def get_value(self, doc, base_path):
+    def get_value(self, doc, base_path, row_index=None, split_column=False, transform_dates=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
         when base_path is non empty, doc is a repeat group from a form submission.
         doc is a form submission or instance of a repeat group in a submission or case
         """
-        value = super(SplitExportColumn, self).get_value(doc, base_path)
+        value = super(SplitExportColumn, self).get_value(doc, base_path, transform_dates=transform_dates)
+        if not split_column:
+            return value
+
         if not isinstance(value, basestring):
             return [None] * len(self.item.options) + [] if self.ignore_unspecified_options else [value]
 
@@ -938,21 +1357,113 @@ class SplitExportColumn(ExportColumn):
             row.append(" ".join(selected.keys()))
         return row
 
-    def get_headers(self):
-        header_template = self.label if '{option}' in self.label else u"{name} | {option}"
+    def get_headers(self, split_column=False):
+        if not split_column:
+            return super(SplitExportColumn, self).get_headers()
+        header = self.label
+        header_template = header if '{option}' in header else u"{name} | {option}"
         headers = []
         for option in self.item.options:
             headers.append(
                 header_template.format(
-                    name=self.label,
+                    name=header,
                     option=option.value
                 )
             )
         if not self.ignore_unspecified_options:
             headers.append(
                 header_template.format(
-                    name=self.label,
+                    name=header,
                     option='extra'
                 )
             )
         return headers
+
+
+class RowNumberColumn(ExportColumn):
+    repeat = IntegerProperty(default=0)
+
+    def get_headers(self, **kwargs):
+        headers = [self.label]
+        if self.repeat > 0:
+            headers += ["{}__{}".format(self.label, i) for i in range(self.repeat + 1)]
+        return headers
+
+    def get_value(self, doc, base_path, transform_dates=False, row_index=None, **kwargs):
+        assert row_index, 'There must be a row_index for number column'
+        return (
+            [".".join([unicode(i) for i in row_index])]
+            + (list(row_index) if len(row_index) > 1 else [])
+        )
+
+    def update_nested_repeat_count(self, repeat):
+        self.repeat = repeat
+
+
+class CaseIndexExportColumn(ExportColumn):
+
+    def get_value(self, doc, **kwargs):
+        path = [self.item.path[0].name]  # Index columns always are just a reference to 'indices'
+        case_type = self.item.case_type
+
+        indices = NestedDictGetter(path)(doc) or []
+        case_ids = map(
+            lambda index: index.get('referenced_id'),
+            filter(lambda index: index.get('referenced_type') == case_type, indices)
+        )
+        return ' '.join(case_ids)
+
+
+class StockExportColumn(ExportColumn):
+    """
+    A special column type for case exports. This will export a column
+    for each product/section combo on the provided domain. (A lot of this code is taken
+    from corehq/apps/commtrack/models.py#StockExportColumn
+    """
+    domain = StringProperty()
+
+    @property
+    def accessor(self):
+        return LedgerAccessors(self.domain)
+
+    def update_domain(self, domain):
+        self.domain = domain
+
+    @property
+    @memoized
+    def _column_tuples(self):
+        product_ids = [p.get_id for p in Product.by_domain(self.domain)]
+        ledger_values = self.accessor.get_ledger_values_for_product_ids(product_ids)
+        section_and_product_ids = sorted(set(map(lambda v: (v.product_id, v.section_id), ledger_values)))
+        return section_and_product_ids
+
+    def _get_product_name(self, product_id):
+        return Product.get(product_id).name
+
+    def get_headers(self, **kwargs):
+        for product_id, section in self._column_tuples:
+            yield u"{product} ({section})".format(
+                product=self._get_product_name(product_id),
+                section=section
+            )
+
+    def get_value(self, doc, base_path, **kwargs):
+        case_id = doc.get('_id')
+
+        states = self.accessor.get_ledger_values_for_case(case_id)
+
+        # use a list to make sure the stock states end up
+        # in the same order as the headers
+        values = [None] * len(self._column_tuples)
+
+        for state in states:
+            column_tuple = (state.product_id, state.section_id)
+            if column_tuple in self._column_tuples:
+                state_index = self._column_tuples.index(column_tuple)
+                values[state_index] = state.stock_on_hand
+        return values
+
+# These must match the constants in corehq/apps/export/static/export/js/const.js
+MAIN_TABLE = []
+CASE_HISTORY_TABLE = [PathNode(name='actions', is_repeat=True)]
+PARENT_CASE_TABLE = [PathNode(name='indices', is_repeat=True)]

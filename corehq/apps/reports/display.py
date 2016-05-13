@@ -16,15 +16,18 @@ from corehq.util.view_utils import absolute_reverse
 
 
 class StringWithAttributes(unicode):
+
     def replace(self, *args):
         string = super(StringWithAttributes, self).replace(*args)
         return StringWithAttributes(string)
 
 
 class FormDisplay(object):
-    def __init__(self, form_doc, report):
+
+    def __init__(self, form_doc, report, lang=None):
         self.form = form_doc
         self.report = report
+        self.lang = lang
 
     @property
     def form_data_link(self):
@@ -58,7 +61,12 @@ class FormDisplay(object):
 
     @property
     def readable_form_name(self):
-        return xmlns_to_name(self.report.domain, self.form.get("xmlns"), app_id=self.form.get("app_id"))
+        return xmlns_to_name(
+            self.report.domain,
+            self.form.get("xmlns"),
+            app_id=self.form.get("app_id"),
+            lang=self.lang
+        )
 
     @property
     def other_columns(self):
@@ -66,6 +74,7 @@ class FormDisplay(object):
 
 
 class _FormType(object):
+
     def __init__(self, domain, xmlns, app_id=None):
         self.domain = domain
         self.xmlns = xmlns
@@ -78,28 +87,28 @@ class _FormType(object):
             except KeyError:
                 self.app_id = None
 
-    def get_label(self):
+    def get_label(self, lang=None):
         form = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
         if form and form.get('app'):
             langs = form['app']['langs']
             app_name = form['app']['name']
-            module_name = form_name = None
+
             if form.get('is_user_registration'):
                 form_name = "User Registration"
                 title = "%s > %s" % (app_name, form_name)
             else:
-                for lang in langs + form['module']['name'].keys():
-                    module_name = form['module']['name'].get(lang)
-                    if module_name is not None:
-                        break
-                for lang in langs + form['form']['name'].keys():
-                    form_name = form['form']['name'].get(lang)
-                    if form_name is not None:
-                        break
-                if module_name is None:
-                    module_name = "?"
-                if form_name is None:
-                    form_name = "?"
+                def _menu_name(menu, lang):
+                    if lang and menu.get(lang):
+                        return menu.get(lang)
+                    else:
+                        for lang in langs + menu.keys():
+                            menu_name = menu.get(lang)
+                            if menu_name is not None:
+                                return menu_name
+                        return "?"
+
+                module_name = _menu_name(form["module"]["name"], lang)
+                form_name = _menu_name(form["form"]["name"], lang)
                 title = "%s > %s > %s" % (app_name, module_name, form_name)
 
             if form.get('app_deleted'):
@@ -112,5 +121,5 @@ class _FormType(object):
         return name
 
 
-def xmlns_to_name(domain, xmlns, app_id):
-    return _FormType(domain, xmlns, app_id).get_label()
+def xmlns_to_name(domain, xmlns, app_id, lang=None):
+    return _FormType(domain, xmlns, app_id).get_label(lang)

@@ -106,7 +106,8 @@ var mk_translation_ui = function (spec) {
         $home = $('<div/>'),
         $list = $('<div/>').appendTo($home),
         $adder = $('<div/>').appendTo($home),
-        $bootstrap = $('<a/>').attr('href', '').text('Auto fill translations').click(function (e) {
+        $autoFill = $('<a/>').attr('href', '').attr('class', 'btn btn-primary').text('Auto fill translations');
+        $autoFill.click(function (e) {
             e.preventDefault();
             $.ajax({
                 type: "get",
@@ -125,11 +126,11 @@ var mk_translation_ui = function (spec) {
                     }
                 }
             });
-        }).after("<span class='hq-help-template' data-placement='right' " + 
+        });
+        var $autoFillHelp = "<span class='auto-fill-help hq-help-template' data-placement='right' " +
             "data-title='Auto Fill translations' " + 
             "data-content='This will pick the most common translations for your selected language.  You can then edit them as needed.'" +
-            "></span>"
-        );
+            "></span>";
 
     for (key in spec.translations) {
         if (spec.translations.hasOwnProperty(key)) {
@@ -232,10 +233,16 @@ var mk_translation_ui = function (spec) {
                 translation.ui.appendTo($list);
             }
         }
-        if (translation_ui.allow_autofill) {
-            $home.append($bootstrap);
-            COMMCAREHQ.transformHelpTemplate($bootstrap.siblings(".hq-help-template"), true);
+
+        $home.append($autoFill);
+        $home.append($autoFillHelp);
+
+        if (!translation_ui.allow_autofill) {
+            $autoFill.attr('class', 'disabled btn btn-primary');
+            $('.auto-fill-help').attr('data-content', "Autofill is not available in English (en). " +
+                "Please change your language using the dropdown on the left next to 'Languages'");
         }
+        COMMCAREHQ.transformHelpTemplate($('.auto-fill-help'), true);
         translation_ui.appendAdder();
         $home.append($home);
     };

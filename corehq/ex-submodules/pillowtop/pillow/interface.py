@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.exceptions import PillowtopCheckpointReset
@@ -10,6 +11,7 @@ class PillowRuntimeContext(object):
     Runtime context for a pillow. Gets passed around during the processing methods
     so that other functions can use it without maintaining global state on the class.
     """
+
     def __init__(self, changes_seen=0, do_set_checkpoint=True):
         self.changes_seen = changes_seen
         self.do_set_checkpoint = do_set_checkpoint
@@ -122,10 +124,9 @@ class ConstructedPillow(PillowBase):
     arguments it needs.
     """
 
-    def __init__(self, name, document_store, checkpoint, change_feed, processor,
+    def __init__(self, name, checkpoint, change_feed, processor,
                  change_processed_event_handler=None):
         self._name = name
-        self._document_store = document_store
         self._checkpoint = checkpoint
         self._change_feed = change_feed
         self._processor = processor
@@ -139,7 +140,10 @@ class ConstructedPillow(PillowBase):
         return self._name
 
     def document_store(self):
-        return self._document_store
+        # todo: replace with NotImplementedError once it's clear this isn't necessary
+        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), send_to_ops=False)
+        _assert(False, 'Something is still calling ConstructedPillow.document_store')
+        return None
 
     @property
     def checkpoint(self):

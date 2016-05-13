@@ -3,40 +3,27 @@ from corehq import toggles
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import cls_require_superuser_or_developer
-from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
 from custom.ilsgateway.models import ReportRun
-from custom.logistics.models import MigrationCheckpoint, StockDataCheckpoint
 
 
 class BaseConfigView(BaseCommTrackManageView):
 
     @cls_require_superuser_or_developer
+    @use_bootstrap3
+    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseConfigView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
         try:
-            checkpoint = MigrationCheckpoint.objects.get(domain=self.domain)
-        except MigrationCheckpoint.DoesNotExist:
-            checkpoint = None
-
-        try:
             runner = ReportRun.objects.get(domain=self.domain, complete=False)
         except ReportRun.DoesNotExist:
             runner = None
 
-        try:
-            stock_data_checkpoint = StockDataCheckpoint.objects.get(domain=self.domain)
-        except StockDataCheckpoint.DoesNotExist, StockDataCheckpoint.MultipleObjectsReturned:
-            stock_data_checkpoint = None
-
         return {
-            'stock_data_checkpoint': stock_data_checkpoint,
             'runner': runner,
-            'checkpoint': checkpoint,
             'settings': self.settings_context,
             'source': self.source,
             'sync_url': self.sync_urlname,
@@ -70,28 +57,3 @@ class BaseConfigView(BaseCommTrackManageView):
         config.all_stock_data = payload['source_config'].get('all_stock_data', False)
         config.save()
         return self.get(request, *args, **kwargs)
-
-
-class BaseRemindersTester(BaseDomainView):
-    section_name = 'Reminders tester'
-    section_url = ""
-    template_name = "logistics/reminders_tester.html"
-    post_url = None
-
-    reminders = {}
-
-    def get_context_data(self, **kwargs):
-        context = super(BaseRemindersTester, self).get_context_data(**kwargs)
-        context['phone_number'] = kwargs.get('phone_number')
-        verified_number = VerifiedNumber.by_phone(context['phone_number'])
-        context['phone_user'] = CommCareUser.get(verified_number.owner_id) if verified_number else None
-        return context
-
-    @property
-    def main_context(self):
-        main_context = super(BaseRemindersTester, self).main_context
-        main_context.update({
-            'reminders': sorted(self.reminders.keys()),
-            'post_url': self.post_url
-        })
-        return main_context

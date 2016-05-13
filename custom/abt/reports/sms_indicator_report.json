@@ -9,7 +9,8 @@
         "airszimbabwe",
         "airstanzania",
         "airsghana",
-        "airsbenin"
+        "airsbenin",
+        "airs-testing"
     ],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"static-sms-indicator-report",
@@ -104,12 +105,12 @@
         ],
         "sort_expression":[
             {
-                "field":"level_2",
+                "field":"date_of_data_collection",
                 "order":"DESC"
             },
             {
-                "field":"date_of_data_collection",
-                "order":"ASC"
+                "field":"level_3",
+                "order":"DESC"
             }
         ],
         "columns":[

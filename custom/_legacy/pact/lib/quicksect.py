@@ -10,33 +10,12 @@ Intersects ... faster.  Suports GenomicInterval datatype and multiple chromosome
 source:
 http://bitbucket.org/james_taylor/bx-python/src/14b6a6c95da6/lib/bx/intervals/operations/quicksect.py
 """
-import math
 import time
-import sys
 import random
 
-class IntervalTree( object ):
-    def __init__( self ):
-        self.chroms = {}
-    def insert( self, interval, linenum=0, other=None ):
-        chrom = interval.chrom
-        start = interval.start
-        end = interval.end
-        if interval.chrom in self.chroms:
-            self.chroms[chrom] = self.chroms[chrom].insert( start, end, linenum, other )
-        else:
-            self.chroms[chrom] = IntervalNode( start, end, linenum, other )
-    def intersect( self, interval, report_func ):
-        chrom = interval.chrom
-        start = interval.start
-        end = interval.end
-        if chrom in self.chroms:
-            self.chroms[chrom].intersect( start, end, report_func )
-    def traverse( self, func ):
-        for item in self.chroms.itervalues():
-            item.traverse( func )
 
 class IntervalNode( object ):
+
     def __init__( self, start, end, linenum=0, other=None ):
         # Python lacks the binomial distribution, so we convert a
         # uniform into a binomial because it naturally scales with
@@ -52,6 +31,7 @@ class IntervalNode( object ):
         self.right = None
         self.linenum = linenum
         self.other = other
+
     def insert( self, start, end, linenum=0, other=None ):
         root = self
         if start > self.start:
@@ -127,6 +107,7 @@ class IntervalNode( object ):
         func( self )
         if self.right: self.right.traverse( func )
 
+
 def main():
     test = None
     intlist = []
@@ -150,8 +131,6 @@ def main():
         bad_sect( intlist, start, end)
     print "%f for linear (bad) method" % (time.clock() - starttime)
 
-def test_func( node ):
-    print "[%d, %d), %d" % (node.start, node.end, node.maxend)
 
 def bad_sect( lst, int_start, int_end ):
     intersection = []

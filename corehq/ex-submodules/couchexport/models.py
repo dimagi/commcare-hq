@@ -31,6 +31,7 @@ display_column_types = {}
 
 
 class register_column_type(object):
+
     def __init__(self, label=None):
         self.label = label
 
@@ -148,6 +149,7 @@ class ExportSchema(Document, UnicodeMixIn):
         )
 
     _tables = None
+
     @property
     def tables(self):
         if self._tables is None:
@@ -242,6 +244,7 @@ class ComplexExportColumn(ExportColumn):
     A single column config that can represent multiple actual columns
     in the excel sheet.
     """
+
     def get_headers(self):
         """
         Return a list of headers that this column contributes to
@@ -391,13 +394,20 @@ class ExportTable(DocumentSchema):
                 return i
 
     def get_items_in_order(self, row):
+        from couchexport.export import scalar_never_was
         row_data = list(row.get_data())
         for column in self.columns:
+            # If, for example, column.index references a question in a form
+            # export and there are no forms that have a value for that question,
+            # then that question does not show up in the schema for the export
+            # and so column.index won't be found in self.row_positions_by_index.
+            # In those cases we want to give a value of '---' to be consistent
+            # with other "not applicable" export values.
             try:
                 i = self.row_positions_by_index[column.index]
                 val = row_data[i]
             except KeyError:
-                val = ''
+                val = scalar_never_was
 
             if issubclass(type(column), ComplexExportColumn):
                 for value in column.get_data(val):
@@ -434,6 +444,7 @@ class ExportTable(DocumentSchema):
             id_index = self.id_index if id else 0
             row_id = row.id if id else None
             yield FormattedRow(cells, row_id, id_index=id_index)
+
 
 class BaseSavedExportSchema(Document):
     # signature: filter(doc)
@@ -519,6 +530,7 @@ class DefaultExportSchema(BaseSavedExportSchema):
         export_tag = self.index
 
         CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
+
         def _build_cache_key(tag, prev_export_id, format, max_column_size):
             def _human_readable_key(tag, prev_export_id, format, max_column_size):
                 return "couchexport_:%s:%s:%s:%s" % (tag, prev_export_id, format, max_column_size)
@@ -591,6 +603,9 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
 
     # For us right now, 'form' or 'case'
     type = StringProperty()
+
+    # ID of  the new style export that it was converted to
+    converted_saved_export_id = StringProperty()
 
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.index)
@@ -921,6 +936,7 @@ class SavedBasicExport(BlobMixin, Document):
     configuration = SchemaProperty(ExportConfiguration)
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
+    is_safe = BooleanProperty(default=False)
 
     @property
     def size(self):

@@ -26,6 +26,7 @@ class GatewayConnectionError(Exception):
 
 
 class IVRResponseData(object):
+
     def __init__(self, ivr_responses, input_length, session):
         self.ivr_responses = ivr_responses
         self.input_length = input_length
@@ -39,6 +40,7 @@ def convert_media_path_to_hq_url(path, app):
     else:
         url_base = get_url_base()
         return url_base + media.url + "foo.wav"
+
 
 def validate_answer(answer, question):
     """
@@ -61,6 +63,7 @@ def validate_answer(answer, question):
             return True
         except AssertionError:
             return False
+
 
 def format_ivr_response(text, app):
     return {
@@ -200,7 +203,7 @@ def answer_question(call_log_entry, recipient, input_data, logged_subevent=None)
     if validate_answer(input_data, current_q):
         answer_is_valid = True
         try:
-            responses = _get_responses(recipient.domain, recipient._id,
+            responses = _get_responses(recipient.domain, recipient.get_id,
                 input_data, yield_responses=True,
                 session_id=call_log_entry.xforms_session_id)
         except TouchformsError as e:

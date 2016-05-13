@@ -1,31 +1,22 @@
+import numbers
 from collections import OrderedDict
 
-from sqlalchemy.exc import ProgrammingError
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext
 
 from dimagi.utils.decorators.memoized import memoized
-from sqlagg import (
-    ColumnNotFoundException,
-    TableNotFoundException,
-)
 from sqlagg.columns import SimpleColumn
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
-from corehq.apps.userreports.exceptions import (
-    UserReportsError, TableNotFoundWarning,
-    InvalidQueryColumn)
+from corehq.apps.userreports.decorators import catch_and_raise_exceptions
+from corehq.apps.userreports.exceptions import InvalidQueryColumn
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.reports.sorting import ASCENDING
-from corehq.apps.userreports.reports.util import get_expanded_columns, get_total_row
+from corehq.apps.userreports.reports.util import get_expanded_columns
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.sql_db.connections import connection_manager
-from corehq.util.soft_assert import soft_assert
-
-_soft_assert = soft_assert(
-    to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
-    exponential_backoff=False,
-)
 
 
 class ConfigurableReportDataSource(SqlData):
@@ -144,18 +135,9 @@ class ConfigurableReportDataSource(SqlData):
         return [w for sql_conf in self.sql_column_configs for w in sql_conf.warnings]
 
     @memoized
+    @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
-        try:
-            ret = super(ConfigurableReportDataSource, self).get_data(start=start, limit=limit)
-        except (
-            ColumnNotFoundException,
-            ProgrammingError,
-            InvalidQueryColumn,
-        ) as e:
-            _soft_assert(False, unicode(e))
-            raise UserReportsError(unicode(e))
-        except TableNotFoundException:
-            raise TableNotFoundWarning
+        ret = super(ConfigurableReportDataSource, self).get_data(start=start, limit=limit)
 
         for report_column in self.column_configs:
             report_column.format_data(ret)
@@ -165,6 +147,7 @@ class ConfigurableReportDataSource(SqlData):
     def has_total_row(self):
         return any(column_config.calculate_total for column_config in self.column_configs)
 
+    @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
         qc = self.query_context()
         for c in self.columns:
@@ -172,23 +155,46 @@ class ConfigurableReportDataSource(SqlData):
             qc.append_column(c.view)
 
         session = connection_manager.get_scoped_session(self.engine_id)
-        try:
-            return qc.count(session.connection(), self.filter_values)
-        except (
-            ColumnNotFoundException,
-            ProgrammingError,
-            InvalidQueryColumn,
-        ) as e:
-            _soft_assert(False, unicode(e))
-            raise UserReportsError(unicode(e))
-        except TableNotFoundException:
-            raise TableNotFoundWarning
+        return qc.count(session.connection(), self.filter_values)
 
+    @method_decorator(catch_and_raise_exceptions)
     def get_total_row(self):
-        return get_total_row(
-            self.get_data(), self.aggregation_columns, self.column_configs,
-            get_expanded_columns(self.column_configs, self.config)
+        def _clean_total_row(val, col):
+            if isinstance(val, numbers.Number):
+                return val
+            elif col.calculate_total:
+                return 0
+            return ''
+
+        def _get_relevant_column_ids(col, column_id_to_expanded_column_ids):
+            return column_id_to_expanded_column_ids.get(col.column_id, [col.column_id])
+
+        expanded_columns = get_expanded_columns(self.column_configs, self.config)
+
+        qc = self.query_context()
+        for c in self.columns:
+            qc.append_column(c.view)
+
+        session = connection_manager.get_scoped_session(self.engine_id)
+        totals = qc.totals(
+            session.connection(),
+            [
+                column_id
+                for col in self.column_configs for column_id in _get_relevant_column_ids(col, expanded_columns)
+                if col.calculate_total
+            ],
+            self.filter_values
         )
+
+        total_row = [
+            _clean_total_row(totals.get(column_id), col)
+            for col in self.column_configs for column_id in _get_relevant_column_ids(
+                col, expanded_columns
+            )
+        ]
+        if total_row and total_row[0] is '':
+            total_row[0] = ugettext('Total')
+        return total_row
 
     def _get_db_column_ids(self, column_id):
         # for columns that end up being complex queries (e.g. aggregate dates)

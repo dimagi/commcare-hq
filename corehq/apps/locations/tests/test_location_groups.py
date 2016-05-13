@@ -9,6 +9,7 @@ from corehq.apps.users.models import CommCareUser
 
 
 class LocationGroupTest(LocationTestBase):
+
     def setUp(self):
         super(LocationGroupTest, self).setUp()
         self.test_state = make_loc(
@@ -216,3 +217,27 @@ class LocationGroupTest(LocationTestBase):
         fixture = location_fixture_generator(self.user, '2.0')
         self.assertEquals(len(fixture[0].findall('.//state')), 1)
         self.assertEquals(len(fixture[0].findall('.//outlet')), 3)
+
+    @patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
+    def test_location_fixture_generator_no_user_location(self):
+        """
+        Ensures that a user without a location will still receive an empty fixture
+        """
+        self.domain.commtrack_enabled = True
+        self.domain.save()
+        self.loc.delete()
+
+        fixture = location_fixture_generator(self.user, '2.0')
+        self.assertEqual(len(fixture), 1)
+        self.assertEquals(len(fixture[0].findall('.//state')), 0)
+
+    def test_location_fixture_generator_domain_no_locations(self):
+        """
+        Ensures that a domain that doesn't use locations doesn't send an empty
+        location fixture
+        """
+        self.domain.save()
+        self.loc.delete()
+
+        fixture = location_fixture_generator(self.user, '2.0')
+        self.assertEqual(len(fixture), 0)

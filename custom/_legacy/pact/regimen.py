@@ -1,30 +1,9 @@
-from pact.enums import DAY_SLOTS_BY_TIME, PACT_REGIMEN_CHOICES, DAY_SLOTS_BY_IDX, DOT_ART, DOT_NONART, CASE_ART_REGIMEN_PROP, CASE_NONART_REGIMEN_PROP
-
-#def calculate_regimen_caseblock(self):
-#    """
-#    Forces all labels to be reset back to the labels set on the patient document.
-#
-#    patient document trumps casedoc in this case.
-#    """
-#    update_ret = {}
-#    for prop_fmt in ['dot_a_%s', 'dot_n_%s']:
-#        if prop_fmt[4] == 'a':
-#            code_arr = get_regimen_code_arr(self.art_regimen)
-#            update_ret['artregimen'] = str(len(code_arr)) if len(code_arr) > 0 else ""
-#        elif prop_fmt[4] == 'n':
-#            code_arr = get_regimen_code_arr(self.non_art_regimen)
-#            update_ret['nonartregimen'] = str(len(code_arr)) if len(code_arr) > 0 else ""
-#        digit_strings = ["zero", 'one', 'two', 'three','four']
-#        for x in range(1,5):
-#            prop_prop = prop_fmt % digit_strings[x]
-#            if x > len(code_arr):
-#                update_ret[prop_prop] = ''
-#            else:
-#                update_ret[prop_prop] = str(code_arr[x-1])
-#    return update_ret
+from pact.enums import DAY_SLOTS_BY_TIME, DAY_SLOTS_BY_IDX, DOT_ART, DOT_NONART, \
+    CASE_ART_REGIMEN_PROP, CASE_NONART_REGIMEN_PROP
 
 type_keys = {DOT_ART: 'dot_a_%s', DOT_NONART: 'dot_n_%s'}
 digit_strings = ['one', 'two', 'three', 'four']
+
 
 def regimen_dict_from_choice(key_type, regimen_string):
     """
@@ -92,7 +71,6 @@ def regimen_string_from_doc(drug_type, doc_dict):
                 pass
 
     return string_from_regimen_props(freq, props=props, suppress_errors=True)
-
 
 
 def string_from_regimen_props(freq, props=[], suppress_errors=False):

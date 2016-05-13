@@ -6,7 +6,6 @@ from datetime import datetime
 from zipfile import BadZipfile
 
 from django.contrib import messages
-from django.contrib.auth.forms import SetPasswordForm
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
@@ -55,14 +54,14 @@ from corehq.apps.locations.models import Location
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
-    use_angular_js
+    use_angular_js, use_jquery_ui, use_jquery_ui_multiselect
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
-    SelfRegistrationForm
+    SelfRegistrationForm, SetUserPasswordForm,
 )
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.users.tasks import bulk_upload_async
@@ -72,7 +71,6 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader
-from corehq.util.view_utils import expect_GET
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -88,6 +86,10 @@ class EditCommCareUserView(BaseFullEditUserView):
     user_update_form_class = UpdateCommCareUserInfoForm
     page_title = ugettext_noop("Edit Mobile Worker")
 
+    @use_bootstrap3
+    @use_jquery_ui
+    @use_jquery_ui_multiselect
+    @use_select2
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
@@ -125,7 +127,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     @memoized
     def reset_password_form(self):
-        return SetPasswordForm(user="")
+        return SetUserPasswordForm(user="")
 
     @property
     @memoized
@@ -245,7 +247,6 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
     async_handlers = [
         Select2BillingInfoHandler,
     ]
-
     @property
     @memoized
     def account(self):
@@ -272,6 +273,8 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
             'billing_info_form': self.billing_info_form,
         }
 
+    @use_select2
+    @use_bootstrap3
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
@@ -315,6 +318,7 @@ def set_commcare_user_group(request, domain):
     group.add_user(user)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
+
 @require_can_edit_commcare_users
 def archive_commcare_user(request, domain, user_id, is_active=False):
     can_add_extra_users = can_add_extra_mobile_workers(request)
@@ -333,6 +337,7 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
             action=_("Reactivated") if user.is_active else _("Deactivated"),
         )
     )))
+
 
 @require_can_edit_commcare_users
 @require_POST
@@ -358,6 +363,7 @@ def update_user_groups(request, domain, couch_user_id):
         messages.error(request, _("Form not valid. A group may have been deleted while you were viewing this page"
                                   "Please try again."))
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
+
 
 @require_can_edit_commcare_users
 @require_POST
@@ -691,13 +697,14 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
+    @use_bootstrap3
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
-        request_params = expect_GET(self.request)
+        request_params = self.request.GET if self.request.method == 'GET' else self.request.POST
         context = {
             'bulk_upload': {
                 "help_site": {
@@ -788,6 +795,10 @@ class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
     page_title = ugettext_noop('Mobile Worker Upload Status')
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(UserUploadStatusView, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         context = super(UserUploadStatusView, self).main_context
         context.update({
@@ -800,7 +811,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
             'next_url_text': _("Return to manage mobile workers"),
         })
-        return render(request, 'style/bootstrap2/soil_status_full.html', context)
+        return render(request, 'style/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -818,7 +829,9 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
         'on_complete_long': _('Mobile Worker upload has finished'),
 
     })
+
     class _BulkUploadResponseWrapper(object):
+
         def __init__(self, context):
             results = context.get('result', defaultdict(lambda: []))
             self.response_rows = results['rows']

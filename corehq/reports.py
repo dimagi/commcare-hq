@@ -10,6 +10,7 @@ from corehq.apps.hqadmin.reports import (
     RealProjectSpacesReport,
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
+    DeviceLogSoftAssertReport,
 )
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
@@ -81,6 +82,7 @@ def REPORTS(project):
             receiverwrapper.SubmissionErrorReport,
             phonelog.DeviceLogDetailsReport,
             deployments.SyncHistoryReport,
+            deployments.ApplicationErrorReport,
         )),
         (ugettext_lazy("Demos"), (
             DemoMapReport, DemoMapReport2, DemoMapCaseList,
@@ -120,6 +122,7 @@ def REPORTS(project):
         sms.MessageEventDetailReport,
         sms.SurveyDetailReport,
         sms.MessageLogReport,
+        sms.SMSOptOutReport,
         ivr.CallReport,
         ivr.ExpectedCallbackReport,
     ])
@@ -305,6 +308,7 @@ ADMIN_REPORTS = (
         RealProjectSpacesReport,
         CommConnectProjectSpacesReport,
         CommTrackProjectSpacesReport,
+        DeviceLogSoftAssertReport,
     )),
 )
 

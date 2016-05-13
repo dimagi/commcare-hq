@@ -6,7 +6,7 @@ import itertools
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
-from corehq.util.global_request import get_request
+from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from django.db import models
@@ -101,6 +101,7 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
 
 
 class SyncLogAssertionError(AssertionError):
+
     def __init__(self, case_id, *args, **kwargs):
         self.case_id = case_id
         super(SyncLogAssertionError, self).__init__(*args, **kwargs)
@@ -860,6 +861,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('index tree before update: {}'.format(self.index_tree))
 
         class CaseUpdate(object):
+
             def __init__(self, case_id, owner_ids_on_phone):
                 self.case_id = case_id
                 self.owner_ids_on_phone = owner_ids_on_phone
@@ -900,7 +902,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if owner_id_from_action is not None:
                     owner_id_map[case_id] = owner_id_from_action
             return owner_id_map.get(case_id, None)
-
 
         all_updates = {}
         for case in case_list:
@@ -1071,8 +1072,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 def _domain_has_legacy_toggle_set():
     # old versions of commcare (< 2.10ish) didn't purge on form completion
     # so can still modify cases that should no longer be on the phone.
-    request = get_request()
-    domain = getattr(request, 'domain', None)
+    domain = get_request_domain()
     return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 

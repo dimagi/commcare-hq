@@ -9,6 +9,8 @@ from django.db import transaction
 from psycopg2._psycopg import DatabaseError
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.util.decorators import serial_task
+from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
 from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
     REMINDER_MONTHLY_RANDR_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
@@ -21,116 +23,26 @@ from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
     process_facility_warehouse_data, process_non_facility_warehouse_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains, send_translated_message
-from custom.logistics.commtrack import save_stock_data_checkpoint
-from custom.ilsgateway.models import ILSGatewayConfig, SupplyPointStatus, DeliveryGroupReport, ReportRun, \
+from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, \
     OrganizationSummary, PendingReportingDataRecalculation
 from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_month_before
 
-
-def get_locations(api_object, facilities):
-    for facility in facilities:
-        location = api_object.endpoint.get_location(facility, params=dict(with_historical_groups=1))
-        api_object.location_sync(api_object.endpoint.models_map['location'](location))
-
-
-def process_supply_point_status(supply_point_status, domain, location_id=None):
-    location_id = location_id or supply_point_status.location_id
-    try:
-        SupplyPointStatus.objects.get(
-            external_id=int(supply_point_status.external_id),
-            location_id=location_id
-        )
-    except SupplyPointStatus.DoesNotExist:
-        supply_point_status.save()
-
-
-def sync_supply_point_status(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
-    has_next = True
-    next_url = ""
-
-    while has_next:
-        meta, supply_point_statuses = endpoint.get_supplypointstatuses(
-            domain,
-            limit=limit,
-            offset=offset,
-            next_url_params=next_url,
-            filters=dict(supply_point=facility, status_date__gte=date),
-            facility=facility
-        )
-        # set the checkpoint right before the data we are about to process
-        if not supply_point_statuses:
-            return None
-        location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
-        save_stock_data_checkpoint(checkpoint,
-                                   'supply_point_status',
-                                   meta.get('limit') or limit,
-                                   meta.get('offset') or offset, date, location_id, True)
-        for supply_point_status in supply_point_statuses:
-            process_supply_point_status(supply_point_status, domain, location_id)
-
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1]
-
-
-def process_delivery_group_report(dgr, domain, location_id=None):
-    location_id = location_id or dgr.location_id
-    try:
-        DeliveryGroupReport.objects.get(external_id=dgr.external_id, location_id=location_id)
-    except DeliveryGroupReport.DoesNotExist:
-        dgr.save()
-
-
-def sync_delivery_group_report(domain, endpoint, facility, checkpoint, date, limit=100, offset=0):
-    has_next = True
-    next_url = ""
-    while has_next:
-        meta, delivery_group_reports = endpoint.get_deliverygroupreports(
-            domain,
-            limit=limit,
-            offset=offset,
-            next_url_params=next_url,
-            filters=dict(supply_point=facility, report_date__gte=date),
-            facility=facility
-        )
-        location_id = SQLLocation.objects.get(domain=domain, external_id=facility).location_id
-        # set the checkpoint right before the data we are about to process
-        save_stock_data_checkpoint(checkpoint,
-                                   'delivery_group',
-                                   meta.get('limit') or limit,
-                                   meta.get('offset') or offset,
-                                   date, location_id, True)
-        for dgr in delivery_group_reports:
-            try:
-                DeliveryGroupReport.objects.get(external_id=dgr.external_id, location_id=location_id)
-            except DeliveryGroupReport.DoesNotExist:
-                dgr.save()
-
-        if not meta.get('next', False):
-            has_next = False
-        else:
-            next_url = meta['next'].split('?')[1]
+from .oneoff import *
 
 
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
                queue='logistics_background_queue')
 def report_run_periodic_task():
-    report_run('ils-gateway')
+    report_run.delay('ils-gateway')
 
 
-@task(queue='logistics_background_queue', ignore_result=True)
+@serial_task('{domain}', queue='logistics_background_queue', max_retries=0, timeout=60 * 60 * 12)
 def report_run(domain, locations=None, strict=True):
     last_successful_run = ReportRun.last_success(domain)
-    recalculation_on_location_change(domain, last_successful_run)
 
     last_run = ReportRun.last_run(domain)
     start_date = (datetime.min if not last_successful_run else last_successful_run.end)
     end_date = datetime.utcnow()
-
-    running = ReportRun.objects.filter(complete=False, domain=domain)
-    if running.count() > 0:
-        raise Exception("Warehouse already running, will do nothing...")
 
     if last_run and last_run.has_error:
         run = last_run
@@ -163,6 +75,8 @@ def report_run(domain, locations=None, strict=True):
         run.complete = True
         run.save()
         logging.info("ILSGateway report runner end time: %s" % datetime.utcnow())
+        if not has_error:
+            recalculation_on_location_change.delay(domain, last_successful_run)
 
 facility_delivery_partial = partial(send_for_day, cutoff=15, reminder_class=DeliveryReminder)
 district_delivery_partial = partial(send_for_day, cutoff=13, reminder_class=DeliveryReminder,
@@ -351,18 +265,35 @@ def soh_thank_you_task():
     Last business day before the 20th at 4:00 PM Tanzania time
     """
     now = datetime.utcnow()
+    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=20)
+    if now.day != business_day.day:
+        return
+
     last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
     for domain in ILSGatewayConfig.get_all_enabled_domains():
         SOHThankYouReminder(domain=domain, date=last_month).send()
 
 
+@periodic_task(run_every=crontab(day_of_month="6-10", hour=8, minute=0),
+               queue="logistics_reminder_queue")
+def stockout_reminder_task():
+    """
+        6th business day of month
+    """
+    now = datetime.utcnow()
+    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=6)
+    if now.day != last_business_day.day:
+        return
+
+    send_for_all_domains(last_business_day, StockoutReminder)
+
+
 def recalculate_on_group_change(location, last_run):
     OrganizationSummary.objects.filter(location_id=location.get_id).delete()
     process_facility_warehouse_data(location, default_start_date(), last_run.end)
-
-    for parent in location.sql_location.get_ancestors(ascending=True):
-        process_non_facility_warehouse_data(parent.couch_location,
-                                            default_start_date(), last_run.end, strict=False)
+    return {
+        ancestor.location_type.name: {ancestor} for ancestor in location.sql_location.get_ancestors(ascending=True)
+    }
 
 
 def recalculate_on_parent_change(location, previous_parent_id, last_run):
@@ -383,13 +314,10 @@ def recalculate_on_parent_change(location, previous_parent_id, last_run):
     for sql_location in locations_to_recalculate:
         type_location_map[sql_location.location_type.name].add(sql_location)
 
-    for location_type in ["DISTRICT", "REGION", "MSDZONE"]:
-        for sql_location in type_location_map[location_type]:
-            process_non_facility_warehouse_data(
-                sql_location.couch_location, default_start_date(), last_run.end, strict=False
-            )
+    return type_location_map
 
 
+@task(queue='logistics_background_queue', ignore_result=True)
 def recalculation_on_location_change(domain, last_run):
     if not last_run:
         PendingReportingDataRecalculation.objects.filter(domain=domain).delete()
@@ -402,19 +330,43 @@ def recalculation_on_location_change(domain, last_run):
         key = (pending_recalculation.sql_location, pending_recalculation.type)
         recalcs_dict[key].append(pending_recalculation.data)
 
+    non_facilities_to_recalculate = defaultdict(set)
+    recalculated = set()
     for (sql_location, recalculation_type), data_list in recalcs_dict.iteritems():
         # If there are more changes, consider earliest and latest change.
         # Thanks to this we avoid recalculations when in fact group/parent wasn't changed.
         # E.g Group is changed from A -> B and later from B -> A.
         # In this situation there is no need to recalculate data.
+
+        if not OrganizationSummary.objects.filter(location_id=sql_location.location_id).exists():
+            # There are no data for that location so there is no need to recalculate
+            PendingReportingDataRecalculation.objects.filter(
+                sql_location=sql_location, type=recalculation_type, domain=domain
+            ).delete()
+            continue
+
         if recalculation_type == 'group_change'\
-                and data_list[0]['previous_group'] != data_list[-1]['current_group']:
-            recalculate_on_group_change(sql_location.couch_location, last_run)
+                and data_list[0]['previous_group'] != data_list[-1]['current_group']\
+                and not sql_location.location_type.administrative:
+            to_recalculate = recalculate_on_group_change(sql_location.couch_location, last_run)
         elif recalculation_type == 'parent_change' \
                 and data_list[0]['previous_parent'] != data_list[-1]['current_parent']:
-            recalculate_on_parent_change(
+            to_recalculate = recalculate_on_parent_change(
                 sql_location.couch_location, data_list[0]['previous_parent'], last_run
             )
-        PendingReportingDataRecalculation.objects.filter(
-            sql_location=sql_location, type=recalculation_type, domain=domain
-        ).delete()
+        else:
+            to_recalculate = {}
+        recalculated.add(sql_location)
+
+        for location_type, sql_locations_to_recalculate in to_recalculate.iteritems():
+            for sql_location_to_recalculate in sql_locations_to_recalculate:
+                non_facilities_to_recalculate[location_type].add(sql_location_to_recalculate)
+
+    for location_type in ["DISTRICT", "REGION", "MSDZONE", "MOHSW"]:
+        for sql_location in non_facilities_to_recalculate.get(location_type, []):
+            process_non_facility_warehouse_data(
+                sql_location.couch_location, default_start_date(), last_run.end, strict=False
+            )
+    PendingReportingDataRecalculation.objects.filter(
+        sql_location__in=recalculated, domain=domain
+    ).delete()

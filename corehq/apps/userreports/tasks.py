@@ -1,19 +1,14 @@
 import datetime
-import logging
 
 from celery.task import task
 from couchdbkit import ResourceConflict
 
-from casexml.apps.case.models import CommCareCase
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
+from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.userreports.sql import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
-from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
-
-CHUNK_SIZE = 10000
+from pillowtop.dao.couch import ID_CHUNK_SIZE
 
 
 def is_static(config_id):
@@ -35,25 +30,23 @@ def _get_redis_key_for_config(config):
     return 'ucr_queue-{}:{}'.format(config._id, rev)
 
 
-def _build_indicators(indicator_config_id, relevant_ids):
-    config = _get_config_by_id(indicator_config_id)
-    adapter = IndicatorSqlAdapter(config)
-    couchdb = _get_db(config.referenced_doc_type)
+def _build_indicators(config, document_store, relevant_ids):
+    adapter = ErrorRaisingIndicatorSqlAdapter(config)
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
 
     last_id = None
-    for doc in iter_docs(couchdb, relevant_ids, chunksize=500):
+    for doc in document_store.iter_documents(relevant_ids):
+        # save is a noop if the filter doesn't match
+        adapter.best_effort_save(doc)
+        last_id = doc.get('_id')
         try:
-            # save is a noop if the filter doesn't match
-            adapter.save(doc)
-            last_id = doc.get('_id')
+            redis_client.lrem(redis_key, 1, last_id)
+        except:
             redis_client.srem(redis_key, last_id)
-        except Exception as e:
-            logging.exception('problem saving document {} to table. {}'.format(doc['_id'], e))
 
     if last_id:
-        redis_client.sadd(redis_key, last_id)
+        redis_client.rpush(redis_key, last_id)
 
 
 @task(queue='ucr_queue', ignore_result=True)
@@ -78,37 +71,36 @@ def resume_building_indicators(indicator_config_id):
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
 
-    if len(redis_client.smembers(redis_key)) > 0:
-        # redis returns a set, which we cant pull a last member from
+    # maintaining support for existing sets in redis while the
+    # transition to lists occurs
+    try:
+        relevant_ids = redis_client.lrange(redis_key, 0, -1)
+    except:
         relevant_ids = tuple(redis_client.smembers(redis_key))
-        _build_indicators(indicator_config_id, relevant_ids)
+    if len(relevant_ids) > 0:
+        _build_indicators(config, get_document_store(config.domain, config.referenced_doc_type), relevant_ids)
         last_id = relevant_ids[-1]
 
         _iteratively_build_table(config, last_id)
 
 
 def _iteratively_build_table(config, last_id=None):
-    couchdb = _get_db(config.referenced_doc_type)
     redis_client = get_redis_client().client.get_client()
     redis_key = _get_redis_key_for_config(config)
     indicator_config_id = config._id
 
     relevant_ids = []
-    for relevant_id in iterate_doc_ids_in_domain_by_type(
-            config.domain,
-            config.referenced_doc_type,
-            chunk_size=CHUNK_SIZE,
-            database=couchdb,
-            startkey_docid=last_id):
+    document_store = get_document_store(config.domain, config.referenced_doc_type)
+    for relevant_id in document_store.iter_document_ids(last_id):
         relevant_ids.append(relevant_id)
-        if len(relevant_ids) >= CHUNK_SIZE:
-            redis_client.sadd(redis_key, *relevant_ids)
-            _build_indicators(indicator_config_id, relevant_ids)
+        if len(relevant_ids) >= ID_CHUNK_SIZE:
+            redis_client.rpush(redis_key, *relevant_ids)
+            _build_indicators(config, document_store, relevant_ids)
             relevant_ids = []
 
     if relevant_ids:
-        redis_client.sadd(redis_key, *relevant_ids)
-        _build_indicators(indicator_config_id, relevant_ids)
+        redis_client.rpush(redis_key, *relevant_ids)
+        _build_indicators(config, document_store, relevant_ids)
 
     if not is_static(indicator_config_id):
         redis_client.delete(redis_key)
@@ -121,16 +113,3 @@ def _iteratively_build_table(config, last_id=None):
             if config.meta.build.initiated == current_config.meta.build.initiated:
                 current_config.meta.build.finished = True
                 current_config.save()
-
-
-def _get_db(doc_type):
-    return _DOC_TYPE_MAPPING.get(doc_type, CommCareCase).get_db()
-
-
-# This is intentionally not using magic to introspect the class from the name, though it could
-from corehq.apps.locations.models import Location
-_DOC_TYPE_MAPPING = {
-    'XFormInstance': XFormInstance,
-    'CommCareCase': CommCareCase,
-    'Location': Location
-}

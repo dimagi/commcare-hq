@@ -13,7 +13,6 @@ from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, 
 from custom.ilsgateway.tasks import report_run
 from custom.ilsgateway.tests.handlers.utils import prepare_domain, create_products
 from custom.ilsgateway.utils import make_loc, create_stock_report
-from custom.logistics.models import StockDataCheckpoint
 
 TEST_DOMAIN = 'report-runner-test'
 
@@ -66,13 +65,6 @@ class TestReportRunner(TestCase):
             status_value=SupplyPointStatusValues.SUBMITTED,
             status_date=date,
             location_id=cls.facility2.get_id
-        )
-        StockDataCheckpoint.objects.create(
-            domain=TEST_DOMAIN,
-            api='test',
-            date=date,
-            limit=1000,
-            offset=0
         )
 
     def _move_location(self, location, new_parent_id):

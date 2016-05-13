@@ -7,7 +7,7 @@ from corehq.apps.userreports.filters.specs import (PropertyMatchFilterSpec, NotF
     BooleanExpressionFilterSpec)
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter, SinglePropertyValueFilter
-from corehq.apps.userreports.operators import EQUAL, get_operator
+from corehq.apps.userreports.operators import equal, get_operator
 
 
 def _build_compound_filter(spec, context):
@@ -40,7 +40,7 @@ def _build_property_match_filter(spec, context):
     wrapped = PropertyMatchFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
         expression=wrapped.getter,
-        operator=EQUAL,
+        operator=equal,
         reference_expression=ExpressionFactory.from_spec(wrapped.property_value),
     )
 
