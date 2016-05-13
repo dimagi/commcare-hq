@@ -1,12 +1,11 @@
 /*globals $, _, django */
 
-function MultimediaReferenceController (references, obj_map, totals) {
+function MultimediaReferenceController (references, obj_map) {
     'use strict';
     var self = this;
     self.obj_map = obj_map;
     self.modules = [];
     self.showMissingReferences = ko.observable(false);
-    self.totals = ko.observable(totals);
     
     self.toggleRefsText = ko.computed(function () {
         return (self.showMissingReferences()) ? django.gettext("Show All References") : django.gettext("Show Only Missing References");
@@ -42,19 +41,6 @@ function MultimediaReferenceController (references, obj_map, totals) {
         }
         event.preventDefault();
     };
-
-    self.incrementTotals = function (trigger, event, data) {
-        var newTotals = _.map(self.totals(), function (media) {
-            if (media.media_type == data.media_type && media.paths.indexOf(data.path) < 0) {
-                media = _.clone(media);
-                media.paths.push(data.path);
-                media.matched = media.paths.length;
-            }
-            return media;
-        });
-        self.totals(newTotals);
-    };
-
 }
 
 function BaseReferenceGroup (name, obj_map, group_id) {
@@ -222,7 +208,6 @@ function BaseMediaReference (ref) {
             self.m_id(obj_ref.m_id);
             self.uid(obj_ref.uid);
             self.url(obj_ref.url);
-            $('.media-totals').trigger('refMediaAdded', self);
             self.is_matched(true);
         }
     };

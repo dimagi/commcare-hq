@@ -96,12 +96,14 @@ from corehq.apps.app_manager.views.modules import (
 )
 from corehq.apps.app_manager.views.multimedia import (
     multimedia_ajax,
+    multimedia_ajax_download,
     multimedia_list_download,
 )
 from corehq.apps.app_manager.views.releases import (
     AppDiffView,
     current_app_version,
     delete_copy,
+    LanguageProfilesView,
     odk_install,
     odk_media_qr_code,
     odk_qr_code,
