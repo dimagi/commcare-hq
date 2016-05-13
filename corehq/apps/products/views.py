@@ -1,7 +1,7 @@
 import json
 from django.http.response import HttpResponseServerError
 from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
-from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.util.files import file_extention_from_filename
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
@@ -489,8 +489,3 @@ class ProductFieldsView(CustomDataModelMixin, BaseCommTrackManageView):
     field_type = 'ProductFields'
     entity_string = _("Product")
     template_name = "custom_data_fields/custom_data_fields.html"
-
-    @use_bootstrap3
-    @use_jquery_ui
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProductFieldsView, self).dispatch(request, *args, **kwargs)
