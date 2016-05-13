@@ -84,8 +84,9 @@ class DjangoModelChangeProvider(ChangeProvider):
         model_list = self.model_class.objects.all()
         paginator = Paginator(model_list, self.chunk_size)
 
-        page = 1
+        page = 0
         while True:
+            page += 1
             try:
                 for model in paginator.page(page):
                     yield self.model_to_change_fn(model)
