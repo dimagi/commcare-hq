@@ -55,6 +55,7 @@ Occasionally you will see an app specified with a `#`, like `app_manager#b3`. Th
 
 ```
 http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/mocha/app_manager/b3)
+```
 
 ## Adding a new app to test
 
