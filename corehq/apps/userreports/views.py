@@ -510,7 +510,7 @@ class EditReportInBuilder(View):
 
 class ConfigureChartReport(ReportBuilderView):
     page_title = ugettext_lazy("Configure Report")
-    template_name = "userreports/partials/report_builder_configure_report.html"
+    template_name = "userreports/reportbuilder/configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = ugettext_lazy("Chart Report: {}")
     report_type = 'chart'

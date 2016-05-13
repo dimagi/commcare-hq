@@ -13,7 +13,6 @@
     {% endif %}
     {% trans "Configure Report Settings" %}
 {% endblock page_title %}
-
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
 
@@ -55,6 +54,7 @@
                 return options[key]
             }
         };
+
 
         /**
          * Knockout view model representing a row in the filter property list
