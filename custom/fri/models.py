@@ -1,5 +1,4 @@
 from dimagi.ext.couchdbkit import *
-from corehq.apps.sms.models import SMS
 
 PROFILE_A = "A"
 PROFILE_B = "B"
