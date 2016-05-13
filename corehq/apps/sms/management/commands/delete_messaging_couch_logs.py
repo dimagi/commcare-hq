@@ -7,6 +7,10 @@ from django.core.management.base import BaseCommand
 from optparse import make_option
 
 
+# Number of seconds to wait between each bulk delete operation
+BULK_DELETE_INTERVAL = 5
+
+
 class Command(BaseCommand):
     args = ""
     help = ("Deletes all messaging logs stored in couch")
@@ -188,18 +192,20 @@ class Command(BaseCommand):
 
     def delete_models(self):
         print 'Deleting SMSLogs...'
-        iter_bulk_delete_with_doc_type_verification(SMSLog.get_db(), self.get_sms_couch_ids(), 'SMSLog')
+        iter_bulk_delete_with_doc_type_verification(SMSLog.get_db(), self.get_sms_couch_ids(), 'SMSLog',
+            wait_time=BULK_DELETE_INTERVAL)
 
         print 'Deleting CallLogs...'
-        iter_bulk_delete_with_doc_type_verification(CallLog.get_db(), self.get_call_couch_ids(), 'CallLog')
+        iter_bulk_delete_with_doc_type_verification(CallLog.get_db(), self.get_call_couch_ids(), 'CallLog',
+            wait_time=BULK_DELETE_INTERVAL)
 
         print 'Deleting ExpectedCallbackEventLogs...'
         iter_bulk_delete_with_doc_type_verification(ExpectedCallbackEventLog.get_db(),
-            self.get_callback_couch_ids(), 'ExpectedCallbackEventLog')
+            self.get_callback_couch_ids(), 'ExpectedCallbackEventLog', wait_time=BULK_DELETE_INTERVAL)
 
         print 'Deleting LastReadMessages...'
         iter_bulk_delete_with_doc_type_verification(LastReadMessage.get_db(),
-            self.get_lastreadmessage_couch_ids(), 'LastReadMessage')
+            self.get_lastreadmessage_couch_ids(), 'LastReadMessage', wait_time=BULK_DELETE_INTERVAL)
 
     def handle(self, *args, **options):
         if options['verify']:
