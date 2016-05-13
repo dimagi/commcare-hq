@@ -65,9 +65,9 @@ On a page that doesn't inherit from our main templates, you'll also
 have to include
 
 ```html
-<script src="{% new_static 'hqwebapp/js/hqModules.js' %}"></script>
-<script src="{% new_static 'hqwebapp/js/toggles.js' %}"></script>
-<script src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
+<script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+<script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+<script src="{% static 'style/js/bootstrap3/main.js' %}"></script>
 ```
 
 ## Remote Method Invocation
@@ -83,8 +83,8 @@ The `notifications` app is a good example resource to study how to use this libr
 - `NotificationsServiceRMIView` is an example of the type of view that can accept RMI posts.
 - `NotificationsService.ko.js` is an example of the client-side invocation and handling.
 - `style/bootstrap3/base.html` has a good example for usage of `NotificationsService`.
-```
-<script type="text/javascript" src="{% new_static '/notifications/js/NotificationsService.ko.js' %}"></script>
+```html
+<script type="text/javascript" src="{% static '/notifications/js/NotificationsService.ko.js' %}"></script>
 <script type="text/javascript">
     $(function () {
         $('#js-settingsmenu-notifications').startNotificationsService('{% url 'notifications_service' %}');
