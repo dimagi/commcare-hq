@@ -1063,6 +1063,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     }
                 },
                 addProperty: function () {
+                    ga_track_event('Case Management', 'Module Level Case List/Detail', 'Add Property');
                     this.addItem({hasAutocomplete: true});
                 },
                 addCalculation: function () {
