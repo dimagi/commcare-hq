@@ -175,29 +175,9 @@ class BasicPillow(PillowBase):
                         self.change_transport(tr)
         except Exception, ex:
             if not is_retry_attempt:
-                self._handle_pillow_error(change, ex)
+                handle_pillow_error(self, change, ex)
             else:
                 raise
-
-    def _handle_pillow_error(self, change, exception):
-        try:
-            # This breaks the module boundary by using a show function defined in commcare-hq
-            # but it was decided that it wasn't worth the effort to maintain the separation.
-            meta = self.get_couch_db().show('domain_shows/domain_date', change['id'])
-        except ResourceNotFound:
-            # Show function does not exist
-            meta = None
-        error = PillowError.get_or_create(change, self, change_meta=meta)
-        error.add_attempt(exception, sys.exc_info()[2])
-        error.save()
-        pillow_logging.exception(
-            "[%s] Error on change: %s, %s. Logged as: %s" % (
-                self.get_name(),
-                change['id'],
-                exception,
-                error.id
-            )
-        )
 
     def change_trigger(self, changes_dict):
         """
@@ -642,3 +622,22 @@ class SQLPillow(SQLPillowMixIn, BasicPillow):
     def __init__(self):
         checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
         super(SQLPillow, self).__init__(checkpoint=checkpoint)
+
+
+def handle_pillow_error(pillow, change, exception):
+    try:
+        meta = pillow.get_couch_db().show('domain_shows/domain_date', change['id'])
+    except ResourceNotFound:
+        # Show function does not exist
+        meta = None
+    error = PillowError.get_or_create(change, pillow, change_meta=meta)
+    error.add_attempt(exception, sys.exc_info()[2])
+    error.save()
+    pillow_logging.exception(
+        "[%s] Error on change: %s, %s. Logged as: %s" % (
+            pillow.get_name(),
+            change['id'],
+            exception,
+            error.id
+        )
+    )
