@@ -36,5 +36,5 @@ create_topics() {
 create_kafka_topics() {
     kafka_topics=$(docker_run kafka find /opt -name kafka-topics.sh | tr -d '\n' | tr -d '\r')
     zookeeper_ip=$(get_container_ip "${PROJECT_NAME:-travis}_kafka_1")
-    create_topics $kafka_topics $zookeeper_ip "case form meta case-sql form-sql sms domain commcare-user web-user group"
+    create_topics $kafka_topics $zookeeper_ip "case form meta case-sql form-sql sms domain commcare-user web-user group ledger"
 }
