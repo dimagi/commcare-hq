@@ -103,12 +103,12 @@ class PillowBase(object):
 
     def process_with_error_handling(self, change):
         try:
-            self.processor(change)
+            self.process_change(change)
         except Exception, ex:
             handle_pillow_error(self, change, ex)
 
     @abstractmethod
-    def processor(self, change):
+    def process_change(self, change):
         pass
 
     @abstractmethod
@@ -161,7 +161,7 @@ class ConstructedPillow(PillowBase):
     def get_change_feed(self):
         return self._change_feed
 
-    def processor(self, change):
+    def process_change(self, change):
         self._processor.process_change(self, change)
 
     def fire_change_processed_event(self, change, context):

@@ -244,7 +244,7 @@ class PtopReindexer(NoArgsCommand):
                     if not isinstance(row, Change):
                         assert isinstance(row, dict)
                         row = change_from_couch_row(row)
-                    self.pillow.processor(row)
+                    self.pillow.process_change(row)
                     break
                 except Exception, ex:
                     retries += 1

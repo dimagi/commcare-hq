@@ -20,7 +20,7 @@ class PillowReindexer(object):
 
     def reindex(self, start_from=None):
         for change in self.change_provider.iter_all_changes(start_from=start_from):
-            self.pillow.processor(change)
+            self.pillow.process_change(change)
 
 
 class ElasticPillowReindexer(PillowReindexer):

@@ -152,7 +152,7 @@ class BasicPillow(PillowBase):
     def _get_base_name(cls):
         return cls.__module__
 
-    def processor(self, change):
+    def process_change(self, change):
         """
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
@@ -285,7 +285,7 @@ class PythonPillow(BasicPillow):
             valid_deletion = self.process_deletions and change.get('deleted', None)
             if valid_change or valid_deletion:
                 try:
-                    super(PythonPillow, self).processor(change)
+                    super(PythonPillow, self).process_change(change)
                 except Exception:
                     logging.exception('something went wrong processing change %s (%s)' %
                                       (change.get('seq', None), change['id']))
@@ -306,13 +306,13 @@ class PythonPillow(BasicPillow):
         wait_time = datetime.utcnow() - self.last_processed_time
         return wait_time > timedelta(seconds=PYTHONPILLOW_MAX_WAIT_TIME)
 
-    def processor(self, change):
+    def process_change(self, change):
         if self.use_chunking:
             self.change_queue.append(change)
             if self.queue_full or self.wait_expired:
                 self.process_chunk()
         elif self.python_filter(change) or (change.get('deleted', None) and self.process_deletions):
-            super(PythonPillow, self).processor(change)
+            super(PythonPillow, self).process_change(change)
 
     def fire_change_processed_event(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:

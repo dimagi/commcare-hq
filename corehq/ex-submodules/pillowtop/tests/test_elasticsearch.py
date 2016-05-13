@@ -185,7 +185,7 @@ def _send_doc_to_pillow(pillow, doc_id, doc):
         sequence_id=0,
         document=doc
     )
-    pillow.processor(change)
+    pillow.process_change(change)
 
 
 class TestSendToElasticsearch(SimpleTestCase):
