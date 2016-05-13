@@ -88,7 +88,7 @@ class PillowBase(object):
                 if change:
                     try:
                         context.changes_seen += 1
-                        self.processor(change)
+                        self.process_with_error_handling(change)
                     except Exception as e:
                         notify_exception(None, u'processor error in pillow {} {}'.format(
                             self.get_name(), e,
@@ -100,6 +100,15 @@ class PillowBase(object):
                     self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
         except PillowtopCheckpointReset:
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
+
+    def process_with_error_handling(self, change, is_retry_attempt=False):
+        try:
+            self.processor(change)
+        except Exception, ex:
+            if not is_retry_attempt:
+                handle_pillow_error(self, change, ex)
+            else:
+                raise
 
     @abstractmethod
     def processor(self, change):
