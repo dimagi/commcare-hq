@@ -675,6 +675,38 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
+    @staticmethod
+    def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
+        assert isinstance(case_ids, list)
+        return RawQuerySetWrapper(LedgerValue.objects.raw(
+            'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
+            [case_ids, section_id, entry_id, date_start, date_end]
+        ))
+
+    @staticmethod
+    def get_all_ledgers_modified_since(modified_since=None, chunk_size=500):
+        return _batch_iterate(
+            batch_fn=LedgerAccessorSQL.get_ledgers_modified_since,
+            next_start_from_fn=lambda ledger: ledger.last_modified,
+            start_from=modified_since,
+            chunk_size=chunk_size
+        )
+
+    @staticmethod
+    def get_ledgers_modified_since(modified_since=None, limit=500):
+        """
+        Iterate through all ledger_values in the entire database, optionally modified since
+        a specific date
+        """
+        if modified_since is None:
+            modified_since = datetime.min
+        results = RawQuerySetWrapper(LedgerValue.objects.raw(
+            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s)',
+            [modified_since, limit])
+        )
+        # sort and add additional limit in memory in case the sharded setup returns more than
+        # the requested number of ledgers
+        return sorted(results, key=lambda ledger: ledger.last_modified)[:limit]
 
     @staticmethod
     def get_ledger_values_for_case(case_id):

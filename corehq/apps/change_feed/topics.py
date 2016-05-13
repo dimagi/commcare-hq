@@ -10,10 +10,11 @@ META = META
 CASE_SQL = 'case-sql'
 FORM_SQL = 'form-sql'
 SMS = 'sms'
+LEDGER = 'ledger'
 
 
 ALL = (
-    CASE, FORM, META, CASE_SQL, FORM_SQL, SMS
+    CASE, FORM, META, CASE_SQL, FORM_SQL, SMS, LEDGER
 )
 
 
