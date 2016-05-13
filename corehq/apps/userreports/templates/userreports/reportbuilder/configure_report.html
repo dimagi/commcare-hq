@@ -3,8 +3,8 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+    <script src="{% static 'style/js/bootstrap3/main.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
 {% endblock %}
 
 {% block page_title %}
