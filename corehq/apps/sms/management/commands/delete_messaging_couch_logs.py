@@ -7,6 +7,10 @@ from django.core.management.base import BaseCommand
 from optparse import make_option
 
 
+# Number of seconds to wait between each bulk delete operation
+BULK_DELETE_INTERVAL = 5
+
+
 class Command(BaseCommand):
     args = ""
     help = ("Deletes all messaging logs stored in couch")
@@ -17,6 +21,12 @@ class Command(BaseCommand):
                     default=False,
                     help="Include this option to double-check that all data "
                          "stored in couch is in postgres without deleting anything."),
+        make_option("--delete-interval",
+                    action="store",
+                    dest="delete_interval",
+                    type="int",
+                    default=BULK_DELETE_INTERVAL,
+                    help="The number of seconds to wait between each bulk delete."),
     )
 
     def get_sms_couch_ids(self):
@@ -186,24 +196,26 @@ class Command(BaseCommand):
             self.verify_model(self.get_callback_couch_ids(), ExpectedCallbackEventLog, ExpectedCallback,
                 self.get_expected_callback_compare_fields(), f)
 
-    def delete_models(self):
+    def delete_models(self, delete_interval):
         print 'Deleting SMSLogs...'
-        iter_bulk_delete_with_doc_type_verification(SMSLog.get_db(), self.get_sms_couch_ids(), 'SMSLog')
+        iter_bulk_delete_with_doc_type_verification(SMSLog.get_db(), self.get_sms_couch_ids(), 'SMSLog',
+            wait_time=delete_interval)
 
         print 'Deleting CallLogs...'
-        iter_bulk_delete_with_doc_type_verification(CallLog.get_db(), self.get_call_couch_ids(), 'CallLog')
+        iter_bulk_delete_with_doc_type_verification(CallLog.get_db(), self.get_call_couch_ids(), 'CallLog',
+            wait_time=delete_interval)
 
         print 'Deleting ExpectedCallbackEventLogs...'
         iter_bulk_delete_with_doc_type_verification(ExpectedCallbackEventLog.get_db(),
-            self.get_callback_couch_ids(), 'ExpectedCallbackEventLog')
+            self.get_callback_couch_ids(), 'ExpectedCallbackEventLog', wait_time=delete_interval)
 
         print 'Deleting LastReadMessages...'
         iter_bulk_delete_with_doc_type_verification(LastReadMessage.get_db(),
-            self.get_lastreadmessage_couch_ids(), 'LastReadMessage')
+            self.get_lastreadmessage_couch_ids(), 'LastReadMessage', wait_time=delete_interval)
 
     def handle(self, *args, **options):
         if options['verify']:
             self.verify()
             return
 
-        self.delete_models()
+        self.delete_models(options['delete_interval'])
