@@ -1,5 +1,5 @@
 from dimagi.ext.couchdbkit import *
-from corehq.apps.sms.models import SMSLog, SMS
+from corehq.apps.sms.models import SMS
 
 PROFILE_A = "A"
 PROFILE_B = "B"
@@ -57,10 +57,3 @@ class FRIExtraMessage(Document):
         return FRIExtraMessage.view("fri/extra_message",
                                     key=[domain, message_id],
                                     include_docs=True).one()
-
-
-class FRISMSLog(SMSLog):
-    fri_message_bank_lookup_completed = BooleanProperty(default=False)
-    fri_message_bank_message_id = StringProperty()
-    fri_id = StringProperty()
-    fri_risk_profile = StringProperty(choices=PROFILES)
