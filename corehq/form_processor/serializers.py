@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
-    XFormInstanceSQL, XFormOperationSQL
-)
+    XFormInstanceSQL, XFormOperationSQL,
+    LedgerValue)
 
 
 def get_instance_from_data(SerializerClass, data):
@@ -114,3 +114,9 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
             'reverse_indices',
             'attachments',
         )
+
+
+class LedgerValueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LedgerValue
+        exclude = ('id',)

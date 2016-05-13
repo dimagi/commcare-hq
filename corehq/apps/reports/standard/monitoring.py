@@ -17,7 +17,7 @@ from corehq.apps.es.aggregations import (
 )
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
-    get_last_submission_time_for_user,
+    get_last_submission_time_for_users,
     get_submission_counts_by_user,
     get_completed_counts_by_user,
     get_submission_counts_by_date,
@@ -1231,14 +1231,15 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             all_users.extend([user for user in self.get_admins_and_demo_users()])
             return dict([(user['user_id'], user) for user in all_users]).values()
 
+    @property
+    def user_ids(self):
+        return [u["user_id"] for u in self.users_to_iterate]
+
     def es_last_submissions(self):
         """
         Creates a dict of userid => date of last submission
         """
-        return {
-            u["user_id"]: get_last_submission_time_for_user(self.domain, u["user_id"], self.datespan)
-            for u in self.users_to_iterate
-        }
+        return get_last_submission_time_for_users(self.domain, self.user_ids, self.datespan)
 
     @staticmethod
     def _dates_for_linked_reports(datespan, case_list=False):
@@ -1494,12 +1495,12 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
         return WorkerActivityReportData(
-            avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),
-            submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan),
-            active_cases_by_owner=get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types),
-            total_cases_by_owner=get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types),
-            cases_closed_by_user=get_case_counts_closed_by_user(self.domain, self.datespan, self.case_types),
-            cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types),
+            avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan, self.user_ids),
+            submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan, self.user_ids),
+            active_cases_by_owner=get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types, self.user_ids),
+            total_cases_by_owner=get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types, self.user_ids),
+            cases_closed_by_user=get_case_counts_closed_by_user(self.domain, self.datespan, self.case_types, self.user_ids),
+            cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types, self.user_ids),
         )
 
     def _total_row(self, rows, report_data):

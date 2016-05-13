@@ -110,8 +110,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     template_name = "custom_data_fields/custom_data_fields.html"
 
     @method_decorator(is_locations_admin)
-    @use_bootstrap3
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 

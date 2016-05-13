@@ -47,12 +47,10 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
   - show-form-case-refs-in-summary # j$ 1/29
-#  - revamp-multimedia # Jenny 2/16
+  - revamp-multimedia # Jenny 2/16
   - app-blobs-testing+lang-profiles # Cal 5/4
   - app-blobs-testing # daniel 4/20
-  - inline-editing+lang-profiles # Cal 5/4
   - lang-profiles  # Cal 5/4
-  - inline-editing # Jenny 4/9
   - b3-groups  # Biyeun 4/26
   - b3-app-multimedia  # Biyeun 4/27
   - notifications-perms-change # j$ 5/11
