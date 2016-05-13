@@ -10,6 +10,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 
 from corehq.apps.reports.commtrack import LedgersByLocationDataSource
+from corehq.util.context_managers import drop_connected_signals
 
 
 class TestLedgersByLocation(TestCase):
@@ -17,15 +18,16 @@ class TestLedgersByLocation(TestCase):
     @classmethod
     def setUpClass(cls):
         def make_stock_state(location, product, soh, section_id='stock'):
-            return StockState.objects.create(
-                section_id=section_id,
-                sql_location=location,
-                case_id=uuid4().hex,
-                sql_product=product,
-                product_id=product.product_id,
-                stock_on_hand=soh,
-                last_modified_date=datetime.datetime.now(),
-            )
+            with drop_connected_signals(post_save):
+                return StockState.objects.create(
+                    section_id=section_id,
+                    sql_location=location,
+                    case_id=uuid4().hex,
+                    sql_product=product,
+                    product_id=product.product_id,
+                    stock_on_hand=soh,
+                    last_modified_date=datetime.datetime.now(),
+                )
 
         def make_product(name):
             return SQLProduct.objects.create(domain='test', name=name,
