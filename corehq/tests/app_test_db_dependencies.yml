@@ -18,7 +18,8 @@ default:
   - couchforms
   - corehq.apps.users
 fluff: []
-pillow_retry: []
+pillow_retry:
+  - pillowtop
 pillowtop: []
 testapps.test_elasticsearch: []
 testapps.test_pillowtop:
