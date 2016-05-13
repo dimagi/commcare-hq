@@ -789,10 +789,6 @@ class ExportDataSchema(Document):
 
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
     last_app_versions = DictProperty()
-    datatype_mapping = defaultdict(lambda: ScalarItem, {
-        'MSelect': MultipleChoiceItem,
-        'Geopoint': GeopointItem,
-    })
 
     class Meta:
         app_label = 'export'
@@ -861,6 +857,10 @@ class FormExportDataSchema(ExportDataSchema):
 
     app_id = StringProperty()
     xmlns = StringProperty()
+    datatype_mapping = defaultdict(lambda: ScalarItem, {
+        'MSelect': MultipleChoiceItem,
+        'Geopoint': GeopointItem,
+    })
 
     @property
     def type(self):
