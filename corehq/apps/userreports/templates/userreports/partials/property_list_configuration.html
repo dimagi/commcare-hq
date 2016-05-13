@@ -77,14 +77,14 @@ TODO:
 
                 <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && !isValid()}">
 
-                    <!-- ko ifnot: optionsContainQuestions -->
+                    <!-- ko ifnot: $root.optionsContainQuestions -->
                     <input type="text"
                            class="form-control"
-                           data-bind="select2: propertyOptions, value: property">
+                           data-bind="select2: $root.propertyOptions, value: property">
                     <!-- /ko -->
-                    <!-- ko if: optionsContainQuestions -->
+                    <!-- ko if: $root.optionsContainQuestions -->
                     <input class="form-control" type="hidden" data-bind="
-                        questionsSelect: propertyOptions.concat(
+                        questionsSelect: $root.propertyOptions.concat(
                             existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
                         ),
                         value: existsInCurrentVersion() ? property : dataSourceField,
@@ -113,7 +113,7 @@ TODO:
                 <!--ko if: $parent.hasFormatCol -->
                 <td>
                     <select class="form-control" data-bind="
-                        options: formatOptions,
+                        options: ReportBuilder.Constants.FORMAT_OPTIONS,
                         value: format,
                         attr: {disabled: !existsInCurrentVersion()}
                     "></select>
