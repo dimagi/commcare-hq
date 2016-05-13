@@ -301,7 +301,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
 
 
 class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
-    template_name = "userreports/builder_report_type_select.html"
+    template_name = "userreports/reportbuilder/report_type_select.html"
     urlname = 'report_builder_select_type'
     page_title = ugettext_lazy('Select Report Type')
 
@@ -425,7 +425,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
-    template_name = 'userreports/builder_data_source_select.html'
+    template_name = 'userreports/reportbuilder/data_source_select.html'
     page_title = ugettext_lazy('Create Report')
 
     @property
