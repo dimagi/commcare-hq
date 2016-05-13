@@ -43,6 +43,10 @@ from dimagi.utils.decorators.memoized import memoized
 class DetailContributor(SectionContributor):
     section_name = 'details'
 
+    def __init__(self, suite, app, modules, build_profile_id=None):
+        super(DetailContributor, self).__init__(suite, app, modules)
+        self.build_profile_id = build_profile_id
+
     def get_section_elements(self):
         r = []
         if not self.app.use_custom_suite:
@@ -62,7 +66,7 @@ class DetailContributor(SectionContributor):
                             )
                             if detail_column_infos:
                                 if detail.use_case_tiles:
-                                    helper = CaseTileHelper(self.app, module, detail, detail_type)
+                                    helper = CaseTileHelper(self.app, module, detail, detail_type, self.build_profile_id)
                                     r.append(helper.build_case_tile_detail())
                                 else:
                                     d = self.build_detail(
@@ -397,12 +401,13 @@ def get_instances_for_module(app, module, additional_xpaths=None):
 class CaseTileHelper(object):
     tile_fields = ["header", "top_left", "sex", "bottom_left", "date"]
 
-    def __init__(self, app, module, detail, detail_type):
+    def __init__(self, app, module, detail, detail_type, build_profile_id):
         self.app = app
         self.module = module
         self.detail = detail
         self.detail_type = detail_type
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
+        self.build_profile_id = build_profile_id
 
     def build_case_tile_detail(self):
         """
@@ -449,6 +454,7 @@ class CaseTileHelper(object):
 
     def _get_column_context(self, column):
         from corehq.apps.app_manager.detail_screen import get_column_generator
+        default_lang = self.app.default_language if not self.build_profile_id else self.app.build_profiles[self.build_profile_id].langs[0]
         context = {
             "xpath_function": escape(get_column_generator(
                 self.app, self.module, self.detail, column).xpath_function,
@@ -459,7 +465,7 @@ class CaseTileHelper(object):
             # Just using default language for now
             # The right thing to do would be to reference the app_strings.txt I think
             "prefix": escape(
-                column.header.get(self.app.default_language, "")
+                column.header.get(default_lang, "")
             )
         }
         if column.format == "enum":

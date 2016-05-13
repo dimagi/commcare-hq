@@ -19,8 +19,16 @@ hqDefine('app_manager/js/releases.js', function () {
         self.num_errors = ko.observable(app_data.num_errors || 0);
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
+        self.build_profile = ko.observable('');
         self.base_url = function() {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
+        };
+        self.build_profiles = function() {
+            var profiles = [{'label': gettext('all languages'), 'value': ''}];
+            _.each(app_data.build_profiles, function(value, key, list) {
+                profiles.push({'label': value['name'], 'value': key});
+            });
+            return profiles;
         };
 
         self.should_generate_url = function(url_type) {
@@ -109,6 +117,10 @@ hqDefine('app_manager/js/releases.js', function () {
             return releasesMain.url(slug, self.id());
         });
 
+        self.full_odk_install_url = ko.computed(function() {
+            return self.get_odk_install_url() + '?profile=' + self.build_profile();
+        });
+
         self.sms_url = function(index) {
             if (index === 0) { // sending to sms
                 return self.short_url();
@@ -146,8 +158,8 @@ hqDefine('app_manager/js/releases.js', function () {
             });
         };
 
-        self.download_application_zip = function (multimedia_only) {
-            releasesMain.download_application_zip(self.id(), multimedia_only);
+        self.download_application_zip = function (multimedia_only, build_profile) {
+            releasesMain.download_application_zip(self.id(), multimedia_only, build_profile);
         };
 
         self.clickDeploy = function () {
@@ -200,11 +212,15 @@ hqDefine('app_manager/js/releases.js', function () {
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = new AsyncDownloader(self.download_modal);
 
-        self.download_application_zip = function(appId, multimedia_only) {
+        self.download_application_zip = function(appId, multimedia_only, build_profile) {
             var url_slug = multimedia_only ? 'download_multimedia' : 'download_zip';
             var url = self.url(url_slug, appId);
-            message = "Your application download is ready";
-            self.async_downloader.generateDownload(url, message);
+            var params = {};
+            params.message = "Your application download is ready";
+            if (build_profile) {
+                params.profile = build_profile;
+            }
+            self.async_downloader.generateDownload(url, params);
             // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
             // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
             $('.modal.fade.in').modal('hide');
