@@ -46,7 +46,13 @@
     <input type="hidden" data-bind="
         questionsSelect: $root.getQuestions('all', false, case_transaction.allow.repeats(), true),
         value: path,
-        optionsCaption: ' '
+        optionsCaption: ' ',
+        event: { change: function(view, e) {
+            if (e.target.closest('#case-config-ko')) {
+                var action = e.target.closest('.case-preload') ? 'Load' : 'Save';
+                ga_track_event('Case Management', 'Form Level', action + ' Property (add/edit)');
+            }
+        } }
     "/>
     <p class="help-block" data-bind="visible: required() && !path()">{% trans "Required" %}</p>
     <p class="help-block" data-bind="visible: !required() && !path() && key()">{% trans "Not assigned" %}</p>
@@ -60,8 +66,8 @@
             casePropertyTypeahead: suggestedProperties,
             event: {
                 change: function(){
-                    var el = $($element)
-                    var caretPosition = el.caret();
+                    var el = $($element),
+                        caretPosition = el.caret();
                     el.val(el.val().replace(/ /g,'_'));
                     el.caret(caretPosition);
                     return true;
