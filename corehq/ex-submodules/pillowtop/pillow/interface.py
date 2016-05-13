@@ -1,4 +1,7 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
+
+import sys
+
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
 from pillowtop.const import CHECKPOINT_MIN_WAIT
@@ -158,3 +161,24 @@ class ConstructedPillow(PillowBase):
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:
             self._change_processed_event_handler.fire_change_processed(change, context)
+
+
+def handle_pillow_error(pillow, change, exception):
+    from couchdbkit import ResourceNotFound
+    from pillow_retry.models import PillowError
+    try:
+        meta = pillow.get_couch_db().show('domain_shows/domain_date', change['id'])
+    except ResourceNotFound:
+        # Show function does not exist
+        meta = None
+    error = PillowError.get_or_create(change, pillow, change_meta=meta)
+    error.add_attempt(exception, sys.exc_info()[2])
+    error.save()
+    pillow_logging.exception(
+        "[%s] Error on change: %s, %s. Logged as: %s" % (
+            pillow.get_name(),
+            change['id'],
+            exception,
+            error.id
+        )
+    )
