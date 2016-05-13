@@ -1,3 +1,4 @@
+/* global django, ReportBuilder */
 hqDefine('userreports/js/builder_view_models.js', function () {
 
     var getOrDefault = function(options, key, default_) {
@@ -37,7 +38,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.displayTextModifiedByUser = ko.observable(false);
 
         // True if the display text should be updated when the property changes
-        this.inheritDisplayText = ko.observable(!Boolean(this.displayText()));
+        this.inheritDisplayText = ko.observable(!this.displayText());
         this.property.subscribe(function(newValue) {
             if (self.inheritDisplayText()){
                 self.displayText(newValue);
@@ -65,7 +66,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
                 self.displayTextModifiedByUser(true);
                 self.displayText(value);
             },
-            owner: this
+            owner: this,
         });
 
         this.displayTextIsValid = ko.pureComputed(function(){
@@ -163,7 +164,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.columns = ko.observableArray(getOrDefault(options, 'initialCols', []));
         this.serializedProperties = ko.computed(function(){
             return JSON.stringify(
-                _.map(self.columns(), function(c){return c.toJS()})
+                _.map(self.columns(), function(c){return c.toJS();})
             );
         });
         this.showWarnings = ko.observable(false);
@@ -173,7 +174,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         var columnsValid = !_.contains(
             _.map(
                 this.columns(),
-                function(c){return c.validate()}
+                function(c){return c.validate();}
             ),
             false
         );
@@ -220,7 +221,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         }
 
         this.filtersList = new PropertyList({
-            hasFormatCol: sourceType == "case",
+            hasFormatCol: sourceType === "case",
             hasCalculationCol: false,
             initialCols: initialFilters,
             buttonText: 'Add Filter',
@@ -232,12 +233,12 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         });
         this.columnsList = new PropertyList({
             hasFormatCol: false,
-            hasCalculationCol: reportType == "table" || reportType == "worker",
+            hasCalculationCol: reportType === "table" || reportType === "worker",
             initialCols: initialColumns,
             buttonText: 'Add Column',
             analyticsAction: 'Add Column',
             calcHelpText: django.gettext("Column format selection will determine how each row's value is calculated."),
-            requireColumns: reportType != "chart",
+            requireColumns: reportType !== "chart",
             requireColumnsText: "At least one column is required",
             noColumnsValidationCallback: function(){
                 window.analytics.usage(

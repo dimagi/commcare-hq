@@ -1,3 +1,4 @@
+/* global describe, it */
 describe("PropertyListItem Behavior", function () {
 
     var PropertyListItem = hqImport("userreports/js/builder_view_models.js").PropertyListItem;
