@@ -7,6 +7,10 @@ from dimagi.utils.couch.bulk import get_docs
 from time import sleep
 
 
+class DocTypeMismatchException(Exception):
+    pass
+
+
 class DesignDoc(object):
     """Data structure representing a design doc"""
     
@@ -88,6 +92,15 @@ def iter_bulk_delete(database, ids, chunksize=100, doc_callback=None):
             for doc in doc_dicts:
                 doc_callback(doc)
         database.bulk_delete(doc_dicts)
+
+
+def iter_bulk_delete_with_doc_type_verification(database, ids, doc_type, chunksize=100):
+    def verify_doc_type(doc):
+        actual_doc_type = doc.get('doc_type')
+        if actual_doc_type != doc_type:
+            raise DocTypeMismatchException("Expected %s, got %s" % (doc_type, actual_doc_type))
+
+    iter_bulk_delete(database, ids, chunksize=chunksize, doc_callback=verify_doc_type)
 
 
 def is_bigcouch():
