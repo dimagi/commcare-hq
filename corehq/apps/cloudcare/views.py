@@ -20,7 +20,6 @@ from casexml.apps.case.models import CASE_STATUS_OPEN
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.stock.models import StockTransaction
-from casexml.apps.stock.utils import get_current_ledger_transactions
 from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
@@ -62,7 +61,7 @@ from corehq.apps.style.decorators import (
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
@@ -507,10 +506,9 @@ def get_ledgers(request, domain):
         case = CaseAccessors(domain).get_case(case_id)
     except CaseNotFound:
         raise Http404()
-    ledger_map = get_current_ledger_transactions(case.case_id)
-
+    ledger_map = LedgerAccessors(domain).get_case_ledger_state(case.case_id)
     def custom_json_handler(obj):
-        if isinstance(obj, StockTransaction):
+        if hasattr(obj, 'stock_on_hand'):
             return obj.stock_on_hand
         return json_handler(obj)
 

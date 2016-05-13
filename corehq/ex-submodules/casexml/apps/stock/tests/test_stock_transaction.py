@@ -1,5 +1,7 @@
 from decimal import Decimal
 import uuid
+
+from datetime import datetime
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.models import StockTransaction, StockReport
@@ -33,6 +35,7 @@ class StockTransactionTests(TestCase):
         report = StockReport.objects.create(
             form_id=uuid.uuid4().hex,
             date=ago(1),
+            server_date=datetime.utcnow(),
             type=const.REPORT_TYPE_BALANCE
         )
 

@@ -44,7 +44,8 @@ class SubmissionPost(object):
     def __init__(self, instance=None, attachments=None, auth_context=None,
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
-                 last_sync_token=None, received_on=None, date_header=None):
+                 last_sync_token=None, received_on=None, date_header=None,
+                 partial_submission=False):
         assert domain, domain
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
@@ -64,6 +65,7 @@ class SubmissionPost(object):
         self.path = path
         self.interface = FormProcessorInterface(domain)
         self.formdb = FormAccessors(domain)
+        self.partial_submission = partial_submission
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -84,6 +86,7 @@ class SubmissionPost(object):
         xform.app_id = self.app_id
         xform.build_id = self.build_id
         xform.export_tag = ["domain", "xmlns"]
+        xform.partial_submission = self.partial_submission
         return xform
 
     def _handle_known_error(self, error, instance, xforms):

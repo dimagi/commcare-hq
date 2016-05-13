@@ -2,7 +2,6 @@ from collections import namedtuple
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from corehq.apps.accounting import models as accounting
@@ -75,27 +74,27 @@ class SmsGatewayFeeCriteria(models.Model):
             for criteria in criteria_list:
                 if national_number.startswith(criteria.prefix):
                     return criteria
-            raise ObjectDoesNotExist
+            raise cls.DoesNotExist
 
         try:
             return get_criteria_with_longest_matching_prefix(
                 list(all_possible_criteria.filter(country_code=country_code, backend_instance=backend_instance))
             )
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=backend_instance)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return get_criteria_with_longest_matching_prefix(
                 list(all_possible_criteria.filter(country_code=country_code, backend_instance=None))
             )
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=None)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
 
         return None
@@ -199,11 +198,11 @@ class SmsUsageFeeCriteria(models.Model):
 
         try:
             return all_possible_criteria.get(domain=domain)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(domain=None)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
 
         return None

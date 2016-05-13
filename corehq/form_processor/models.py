@@ -199,10 +199,11 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     # The time at which the server has received the form
     received_on = models.DateTimeField()
 
-    # Used to tag forms that were forcefully submitted
-    # without a touchforms session completing normally
     auth_context = JSONField(lazy=True, default=dict)
     openrosa_headers = JSONField(lazy=True, default=dict)
+
+    # Used to tag forms that were forcefully submitted
+    # without a touchforms session completing normally
     partial_submission = models.BooleanField(default=False)
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
@@ -1203,14 +1204,16 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     """
     objects = RestrictedManager()
 
-    # domain not included and assumed to be accessed through the foreign key to the case table. legit?
+    domain = models.CharField(max_length=255, null=False, default=None)
     case_id = models.CharField(max_length=255, db_index=True, default=None)  # remove foreign key until we're sharding this
+    location_id = models.CharField(max_length=255, null=True, default=None)
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
     entry_id = models.CharField(max_length=100, db_index=True, default=None)
     section_id = models.CharField(max_length=100, db_index=True, default=None)
     balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
     last_modified = models.DateTimeField(auto_now=True)
+    last_modified_form_id = models.CharField(max_length=100, null=True, default=None)
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
 
     @property
@@ -1231,6 +1234,17 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
         return UniqueLedgerReference(
             case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
         )
+
+    @property
+    def sql_location(self):
+        from corehq.apps.locations.models import SQLLocation
+        if self.location_id:
+            return SQLLocation.by_location_id(self.location_id)
+
+    def to_json(self):
+        from .serializers import LedgerValueSerializer
+        serializer = LedgerValueSerializer(self)
+        return serializer.data
 
     class Meta:
         app_label = "form_processor"

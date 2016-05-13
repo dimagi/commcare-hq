@@ -27,7 +27,8 @@ class BaseReportFilter(object):
     help_style_bubble = False
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
-                 is_bootstrap3=False, css_label=None, css_field=None):
+                 css_label=None, css_field=None):
+        self.domain = domain
         if self.slug is None:
             raise NotImplementedError("slug is required")
         if self.template is None:
@@ -35,10 +36,8 @@ class BaseReportFilter(object):
         if self.label is None:
             raise NotImplementedError("label is required")
         self.request = request
-        self.domain = domain
         self.timezone = timezone
         self.parent_report = parent_report
-        self.is_bootstrap3 = is_bootstrap3
         self.css_label = css_label or DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER
         self.css_field = css_field or DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER
         self.context = {}
@@ -75,22 +74,17 @@ class BaseReportFilter(object):
         if not (filter_context, dict):
             raise ValueError("filter_context must return a dict.")
         self.context.update(filter_context)
-        return render_to_string(self.get_bootstrap_template(), self.context)
+        return render_to_string(self.template, self.context)
 
     @classmethod
     def get_value(cls, request, domain):
         return request.GET.get(cls.slug)
 
-    def get_bootstrap_template(self):
-        if self.is_bootstrap3:
-            return self.template.replace('/bootstrap2/', '/bootstrap3/')
-        return self.template
-
 
 class CheckboxFilter(BaseReportFilter):
     slug = "checkbox"
     label = "hello"
-    template = "reports/filters/bootstrap2/checkbox.html"
+    template = "reports/filters/checkbox.html"
 
     @property
     def filter_context(self):
@@ -109,7 +103,7 @@ class BaseSingleOptionFilter(BaseReportFilter):
     """
         Displays a select field.
     """
-    template = "reports/filters/bootstrap2/single_option.html"
+    template = "reports/filters/single_option.html"
     default_text = ugettext_noop("Filter by...")
     placeholder = ''
     is_paginated = False
@@ -172,7 +166,7 @@ class BaseMultipleOptionFilter(BaseSingleOptionFilter):
     """
         Displays a multiselect field.
     """
-    template = "reports/filters/bootstrap2/multi_option.html"
+    template = "reports/filters/multi_option.html"
     default_options = [] # specify a list
 
     @classmethod
@@ -197,7 +191,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             and select a final option before the result is usable. For example, you can't just pick an application
             and show all of its forms, you must select exactly one form.
     """
-    template = "reports/filters/bootstrap2/drilldown_options.html"
+    template = "reports/filters/drilldown_options.html"
     use_only_last = False
     drilldown_empty_text = ugettext_noop("No Data Available")
     is_cacheable = True
@@ -323,7 +317,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
 
 
 class BaseTagsFilter(BaseReportFilter):
-    template = "reports/filters/bootstrap2/base_tags_filter.html"
+    template = "reports/filters/base_tags_filter.html"
     tags = []
 
     @property

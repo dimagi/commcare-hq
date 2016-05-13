@@ -6,6 +6,8 @@ import json
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
+    REPORT_BUILDER_ACCESS
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.tabs.tabclasses import ProjectReportsTab
@@ -236,7 +238,18 @@ class MySavedReportsView(BaseProjectReportSectionView):
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
+        self._init_tours()
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
+
+    def _init_tours(self):
+        """
+        Add properties to the request for any tour that might be active
+        """
+        tours = ((REPORT_BUILDER_ACCESS, 1), (REPORT_BUILDER_NO_ACCESS, 2))
+        for tour, step in tours:
+            if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
+                self.request.guided_tour = tour.get_tour_data(self.request, step)
+                break  # Only one of these tours may be active.
 
     @property
     def language(self):
@@ -1221,7 +1234,7 @@ def case_forms(request, domain, case_id):
         }
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
-    forms = FormAccessors(domain).get_forms(slice)
+    forms = FormAccessors(domain).get_forms(slice, ordered=True)
     return json_response([
         form_to_json(form) for form in forms
     ])

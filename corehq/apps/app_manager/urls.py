@@ -71,6 +71,8 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
 
     url(r'^edit_form_attr/(?P<app_id>[\w-]+)/(?P<unique_form_id>[\w-]+)/(?P<attr>[\w-]+)/$',
         'edit_form_attr', name='edit_form_attr'),
+    url(r'^edit_form_attr_api/(?P<app_id>[\w-]+)/(?P<unique_form_id>[\w-]+)/(?P<attr>[\w-]+)/$',
+        'edit_form_attr_api', name='edit_form_attr_api'),
     url(r'^patch_xform/(?P<app_id>[\w-]+)/(?P<unique_form_id>[\w-]+)/$',
         'patch_xform', name='patch_xform'),
     url(r'^validate_form_for_build/(?P<app_id>[\w-]+)/(?P<unique_form_id>[\w-]+)/$',

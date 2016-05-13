@@ -4,7 +4,7 @@ svg {
 
 
 
-.nv-controlsWrap, .icon-question-sign, .accordion-heading, br, .hq-help {
+.nv-controlsWrap, .fa-question-circle, .accordion-heading, br, .hq-help {
     display: none;
 }
 

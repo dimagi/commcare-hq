@@ -206,21 +206,6 @@ class AppManagerTest(TestCase):
 
 class TestReportModule(SimpleTestCase):
 
-    def test_report_module_uuid_updates(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-
-        report_module = app.add_module(ReportModule.new_module('Reports', None))
-        report_module.unique_id = 'report_module'
-
-        report_app_config = ReportAppConfig(report_id='123',
-                                            header={'en': 'CommBugz'})
-        report_module.report_configs = [report_app_config]
-        report_module._loaded = True
-
-        app_source = app.export_json(dump_json=False)
-        new_uuid = app_source['modules'][0]['report_configs'][0]['uuid']
-        self.assertNotEqual(report_app_config.uuid, new_uuid)
-
     @flag_enabled('MOBILE_UCR')
     @patch('dimagi.ext.couchdbkit.Document.get_db')
     def test_purge_report_from_mobile_ucr(self, get_db):

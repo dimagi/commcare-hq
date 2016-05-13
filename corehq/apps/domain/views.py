@@ -785,11 +785,14 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def billing_info_form(self):
+        is_ops_user = has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
         if self.request.method == 'POST':
             return EditBillingAccountInfoForm(
-                self.account, self.domain, self.request.couch_user.username, data=self.request.POST
+                self.account, self.domain, self.request.couch_user.username, data=self.request.POST,
+                is_ops_user=is_ops_user
             )
-        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username)
+        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username,
+                                          is_ops_user=is_ops_user)
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -2159,7 +2162,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     dispatcher = DomainReportDispatcher
     ajax_pagination = True
     asynchronous = False
-    is_bootstrap3 = True
     sortable = False
 
     fields = [
