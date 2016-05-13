@@ -1,6 +1,5 @@
 from functools import wraps
 import logging
-from couchdbkit.exceptions import ResourceNotFound
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 from django.db.utils import InterfaceError as DjangoInterfaceError
@@ -11,11 +10,9 @@ import math
 import time
 
 import simplejson
-import sys
 
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
-from pillow_retry.models import PillowError
 from pillowtop.checkpoints.manager import PillowCheckpoint, get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
 from pillowtop.const import CHECKPOINT_FREQUENCY
@@ -26,7 +23,7 @@ from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.es_utils import completely_initialize_pillow_index, doc_exists
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
-from pillowtop.pillow.interface import PillowBase, handle_pillow_error
+from pillowtop.pillow.interface import PillowBase
 from pillowtop.utils import prepare_bulk_payloads
 
 try:
@@ -160,24 +157,15 @@ class BasicPillow(PillowBase):
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
         """
-        self.process_change(change)
+        with lock_manager(self.change_trigger(change)) as t:
+            if t is not None:
+                tr = self.change_transform(t)
+                if tr is not None:
+                    self.change_transport(tr)
 
     def fire_change_processed_event(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             self.set_checkpoint(change)
-
-    def process_change(self, change, is_retry_attempt=False):
-        try:
-            with lock_manager(self.change_trigger(change)) as t:
-                if t is not None:
-                    tr = self.change_transform(t)
-                    if tr is not None:
-                        self.change_transport(tr)
-        except Exception, ex:
-            if not is_retry_attempt:
-                handle_pillow_error(self, change, ex)
-            else:
-                raise
 
     def change_trigger(self, changes_dict):
         """
@@ -297,7 +285,7 @@ class PythonPillow(BasicPillow):
             valid_deletion = self.process_deletions and change.get('deleted', None)
             if valid_change or valid_deletion:
                 try:
-                    self.process_change(change)
+                    super(PythonPillow, self).processor(change)
                 except Exception:
                     logging.exception('something went wrong processing change %s (%s)' %
                                       (change.get('seq', None), change['id']))
@@ -324,7 +312,7 @@ class PythonPillow(BasicPillow):
             if self.queue_full or self.wait_expired:
                 self.process_chunk()
         elif self.python_filter(change) or (change.get('deleted', None) and self.process_deletions):
-            self.process_change(change)
+            super(PythonPillow, self).processor(change)
 
     def fire_change_processed_event(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:

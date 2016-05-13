@@ -101,14 +101,11 @@ class PillowBase(object):
         except PillowtopCheckpointReset:
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
-    def process_with_error_handling(self, change, is_retry_attempt=False):
+    def process_with_error_handling(self, change):
         try:
             self.processor(change)
         except Exception, ex:
-            if not is_retry_attempt:
-                handle_pillow_error(self, change, ex)
-            else:
-                raise
+            handle_pillow_error(self, change, ex)
 
     @abstractmethod
     def processor(self, change):

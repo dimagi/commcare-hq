@@ -273,7 +273,7 @@ class FakePillow(BasicPillow):
     def get_couch_db():
         return CachedCouchDB(Stub.get_db().uri, readonly=True)
 
-    def process_change(self, change, is_retry_attempt=False):
+    def processor(self, change):
         #  see test_include_doc
         if not change.get('deleted') and 'doc' not in change:
             raise Exception('missing doc in change')

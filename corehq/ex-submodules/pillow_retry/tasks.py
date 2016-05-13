@@ -73,7 +73,7 @@ def process_pillow_retry(error_doc_id):
                     raise Exception('this is temporarily not supported!')
             except ImportError:
                 pass
-            pillow.process_change(change, is_retry_attempt=True)
+            pillow.processor(change)
         except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()
             error_doc.add_attempt(ex_value, ex_tb)
