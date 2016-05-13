@@ -407,7 +407,7 @@ def download_index_files(app, build_profile_id=None):
         prefix += build_profile_id + '/'
     if app.copy_of:
         # profile hasnt been built yet
-        if not (prefix + 'profile.ccpr') in app._attachments:
+        if not (prefix + 'profile.ccpr') in app.blobs:
             app.create_build_files(save=True, build_profile_id=build_profile_id)
             app.save()
         files = [(path[len(prefix):], app.fetch_attachment(path))
