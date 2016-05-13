@@ -1,3 +1,4 @@
+from collections import namedtuple
 from django.core import cache
 from django.conf import settings
 from django.utils.safestring import mark_safe
@@ -6,10 +7,11 @@ import json
 from corehq.apps.hqadmin.system_info.utils import human_bytes
 from soil import heartbeat
 
+ServiceStatus = namedtuple("ServiceStatus", "success msg")
+
 
 def check_redis():
     #redis status
-    ret = {}
     redis_status = ""
     redis_results = ""
     if 'redis' in settings.CACHES:
@@ -18,23 +20,14 @@ def check_redis():
             import redis
             redis_api = redis.StrictRedis.from_url('%s' % rc._server)
             info_dict = redis_api.info()
-            redis_status = "Online"
-            redis_results = "Used Memory: %s" % info_dict['used_memory_human']
+            return ServiceStatus(True, "Used Memory: %s" % info_dict['used_memory_human'])
         except Exception, ex:
-            redis_status = "Offline"
-            redis_results = "Redis connection error: %s" % ex
+            return ServiceStatus(False, "Redis connection error: %s" % ex)
     else:
-        redis_status = "Not Configured"
-        redis_results = "Redis is not configured on this system!"
-
-    ret['redis_status'] = redis_status
-    ret['redis_results'] = redis_results
-    return ret
+        return ServiceStatus(False, "Redis is not configured on this system!")
 
 
 def check_rabbitmq():
-    ret ={}
-    mq_status = "Unknown"
     if settings.BROKER_URL.startswith('amqp'):
         amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '15672')
@@ -42,19 +35,17 @@ def check_rabbitmq():
         try:
             mq = Resource('http://%s' % mq_management_url, timeout=2)
             vhost_dict = json.loads(mq.get('api/vhosts', timeout=2).body_string())
-            mq_status = "Offline"
             for d in vhost_dict:
                 if d['name'] == vhost:
-                    mq_status='RabbitMQ OK'
-        except Exception, ex:
-            mq_status = "RabbitMQ Error: %s" % ex
+                    return ServiceStatus(True, 'RabbitMQ OK')
+            return ServiceStatus(False, 'RabbitMQ Offline')
+        except Exception as e:
+            return ServiceStatus(False, "RabbitMQ Error: %s" % e)
     else:
-        mq_status = "RabbitMQ Not configured"
-    ret['rabbitmq_status'] = mq_status
-    return ret
+        return ServiceStatus(False, "RabbitMQ Not configured")
 
 
-def check_celery_health():
+def check_celery():
 
     def get_stats(celery_monitoring, status_only=False, refresh=False):
         cresource = Resource(celery_monitoring, timeout=3)
@@ -107,5 +98,9 @@ def check_celery_health():
             worker_info.append(' '.join([worker_name, status_html, tasks_html]))
         worker_status = '<br>'.join(worker_info)
     ret['worker_status'] = mark_safe(worker_status)
-    ret['heartbeat'] = heartbeat.is_alive()
-    return ret
+    return ServiceStatus(False, "")
+
+
+def check_heartbeat():
+    is_alive = heartbeat.is_alive()
+    return ServiceStatus(is_alive, "OK" if is_alive else "DOWN")

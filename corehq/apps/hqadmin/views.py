@@ -59,7 +59,7 @@ from corehq.apps.hqadmin.escheck import (
     check_reportxform_es_index
 )
 from corehq.apps.hqadmin.management.commands.check_services import service_tests
-from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health
+from corehq.apps.hqadmin.system_info import checks
 from corehq.apps.hqadmin.reporting.reports import (
     get_project_spaces,
     get_stats_data,
@@ -312,10 +312,12 @@ class SystemInfoView(BaseAdminSectionView):
 
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
-        context.update(check_redis())
-        context.update(check_rabbitmq())
-        context.update(check_celery_health())
-        context.update(check_es_cluster_health())
+        context['redis'] = checks.check_redis()
+        context['rabbitmq'] = checks.check_rabbitmq()
+        context['celery'] = checks.check_celery()
+        context['heartbeat'] = checks.check_heartbeat()
+
+        context['elastic'] = check_es_cluster_health()
 
         return context
 
