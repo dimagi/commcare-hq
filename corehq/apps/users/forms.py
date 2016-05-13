@@ -321,16 +321,26 @@ class RoleForm(forms.Form):
 
 class SetUserPasswordForm(SetPasswordForm):
 
-    def __init__(self, *args, **kwargs):
-        super(SetUserPasswordForm, self).__init__(*args, **kwargs)
+    def __init__(self, domain, user_id, **kwargs):
+        super(SetUserPasswordForm, self).__init__(**kwargs)
 
         self.helper = FormHelper()
 
         self.helper.form_method = 'POST'
-        self.helper.form_class = 'form-horizontal'
+        self.helper.form_class = 'form form-horizontal reset-password-form'
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_action = reverse("change_password", args=[domain, user_id])
+        self.helper.layout = crispy.Layout(
+            'new_password1',
+            'new_password2',
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Reset Password'))
+                )
+            )
+        )
 
 
 class CommCareAccountForm(forms.Form):
