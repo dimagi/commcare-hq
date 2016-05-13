@@ -41,7 +41,6 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_for_users,
     get_last_form_submission_for_xmlns,
     guess_form_name_from_submissions_using_xmlns,
-    get_active_case_count
 )
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
@@ -655,6 +654,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestFormESAccessorsSQL(TestFormESAccessors):
+
     def get_pillow(self):
         XFormPillow()  # initialize index
         return get_sql_xform_to_elasticsearch_pillow()
@@ -910,32 +910,10 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
         self.assertEqual(results, {})
 
-    def test_get_all_active_cases(self):
-        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
-        opened_on = datetime(2013, 7, 15)
-        opened_before = datetime(2013, 6, 25)
-
-        self._send_case_to_es(opened_on=opened_on)
-        self._send_case_to_es(opened_on=opened_before)
-
-        results = get_active_case_count(self.domain, datespan, []).total
-
-        self.assertEqual(results, 1)
-
-    def test_get_total_active_cases(self):
-        datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
-        opened_on = datetime(2013, 7, 15)
-        opened_before = datetime(2013, 6, 25)
-
-        self._send_case_to_es(opened_on=opened_on)
-        self._send_case_to_es(opened_on=opened_before)
-
-        results = get_active_case_count(self.domain, datespan, [], True).total
-
-        self.assertEqual(results, 2)
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestCaseESAccessorsSQL(TestCaseESAccessors):
+
     def get_pillow(self):
         CasePillow()  # initialize index
         return get_sql_case_to_elasticsearch_pillow()

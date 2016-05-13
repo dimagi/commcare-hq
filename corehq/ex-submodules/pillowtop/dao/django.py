@@ -8,6 +8,7 @@ class DjangoDocumentStore(DocumentStore):
     """
     An implementation of the DocumentStore that uses the Django ORM.
     """
+
     def __init__(self, model_class, doc_generator_fn, model_generator_fn=None):
         self._model_class = model_class
         self._doc_generator_fn = doc_generator_fn

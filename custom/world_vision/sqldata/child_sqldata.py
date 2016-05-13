@@ -86,6 +86,7 @@ class ChildRegistrationDetails(MotherRegistrationDetails):
             ])
         return columns
 
+
 class ClosedChildCasesBreakdown(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
     slug = 'closed_child_cases_breakdown'
@@ -338,6 +339,7 @@ class NutritionMeanMedianBirthWeightDetails(BaseSqlData):
                  "%.2f" % (self.data['mean_birth_weight'] if self.data['mean_birth_weight'] else 0),
                  "%.2f" % (self.data['median_birth_weight'] if self.data['mean_birth_weight'] else 0)]
         ]
+
 
 class NutritionBirthWeightDetails(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"
@@ -658,6 +660,7 @@ class ChildDeworming(BaseSqlData):
                 )
             ),
         ]
+
 
 class EBFStoppingDetails(BaseSqlData):
     table_name = "fluff_WorldVisionChildFluff"

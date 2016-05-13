@@ -18,6 +18,8 @@ class FundamentalCaseTests(TestCase):
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
 
+    tearDownClass = setUpClass
+
     def setUp(self):
         self.interface = FormProcessorInterface()
         self.casedb = CaseAccessors()
@@ -53,7 +55,6 @@ class FundamentalCaseTests(TestCase):
             self.assertEqual(case.closed_by, '')
 
         self.assertEqual(case.dynamic_case_properties()['dynamic'], '123')
-
 
     @run_with_all_backends
     def test_update_case(self):

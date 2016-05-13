@@ -103,7 +103,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             owner_ids.append("demo_user")
         return owner_ids
 
-
     @property
     @memoized
     def case_owners(self):

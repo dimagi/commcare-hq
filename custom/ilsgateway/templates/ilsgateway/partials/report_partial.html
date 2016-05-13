@@ -10,7 +10,7 @@
             {% for chart in thisreport.charts %}
                 {% if chart.data.0.values %}
                     {% if chart.title %}<h4 style="text-align: center;">{{ chart.title }}</h4>{% endif %}
-                    <div id='{{ chart_id }}' class="span{{ chart_span }} collapse">
+                    <div id='{{ chart_id }}' class="col-sm-{{ chart_span }} collapse">
                         <svg style='height: {{ chart.height }}px'> </svg>
                     </div>
                     {% include chart.template_partial with chart=chart chart_id=chart_id %}

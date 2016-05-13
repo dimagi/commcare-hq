@@ -75,6 +75,7 @@ TESTS = (
 def mock_fetch_case_attachment(case_id, attachments):
 
     class MockCachedObject(object):
+
         def __init__(self, attachment_file):
             self.attachment_file = attachment_file
 

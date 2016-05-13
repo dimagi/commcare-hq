@@ -143,6 +143,7 @@ class TestDetermineAuthType(SimpleTestCase):
     @staticmethod
     def _mock_request(user_agent='', auth_header=''):
         class FakeRequest(object):
+
             def __init__(self, user_agent, auth_header):
                 self.META = {
                     'HTTP_USER_AGENT': user_agent,

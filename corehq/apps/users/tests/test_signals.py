@@ -57,6 +57,7 @@ class TestUserSignals(SimpleTestCase):
 @patch('corehq.apps.callcenter.signals.sync_call_center_user_case')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
 class TestUserSyncToEs(SimpleTestCase):
+
     @classmethod
     def setUpClass(cls):
         # create the index

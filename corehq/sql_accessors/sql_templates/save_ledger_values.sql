@@ -13,15 +13,18 @@ BEGIN
     IF ledger_value.id IS NOT NULL THEN
         UPDATE form_processor_ledgervalue SET
             balance = ledger_value.balance,
-            last_modified = ledger_value.last_modified
+            last_modified = ledger_value.last_modified,
+            daily_consumption = ledger_value.daily_consumption
         WHERE
             id = ledger_value.id;
     ELSE
         INSERT INTO form_processor_ledgervalue (
-            case_id, section_id, entry_id, balance, last_modified
+            case_id, section_id, entry_id, balance, last_modified, last_modified_form_id,
+            domain, location_id, daily_consumption
         ) VALUES (
             ledger_value.case_id, ledger_value.section_id, ledger_value.entry_id,
-            ledger_value.balance, ledger_value.last_modified
+            ledger_value.balance, ledger_value.last_modified, ledger_value.last_modified_form_id,
+            ledger_value.domain, ledger_value.location_id, ledger_value.daily_consumption
         );
     END IF;
 

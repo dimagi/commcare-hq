@@ -2,6 +2,7 @@ from collections import defaultdict
 
 
 class TrackRelatedChanges(object):
+
     def __init__(self):
         self.create_models = defaultdict(list)
         self.update_models = defaultdict(list)

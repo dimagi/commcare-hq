@@ -107,7 +107,7 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     urlname = 'location_fields_view'
     field_type = 'LocationFields'
     entity_string = ugettext_lazy("Location")
-    template_name = "custom_data_fields/bootstrap3/custom_data_fields.html"
+    template_name = "custom_data_fields/custom_data_fields.html"
 
     @method_decorator(is_locations_admin)
     @use_bootstrap3
@@ -387,6 +387,7 @@ def location_descendants_count(request, domain, loc_id):
         'count': count
     })
 
+
 @can_edit_location
 def unarchive_location(request, domain, loc_id):
     # hack for circumventing cache
@@ -553,6 +554,7 @@ class EditLocationView(NewLocationView):
 class BaseSyncView(BaseLocationView):
     source = ""
     sync_urlname = None
+    section_name = ugettext_lazy("Project Settings")
 
     @property
     def page_context(self):
@@ -590,6 +592,10 @@ class BaseSyncView(BaseLocationView):
 
         return self.get(request, *args, **kwargs)
 
+    @property
+    def section_url(self):
+        return reverse('settings_default', args=(self.domain,))
+
 
 class FacilitySyncView(BaseSyncView):
     urlname = 'sync_facilities'
@@ -597,6 +603,11 @@ class FacilitySyncView(BaseSyncView):
     page_title = ugettext_noop("OpenLMIS")
     template_name = 'locations/facility_sync.html'
     source = 'openlmis'
+
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(FacilitySyncView, self).dispatch(request, *args, **kwargs)
 
 
 class LocationImportStatusView(BaseLocationView):
@@ -688,7 +699,7 @@ class LocationImportView(BaseLocationView):
 
 @locations_access_required
 def location_importer_job_poll(request, domain, download_id,
-                               template="style/bootstrap2/partials/download_status.html"):
+                               template="style/bootstrap3/partials/download_status.html"):
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
@@ -780,7 +791,10 @@ class DowngradeLocationsView(BaseDomainView):
     """
     template_name = 'locations/downgrade_locations.html'
     urlname = 'downgrade_locations'
+    section_name = ugettext_lazy("Project Settings")
+    page_title = ugettext_lazy("Project Access")
 
+    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         if not users_have_locations(self.domain):  # irrelevant, redirect
             redirect_url = reverse('users_default', args=[self.domain])
@@ -789,7 +803,7 @@ class DowngradeLocationsView(BaseDomainView):
 
     @property
     def section_url(self):
-        return self.page_url
+        return reverse('settings_default', args=(self.domain, ))
 
 
 @domain_admin_required

@@ -4,6 +4,7 @@ import django
 
 if django.get_version() < '1.4':
     from django.contrib.auth.models import get_hexdigest
+
     def make_password(password, salt=None):
         import random
         algo = 'sha1'

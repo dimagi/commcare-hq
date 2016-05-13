@@ -16,6 +16,7 @@ try:
     from corehq.apps.app_manager.tests.test_case_list_form import *
     from corehq.apps.app_manager.tests.test_case_list_lookup import *
     from corehq.apps.app_manager.tests.test_case_meta import *
+    from corehq.apps.app_manager.tests.test_case_refs_from_fb import *
     from corehq.apps.app_manager.tests.test_child_module import *
     from corehq.apps.app_manager.tests.test_commcare_settings import *
     from corehq.apps.app_manager.tests.test_days_ago_migration import *

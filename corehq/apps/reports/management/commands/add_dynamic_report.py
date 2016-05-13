@@ -5,6 +5,7 @@ import sys
 from corehq.apps.domain.models import Domain, DynamicReportSet, DynamicReportConfig
 from dimagi.utils.modules import to_function
 
+
 class Command(BaseCommand):
     help = "Set up a dynamic report for a domain"
     args = "<domain> <subsection> <reportname> <reportclass> <reportproperties (json) (if '-' read from stdin)>"

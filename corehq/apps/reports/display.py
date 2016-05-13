@@ -16,12 +16,14 @@ from corehq.util.view_utils import absolute_reverse
 
 
 class StringWithAttributes(unicode):
+
     def replace(self, *args):
         string = super(StringWithAttributes, self).replace(*args)
         return StringWithAttributes(string)
 
 
 class FormDisplay(object):
+
     def __init__(self, form_doc, report, lang=None):
         self.form = form_doc
         self.report = report
@@ -72,6 +74,7 @@ class FormDisplay(object):
 
 
 class _FormType(object):
+
     def __init__(self, domain, xmlns, app_id=None):
         self.domain = domain
         self.xmlns = xmlns

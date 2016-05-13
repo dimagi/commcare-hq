@@ -1,13 +1,8 @@
 from functools import wraps
 import json
-from django.contrib import messages
-from django.utils.encoding import force_unicode
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext
 from corehq import privileges
-from corehq.apps.accounting.models import DefaultProductPlan, \
-    SoftwarePlanVisibility
-from django.http import Http404, HttpResponse
+from corehq.apps.accounting.models import DefaultProductPlan
+from django.http import HttpResponse
 from corehq.const import USER_DATE_FORMAT
 from django_prbac.decorators import requires_privilege
 from django_prbac.exceptions import PermissionDenied

@@ -204,6 +204,7 @@ class DomainViewMixin(object):
 
 
 class LoginAndDomainMixin(object):
+
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
@@ -502,6 +503,10 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
     urlname = 'dhis2_settings'
     page_title = ugettext_lazy("DHIS2 API settings")
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditDhis2SettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def dhis2_settings_form(self):
@@ -577,6 +582,7 @@ def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
+
 
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
@@ -779,11 +785,14 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def billing_info_form(self):
+        is_ops_user = has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
         if self.request.method == 'POST':
             return EditBillingAccountInfoForm(
-                self.account, self.domain, self.request.couch_user.username, data=self.request.POST
+                self.account, self.domain, self.request.couch_user.username, data=self.request.POST,
+                is_ops_user=is_ops_user
             )
-        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username)
+        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username,
+                                          is_ops_user=is_ops_user)
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -1604,6 +1613,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
 
 class SubscriptionMixin(object):
+
     @property
     @memoized
     def subscription(self):
@@ -2152,7 +2162,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     dispatcher = DomainReportDispatcher
     ajax_pagination = True
     asynchronous = False
-    is_bootstrap3 = True
     sortable = False
 
     fields = [
@@ -2636,6 +2645,10 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     urlname = 'pro_bono_static'
     use_domain_field = True
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoStaticView, self).dispatch(request, *args, **kwargs)
+
     @property
     def requesting_domain(self):
         return self.pro_bono_form.cleaned_data['domain']
@@ -2645,6 +2658,10 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
     use_domain_field = False
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def requesting_domain(self):
@@ -2789,6 +2806,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             return {'form': self.transfer_domain_form}
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
@@ -2915,6 +2933,11 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesAsyncHandler,
         SMSRatesSelect2AsyncHandler,
     ]
+
+    @use_bootstrap3
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

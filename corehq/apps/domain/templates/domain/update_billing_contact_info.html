@@ -24,6 +24,12 @@
          url: '{{ card_base_url }}',
      });
      $("#card-manager").koApplyBindings(cardManager);
+
+     $("#show_emails").click(function() {
+        $('#emails-text').show();
+        $(this).parent().hide();
+     });
+
     </script>
 {% endblock %}
 

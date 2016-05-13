@@ -38,12 +38,14 @@ class KeyRecord(XmlObject):
     type = StringField('key/@type', choices=['AES256'], required=True)
     key = StringField('key', required=True)
 
+
 class AuthKeys(XmlObject):
     ROOT_NAME = 'auth_keys'
     domain = StringField('@domain', required=True)
     issued = CustomDateTimeField('@issued', required=True)
 
     key_records = NodeListField('key_record', KeyRecord, required=True)
+
 
 class OpenRosaResponse(XmlObject):
     ROOT_NAME = 'OpenRosaResponse'

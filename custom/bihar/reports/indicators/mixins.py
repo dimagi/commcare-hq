@@ -2,6 +2,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class IndicatorConfigMixIn(object):
+
     @property
     @memoized
     def indicator_config(self):

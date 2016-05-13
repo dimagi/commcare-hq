@@ -212,6 +212,7 @@ class ExcelFile(object):
         if sheet:
             return self._row_values(sheet, index)
 
+
 def convert_custom_fields_to_struct(config):
     excel_fields = config.excel_fields
     case_fields = config.case_fields
@@ -231,6 +232,7 @@ def convert_custom_fields_to_struct(config):
                 field_map[field]['field_name'] = custom_fields[i]
 
     return field_map
+
 
 class ImportErrorDetail(object):
 
@@ -329,6 +331,7 @@ def parse_search_id(config, columns, row):
 
     return convert_field_value(search_id)
 
+
 def get_key_column_index(config, columns):
     key_column = config.key_column
     try:
@@ -338,6 +341,7 @@ def get_key_column_index(config, columns):
 
     return key_column_index
 
+
 def get_value_column_index(config, columns):
     value_column = config.value_column
     try:
@@ -346,6 +350,7 @@ def get_value_column_index(config, columns):
         value_column_index = False
 
     return value_column_index
+
 
 def lookup_case(search_field, search_id, domain, case_type):
     """
@@ -377,6 +382,7 @@ def lookup_case(search_field, search_id, domain, case_type):
         return (case, None)
     else:
         return (None, LookupErrors.NotFound)
+
 
 def populate_updated_fields(config, columns, row, datemode):
     """

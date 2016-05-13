@@ -17,7 +17,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
+from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from corehq.apps.style import crispy as hqcrispy
 from django_countries.data import COUNTRIES
@@ -92,8 +92,10 @@ class BillingAccountBasicForm(forms.Form):
     )
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscriptions To"),
-        help_text=ugettext_lazy("Transfer any existing subscriptions to the "
-                    "Billing Account specified here."),
+        help_text=ugettext_lazy(
+            "Transfer any existing subscriptions to the "
+            "Billing Account specified here."
+        ),
         required=False,
     )
     dimagi_contact = forms.EmailField(
@@ -150,8 +152,10 @@ class BillingAccountBasicForm(forms.Form):
         if account is not None:
             additional_fields.append(hqcrispy.B3MultiField(
                 "Active Status",
-                crispy.Field('is_active',
-                    data_bind="checked: is_active"),
+                crispy.Field(
+                    'is_active',
+                    data_bind="checked: is_active",
+                ),
             ))
             if account.subscription_set.count() > 0:
                 additional_fields.append(crispy.Div(
@@ -167,6 +171,33 @@ class BillingAccountBasicForm(forms.Form):
                 'Basic Information',
                 'name',
                 crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Div(
+                    crispy.Div(
+                        css_class='col-sm-3 col-md-2'
+                    ),
+                    crispy.Div(
+                        crispy.HTML(self.initial['email_list']),
+                        css_class='col-sm-9 col-md-8 col-lg-6'
+                    ),
+                    css_id='emails-text',
+                    css_class='collapse form-group'
+                ),
+                crispy.Div(
+                    crispy.Div(
+                        css_class='col-sm-3 col-md-2'
+                    ),
+                    crispy.Div(
+                        StrictButton(
+                            "Show contact emails as text",
+                            type="button",
+                            css_class='btn btn-default',
+                            css_id='show_emails'
+                        ),
+                        crispy.HTML('<p class="help-block">Useful when you want to copy contact emails</p>'),
+                        css_class='col-sm-9 col-md-8 col-lg-6'
+                    ),
+                    css_class='form-group'
+                ),
                 'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
@@ -201,7 +232,8 @@ class BillingAccountBasicForm(forms.Form):
 
     def clean_active_accounts(self):
         transfer_subs = self.cleaned_data['active_accounts']
-        if (not self.cleaned_data['is_active'] and self.account is not None
+        if (
+            not self.cleaned_data['is_active'] and self.account is not None
             and self.account.subscription_set.count() > 0
             and not transfer_subs
         ):
@@ -421,11 +453,13 @@ class SubscriptionForm(forms.Form):
             plan_version_field = hqcrispy.B3TextField(
                 'plan_version',
                 '<a href="%(plan_version_url)s">%(plan_name)s</a>' % {
-                'plan_version_url': reverse(
-                    ViewSoftwarePlanVersionView.urlname,
-                    args=[subscription.plan_version.plan.id, subscription.plan_version_id]),
-                'plan_name': subscription.plan_version,
-            })
+                    'plan_version_url': reverse(
+                        ViewSoftwarePlanVersionView.urlname,
+                        args=[subscription.plan_version.plan.id, subscription.plan_version_id]
+                    ),
+                    'plan_name': subscription.plan_version,
+                },
+            )
             try:
                 plan_product = subscription.plan_version.product_rate.product.product_type
                 self.fields['plan_product'].initial = plan_product
@@ -452,10 +486,11 @@ class SubscriptionForm(forms.Form):
             domain_field = hqcrispy.B3TextField(
                 'domain',
                 '<a href="%(project_url)s">%(project_name)s</a>' % {
-                'project_url': reverse(DefaultProjectSettingsView.urlname,
-                                       args=[subscription.subscriber.domain]),
-                'project_name': subscription.subscriber.domain,
-            })
+                    'project_url': reverse(DefaultProjectSettingsView.urlname,
+                                           args=[subscription.subscriber.domain]),
+                    'project_name': subscription.subscriber.domain,
+                },
+            )
 
             self.fields['start_date'].initial = subscription.date_start.isoformat()
             self.fields['end_date'].initial = (
@@ -473,18 +508,23 @@ class SubscriptionForm(forms.Form):
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
             self.fields['funding_source'].initial = subscription.funding_source
 
-            if (subscription.date_start is not None
-                and subscription.date_start <= today):
+            if (
+                subscription.date_start is not None
+                and subscription.date_start <= today
+            ):
                 self.fields['start_date'].help_text = '(already started)'
             if has_subscription_already_ended(subscription):
                 self.fields['end_date'].help_text = '(already ended)'
-            if (subscription.date_delay_invoicing is not None
-                and subscription.date_delay_invoicing <= today):
+            if (
+                subscription.date_delay_invoicing is not None
+                and subscription.date_delay_invoicing <= today
+            ):
                 delay_invoice_until_field = hqcrispy.B3TextField(
                     'delay_invoice_until',
                     "%(delay_date)s (date has already passed)" % {
-                    'delay_date': self.fields['delay_invoice_until'].initial,
-                })
+                        'delay_date': self.fields['delay_invoice_until'].initial,
+                    }
+                )
 
             self.fields['plan_version'].required = False
             self.fields['domain'].required = False
@@ -919,7 +959,7 @@ class PlanInformationForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-            'Plan Information',
+                'Plan Information',
                 'name',
                 'description',
                 'edition',
@@ -938,8 +978,10 @@ class PlanInformationForm(forms.Form):
 
     def clean_name(self):
         name = self.cleaned_data['name']
-        if (len(SoftwarePlan.objects.filter(name=name)) != 0
-            and (self.plan is None or self.plan.name != name)):
+        if (
+            len(SoftwarePlan.objects.filter(name=name)) != 0
+            and (self.plan is None or self.plan.name != name)
+        ):
             raise ValidationError(_('Name already taken.  Please enter a new name.'))
         return name
 
@@ -1042,7 +1084,10 @@ class SoftwarePlanVersionForm(forms.Form):
         super(SoftwarePlanVersionForm, self).__init__(*args, **kwargs)
 
         self.fields['privileges'].choices = list(self.available_privileges)
-        self.fields['role_slug'].choices = [(r['slug'], "%s (%s)" % (r['name'], r['slug'])) for r in self.existing_roles]
+        self.fields['role_slug'].choices = [
+            (r['slug'], "%s (%s)" % (r['name'], r['slug']))
+            for r in self.existing_roles
+        ]
 
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -1215,7 +1260,10 @@ class SoftwarePlanVersionForm(forms.Form):
                 'slug': role.slug,
                 'name': role.name,
                 'description': role.description,
-                'privileges': [(grant.to_role.slug, grant.to_role.name) for grant in role.memberships_granted.all()]
+                'privileges': [
+                    (grant.to_role.slug, grant.to_role.name)
+                    for grant in role.memberships_granted.all()
+                ],
             }
 
     @property
@@ -1268,7 +1316,8 @@ class SoftwarePlanVersionForm(forms.Form):
         else:
             return {}
 
-    def _get_errors_from_subform(self, form_name, subform):
+    @staticmethod
+    def _get_errors_from_subform(form_name, subform):
         for field, field_errors in subform._errors.items():
             for field_error in field_errors:
                 error_message = "%(form_name)s > %(field_name)s: %(error)s" % {
@@ -1345,10 +1394,18 @@ class SoftwarePlanVersionForm(forms.Form):
             ))
 
         self.new_feature_rates = rate_instances
-        rate_ids = lambda x: set([r.id for r in x])
-        if (not self.is_update
-            and (self.plan_version is None
-                 or rate_ids(rate_instances).symmetric_difference(rate_ids(self.plan_version.feature_rates.all())))):
+
+        def rate_ids(rate_list):
+            return set([rate.id for rate in rate_list])
+        if (
+            not self.is_update
+            and (
+                self.plan_version is None
+                or rate_ids(rate_instances).symmetric_difference(
+                    rate_ids(self.plan_version.feature_rates.all())
+                )
+            )
+        ):
             self.is_update = True
         return original_data
 
@@ -1446,7 +1503,10 @@ class SoftwarePlanVersionForm(forms.Form):
             new_version.feature_rates.add(feature_rate)
         new_version.save()
 
-        messages.success(request, 'The version for %s Software Plan was successfully updated.' % new_version.plan.name)
+        messages.success(
+            request,
+            'The version for %s Software Plan was successfully updated.' % new_version.plan.name
+        )
 
 
 class FeatureRateForm(forms.ModelForm):
@@ -2101,7 +2161,7 @@ class CreateAdminForm(forms.Form):
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.form_show_labels= False
+        self.helper.form_show_labels = False
         self.helper.form_style = 'inline'
         self.helper.layout = crispy.Layout(
             InlineField(

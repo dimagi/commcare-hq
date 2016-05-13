@@ -35,6 +35,7 @@ def _get_fs_db(settings):
 
 
 class BlobInfo(namedtuple("BlobInfo", ["identifier", "length", "digest"])):
+
     @property
     def md5_hash(self):
         if self.digest and self.digest.startswith("md5-"):

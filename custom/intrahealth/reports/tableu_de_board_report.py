@@ -18,8 +18,6 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
     flush_layout = True
     export_format_override = 'csv'
 
-    is_bootstrap3 = True
-
     @use_nvd3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
         super(MultiReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
@@ -144,6 +142,7 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
             table.append(_unformat_row(total_row))
 
         return [export_sheet_name, table]
+
 
 class TableuDeBoardReport(MultiReport):
     title = "Tableau De Bord"

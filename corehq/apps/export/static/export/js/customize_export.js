@@ -409,7 +409,7 @@ var CustomExportView = {
         };
 
         self.row_label_classes = function(row) {
-            return (row === 'no data' || row === 'deleted') ? "label label-warning" : "label";
+            return (row === 'no data' || row === 'deleted') ? "label label-warning" : "label label-default";
         };
 
         setTimeout(function () {

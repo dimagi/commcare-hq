@@ -214,6 +214,7 @@ class TestBillingRecord(BaseAccountingTest):
 
 @mock.patch.object(StripePaymentMethod, 'customer')
 class TestStripePaymentMethod(BaseAccountingTest):
+
     def setUp(self):
         super(TestStripePaymentMethod, self).setUp()
 

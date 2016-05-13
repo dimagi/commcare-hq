@@ -1,4 +1,4 @@
-{% extends "hqadmin/bootstrap3/faceted_report.html" %}
+{% extends "hqadmin/faceted_report.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load compress %}
@@ -112,7 +112,7 @@
                         <h2 class="panel-title">{{ data.chart_title }}</h2>
                     </div>
                     <div class="panel-body">
-                    {% include "hqadmin/bootstrap3/partials/visualizations.html" with chart_name=data.chart_name date_field_opts=data.date_field_opts hide_cumulative_charts=data.hide_cumulative_charts interval=data.interval %}
+                    {% include "hqadmin/partials/visualizations.html" with chart_name=data.chart_name date_field_opts=data.date_field_opts hide_cumulative_charts=data.hide_cumulative_charts interval=data.interval %}
                     </div>
                 </div>
             {% endwith %}

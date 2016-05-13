@@ -135,6 +135,7 @@ class TestPregnancyVHNDNew(OPMCaseReportTestBase):
         row = MockCaseRow(case, self.report)
         self.assertEqual(True, row.preg_attended_vhnd)
 
+
 class TestPregnancyVHNDLegacy(OPMCaseReportTestBase):
     # mapping month of pregnancy to case properties that trigger vhnd attendance
     month_to_property_map = (
@@ -181,6 +182,7 @@ def _child_form_with_vhnd_attendance(received_on, xmlns=CFU1_XMLNS):
         }
     )
 
+
 def _child_form_without_vhnd_attendance(received_on, xmlns=CFU1_XMLNS):
     return XFormInstance(
         received_on=received_on,
@@ -192,6 +194,7 @@ def _child_form_without_vhnd_attendance(received_on, xmlns=CFU1_XMLNS):
         },
     )
 
+
 def _preg_form_with_vhnd_attendance(received_on):
     return XFormInstance(
         received_on=received_on,
@@ -202,6 +205,7 @@ def _preg_form_with_vhnd_attendance(received_on):
             }
         }
     )
+
 
 def _preg_form_without_vhnd_attendance(received_on):
     return XFormInstance(

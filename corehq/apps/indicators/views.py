@@ -29,7 +29,7 @@ from dimagi.utils.modules import to_function
 
 @require_edit_indicators
 @login_and_domain_required
-def default_admin(request, domain, template="reports/bootstrap3/base_template.html", **kwargs):
+def default_admin(request, domain, template="reports/base_template.html", **kwargs):
     if request.domain not in get_indicator_domains():
         raise Http404
     set_bootstrap_version3()

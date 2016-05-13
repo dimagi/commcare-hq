@@ -8,6 +8,7 @@ from corehq.apps.users.models import Permissions
 require_edit_indicators = require_permission(Permissions.edit_data)
 cls_require_edit_indicators = cls_to_view(additional_decorator=require_edit_indicators)
 
+
 class IndicatorAdminInterfaceDispatcher(ReportDispatcher):
     prefix = "indicator_admin_interface"
     map_name = "INDICATOR_ADMIN_INTERFACES"

@@ -264,6 +264,7 @@ def _one(filter_func, list):
 
 
 class IndicatorConfig(object):
+
     def __init__(self, spec):
         self.indicator_sets = [IndicatorSet(setspec) for setspec in spec]
 
@@ -320,6 +321,7 @@ class Indicator(object):
     def as_row(self, case, context, fluff_row):
         return self._display.as_row(case, context, fluff_row)
 
+
 class IndicatorDataProvider(object):
 
     def __init__(self, domain, indicator_set, groups):
@@ -360,7 +362,6 @@ class IndicatorDataProvider(object):
     def get_case_ids(self, indicator):
         return self.get_case_data(indicator).keys()
 
-
     @memoized
     def get_case_data(self, indicator):
         results = indicator.fluff_calculator.aggregate_results(
@@ -370,7 +371,6 @@ class IndicatorDataProvider(object):
         numerator = results['numerator']
         denominator = results[indicator.fluff_calculator.primary]
         return dict((id, {'num': id in numerator, 'denom': id in denominator}) for id in numerator | denominator)
-
 
     def get_chart(self, indicator):
         # this is a serious hack for now

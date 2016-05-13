@@ -43,6 +43,7 @@ class XFormParsingTest(SimpleTestCase, TestXmlMixin):
 
 
 class ItextValueTest(SimpleTestCase):
+
     def _test(self, escaped_itext, expected):
         itext_value = ItextValue.from_node(
             WrappedNode(

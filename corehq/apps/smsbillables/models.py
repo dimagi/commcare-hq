@@ -2,11 +2,7 @@ from collections import namedtuple
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-
-from twilio import TwilioRestException
-from twilio.rest import TwilioRestClient
 
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
@@ -18,7 +14,10 @@ from corehq.apps.sms.models import (
     SQLMobileBackend,
 )
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
-from corehq.apps.smsbillables.utils import log_smsbillables_error
+from corehq.apps.smsbillables.utils import (
+    get_twilio_message,
+    log_smsbillables_error,
+)
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException, RetryBillableTaskException
@@ -75,27 +74,27 @@ class SmsGatewayFeeCriteria(models.Model):
             for criteria in criteria_list:
                 if national_number.startswith(criteria.prefix):
                     return criteria
-            raise ObjectDoesNotExist
+            raise cls.DoesNotExist
 
         try:
             return get_criteria_with_longest_matching_prefix(
                 list(all_possible_criteria.filter(country_code=country_code, backend_instance=backend_instance))
             )
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=backend_instance)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return get_criteria_with_longest_matching_prefix(
                 list(all_possible_criteria.filter(country_code=country_code, backend_instance=None))
             )
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=None)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
 
         return None
@@ -199,11 +198,11 @@ class SmsUsageFeeCriteria(models.Model):
 
         try:
             return all_possible_criteria.get(domain=domain)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(domain=None)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
 
         return None
@@ -324,7 +323,6 @@ class SmsBillable(models.Model):
             direction=direction,
             date_sent=message_log.date,
             domain=domain,
-            multipart_count=multipart_count,
         )
 
         gateway_charge_info = cls._get_gateway_fee(
@@ -334,6 +332,9 @@ class SmsBillable(models.Model):
         billable.gateway_fee = gateway_charge_info.gateway_fee
         billable.gateway_fee_conversion_rate = gateway_charge_info.conversion_rate
         billable.direct_gateway_fee = gateway_charge_info.direct_gateway_fee
+        billable.multipart_count = cls._get_multipart_count(
+            message_log.backend_api, message_log.backend_id, message_log.backend_message_id, multipart_count
+        )
         billable.usage_fee = cls._get_usage_fee(domain, direction)
 
         if message_log.backend_api == SQLTestSMSBackend.get_api_id():
@@ -341,6 +342,17 @@ class SmsBillable(models.Model):
 
         billable.save()
         return billable
+
+    @classmethod
+    def _get_multipart_count(cls, backend_api_id, backend_instance, backend_message_id, multipart_count):
+        if backend_api_id == SQLTwilioBackend.get_api_id():
+            twilio_message = get_twilio_message(backend_instance, backend_message_id)
+            if twilio_message.num_segments is not None:
+                return int(twilio_message.num_segments)
+            else:
+                raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
+        else:
+            return multipart_count
 
     @classmethod
     def _get_gateway_fee(cls, backend_api_id, backend_instance,
@@ -395,34 +407,15 @@ class SmsBillable(models.Model):
 
     @classmethod
     def _get_twilio_charges(cls, backend_message_id, backend_instance, direction, couch_id):
-        def _get_twilio_client():
-            twilio_backend = SQLMobileBackend.load(
-                backend_instance,
-                api_id=SQLTwilioBackend.get_api_id(),
-                is_couch_id=True,
-                include_deleted=True,
-            )
-            config = twilio_backend.config
-            return TwilioRestClient(config.account_sid, config.auth_token)
-
         if backend_message_id:
-            try:
-                twilio_message = _get_twilio_client().messages.get(backend_message_id)
-            except TwilioRestException:
-                raise RetryBillableTaskException
+            twilio_message = get_twilio_message(backend_instance, backend_message_id)
             if twilio_message.status in [
                 'accepted',
                 'queued',
                 'sending',
                 'receiving',
-            ]:
-                raise RetryBillableTaskException
-            if twilio_message.price is None:
-                log_smsbillables_error(
-                    "price is None: backend_message_id=%s, status=%s"
-                    % (twilio_message.backend_message_id, twilio_message.status)
-                )
-                return _TwilioChargeInfo(None, None)
+            ] or twilio_message.price is None:
+                raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
             return _TwilioChargeInfo(
                 Decimal(twilio_message.price) * -1,
                 SmsGatewayFee.get_by_criteria(

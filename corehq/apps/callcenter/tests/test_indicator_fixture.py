@@ -11,6 +11,7 @@ from django.test import SimpleTestCase
 
 
 class MockIndicatorSet(object):
+
     def __init__(self, name, indicators):
         self.name = name
         self.indicators = indicators
@@ -24,6 +25,7 @@ class MockIndicatorSet(object):
 
 
 class CallcenterFixtureTests(SimpleTestCase):
+
     def test_callcenter_fixture_format(self):
         user = CommCareUser(_id='123')
         indicator_set = MockIndicatorSet(name='test', indicators=OrderedDict([

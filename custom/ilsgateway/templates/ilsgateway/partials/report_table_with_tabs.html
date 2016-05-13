@@ -4,7 +4,7 @@
 
 
 {% if report.needs_filters %}
-    {% include 'reports/bootstrap3/partials/description.html' %}
+    {% include 'reports/partials/description.html' %}
 {% else %}
     <div style="float: left;" class="{{ thisreport.css_class }}">
         <div class="media">
@@ -115,6 +115,7 @@
                 showAllRowsOption: {{ report_table.show_all_rows|JSON }},
                 useBootstrap3: true,
                 paginationType: 'bs_normal',
+                {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
                 loadingTemplateSelector: '#js-template-loading-report'
             });
             if (typeof standardHQReport !== 'undefined') {

@@ -10,6 +10,7 @@ from django_prbac.models import Role
 
 
 class AccToManyField(ToManyField):
+
     def dehydrate(self, bundle, for_list=True):
         related_objects = super(AccToManyField, self).dehydrate(bundle, for_list)
         only_ids = []

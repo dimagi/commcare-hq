@@ -1,3 +1,4 @@
+from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -86,6 +87,7 @@ class LanguageField(forms.CharField):
     """
     Adds language code validation to a field
     """
+
     def __init__(self, *args, **kwargs):
         super(LanguageField, self).__init__(*args, **kwargs)
         self.min_length = 2
@@ -98,6 +100,17 @@ class LanguageField(forms.CharField):
 
 
 class BaseUpdateUserForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        super(BaseUpdateUserForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     @property
     def direct_properties(self):
@@ -184,7 +197,7 @@ class BaseUserInfoForm(forms.Form):
         required=False,
         help_text=mark_safe_lazy(
             ugettext_lazy(
-                "<i class=\"icon-info-sign\"></i> "
+                "<i class=\"fa fa-info-circle\"></i> "
                 "Becomes default language seen in CloudCare and reports (if applicable), "
                 "but does not affect mobile applications. "
                 "Supported languages for reports are en, fr (partial), and hin (partial)."
@@ -278,7 +291,7 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.fields['role'].help_text = _(mark_safe(
-            "<i class=\"icon-info-sign\"></i> "
+            "<i class=\"fa fa-info-circle\"></i> "
             "Only applies to mobile workers that will be entering data using "
             "<a href='https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry'>"
             "CloudCare</a>"
@@ -304,6 +317,20 @@ class RoleForm(forms.Form):
             role_choices = ()
         super(RoleForm, self).__init__(*args, **kwargs)
         self.fields['role'].choices = role_choices
+
+
+class SetUserPasswordForm(SetPasswordForm):
+
+    def __init__(self, *args, **kwargs):
+        super(SetUserPasswordForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
 
 class CommCareAccountForm(forms.Form):
@@ -364,13 +391,7 @@ class CommCareAccountForm(forms.Form):
 
         return self.cleaned_data
 
-import django
-if django.VERSION < (1, 6):
-    from django.core.validators import email_re
-    validate_username = EmailValidator(email_re,
-            ugettext_lazy(u'Username contains invalid characters.'), 'invalid')
-else:
-    validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
+validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
 
 
 _username_help = """
@@ -494,7 +515,7 @@ class MultipleSelectionForm(forms.Form):
             return form
 
         # template.html
-        <script src="{% static 'style/js/bootstrap2/ui-element.js' %}"></script>
+        <script src="{% static 'style/js/bootstrap3/ui-element.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
 
@@ -543,6 +564,7 @@ class MultipleSelectionForm(forms.Form):
 
 
 class SupplyPointSelectWidget(forms.Widget):
+
     def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
@@ -577,6 +599,14 @@ class CommtrackUserForm(forms.Form):
             self.fields['program_id'].choices = choices
         else:
             self.fields['program_id'].widget = forms.HiddenInput()
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self, user):
         location_id = self.cleaned_data['location']
@@ -642,6 +672,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         ) % {'pa_url': reverse('product_agreement')}
 
         from corehq.apps.users.views.mobile import MobileWorkerListView
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -661,10 +693,13 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 crispy.Field('country', css_class="input-large",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
-            crispy.Field('confirm_product_agreement'),
-            FormActions(
+            hqcrispy.B3MultiField(
+                '',
+                crispy.Field('confirm_product_agreement'),
+            ),
+            hqcrispy.FormActions(
                 crispy.HTML(
-                    '<a href="%(user_list_url)s" class="btn">%(text)s</a>' % {
+                    '<a href="%(user_list_url)s" class="btn btn-default">%(text)s</a>' % {
                         'user_list_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
                         'text': _("Back to Mobile Workers List")
                     }
@@ -694,6 +729,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
 
 
 class SelfRegistrationForm(forms.Form):
+
     def __init__(self, *args, **kwargs):
         if 'domain' not in kwargs:
             raise Exception('Expected kwargs: domain')

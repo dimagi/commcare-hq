@@ -60,6 +60,7 @@ SUM_LAST_UNIQUE_INICATORS = [
     SUM_LAST_UNIQUE_CHILD_HEALTH_INDICATORS
 ]
 
+
 class Command(LabelCommand):
     help = "Create the indicator definitions necessary to compute MVP Indicators."
     args = ""
