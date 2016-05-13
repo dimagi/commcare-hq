@@ -155,7 +155,7 @@ class BasicPillow(PillowBase):
     def _get_base_name(cls):
         return cls.__module__
 
-    def processor(self, change, context):
+    def processor(self, change):
         """
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
@@ -318,7 +318,7 @@ class PythonPillow(BasicPillow):
         wait_time = datetime.utcnow() - self.last_processed_time
         return wait_time > timedelta(seconds=PYTHONPILLOW_MAX_WAIT_TIME)
 
-    def processor(self, change, context):
+    def processor(self, change):
         if self.use_chunking:
             self.change_queue.append(change)
             if self.queue_full or self.wait_expired:

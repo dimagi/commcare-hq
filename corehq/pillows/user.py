@@ -57,7 +57,7 @@ class UnknownUsersProcessor(PillowProcessor):
     def __init__(self):
         self._es = get_es_new()
 
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
+    def process_change(self, pillow_instance, change):
         update_unknown_user_from_form_if_necessary(self._es, change.get_document())
 
 

@@ -85,7 +85,7 @@ class PillowBase(object):
                 if change:
                     try:
                         context.changes_seen += 1
-                        self.processor(change, context)
+                        self.processor(change)
                     except Exception as e:
                         notify_exception(None, u'processor error in pillow {} {}'.format(
                             self.get_name(), e,
@@ -99,7 +99,7 @@ class PillowBase(object):
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
     @abstractmethod
-    def processor(self, change, context):
+    def processor(self, change):
         pass
 
     @abstractmethod
@@ -152,8 +152,8 @@ class ConstructedPillow(PillowBase):
     def get_change_feed(self):
         return self._change_feed
 
-    def processor(self, change, do_set_checkpoint=True):
-        self._processor.process_change(self, change, do_set_checkpoint)
+    def processor(self, change):
+        self._processor.process_change(self, change)
 
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:

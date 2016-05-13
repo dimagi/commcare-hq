@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.test import TestCase
 from pillowtop.feed.couch import change_from_couch_row
-from pillowtop.pillow.interface import PillowRuntimeContext
 
 import sqlalchemy
 from fluff.signals import rebuild_table, indicator_document_updated
@@ -165,8 +164,7 @@ class FluffTest(TestCase):
         for cls in [MockIndicators, MockIndicatorsWithGetters]:
             classname = cls.__name__
             pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
-            pillow.processor(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}),
-                             PillowRuntimeContext())
+            pillow.processor(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}))
             indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
             self.assertIsNotNone(indicator)
             self.assertEqual(10, len(indicator))
@@ -530,8 +528,7 @@ class FluffTest(TestCase):
         for cls in [MockIndicators, MockIndicatorsWithGetters]:
             classname = cls.__name__
             pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
-            pillow.processor(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}),
-                             PillowRuntimeContext())
+            pillow.processor(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}))
             indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
             self.assertIsNotNone(indicator)
 
@@ -539,8 +536,7 @@ class FluffTest(TestCase):
         for cls in [MockIndicators, MockIndicatorsWithGetters]:
             classname = cls.__name__
             pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
-            pillow.processor(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}),
-                             PillowRuntimeContext())
+            pillow.processor(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}))
             indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
             self.assertIsNone(indicator)
 
@@ -556,8 +552,7 @@ class FluffTest(TestCase):
 
         for cls in [MockIndicatorsSql]:
             pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
-            pillow.processor(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}),
-                             PillowRuntimeContext())
+            pillow.processor(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}))
             with self.engine.begin() as connection:
                 rows = connection.execute(sqlalchemy.select([cls._table]))
                 self.assertEqual(rows.rowcount, 6)
@@ -565,8 +560,7 @@ class FluffTest(TestCase):
         doc['doc_type'] = 'MockArchive'
         for cls in [MockIndicatorsSql]:
             pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
-            pillow.processor(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}),
-                             PillowRuntimeContext())
+            pillow.processor(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}))
             with self.engine.begin() as connection:
                 rows = connection.execute(sqlalchemy.select([cls._table]))
                 self.assertEqual(rows.rowcount, 0)

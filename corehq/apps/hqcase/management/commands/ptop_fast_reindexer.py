@@ -12,7 +12,6 @@ from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_sett
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
-from pillowtop.pillow.interface import PillowRuntimeContext
 
 CHUNK_SIZE = 10000
 POOL_SIZE = 15
@@ -245,7 +244,7 @@ class PtopReindexer(NoArgsCommand):
                     if not isinstance(row, Change):
                         assert isinstance(row, dict)
                         row = change_from_couch_row(row)
-                    self.pillow.processor(row, PillowRuntimeContext(do_set_checkpoint=False))
+                    self.pillow.processor(row)
                     break
                 except Exception, ex:
                     retries += 1
