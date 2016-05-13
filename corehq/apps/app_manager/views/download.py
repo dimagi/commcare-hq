@@ -411,7 +411,7 @@ def download_index_files(app, build_profile_id=None):
             app.create_build_files(save=True, build_profile_id=build_profile_id)
             app.save()
         files = [(path[len(prefix):], app.fetch_attachment(path))
-                 for path in app._attachments
+                 for path in app.blobs
                  if _file_needed_for_CCZ(path, prefix, profiles)]
     else:
         files = app.create_all_files().items()
