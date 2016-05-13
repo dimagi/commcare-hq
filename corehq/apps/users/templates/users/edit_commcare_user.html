@@ -37,13 +37,10 @@
                 type: 'POST',
                 dataType: 'json',
                 success: function (response, status, xhr, form) {
-                    form.find('.reset-password-body').html(response.formHTML);
+                    form.find('#user-password').html(response.formHTML);
                     if (response.status == "OK") {
-                        var $alert = $('<p />')
-                                .addClass('alert alert-success')
-                                .text("{% trans 'Password changed successfully' %}");
-                        form.find('.reset-password-body').prepend($alert);
-                        form.find('input').val('');
+
+                        alert_user("{% trans 'Password changed successfully' %}", 'success');
                         ga_track_event("Edit Mobile Worker", "Reset password", "{{couch_user_id|escapejs}}");
                     }
                 },
@@ -156,22 +153,7 @@
         </div>
         {% endif %}
         <div class="tab-pane" id="user-password">
-            <form class="form form-horizontal reset-password-form"
-                  action="{% url "change_password" domain couch_user.user_id %}"
-                  method="post">
-                {% csrf_token %}
-                <fieldset>
-                    <legend>{% trans 'Reset Password' %}</legend>
-                    <div class="reset-password-body">
-                        {% include 'users/partial/reset_password.html' %}
-                    </div>
-                </fieldset>
-                <div class="form-actions">
-                    <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                        <button type="submit" class="btn btn-primary">{% trans 'Reset Password' %}</button>
-                    </div>
-                </div>
-            </form>
+            {% include 'users/partial/reset_password.html' %}
         </div>
         {% if not is_currently_logged_in_user %}
         <div class="tab-pane" id="user-permanent">

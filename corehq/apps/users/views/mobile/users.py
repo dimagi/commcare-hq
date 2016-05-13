@@ -136,7 +136,7 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     @memoized
     def reset_password_form(self):
-        return SetUserPasswordForm(user="")
+        return SetUserPasswordForm(self.domain, self.editable_user_id, user="")
 
     @property
     @memoized
