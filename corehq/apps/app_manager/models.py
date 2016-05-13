@@ -4457,11 +4457,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                                          content_type="image/png")
             return png_data
 
-    def generate_shortened_url(self, url_type):
+    def generate_shortened_url(self, url_type, build_profile_id=None):
         try:
             if settings.BITLY_LOGIN:
                 view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
-                long_url = "{}{}".format(self.url_base, reverse(view_name, args=[self.domain, self._id]))
+                if build_profile_id:
+                    long_url = "{}{}?profile={}".format(
+                        self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
+                    )
+                else:
+                    long_url = "{}{}".format(self.url_base, reverse(view_name, args=[self.domain, self._id]))
                 shortened_url = bitly.shorten(long_url)
             else:
                 shortened_url = None
@@ -4470,23 +4475,32 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         else:
             return shortened_url
 
-    def get_short_url(self):
-        if not self.short_url:
-            self.short_url = self.generate_shortened_url('download_jad')
-            self.save()
-        return self.short_url
-
-    def get_short_odk_url(self, with_media=False):
-        if with_media:
-            if not self.short_odk_media_url:
-                self.short_odk_media_url = self.generate_shortened_url('download_odk_media_profile')
+    def get_short_url(self, build_profile_id=None):
+        if not build_profile_id:
+            if not self.short_url:
+                self.short_url = self.generate_shortened_url('download_jad')
                 self.save()
-            return self.short_odk_media_url
+            return self.short_url
         else:
-            if not self.short_odk_url:
-                self.short_odk_url = self.generate_shortened_url('download_odk_profile')
-                self.save()
-            return self.short_odk_url
+            return self.generate_shortened_url('download_jad', build_profile_id)
+
+    def get_short_odk_url(self, with_media=False, build_profile_id=None):
+        if not build_profile_id:
+            if with_media:
+                if not self.short_odk_media_url:
+                    self.short_odk_media_url = self.generate_shortened_url('download_odk_media_profile')
+                    self.save()
+                return self.short_odk_media_url
+            else:
+                if not self.short_odk_url:
+                    self.short_odk_url = self.generate_shortened_url('download_odk_profile')
+                    self.save()
+                return self.short_odk_url
+        else:
+            if with_media:
+                return self.generate_shortened_url('download_odk_media_profile', build_profile_id)
+            else:
+                return self.generate_shortened_url('download_odk_profile', build_profile_id)
 
     def fetch_jar(self):
         return self.get_jadjar().fetch_jar()
