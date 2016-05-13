@@ -20,7 +20,7 @@ from dimagi.utils.parsing import string_to_datetime
 PagedResult = namedtuple('PagedResult', 'total hits')
 
 
-def get_last_submission_time_for_user(domain, user_ids, datespan):
+def get_last_submission_time_for_users(domain, user_ids, datespan):
     def convert_to_date(date):
         return string_to_datetime(date).date() if date else None
 
@@ -108,10 +108,10 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
         .size(0))
 
     if case_types:
-        case_query = case_query.filter({"terms": {"type.exact": case_types}})
+        case_query = case_query.case_type(case_types)
 
     if owner_ids:
-        case_query = case_query.filter({"terms": {user_field: owner_ids}})
+        case_query = case_query.filter(filters.term(user_field, owner_ids))
 
     return case_query.run().aggregations.by_user.counts_by_bucket()
 
