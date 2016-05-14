@@ -323,6 +323,7 @@ corehq.apps.export:
   - corehq.apps.export
   - corehq.apps.domain
   - corehq.apps.app_manager
+  - corehq.couchapps
   - couchexport
 corehq.apps.callcenter:
   - auditcare

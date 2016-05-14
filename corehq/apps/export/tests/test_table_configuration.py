@@ -208,6 +208,8 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             ]
         )
         submission = {
+            'domain': 'my-domain',
+            '_id': '1234',
             "form": {
                 "q1": "foo",
                 "q2": "bar",
@@ -236,6 +238,8 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             ]
         )
         submission = {
+            'domain': 'my-domain',
+            '_id': '1234',
             'form': {
                 'repeat1': [
                     {'q1': 'foo'},
@@ -275,6 +279,8 @@ class TableConfigurationGetRowsTest(SimpleTestCase):
             ]
         )
         submission = {
+            'domain': 'my-domain',
+            '_id': '1234',
             'form': {
                 'repeat1': [
                     {
@@ -318,7 +324,14 @@ class SplitColumnTest(SimpleTestCase):
             ignore_unspecified_options=False
         )
         doc = {"q1": "a b d"}
-        self.assertEqual(column.get_value(doc, [PathNode(name='form')], split_column=True), [1, None, "b d"])
+        self.assertEqual(column.get_value(
+            'domain',
+            'docid',
+            doc,
+            [PathNode(name='form')],
+            split_column=True),
+            [1, None, "b d"]
+        )
 
     def test_ignore_extas(self):
         column = SplitExportColumn(
@@ -329,7 +342,14 @@ class SplitColumnTest(SimpleTestCase):
             ignore_unspecified_options=True
         )
         doc = {"q1": "a b d"}
-        self.assertEqual(column.get_value(doc, [PathNode(name="form")], split_column=True), [1, None])
+        self.assertEqual(column.get_value(
+            'domain',
+            'docid',
+            doc,
+            [PathNode(name="form")],
+            split_column=True),
+            [1, None],
+        )
 
     def test_basic_get_headers(self):
         column = SplitExportColumn(

@@ -135,7 +135,7 @@ class ExportColumn(DocumentSchema):
     # A transforms that deidentifies the value
     deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
 
-    def get_value(self, doc, base_path, transform_dates=False, row_index=None, split_column=False):
+    def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, split_column=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -301,6 +301,13 @@ class TableConfiguration(DocumentSchema):
         :return: List of ExportRows
         """
         sub_documents = self._get_sub_documents(document, row_number)
+
+        domain = document.get('domain')
+        document_id = document.get('_id')
+
+        assert domain is not None, 'Form or Case must be associated with domain'
+        assert document_id is not None, 'Form or Case must have an id'
+
         rows = []
         for doc_row in sub_documents:
             doc, row_index = doc_row.doc, doc_row.row
@@ -308,6 +315,8 @@ class TableConfiguration(DocumentSchema):
             row_data = []
             for col in self.selected_columns:
                 val = col.get_value(
+                    domain,
+                    document_id,
                     doc,
                     self.path,
                     row_index=row_index,
@@ -1246,6 +1255,8 @@ class SplitUserDefinedExportColumn(ExportColumn):
         doc is a form submission or instance of a repeat group in a submission or case
         """
         value = super(SplitUserDefinedExportColumn, self).get_value(
+            domain,
+            doc_id,
             doc,
             base_path,
             transform_dates=transform_dates
@@ -1300,8 +1311,14 @@ class SplitGPSExportColumn(ExportColumn):
         ]
         return map(lambda header_template: header_template.format(header), header_templates)
 
-    def get_value(self, doc, base_path, row_index=None, split_column=False, transform_dates=False):
-        value = super(SplitGPSExportColumn, self).get_value(doc, base_path, transform_dates=transform_dates)
+    def get_value(self, domain, doc_id, doc, base_path, split_column=False, **kwargs):
+        value = super(SplitGPSExportColumn, self).get_value(
+            domain,
+            doc_id,
+            doc,
+            base_path,
+            **kwargs
+        )
         if not split_column:
             return value
         values = [None] * 4
@@ -1335,14 +1352,14 @@ class SplitExportColumn(ExportColumn):
     item = SchemaProperty(MultipleChoiceItem)
     ignore_unspecified_options = BooleanProperty(default=False)
 
-    def get_value(self, doc, base_path, row_index=None, split_column=False, transform_dates=False):
+    def get_value(self, domain, doc_id, doc, base_path, split_column=False, **kwargs):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
         when base_path is non empty, doc is a repeat group from a form submission.
         doc is a form submission or instance of a repeat group in a submission or case
         """
-        value = super(SplitExportColumn, self).get_value(doc, base_path, transform_dates=transform_dates)
+        value = super(SplitExportColumn, self).get_value(domain, doc_id, doc, base_path, **kwargs)
         if not split_column:
             return value
 
@@ -1389,7 +1406,7 @@ class RowNumberColumn(ExportColumn):
             headers += ["{}__{}".format(self.label, i) for i in range(self.repeat + 1)]
         return headers
 
-    def get_value(self, doc, base_path, transform_dates=False, row_index=None, **kwargs):
+    def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, **kwargs):
         assert row_index, 'There must be a row_index for number column'
         return (
             [".".join([unicode(i) for i in row_index])]
@@ -1402,7 +1419,7 @@ class RowNumberColumn(ExportColumn):
 
 class CaseIndexExportColumn(ExportColumn):
 
-    def get_value(self, doc, **kwargs):
+    def get_value(self, domain, doc_id, doc, **kwargs):
         path = [self.item.path[0].name]  # Index columns always are just a reference to 'indices'
         case_type = self.item.case_type
 
@@ -1447,10 +1464,8 @@ class StockExportColumn(ExportColumn):
                 section=section
             )
 
-    def get_value(self, doc, base_path, **kwargs):
-        case_id = doc.get('_id')
-
-        states = self.accessor.get_ledger_values_for_case(case_id)
+    def get_value(self, domain, doc_id, doc, base_path, **kwargs):
+        states = self.accessor.get_ledger_values_for_case(doc_id)
 
         # use a list to make sure the stock states end up
         # in the same order as the headers
