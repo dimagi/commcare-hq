@@ -20,7 +20,7 @@ class ChangeFeedDbTest(TestCase):
         self.couch_db.save_doc({'_id': doc_id, 'property': 'property_value'})
         pillow.process_changes(since=self.update_seq, forever=False)
 
-        change = self._extract_change_from_call_args(pillow.processor.call_args)
+        change = self._extract_change_from_call_args(pillow.process_change.call_args)
         # validate the structure of the change. some implicit asserts here
         self.assertEqual(doc_id, change['id'])
         doc = change['doc']
@@ -35,7 +35,7 @@ class ChangeFeedDbTest(TestCase):
         self.couch_db.save_doc({'_id': doc_id, 'property': 'property_value'})
         pillow.process_changes(since=self.update_seq, forever=False)
 
-        change = self._extract_change_from_call_args(pillow.processor.call_args)
+        change = self._extract_change_from_call_args(pillow.process_change.call_args)
         self.assertEqual(doc_id, change['id'])
         self.assertTrue(change.get('doc', None) is None)
 
@@ -49,15 +49,15 @@ class ChangeFeedDbTest(TestCase):
         form.save()
         pillow.process_changes(since=self.update_seq, forever=False)
 
-        change = self._extract_change_from_call_args(pillow.processor.call_args)
+        change = self._extract_change_from_call_args(pillow.process_change.call_args)
         self.assertEqual(form._id, change['id'])
         self.assertEqual(form.domain, change['doc']['domain'])
 
     def _apply_mocks_to_pillow(self, pillow):
-        pillow.processor = MagicMock(return_value=True)
+        pillow.process_change = MagicMock(return_value=True)
 
     def _extract_change_from_call_args(self, call_args):
         ordered_args, keyword_args = call_args
-        self.assertEqual(2, len(ordered_args))
+        self.assertEqual(1, len(ordered_args))
         self.assertEqual(0, len(keyword_args))
         return ordered_args[0]

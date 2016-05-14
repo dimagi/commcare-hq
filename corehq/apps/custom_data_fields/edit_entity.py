@@ -125,8 +125,8 @@ class CustomDataEditor(object):
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
-        CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-sm-3 col-md-2'
-        CustomDataForm.helper.field_class = 'col-sm-8' if self.angular_model else 'col-sm-9 col-md-8 col-lg-6'
+        CustomDataForm.helper.label_class = 'col-sm-4'
+        CustomDataForm.helper.field_class = 'col-sm-8'
         if field_names:  # has custom data
             CustomDataForm.helper.layout = Layout(
                 Fieldset(_("Additional Information"), *field_names),
@@ -152,20 +152,20 @@ class CustomDataEditor(object):
     def uncategorized_form(self):
 
         def FakeInput(val):
-            return HTML(u'<p class="form-control-static">{}</p>'
+            return HTML(u'<span class="input-xlarge uneditable-input">{}</span>'
                         .format(val))
 
         def Label(val):
-            return HTML('<label class="control-label col-sm-3 col-md-2">{}</label>'.format(val))
+            return HTML('<label class="control-label">{}</label>'.format(val))
 
         def _make_field_div(slug, val):
             return Div(
                 Label(slug),
                 Div(
                     FakeInput(val),
-                    css_class="controls col-sm-9 col-md-8 col-lg-6",
+                    css_class="controls",
                 ),
-                css_class="form-group",
+                css_class="control-group",
             )
 
         fields = [f.slug for f in self.model.get_fields()]
@@ -188,7 +188,7 @@ class CustomDataEditor(object):
             _("Unrecognized Information"),
             Div(
                 HTML(msg),
-                css_class="alert alert-danger",
+                css_class="alert alert-error",
             ),
             *help_div
         ) if len(help_div) else HTML('')

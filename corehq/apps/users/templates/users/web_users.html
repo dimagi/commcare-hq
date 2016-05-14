@@ -368,7 +368,7 @@
                                     {{ invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil }} remaining
                                 </span>
                                 {% else %}
-                                <span class="label label-danger">
+                                <span class="label label-important">
                                      {% trans "Expired" %}
                                 </span>
                                 {% endif %}
