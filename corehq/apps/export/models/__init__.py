@@ -1,6 +1,7 @@
 from .deprecated import QuestionMeta, FormQuestionSchema
 from .new import (
     ExportItem,
+    DocRow,
     ExportColumn,
     RowNumberColumn,
     CaseIndexExportColumn,
