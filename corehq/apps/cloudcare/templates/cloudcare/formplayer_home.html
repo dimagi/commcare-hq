@@ -164,9 +164,9 @@
         </div>
 
         <table>
-            <col width="300px" />
-            <col width="300px" />
-            <col width="300px" />
+            <col width="300px"/>
+            <col width="300px"/>
+            <col width="300px"/>
             <tbody></tbody>
         </table>
     </script>
@@ -209,7 +209,10 @@
         <p id="title"><% title %></p>
         <table class="table table-hover table-striped table-bordered">
             <thead>
-            <tr id="case-list-header">
+            <tr>
+                <% _.each(headers, function(header) { %>
+                    <td> <%= header %></td>
+                <% }); %>
             </tr>
             </thead>
             <tbody>
@@ -218,7 +221,9 @@
     </script>
 
     <script type="text/template" id="case-view-item">
-        <td><%- data %></td>
+        <% _.each(data, function(datum) { %>
+            <td> <%= datum %></td>
+        <% }); %>
     </script>
 
     <script type="text/template" id="detail-view-list">
@@ -245,7 +250,7 @@
                     <p>Some text in the modal.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Select</button>
+                    <button type="button" class="btn btn-default" id="select-case" data-dismiss="modal">Select</button>
                 </div>
             </div>
 

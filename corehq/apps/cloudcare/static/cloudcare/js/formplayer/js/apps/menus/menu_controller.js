@@ -50,7 +50,15 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             var menuListView = new MenuList.DetailListView({
                 collection: detailCollection,
             });
+
+            var selectCase = function(){
+                FormplayerFrontend.trigger("menu:select", model._index, model.options.model.collection.appId);
+            };
+
             $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
+            $('#select-case').click(function (){
+                selectCase();
+            });
             $('#case-detail-modal').modal('toggle');
         },
     };

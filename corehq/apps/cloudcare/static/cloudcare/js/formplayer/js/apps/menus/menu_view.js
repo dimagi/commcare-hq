@@ -57,6 +57,12 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
             e.preventDefault();
             FormplayerFrontend.trigger("app:show:detail", this);
         },
+
+        templateHelpers: function () {
+            return {
+                data: this.options.model.attributes.data
+            };
+        },
     });
 
     MenuList.CaseListView = Marionette.CompositeView.extend({
@@ -65,19 +71,11 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         childView: MenuList.CaseView,
         childViewContainer: "tbody",
 
-        onRender: function(){
-            var headerHtml = ""
-            var headers = this.options.headers;
-            for(var i=0; i < headers.length; i++) {
-                headerHtml += "<td>" + headers[i] + "</td>";
-            }
-            this.options.headerHtml = headerHtml;
-            $("#case-list-header").append(headerHtml);
-        },
-
         templateHelpers: function () {
             return {
-                title: this.options.collection.title
+                title: this.options.collection.title,
+                headers: this.options.headers,
+                widthHints: this.options.widthHints,
             };
         },
     });

@@ -60,7 +60,7 @@ FormplayerFrontend.reqres.setHandler('currentApp', function (app_id) {
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     var loadSession = function () {
 
-        $('#app-container').html("");
+        $('#main-region').html("");
 
         data.onLoading = tfLoading;
         data.onLoadingComplete = tfLoadingComplete;
@@ -95,7 +95,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
                         message = translatedStrings.unknownError + status + " " + resp.status;
                         if (resp.status === 0) {
                             message = (message + ". "
-                            + translatedStrings.unknownErrorDetail + " (" + submitUrl + ")");
+                            + translatedStrings.unknownErrorDetail + " (" + postUrl + ")");
                         }
                     }
                     data.onerror({message: message});
