@@ -190,7 +190,7 @@
     </script>
 
     <script type="text/template" id="menu-view-item-audio">
-        <td><img style="max-height:50px"
+        <td style="width:60px"><img style="max-height:50px"
                  src="<%- imageUrl ? imageUrl : '{% static 'cloudcare/images/avatar_form.png' %}' %>"/></td>
         <td><%- displayText ? displayText : "" %></td>
         <td>
@@ -201,7 +201,8 @@
     </script>
 
     <script type="text/template" id="menu-view-item">
-        <td><img style="max-height:50px" src="{% static 'cloudcare/images/avatar_form.png' %}"/></td>
+        <td style="width:60px"><img style="max-height:50px"
+                 src="<%- imageUrl ? imageUrl : '{% static 'cloudcare/images/avatar_form.png' %}' %>"/></td>
         <td><%- displayText ? displayText : "" %></td>
     </script>
 
