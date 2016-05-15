@@ -1,9 +1,8 @@
 hqDefine('app_manager/js/supported-languages.js', function () {
-    function Language(langcode, deploy, languages) {
+    function Language(langcode, languages) {
         var self = this;
-        this.langcode = ko.observable(deploy === undefined ? '' : langcode);
-        this.originalLangcode = ko.observable(deploy === undefined ? '' : langcode);
-        this.deploy = ko.observable(deploy === undefined ? true : deploy);
+        this.langcode = ko.observable(langcode);
+        this.originalLangcode = ko.observable(langcode);
         this.message_content = ko.observable('');
         this.show_error = ko.observable();
         this.languages = languages;
@@ -32,7 +31,6 @@ hqDefine('app_manager/js/supported-languages.js', function () {
     }
     function SupportedLanguages(options) {
         var langs = options.langs;
-        var buildLangs = options.buildLangs;
         var saveURL = options.saveURL;
         var validate = options.validate;
         var self = this;
@@ -62,13 +60,9 @@ hqDefine('app_manager/js/supported-languages.js', function () {
                     }
                 }
                 var langs = [];
-                var buildLangs = [];
                 var rename = {};
                 ko.utils.arrayForEach(self.languages(), function (language) {
                     langs.push(language.langcode());
-                    if (language.deploy()) {
-                        buildLangs.push(language.langcode());
-                    }
                     if (language.originalLangcode()) {
                         rename[language.originalLangcode()] = language.langcode();
                     }
@@ -80,7 +74,6 @@ hqDefine('app_manager/js/supported-languages.js', function () {
                     data: ko.toJSON({
                         langs: langs,
                         rename: rename,
-                        build: buildLangs
                     }),
                     success: function (data) {
                         var i;
@@ -105,10 +98,9 @@ hqDefine('app_manager/js/supported-languages.js', function () {
 
         this.languages = ko.observableArray([]);
         this.removedLanguages = ko.observableArray([]);
-        function newLanguage(langcode, deploy) {
-            var language = new Language(langcode, deploy, self.languages);
+        function newLanguage(langcode) {
+            var language = new Language(langcode, self.languages);
             language.langcode.subscribe(changeSaveButton);
-            language.deploy.subscribe(changeSaveButton);
             language.langcode.subscribe(function () { self.validateLanguage(language); });
             return language;
         }
@@ -126,8 +118,7 @@ hqDefine('app_manager/js/supported-languages.js', function () {
             self.languages.push(language);
         };
         for (var i = 0; i < langs.length; i += 1) {
-            var deploy = buildLangs.indexOf(langs[i]) !== -1;
-            var language = newLanguage(langs[i], deploy);
+            var language = newLanguage(langs[i]);
             self.languages.push(language);
         }
         this.languages.subscribe(changeSaveButton);
@@ -143,15 +134,6 @@ hqDefine('app_manager/js/supported-languages.js', function () {
             }
             if (!self.languages().length) {
                 message = "You must have at least one language";
-            }
-            var totalDeploy = 0;
-            for (var i = 0; i < self.languages().length; i++) {
-                if (self.languages()[i].deploy()) {
-                    totalDeploy++;
-                }
-            }
-            if (!message && !totalDeploy) {
-                message = "You must deploy at least one language";
             }
             return message;
         };

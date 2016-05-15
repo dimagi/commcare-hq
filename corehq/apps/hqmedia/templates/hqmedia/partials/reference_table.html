@@ -1,6 +1,13 @@
 {% load i18n %}
 <div class="panel panel-default" data-bind="visible: {{ show_refs }}">
     <div class="panel-heading">
+        <!-- TODO: test / pick one -->
+        <!--h3 data-toggle="collapse" data-bind="attr: { href: '#' + id + '-{{ this_accordion }}'}">
+            <i class="fa fa-angle-double-down"></i> {{ title }}
+        </h3>
+    </div>
+    <div class="panel-collapse collapse in"
+            data-bind="attr: { id: id + '-{{ this_accordion }}' }"-->
         <h3 class="panel-title">
             <a class="accordion-toggle"
                  data-toggle="collapse"
@@ -28,7 +35,8 @@
                     <td><a data-toggle="modal"
                             data-bind="text: upload_button_text,
                                        attr: { class: upload_button_class, href: upload_controller.container },
-                                       click: triggerUpload"></a></td>
+                                       click: triggerUpload">
+                        </a></td>
                     <td><div data-bind="visible: is_matched, template: preview_template"></div></td>
                     <td><code data-bind="text: path"></code></td>
                 </tr>
