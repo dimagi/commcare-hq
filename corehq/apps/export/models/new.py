@@ -945,7 +945,10 @@ class FormExportDataSchema(ExportDataSchema):
     @staticmethod
     def _generate_schema_from_xform(xform, case_updates, langs, app_id, app_version):
         questions = xform.get_questions(langs)
-        repeats = [r['value'] for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat']
+        repeats = [
+            r['value']
+            for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat'
+        ]
         schema = FormExportDataSchema()
         question_keyfn = lambda q: q['repeat']
 
