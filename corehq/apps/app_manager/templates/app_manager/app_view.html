@@ -52,7 +52,6 @@
             $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
         });
 
-        {% if not app.is_remote_app %}
         $(function () {
             var state = "",
                 $main = $("#releases"),
@@ -87,7 +86,6 @@
                 });
             });
         });
-        {% endif %}
     </script>
     {% include 'app_manager/partials/multimedia_manager_js.html' %}
     {% include 'hqmedia/partials/multimedia_init.html' %}
