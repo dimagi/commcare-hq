@@ -71,11 +71,24 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
         childView: MenuList.CaseView,
         childViewContainer: "tbody",
 
+        ui: {
+            button: '#double-management',
+        },
+
+        events: {
+            'click @ui.button': 'caseListAction'
+        },
+
+        caseListAction: function () {
+            FormplayerFrontend.trigger("menu:select", "action 0", this.options.collection.appId);
+        },
+
         templateHelpers: function () {
             return {
                 title: this.options.collection.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
+                action: this.options.action
             };
         },
     });

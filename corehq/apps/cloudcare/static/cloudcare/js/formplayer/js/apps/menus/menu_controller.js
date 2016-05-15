@@ -17,7 +17,8 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
                 var menuData = {collection: menuResponse,
                     title: menuResponse.title,
                     headers: menuResponse.headers,
-                    widthHints: menuResponse.widthHints};
+                    widthHints: menuResponse.widthHints,
+                    action: menuResponse.action};
                 if (menuResponse.type === "commands") {
                     menuListView = new MenuList.MenuListView(menuData);
                     FormplayerFrontend.regions.main.show(menuListView.render());

@@ -211,18 +211,23 @@
             <thead>
             <tr>
                 <% _.each(headers, function(header) { %>
-                    <td> <%= header %></td>
+                <td> <%= header %></td>
                 <% }); %>
             </tr>
             </thead>
             <tbody>
             </tbody>
         </table>
+        <% if (action) { %>
+        <div>
+            <button type="button" class="btn btn-default" id="double-management"><%= action.text %></button>
+        </div>
+        <% } %>
     </script>
 
     <script type="text/template" id="case-view-item">
         <% _.each(data, function(datum) { %>
-            <td> <%= datum %></td>
+        <td> <%= datum %></td>
         <% }); %>
     </script>
 
