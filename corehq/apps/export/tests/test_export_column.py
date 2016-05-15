@@ -299,3 +299,24 @@ class TestMultiMediaExportColumn(SimpleTestCase):
                 absolute_reverse('download_attachment', args=('my-domain', '1234'))
             )
         )
+
+    def test_get_value_excel_format(self):
+        column = MultiMediaExportColumn(
+            item=MultiMediaItem(
+                path=[PathNode(name='form'), PathNode(name='photo')],
+            ),
+        )
+
+        result = column.get_value(
+            'my-domain',
+            '1234',
+            {'photo': '1234.jpg'},
+            [PathNode(name='form')],
+            transform_dates=True,
+        )
+        self.assertEqual(
+            result,
+            '=HYPERLINK("{}?attachment=1234.jpg")'.format(
+                absolute_reverse('download_attachment', args=('my-domain', '1234'))
+            )
+        )

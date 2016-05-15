@@ -24,6 +24,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.global_request import get_request
+from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
@@ -99,6 +100,8 @@ class ExportItem(DocumentSchema):
                 return GeopointItem.wrap(data)
             elif doc_type == 'CaseIndexItem':
                 return CaseIndexItem.wrap(data)
+            elif doc_type == 'MultiMediaItem':
+                return MultiMediaItem.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export item', doc_type)
         else:
@@ -140,6 +143,8 @@ class ExportColumn(DocumentSchema):
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
         when base_path is non empty, doc is a repeat group from a form submission.
+        :param domain: Domain that the document belongs to
+        :param doc_id: The form submission or case id
         :param doc: A form submission or instance of a repeat group in a submission or case
         :param base_path: The PathNode list to the column
         :param transform_dates: If set to True, will convert dates to be compatible with Excel
@@ -187,6 +192,8 @@ class ExportColumn(DocumentSchema):
 
         if isinstance(item, GeopointItem):
             column = SplitGPSExportColumn(**constructor_args)
+        elif isinstance(item, MultiMediaItem):
+            column = MultiMediaExportColumn(**constructor_args)
         elif isinstance(item, MultipleChoiceItem):
             column = SplitExportColumn(**constructor_args)
         elif isinstance(item, CaseIndexItem):
@@ -250,6 +257,8 @@ class ExportColumn(DocumentSchema):
                 return SplitUserDefinedExportColumn.wrap(data)
             elif doc_type == 'SplitGPSExportColumn':
                 return SplitGPSExportColumn.wrap(data)
+            elif doc_type == 'MultiMediaExportColumn':
+                return MultiMediaExportColumn.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export column', doc_type)
         else:
@@ -731,6 +740,12 @@ class GeopointItem(ExportItem):
     """
 
 
+class MultiMediaItem(ExportItem):
+    """
+    An item that references multimedia
+    """
+
+
 class Option(DocumentSchema):
     """
     This object represents a multiple choice question option.
@@ -869,6 +884,9 @@ class FormExportDataSchema(ExportDataSchema):
     datatype_mapping = defaultdict(lambda: ScalarItem, {
         'MSelect': MultipleChoiceItem,
         'Geopoint': GeopointItem,
+        'Image': MultiMediaItem,
+        'Audio': MultiMediaItem,
+        'Video': MultiMediaItem,
     })
 
     @property
@@ -1247,7 +1265,7 @@ class SplitUserDefinedExportColumn(ExportColumn):
     )
     user_defined_options = ListProperty()
 
-    def get_value(self, doc, base_path, transform_dates=False, **kwargs):
+    def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, **kwargs):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -1294,6 +1312,29 @@ class SplitUserDefinedExportColumn(ExportColumn):
             )
         )
         return headers
+
+
+class MultiMediaExportColumn(ExportColumn):
+    """
+    A column that will take a multimedia file and transform it to the absolute download URL.
+    If transform_dates is set to True it will render the link with Excel formatting
+    in order to make the link clickable.
+    """
+
+    def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, **kwargs):
+        value = super(MultiMediaExportColumn, self).get_value(domain, doc_id, doc, base_path, **kwargs)
+
+        if not value:
+            return value
+
+        download_url = u'{url}?attachment={attachment}'.format(
+            url=absolute_reverse('download_attachment', args=(domain, doc_id)),
+            attachment=value,
+        )
+        if transform_dates:
+            download_url = u'=HYPERLINK("{}")'.format(download_url)
+
+        return download_url
 
 
 class SplitGPSExportColumn(ExportColumn):
