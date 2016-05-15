@@ -5424,8 +5424,9 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         source = source.export_json()
         source = json.loads(source)
     else:
+        cls = str_to_cls[app_id_or_source['doc_type']]
         # Don't modify original app source
-        app = Application.wrap(deepcopy(app_id_or_source))
+        app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
