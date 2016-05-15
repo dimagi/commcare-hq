@@ -46,7 +46,7 @@ hqDefine('app_manager/js/releases.js', function () {
             if (should_generate_url && !self.generating_url()){
                 self.generating_url(true);
                 $.ajax({
-                    url: base_url + url_type + '/'
+                    url: base_url + url_type + '/?profile=' + self.build_profile()
                 }).done(function(data){
                     var bitly_code = self.parse_bitly_url(data);
                     self[url_type](data);
