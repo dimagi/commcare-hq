@@ -158,7 +158,8 @@ def save_copy(request, domain, app_id):
     track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
-    app.update_mm_map()
+    if not app.is_remote_app():
+        app.update_mm_map()
     try:
         errors = app.validate_app()
     except ModuleIdMissingException:
@@ -260,12 +261,14 @@ def odk_media_qr_code(request, domain, app_id):
 
 
 def short_url(request, domain, app_id):
-    short_url = get_app(domain, app_id).get_short_url()
+    build_profile_id = request.GET.get('profile')
+    short_url = get_app(domain, app_id).get_short_url(build_profile_id=build_profile_id)
     return HttpResponse(short_url)
 
 
 def short_odk_url(request, domain, app_id, with_media=False):
-    short_url = get_app(domain, app_id).get_short_odk_url(with_media=with_media)
+    build_profile_id = request.GET.get('profile')
+    short_url = get_app(domain, app_id).get_short_odk_url(with_media=with_media, build_profile_id=build_profile_id)
     return HttpResponse(short_url)
 
 
@@ -381,7 +384,7 @@ class LanguageProfilesView(View):
 
     def post(self, request, domain, app_id, *args, **kwargs):
         profiles = json.loads(request.body).get('profiles')
-        app = Application.get(app_id)
+        app = get_app(domain, app_id)
         build_profiles = {}
         if profiles:
             for profile in profiles:
