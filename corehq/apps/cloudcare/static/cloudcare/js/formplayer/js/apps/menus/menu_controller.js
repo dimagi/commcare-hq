@@ -2,9 +2,9 @@
 
 FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $, _) {
     MenuList.Controller = {
-        selectMenu: function (appId, stepList) {
+        selectMenu: function (appId, stepList, page) {
 
-            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", appId, stepList);
+            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", appId, stepList, page);
 
             /*
              Determine the next screen to display.  Could be
@@ -18,7 +18,9 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
                     title: menuResponse.title,
                     headers: menuResponse.headers,
                     widthHints: menuResponse.widthHints,
-                    action: menuResponse.action};
+                    action: menuResponse.action,
+                    pageCount: menuResponse.pageCount,
+                    currentPage: menuResponse.currentPage};
                 if (menuResponse.type === "commands") {
                     menuListView = new MenuList.MenuListView(menuData);
                     FormplayerFrontend.regions.main.show(menuListView.render());

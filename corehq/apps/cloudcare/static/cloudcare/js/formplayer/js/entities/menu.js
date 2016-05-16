@@ -26,6 +26,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 this.styles = response.styles;
                 this.headers = response.headers;
                 this.widthHints = response.widthHints;
+                this.currentPage = response.currentPage;
+                this.pageCount = response.pageCount;
                 return response.entities;
             }
             else if(response.tree){
@@ -45,7 +47,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (appId, stepList) {
+        getMenus: function (appId, stepList, page) {
             var menus = new Entities.MenuSelectCollection({
                 domain: FormplayerFrontend.request('currentUser').domain,
                 appId: appId,
@@ -59,6 +61,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "domain": "test",
                         "app_id": collection.appId,
                         "selections": stepList,
+                        "offset": page * 10,
                     });
 
                     if (stepList) {
@@ -89,7 +92,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, stepList) {
-        return API.getMenus(appId, stepList);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, stepList, page) {
+        return API.getMenus(appId, stepList, page);
     });
 });

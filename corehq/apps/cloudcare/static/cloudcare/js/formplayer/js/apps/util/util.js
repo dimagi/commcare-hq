@@ -17,9 +17,15 @@ Util.getQueryParams = function (qs) {
 // Given a URL, return the parameter values (in our case they can only be steps)
 Util.getSteps = function (qs) {
     var urlParams = Util.getQueryParams(qs);
+    var paramMap = {};
     var steps = [];
     for (var i = 0; i < urlParams.length; i++) {
-        steps.push(urlParams[i].v);
+        if (urlParams[i].k.indexOf('step') > -1) {
+            steps.push(urlParams[i].v);
+        } else if(urlParams[i].k.indexOf('page') > -1) {
+            paramMap.page = (urlParams[i].v);
+        }
     }
-    return steps;
+    paramMap.steps = steps;
+    return paramMap;
 };

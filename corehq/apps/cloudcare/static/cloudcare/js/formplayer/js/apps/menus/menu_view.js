@@ -73,14 +73,21 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
 
         ui: {
             button: '#double-management',
+            paginators: '.page-link',
         },
 
         events: {
-            'click @ui.button': 'caseListAction'
+            'click @ui.button': 'caseListAction',
+            'click @ui.paginators': 'paginateAction',
         },
 
         caseListAction: function () {
             FormplayerFrontend.trigger("menu:select", "action 0", this.options.collection.appId);
+        },
+
+        paginateAction: function (e) {
+            var pageSelection = $(e.currentTarget).data("id");
+            FormplayerFrontend.trigger("menu:paginate", pageSelection, this.options.collection.appId);
         },
 
         templateHelpers: function () {
@@ -88,7 +95,9 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
                 title: this.options.collection.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
-                action: this.options.action
+                action: this.options.action,
+                currentPage: this.options.currentPage,
+                pageCount: this.options.pageCount,
             };
         },
     });

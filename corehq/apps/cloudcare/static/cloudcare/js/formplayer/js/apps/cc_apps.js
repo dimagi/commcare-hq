@@ -24,14 +24,16 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
         listMenus: function (appId) {
             FormplayerFrontend.request("clearForm");
             var currentFragment = Backbone.history.getFragment();
-            var steps = Util.getSteps(currentFragment);
+            var paramMap = Util.getSteps(currentFragment);
+            var steps = paramMap.steps;
+            var page = paramMap.page || 0;
             if (steps && steps.length > 0) {
-                AppSelect.MenuList.Controller.selectMenu(appId, steps);
+                AppSelect.MenuList.Controller.selectMenu(appId, steps, page);
             } else {
                 AppSelect.MenuList.Controller.selectMenu(appId);
             }
         },
-        showDetail: function(model) {
+        showDetail: function (model) {
             AppSelect.MenuList.Controller.showDetail(model);
         },
     };
@@ -61,6 +63,16 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
             newAddition = "/menu?step=" + index;
         } else {
             newAddition = "&step=" + index;
+        }
+        FormplayerFrontend.navigate(oldRoute + newAddition);
+        API.listMenus(appId);
+    });
+
+    FormplayerFrontend.on("menu:paginate", function (index, appId) {
+        var newAddition = "&page=" + index;
+        var oldRoute = Backbone.history.getFragment();
+        if (oldRoute.indexOf('page') > 0) {
+            oldRoute = oldRoute.substring(0, oldRoute.indexOf('&page'));
         }
         FormplayerFrontend.navigate(oldRoute + newAddition);
         API.listMenus(appId);
