@@ -206,10 +206,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     # Pass form for Copy Application to template
     domain_names = [d.name for d in Domain.active_for_user(request.couch_user)]
     domain_names.sort()
+    toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
+    if copy_app_form is None:
+        copy_app_form = CopyApplicationForm(app_id, export_zipped_apps_enabled=toggle_enabled)
     context.update({
-        'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id),
+        'copy_app_form': copy_app_form,
         'domain_names': domain_names,
-        'export_apps_toggle': toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username),
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]

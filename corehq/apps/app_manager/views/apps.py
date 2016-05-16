@@ -271,8 +271,8 @@ def app_source(request, domain, app_id):
 
 
 @require_can_edit_apps
-def copy_app_check_domain(request, domain, name, app_id):
-    app_copy = import_app_util(app_id, domain, {'name': name})
+def copy_app_check_domain(request, domain, name, app_id_or_source):
+    app_copy = import_app_util(app_id_or_source, domain, {'name': name})
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
@@ -281,7 +281,16 @@ def copy_app(request, domain):
     app_id = request.POST.get('app')
     form = CopyApplicationForm(app_id, request.POST)
     if form.is_valid():
-        return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
+        gzip = request.FILES.get('gzip')
+        if gzip:
+            with zipfile.ZipFile(gzip, 'r', zipfile.ZIP_DEFLATED) as z:
+                source = z.read(z.filelist[0].filename)
+            app_id_or_source = source
+        else:
+            app_id_or_source = app_id
+
+        return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'],
+                                     app_id_or_source)
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
@@ -310,7 +319,6 @@ def app_from_template(request, domain, slug):
 @require_can_edit_apps
 def export_gzip(req, domain, app_id):
     app_json = get_app(None, app_id)
-    #
     fd, fpath = tempfile.mkstemp()
     with os.fdopen(fd, 'w') as tmp:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
@@ -321,25 +329,6 @@ def export_gzip(req, domain, app_id):
     response['Content-Length'] = os.path.getsize(fpath)
     set_file_download(response, app_id)
     return response
-
-
-@require_can_edit_apps
-def import_gzip(request, domain, app_id, template="app_manager/import_app.html"):
-    gzip_file = request.FILES['gzip']
-    with zipfile.ZipFile(gzip_file, 'r', zipfile.ZIP_DEFLATED) as z:
-        source = z.read(z.filelist[0].filename)
-    valid_request = True
-    if not source:
-        messages.error(request, _("You must submit the source data."))
-        valid_request = False
-
-    if not valid_request:
-        return render(request, template, {'domain': domain})
-
-    source = json.loads(source)
-    assert (source is not None)
-    app = import_app_util(source, domain)
-    return back_to_main(request, domain, app_id=app.id)
 
 
 @require_can_edit_apps
