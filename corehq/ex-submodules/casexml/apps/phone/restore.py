@@ -15,8 +15,13 @@ from casexml.apps.phone.exceptions import (
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
-from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
-    get_sync_log_class_by_format
+from casexml.apps.phone.models import (
+    SyncLog,
+    get_properly_wrapped_sync_log,
+    LOG_FORMAT_SIMPLIFIED,
+    get_sync_log_class_by_format,
+    OTARestoreUser,
+)
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml as xml_util
@@ -438,6 +443,7 @@ class RestoreConfig(object):
     """
 
     def __init__(self, project=None, restore_user=None, params=None, cache_settings=None):
+        assert isinstance(restore_user, OTARestoreUser)
         self.project = project
         self.domain = project.name if project else ''
         self.restore_user = restore_user

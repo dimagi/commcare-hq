@@ -3,7 +3,6 @@ from xml.etree.ElementTree import Element
 from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.locations.models import SQLLocation
 from corehq import toggles
-from corehq.apps.fixtures.models import UserFixtureType
 
 
 class LocationSet(object):
@@ -29,11 +28,6 @@ class LocationSet(object):
         return item in self.by_id
 
 
-def fixture_last_modified(restore_user):
-    """Return when the fixture was last modified"""
-    return restore_user.fixture_status(UserFixtureType.LOCATION)
-
-
 def should_sync_locations(last_sync, location_db, restore_user):
     """
     Determine if any locations (already filtered to be relevant
@@ -42,7 +36,7 @@ def should_sync_locations(last_sync, location_db, restore_user):
     if (
         not last_sync or
         not last_sync.date or
-        fixture_last_modified(restore_user) >= last_sync.date
+        restore_user.get_fixture_last_modified() >= last_sync.date
     ):
         return True
 

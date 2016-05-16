@@ -9,6 +9,7 @@ from corehq.apps.fixtures.models import (
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.form_processor.tests import run_with_all_backends
 
@@ -33,14 +34,13 @@ class OtaFixtureTest(TestCase):
             FR_PROVINCES: make_item_lists(FR_PROVINCES, 'burgundy'),
         }
 
-        cls.casexml_user = cls.user.to_casexml_user()
+        cls.restore_user = cls.user.to_ota_restore_user()
 
     @classmethod
     def tearDownClass(cls):
         for group in Group.by_domain(DOMAIN):
             group.delete()
-        for user in CommCareUser.all():
-            user.delete()
+        delete_all_users()
 
         for _, item_list in cls.item_lists.items():
             item_list[0].delete()
@@ -72,37 +72,37 @@ class OtaFixtureTest(TestCase):
 
     @run_with_all_backends
     def test_fixture_gen_v1(self):
-        fixture_xml = generator.get_fixtures(self.casexml_user, version=V1)
+        fixture_xml = generator.get_fixtures(self.restore_user, version=V1)
         self.assertEqual(fixture_xml, [])
 
     @run_with_all_backends
     def test_basic_fixture_generation(self):
-        fixture_xml = generator.get_fixtures(self.casexml_user, version=V2)
+        fixture_xml = generator.get_fixtures(self.restore_user, version=V2)
         self._check_fixture(fixture_xml, item_lists=[SA_PROVINCES, FR_PROVINCES])
 
     @run_with_all_backends
     def test_fixtures_by_group(self):
-        fixture_xml = generator.get_fixtures(self.casexml_user, version=V2, group='case')
+        fixture_xml = generator.get_fixtures(self.restore_user, version=V2, group='case')
         self.assertEqual(list(fixture_xml), [])
 
-        fixture_xml = generator.get_fixtures(self.casexml_user, version=V2, group='standalone')
+        fixture_xml = generator.get_fixtures(self.restore_user, version=V2, group='standalone')
         self._check_fixture(fixture_xml, item_lists=[SA_PROVINCES, FR_PROVINCES])
 
     @run_with_all_backends
     def test_fixtures_by_id(self):
-        fixture_xml = generator.get_fixture_by_id('user-groups', self.casexml_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('user-groups', self.restore_user, version=V2)
         self._check_fixture([fixture_xml])
 
-        fixture_xml = generator.get_fixture_by_id('item-list:sa_provinces', self.casexml_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('item-list:sa_provinces', self.restore_user, version=V2)
         self._check_fixture([fixture_xml], has_groups=False, item_lists=[SA_PROVINCES])
 
-        fixture_xml = generator.get_fixture_by_id('item-list:fr_provinces', self.casexml_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('item-list:fr_provinces', self.restore_user, version=V2)
         self._check_fixture([fixture_xml], has_groups=False, item_lists=[FR_PROVINCES])
 
-        fixture_xml = generator.get_fixture_by_id('user-locations', self.casexml_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('user-locations', self.restore_user, version=V2)
         self.assertIsNone(fixture_xml)
 
-        fixture_xml = generator.get_fixture_by_id('bad ID', self.casexml_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('bad ID', self.restore_user, version=V2)
         self.assertIsNone(fixture_xml)
 
 

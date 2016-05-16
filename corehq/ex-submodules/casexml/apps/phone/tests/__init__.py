@@ -15,7 +15,7 @@ try:
     from .test_xml import *
     from .test_ota_fixtures import OtaFixtureTest
     # uncomment to run performance tests
-    # from .performance_tests import SyncPerformanceTest
+    from .test_performance import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
     # otherwise debugging is a pain

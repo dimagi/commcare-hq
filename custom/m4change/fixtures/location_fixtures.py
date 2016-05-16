@@ -36,7 +36,7 @@ class LocationFixtureProvider(object):
         """
         root = ElementTree.Element('fixture', attrib={
             'id': self.id,
-            'user_id': restore_user._id
+            'user_id': restore_user.user_id
         })
 
         locations_element = ElementTree.Element('locations')

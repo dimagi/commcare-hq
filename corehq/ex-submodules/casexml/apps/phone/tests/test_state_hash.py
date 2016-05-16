@@ -2,15 +2,20 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.phone.models import User, get_properly_wrapped_sync_log
+from casexml.apps.phone.models import OTARestoreUser, get_properly_wrapped_sync_log
 from datetime import datetime
 from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V2
 from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.phone.exceptions import BadStateException
-from casexml.apps.phone.tests.utils import generate_restore_response, \
-    get_exactly_one_wrapped_sync_log, generate_restore_payload
+from casexml.apps.phone.tests.utils import (
+    generate_restore_response,
+    get_exactly_one_wrapped_sync_log,
+    generate_restore_payload,
+    create_restore_user,
+)
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.tests import run_with_all_backends
 
 
@@ -21,9 +26,10 @@ class StateHashTest(TestCase):
         delete_all_cases()
         delete_all_xforms()
         delete_all_sync_logs()
+        delete_all_users()
         self.project = Domain(name='state-hash-tests-project')
-        self.user = User(user_id="state_hash", username="state_hash",
-                         password="changeme", date_joined=datetime(2011, 6, 9))
+        self.project.save()
+        self.user = create_restore_user(domain=self.project.name)
 
         # this creates the initial blank sync token in the database
         generate_restore_payload(self.project, self.user)
@@ -34,9 +40,14 @@ class StateHashTest(TestCase):
         empty_hash = CaseStateHash(EMPTY_HASH)
         wrong_hash = CaseStateHash("thisisntright")
         self.assertEqual(empty_hash, self.sync_log.get_state_hash())
-        response = generate_restore_response(self.project, self.user, self.sync_log.get_id, version=V2)
+        response = generate_restore_response(
+            self.project,
+            self.user,
+            self.sync_log.get_id,
+            version=V2
+        )
         self.assertEqual(200, response.status_code)
-        
+
         try:
             generate_restore_payload(
                 self.project, self.user, self.sync_log.get_id,
