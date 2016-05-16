@@ -92,7 +92,7 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
 
         templateHelpers: function () {
             return {
-                title: this.options.collection.title,
+                title: this.options.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
                 action: this.options.action,
