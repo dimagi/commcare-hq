@@ -301,7 +301,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
 
 
 class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
-    template_name = "userreports/builder_report_type_select.html"
+    template_name = "userreports/reportbuilder/report_type_select.html"
     urlname = 'report_builder_select_type'
     page_title = ugettext_lazy('Select Report Type')
 
@@ -425,7 +425,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
-    template_name = 'userreports/builder_data_source_select.html'
+    template_name = 'userreports/reportbuilder/data_source_select.html'
     page_title = ugettext_lazy('Create Report')
 
     @property
@@ -510,7 +510,7 @@ class EditReportInBuilder(View):
 
 class ConfigureChartReport(ReportBuilderView):
     page_title = ugettext_lazy("Configure Report")
-    template_name = "userreports/partials/report_builder_configure_report.html"
+    template_name = "userreports/reportbuilder/configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = ugettext_lazy("Chart Report: {}")
     report_type = 'chart'
@@ -541,10 +541,6 @@ class ConfigureChartReport(ReportBuilderView):
             'initial_columns': [
                 c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
             ],
-            'filter_property_help_text': _('Choose the property you would like to add as a filter to this report.'),
-            'filter_display_help_text': _('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
-            'filter_format_help_text': _('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
-            'calculation_help_text': _("Column format selection will determine how each row's value is calculated."),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
 

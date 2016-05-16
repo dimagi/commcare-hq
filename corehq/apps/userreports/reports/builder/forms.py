@@ -547,7 +547,7 @@ class ConfigureNewReportBase(forms.Form):
         }
 
         # NOTE: The corresponding knockout view model is defined in:
-        #       templates/userreports/partials/report_builder_configure_report.html
+        #       templates/userreports/reportbuilder/configure_report.html
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
