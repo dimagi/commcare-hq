@@ -1,5 +1,5 @@
 from corehq.apps.products.models import Product
-from corehq.apps.commtrack.fixtures import _simple_fixture_generator
+from corehq.apps.commtrack.fixtures import simple_fixture_generator
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 
@@ -59,7 +59,7 @@ class ProductFixturesProvider(object):
                 key=lambda product: product.code
             )
 
-        return _simple_fixture_generator(
+        return simple_fixture_generator(
             user, self.id, "product", PRODUCT_FIELDS, get_products, last_sync
         )
 

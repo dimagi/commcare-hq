@@ -1,5 +1,5 @@
 from corehq.apps.programs.models import Program
-from corehq.apps.commtrack.fixtures import _simple_fixture_generator
+from corehq.apps.commtrack.fixtures import simple_fixture_generator
 
 PROGRAM_FIELDS = ['name', 'code']
 
@@ -35,7 +35,7 @@ class ProgramFixturesProvider(object):
 
     def __call__(self, user, version, last_sync=None, app=None):
         data_fn = lambda: Program.by_domain(user.domain)
-        return _simple_fixture_generator(user, self.id, "program",
+        return simple_fixture_generator(user, self.id, "program",
                                          PROGRAM_FIELDS, data_fn, last_sync)
 
 program_fixture_generator = ProgramFixturesProvider()

@@ -1,7 +1,7 @@
 from xml.etree import ElementTree
 
 
-def _simple_fixture_generator(user, id, name, fields, data_fn, last_sync=None):
+def simple_fixture_generator(user, id, name, fields, data_fn, last_sync=None):
     """
     Fixture generator used to build commtrack related fixtures such
     as products and programs.
