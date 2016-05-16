@@ -260,12 +260,14 @@ def odk_media_qr_code(request, domain, app_id):
 
 
 def short_url(request, domain, app_id):
-    short_url = get_app(domain, app_id).get_short_url()
+    build_profile_id = request.GET.get('profile')
+    short_url = get_app(domain, app_id).get_short_url(build_profile_id=build_profile_id)
     return HttpResponse(short_url)
 
 
 def short_odk_url(request, domain, app_id, with_media=False):
-    short_url = get_app(domain, app_id).get_short_odk_url(with_media=with_media)
+    build_profile_id = request.GET.get('profile')
+    short_url = get_app(domain, app_id).get_short_odk_url(with_media=with_media, build_profile_id=build_profile_id)
     return HttpResponse(short_url)
 
 
@@ -381,7 +383,7 @@ class LanguageProfilesView(View):
 
     def post(self, request, domain, app_id, *args, **kwargs):
         profiles = json.loads(request.body).get('profiles')
-        app = Application.get(app_id)
+        app = get_app(domain, app_id)
         build_profiles = {}
         if profiles:
             for profile in profiles:
