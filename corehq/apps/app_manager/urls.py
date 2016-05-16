@@ -33,8 +33,7 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^summary/$', AppSummaryView.as_view(), name=AppSummaryView.urlname),
     url(r'^update_build_comment/$', 'update_build_comment',
         name='update_build_comment'),
-    url(r'^copy/gzip$', 'export_gzip', name='gzip_app'),
-    url(r'^copy/import_zipped$', 'import_gzip', name='import_zipped'),
+    url(r'^copy/gzip$', 'export_gzip', name='gzip_app')
 )
 
 urlpatterns = patterns('corehq.apps.app_manager.views',
