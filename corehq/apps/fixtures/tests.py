@@ -14,6 +14,7 @@ from django.test import TestCase, SimpleTestCase
 
 
 class FixtureDataTest(TestCase):
+
     def setUp(self):
         self.domain = 'qwerty'
         self.tag = "district"
@@ -128,6 +129,28 @@ class FixtureDataTest(TestCase):
         self.fixture_ownership = self.data_item.add_user(self.user)
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
+    def test_fixture_removal(self):
+        """
+        An empty fixture list should be generated for each fixture that the
+        use does not have access to (within the domain).
+        """
+
+        self.data_item.remove_user(self.user)
+
+        fixtures = fixturegenerators.item_lists(self.user, V2)
+        self.assertEqual(1, len(fixtures))
+        check_xml_line_by_line(
+            self,
+            """
+            <fixture id="item-list:district" user_id="{}">
+                <district_list />
+            </fixture>
+            """.format(self.user.user_id),
+            ElementTree.tostring(fixtures[0])
+        )
+
+        self.fixture_ownership = self.data_item.add_user(self.user)
+
     def test_get_indexed_items(self):
         with self.assertRaises(FixtureVersionError):
             fixtures = FixtureDataItem.get_indexed_items(self.domain,
@@ -137,6 +160,7 @@ class FixtureDataTest(TestCase):
 
 
 class DBAccessorTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'fixture-dbaccessors'

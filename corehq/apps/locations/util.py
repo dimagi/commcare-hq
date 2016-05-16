@@ -27,6 +27,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
                           if True get only administrative locations
     """
     from .permissions import user_can_edit_location, user_can_view_location
+
     def loc_to_json(loc, project):
         ret = {
             'name': loc.name,
@@ -117,6 +118,7 @@ def get_location_data_model(domain):
 
 
 class LocationExporter(object):
+
     def __init__(self, domain, include_consumption=False, include_ids=False):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)

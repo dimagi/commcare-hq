@@ -15,6 +15,7 @@ class ContextDecorator(object):
     A base class that enables a context manager to also be used as a decorator.
     https://docs.python.org/3/library/contextlib.html#contextlib.ContextDecorator
     """
+
     def __call__(self, fn):
         @wraps(fn)
         def decorated(*args, **kwds):
@@ -48,6 +49,7 @@ class change_log_level(ContextDecorator):
     Temporarily change the log level of a specific logger.
     Can be used as either a context manager or decorator.
     """
+
     def __init__(self, logger, level):
         self.logger = logging.getLogger(logger)
         self.new_level = level
@@ -61,6 +63,7 @@ class change_log_level(ContextDecorator):
 
 
 class require_debug_true(ContextDecorator):
+
     def __enter__(self):
         if not settings.DEBUG:
             raise Exception("This can only be called in DEBUG mode.")

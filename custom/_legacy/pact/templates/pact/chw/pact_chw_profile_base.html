@@ -1,8 +1,8 @@
-{% extends report_base|default:"reports/async/bootstrap2/default.html" %}
+{% extends report_base|default:"reports/async/default.html" %}
 {% load i18n %}
 
 {% block reportcontent %}
-<div class="span11">
+<div class="col-sm-11">
     {% block actor-tab-controller %}
         <h4>{{ user_doc.first_name|title }} {{ user_doc.last_name|title }}</h4>
         <ul class="nav nav-pills">

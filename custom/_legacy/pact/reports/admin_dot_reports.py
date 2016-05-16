@@ -19,6 +19,7 @@ class PactDOTAdminPatientField(PactDOTPatientField):
 COUCH_CHUNK_LIMIT = 500
 COUCH_MAX_LIMIT = 1000
 
+
 class PactDOTAdminReport(GenericTabularReport, CustomProjectReport):
     fields = ['pact.reports.admin_dot_reports.PactDOTAdminPatientField',
               'corehq.apps.reports.filters.dates.DatespanFilter']

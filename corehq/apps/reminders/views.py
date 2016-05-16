@@ -91,6 +91,7 @@ survey_reminders_permission = lambda *args, **kwargs: (
     )
 )
 
+
 def get_project_time_info(domain):
     timezone = get_timezone_for_user(None, domain)
     now = pytz.utc.localize(datetime.utcnow())
@@ -148,7 +149,7 @@ class ScheduledRemindersCalendarView(BaseMessagingSectionView):
                 "next_fire": adjust_next_fire_to_timezone(reminder),
                 "recipient_desc": recipient_desc,
                 "recipient_type": handler.recipient,
-                "case_id": case.get_id if case is not None else None,
+                "case_id": case.case_id if case is not None else None,
                 "case_name": case.name if case is not None else None,
             })
 

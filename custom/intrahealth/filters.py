@@ -46,8 +46,10 @@ class LocationFilter(AsyncLocationFilter):
         context.update(dict(required=self.required))
         return context
 
+
 class FicheLocationFilter(LocationFilter):
     required = 1
+
 
 class RecapPassageLocationFilter(LocationFilter):
     required = 2
@@ -57,6 +59,7 @@ class RecapPassageLocationFilter(LocationFilter):
         context = super(RecapPassageLocationFilter, self).filter_context
         context.update(dict(hierarchy=location_hierarchy_config(self.domain)))
         return context
+
 
 class FRYearFilter(YearFilter):
     label = ugettext_noop(u"Ann\xe9e")

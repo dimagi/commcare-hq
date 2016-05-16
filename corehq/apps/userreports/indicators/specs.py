@@ -3,12 +3,12 @@ from jsonobject import DefaultProperty
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.expressions.getters import TransformedGetter, getter_from_property_reference, \
     transform_from_datatype
-from corehq.apps.userreports.operators import IN_MULTISELECT, EQUAL
+from corehq.apps.userreports.operators import in_multiselect, equal
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 
 
-DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal']
+DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal', 'array']
 
 
 def DataTypeProperty(**kwargs):
@@ -97,7 +97,7 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     select_style = StringProperty(choices=['single', 'multiple'])
 
     def get_operator(self):
-        return IN_MULTISELECT if self.select_style == 'multiple' else EQUAL
+        return in_multiselect if self.select_style == 'multiple' else equal
 
 
 class LedgerBalancesIndicatorSpec(IndicatorSpecBase):

@@ -1,14 +1,12 @@
 import uuid
 from kafka import KafkaConsumer
 from kafka.common import KafkaUnavailableError
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.signals import case_post_save
-from casexml.apps.case.util import post_case_blocks
-from corehq.util.context_managers import drop_connected_signals
+
+from corehq.util.decorators import ContextDecorator
 from corehq.util.test_utils import trap_extra_setup
 from nose.tools import nottest
-import settings
-
+from pillowtop import get_pillow_by_name
+from django.conf import settings
 
 @nottest
 def get_test_kafka_consumer(topic):
@@ -28,19 +26,28 @@ def get_test_kafka_consumer(topic):
 def get_current_kafka_seq(topic):
     consumer = get_test_kafka_consumer(topic)
     # have to get the seq id before the change is processed
-    return consumer.offsets()['fetch'][(topic, 0)]
+    return consumer.offsets()['fetch'].get((topic, 0), 0)
 
 
-def make_a_case(domain, case_id, case_name):
-    # this avoids having to deal with all the reminders code bootstrap
-    with drop_connected_signals(case_post_save):
-        form, cases = post_case_blocks(
-            [
-                CaseBlock(
-                    create=True,
-                    case_id=case_id,
-                    case_name=case_name,
-                ).as_xml()
-            ], domain=domain
-        )
-    return cases[0]
+class process_kafka_changes(ContextDecorator):
+    def __init__(self, pillow_name, topic):
+        self.topic = topic
+        with real_pillow_settings():
+            self.pillow = get_pillow_by_name(pillow_name, instantiate=True)
+
+    def __enter__(self):
+        self.kafka_seq = get_current_kafka_seq(self.topic)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.pillow.process_changes(since=self.kafka_seq, forever=False)
+
+
+class real_pillow_settings(ContextDecorator):
+    def __enter__(self):
+        self._PILLOWTOPS = settings.PILLOWTOPS
+        if not settings.PILLOWTOPS:
+            # assumes HqTestSuiteRunner, which blanks this out and saves a copy here
+            settings.PILLOWTOPS = settings._PILLOWTOPS
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        settings.PILLOWTOPS = self._PILLOWTOPS

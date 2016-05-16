@@ -45,6 +45,7 @@ class CaseAPIResult(object):
     The result of a case API query. Useful for abstracting out the difference
     between an id-only representation and a full_blown one.
     """
+
     def __init__(self, id=None, couch_doc=None, id_only=False, lite=True, sanitize=True):
         self._id = id
         self._couch_doc = couch_doc
@@ -72,7 +73,7 @@ class CaseAPIResult(object):
 
     @property
     def case_json(self):
-        json = self.couch_doc.get_json(lite=self.lite)
+        json = self.couch_doc.to_api_json(lite=self.lite)
         if self.sanitize:
             # This ensures that any None value will be encoded as "" instead of null
             # This fixes http://manage.dimagi.com/default.asp?158655 because mobile chokes on null
@@ -94,6 +95,7 @@ class CaseAPIHelper(object):
     """
     Simple config object for querying the APIs
     """
+
     def __init__(self, domain, status=CASE_STATUS_OPEN, case_type=None, ids_only=False,
                  footprint=False, strip_history=False, filters=None):
         if status not in [CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN]:
@@ -209,6 +211,7 @@ def get_filtered_cases(domain, status, user_id=None, case_type=None,
         return helper.get_owned(user_id)
     else:
         return helper.get_all()
+
 
 class ElasticCaseQuery(object):
     # this class is currently pretty customized to serve exactly

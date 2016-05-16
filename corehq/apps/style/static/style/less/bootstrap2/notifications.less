@@ -1,4 +1,4 @@
-@notifications-icon-size: 36px;
+@notifications-icon-size: 38px;
 
 .notifications-active-icon {
   color: @cc-att-neg-mid;
@@ -9,6 +9,12 @@ ul.notifications-dropdown {
 
   > li a {
     white-space: normal;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-left: 4px solid transparent;
+    &:hover {
+      border-color: @cc-brand-mid;
+    }
   }
 }
 
@@ -25,14 +31,6 @@ ul.notifications-dropdown {
   > .notifications-type {
     line-height: @notifications-icon-size;
     font-size: @notifications-icon-size - 20;
-  }
-
-  > .notifications-unread {
-    position: absolute;
-    top: 0;
-    left: -8px;
-    font-size: 16px;
-    color: @cc-att-neg-mid;
   }
 }
 
@@ -73,9 +71,25 @@ ul.notifications-dropdown {
 }
 
 .notifications-date {
-  color: lighten(@cc-text, 50%);
+  color: lighten(@cc-text, 40%);
+  padding: 2px 0;
 }
 
 .notifications-dropdown > li > a:hover > .notifications-date {
   color: #ffffff;
 }
+
+.notifications-dropdown > li.notifications-unread {
+  background-color: @cc-bg;
+  > a {
+    border-color: @cc-brand-mid;
+  }
+  .notifications-text,
+  .notifications-date {
+    font-weight: bold;
+  }
+  .notifications-date {
+    color: lighten(@cc-text, 30%);
+  }
+}
+

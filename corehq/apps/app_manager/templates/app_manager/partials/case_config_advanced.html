@@ -291,11 +291,11 @@
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
     <div data-bind="with: caseConfigViewModel">
-        <div class="dropdown" data-bind="visible: actionOptions().length">
-            <a href="#" data-toggle="dropdown">
-                <i class="fa fa-plus icon-blue"></i>
+        <div class="btn-group" data-bind="visible: actionOptions().length">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fa fa-plus"></i>
                 <span>{% trans "Add Action" %}</span><span class="caret"></span>
-            </a>
+            </button>
             <ul class="dropdown-menu" role="menu" data-bind="foreach: actionOptions">
                 <!-- ko if: value === 'separator' -->
                 <li class="divider"></li>

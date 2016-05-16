@@ -57,3 +57,4 @@ node_modules/
 /sharedfiles/
 docker/data
 *.lock
+fab/config.py

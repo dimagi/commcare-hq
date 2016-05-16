@@ -1,5 +1,8 @@
 """
-A nose plugin that splits testing into two stages:
+Utilities and plugins for running tests with nose
+
+Django-nose database context to run tests in two phases:
+
  - Stage 1 runs all test that don't require DB access (test that don't inherit
    from TransactionTestCase)
  - Stage 2 runs all DB tests (test that do inherit from TransactionTestCase)
@@ -12,6 +15,8 @@ import logging
 import os
 import sys
 import threading
+import types
+from fnmatch import fnmatch
 from unittest.case import TestCase
 
 import couchlog.signals
@@ -19,9 +24,100 @@ from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from mock import patch, Mock
 from nose.plugins import Plugin
+from django.apps import AppConfig
+from django.conf import settings
 from django_nose.plugin import DatabaseContext
 
+from corehq.tests.optimizer import optimize_apps_for_test_labels
+
 log = logging.getLogger(__name__)
+
+
+class HqTestFinderPlugin(Plugin):
+    """Find tests in all modules within "tests" packages"""
+
+    enabled = True
+
+    INCLUDE_DIRS = [
+        "corehq/ex-submodules/*",
+        "submodules/auditcare-src",
+        "submodules/couchlog-src",
+        "submodules/dimagi-utils-src",
+        "submodules/django-digest-src",
+        "submodules/toggle",
+        "submodules/touchforms-src",
+    ]
+
+    def options(self, parser, env):
+        """Avoid adding a ``--with`` option for this plugin."""
+
+    def configure(self, options, conf):
+        # do not call super (always enabled)
+
+        import corehq
+        abspath = os.path.abspath
+        dirname = os.path.dirname
+        self.hq_root = dirname(dirname(abspath(corehq.__file__)))
+
+    @staticmethod
+    def pathmatch(path, pattern):
+        """Test if globbing pattern matches path
+
+        >>> join = os.path.join
+        >>> match = HqTestFinderPlugin.pathmatch
+        >>> match(join('a', 'b', 'c'), 'a/b/c')
+        True
+        >>> match(join('a', 'b', 'c'), 'a/b/*')
+        True
+        >>> match(join('a', 'b', 'c'), 'a/*/c')
+        True
+        >>> match(join('a'), 'a/*')
+        True
+        >>> match(join('a', 'b', 'c'), 'a/b')
+        >>> match(join('a', 'b', 'c'), 'a/*')
+        >>> match(join('a', 'b', 'c'), 'a/*/x')
+        False
+        >>> match(join('a', 'b', 'x'), 'a/b/c')
+        False
+        >>> match(join('a', 'x', 'c'), 'a/b')
+        False
+
+        :returns: `True` if the pattern matches. `False` if it does not
+                  match. `None` if the match pattern could match, but
+                  has less elements than the path.
+        """
+        parts = path.split(os.path.sep)
+        patterns = pattern.split("/")
+        result = all(fnmatch(part, pat) for part, pat in zip(parts, patterns))
+        if len(patterns) >= len(parts):
+            return result
+        return None if result else False
+
+    def wantDirectory(self, directory):
+        root = self.hq_root + os.path.sep
+        if directory.startswith(root):
+            relname = directory[len(root):]
+            results = [self.pathmatch(relname, p) for p in self.INCLUDE_DIRS]
+            log.debug("want directory? %s -> %s", relname, results)
+            if any(results):
+                return True
+        else:
+            log.debug("ignored directory: %s", directory)
+        return None
+
+    def wantFile(self, path):
+        """Want all .py files in .../tests dir (and all sub-packages)"""
+        pysrc = os.path.splitext(path)[-1] == ".py"
+        if pysrc:
+            parent, base = os.path.split(path)
+            while base and len(parent) > len(self.hq_root):
+                if base == "tests":
+                    return True
+                parent, base = os.path.split(parent)
+
+    def wantModule(self, module):
+        """Want all modules in "tests" package"""
+        return "tests" in module.__name__.split(".")
 
 
 class OmitDjangoInitModuleTestsPlugin(Plugin):
@@ -63,33 +159,6 @@ class OmitDjangoInitModuleTestsPlugin(Plugin):
         return None  # defer to default selector
 
 
-class DjangoMigrationsPlugin(Plugin):
-    """Run tests with Django migrations.
-
-    Migrations are disabled by default. Use the option to enable this
-    plugin (`--with-migrations`) to run tests with migrations.
-    """
-    # Inspired by https://gist.github.com/NotSqrt/5f3c76cd15e40ef62d09
-    # See also https://github.com/henriquebastos/django-test-without-migrations
-
-    name = 'migrations'
-
-    def configure(self, options, conf):
-        super(DjangoMigrationsPlugin, self).configure(options, conf)
-        if not self.enabled:
-            from django.conf import settings
-            settings.MIGRATION_MODULES = DisableMigrations()
-
-
-class DisableMigrations(object):
-
-    def __contains__(self, item):
-        return True
-
-    def __getitem__(self, item):
-        return "notmigrations"
-
-
 class ErrorOnDbAccessContext(object):
     """Ensure that touching a database raises an error."""
 
@@ -98,7 +167,6 @@ class ErrorOnDbAccessContext(object):
 
     def setup(self):
         """Disable database access"""
-        from django.conf import settings
         self.original_db_enabled = settings.DB_ENABLED
         settings.DB_ENABLED = False
 
@@ -127,14 +195,64 @@ class ErrorOnDbAccessContext(object):
 
     def teardown(self):
         """Enable database access"""
-        from django.conf import settings
         settings.DB_ENABLED = self.original_db_enabled
         for cls in self.db_classes:
-            db = loading.get_db(cls._meta.app_label)
-            cls.set_db(db)
+            del cls._db
         couchlog.signals.got_request_exception.connect(
             couchlog.signals.log_request_exception)
         self.db_patch.stop()
+
+
+class AppLabelsPlugin(Plugin):
+    """A plugin that supplies a list of app labels for the db app optimizer
+    """
+    enabled = True
+    user_specified_test_names = []  # globally referenced singleton
+
+    def options(self, parser, env):
+        """Avoid adding a ``--with`` option for this plugin."""
+
+    def configure(self, options, conf):
+        """Do not call super (always enabled)"""
+
+    def loadTestsFromNames(self, names, module=None):
+        if names == ['.'] and os.getcwd() == settings.BASE_DIR:
+            # no user specified names
+            return
+        type(self).user_specified_test_names = names
+
+    @classmethod
+    def get_test_labels(cls, tests):
+        """Get a list of app labels and possibly tests for the db app optimizer
+
+        This should be called after `loadTestsFromNames` has been called.
+        """
+        test_apps = set(app for app in settings.INSTALLED_APPS
+                        if app not in settings.APPS_TO_EXCLUDE_FROM_TESTS
+                        and not app.startswith('django.'))
+        if not cls.user_specified_test_names:
+            return [AppConfig.create(app).label for app in test_apps]
+
+        def iter_names(test):
+            # a.b.c -> a.b.c, a.b, a
+            if isinstance(test.context, type):
+                name = test.context.__module__
+            elif isinstance(test.context, types.ModuleType):
+                name = test.context.__name__
+            else:
+                raise RuntimeError("unknown test type: {!r}".format(test))
+            parts = name.split(".")
+            num_parts = len(parts)
+            for i in range(num_parts):
+                yield ".".join(parts[:num_parts - i])
+
+        labels = set()
+        for test in tests:
+            for name in iter_names(test):
+                if name in test_apps:
+                    labels.add((AppConfig.create(name).label, test.context))
+                    break
+        return list(labels)
 
 
 class HqdbContext(DatabaseContext):
@@ -147,6 +265,10 @@ class HqdbContext(DatabaseContext):
     ``couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner``
     """
 
+    def __init__(self, tests, runner):
+        self.test_labels = AppLabelsPlugin.get_test_labels(tests)
+        super(HqdbContext, self).__init__(tests, runner)
+
     @classmethod
     def verify_test_db(cls, app, uri):
         if '/test_' not in uri:
@@ -158,9 +280,11 @@ class HqdbContext(DatabaseContext):
         return "--collect-only" in sys.argv
 
     def setup(self):
-        from django.conf import settings
         if self.should_skip_test_setup():
             return
+
+        self.optimizer = optimize_apps_for_test_labels(self.test_labels)
+        self.optimizer.__enter__()
 
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
@@ -180,6 +304,7 @@ class HqdbContext(DatabaseContext):
             return
 
         self.blob_db.close()
+        self.optimizer.__exit__(None, None, None)
 
         # delete couch databases
         deleted_databases = []

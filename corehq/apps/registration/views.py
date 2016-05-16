@@ -15,7 +15,9 @@ from django.views.generic.base import TemplateView
 from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
+    track_clicked_signup_on_hubspot
 )
+from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
@@ -70,15 +72,16 @@ def register_user(request):
                             request, form, is_new_user=True)
                     except NameUnavailableException:
                         context.update({
+                            'current_page': {'page_name': _('Oops!')},
                             'error_msg': _('Project name already taken - please try another'),
                             'show_homepage_link': 1
                         })
                         return render(request, 'error.html', context)
 
                 context.update({
-                    'alert_message': _("An email has been sent to %s.") % request.user.username,
                     'requested_domain': requested_domain,
                     'track_domain_registration': True,
+                    'current_page': {'page_name': _('Confirmation Email Sent')},
                 })
                 return render(request, 'registration/confirmation_sent.html', context)
             context.update({'create_domain': form.cleaned_data['create_domain']})
@@ -86,10 +89,14 @@ def register_user(request):
             form = NewWebUserRegistrationForm(
                 initial={'email': prefilled_email, 'create_domain': True})
             context.update({'create_domain': True})
+            meta = get_meta(request)
+            track_clicked_signup_on_hubspot(prefilled_email, request.COOKIES, meta)
 
         context.update({
             'form': form,
-            'legacy_password': getattr(settings, 'ENABLE_DRACONIAN_SECURITY_FEATURES', False),
+            'current_page': {'page_name': _('Create an Account')},
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'is_register_user_experiment': True,
         })
         return render(request, 'registration/create_new_user.html', context)
 
@@ -108,7 +115,10 @@ class RegisterDomainView(TemplateView):
             pending_domains = Domain.active_for_user(request.user, is_active=False)
             if len(pending_domains) > 0:
                 context = get_domain_context()
-                context['requested_domain'] = pending_domains[0]
+                context.update({
+                    'requested_domain': pending_domains[0],
+                    'current_page': {'page_name': _('Confirm Account')},
+                })
                 return render(request, 'registration/confirmation_waiting.html', context)
         return super(RegisterDomainView, self).get(request, *args, **kwargs)
 
@@ -129,6 +139,7 @@ class RegisterDomainView(TemplateView):
             max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
             if reqs_today >= max_req:
                 context.update({
+                    'current_page': {'page_name': _('Oops!')},
                     'error_msg': _(
                         'Number of domains requested today exceeds limit (%d) - contact Dimagi'
                     ) % max_req,
@@ -141,6 +152,7 @@ class RegisterDomainView(TemplateView):
                     request, form, is_new_user=self.is_new_user)
             except NameUnavailableException:
                 context.update({
+                    'current_page': {'page_name': _('Oops!')},
                     'error_msg': _('Project name already taken - please try another'),
                     'show_homepage_link': 1
                 })
@@ -148,9 +160,9 @@ class RegisterDomainView(TemplateView):
 
             if self.is_new_user:
                 context.update({
-                    'alert_message': _("An email has been sent to %s.") % request.user.username,
                     'requested_domain': domain_name,
                     'track_domain_registration': True,
+                    'current_page': {'page_name': _('Confirm Account')},
                 })
                 return render(request, 'registration/confirmation_sent.html', context)
             else:
@@ -202,6 +214,7 @@ def resend_confirmation(request):
                     request.user.get_full_name())
         except Exception:
             context.update({
+                'current_page': {'page_name': _('Oops!')},
                 'error_msg': _('There was a problem with your request'),
                 'error_details': sys.exc_info(),
                 'show_homepage_link': 1,
@@ -209,15 +222,15 @@ def resend_confirmation(request):
             return render(request, 'error.html', context)
         else:
             context.update({
-                'alert_message': _(
-                    "An email has been sent to %s.") % dom_req.new_user_username,
-                'requested_domain': dom_req.domain
+                'requested_domain': dom_req.domain,
+                'current_page': {'page_name': ('Confirmation Email Sent')},
             })
             return render(request, 'registration/confirmation_sent.html',
                 context)
 
     context.update({
-        'requested_domain': dom_req.domain
+        'requested_domain': dom_req.domain,
+        'current_page': {'page_name': _('Resend Confirmation Email')},
     })
     return render(request, 'registration/confirmation_resend.html', context)
 
@@ -240,9 +253,8 @@ def confirm_domain(request, guid=None):
 
     if error is not None:
         context = {
-            'message_title': _('Account not activated'),
-            'message_subtitle': _('Email not yet confirmed'),
             'message_body': error,
+            'current_page': {'page_name': 'Account Not Activated'},
         }
         return render(request, 'registration/confirmation_error.html', context)
 

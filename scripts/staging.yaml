@@ -45,36 +45,21 @@
 trunk: master
 name: autostaging
 branches:
-  - b3-reports-home+TABS
-  - TABS  # Danny 3/31
-  - delete-cloudcare-cloudcare-apps  # Danny 3/29
-  - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
-#  - java-tf-deploy # Ben/Will 1/21/16
-  - show-form-case-refs-in-summary # j$ 1/29
-#  - revamp-multimedia # Jenny 2/16
-  - analytics-retry # Cal 2/18
-  - j2me # j$ 2/23
-  # B3 Changes round 2
-  - b3-reports-data  # BB 2/23
-  - b3-data-import-cases  # BB 2/23
-  - b3-data-lookup-tables  # BB 2/23
-  - b3-reports-home  # BB 2/23
-  # B3 Report Migration branches
-  - import_build-anchor-tag # Nick P 2/29
-  - b3-project-settings-accounting  # Biyeun 3/1
-  - b3-commcare-exchange # biyeun 3/10
-  - report-builder-text # Cal 3/1
-  - certificate-validation # Cal 3/10
-  - login-b3 # Jenny 3/21
-  - knockout-3-3 # Jenny 3/30
-  - fixtures-mobile-fix # GC 3/31
+  - lang-profiles+revamp-multimedia # Jenny 5/13
+  - revamp-multimedia # Jenny 2/16
+  - app-blobs-testing+lang-profiles # Cal 5/4
+  - app-blobs-testing # daniel 4/20
+  - lang-profiles  # Cal 5/4
+  - b3-groups  # Biyeun 4/26
+  - b3-app-multimedia  # Biyeun 4/27
+  - notifications-perms-change # j$ 5/11
+  - calculatedIcons # Sravan 3/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - 2.26-jars # wsp 2.23
+    branches: []
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -88,7 +73,6 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: #[]
-      - TABS  # Danny 3/31
+    branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []

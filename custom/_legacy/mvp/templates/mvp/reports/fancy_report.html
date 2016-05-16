@@ -1,16 +1,14 @@
-{% extends "reports/async/bootstrap3/default.html" %}
+{% extends "reports/async/default.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'mvp/js/mvp.indicatorQueue.js' %}"></script>
-    <script type="text/javascript" src="{% static 'mvp/ko/mvp.async_indicators.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        $(function(){
+        $.when(
+            $.getScript("{% static 'mvp/js/mvp.indicatorQueue.js' %}"),
+            $.getScript("{% static 'mvp/ko/mvp.async_indicators.js' %}")
+        ).done(function () {
 
             $('#mvp_mvis_indicators').asyncIndicators({
                 categories: {{ report|JSON }}

@@ -7,9 +7,12 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, PropertyPathGetterSpec, \
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
-    NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec
+    NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
+    IterationNumberExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
+from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
+    MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
 
@@ -29,6 +32,7 @@ _identity_expression = functools.partial(_simple_expression_generator, IdentityE
 _constant_expression = functools.partial(_simple_expression_generator, ConstantGetterSpec)
 _property_name_expression = functools.partial(_simple_expression_generator, PropertyNameGetterSpec)
 _property_path_expression = functools.partial(_simple_expression_generator, PropertyPathGetterSpec)
+_iteration_number_expression = functools.partial(_simple_expression_generator, IterationNumberExpressionSpec)
 
 
 def _named_expression(spec, context):
@@ -111,8 +115,8 @@ def _dict_expression(spec, context):
 def _add_days_expression(spec, context):
     wrapped = AddDaysExpressionSpec.wrap(spec)
     wrapped.configure(
-        date_expression=ExpressionFactory.from_spec(wrapped.date_expression),
-        count_expression=ExpressionFactory.from_spec(wrapped.count_expression),
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
+        count_expression=ExpressionFactory.from_spec(wrapped.count_expression, context),
     )
     return wrapped
 
@@ -120,8 +124,8 @@ def _add_days_expression(spec, context):
 def _add_months_expression(spec, context):
     wrapped = AddMonthsExpressionSpec.wrap(spec)
     wrapped.configure(
-        date_expression=ExpressionFactory.from_spec(wrapped.date_expression),
-        months_expression=ExpressionFactory.from_spec(wrapped.months_expression),
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
+        months_expression=ExpressionFactory.from_spec(wrapped.months_expression, context),
     )
     return wrapped
 
@@ -129,7 +133,7 @@ def _add_months_expression(spec, context):
 def _month_start_date_expression(spec, context):
     wrapped = MonthStartDateExpressionSpec.wrap(spec)
     wrapped.configure(
-        date_expression=ExpressionFactory.from_spec(wrapped.date_expression),
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
     )
     return wrapped
 
@@ -137,7 +141,7 @@ def _month_start_date_expression(spec, context):
 def _month_end_date_expression(spec, context):
     wrapped = MonthEndDateExpressionSpec.wrap(spec)
     wrapped.configure(
-        date_expression=ExpressionFactory.from_spec(wrapped.date_expression),
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
     )
     return wrapped
 
@@ -145,8 +149,8 @@ def _month_end_date_expression(spec, context):
 def _diff_days_expression(spec, context):
     wrapped = DiffDaysExpressionSpec.wrap(spec)
     wrapped.configure(
-        from_date_expression=ExpressionFactory.from_spec(wrapped.from_date_expression),
-        to_date_expression=ExpressionFactory.from_spec(wrapped.to_date_expression),
+        from_date_expression=ExpressionFactory.from_spec(wrapped.from_date_expression, context),
+        to_date_expression=ExpressionFactory.from_spec(wrapped.to_date_expression, context),
     )
     return wrapped
 
@@ -156,6 +160,57 @@ def _evaluator_expression(spec, context):
     wrapped.configure(
         context_variables={slug: ExpressionFactory.from_spec(expression, context)
                            for slug, expression in wrapped.context_variables.items()}
+    )
+    return wrapped
+
+
+def _get_forms_expression(spec, context):
+    wrapped = FormsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context)
+    )
+    return wrapped
+
+
+def _filter_items_expression(spec, context):
+    wrapped = FilterItemsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context),
+        filter_expression=_make_filter(wrapped.filter_expression, context)
+    )
+    return wrapped
+
+
+def _map_items_expression(spec, context):
+    wrapped = MapItemsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context),
+        map_expression=ExpressionFactory.from_spec(wrapped.map_expression, context)
+    )
+    return wrapped
+
+
+def _reduce_items_expression(spec, context):
+    wrapped = ReduceItemsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context)
+    )
+    return wrapped
+
+
+def _flatten_expression(spec, context):
+    wrapped = FlattenExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context)
+    )
+    return wrapped
+
+
+def _sort_items_expression(spec, context):
+    wrapped = SortItemsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        items_expression=ExpressionFactory.from_spec(wrapped.items_expression, context),
+        sort_expression=ExpressionFactory.from_spec(wrapped.sort_expression, context)
     )
     return wrapped
 
@@ -172,6 +227,7 @@ class ExpressionFactory(object):
         'root_doc': _root_doc_expression,
         'related_doc': _related_doc_expression,
         'iterator': _iterator_expression,
+        'base_iteration_number': _iteration_number_expression,
         'switch': _switch_expression,
         'nested': _nested_expression,
         'dict': _dict_expression,
@@ -181,6 +237,12 @@ class ExpressionFactory(object):
         'month_end_date': _month_end_date_expression,
         'diff_days': _diff_days_expression,
         'evaluator': _evaluator_expression,
+        'get_case_forms': _get_forms_expression,
+        'filter_items': _filter_items_expression,
+        'map_items': _map_items_expression,
+        'reduce_items': _reduce_items_expression,
+        'flatten': _flatten_expression,
+        'sort_items': _sort_items_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 

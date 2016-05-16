@@ -1,10 +1,10 @@
 from couchdbkit import ResourceNotFound
 from django.conf import settings
-from corehq.util.quickcache import quickcache
+from corehq.util.quickcache import skippable_quickcache
 from dimagi.utils.couch.database import get_db
 
 
-@quickcache([], timeout=60)
+@skippable_quickcache([], lambda: settings.UNIT_TESTING, timeout=60)
 def get_indicator_config():
     try:
         doc = get_db().open_doc('INDICATOR_CONFIGURATION')

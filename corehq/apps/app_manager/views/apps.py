@@ -218,16 +218,7 @@ def clear_app_cache(request, domain):
         startkey=[domain],
         limit=1,
     ).all()
-    for is_active in True, False:
-        key = make_template_fragment_key('header_tab', [
-            domain,
-            None,  # tab.org should be None for any non org page
-            ApplicationsTab.view,
-            is_active,
-            request.couch_user.get_id,
-            get_language(),
-        ])
-        cache.delete(key)
+    ApplicationsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
 
 
 def get_apps_base_context(request, domain, app):
@@ -374,16 +365,6 @@ def import_app(request, domain, template="app_manager/import_app.html"):
 @require_deploy_apps
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
-    # redirect old m=&f= urls
-    module_id = request.GET.get('m', None)
-    form_id = request.GET.get('f', None)
-    if module_id or form_id:
-        soft_assert('{}@{}'.format('skelly', 'dimagi.com')).call(
-            False, 'old m=&f= url still in use'
-        )
-        return back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                            form_id=form_id)
-
     return view_generic(request, domain, app_id)
 
 
@@ -490,11 +471,17 @@ def edit_app_langs(request, domain, app_id):
 
 @require_can_edit_apps
 @no_conflict_require_POST
-def edit_app_translations(request, domain, app_id):
+def edit_app_ui_translations(request, domain, app_id):
     params = json_request(request.POST)
     lang = params.get('lang')
     translations = params.get('translations')
     app = get_app(domain, app_id)
+
+    # Workaround for https://github.com/dimagi/commcare-hq/pull/10951#issuecomment-203978552
+    # auto-fill UI translations might have modules.m0 in the update originating from popular-translations docs
+    # since module.m0 is not a UI string, don't update modules.m0 in UI translations
+    translations.pop('modules.m0', None)
+
     app.set_translations(lang, translations)
     response = {}
     app.save(response)
@@ -502,7 +489,7 @@ def edit_app_translations(request, domain, app_id):
 
 
 @require_GET
-def get_app_translations(request, domain):
+def get_app_ui_translations(request, domain):
     params = json_request(request.GET)
     lang = params.get('lang', 'en')
     key = params.get('key', None)
@@ -587,6 +574,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('amplifies_workers', None),
         ('amplifies_project', None),
         ('minimum_use_threshold', None),
+        ('experienced_threshold', None),
         ('use_grid_menus', None),
         ('comment', None),
         ('custom_base_url', None),

@@ -15,6 +15,7 @@ class CaseDbCacheTest(TestCase):
     """
     Tests the functionality of the CaseDbCache object
     """
+
     def setUp(self):
         self.interface = FormProcessorInterface()
 

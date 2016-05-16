@@ -1,14 +1,15 @@
 import mock
+from collections import namedtuple
 from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.export.models import (
     ExportItem,
+    MultipleChoiceItem,
     FormExportDataSchema,
     ExportGroupSchema,
     FormExportInstance,
     TableConfiguration,
-)
-from corehq.apps.export.models.new import (
+    SplitExportColumn,
     PathNode,
     MAIN_TABLE,
     FormExportInstanceDefaults,
@@ -16,10 +17,16 @@ from corehq.apps.export.models.new import (
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
     TOP_MAIN_FORM_TABLE_PROPERTIES
 
+MockRequest = namedtuple('MockRequest', 'domain')
+
 
 @mock.patch(
     'corehq.apps.export.models.new.FormExportInstanceDefaults.get_default_instance_name',
     return_value='dummy-name'
+)
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='my-domain'),
 )
 class TestExportInstanceGeneration(SimpleTestCase):
 
@@ -31,7 +38,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
                 ExportGroupSchema(
                     path=MAIN_TABLE,
                     items=[
-                        ExportItem(
+                        MultipleChoiceItem(
                             path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
                             last_occurrences={cls.app_id: 3},
@@ -57,7 +64,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
             ],
         )
 
-    def test_generate_instance_from_schema(self, _):
+    def test_generate_instance_from_schema(self, _, __):
         """Only questions that are in the main table and of the same version should be shown"""
         build_ids_and_versions = {self.app_id: 3}
         with mock.patch(
@@ -67,6 +74,13 @@ class TestExportInstanceGeneration(SimpleTestCase):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
         self.assertEqual(len(instance.tables), 2)
+
+        index, split_column = instance.tables[0].get_column(
+            [PathNode(name='data'), PathNode(name='question1')],
+            'MultipleChoiceItem',
+            None
+        )
+        self.assertTrue(isinstance(split_column, SplitExportColumn))
 
         selected = filter(
             lambda column: column.selected,
@@ -80,7 +94,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         self.assertEqual(len(selected), 1 + selected_system_props)
         self.assertEqual(len(shown), 1 + selected_system_props)
 
-    def test_generate_instance_from_schema_deleted(self, _):
+    def test_generate_instance_from_schema_deleted(self, _, __):
         """Given a higher app_version, all the old questions should not be shown or selected"""
         build_ids_and_versions = {self.app_id: 4}
         with mock.patch(
@@ -102,7 +116,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         self.assertEqual(len(selected), 0 + selected_system_props)
         self.assertEqual(len(shown), 0 + selected_system_props)
 
-    def test_default_table_names(self, _):
+    def test_default_table_names(self, _, __):
         self.assertEqual(
             FormExportInstanceDefaults.get_default_table_name(MAIN_TABLE),
             "Forms"
@@ -120,6 +134,10 @@ class TestExportInstanceGeneration(SimpleTestCase):
 @mock.patch(
     'corehq.apps.export.models.new.FormExportInstanceDefaults.get_default_instance_name',
     return_value='dummy-name'
+)
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='my-domain'),
 )
 class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
     """Test Instance generation when the schema is made from multiple apps"""
@@ -169,7 +187,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
             ],
         )
 
-    def test_ensure_that_column_is_not_deleted(self, _):
+    def test_ensure_that_column_is_not_deleted(self, _, __):
         """This test ensures that as long as ONE app in last_occurrences is the most recent version then the
         column is still marked as is_deleted=False
         """
@@ -196,7 +214,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
         self.assertEqual(len(selected), 1 + selected_system_props)
         self.assertEqual(len(is_advanced), 0 + advanced_system_props)
 
-    def test_ensure_that_column_is_deleted(self, _):
+    def test_ensure_that_column_is_deleted(self, _, __):
         """If both apps are out of date then, the question is indeed deleted"""
         build_ids_and_versions = {
             self.app_id: 3,
@@ -253,6 +271,10 @@ class TestExportInstance(SimpleTestCase):
         self.assertIsNone(table)
 
 
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='my-domain'),
+)
 class TestExportInstanceFromSavedInstance(TestCase):
 
     @classmethod
@@ -323,7 +345,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
             ],
         )
 
-    def test_export_instance_from_saved(self):
+    def test_export_instance_from_saved(self, _):
         """This test ensures that when we build from a saved export instance that the selection that a user
         makes is still there"""
         first_non_system_property = len(TOP_MAIN_FORM_TABLE_PROPERTIES)
@@ -360,7 +382,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
         # Selection from previous instance should hold the same and not revert to defaults
         self.assertFalse(instance.tables[0].columns[first_non_system_property].selected)
 
-    def test_export_instance_deleted_columns_updated(self):
+    def test_export_instance_deleted_columns_updated(self, _):
         """This test ensures that when building from a saved export that the new instance correctly labels the
         old columns as advanced
         """

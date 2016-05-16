@@ -5,9 +5,13 @@ import uuid
 from PIL import Image
 from django.db import transaction
 from casexml.apps.case.xform import get_case_updates
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import (
+    FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
+)
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
-from corehq.form_processor.change_publishers import publish_form_saved, publish_case_saved
+from corehq.form_processor.change_publishers import (
+    publish_form_saved, publish_case_saved, publish_ledger_v2_saved
+)
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from couchforms.const import ATTACHMENT_NAME
@@ -60,7 +64,7 @@ class FormProcessorSQL(object):
         CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
 
     @classmethod
-    def save_processed_models(cls, processed_forms, cases=None, stock_updates=None):
+    def save_processed_models(cls, processed_forms, cases=None, stock_result=None):
         with transaction.atomic():
             logging.debug('Beginning atomic commit\n')
             # Save deprecated form first to avoid ID conflicts
@@ -72,21 +76,23 @@ class FormProcessorSQL(object):
                 for case in cases:
                     CaseAccessorSQL.save_case(case)
 
-            ledgers_to_save = []
-            for stock_update in stock_updates or []:
-                ledgers_to_save.extend(stock_update.to_save)
+            if stock_result:
+                ledgers_to_save = stock_result.models_to_save
+                LedgerAccessorSQL.save_ledger_values(ledgers_to_save, processed_forms.deprecated)
 
-            LedgerAccessorSQL.save_ledger_values(ledgers_to_save)
-
-        cls._publish_changes(processed_forms, cases)
+        cls._publish_changes(processed_forms, cases, stock_result)
 
     @staticmethod
-    def _publish_changes(processed_forms, cases):
+    def _publish_changes(processed_forms, cases, stock_result):
         # todo: form deprecations?
         publish_form_saved(processed_forms.submitted)
         cases = cases or []
         for case in cases:
             publish_case_saved(case)
+
+        if stock_result:
+            for ledger in stock_result.models_to_save:
+                publish_ledger_v2_saved(ledger)
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
@@ -193,6 +199,7 @@ class FormProcessorSQL(object):
         if case.is_deleted and not found:
             return None
         CaseAccessorSQL.save_case(case)
+        return case
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):
@@ -200,7 +207,13 @@ class FormProcessorSQL(object):
         strategy = SqlCaseUpdateStrategy(case)
 
         rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)
-        strategy.rebuild_from_transactions(transactions, rebuild_transaction)
+        unarchived_form_id = None
+        if detail.type == CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED and not detail.archived:
+            # we're rebuilding because a form was un-archived
+            unarchived_form_id = detail.form_id
+        strategy.rebuild_from_transactions(
+            transactions, rebuild_transaction, unarchived_form_id=unarchived_form_id
+        )
         return case
 
     @staticmethod

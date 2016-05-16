@@ -7,12 +7,12 @@
             $('#confirm-product-agreement').click(function () {
                 var $submit = $('#submit-button-pa'),
                     $helpText = $('#submit-button-help-qa');
-                if ($(this).attr('checked')) {
-                    $submit.removeAttr('disabled');
+                if ($(this).prop('checked')) {
+                    $submit.removeProp('disabled');
                     $submit.removeClass('disabled');
                     $helpText.addClass('hide');
                 } else {
-                    $submit.attr('disabled', 'disabled');
+                    $submit.prop('disabled', true);
                     $submit.addClass('disabled');
                     $helpText.removeClass('hide');
                 }
@@ -31,9 +31,9 @@
         <dt>{% trans 'Monthly Fee' %}</dt>
         <dd>{{ plan.monthly_fee }}</dd>
     </dl>
-    <div class="alert alert-info">
-        <h4>{% trans 'Included each month' %}</h4>
-        <dl class="dl-horizontal">
+    <h4>{% trans 'Included each month' %}</h4>
+    <div class="well well-sm">
+        <dl class="dl-horizontal" style="margin-bottom: 0;">
             {% for rate in plan.rates %}
                 <dt>{{ rate.name }}</dt>
                 <dd>{{ rate.included }}</dd>
@@ -51,7 +51,7 @@
     {% endif %}
     {% if current_plan %}
     <hr />
-    <div class="alert alert-error">
+    <div class="alert alert-danger">
         {% blocktrans with current_plan.name as p %}
         <h4>Note: Continuing will change your current subscription.</h4>
         <p>You are currently subscribed to the <strong>{{ p }} Software Plan</strong></p>
@@ -71,7 +71,7 @@
     {% endif %}
 
     {% for message in downgrade_messages %}
-        <div class="alert alert-info">
+        <div class="alert alert-warning">
             {{ message.message }}
             <ul>
             {% for detail in message.details %}
@@ -82,7 +82,7 @@
     {% endfor %}
     {% if show_community_notice %}
     <div class="form-actions">
-        <a href="{% url 'domain_select_plan' domain %}" class="btn">{% trans 'Select different plan' %}</a>
+        <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
         <a href="{% url 'domain_subscription_view' domain %}" class="btn btn-primary">{% trans 'Stay with Community Plan' %}</a>
     </div>
     {% else %}
@@ -95,8 +95,8 @@
             Clicking the 'Select this Plan' button below will bring you to a page where you can enter basic billing information.
             {% endblocktrans %}
         </p>
-        <p>
-            <label class="checkbox" style="font-weight: bold;">
+        <div class="checkbox">
+            <label  style="font-weight: bold;">
                 <input type="checkbox" id="confirm-product-agreement" name="confirm_legal" />
                 {% url "product_agreement" as pa_url %}
                 {% blocktrans %}
@@ -104,15 +104,19 @@
                     Software Product Subscription Agreement</a>.
                 {% endblocktrans %}
             </label>
-        </p>
+        </div>
         <div class="form-actions">
-            <a href="{% url 'domain_select_plan' domain %}" class="btn">{% trans 'Select different plan' %}</a>
-            <button type="submit" class="btn btn-primary disabled" id="submit-button-pa" disabled="disabled">
-                {% trans 'Select this Plan' %}
-            </button>
-            <p class="help-inline" id="submit-button-help-qa" style="vertical-align: top; margin-top: 5px; margin-bottom: 0px;">
-                Please agree to the Product Subscription Agreement above before continuing.
-            </p>
+            <div class="col-sm-6">
+                <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
+                <button type="submit" class="btn btn-primary disabled" id="submit-button-pa" disabled="disabled">
+                    {% trans 'Select this Plan' %}
+                </button>
+                <span class="label label-info label-lg" id="submit-button-help-qa">
+                    {% blocktrans %}
+                    Please agree to the Product Subscription Agreement above before continuing.
+                    {% endblocktrans %}
+                </span>
+            </div>
         </div>
     </form>
     {% endif %}

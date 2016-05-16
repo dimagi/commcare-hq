@@ -6,7 +6,7 @@ from corehq.util.test_utils import TestFileMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import convert_xform_to_json
-from phonelog.models import UserEntry, DeviceReportEntry, UserErrorEntry
+from phonelog.models import UserEntry, DeviceReportEntry, UserErrorEntry, ForceCloseEntry
 from phonelog.utils import _get_logs
 
 
@@ -21,51 +21,91 @@ class DeviceLogTest(TestCase, TestFileMixin):
         DeviceReportEntry.objects.all().delete()
         UserEntry.objects.all().delete()
         UserErrorEntry.objects.all().delete()
+        ForceCloseEntry.objects.all().delete()
+
+    def assert_properties_equal(self, obj, expected):
+        for prop, value in expected:
+            actual = getattr(obj, prop)
+            msg = ("{}.{} mismatch!\nexpected:\t'{}'\ngot:\t\t'{}'"
+                   .format(obj.__class__.__name__, prop, value, actual))
+            self.assertEqual(actual, value, msg)
 
     @run_with_all_backends
     def test_basic_devicelog(self):
         xml = self.get_xml('devicelog')
         submit_form_locally(xml, 'test-domain')
+        self.assert_device_report_entries()
+        self.assert_user_entries()
+        self.assert_user_error_entries()
+        self.assert_force_close_entries()
 
-        # Assert Device Report Entries
+    def assert_device_report_entries(self):
         self.assertEqual(DeviceReportEntry.objects.count(), 7)
         first = DeviceReportEntry.objects.first()
 
-        self.assertEqual(first.type, 'resources')
-        self.assertEqual(first.domain, 'test-domain')
-        self.assertEqual(first.msg, 'Staging Sandbox: 54cfe6515fc24e3fafa1170b9a7c2a00')
-        self.assertEqual(first.device_id, '351780060530179')
-        self.assertEqual(
-            first.app_version,
-            'CommCare ODK, version "2.15.0"(335344). App v182. CommCare Version 2.15. Build 335344, built on: October-02-2014'
-        )
-        self.assertEqual(first.i, 0)
+        self.assert_properties_equal(first, (
+            ('type', 'resources'),
+            ('domain', 'test-domain'),
+            ('msg', 'Staging Sandbox: 54cfe6515fc24e3fafa1170b9a7c2a00'),
+            ('device_id', '351780060530179'),
+            ('i', 0),
+            ('app_version', 'CommCare ODK, version "2.15.0"(335344). App v182. '
+                            'CommCare Version 2.15. Build 335344, built on: '
+                            'October-02-2014')
+        ))
         self.assertIsNotNone(first.server_date)
         self.assertIsNotNone(first.date)
 
         second = DeviceReportEntry.objects.all()[1]
-        self.assertEqual(second.type, 'user')
-        self.assertEqual(second.username, 'ricatla')
-        self.assertEqual(second.user_id, '428d454aa9abc74e1964e16d3565d6b6')
+        self.assert_properties_equal(second, (
+            ('type', 'user'),
+            ('username', 'ricatla'),
+            ('user_id', '428d454aa9abc74e1964e16d3565d6b6'),
+        ))
 
-        # Assert UserEntries
+    def assert_user_entries(self):
         self.assertEqual(UserEntry.objects.count(), 1)
-        first = UserEntry.objects.first()
+        user_entry = UserEntry.objects.first()
 
-        self.assertIsNotNone(first.xform_id)
-        self.assertEqual(first.i, 0)
-        self.assertEqual(first.user_id, '428d454aa9abc74e1964e16d3565d6b6')
-        self.assertEqual(first.username, 'ricatla')
-        self.assertEqual(first.sync_token, '848609ceef09fa567e98ca61e3b0514d')
+        self.assertIsNotNone(user_entry.xform_id)
+        self.assert_properties_equal(user_entry, (
+            ('i', 0),
+            ('user_id', '428d454aa9abc74e1964e16d3565d6b6'),
+            ('username', 'ricatla'),
+            ('sync_token', '848609ceef09fa567e98ca61e3b0514d'),
+        ))
 
-        # Assert UserErrorEntries
+    def assert_user_error_entries(self):
         self.assertEqual(UserErrorEntry.objects.count(), 2)
         user_error = UserErrorEntry.objects.all()[1]
-        self.assertEqual(user_error.type, 'error-config')
-        self.assertEqual(user_error.user_id, '428d454aa9abc74e1964e16d3565d6b6')
-        self.assertEqual(user_error.version_number, 604)
-        self.assertEqual(user_error.app_id, '36c0bdd028d14a52cbff95bb1bfd0962')
-        self.assertEqual(user_error.expr, '/data/fake')
+        self.assert_properties_equal(user_error, (
+            ('type', 'error-config'),
+            ('user_id', '428d454aa9abc74e1964e16d3565d6b6'),
+            ('version_number', 604),
+            ('app_id', '36c0bdd028d14a52cbff95bb1bfd0962'),
+            ('expr', '/data/fake'),
+            ('context_node', '/data/foo'),
+        ))
+
+    def assert_force_close_entries(self):
+        self.assertEqual(ForceCloseEntry.objects.count(), 1)
+        force_closure = ForceCloseEntry.objects.first()
+
+        self.assert_properties_equal(force_closure, (
+            ('domain', 'test-domain'),
+            ('app_id', '36c0bdd028d14a52cbff95bb1bfd0962'),
+            ('version_number', 15),
+            ('user_id', 'ahelis3q3s0c33ms8r5is7yrei7t02m8'),
+            ('type', 'forceclose'),
+            ('android_version', '6.0.1'),
+            ('device_model', 'Nexus 5X'),
+            ('session_readable', ''),
+            ('session_serialized', 'AAAAAA=='),
+        ))
+        self.assertEqual(force_closure.date.isoformat(), '2016-03-15T07:52:04.573000')
+        self.assertIsNotNone(force_closure.xform_id)
+        self.assertIsNotNone(force_closure.server_date)
+        self.assertIn("java.lang.Exception: exception_text", force_closure.msg)
 
     @run_with_all_backends
     def test_subreports_that_shouldnt_fail(self):

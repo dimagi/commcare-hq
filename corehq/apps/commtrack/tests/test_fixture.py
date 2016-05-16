@@ -23,6 +23,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
 
     def _initialize_product_names(self, count):
         product_names = sorted([self._random_string(20) for _ in range(count)])
+
         def get_product_name():
             for name in product_names:
                 yield name

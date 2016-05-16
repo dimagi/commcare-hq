@@ -1,5 +1,6 @@
 {% extends "pact/patient/pactpatient_base.html" %}
 {% load case_tags %}
+
 {% block patient-tab-container %}
 <script>
     // have to do this here too because this page is loaded asynchronously
@@ -9,6 +10,9 @@
 </script>
 
 <div class="row">
+    {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
+    {# import error on the case details page: http://manage.dimagi.com/default.asp?223100 #}
+    {% include 'cloudcare/includes/touchforms-inline.html' with exclude_jquery_ui_import=True %}
     {% render_case_hierarchy case case_hierarchy_options %}
 </div>
 {% endblock %}

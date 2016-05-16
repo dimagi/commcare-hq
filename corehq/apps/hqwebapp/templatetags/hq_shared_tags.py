@@ -349,6 +349,7 @@ def do_captureas(parser, token):
 
 
 class CaptureasNode(template.Node):
+
     def __init__(self, nodelist, varname):
         self.nodelist = nodelist
         self.varname = varname
@@ -365,9 +366,11 @@ def chevron(value):
     Displays a green up chevron if value > 0, and a red down chevron if value < 0
     """
     if value > 0:
-        return '<span class="glyphicon glyphicon-chevron-up" style="color: #006400;"></span>'
+        return '<span class="fa fa-chevron-up" style="color: #006400;"></span>'
     elif value < 0:
-        return '<span class="glyphicon glyphicon-chevron-down" style="color: #8b0000;"> </span>'
+        return '<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>'
+    else:
+        return ''
 
 
 @register.simple_tag

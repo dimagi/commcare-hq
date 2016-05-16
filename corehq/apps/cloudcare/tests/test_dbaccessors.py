@@ -4,6 +4,7 @@ from corehq.apps.cloudcare.models import ApplicationAccess
 
 
 class DBAccessorsTest(TestCase):
+
     def test_get_application_access_for_domain(self):
         application_access_objects = []
         domain = 'application-access-dbaccessors'

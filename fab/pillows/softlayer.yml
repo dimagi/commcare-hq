@@ -1,4 +1,0 @@
-# fab/pillows/india.yml
----
-include_pillows:
-  - custom.bihar.models.CareBiharFluffPillow

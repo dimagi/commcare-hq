@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/tabular.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -35,7 +35,9 @@
                 defaultRows: {{ report_table.default_rows|default:10 }},
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},
                 showAllRowsOption: {{ report_table.show_all_rows|JSON }},
-                defaultSort: false
+                defaultSort: false,
+                useBootstrap3: true,
+                paginationType: 'bs_normal'
             });
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
@@ -45,9 +47,10 @@
         {% endif %}
 
         $(function() {
-            $('.header-popover').popout({
+            $('.header-popover').popover({
                 trigger: 'hover',
-                placement: 'bottom'
+                placement: 'bottom',
+                container: 'body'
             });
         });
     </script>

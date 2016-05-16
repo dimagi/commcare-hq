@@ -1,4 +1,4 @@
-var charts = (function() {
+hqDefine('reports_core/js/charts.js', function() {
     var fn = {};
     var renderPie = function (config, data, svgSelector) {
         return function () {
@@ -129,6 +129,7 @@ var charts = (function() {
                     });
                 }
             }
+
             var chart = nv.models.multiBarChart()
                 .transitionDuration(350)
                 .reduceXTicks(true)
@@ -136,6 +137,7 @@ var charts = (function() {
                 .showControls(true)
                 .groupSpacing(0.1)
                 .stacked(config.is_stacked || false)
+                .staggerLabels(shouldStaggerXAxis(record))
             ;
 
             d3.select(svgSelector)
@@ -170,6 +172,18 @@ var charts = (function() {
             }
         }
     };
+
+    fn.clear = function(chartContainer) {
+        chartContainer.hide();
+        chartContainer.empty();
+    };
     return fn;
 
-})();
+    function shouldStaggerXAxis(record){
+        // If any label is of more than 18 char length stagger
+        return _.some(record.values, function(value){
+            return value.x.length > 18;
+        });
+    }
+
+});

@@ -142,7 +142,7 @@ def get_start_date():
     start_date = datetime.date.today()
     (_, last_day) = calendar.monthrange(start_date.year, start_date.month)
     # make sure that the start_date does not fall on the first or last day of the month:
-    return start_date.replace(day=min(max(2, start_date.day), last_day-1))
+    return start_date.replace(day=min(max(2, start_date.day), last_day - 1))
 
 
 def arbitrary_domain():
@@ -209,6 +209,7 @@ def create_excess_community_users(domain):
 
 
 class FakeStripeCard(mock.MagicMock):
+
     def __init__(self):
         super(FakeStripeCard, self).__init__()
         self._metadata = {}
@@ -228,6 +229,7 @@ class FakeStripeCard(mock.MagicMock):
 
 
 class FakeStripeCustomer(mock.MagicMock):
+
     def __init__(self, cards):
         super(FakeStripeCustomer, self).__init__()
         self.id = uuid.uuid4().hex.lower()[:25]

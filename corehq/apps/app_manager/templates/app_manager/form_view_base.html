@@ -98,18 +98,78 @@
 
         {% if app.application_version == '2.0' %}
             {% if allow_form_filtering %}
+
+            function formFilterMatches(filter, pattern_matches, substring_matches) {
+                if(typeof(filter) != 'string') {
+                    return false;
+                }
+
+                var result = false;
+                $.each(pattern_matches, function(index, pattern) {
+                    result = result || filter.match(pattern);
+                });
+
+                $.each(substring_matches, function(index, sub) {
+                    result = result || filter.indexOf(sub) != -1;
+                });
+
+                return result;
+            }
+
             var putInRoot = {{ module.put_in_root|BOOL }};
             var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
-            var isModuleFilterEnabled = {{ is_module_filter_enabled|BOOL }};
-            var formFilter = {{ form.form_filter|JSON }};
+            var formFilter = ko.observable({{ form.form_filter|JSON }});
             var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
-            var formFilterAllowed = ko.computed(function () {
-                return ((allOtherFormsRequireACase && form_requires() === 'case' && !putInRoot) ||
-                        isUserCaseInUse || isModuleFilterEnabled);
+
+            var caseXpathPatternMatches = {{ case_xpath_pattern_matches|JSON }};
+            var caseXpathSubstringMatches = {{ case_xpath_substring_matches|JSON }};
+            var userCaseXpathPatternMatches = {{ user_case_xpath_pattern_matches|JSON }};
+            var userCaseXpathSubstringMatches = {{ user_case_xpath_substring_matches|JSON }};
+
+            var formFilterReferencesCase = ko.computed(function() {
+                // We want to determine here if the filter expression references
+                // any case but the user case.
+                var filter = formFilter();
+                if(typeof(filter) != 'string') {
+                    return false;
+                }
+
+                $.each(userCaseXpathSubstringMatches, function(index, sub) {
+                    filter = filter.replace(sub, '');
+                });
+
+                return formFilterMatches(filter, caseXpathPatternMatches, caseXpathSubstringMatches);
             });
+
+            var formFilterReferencesUserCase = ko.computed(function() {
+                return formFilterMatches(formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches);
+            });
+
+            var formFilterErrorMessage = ko.observable();
+
+            var formFilterAllowed = ko.computed(function () {
+                if(!formFilter()) {
+                    return true;
+                }
+
+                moduleUsesCase = (allOtherFormsRequireACase && form_requires() === 'case');
+                if(formFilterReferencesCase() && (!moduleUsesCase || putInRoot)) {
+                    formFilterErrorMessage($('#caseReferenceNotAllowed').html());
+                    return false;
+                }
+
+                if(formFilterReferencesUserCase() && !isUserCaseInUse) {
+                    formFilterErrorMessage($('#userCaseReferenceNotAllowed').html());
+                    return false;
+                }
+
+                return true;
+            });
+
             $('#form-filter').koApplyBindings({
-                    formFilter: ko.observable(formFilter),
+                    formFilter: formFilter,
                     formFilterAllowed: formFilterAllowed,
+                    errorMessages: {notAllowed: formFilterErrorMessage}
             });
             {% endif %}
 

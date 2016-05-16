@@ -17,6 +17,7 @@ CaseIndexInfo = namedtuple(
 
 
 class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'content_stream'])):
+
     @property
     def content_body(self):
         with self.content_stream as stream:
@@ -37,7 +38,7 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_forms(form_ids):
+    def get_forms(form_ids, ordered=False):
         raise NotImplementedError
 
     @abstractmethod
@@ -46,6 +47,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_deleted_form_ids_for_user(domain, user_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_form_ids_in_domain_by_type(domain, type_):
         raise NotImplementedError
 
     @abstractmethod
@@ -85,6 +90,7 @@ class FormAccessors(object):
     """
     Facade for Form DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -101,8 +107,13 @@ class FormAccessors(object):
     def get_form(self, form_id):
         return self.db_accessor.get_form(form_id)
 
-    def get_forms(self, form_ids):
-        return self.db_accessor.get_forms(form_ids)
+    def get_forms(self, form_ids, ordered=False):
+        """
+        :param form_ids: list of form_ids to fetch
+        :type ordered:   True if the list of returned forms should have the same order
+                         as the list of form_ids passed in
+        """
+        return self.db_accessor.get_forms(form_ids, ordered=ordered)
 
     def iter_forms(self, form_ids):
         for chunk in chunked(form_ids, 100):
@@ -112,6 +123,12 @@ class FormAccessors(object):
 
     def form_exists(self, form_id):
         return self.db_accessor.form_exists(form_id)
+
+    def get_all_form_ids_in_domain(self):
+        return self.get_form_ids_in_domain_by_type('XFormInstance')
+
+    def get_form_ids_in_domain_by_type(self, type_):
+        return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, type_)
 
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
@@ -128,8 +145,8 @@ class FormAccessors(object):
     def get_deleted_form_ids_for_user(self, domain, user_id):
         return self.db_accessor.get_deleted_form_ids_for_user(domain, user_id)
 
-    def get_form_ids_for_user(self, domain, user_id):
-        return self.db_accessor.get_form_ids_for_user(domain, user_id)
+    def get_form_ids_for_user(self, user_id):
+        return self.db_accessor.get_form_ids_for_user(self.domain, user_id)
 
     def get_attachment_content(self, form_id, attachment_name):
         return self.db_accessor.get_attachment_content(form_id, attachment_name)
@@ -223,6 +240,7 @@ class CaseAccessors(object):
     """
     Facade for Case DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -323,8 +341,42 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
 
 
 class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
+
     @abstractmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_ledger_value(case_id, section_id, entry_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
+        """
+        :return: List of transactions orderd by date ascending
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_latest_transaction(case_id, section_id, entry_id):
+        raise NotImplementedError\
+
+    @abstractmethod
+    def get_current_ledger_state(case_ids, ensure_form_id=False):
+        """
+        Given a list of case IDs return a dict of all current ledger data of the following format:
+        {
+            "case_id": {
+                "section_id": {
+                     "product_id": StockState,
+                     "product_id": StockState,
+                     ...
+                },
+                ...
+            },
+            ...
+        }
+        """
         raise NotImplementedError
 
 
@@ -332,6 +384,7 @@ class LedgerAccessors(object):
     """
     Facade for Ledger DB access that proxies method calls to SQL or Couch version
     """
+
     def __init__(self, domain=None):
         self.domain = domain
 
@@ -349,3 +402,26 @@ class LedgerAccessors(object):
         return self.db_accessor.get_transactions_for_consumption(
             self.domain, case_id, product_id, section_id, window_start, window_end
         )
+
+    def get_ledger_value(self, case_id, section_id, entry_id):
+        return self.db_accessor.get_ledger_value(case_id, section_id, entry_id)
+
+    def get_ledger_transactions_for_case(self, case_id, section_id=None, entry_id=None):
+        return self.db_accessor.get_ledger_transactions_for_case(case_id, section_id, entry_id)
+
+    def get_latest_transaction(self, case_id, section_id, entry_id):
+        return self.db_accessor.get_latest_transaction(case_id, section_id, entry_id)
+
+    def get_ledger_values_for_case(self, case_id):
+        return self.db_accessor.get_ledger_values_for_case(case_id)
+
+    def get_ledger_values_for_product_ids(self, product_ids):
+        return self.db_accessor.get_ledger_values_for_product_ids(product_ids)
+
+    def get_current_ledger_state(self, case_ids):
+        if not case_ids:
+            return {}
+        return self.db_accessor.get_current_ledger_state(case_ids)
+
+    def get_case_ledger_state(self, case_id, ensure_form_id=False):
+        return self.db_accessor.get_current_ledger_state([case_id], ensure_form_id=ensure_form_id)[case_id]

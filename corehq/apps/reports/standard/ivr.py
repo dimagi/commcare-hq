@@ -29,7 +29,6 @@ import pytz
 from math import ceil
 
 
-
 class CallReport(BaseCommConnectLogReport):
     """
     Displays all calls for the given domain and date range.
@@ -171,7 +170,6 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     slug = 'expected_callbacks'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
-    is_bootstrap3 = True
     
     @property
     def headers(self):

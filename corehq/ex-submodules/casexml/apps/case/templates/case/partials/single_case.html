@@ -74,12 +74,12 @@
                             <th>{% trans "Last Updated" %}</th>
                         </tr>
                     </thead>
-                    {% for product_name, transaction in product_map %}
+                    {% for product_name, stock_state in product_map %}
                     <tr>
                         <td>{{ product_name }}</td>
-                        <td>{{ transaction.stock_on_hand }}</td>
-                        {% if transaction %}
-                        <td><a href="{% url 'render_form_data' case.domain transaction.report.form_id %}">{{ transaction.report.date }}</a></td>
+                        <td>{{ stock_state.stock_on_hand }}</td>
+                        {% if stock_state %}
+                        <td><a href="{% url 'render_form_data' case.domain stock_state.last_modified_form_id %}">{{ stock_state.last_modified_date }}</a></td>
                         {% else %}
                         <td>{% trans "No transaction found" %}</td>
                         {% endif %}
@@ -126,16 +126,16 @@
                                 <span data-bind="text: $root.page_start_num() + '-' + $root.page_end_num() + ' / ' + $root.total_rows()"></span>
                             </div>
                             <div class="dataTables_length">
-                                <select id="page_size_select" size="1" class="form-control" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
+                                <select id="page_size_select" class="form-control" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
                             </div>
 
-                            <div class="pagination pagination-right" data-bind="visible: $root.page_count() > 1">
-                                <ul>
+                            <div class="pull-right" data-bind="visible: $root.page_count() > 1">
+                                <ul class="pagination">
                                     <li>
                                         <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.disp_page_index() > 1, click: $root.prevPage">«</button>
                                     </li>
                                     <li class="active">
-                                        <select size="1" class="form-control" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
+                                        <select class="form-control" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
                                     </li>
                                     <li>
                                         <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.page_end_num() < $root.total_rows(), click: $root.nextPage">»</button>

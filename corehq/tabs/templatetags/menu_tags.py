@@ -4,44 +4,90 @@ from django.utils.safestring import mark_safe
 
 import corehq.apps.style.utils as style_utils
 from corehq.tabs import MENU_TABS
+from corehq.tabs.exceptions import TabClassError, TabClassErrorSummary
+from corehq.tabs.utils import path_starts_with_url
 
 
 register = template.Library()
 
 
 def _get_active_tab(visible_tabs, request_path):
-    for is_active_tab_fn in [
-        lambda t: t.is_active_fast,
-        lambda t: t.is_active,
-        lambda t: t.url and request_path.startswith(t.url),
-    ]:
-        for tab in visible_tabs:
-            if is_active_tab_fn(tab):
-                tab.is_active_tab = True
-                return tab
+    """
+    return the tab that claims the longest matching url_prefix
+
+    if one tab claims
+      '/a/{domain}/data/'
+    and another tab claims
+      '/a/{domain}/data/edit/case_groups/'
+    then the second tab wins because it's a longer match.
+
+    """
+
+    matching_tabs = sorted(
+        (url_prefix, tab)
+        for tab in visible_tabs
+        for url_prefix in tab.url_prefixes
+        if request_path.startswith(url_prefix)
+    )
+
+    if matching_tabs:
+        _, tab = matching_tabs[-1]
+        return tab
+
+
+def get_all_tabs(request, domain, couch_user, project):
+    """
+    instantiate all UITabs, and aggregate all their TabClassErrors (if any)
+    into a single TabClassErrorSummary
+
+    this makes it easy to get a list of all configuration issues
+    and fix them in one cycle
+
+    """
+    all_tabs = []
+    instantiation_errors = []
+    for tab_class in MENU_TABS:
+        try:
+            tab = tab_class(
+                request, domain=domain,
+                couch_user=couch_user, project=project)
+        except TabClassError as e:
+            instantiation_errors.append(e)
+        else:
+            all_tabs.append(tab)
+
+    if instantiation_errors:
+        messages = (
+            '- {}: {}'.format(e.__class__.__name__, e.message)
+            for e in instantiation_errors
+        )
+        summary_message = 'Summary of Tab Class Errors:\n{}'.format('\n'.join(messages))
+        raise TabClassErrorSummary(summary_message)
+    else:
+        return all_tabs
 
 
 class MainMenuNode(template.Node):
+
     def render(self, context):
         request = context['request']
-        current_url_name = context['current_url_name']
         couch_user = getattr(request, 'couch_user', None)
         project = getattr(request, 'project', None)
         domain = context.get('domain')
-        visible_tabs = []
-        for tab_class in MENU_TABS:
-            t = tab_class(
-                request, current_url_name, domain=domain,
-                couch_user=couch_user, project=project)
 
-            t.is_active_tab = False
-            if t.real_is_viewable:
-                visible_tabs.append(t)
+        all_tabs = get_all_tabs(request, domain=domain, couch_user=couch_user,
+                                project=project)
+
+        active_tab = _get_active_tab(all_tabs, request.get_full_path())
+
+        if active_tab:
+            active_tab.is_active_tab = True
+
+        visible_tabs = [tab for tab in all_tabs if tab.should_show()]
 
         # set the context variable in the highest scope so it can be used in
         # other blocks
-        context.dicts[0]['active_tab'] = _get_active_tab(
-            visible_tabs, request.get_full_path())
+        context.dicts[0]['active_tab'] = active_tab
         return mark_safe(render_to_string('tabs/menu_main.html', {
             'tabs': visible_tabs,
         }))
@@ -53,54 +99,20 @@ def format_main_menu(parser, token):
 
 
 @register.simple_tag(takes_context=True)
-def format_subtab_menu(context):
-    active_tab = context.get('active_tab', None)
-    if active_tab and active_tab.subtabs:
-        subtabs = [t for t in active_tab.subtabs if t.is_viewable]
-    else:
-        subtabs = None
-
-    return mark_safe(render_to_string("style/bootstrap2/partials/subtab_menu.html", {
-        'subtabs': subtabs if subtabs and len(subtabs) > 1 else None
-    }))
-
-
-@register.simple_tag(takes_context=True)
 def format_sidebar(context):
     current_url_name = context['current_url_name']
     active_tab = context.get('active_tab', None)
     request = context['request']
 
-    sections = None
-
-    if active_tab and active_tab.subtabs:
-        # if active_tab is active then at least one of its subtabs should have
-        # is_active == True, but we guard against the possibility of this not
-        # being the case by setting sections = None above
-        for s in active_tab.subtabs:
-            if s.is_active:
-                sections = s.sidebar_items
-                break
-        if sections is None:
-            for s in active_tab.subtabs:
-                if s.url and request.get_full_path().startswith(s.url):
-                    sections = s.sidebar_items
-                    break
-    else:
-        sections = active_tab.sidebar_items if active_tab else None
-
-    def _strip_scheme(uri):
-        return uri.lstrip('https')
+    sections = active_tab.sidebar_items if active_tab else None
 
     if sections:
         # set is_active on active sidebar item by modifying nav by reference
         # and see if the nav needs a subnav for the current contextual item
         for section_title, navs in sections:
             for nav in navs:
-                full_path = request.get_full_path()  # The path of the URL after the domain
-                absolute_uri = request.build_absolute_uri()  # The full uri {scheme}{host}{path}
-                if (full_path.startswith(nav['url']) or
-                   _strip_scheme(absolute_uri).startswith(_strip_scheme(nav['url']))):
+                full_path = request.get_full_path()
+                if path_starts_with_url(full_path, nav['url']):
                     nav['is_active'] = True
                 else:
                     nav['is_active'] = False

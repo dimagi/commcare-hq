@@ -12,6 +12,34 @@ are available, and put 'em here if you end up using any of 'em.
 """
 import re
 
+MUST = "must"
+MUST_NOT = "must_not"
+SHOULD = "should"
+BOOL = "bool"
+
+
+def BOOL_CLAUSE(query):
+    return {BOOL: query}
+
+
+def MUST_CLAUSE(query):
+    return {MUST: query}
+
+
+def MUST_NOT_CLAUSE(query):
+    return {MUST_NOT: query}
+
+
+def SHOULD_CLAUSE(query):
+    return {SHOULD: query}
+
+CLAUSES = {
+    MUST: MUST_CLAUSE,
+    MUST_NOT: MUST_NOT_CLAUSE,
+    SHOULD: SHOULD_CLAUSE,
+    BOOL: BOOL_CLAUSE
+}
+
 
 def match_all():
     """No-op query used because a default must be specified"""
@@ -46,5 +74,44 @@ def search_string_query(search_string, default_fields=None):
             "query": query_string,
             "default_operator": "AND",
             "fields": default_fields if is_simple else None
+        }
+    }
+
+
+def match(search_string, field, fuzziness="AUTO"):
+    return {
+        "match": {
+            field: {
+                "query": search_string,
+                "fuzziness": fuzziness,
+            }
+        }
+    }
+
+
+def nested(path, query, *args, **kwargs):
+    """
+    Creates a nested query for use with nested documents
+
+    Keyword arguments such as score_mode and others can be added.
+    """
+    nested = {
+        "path": path,
+        "query": query
+    }
+    nested.update(kwargs)
+    return {
+        "nested": nested
+    }
+
+
+def filtered(query, filter_):
+    """
+    Filtered query for performing both filtering and querying at once
+    """
+    return {
+        "filtered": {
+            "query": query,
+            "filter": filter_,
         }
     }

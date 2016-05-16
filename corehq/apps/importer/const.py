@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext_noop
 
+
 class LookupErrors:
     NotFound, MultipleResults = range(2)
 

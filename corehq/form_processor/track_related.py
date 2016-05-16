@@ -2,10 +2,14 @@ from collections import defaultdict
 
 
 class TrackRelatedChanges(object):
+
     def __init__(self):
         self.create_models = defaultdict(list)
         self.update_models = defaultdict(list)
         self.delete_models = defaultdict(list)
+
+    def has_tracked_models(self):
+        return bool(self.create_models or self.update_models or self.delete_models)
 
     def clear_tracked_models(self, model_class=None):
         if not model_class:

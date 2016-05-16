@@ -309,7 +309,7 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
 
         # update date_range filter's initial values to span the entirety of
         # the domain's submission range
-        default_datespan = datespan_from_beginning(self.domain_object.name, self.timezone)
+        default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
         )
@@ -422,17 +422,14 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
             return UserTypeFilter(self._get_es_user_types())
 
 
-class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
+class FilterCaseCouchExportDownloadForm(BaseFilterExportDownloadForm):
     _export_type = 'case'
+    # This class will be removed when the switch over to ES exports is complete
 
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditCustomCaseExportView
         return reverse(EditCustomCaseExportView.urlname,
                        args=(self.domain_object.name, export.get_id))
-
-
-class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
-    # This class will be removed when the switch over to ES exports is complete
 
     def get_case_filter(self):
         group = self._get_group()
@@ -445,7 +442,13 @@ class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
                                     groups=case_sharing_groups)
 
 
-class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
+class FilterCaseESExportDownloadForm(BaseFilterExportDownloadForm):
+    _export_type = 'case'
+
+    def get_edit_url(self, export):
+        from corehq.apps.export.views import EditNewCustomCaseExportView
+        return reverse(EditNewCustomCaseExportView.urlname,
+                       args=(self.domain_object.name, export.get_id))
 
     def get_case_filter(self):
         group = self._get_group()

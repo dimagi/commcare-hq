@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from casexml.apps.case.xml.generator import safe_element
 from casexml.apps.phone.xml import get_casedb_element
+from xml.etree import ElementTree
 
 
 class CaseDBFixture(object):
@@ -21,7 +23,7 @@ class CaseDBFixture(object):
     def fixture(self):
         """For a list of cases, return a fixture with all case properties
 
-        <fixture id="case">
+        <results id="case">
             <case case_id="" case_type="" owner_id="" status="">
                 <case_name/>
                 <date_opened/>
@@ -37,15 +39,15 @@ class CaseDBFixture(object):
             <case>
             ...
             </case>
-        </fixture>
+        </results>
 
         https://github.com/dimagi/commcare/wiki/casedb
         https://github.com/dimagi/commcare/wiki/fixtures
         """
-        element = safe_element("fixture")
+        element = safe_element("results")
         element.attrib = {'id': self.id}
 
         for case in self.cases:
             element.append(get_casedb_element(case))
 
-        return element
+        return ElementTree.tostring(element, encoding="utf-8")

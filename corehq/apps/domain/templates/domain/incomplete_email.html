@@ -8,7 +8,7 @@
 <div class="row">
     <div>
         <h2>{% trans "Self Started Projects" %}</h2>
-        <p>Domains that will be emailed to the master list email</p>
+        <p>{% trans "Domains that will be emailed to the master list email" %}</p>
         <ul class="nav nav-pills nav-stacked">
         {% for domain in self_started %}
             <li>{{ domain }}</li>
@@ -17,8 +17,8 @@
         <h2>{% trans "Dimagi Owned Projects" %}</h2>
         <table class="table table-condensed">
             <tr>
-                <th>Incomplete domain (with link)</th>
-                <th>Users that will be emailed</th>
+                <th>{% trans "Incomplete domain (with link)" %}</th>
+                <th>{% trans "Users who will be emailed" %}</th>
             </tr>
             {% for domain in dimagi_owned %}
             <tr>

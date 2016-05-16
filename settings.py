@@ -30,7 +30,7 @@ LESS_WATCH = False
 VELLUM_DEBUG = None
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
@@ -75,7 +75,8 @@ MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
 STATIC_CDN = ''
 
-FILEPATH = os.path.abspath(os.path.dirname(__file__))
+FILEPATH = BASE_DIR
+SERVICE_DIR = os.path.join(FILEPATH, 'deployment', 'commcare-hq-deploy', 'fab', 'services', 'templates')
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
 STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
@@ -111,6 +112,8 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
+FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -159,6 +162,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 # time in minutes before forced logout due to inactivity
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
+ENABLE_DRACONIAN_SECURITY_FEATURES = False
 
 PASSWORD_HASHERS = (
     # this is the default list with SHA1 moved to the front
@@ -208,6 +212,7 @@ DEFAULT_APPS = (
     'djtables',
     'django_prbac',
     'djangular',
+    'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
     'gunicorn',
@@ -222,6 +227,7 @@ DEFAULT_APPS = (
     'statici18n',
 )
 
+CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
 CRISPY_TEMPLATE_PACK = 'bootstrap'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
@@ -342,11 +348,11 @@ HQ_APPS = (
     'dimagi.ext',
     'corehq.doctypemigrations',
     'corehq.blobs',
+    'corehq.apps.case_search',
 
     # custom reports
     'a5288',
     'custom.bihar',
-    'custom.penn_state',
     'custom.apps.gsid',
     'custom.icds',
     'hsph',
@@ -380,7 +386,7 @@ HQ_APPS = (
 
     'custom.dhis2',
     'custom.openclinica',
-
+    'custom.icds_reports',
 )
 
 TEST_APPS = ()
@@ -388,8 +394,8 @@ TEST_APPS = ()
 # also excludes any app starting with 'django.'
 APPS_TO_EXCLUDE_FROM_TESTS = (
     'a5288',
+    'captcha',
     'couchdbkit.ext.django',
-    'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
@@ -458,8 +464,8 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
-BASE_ASYNC_TEMPLATE = "reports/async/bootstrap2/basic.html"
+BASE_TEMPLATE = "style/bootstrap3/base.html"  # should eventually be bootstrap3
+BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
@@ -495,13 +501,21 @@ INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
+REPORT_BUILDER_ADD_ON_EMAIL = 'updates@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
+SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@dimagi.com'
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
 BASE_ADDRESS = 'localhost:8000'
+J2ME_ADDRESS = ''
+
+# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
+# Should include the protocol.
+# If this is None, get_url_base() will be used
+CLOUDCARE_BASE_URL = None
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -929,6 +943,12 @@ LOGGING = {
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
         },
+        'formplayer_timing': {
+            'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
+        },
+        'formplayer_diff': {
+            'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
+        }
     },
     'filters': {
         'hqcontext': {
@@ -984,6 +1004,22 @@ LOGGING = {
             'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'datadog',
             'filename': DATADOG_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_diff': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_diff',
+            'filename': FORMPLAYER_DIFF_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_timing': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_timing',
+            'filename': FORMPLAYER_TIMING_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1062,6 +1098,16 @@ LOGGING = {
             'handlers': ['datadog'],
             'level': 'INFO',
             'propogate': False,
+        },
+        'formplayer_timing': {
+            'handlers': ['formplayer_timing'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'formplayer_diff': {
+            'handlers': ['formplayer_diff'],
+            'level': 'INFO',
+            'propogate': True,
         },
     }
 }
@@ -1200,7 +1246,6 @@ COUCHDB_APPS = [
     'dhis2',
 
     # custom reports
-    'penn_state',
     'care_benin',
     'gsid',
     'hsph',
@@ -1387,13 +1432,22 @@ PILLOWTOPS = {
     'core': [
         'corehq.pillows.case.CasePillow',
         'corehq.pillows.xform.XFormPillow',
-        'corehq.pillows.domain.DomainPillow',
-        'corehq.pillows.user.UserPillow',
+        {
+            'name': 'UserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_user_pillow',
+        },
         'corehq.pillows.application.AppPillow',
-        'corehq.pillows.group.GroupPillow',
-        'corehq.pillows.sms.SMSPillow',
-        'corehq.pillows.user.GroupToUserPillow',
-        'corehq.pillows.user.UnknownUsersPillow',
+        {
+            'name': 'GroupPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.group.get_group_pillow',
+        },
+        {
+            'name': 'GroupToUserPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
+        },
         'corehq.pillows.sofabed.FormDataPillow',
         'corehq.pillows.sofabed.CaseDataPillow',
         {
@@ -1401,19 +1455,29 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.sms.get_sql_sms_pillow',
         },
+        {
+            'name': 'UserGroupsDbKafkaPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
+        },
+        {
+            'name': 'KafkaDomainPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
+        },
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
         {
             'name': 'DefaultChangeFeedPillow',
-            'class': 'corehq.apps.change_feed.pillow.ChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
         },
         {
-            'name': 'UserGroupsDbKafkaPillow',
+            'name': 'DomainDbKafkaPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_user_groups_db_kafka_pillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
         },
         {
             'name': 'kafka-ucr-main',
@@ -1424,6 +1488,21 @@ PILLOWTOPS = {
             'name': 'kafka-ucr-static',
             'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
+        },
+        {
+            'name': 'SqlXFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'SqlCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'UnknownUsersPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.user.get_unknown_users_pillow',
         },
     ],
     'cache': [
@@ -1473,14 +1552,14 @@ PILLOWTOPS = {
             'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
         },
         {
-            'name': 'SqlXFormToElasticsearchPillow',
+            'name': 'CaseSearchToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.case_search.get_case_search_to_elasticsearch_pillow',
         },
         {
-            'name': 'SqlCaseToElasticsearchPillow',
+            'name': 'LedgerToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.ledger.get_ledger_to_elasticsearch_pillow',
         },
     ]
 }
@@ -1512,6 +1591,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
     os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json')
+]
+
+STATIC_DATA_SOURCE_PROVIDERS = [
+    'corehq.apps.callcenter.data_source.call_center_data_source_provider'
 ]
 
 
@@ -1600,7 +1683,6 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
-    'psu-legacy-together': 'custom.penn_state',
     'mvp-potou': 'mvp',
     'mvp-sauri': 'mvp',
     'mvp-bonsaaso': 'mvp',
@@ -1615,6 +1697,7 @@ DOMAIN_MODULE_MAP = {
     'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
+    'icds-test': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
@@ -1647,7 +1730,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'common', 'compressor', 'smsbillables',
+        'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway'
     ),
 )
 

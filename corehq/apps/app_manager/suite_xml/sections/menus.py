@@ -1,15 +1,28 @@
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import ScheduleError
+from corehq.apps.app_manager.exceptions import (ScheduleError, CaseXPathValidationError,
+    UserCaseXPathValidationError)
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command, LocalizedMenu
-from corehq.apps.app_manager.util import is_usercase_in_use
-from corehq.apps.app_manager.xpath import interpolate_xpath, CaseIDXPath, session_var, QualifiedScheduleFormXPath
+from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_case,
+    xpath_references_user_case)
+from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
+    QualifiedScheduleFormXPath)
 from corehq.feature_previews import MODULE_FILTER
+from dimagi.utils.decorators.memoized import memoized
 
 
 class MenuContributor(SuiteContributorByModule):
+
     def get_module_contributions(self, module):
         def get_commands():
+            @memoized
+            def module_uses_case():
+                return module.all_forms_require_a_case()
+
+            @memoized
+            def domain_uses_usercase():
+                return is_usercase_in_use(self.app.domain)
+
             for form in module.get_suite_forms():
                 command = Command(id=id_strings.form_command(form, module))
 
@@ -23,16 +36,22 @@ class MenuContributor(SuiteContributorByModule):
                 else:
                     case = None
 
-                if (
-                    getattr(form, 'form_filter', None) and
-                    not module.put_in_root and
-                    (module.all_forms_require_a_case() or is_usercase_in_use(self.app.domain))
-                ):
+                if getattr(form, 'form_filter', None):
                     fixture_xpath = (
                         session_var(id_strings.fixture_session_var(module)) if module.fixture_select.active
                         else None
                     )
-                    command.relevant = interpolate_xpath(form.form_filter, case, fixture_xpath)
+                    interpolated_xpath = interpolate_xpath(form.form_filter, case, fixture_xpath,
+                        module=module, form=form)
+
+                    if xpath_references_case(interpolated_xpath) and \
+                            (not module_uses_case() or module.put_in_root):
+                        raise CaseXPathValidationError(module=module, form=form)
+
+                    if xpath_references_user_case(interpolated_xpath) and not domain_uses_usercase():
+                        raise UserCaseXPathValidationError(module=module, form=form)
+
+                    command.relevant = interpolated_xpath
 
                 if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case():
                     # If there is a schedule and another filter condition, disregard it...

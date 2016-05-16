@@ -1,11 +1,11 @@
 import uuid
-from django.contrib.auth.models import User
 from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
 
@@ -13,9 +13,7 @@ from corehq.apps.users.util import format_username
 class OtaRestoreBugTest(TestCase):
 
     def setUp(self):
-        for user in CouchUser.all():
-            user.delete()
-        User.objects.all().delete()
+        delete_all_users()
 
     def test_cross_domain_assignments(self):
         good_domain = 'main-domain'

@@ -1,13 +1,26 @@
+from collections import namedtuple
+from mock import patch
 from django.test import SimpleTestCase
 
 from corehq.apps.export.const import USERNAME_TRANSFORM
 from corehq.apps.export.models import TableConfiguration, ExportColumn, \
     ScalarItem, ExportRow
-from corehq.apps.export.models.new import SplitExportColumn, MultipleChoiceItem, \
-    Option, DocRow, RowNumberColumn, PathNode
+from corehq.apps.export.models.new import (
+    SplitExportColumn,
+    MultipleChoiceItem,
+    Option,
+    DocRow,
+    RowNumberColumn,
+    PathNode,
+    StockExportColumn,
+    ExportItem,
+)
+
+MockLedgerValue = namedtuple('MockLedgerValue', ['product_id', 'section_id'])
 
 
 class TableConfigurationTest(SimpleTestCase):
+
     def test_get_column(self):
         table_configuration = TableConfiguration(
             path=[PathNode(name='form', is_repeat=False), PathNode(name="repeat1", is_repeat=True)],
@@ -22,12 +35,12 @@ class TableConfigurationTest(SimpleTestCase):
                     )
                 ),
                 ExportColumn(
-                    transforms=[USERNAME_TRANSFORM, "deid_id"],
                     item=ScalarItem(
                         path=[
                             PathNode(name="form"),
                             PathNode(name="user_id"),
-                        ]
+                        ],
+                        transform=USERNAME_TRANSFORM
                     )
                 ),
                 ExportColumn(
@@ -42,13 +55,14 @@ class TableConfigurationTest(SimpleTestCase):
             ]
         )
 
-        column = table_configuration.get_column(
+        index, column = table_configuration.get_column(
             [
                 PathNode(name='form'),
                 PathNode(name='repeat1', is_repeat=True),
                 PathNode(name='q1')
             ],
-            []
+            'ScalarItem',
+            None,
         )
         self.assertEqual(
             column.item.path,
@@ -58,26 +72,31 @@ class TableConfigurationTest(SimpleTestCase):
                 PathNode(name='q1')
             ]
         )
+        self.assertEqual(index, 0)
 
-        column = table_configuration.get_column(
+        index, column = table_configuration.get_column(
             [
                 PathNode(name='form'),
                 PathNode(name='repeat1', is_repeat=True),
                 PathNode(name='DoesNotExist')
             ],
-            []
+            'ScalarItem',
+            None,
         )
         self.assertIsNone(column)
 
         # Verify that get_column ignores deid transforms
-        column = table_configuration.get_column(
+        index, column = table_configuration.get_column(
             [PathNode(name="form"), PathNode(name="user_id")],
-            [USERNAME_TRANSFORM]
+            'ScalarItem',
+            USERNAME_TRANSFORM
         )
         self.assertIsNotNone(column)
+        self.assertEqual(index, 1)
 
 
 class TableConfigurationGetSubDocumentsTest(SimpleTestCase):
+
     def test_basic(self):
 
         table = TableConfiguration(path=[])
@@ -299,7 +318,7 @@ class SplitColumnTest(SimpleTestCase):
             ignore_unspecified_options=False
         )
         doc = {"q1": "a b d"}
-        self.assertEqual(column.get_value(doc, [PathNode(name='form')]), [1, None, "b d"])
+        self.assertEqual(column.get_value(doc, [PathNode(name='form')], split_column=True), [1, None, "b d"])
 
     def test_ignore_extas(self):
         column = SplitExportColumn(
@@ -310,7 +329,7 @@ class SplitColumnTest(SimpleTestCase):
             ignore_unspecified_options=True
         )
         doc = {"q1": "a b d"}
-        self.assertEqual(column.get_value(doc, [PathNode(name="form")]), [1, None])
+        self.assertEqual(column.get_value(doc, [PathNode(name="form")], split_column=True), [1, None])
 
     def test_basic_get_headers(self):
         column = SplitExportColumn(
@@ -320,7 +339,7 @@ class SplitColumnTest(SimpleTestCase):
             ),
             ignore_unspecified_options=True
         )
-        self.assertEqual(column.get_headers(), ["Fruit | Apple", "Fruit | Banana"])
+        self.assertEqual(column.get_headers(split_column=True), ["Fruit | Apple", "Fruit | Banana"])
 
     def test_get_headers_with_template_string(self):
         column = SplitExportColumn(
@@ -330,7 +349,7 @@ class SplitColumnTest(SimpleTestCase):
             ),
             ignore_unspecified_options=True
         )
-        self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana"])
+        self.assertEqual(column.get_headers(split_column=True), ["Fruit - Apple", "Fruit - Banana"])
 
     def test_get_headers_with_extras(self):
         column = SplitExportColumn(
@@ -340,4 +359,34 @@ class SplitColumnTest(SimpleTestCase):
             ),
             ignore_unspecified_options=False
         )
-        self.assertEqual(column.get_headers(), ["Fruit - Apple", "Fruit - Banana", "Fruit - extra"])
+        self.assertEqual(
+            column.get_headers(split_column=True),
+            ["Fruit - Apple", "Fruit - Banana", "Fruit - extra"]
+        )
+
+
+class StockExportColumnTest(SimpleTestCase):
+    domain = 'stock-domain'
+
+    @patch('corehq.apps.export.models.new.StockExportColumn._get_product_name', return_value='water')
+    @patch('corehq.apps.export.models.new.Product.by_domain', return_value=[])
+    def test_get_headers(self, _, __):
+        column = StockExportColumn(
+            domain=self.domain,
+            label="Stock",
+            item=ExportItem(),
+        )
+        get_ledger_path = (
+            'corehq.form_processor.interfaces.dbaccessors.'
+            'LedgerAccessors.get_ledger_values_for_product_ids'
+        )
+        with patch(
+                get_ledger_path,
+                return_value=[
+                    MockLedgerValue(section_id='abc', product_id='def'),
+                    MockLedgerValue(section_id='abc', product_id='def'),
+                    MockLedgerValue(section_id='123', product_id='456'),
+                ]):
+
+            headers = list(column.get_headers())
+            self.assertEqual(headers, ['water (123)', 'water (abc)'])

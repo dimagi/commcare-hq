@@ -17,6 +17,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class CaseInfo(object):
+
     def __init__(self, report, case):
         """
         case is a dict object of the case doc
@@ -187,6 +188,7 @@ class CaseInfo(object):
 
 
 class CaseDisplay(CaseInfo):
+
     @property
     def closed_display(self):
         return yesno(self.is_closed, "closed,open")
@@ -212,7 +214,7 @@ class CaseDisplay(CaseInfo):
     def owner_display(self):
         owner_type, owner = self.owner
         if owner_type == 'group':
-            return '<span class="label label-inverse">%s</span>' % owner['name']
+            return '<span class="label label-default">%s</span>' % owner['name']
         else:
             return owner['name']
 

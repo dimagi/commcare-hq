@@ -7,7 +7,7 @@ from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
 
 
-def _get_exports(domain, include_docs=True, **kwargs):
+def _get_exports(domain, include_docs=True, reduce=False, **kwargs):
     from corehq.apps.reports.models import HQExportSchema
     # add saved exports. because of the way in which the key is stored
     # (serialized json) this is a little bit hacky, but works.
@@ -18,22 +18,26 @@ def _get_exports(domain, include_docs=True, **kwargs):
         startkey=startkey,
         endkey=endkey,
         include_docs=include_docs,
+        reduce=reduce,
         **kwargs
     )
 
 
 def stale_get_exports_json(domain):
     for res in _get_exports(domain, stale=settings.COUCH_STALE_QUERY):
-        yield res['doc']
+        # workaround for http://manage.dimagi.com/default.asp?223471
+        if res['doc'] is not None:
+            yield res['doc']
 
 
 def stale_get_export_count(domain):
-    return _get_exports(
+    result = _get_exports(
         domain,
-        stale=settings.COUCH_STALE_QUERY,
         include_docs=False,
-        limit=1
-    ).count()
+        limit=1,
+        reduce=True,
+    ).one()
+    return result["value"] if result else 0
 
 
 def touch_exports(domain):

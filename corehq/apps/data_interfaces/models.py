@@ -141,37 +141,52 @@ class AutomaticUpdateRuleCriteria(models.Model):
     class Meta:
         app_label = "data_interfaces"
 
+    def get_case_values(self, case):
+        values = case.resolve_case_property(self.property_name)
+        return [element.value for element in values]
+
     def check_days_since(self, case, now):
-        date_to_check = case.get_case_property(self.property_name)
-        if (
-            not isinstance(date_to_check, date) and
-            isinstance(date_to_check, basestring) and
-            ALLOWED_DATE_REGEX.match(date_to_check)
-        ):
-            date_to_check = parse(date_to_check)
+        values = self.get_case_values(case)
+        for date_to_check in values:
+            if (
+                not isinstance(date_to_check, date) and
+                isinstance(date_to_check, basestring) and
+                ALLOWED_DATE_REGEX.match(date_to_check)
+            ):
+                date_to_check = parse(date_to_check)
 
-        if not isinstance(date_to_check, date):
-            return False
+            if not isinstance(date_to_check, date):
+                continue
 
-        if not isinstance(date_to_check, datetime):
-            date_to_check = datetime.combine(date_to_check, time(0, 0))
+            if not isinstance(date_to_check, datetime):
+                date_to_check = datetime.combine(date_to_check, time(0, 0))
 
-        days = int(self.property_value)
-        return date_to_check <= (now - timedelta(days=days))
+            days = int(self.property_value)
+            if date_to_check <= (now - timedelta(days=days)):
+                return True
+
+        return False
 
     def check_equal(self, case, now):
-        return case.to_json().get(self.property_name) == self.property_value
+        return any([
+            value == self.property_value for value in self.get_case_values(case)
+        ])
 
     def check_not_equal(self, case, now):
-        return case.to_json().get(self.property_name) != self.property_value
+        return any([
+            value != self.property_value for value in self.get_case_values(case)
+        ])
 
     def check_has_value(self, case, now):
-        value = case.get_case_property(self.property_name)
-        if value is None:
-            return False
-        if isinstance(value, basestring) and not value.strip():
-            return False
-        return True
+        values = self.get_case_values(case)
+        for value in values:
+            if value is None:
+                continue
+            if isinstance(value, basestring) and not value.strip():
+                continue
+            return True
+
+        return False
 
     def matches(self, case, now):
         return {

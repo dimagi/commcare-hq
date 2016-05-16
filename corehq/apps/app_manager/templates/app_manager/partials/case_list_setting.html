@@ -10,10 +10,9 @@
         ></span>
     </label>
     <div class="col-sm-4">
-        <select class="form-control" type="text" name="{{ SLUG }}-show"
-                data-value="{% if case_list.show %}true{% else %}false{% endif %}">
-            <option value="false">Don't Show</option>
-            <option value="true">Show</option>
+        <select class="form-control" type="text" name="{{ SLUG }}-show">
+            <option value="false" {% if not case_list.show %}selected{% endif %}>Don't Show</option>
+            <option value="true" {% if case_list.show %}selected{% endif %}>Show</option>
         </select>
     </div>
 </div>

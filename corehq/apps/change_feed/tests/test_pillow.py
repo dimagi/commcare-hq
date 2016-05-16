@@ -5,9 +5,8 @@ from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
 from kafka.common import ConsumerTimeout, KafkaUnavailableError
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
-from corehq.apps.change_feed.pillow import ChangeFeedPillow
+from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
 from corehq.apps.change_feed.data_sources import COUCH
 from corehq.util.test_utils import trap_extra_setup
 from pillowtop.feed.interface import Change
@@ -26,9 +25,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
                 bootstrap_servers=[settings.KAFKA_URL],
                 consumer_timeout_ms=100,
             )
-        self.pillow = ChangeFeedPillow(
-            'fake-changefeed-pillow-id', self._fake_couch, kafka=get_kafka_client(), checkpoint=None
-        )
+        self.pillow = get_change_feed_pillow_for_db('fake-changefeed-pillow-id', self._fake_couch)
 
     def test_process_change(self):
         document = {

@@ -12,6 +12,7 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop, ugettext as _
 from sqlagg.filters import IN
+from corehq.apps.style.decorators import use_maps
 from corehq.const import SERVER_DATETIME_FORMAT
 from couchexport.models import Format
 from couchforms.models import XFormInstance
@@ -316,13 +317,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
             end = now
         return (start, end)
 
-    def get_model_kwargs(self):
-        """
-        Override this method to provide a dict of extra kwargs to the
-        row constructor
-        """
-        return {}
-
     @property
     @request_cache()
     def print_response(self):
@@ -494,7 +488,7 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
             account_number = row[self.column_index('account_number')]
             existing_row = accounts.get(account_number, [])
             accounts[account_number] = existing_row + [row]
-        return map(self.join_rows, accounts.values())
+        return map(lambda x: list(self.join_rows(x)), accounts.values())
 
     def join_rows(self, rows):
         if len(rows) == 1:
@@ -520,10 +514,12 @@ class BeneficiaryPaymentReport(CaseReportMixin, BaseReport):
                         yield ','.join(unique_values)
                 elif i == self.column_index('issues'):
                     sep = ', '
-                    if share_account and (has_bonus_cash == 2000 or has_bonus_cash == 3000):
-                        msg = _("Check for multiple pregnancies")
-                    else:
-                        msg = _("Duplicate account number")
+                    msg = ''
+                    if share_account:
+                        if has_bonus_cash == 2000 or has_bonus_cash == 3000:
+                            msg = _("Check for multiple pregnancies")
+                        else:
+                            msg = _("Duplicate account number")
                     all_issues = sep.join(filter(None, values + (msg,)))
                     yield sep.join(set(all_issues.split(sep)))
                 else:
@@ -774,6 +770,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     @property
     def rows(self):
         totals = [[None, None] for i in range(len(self.model.method_map))]
+
         def add_to_totals(col, val, denom):
             for i, num in enumerate([val, denom]):
                 if isinstance(num, int):
@@ -893,16 +890,6 @@ class IncentivePaymentReport(CaseReportMixin, BaseReport):
     @property
     def fields(self):
         return [HierarchyFilter] + super(BaseReport, self).fields
-
-    @property
-    @memoized
-    def last_month_totals(self):
-        last_month = self.datespan.startdate_utc - datetime.timedelta(days=4)
-        # TODO This feature depended on snapshots
-        return None
-
-    def get_model_kwargs(self):
-        return {'last_month_totals': self.last_month_totals}
 
     @property
     @memoized
@@ -1030,6 +1017,12 @@ class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProject
         'geo_column': 'gps',
         'report': 'custom.opm.reports.HealthMapSource',
     }
+
+    is_bootstrap3 = True
+
+    @use_maps
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(HealthMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     def report_subtitles(self):

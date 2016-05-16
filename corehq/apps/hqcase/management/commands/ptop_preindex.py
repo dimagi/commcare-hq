@@ -1,132 +1,105 @@
 from gevent import monkey; monkey.patch_all()
+from corehq.pillows.utils import get_all_expected_es_indices
+
+
 from corehq.elastic import get_es_new
-
-
-from pillowtop.es_utils import pillow_index_exists, get_all_elasticsearch_pillow_classes, \
-    get_all_expected_es_indices, needs_reindex
 
 from cStringIO import StringIO
 import traceback
 from datetime import datetime
-from optparse import make_option
 from django.core.mail import mail_admins
 from corehq.pillows.user import add_demo_user_to_user_index
 import gevent
-from django.core.management.base import NoArgsCommand, BaseCommand
+from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.conf import settings
 
 
-def get_reindex_commands(pillow_class_name):
+def get_reindex_commands(alias_name):
     # pillow_command_map is a mapping from es pillows
     # to lists of management commands or functions
     # that should be used to rebuild the index from scratch
     pillow_command_map = {
-        'DomainPillow': ['ptop_fast_reindex_domains'],
-        'CasePillow': ['ptop_fast_reindex_cases'],
-        'XFormPillow': ['ptop_fast_reindex_xforms'],
+        'hqdomains': [('ptop_reindexer_v2', {'index': 'domain'})],
+        'hqcases': ['ptop_fast_reindex_cases'],
+        'xforms': ['ptop_fast_reindex_xforms'],
         # groupstousers indexing must happen after all users are indexed
-        'UserPillow': [
-            'ptop_fast_reindex_users',
+        'hqusers': [
+            ('ptop_reindexer_v2', {'index': 'user'}),
             add_demo_user_to_user_index,
-            'ptop_fast_reindex_groupstousers',
-            # 'ptop_fast_reindex_unknownusers',  removed until we have a better workflow for this
+            ('ptop_reindexer_v2', {'index': 'groups-to-user'}),
         ],
-        'AppPillow': ['ptop_fast_reindex_apps'],
-        'GroupPillow': ['ptop_fast_reindex_groups'],
-        'ReportXFormPillow': ['ptop_fast_reindex_reportxforms'],
-        'ReportCasePillow': ['ptop_fast_reindex_reportcases'],
+        'hqapps': ['ptop_fast_reindex_apps'],
+        'hqgroups': [('ptop_reindexer_v2', {'index': 'group'})],
+        'report_xforms': ['ptop_fast_reindex_reportxforms'],
+        'report_cases': ['ptop_fast_reindex_reportcases'],
+        'case_search': [('ptop_reindexer_v2', {'index': 'case-search'})]
     }
-    return pillow_command_map.get(pillow_class_name, [])
+    return pillow_command_map.get(alias_name, [])
 
 
-def do_reindex(pillow_class_name):
-    print "Starting pillow preindex %s" % pillow_class_name
-    reindex_commands = get_reindex_commands(pillow_class_name)
+def do_reindex(alias_name):
+    print "Starting pillow preindex %s" % alias_name
+    reindex_commands = get_reindex_commands(alias_name)
     for reindex_command in reindex_commands:
         if isinstance(reindex_command, basestring):
             call_command(reindex_command, **{'noinput': True, 'bulk': True})
+        elif isinstance(reindex_command, (tuple, list)):
+            reindex_command, kwargs = reindex_command
+            call_command(reindex_command, **kwargs)
         else:
             reindex_command()
-    print "Pillow preindex finished %s" % pillow_class_name
+    print "Pillow preindex finished %s" % alias_name
 
 
 class Command(BaseCommand):
     help = ("Preindex ES pillows. "
             "Only run reindexer if the index doesn't exist.")
-    option_list = NoArgsCommand.option_list + (
-        make_option(
-            '--replace',
-            action='store_true',
-            dest='replace',
-            default=False,
-            help='Reindex existing indices even if they are already there.',
-        ),
-    )
 
     def handle(self, *args, **options):
         runs = []
-        aliased_classes = get_all_elasticsearch_pillow_classes()
         all_es_indices = get_all_expected_es_indices()
         es = get_es_new()
-        indices_needing_reindex = [info for info in all_es_indices if needs_reindex(es, info)]
-        aliasable_pillows = [p(online=False) for p in aliased_classes]
-        reindex_all = options['replace']
+        indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
 
-        print "Master indices missing aliases:"
-        unmapped_indices = [info.index for info in indices_needing_reindex]
-        print unmapped_indices
-
-        if reindex_all:
-            print "Reindexing ALL master pillows that are not aliased"
-            preindexable_pillows = aliasable_pillows
-        else:
-            print ("Reindexing master pillows that do not exist yet "
-                   "(ones with aliases skipped)")
-
-            preindexable_pillows = [pillow for pillow in aliasable_pillows
-                                    if not pillow_index_exists(pillow)]
-
-        reindex_pillows = filter(lambda x: x.es_index in unmapped_indices,
-                                 preindexable_pillows)
+        if not indices_needing_reindex:
+            print 'Nothing needs to be reindexed'
+            return
 
         print "Reindexing:\n\t",
-        print '\n\t'.join(x.es_index for x in reindex_pillows)
+        print '\n\t'.join(map(unicode, indices_needing_reindex))
 
-        if len(reindex_pillows) > 0:
-            preindex_message = """
+        preindex_message = """
         Heads up!
 
-        %s is going to start preindexing the following pillows:
+        %s is going to start preindexing the following indices:\n
         %s
 
         This may take a while, so don't deploy until all these have reported finishing.
             """ % (
                 settings.EMAIL_SUBJECT_PREFIX,
-                ', '.join([x.__class__.__name__ for x in reindex_pillows])
+                '\n\t'.join(map(unicode, indices_needing_reindex))
             )
 
-            mail_admins("Pillow preindexing starting", preindex_message)
-
+        mail_admins("Pillow preindexing starting", preindex_message)
         start = datetime.utcnow()
-        for pillow in reindex_pillows:
+        for index_info in indices_needing_reindex:
             # loop through pillows once before running greenlets
             # to fail hard on misconfigured pillows
-            pillow_class_name = pillow.__class__.__name__
-            reindex_command = get_reindex_commands(pillow_class_name)
+            reindex_command = get_reindex_commands(index_info.alias)
             if not reindex_command:
                 raise Exception(
                     "Error, pillow [%s] is not configured "
                     "with its own management command reindex command "
-                    "- it needs one" % pillow_class_name
+                    "- it needs one" % index_info.alias
                 )
 
-        for pillow in reindex_pillows:
-            print pillow.__class__.__name__
-            g = gevent.spawn(do_reindex, pillow.__class__.__name__)
+        for index_info in indices_needing_reindex:
+            print index_info.alias
+            g = gevent.spawn(do_reindex, index_info.alias)
             runs.append(g)
 
-        if len(reindex_pillows) > 0:
+        if len(indices_needing_reindex) > 0:
             gevent.joinall(runs)
             try:
                 for job in runs:
@@ -140,7 +113,7 @@ class Command(BaseCommand):
                 mail_admins(
                     "Pillow preindexing completed",
                     "Reindexing %s took %s seconds" % (
-                        ', '.join([x.__class__.__name__ for x in reindex_pillows]),
+                        ', '.join(map(unicode, indices_needing_reindex)),
                         (datetime.utcnow() - start).seconds
                     )
                 )

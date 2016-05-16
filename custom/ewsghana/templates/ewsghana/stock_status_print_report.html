@@ -40,14 +40,14 @@
 {% endblock %}
 
 {% block reportcontent %}
-    {% compress css %}
-    <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
-    {% endcompress %}
-
     <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
     <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
     <style>
             button {
+                display: none !important;
+            }
+
+            #stockouts_filter {
                 display: none !important;
             }
 

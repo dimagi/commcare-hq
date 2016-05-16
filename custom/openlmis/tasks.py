@@ -18,6 +18,7 @@ def check_requisition_updates():
                 if cases and send_notification:
                     send_notifications(xform=None, cases=cases)
 
+
 @task
 def bootstrap_domain_task(domain):
     return bootstrap_domain(domain)

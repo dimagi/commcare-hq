@@ -11,6 +11,7 @@ from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
@@ -78,6 +79,7 @@ ES_META = {
     "sms": EsMeta(SMS_INDEX, 'sms'),
     "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
     "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
+    "case_search": EsMeta(CASE_SEARCH_INDEX, 'case')
 }
 
 ADD_TO_ES_FILTER = {
@@ -148,6 +150,7 @@ def scroll_query(index_name, q):
 
 
 class ScanResult(object):
+
     def __init__(self, count, iterator):
         self._iterator = iterator
         self.count = count
@@ -250,6 +253,8 @@ def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
 
 
 SIZE_LIMIT = 1000000
+
+
 def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_at=None, size=None, dict_only=False,
              fields=None, facet_size=None):
     if terms is None:

@@ -21,7 +21,6 @@ class Command(LabelCommand):
             except Exception:
                 failed.append(domain.name)
 
-
         message = 'The following domains have opted out of data use:\n{domains}'.format(
             domains='\n'.join(opted_out_domains)
         )

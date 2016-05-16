@@ -10,13 +10,11 @@ class Migration(SchemaMigration):
         # Deleting field 'PillowError.error_message'
         db.delete_column(u'pillow_retry_pillowerror', 'error_message')
 
-
     def backwards(self, orm):
         # Adding field 'PillowError.error_message'
         db.add_column(u'pillow_retry_pillowerror', 'error_message',
                       self.gf('django.db.models.fields.CharField')(max_length=512, null=True),
                       keep_default=False)
-
 
     models = {
         u'pillow_retry.pillowerror': {

@@ -11,7 +11,8 @@ from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
-    CommConnectProjectSpacesReport, CommTrackProjectSpacesReport
+    CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
+    DeviceLogSoftAssertReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
@@ -33,50 +34,91 @@ from django_prbac.utils import has_privilege
 
 
 class ProjectReportsTab(UITab):
-    title = ugettext_noop("Project Reports")
+    title = ugettext_noop("Reports")
     view = "corehq.apps.reports.views.default"
 
-    @property
-    def is_active_shortcircuit(self):
-        # HACK. We need a more overarching way to avoid doing things this way
-        if 'reports/adm' in self._request.get_full_path():
-            return False
+    url_prefix_formats = ('/a/{domain}/reports/',)
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return user_can_view_reports(self.project, self.couch_user)
 
     @property
+    def view(self):
+        module = Domain.get_module_by_name(self.domain)
+        if hasattr(module, 'DEFAULT_REPORT_CLASS'):
+            return "corehq.apps.reports.views.default"
+        from corehq.apps.reports.views import MySavedReportsView
+        return MySavedReportsView.urlname
+
+    @property
     def sidebar_items(self):
-        context = {
-            'request': self._request,
-            'domain': self.domain,
-        }
+
+        from corehq.apps.reports.views import MySavedReportsView
 
         tools = [(_("Tools"), [
-            {'title': _('My Saved Reports'),
-             'url': reverse('saved_reports', args=[self.domain]),
+            {'title': MySavedReportsView.page_title,
+             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
              'icon': 'icon-tasks fa fa-tasks',
              'show_in_dropdown': True}
         ])]
 
         user_reports = []
+        if self.couch_user.can_edit_data():
+            if has_report_builder_access(self._request):
+                create_report_url = reverse("report_builder_select_type", args=[self.domain])
+            else:
+                from corehq.apps.userreports.views import paywall_home
+                create_report_url = paywall_home(self.domain)
 
-        if has_report_builder_access(self._request):
             user_reports = [(
                 _("Create Reports"),
                 [{
                     "title": _('Create new report'),
-                    "url": reverse("report_builder_select_type", args=[self.domain]),
-                    "icon": "icon-plus fa fa-plus"
+                    "url": create_report_url,
+                    "icon": "icon-plus fa fa-plus",
+                    "id": "create-new-report-left-nav",
                 }]
             )]
 
-        project_reports = ProjectReportDispatcher.navigation_sections(context)
+        project_reports = ProjectReportDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
-            context)
-
+            request=self._request, domain=self.domain)
         return tools + user_reports + project_reports + custom_reports
+
+    @property
+    def dropdown_items(self):
+        saved_report_header = dropdown_dict(_('My Saved Reports'), is_header=True)
+        saved_reports_list = list(ReportConfig.by_domain_and_owner(
+                                  self.domain,
+                                  self.couch_user._id))
+
+        MAX_DISPLAYABLE_SAVED_REPORTS = 5
+        first_five_items = [
+            dropdown_dict(saved_report.name, url=saved_report.url)
+            for counter, saved_report in enumerate(saved_reports_list)
+            if counter < MAX_DISPLAYABLE_SAVED_REPORTS
+        ]
+        rest_as_second_level_items = [
+            dropdown_dict("More Saved Reports", "#", second_level_dropdowns=[
+                dropdown_dict(saved_report.name, url=saved_report.url)
+                for counter, saved_report in enumerate(saved_reports_list)
+                if counter >= MAX_DISPLAYABLE_SAVED_REPORTS
+            ])
+        ] if len(saved_reports_list) > MAX_DISPLAYABLE_SAVED_REPORTS else []
+
+        if first_five_items:
+            saved_reports_dropdown = ([saved_report_header] + first_five_items + rest_as_second_level_items)
+        else:
+            saved_reports_dropdown = []
+
+        reports = sidebar_to_dropdown(
+            ProjectReportDispatcher.navigation_sections(
+                request=self._request, domain=self.domain),
+            current_url=self.url)
+
+        return saved_reports_dropdown + reports
 
 
 class IndicatorAdminTab(UITab):
@@ -84,8 +126,10 @@ class IndicatorAdminTab(UITab):
     view = "corehq.apps.indicators.views.default_admin"
     dispatcher = IndicatorAdminInterfaceDispatcher
 
+    url_prefix_formats = ('/a/{domain}/indicators/',)
+
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         indicator_enabled_projects = get_indicator_domains()
         return (self.couch_user.can_edit_data() and
                 self.domain in indicator_enabled_projects)
@@ -119,8 +163,10 @@ class DashboardTab(UITab):
     title = ugettext_noop("Dashboard")
     view = 'corehq.apps.dashboard.views.dashboard_default'
 
+    url_prefix_formats = ('/a/{domain}/dashboard/project/',)
+
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         if self.domain and self.project and not self.project.is_snapshot and self.couch_user:
             # domain hides Dashboard tab if user is non-admin
             if not user_has_custom_top_menu(self.domain, self.couch_user):
@@ -138,69 +184,26 @@ class DashboardTab(UITab):
         return default_dashboard_url(self._request, self.domain)
 
 
-class ReportsTab(UITab):
-    title = ugettext_noop("Reports")
-    subtab_classes = (ProjectReportsTab, IndicatorAdminTab)
-
-    @property
-    def view(self):
-        return self.get_view(self.domain)
-
-    @staticmethod
-    def get_view(domain):
-        module = Domain.get_module_by_name(domain)
-        if hasattr(module, 'DEFAULT_REPORT_CLASS'):
-            return "corehq.apps.reports.views.default"
-        return "corehq.apps.reports.views.saved_reports"
-
-    @property
-    def dropdown_items(self):
-        saved_report_header = dropdown_dict(_('My Saved Reports'), is_header=True)
-        saved_reports_list = list(ReportConfig.by_domain_and_owner(
-                                  self.domain,
-                                  self.couch_user._id))
-
-        MAX_DISPLAYABLE_SAVED_REPORTS = 5
-        first_five_items = [
-            dropdown_dict(saved_report.name, url=saved_report.url)
-            for counter, saved_report in enumerate(saved_reports_list)
-            if counter < MAX_DISPLAYABLE_SAVED_REPORTS
-        ]
-        rest_as_second_level_items = [
-            dropdown_dict("More Saved Reports", "#", second_level_dropdowns=[
-                dropdown_dict(saved_report.name, url=saved_report.url)
-                for counter, saved_report in enumerate(saved_reports_list)
-                if counter >= MAX_DISPLAYABLE_SAVED_REPORTS
-            ])
-        ] if len(saved_reports_list) > MAX_DISPLAYABLE_SAVED_REPORTS else []
-
-        if first_five_items:
-            saved_reports_dropdown = ([saved_report_header] + first_five_items + rest_as_second_level_items)
-        else:
-            saved_reports_dropdown = []
-
-        context = {
-            'request': self._request,
-            'domain': self.domain,
-        }
-        reports = sidebar_to_dropdown(
-            ProjectReportDispatcher.navigation_sections(context),
-            current_url_name=self.url)
-        return saved_reports_dropdown + reports
-
-
 class ProjectInfoTab(UITab):
     title = ugettext_noop("Project Info")
     view = "corehq.apps.appstore.views.project_info"
 
+    url_prefix_formats = ('/exchange/{domain}/info/',)
+
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return self.project and self.project.is_snapshot
 
 
 class SetupTab(UITab):
     title = ugettext_noop("Setup")
     view = "corehq.apps.commtrack.views.default"
+
+    url_prefix_formats = (
+        '/a/{domain}/settings/products/',
+        '/a/{domain}/settings/programs/',
+        '/a/{domain}/settings/commtrack/',
+    )
 
     @property
     def dropdown_items(self):
@@ -214,7 +217,6 @@ class SetupTab(UITab):
         from corehq.apps.products.views import ProductListView
 
         dropdown_items = []
-
 
         if self.project.commtrack_enabled:
             dropdown_items += [(_(view.page_title), view) for view in (
@@ -233,7 +235,7 @@ class SetupTab(UITab):
         ]
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return (self.couch_user.is_domain_admin() and
                 self.project.commtrack_enabled)
 
@@ -335,6 +337,10 @@ class SetupTab(UITab):
 class ProjectDataTab(UITab):
     title = ugettext_noop("Data")
     view = "corehq.apps.data_interfaces.views.default"
+    url_prefix_formats = (
+        '/a/{domain}/data/',
+        '/a/{domain}/fixtures/',
+    )
 
     @property
     @memoized
@@ -379,17 +385,12 @@ class ProjectDataTab(UITab):
         return domain_has_privilege(self.domain, privileges.LOOKUP_TABLES)
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return self.domain and (self.can_edit_commcare_data or self.can_export_data)
 
     @property
     def sidebar_items(self):
         items = []
-
-        context = {
-            'request': self._request,
-            'domain': self.domain,
-        }
 
         export_data_views = []
         if self.can_only_see_deid_exports:
@@ -502,7 +503,8 @@ class ProjectDataTab(UITab):
         if self.can_edit_commcare_data:
             from corehq.apps.data_interfaces.dispatcher \
                 import EditDataInterfaceDispatcher
-            edit_section = EditDataInterfaceDispatcher.navigation_sections(context)
+            edit_section = EditDataInterfaceDispatcher.navigation_sections(
+                request=self._request, domain=self.domain)
 
             from corehq.apps.data_interfaces.views \
                 import ArchiveFormView, AutomaticUpdateRuleListView
@@ -522,7 +524,8 @@ class ProjectDataTab(UITab):
 
         if self.can_use_lookup_tables:
             from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
-            items.extend(FixtureInterfaceDispatcher.navigation_sections(context))
+            items.extend(FixtureInterfaceDispatcher.navigation_sections(
+                request=self._request, domain=self.domain))
 
         return items
 
@@ -550,6 +553,8 @@ class ProjectDataTab(UITab):
 
 class ApplicationsTab(UITab):
     view = "corehq.apps.app_manager.views.view_app"
+
+    url_prefix_formats = ('/a/{domain}/apps/',)
 
     @property
     def title(self):
@@ -593,7 +598,7 @@ class ApplicationsTab(UITab):
         return submenu_context
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         couch_user = self.couch_user
         return (self.domain and couch_user and
                 (couch_user.is_web_user() or couch_user.can_edit_apps()) and
@@ -606,10 +611,12 @@ class CloudcareTab(UITab):
     title = ugettext_noop("CloudCare")
     view = "corehq.apps.cloudcare.views.default"
 
+    url_prefix_formats = ('/a/{domain}/cloudcare/',)
+
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
@@ -621,8 +628,15 @@ class MessagingTab(UITab):
     title = ugettext_noop("Messaging")
     view = "corehq.apps.sms.views.default"
 
+    url_prefix_formats = (
+        '/a/{domain}/sms/',
+        '/a/{domain}/reminders/',
+        '/a/{domain}/reports/message_log/',
+        '/a/{domain}/data/edit/case_groups/',
+    )
+
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return (self.can_access_reminders or self.can_use_outbound_sms) and (
             self.project and not (self.project.is_snapshot or
                                   self.couch_user.is_commcare_user())
@@ -826,7 +840,6 @@ class MessagingTab(UITab):
                 ]
             })
 
-
         return contacts_urls
 
     @property
@@ -886,29 +899,16 @@ class ProjectUsersTab(UITab):
     title = ugettext_noop("Users")
     view = "users_default"
 
+    url_prefix_formats = (
+        '/a/{domain}/settings/users/',
+        '/a/{domain}/settings/cloudcare/',
+        '/a/{domain}/settings/locations/',
+    )
+
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return self.domain and (self.couch_user.can_edit_commcare_users() or
                                 self.couch_user.can_edit_web_users())
-
-    @property
-    def is_active_shortcircuit(self):
-        if not self.domain:
-            return False
-
-    @property
-    @memoized
-    def is_active(self):
-        if super(ProjectUsersTab, self).is_active:
-            return True
-
-        if not self.domain:
-            return False
-
-        cloudcare_settings_url = reverse('cloudcare_app_settings',
-                                         args=[self.domain])
-        full_path = self._request.get_full_path()
-        return full_path.startswith(cloudcare_settings_url)
 
     @property
     def can_view_cloudcare(self):
@@ -1075,8 +1075,10 @@ class ProjectSettingsTab(UITab):
     title = ugettext_noop("Project Settings")
     view = 'domain_settings_default'
 
+    url_prefix_formats = ('/a/{domain}/settings/project/',)
+
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return (self.domain and self.couch_user and
                 self.couch_user.is_domain_admin(self.domain))
 
@@ -1131,6 +1133,12 @@ class ProjectSettingsTab(UITab):
                     'url': reverse('domain_manage_multimedia', args=[self.domain])
                 }
             ]
+
+            if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain):
+                administration.append({
+                    'title': _('Case Search'),
+                    'url': reverse('case_search_config', args=[self.domain])
+                })
 
             def forward_name(repeater_type=None, **context):
                 if repeater_type == 'FormRepeater':
@@ -1261,9 +1269,10 @@ class ProjectSettingsTab(UITab):
 class MySettingsTab(UITab):
     title = ugettext_noop("My Settings")
     view = 'default_my_settings'
+    url_prefix_formats = ('/account/',)
 
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return self.couch_user is not None
 
     @property
@@ -1293,81 +1302,16 @@ class MySettingsTab(UITab):
         return items
 
 
-class AdminReportsTab(UITab):
-    title = ugettext_noop("Admin Reports")
-    view = "corehq.apps.hqadmin.views.default"
-
-    @property
-    def sidebar_items(self):
-        # todo: convert these to dispatcher-style like other reports
-        if (self.couch_user and
-                (not self.couch_user.is_superuser and
-                 toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
-            return [
-                (_('Administrative Reports'), [
-                    {'title': _('System Info'),
-                     'url': reverse('system_info')},
-                ])]
-
-        admin_operations = []
-
-        if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import AuthenticateAs
-            admin_operations.extend([
-                {'title': _('PillowTop Errors'),
-                 'url': reverse('admin_report_dispatcher',
-                                args=('pillow_errors',))},
-                {'title': _('Login as another user'),
-                 'url': reverse(AuthenticateAs.urlname)},
-                {'title': _('Look up user by email'),
-                 'url': reverse('web_user_lookup')},
-            ])
-        return [
-            (_('Administrative Reports'), [
-                {'title': _('Project Space List'),
-                 'url': reverse('admin_report_dispatcher', args=('domains',))},
-                {'title': _('Submission Map'),
-                 'url': reverse('dimagisphere')},
-                {'title': _('User List'),
-                 'url': reverse('admin_report_dispatcher', args=('user_list',))},
-                {'title': _('Application List'),
-                 'url': reverse('admin_report_dispatcher', args=('app_list',))},
-                {'title': _('System Info'),
-                 'url': reverse('system_info')},
-                {'title': _('Loadtest Report'),
-                 'url': reverse('loadtest_report')},
-                {'title': _('Download Malt table'),
-                 'url': reverse('download_malt')},
-            ]),
-            (_('Administrative Operations'), admin_operations),
-            (_('CommCare Reports'), [
-                {
-                    'title': report.name,
-                    'url': '%s?%s' % (reverse('admin_report_dispatcher',
-                                              args=(report.slug,)),
-                                      urlencode(report.default_params))
-                } for report in [
-                    RealProjectSpacesReport,
-                    CommConnectProjectSpacesReport,
-                    CommTrackProjectSpacesReport,
-                ]
-            ]),
-        ]
-
-    @property
-    def is_viewable(self):
-        return (self.couch_user and
-                (self.couch_user.is_superuser or
-                 toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
-
-
 class AccountingTab(UITab):
     title = ugettext_noop("Accounting")
     view = "accounting_default"
     dispatcher = AccountingAdminInterfaceDispatcher
 
+    url_prefix_formats = ('/hq/accounting/',)
+    show_by_default = False
+
     @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return is_accounting_admin(self._request.user)
 
     @property
@@ -1409,6 +1353,9 @@ class SMSAdminTab(UITab):
     view = "default_sms_admin_interface"
     dispatcher = SMSAdminInterfaceDispatcher
 
+    url_prefix_formats = ('/hq/sms/',)
+    show_by_default = False
+
     @property
     @memoized
     def sidebar_items(self):
@@ -1430,28 +1377,15 @@ class SMSAdminTab(UITab):
         return items
 
     @property
-    def is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
-
-
-class FeatureFlagsTab(UITab):
-    title = ugettext_noop("Feature Flags")
-    view = "toggle_list"
-
-    @property
-    def is_viewable(self):
+    def _is_viewable(self):
         return self.couch_user and self.couch_user.is_superuser
 
 
 class AdminTab(UITab):
     title = ugettext_noop("Admin")
     view = "corehq.apps.hqadmin.views.default"
-    subtab_classes = (
-        AdminReportsTab,
-        SMSAdminTab,
-        AccountingTab,
-        FeatureFlagsTab
-    )
+
+    url_prefix_formats = ('/hq/admin/',)
 
     @property
     def dropdown_items(self):
@@ -1474,7 +1408,7 @@ class AdminTab(UITab):
             #                      url=reverse("default_announcement_admin")),
         ]
         try:
-            if AccountingTab(self._request, self._current_url_name).is_viewable:
+            if AccountingTab(self._request)._is_viewable:
                 submenu_context.append(
                     dropdown_dict(AccountingTab.title, url=reverse('accounting_default'))
                 )
@@ -1496,7 +1430,70 @@ class AdminTab(UITab):
         return submenu_context
 
     @property
-    def is_viewable(self):
+    def sidebar_items(self):
+        # todo: convert these to dispatcher-style like other reports
+        if (self.couch_user and
+                (not self.couch_user.is_superuser and
+                 toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
+            return [
+                (_('Administrative Reports'), [
+                    {'title': _('System Info'),
+                     'url': reverse('system_info')},
+                ])]
+
+        admin_operations = []
+
+        if self.couch_user and self.couch_user.is_staff:
+            from corehq.apps.hqadmin.views import AuthenticateAs
+            admin_operations.extend([
+                {'title': _('PillowTop Errors'),
+                 'url': reverse('admin_report_dispatcher',
+                                args=('pillow_errors',))},
+                {'title': _('Login as another user'),
+                 'url': reverse(AuthenticateAs.urlname)},
+                {'title': _('Look up user by email'),
+                 'url': reverse('web_user_lookup')},
+                {'title': _('View raw couch documents'),
+                 'url': reverse('raw_couch')},
+                {'title': _('Check Call Center UCR tables'),
+                 'url': reverse('callcenter_ucr_check')},
+            ])
+        return [
+            (_('Administrative Reports'), [
+                {'title': _('Project Space List'),
+                 'url': reverse('admin_report_dispatcher', args=('domains',))},
+                {'title': _('Submission Map'),
+                 'url': reverse('dimagisphere')},
+                {'title': _('User List'),
+                 'url': reverse('admin_report_dispatcher', args=('user_list',))},
+                {'title': _('Application List'),
+                 'url': reverse('admin_report_dispatcher', args=('app_list',))},
+                {'title': _('System Info'),
+                 'url': reverse('system_info')},
+                {'title': _('Loadtest Report'),
+                 'url': reverse('loadtest_report')},
+                {'title': _('Download Malt table'),
+                 'url': reverse('download_malt')},
+            ]),
+            (_('Administrative Operations'), admin_operations),
+            (_('CommCare Reports'), [
+                {
+                    'title': report.name,
+                    'url': '{url}{params}'.format(
+                        url=reverse('admin_report_dispatcher', args=(report.slug,)),
+                        params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
+                    )
+                } for report in [
+                    RealProjectSpacesReport,
+                    CommConnectProjectSpacesReport,
+                    CommTrackProjectSpacesReport,
+                    DeviceLogSoftAssertReport,
+                ]
+            ]),
+        ]
+
+    @property
+    def _is_viewable(self):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
                  toggles.IS_DEVELOPER.enabled(self.couch_user.username)))

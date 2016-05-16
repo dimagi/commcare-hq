@@ -1,5 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
+
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.domain.models import Domain
 
@@ -7,10 +9,7 @@ from corehq.apps.domain.models import Domain
 class UpdateTestCase(TestCase):
 
     def setUp(self):
-        all_users = CouchUser.all()
-        for user in all_users:
-            user.delete()
-        User.objects.all().delete()
+        delete_all_users()
         self.username = "joe@my-domain.commcarehq.org"
         password = "password"
         self.domain = Domain(name='my-domain')

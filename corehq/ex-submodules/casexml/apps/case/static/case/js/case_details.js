@@ -71,6 +71,16 @@ function FormDateHistogram(data) {
     self.form_count = ko.observable(data.count);
 };
 
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 function XFormListViewModel() {
     var self = this;
 
@@ -79,8 +89,7 @@ function XFormListViewModel() {
     self.xforms = ko.observableArray([]);
     self.page_size = ko.observable(10);
     self.disp_page_index = ko.observable(1);
-    self.total_rows = ko.observable(0);
-    self.page_count = ko.observable(0);
+    self.total_rows = ko.observable(-1);
     self.selected_xform_idx = ko.observable(-1);
     self.selected_xform_doc_id = ko.observable("");
     self.selected_xforms = ko.observableArray([]);
@@ -91,6 +100,20 @@ function XFormListViewModel() {
     self.data_loading = ko.observable(false);
 
     var api_url = CASE_DETAILS.xform_api_url;
+
+
+    var init = function() {
+        var hash = window.location.hash.split('?');
+        if (hash[0] !== '#!history') {
+            return;
+        }
+
+        var formId = getParameterByName('form_id', window.location.hash);
+        if (formId) {
+            self.get_xform_data(formId);
+            self.selected_xform_doc_id(formId);
+        }
+    };
 
     self.get_xform_data = function(xform_id) {
         //method for getting individual xform via GET
@@ -110,19 +133,41 @@ function XFormListViewModel() {
         })
     };
 
+    init();
+
     self.xform_history_cb = function(data) {
         self.total_rows(CASE_DETAILS.xform_ids.length);
-        self.calc_page_count();
         var mapped_xforms = $.map(data, function (item) {
             return new XFormDataModel(item);
         });
         self.xforms(mapped_xforms);
-        self.selected_xform_idx(-1);
+        var xformId = self.selected_xform_doc_id();
+        if (xformId) {
+            self.selected_xform_idx(self.xforms.indexOf());
+        } else {
+            self.selected_xform_idx(-1);
+        }
     };
 
-    self.refresh_forms = function () {
+    self.all_rows_loaded = ko.computed(function() {
+        return self.total_rows() === self.xforms().length;
+    });
+
+    self.page_count = ko.computed(function() {
+        return Math.ceil(self.total_rows()/self.page_size());
+    });
+
+    self.refresh_forms = ko.computed(function () {
+        var disp_index = self.disp_page_index();
+        if (disp_index > self.page_count.peek()) {
+            self.disp_page_index(self.page_count.peek());
+            return;
+        }
+        if (self.total_rows.peek() > 0 && self.all_rows_loaded.peek()) {
+            return;
+        }
         self.data_loading(true);
-        var start_num = self.disp_page_index() || 1;
+        var start_num = disp_index || 1;
         var start_range = (start_num - 1) * self.page_size();
         var end_range = start_range + self.page_size();
         $.ajax({
@@ -143,23 +188,14 @@ function XFormListViewModel() {
                 self.data_loading(false);
             }
         });
-    };
-
-    self.calc_page_count = function() {
-        self.page_count(Math.ceil(self.total_rows()/self.page_size()));
-    };
-
-    //main function data collection - entry point if you will
-    self.refresh_forms();
+    }, this).extend({deferred: true});
 
     self.nextPage = function() {
         self.disp_page_index(self.disp_page_index() + 1);
-        self.refresh_forms();
     };
 
     self.prevPage = function() {
         self.disp_page_index(self.disp_page_index() - 1);
-        self.refresh_forms();
     };
 
     self.clickRow = function(item) {
@@ -173,6 +209,7 @@ function XFormListViewModel() {
             self.selected_xforms([]);
             self.selected_xforms.push(self.xforms()[self.selected_xform_idx()]);
         }
+        window.history.pushState({}, '', '#!history?form_id=' + self.selected_xform_doc_id());
     };
 
     self.page_start_num = ko.computed(function() {
@@ -190,21 +227,6 @@ function XFormListViewModel() {
         else {
             return end_page_num;
         }
-    });
-
-
-    self.page_size_changed = self.page_size.subscribe(function () {
-        var disp_index = self.disp_page_index();
-        self.calc_page_count();
-        if (disp_index > self.page_count()) {
-            self.disp_page_index(self.page_count());
-        } else {
-            self.refresh_forms();
-        }
-    });
-
-    self.disp_page_index_changed = self.disp_page_index.subscribe(function () {
-        self.refresh_forms();
     });
 
     self.all_pages = function() {

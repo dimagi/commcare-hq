@@ -23,7 +23,6 @@ class TestSubscriptionEmailLogic(SimpleTestCase):
 
 
 class TestUserRoleSubscriptionChanges(BaseAccountingTest):
-    min_subscription_length = 3
 
     def setUp(self):
         super(TestUserRoleSubscriptionChanges, self).setUp()

@@ -1,10 +1,13 @@
 import copy
+import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from simpleeval import InvalidExpression
+from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.specs import (
@@ -13,7 +16,10 @@ from corehq.apps.userreports.expressions.specs import (
 )
 from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.util.test_utils import generate_cases
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.tests import run_with_all_backends
+from corehq.util.test_utils import generate_cases, create_and_save_a_form, create_and_save_a_case
 
 
 class ExpressionPluginTest(SimpleTestCase):
@@ -105,6 +111,9 @@ class PropertyExpressionTest(SimpleTestCase):
             (date(2015, 9, 30), "date", "2015-09-30T19:04:27Z"),
             (date(2015, 9, 30), "date", datetime(2015, 9, 30)),
             (None, "datetime", "2015-09-30"),
+            ([None], "array", None),
+            ([3], "array", 3),
+            ([3, 4, 9], "array", [3, 4, 9]),
         ]:
             getter = ExpressionFactory.from_spec({
                 'type': 'property_name',
@@ -538,7 +547,7 @@ class RootDocExpressionTest(SimpleTestCase):
         )
 
 
-class DocJoinExpressionTest(SimpleTestCase):
+class RelatedDocExpressionTest(SimpleTestCase):
 
     def setUp(self):
         # we have to set the fake database before any other calls
@@ -599,7 +608,8 @@ class DocJoinExpressionTest(SimpleTestCase):
         self.assertEqual('foo', self.expression(my_doc, EvaluationContext(my_doc, 0)))
 
     def test_related_doc_not_found(self):
-        self.assertEqual(None, self.expression({'parent_id': 'some-missing-id'}))
+        doc = {'parent_id': 'some-missing-id', 'domain': 'whatever'}
+        self.assertEqual(None, self.expression(doc, EvaluationContext(doc, 0)))
 
     def test_cross_domain_lookups(self):
         related_id = 'cross-domain-id'
@@ -692,6 +702,55 @@ class DocJoinExpressionTest(SimpleTestCase):
         self.assertEqual('foo', same_expression(my_doc, EvaluationContext(my_doc, 0)))
 
 
+class RelatedDocExpressionDbTest(TestCase):
+    domain = 'related-doc-db-test-domain'
+
+    @run_with_all_backends
+    def test_form_lookups(self):
+        form = create_and_save_a_form(domain=self.domain)
+        expression = self._get_expression('XFormInstance')
+        doc = self._get_doc(form.form_id)
+        self.assertEqual(form.form_id, expression(doc, EvaluationContext(doc, 0)))
+
+    @run_with_all_backends
+    def test_case_lookups(self):
+        case_id = uuid.uuid4().hex
+        create_and_save_a_case(domain=self.domain, case_id=case_id, case_name='related doc test case')
+        expression = self._get_expression('CommCareCase')
+        doc = self._get_doc(case_id)
+        self.assertEqual(case_id, expression(doc, EvaluationContext(doc, 0)))
+
+    @run_with_all_backends
+    def test_other_lookups(self):
+        user_id = uuid.uuid4().hex
+        CommCareUser.get_db().save_doc({'_id': user_id, 'domain': self.domain})
+        expression = self._get_expression('CommCareUser')
+        doc = self._get_doc(user_id)
+        self.assertEqual(user_id, expression(doc, EvaluationContext(doc, 0)))
+
+    @staticmethod
+    def _get_expression(doc_type):
+        return ExpressionFactory.from_spec({
+            "type": "related_doc",
+            "related_doc_type": doc_type,
+            "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "related_id"
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            }
+        })
+
+    @classmethod
+    def _get_doc(cls, id):
+        return {
+            'related_id': id,
+            'domain': cls.domain,
+        }
+
+
 @generate_cases([
     ({'dob': '2015-01-20'}, 3, date(2015, 1, 23)),
     ({'dob': '2015-01-20'}, 5, date(2015, 1, 25)),
@@ -719,6 +778,15 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
 
 @generate_cases([
     ({}, "a + b", {"a": 2, "b": 3}, 2 + 3),
+    (
+        {},
+        "timedelta_to_seconds(a - b)",
+        {
+            "a": "2016-01-01T11:30:00.000000Z",
+            "b": "2016-01-01T11:00:00.000000Z"
+        },
+        30 * 60
+    ),
     # supports string manupulation
     ({}, "str(a)+'text'", {"a": 3}, "3text"),
     # context can contain expressions
@@ -807,3 +875,62 @@ def test_unsupported_evluator_statements(self, eq, context):
         "context_variables": context
     })
     self.assertEqual(expression({}), None)
+
+
+class TestFormsExpressionSpec(TestCase):
+
+    def setUp(self):
+        self.domain = uuid.uuid4().hex
+        factory = CaseFactory(domain=self.domain)
+        [self.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
+        self.forms = [f.to_json() for f in FormAccessors(self.domain).get_forms(self.case.xform_ids)]
+        #  redundant case to create extra forms that shouldn't be in the results for self.case
+        [self.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
+
+        self.expression = ExpressionFactory.from_spec({
+            "type": "get_case_forms",
+            "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            },
+        })
+
+    def tearDown(self):
+        delete_all_xforms()
+        delete_all_cases()
+
+    @run_with_all_backends
+    def test_evaluation(self):
+        context = EvaluationContext({"domain": self.domain}, 0)
+        forms = self.expression(self.case.to_json(), context)
+
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms, self.forms)
+
+    @run_with_all_backends
+    def test_wrong_domain(self):
+        context = EvaluationContext({"domain": "wrong-domain"}, 0)
+        forms = self.expression(self.case.to_json(), context)
+        self.assertEqual(forms, [])
+
+
+class TestIterationNumberExpression(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.spec = ExpressionFactory.from_spec({'type': 'base_iteration_number'})
+
+    def test_default(self):
+        self.assertEqual(0, self.spec({}, EvaluationContext({})))
+
+    def test_value_set(self):
+        self.assertEqual(7, self.spec({}, EvaluationContext({}, iteration=7)))
+
+
+class TestEvaluationContext(SimpleTestCase):
+
+    def test_cache(self):
+        context = EvaluationContext({})
+        context.set_cache_value(('k1', 'k2'), 'v1')
+        self.assertEqual(context.get_cache_value(('k1', 'k2')), 'v1')
+        self.assertEqual(context.get_cache_value(('k1',)), None)

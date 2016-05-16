@@ -18,7 +18,6 @@ import logging
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from corehq.util.soft_assert import soft_assert
 from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task
 
@@ -37,6 +36,7 @@ HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID = "619daf02-e043-4617-8947-a23e4589935
 HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
 HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
 HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
+HUBSPOT_CLICKED_SIGNUP_FORM = "06b39b74-62b3-4387-b323-fe256dc92720"
 HUBSPOT_COOKIE = 'hubspotutk'
 
 
@@ -114,7 +114,6 @@ def _hubspot_post(url, data):
         response.raise_for_status()
 
 
-
 def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
@@ -140,7 +139,7 @@ def _get_client_ip(meta):
     return ip
 
 
-def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None):
+def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, email=False):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -153,11 +152,13 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None):
             form_id=form_id
         )
         data = {
-            'email': webuser.username,
-            'firstname': webuser.first_name,
-            'lastname': webuser.last_name,
+            'email': email if email else webuser.username,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
+        if webuser:
+            data.update({'firstname': webuser.first_name,
+                         'lastname': webuser.last_name,
+                         })
         if extra_fields:
             data.update(extra_fields)
 
@@ -182,6 +183,7 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
         tracking_dict = {
             'created_account_in_hq': True,
             'is_a_commcare_user': True,
+            'lifecyclestage': 'lead'
         }
         tracking_dict.update(get_ab_test_properties(webuser))
         _track_on_hubspot(webuser, tracking_dict)
@@ -251,6 +253,13 @@ def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_NEW_USER_INVITE_FORM, webuser, cookies, meta)
 
 
+@analytics_task()
+def track_clicked_signup_on_hubspot(email, cookies, meta):
+    lifecycle = {'lifecyclestage': 'subscriber'}
+    if email:
+        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, extra_fields=lifecycle, email=email)
+
+
 def track_workflow(email, event, properties=None):
     """
     Record an event in KISSmetrics.
@@ -297,19 +306,15 @@ def track_periodic_data():
     Sync data that is neither event or page based with hubspot/Kissmetrics
     :return:
     """
-    start_time = datetime.now()
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
     users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email'])\
                                .run().hits
     # users_to_domains is a list of dicts
-    time_users_to_domains_query = datetime.now()
     domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
         .aggregations.domain.counts_by_bucket()
-    time_domains_to_forms_query = datetime.now()
     domains_to_mobile_users = UserES().mobile_users().terms_aggregation('domain', 'domain').size(0).run()\
                                       .aggregations.domain.counts_by_bucket()
-    time_domains_to_mobile_users_query = datetime.now()
 
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
@@ -352,23 +357,7 @@ def track_periodic_data():
         }
         submit.append(user_json)
 
-    end_time = datetime.now()
     submit_json = json.dumps(submit)
-
-    processing_time = end_time - start_time
-    _soft_assert = soft_assert('{}@{}'.format('tsheffels', 'dimagi.com'))
-    #TODO: Update this soft assert to only trigger if the timing is longer than a threshold
-    msg = 'Periodic Data Timing: start: {}, users_to_domains: {}, domains_to_forms: {}, ' \
-          'domains_to_mobile_workers: {}, end: {}, size of string post to hubspot (bytes): {}'\
-        .format(
-            start_time,
-            time_users_to_domains_query,
-            time_domains_to_forms_query,
-            time_domains_to_mobile_users_query,
-            end_time,
-            sys.getsizeof(submit_json)
-        )
-    _soft_assert(processing_time.seconds < 100, msg)
 
     submit_data_to_hub_and_kiss(submit_json)
 

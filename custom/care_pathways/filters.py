@@ -1,4 +1,7 @@
+import datetime
 from django.utils.translation import ugettext_noop
+
+import settings
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.users.models import CommCareUser
@@ -102,7 +105,7 @@ class GenderFilter(BaseSingleOptionFilter):
     @property
     @memoized
     def selected(self):
-        return self.get_value(self.request, self.domain) or "2" if self.domain == 'pathways-india-mis' else ''
+        return self.get_value(self.request, self.domain) or ("2" if self.domain == 'pathways-india-mis' else '')
 
 
 class GroupLeadershipFilter(BaseSingleOptionFilter):
@@ -119,15 +122,21 @@ class GroupLeadershipFilter(BaseSingleOptionFilter):
     @property
     @memoized
     def selected(self):
-        return self.get_value(self.request, self.domain) or "2" if self.domain == 'pathways-india-mis' else ''
+        return self.get_value(self.request, self.domain) or ("2" if self.domain == 'pathways-india-mis' else '')
 
 
 class CBTNameFilter(BaseSingleOptionFilter):
     slug = 'cbt_name'
-    label = ugettext_noop('CBT Name')
     default_text = "All"
     template = "care_pathways/filters/single_option_with_helper.html"
     help_text = "Community Based Trainer"
+
+    @property
+    def label(self):
+        if self.domain == 'care-macf-malawi':
+            return 'FFT Name'
+        else:
+            return 'CBT NAME'
 
     @property
     def options(self):
@@ -162,6 +171,34 @@ class ScheduleFilter(CareBaseDrilldownOptionFilter):
 
 class PPTYearFilter(YearFilter):
     label = "PPT Year"
+
+
+class MalawiPPTYearFilter(PPTYearFilter):
+
+    @property
+    def options(self):
+        start_year = getattr(settings, 'START_YEAR', 2008)
+        years = [(unicode(y), unicode("{0}/{1}".format(y, y+1))) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
+        years.reverse()
+        return years
+
+
+class RealOrTestFilter(BaseSingleOptionFilter):
+    slug = 'real_or_test'
+    default_text = None
+    label = ugettext_noop("Real or Test Data?")
+
+    @property
+    def options(self):
+        return [
+            ('Real', 'Real'),
+            ('Test', 'Test')
+        ]
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or "Real"
 
 
 class TypeFilter(CareBaseDrilldownOptionFilter):
@@ -213,7 +250,6 @@ class DisaggregateByFilter(BaseSingleOptionFilter):
     def options(self):
         return [('group', 'Group Leadership'), ('sex', 'Sex of Members')]
 
-
     @property
     @memoized
     def selected(self):
@@ -234,6 +270,7 @@ class TableCardGroupByFilter(BaseSingleOptionFilter):
     @memoized
     def selected(self):
         return self.get_value(self.request, self.domain) or "group_name"
+
 
 class TableCardTypeFilter(TypeFilter):
     single_option_select_without_default_text = 1

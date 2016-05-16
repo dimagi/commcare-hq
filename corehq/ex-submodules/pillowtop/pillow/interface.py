@@ -1,4 +1,8 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
+
+import sys
+
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.exceptions import PillowtopCheckpointReset
@@ -10,6 +14,7 @@ class PillowRuntimeContext(object):
     Runtime context for a pillow. Gets passed around during the processing methods
     so that other functions can use it without maintaining global state on the class.
     """
+
     def __init__(self, changes_seen=0, do_set_checkpoint=True):
         self.changes_seen = changes_seen
         self.do_set_checkpoint = do_set_checkpoint
@@ -83,7 +88,7 @@ class PillowBase(object):
                 if change:
                     try:
                         context.changes_seen += 1
-                        self.processor(change, context)
+                        self.process_with_error_handling(change)
                     except Exception as e:
                         notify_exception(None, u'processor error in pillow {} {}'.format(
                             self.get_name(), e,
@@ -96,8 +101,14 @@ class PillowBase(object):
         except PillowtopCheckpointReset:
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
+    def process_with_error_handling(self, change):
+        try:
+            self.process_change(change)
+        except Exception, ex:
+            handle_pillow_error(self, change, ex)
+
     @abstractmethod
-    def processor(self, change, context):
+    def process_change(self, change, is_retry_attempt=False):
         pass
 
     @abstractmethod
@@ -122,10 +133,9 @@ class ConstructedPillow(PillowBase):
     arguments it needs.
     """
 
-    def __init__(self, name, document_store, checkpoint, change_feed, processor,
+    def __init__(self, name, checkpoint, change_feed, processor,
                  change_processed_event_handler=None):
         self._name = name
-        self._document_store = document_store
         self._checkpoint = checkpoint
         self._change_feed = change_feed
         self._processor = processor
@@ -139,7 +149,10 @@ class ConstructedPillow(PillowBase):
         return self._name
 
     def document_store(self):
-        return self._document_store
+        # todo: replace with NotImplementedError once it's clear this isn't necessary
+        _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), send_to_ops=False)
+        _assert(False, 'Something is still calling ConstructedPillow.document_store')
+        return None
 
     @property
     def checkpoint(self):
@@ -148,9 +161,32 @@ class ConstructedPillow(PillowBase):
     def get_change_feed(self):
         return self._change_feed
 
-    def processor(self, change, do_set_checkpoint=True):
-        self._processor.process_change(self, change, do_set_checkpoint)
+    def process_change(self, change, is_retry_attempt=False):
+        self._processor.process_change(self, change)
 
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:
             self._change_processed_event_handler.fire_change_processed(change, context)
+
+
+def handle_pillow_error(pillow, change, exception):
+    from couchdbkit import ResourceNotFound
+    from pillow_retry.models import PillowError
+    meta = None
+    if hasattr(pillow, 'get_couch_db'):
+        try:
+            meta = pillow.get_couch_db().show('domain_shows/domain_date', change['id'])
+        except ResourceNotFound:
+            pass
+
+    error = PillowError.get_or_create(change, pillow, change_meta=meta)
+    error.add_attempt(exception, sys.exc_info()[2])
+    error.save()
+    pillow_logging.exception(
+        "[%s] Error on change: %s, %s. Logged as: %s" % (
+            pillow.get_name(),
+            change['id'],
+            exception,
+            error.id
+        )
+    )

@@ -259,6 +259,12 @@ var PaginatedItem = function (itemSpec, initRow) {
         var $modals = self.getItemRow().find('.modal');
         if ($modals) {
             $modals.modal('hide');
+            //  fix for b3
+            $('body').removeClass('modal-open');
+            var $modalBackdrop = $('.modal-backdrop');
+            if ($modalBackdrop) {
+                $modalBackdrop.remove();
+            }
         }
     };
 

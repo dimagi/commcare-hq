@@ -106,7 +106,7 @@ class ConfigurableReportTableManagerMixin(object):
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
 
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
+    def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
         if change.deleted:
             # we don't currently support hard-deletions at all.
@@ -144,7 +144,6 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         )
         super(ConfigurableReportKafkaPillow, self).__init__(
             name=pillow_name,
-            document_store=None,
             change_feed=change_feed,
             processor=processor,
             checkpoint=checkpoint,

@@ -10,49 +10,53 @@
             <span>
                 <span data-bind="text: table.label()" />
             </span>
+            <span>
+                <span class="label label-warning" data-bind="visible: table.is_deleted">deleted</span>
+            </span>
         </legend>
-        <div data-bind="visibleFade: table.selected">
-            <div class="control-group pull-right">
-                <div class="controls">
-                    <button type="button" class="btn" data-bind="
-                        click: table.toggleShowAdvanced,
-                        css: {active: table.showAdvanced}">
-                        <span data-bind="visible: !table.showAdvanced()">
-                        {% if export_instance.type == 'form' %}
-                            {% trans "Show Deleted Questions and Advanced Properties" %}
-                        {% else %}
-                            {% trans "Show Deleted Properties and Advanced Properties" %}
-                        {% endif %}
-                        </span>
-                        <span data-bind="visible: table.showAdvanced">
-                        {% if export_instance.type == 'form' %}
-                            {% trans "Hide Deleted Questions and Advanced Properties" %}
-                        {% else %}
-                            {% trans "Hide Deleted Properties and Advanced Properties" %}
-                        {% endif %}
-                        </span>
-                    </button>
+        <div class="col-sm-12" data-bind="visibleFade: table.selected">
+            <div class="form-group pull-right">
+                <button type="button" class="btn btn-default" data-bind="
+                    click: table.toggleShowAdvanced,
+                    css: {active: table.showAdvanced}">
+                    <span data-bind="visible: !table.showAdvanced()">
+                    {% if export_instance.type == 'form' %}
+                        {% trans "Show Deleted Questions and Advanced Properties" %}
+                    {% else %}
+                        {% trans "Show Deleted Properties and Advanced Properties" %}
+                    {% endif %}
+                    </span>
+                    <span data-bind="visible: table.showAdvanced">
+                    {% if export_instance.type == 'form' %}
+                        {% trans "Hide Deleted Questions and Advanced Properties" %}
+                    {% else %}
+                        {% trans "Hide Deleted Properties and Advanced Properties" %}
+                    {% endif %}
+                    </span>
+                </button>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-4 col-md-3 col-lg-2 control-label">{% trans "Sheet Name" %}</label>
+                <div class="col-sm-4 col-md-3 col-lg-2">
+                    <input type="text" class="form-control" data-bind="value: table.label" />
                 </div>
             </div>
-            <div class="control-group">
-                <label class="control-label">{% trans "Sheet Name" %}</label>
-                <div class="controls">
-                    <input type="text" data-bind="value: table.label" />
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">
+            <div class="form-group">
+                <label class="col-md-3 col-lg-2 control-label">
                     <strong>{% trans "Choose the fields you want to export." %}</strong><br />
+                    <span style="font-weight: normal">
                     {% trans "You can drag and drop fields to reorder them.  You can also rename fields, which will update the headers in the export file." %}
+                    </span>
                 </label>
-                <div class="controls">
-                    <table class="table table-striped table-bordered table-condensed" id="field-select">
+                <div class="col-md-9 col-lg-10">
+                    <table class="table table-bordered table-striped table-condensed" id="field-select">
                         <thead>
                         <tr class="nodrag nodrop">
                             <th></th>
-                            <th>{% trans "Include this Field?" %}<br>
-                                <a class="btn btn-mini" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
-                                <a class="btn btn-mini btn-inverse" data-bind="click: table.selectNone">{% trans "Select None" %}</a></th>
+                            <th>{% trans "Include this Field?" %}<br />
+                                <a class="btn btn-xs btn-primary" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
+                                <a class="btn btn-xs btn-default" data-bind="click: table.selectNone">{% trans "Select None" %}</a>
+                            </th>
                             <th>
                             {% if export_instance.type == 'form' %}
                                 {% trans "Question" %}
@@ -60,7 +64,21 @@
                                 {% trans "Property" %}
                             {% endif %}
                             </th>
-                            <th>{% trans "Display" %}</th>
+                            <th>
+                                {% trans "Display" %}<br />
+                                {% if export_instance.type == 'form' %}
+                                <a
+                                    class="btn btn-xs btn-primary"
+                                    data-bind="click: table.useLabels">
+                                    {% trans "Use question labels" %}
+                                </a>
+                                <a
+                                    class="btn btn-xs btn-default"
+                                    data-bind="click: table.useIds">
+                                    {% trans "Use question ids" %}
+                                </a>
+                                {% endif %}
+                            </th>
                             {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
                             <th>{% trans "Type" %}</th>
                             {% endif %}
@@ -76,12 +94,12 @@
                                 name: 'ko-export-column-template'
                             }
                         ">
-                            <tr data-bind="
+                            <tr class="sortable-handle" data-bind="
                                 visible: column.isVisible($parent),
                                 attr: {'data-order': _sortableOrder}
                                 ">
-                                <td class="sortable-handle">
-                                    <i class="icon-resize-vertical"></i>
+                                <td class="sortable-handle text-center">
+                                    <i class="fa fa-arrows-v"></i>
                                 </td>
                                 <td>
                                     <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
@@ -101,50 +119,93 @@
                                             text: tag,
                                             attr: { class: Exports.Utils.getTagCSSClass(tag) }"></span>
                                     </span>
-                                    <code data-bind="text: column.formatProperty()"></code>
+                                    <code data-toggle="tooltip" data-placement="top" 
+                                        data-bind="
+                                            text: column.formatProperty(),
+                                            attr: {
+                                                'data-original-title': column.help_text,
+                                                'data-toggle': column.help_text ? 'tooltip' : null
+                                            },
+                                            css: {
+                                                'export-tooltip': column.translatedHelp()
+                                            }
+                                        "></code>
                                 </td>
-                                <td><input class="input-xlarge" type="text" data-bind="value: column.label" /></td>
+                                <td><input class="form-control" type="text" data-bind="value: column.label" /></td>
                                 {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
-                                <td class="input">
-                                    <div data-bind="if: !allOptions()">
-                                        <select disabled>
-                                            <option>{% trans "plain" %}</option>
-                                        </select>
-                                    </div>
-                                    <div data-bind="if: allOptions">
-                                        <select data-bind="
-                                            value: doc_type,
-                                            foreach: $root.column_type_options
-                                        "/>
-                                            <option data-bind="value: value, text: label"></option>
-                                        </select>
-                                        <span data-bind="makeHqHelp: {name: '{% trans "Split multi-select data" %}', placement: 'left'}"></span>
-                                        <div data-bind="if: doc_type() === 'SplitColumn'">
-                                            <a href="#" data-bind="visible: !showOptions(), click: function() {showOptions(true);}">{% trans "Show Options" %}</a>
-                                            <div data-bind="visible: showOptions">
-                                                <select class="select2" data-bind="options: allOptions, selectedOptions: options" multiple="true">
-                                                </select>
-                                                <br/>
-                                                <input class="input input-small" type="text" data-bind="value: newOption"/>
-                                                <button class="btn" data-bind="click: addOption">{% trans "Add" %}</button>
+                                <td>
+                                    <form
+                                        class="form-horizontal col-xs-12"
+                                        data-bind="
+                                            if: column.doc_type() === 'SplitUserDefinedExportColumn',
+                                            submit: column.addUserDefinedOption
+                                        ">
+                                        <div class="form-group">
+                                            <span class="pull-right" data-bind="
+                                                makeHqHelp: {
+                                                    name: '{% trans "Split multi-select data" %}',
+                                                    placement: 'left'
+                                                }
+                                            "></span>
+                                            <select style="width:200px" class="form-control" data-bind="
+                                                options: Exports.Constants.USER_DEFINED_SPLIT_TYPES,
+                                                value: column.split_type,
+                                            "/></select>
+                                        </div>
+                                        <!-- ko if: column.split_type() === Exports.Constants.MULTISELECT_SPLIT_TYPE -->
+                                        <div class="form-group">
+                                            <button class="btn btn-default btn-xs" data-bind="
+                                                visible: !column.showOptions(),
+                                                click: function() {column.showOptions(true);}
+                                            ">{% trans "Show Options" %}</button>
+
+                                            <button class="btn btn-default btn-xs" data-bind="
+                                                visible: column.showOptions(),
+                                                click: function() {column.showOptions(false);}
+                                            ">{% trans "Hide Options" %}</button>
+                                        </div>
+                                        <div data-bind="visible: column.showOptions()">
+                                            <ul class="list-group" data-bind="
+                                                foreach: column.user_defined_options
+                                            ">
+                                                <li class="list-group-item">
+                                                    <span data-bind="text: $data"></span>
+                                                    <i
+                                                        style="cursor: pointer"
+                                                        class="text-danger fa fa-trash pull-right"
+                                                        data-bind="click: column.removeUserDefinedOption.bind(column)"
+                                                        ></i>
+                                                </li>
+                                            </ul>
+                                            <div class="form-group">
+                                                <div style="max-width: 200px" class="input-group">
+                                                    <input
+                                                        class="form-control input-sm"
+                                                        type="text"
+                                                        data-bind="value: column.userDefinedOptionToAdd"/>
+                                                    <span class="input-group-btn">
+                                                        <button
+                                                            type="submit"
+                                                            class="btn btn-default btn-sm"
+                                                            data-bind="click: column.addUserDefinedOption">
+                                                        {% trans "Add" %}
+                                                        </button>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
+                                        <!-- /ko -->
                                     </div>
                                 </td>
                                 {% endif %}
                                 {% if allow_deid %}
                                 <td class="deid-column" data-bind="visible: $root.isDeidColumnVisible()">
-                                    <select data-bind="
-                                        value: deidTransform,
+                                    <select class="form-control" data-bind="
+                                        value: deid_transform,
                                         options: getDeidOptions(),
-                                        optionsText: getDeidOptionText,
-                                        visible: isDeidSelectVisible()
+                                        optionsText: getDeidOptionText
                                     ">
                                     </select>
-                                    <span class="label label-info"
-                                          data-bind="visible: !isDeidSelectVisible()">
-                                        {% trans "Cannot be published in De-Identified Export." %}
-                                    </span>
                                 </td>
                                 {% endif %}
                             </tr>

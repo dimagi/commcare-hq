@@ -16,12 +16,6 @@ class StockModelUpdateResult(namedtuple('StockModelUpdate', ['to_save', 'to_dele
             to_delete=to_delete or [],
         )
 
-    def commit(self):
-        for to_save in self.to_save:
-            to_save.save()
-        for to_delete in self.to_delete:
-            to_delete.delete()
-
 
 class LedgerDBInterface(object):
     """
@@ -36,27 +30,23 @@ class LedgerDBInterface(object):
         self._balances = {}
         self._ledgers = {}
 
-    def get_current_balance(self, unique_ledger_reference):
-        if unique_ledger_reference not in self._balances:
-            current_balance = self.get_current_ledger_value(unique_ledger_reference)
-            self._balances[unique_ledger_reference] = current_balance
-        return self._balances[unique_ledger_reference]
-
-    def set_current_balance(self, unique_ledger_reference, balance):
-        self._balances[unique_ledger_reference] = balance
-
     def get_ledger(self, unique_ledger_reference):
         if unique_ledger_reference not in self._ledgers:
             ledger = self._get_ledger(unique_ledger_reference)
             self._ledgers[unique_ledger_reference] = ledger
         return self._ledgers[unique_ledger_reference]
 
-    @abstractmethod
-    def get_ledgers_for_case(self, case_id):
-        pass
+    def set_ledger(self, ledger):
+        # if it's not there or the value is None
+        if not self._ledgers.get(ledger.ledger_reference, None):
+            self._ledgers[ledger.ledger_reference] = ledger
+
+    def get_current_ledger_value(self, unique_ledger_reference):
+        ledger = self.get_ledger(unique_ledger_reference)
+        return ledger.stock_on_hand if ledger else 0
 
     @abstractmethod
-    def get_current_ledger_value(self, unique_ledger_reference):
+    def get_ledgers_for_case(self, case_id):
         pass
 
     @abstractmethod
@@ -71,8 +61,20 @@ class LedgerProcessorInterface(object):
         self.domain = domain
 
     @abstractmethod
-    def get_models_to_update(self, stock_report_helper, ledger_db=None):
+    def get_models_to_update(self, form_id, stock_report_helpers, deprecated_helpers, ledger_db=None):
         """
         Returns a list of StockModelUpdate object containing everything that needs to be updated.
         """
+        pass
+
+    @abstractmethod
+    def rebuild_ledger_state(self, case_id, section_id, entry_id):
+        pass
+
+    @abstractmethod
+    def process_form_archived(self, form):
+        pass
+
+    @abstractmethod
+    def process_form_unarchived(self, form):
         pass

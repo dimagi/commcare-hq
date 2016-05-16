@@ -189,7 +189,7 @@ class TestBillingRecord(BaseAccountingTest):
         self.assertTrue(self.billing_record.should_send_email)
 
     def test_should_send_email_contracted(self):
-        self.subscription.service_type = SubscriptionType.CONTRACTED
+        self.subscription.service_type = SubscriptionType.IMPLEMENTATION
         self.assertFalse(self.billing_record.should_send_email)
 
         self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD - 1)
@@ -214,6 +214,7 @@ class TestBillingRecord(BaseAccountingTest):
 
 @mock.patch.object(StripePaymentMethod, 'customer')
 class TestStripePaymentMethod(BaseAccountingTest):
+
     def setUp(self):
         super(TestStripePaymentMethod, self).setUp()
 

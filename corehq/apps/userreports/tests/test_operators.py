@@ -1,4 +1,4 @@
-from corehq.apps.userreports import operators
+from corehq.apps.userreports.operators import get_operator
 from corehq.util.test_utils import generate_cases
 
 
@@ -16,4 +16,4 @@ from corehq.util.test_utils import generate_cases
     (42, ['42'], False),
 ))
 def test_in_operator(self, input, reference_list, expected_result):
-    self.assertEqual(expected_result, operators.IN(input, reference_list))
+    self.assertEqual(expected_result, get_operator('in')(input, reference_list))

@@ -8,7 +8,12 @@ from corehq.apps.export.models.new import MAIN_TABLE, \
 from dimagi.utils.couch.database import safe_delete
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
-from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema, ExportDataSchema
+from corehq.apps.export.models import (
+    FormExportDataSchema,
+    CaseExportDataSchema,
+    ExportDataSchema,
+    PARENT_CASE_TABLE,
+)
 from corehq.apps.export.const import PROPERTY_TAG_UPDATE
 
 
@@ -147,6 +152,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         }
         schema = CaseExportDataSchema._generate_schema_from_case_property_mapping(
             case_property_mapping,
+            [],
             self.app_id,
             1,
         )
@@ -303,6 +309,7 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         }
         schema1 = CaseExportDataSchema._generate_schema_from_case_property_mapping(
             case_property_mapping,
+            [],
             app_id,
             1,
         )
@@ -311,6 +318,7 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         }
         schema2 = CaseExportDataSchema._generate_schema_from_case_property_mapping(
             case_property_mapping,
+            [],
             app_id,
             2,
         )
@@ -449,8 +457,8 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     def test_basic_application_schema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(self.domain, self.case_type)
 
-        # One for case, one for case history, one for parent cases.
-        self.assertEqual(len(schema.group_schemas), 3)
+        # One for case, one for case history
+        self.assertEqual(len(schema.group_schemas), 2)
 
         group_schema = schema.group_schemas[0]
         self.assertEqual(group_schema.last_occurrences[self.current_app._id], 3)
@@ -465,8 +473,8 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(schema.last_app_versions[app._id], 3)
-        # One for case, one for case history, one for parent cases.
-        self.assertEqual(len(schema.group_schemas), 3)
+        # One for case, one for case history
+        self.assertEqual(len(schema.group_schemas), 2)
 
         # After the first schema has been saved let's add a second app to process
         second_build = Application.wrap(self.get_json('basic_case_application'))
@@ -483,5 +491,60 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         self.assertEqual(new_schema._id, schema._id)
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
-        # One for case, one for case history, one for parent cases.
-        self.assertEqual(len(new_schema.group_schemas), 3)
+        # One for case, one for case history
+        self.assertEqual(len(new_schema.group_schemas), 2)
+
+
+class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    domain = 'aspace'
+    case_type = 'candy'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.current_app = Application.wrap(cls.get_json('parent_child_case_application'))
+
+        cls.apps = [
+            cls.current_app,
+        ]
+        for app in cls.apps:
+            app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+
+    def tearDown(self):
+        db = ExportDataSchema.get_db()
+        for row in db.view('schemas_by_xmlns_or_case_type/view', reduce=False):
+            doc_id = row['id']
+            safe_delete(db, doc_id)
+
+    def test_parent_case_table_generation(self):
+        """
+        Ensures that the child case generates a parent case table and indices
+        columns in main table
+        """
+        schema = CaseExportDataSchema.generate_schema_from_builds(self.domain, 'child-case')
+
+        # One for case, one for case history, one for parent case
+        self.assertEqual(len(schema.group_schemas), 3)
+        main_table = filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas)[0]
+        self.assertEqual(
+            len(filter(lambda item: item.doc_type == 'CaseIndexItem', main_table.items)),
+            1
+        )
+
+        self.assertEqual(
+            len(filter(lambda gs: gs.path == PARENT_CASE_TABLE, schema.group_schemas)),
+            1
+        )
+
+    def test_parent_case_table_generation_for_parent_case(self):
+        """Ensures that the parent case doesn't have a parent case table"""
+        schema = CaseExportDataSchema.generate_schema_from_builds(self.domain, self.case_type)
+
+        # One for case, one for case history
+        self.assertEqual(len(schema.group_schemas), 2)

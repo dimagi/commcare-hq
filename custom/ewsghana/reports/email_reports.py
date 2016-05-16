@@ -203,11 +203,13 @@ class EmailReportingData(EWSData):
 
 
 class StockSummaryReportingData(EmailReportingData):
+
     def get_locations(self, loc_id, domain):
         return [loc.supply_point_id for loc in get_descendants(loc_id)]
 
 
 class CMSRMSSummaryReportingData(EmailReportingData):
+
     def get_locations(self, loc_id, domain):
         return [
             loc.supply_point_id

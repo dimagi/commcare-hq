@@ -22,7 +22,8 @@ def _send_message(info, backend):
 
 
 def soft_assert(to=None, notify_admins=False,
-                fail_if_debug=False, exponential_backoff=True, skip_frames=0):
+                fail_if_debug=False, exponential_backoff=True, skip_frames=0,
+                send_to_ops=True,):
     """
     send an email with stack trace if assertion is not True
 
@@ -59,6 +60,9 @@ def soft_assert(to=None, notify_admins=False,
 
     if isinstance(to, basestring):
         to = [to]
+
+    if to is not None and send_to_ops and settings.SOFT_ASSERT_EMAIL:
+        to = to + [settings.SOFT_ASSERT_EMAIL]
 
     def send_to_recipients(subject, message):
         send_mail_async.delay(

@@ -28,15 +28,16 @@ from corehq.apps.styleguide.views.docs import (
 class BaseSGTab(UITab):
 
     @property
-    def is_viewable(self):
-        full_path = self._request.get_full_path()
+    def _is_viewable(self):
         docs_url = reverse('sg_examples_default')
-        return full_path.startswith(docs_url)
+        return self.request_path.startswith(docs_url)
 
 
 class SimpleCrispyFormSGExample(BaseSGTab):
     title = ugettext_noop("Simple Crispy Form")
     view = DefaultSimpleCrispyFormSectionView.urlname
+
+    url_prefix_formats = ('/styleguide/docs/simple_crispy/',)
 
     @property
     @memoized
@@ -71,6 +72,8 @@ class ControlsDemoSGExample(BaseSGTab):
     title = ugettext_noop("Form Controls")
     view = DefaultControlsDemoFormsView.urlname
 
+    url_prefix_formats = ('/styleguide/docs/controls_demo/',)
+
     @property
     @memoized
     def sidebar_items(self):
@@ -104,10 +107,8 @@ class ControlsDemoSGExample(BaseSGTab):
 class SGExampleTab(BaseSGTab):
     title = ugettext_noop("Style Guide")
     view = 'corehq.apps.styleguide.views.docs.default'
-    subtab_classes = (
-        SimpleCrispyFormSGExample,
-        ControlsDemoSGExample,
-    )
+
+    url_prefix_formats = ('/styleguide/docs/',)
 
     @property
     def dropdown_items(self):

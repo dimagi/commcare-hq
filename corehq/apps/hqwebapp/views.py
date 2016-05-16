@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime
 from urlparse import urlparse
 
+import functools
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -29,7 +30,7 @@ from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 
 import httpagentparser
@@ -38,7 +39,8 @@ from restkit import Resource
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
-
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -58,7 +60,7 @@ from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
 from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
-from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
@@ -69,7 +71,6 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
-from corehq.util.view_utils import expect_GET
 
 
 def pg_check():
@@ -159,7 +160,6 @@ def server_error(request, template_name='500.html'):
 
     domain = get_domain_from_url(request.path) or ''
 
-
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
     t = loader.get_template(template_name)
     type, exc, tb = sys.exc_info()
@@ -187,6 +187,7 @@ def not_found(request, template_name='404.html'):
         })))
 
 
+@require_GET
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated():
         if domain != None:
@@ -282,7 +283,6 @@ def server_up(req):
     Hit serverup.txt?celery (or heartbeat) to check a specific service
     View that just returns "success", which can be hooked into server monitoring tools like: pingdom
     '''
-
 
     checkers = {
         "heartbeat": {
@@ -382,6 +382,11 @@ def _login(req, domain_name, template_name):
             'hr_name': domain.display_name() if domain else domain_name,
             'next': req_params.get('next', '/a/%s/' % domain),
             'allow_domain_requests': domain.allow_domain_requests,
+            'current_page': {'page_name': _('Welcome back to %s!') % domain.display_name()}
+        })
+    else:
+        context.update({
+            'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
         })
 
     auth_view = HQLoginView if not domain_name else CloudCareLoginView
@@ -1040,10 +1045,9 @@ def quick_find(request):
     if not query:
         return HttpResponseBadRequest('GET param "q" must be provided')
 
-    def deal_with_couch_doc(doc):
-        domain = doc.get('domain') or doc.get('domains', [None])[0]
+    def deal_with_doc(doc, domain, doc_info_fn):
         if request.couch_user.is_superuser or (domain and request.couch_user.is_domain_admin(domain)):
-            doc_info = get_doc_info(doc, domain_hint=domain)
+            doc_info = doc_info_fn(doc)
         else:
             raise Http404()
         if redirect and doc_info.link:
@@ -1054,15 +1058,27 @@ def quick_find(request):
         else:
             return json_response(doc_info)
 
-    for db_name in (None, 'users', 'receiverwrapper', 'meta'):
+    couch_dbs = [None] + settings.COUCH_SETTINGS_HELPER.extra_db_names
+    for db_name in couch_dbs:
         try:
             doc = get_db(db_name).get(query)
         except ResourceNotFound:
             pass
         else:
-            return deal_with_couch_doc(doc)
-    else:
-        raise Http404()
+            domain = doc.get('domain') or doc.get('domains', [None])[0]
+            doc_info_fn = functools.partial(get_doc_info, domain_hint=domain)
+            return deal_with_doc(doc, domain, doc_info_fn)
+
+    for accessor in (FormAccessorSQL.get_form, CaseAccessorSQL.get_case):
+        try:
+            doc = accessor(query)
+        except (XFormNotFound, CaseNotFound):
+            pass
+        else:
+            domain = doc.domain
+            return deal_with_doc(doc, domain, get_object_info)
+
+    raise Http404()
 
 
 def osdd(request, template='osdd.xml'):
@@ -1083,6 +1099,7 @@ def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.ht
             'id': alert.id,
         } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
     })
+
 
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
@@ -1141,6 +1158,7 @@ def deactivate_alert(request):
 
 
 class DataTablesAJAXPaginationMixin(object):
+
     @property
     def echo(self):
         return self.request.GET.get('sEcho')

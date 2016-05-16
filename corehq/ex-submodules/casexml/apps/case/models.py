@@ -18,7 +18,8 @@ from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
-from corehq.form_processor.abstract_models import AbstractCommCareCase
+from corehq.apps.sms.mixin import MessagingCaseContactMixin
+from corehq.form_processor.abstract_models import AbstractCommCareCase, DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.django.cached_object import (
     CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
@@ -44,7 +45,7 @@ CASE_STATUS_OPEN = 'open'
 CASE_STATUS_CLOSED = 'closed'
 CASE_STATUS_ALL = 'all'
 
-INDEX_ID_PARENT = 'parent'
+INDEX_RELATIONSHIP_CHILD = 'child'
 
 
 class CommCareCaseAction(LooselyEqualDocumentSchema):
@@ -104,6 +105,31 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         """For compatability with CaseTransaction"""
         return self.xform
 
+    @property
+    def form_id(self):
+        """For compatability with CaseTransaction"""
+        return self.xform_id
+
+    @property
+    def is_case_create(self):
+        return self.action_type == const.CASE_ACTION_CREATE
+
+    @property
+    def is_case_close(self):
+        return self.action_type == const.CASE_ACTION_CLOSE
+
+    @property
+    def is_case_index(self):
+        return self.action_type == const.CASE_ACTION_INDEX
+
+    @property
+    def is_case_attachment(self):
+        return self.action_type == const.CASE_ACTION_ATTACHMENT
+
+    @property
+    def is_case_rebuild(self):
+        return self.action_type == const.CASE_ACTION_REBUILD
+
     def get_user_id(self):
         key = 'xform-%s-user_id' % self.xform_id
         id = cache.get(key)
@@ -124,7 +150,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
 
 class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
-                   CouchDocLockableMixIn, AbstractCommCareCase):
+                   CouchDocLockableMixIn, AbstractCommCareCase, MessagingCaseContactMixin):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
@@ -184,19 +210,31 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return "%s(name=%r, type=%r, id=%r)" % (
                 self.__class__.__name__, self.name, self.type, self._id)
 
-    @property
     @memoized
+    def get_parent(self, identifier=None, relationship=None):
+        indices = self.indices
+
+        if identifier:
+            indices = filter(lambda index: index.identifier == identifier, indices)
+
+        if relationship:
+            indices = filter(lambda index: index.relationship == relationship, indices)
+
+        return [CommCareCase.get(index.referenced_id) for index in indices]
+
+    @property
     def parent(self):
         """
         Returns the parent case if one exists, else None.
         NOTE: This property should only return the first parent in the list
-        of indices. If for some reason your use case creates more than one, 
+        of indices. If for some reason your use case creates more than one,
         please write/use a different property.
         """
-        for index in self.indices:
-            if index.identifier == INDEX_ID_PARENT:
-                return CommCareCase.get(index.referenced_id)
-        return None
+        result = self.get_parent(
+            identifier=DEFAULT_PARENT_IDENTIFIER,
+            relationship=INDEX_RELATIONSHIP_CHILD
+        )
+        return result[0] if result else None
 
     @property
     def server_opened_on(self):
@@ -212,8 +250,11 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return get_reverse_indices(self)
 
     @memoized
-    def get_subcases(self):
-        subcase_ids = [ix.referenced_id for ix in self.reverse_indices]
+    def get_subcases(self, index_identifier=None):
+        subcase_ids = [
+            ix.referenced_id for ix in self.reverse_indices
+            if (index_identifier is None or ix.identifier == index_identifier)
+        ]
         return CommCareCase.view('_all_docs', keys=subcase_ids, include_docs=True)
 
     @property
@@ -236,7 +277,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         self.doc_type += DELETED_SUFFIX
         self.save()
 
-    def get_json(self, lite=False):
+    def to_api_json(self, lite=False):
         ret = {
             # actions excluded here
             "domain": self.domain,
@@ -262,15 +303,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
                 "reverse_indices": self.get_index_map(True),
             })
         return ret
-
-    @memoized
-    def get_attachment_map(self):
-        return dict([
-            (name, {
-                'url': self.get_attachment_server_url(att.attachment_key),
-                'mime': att.attachment_from
-            }) for name, att in self.case_attachments.items()
-        ])
 
     @classmethod
     def get(cls, id, strip_history=False, **kwargs):

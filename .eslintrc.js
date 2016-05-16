@@ -13,6 +13,8 @@ module.exports = {
         "hqDefine": false,
         "hqImport": false,
         "gettext": false,
+        "assert": false,
+        "sinon": false,
         "$": false,
         "ko": false,
         "_": false,
@@ -23,9 +25,10 @@ module.exports = {
     // http://eslint.org/docs/user-guide/configuring#configuring-rules
     "rules": {
         // First option can be off, warn, or error
+        "comma-dangle": ["warn", "always-multiline"],
+        "eqeqeq": ["error"],
         "indent": ["warn", 4],
         "linebreak-style": ["error", "unix"],
-        "eqeqeq": ["error"],
         "semi": ["error", "always"],
     }
 };

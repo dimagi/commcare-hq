@@ -6,7 +6,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.phone.cleanliness import get_case_footprint_info
-from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
+from casexml.apps.phone.data_providers.case.load_testing import get_elements_for_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, LOG_FORMAT_SIMPLIFIED, IndexTree, SimplifiedSyncLog
@@ -66,7 +66,7 @@ class CleanOwnerCaseSyncOperation(object):
         extension_indices = defaultdict(set)
         all_dependencies_syncing = set()
         closed_cases = set()
-        potential_updates_to_sync = []
+        potential_elements_to_sync = {}
         while case_ids_to_sync:
             ids = pop_ids(case_ids_to_sync, chunk_size)
             # todo: see if we can avoid wrapping - serialization depends on it heavily for now
@@ -81,22 +81,24 @@ class CleanOwnerCaseSyncOperation(object):
             for update in updates:
                 case = update.case
                 all_synced.add(case.case_id)
-                potential_updates_to_sync.append(update)
-
+                potential_elements_to_sync[case.case_id] = get_elements_for_response(update, self.restore_state)
                 # update the indices in the new sync log
                 if case.indices:
-                    # and double check footprint for non-live cases
                     extension_indices[case.case_id] = {
                         index.identifier: index.referenced_id
                         for index in case.indices
                         if index.relationship == CASE_INDEX_EXTENSION
                     }
-                    child_indices[case.case_id] = {index.identifier: index.referenced_id for index in case.indices
-                                               if index.relationship == CASE_INDEX_CHILD}
+                    child_indices[case.case_id] = {
+                        index.identifier: index.referenced_id
+                        for index in case.indices
+                        if index.relationship == CASE_INDEX_CHILD
+                    }
                     for index in case.indices:
                         if index.referenced_id not in all_maybe_syncing:
                             case_ids_to_sync.add(index.referenced_id)
 
+                # and double check footprint for non-live cases
                 if not _is_live(case, self.restore_state):
                     all_dependencies_syncing.add(case.case_id)
                     if case.closed:
@@ -131,6 +133,9 @@ class CleanOwnerCaseSyncOperation(object):
                 primary_cases_syncing
             )
             index_tree = self.restore_state.last_sync_log.index_tree.apply_updates(index_tree)
+            extension_index_tree = self.restore_state.last_sync_log.extension_index_tree.apply_updates(
+                extension_index_tree
+            )
 
         self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
         self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing
@@ -149,9 +154,10 @@ class CleanOwnerCaseSyncOperation(object):
         else:
             irrelevant_cases = purged_cases - self.restore_state.last_sync_log.case_ids_on_phone
 
-        for update in potential_updates_to_sync:
-            if update.case.case_id not in irrelevant_cases:
-                append_update_to_response(response, update, self.restore_state)
+        for element_case_id, elements in potential_elements_to_sync.iteritems():
+            if element_case_id not in irrelevant_cases:
+                for element in elements:
+                    response.append(element)
 
         return response
 

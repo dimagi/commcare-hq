@@ -8,11 +8,11 @@
                             &nbsp;<a id="btn_pt_edit" class="btn btn-success" href="{{ pt_root_url }}&view=edit">Edit</a>
                     &nbsp;&nbsp;
 
-                    &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_pn_url }}">New Progress Note</a>
+                    &nbsp;<a class="btn btn-default" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_pn_url }}">New Progress Note</a>
                     {% if patient_doc.dot_status != "" %}
-                    &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_dot_url }}">New DOT</a>
+                    &nbsp;<a class="btn btn-default" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_dot_url }}">New DOT</a>
                     {% endif %}
-                    &nbsp;<a class="btn" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_bw_url }}">New Bloodwork</a>
+                    &nbsp;<a class="btn btn-default" {% if not notabs %}target="_blank"{% endif %} href="{{ cloudcare_bw_url }}">New Bloodwork</a>
                 </h4>
             </div>
             <div class="commit-group">
@@ -29,16 +29,16 @@
                     </tr>
 
                     <tr>
-                        <th class="span3">Race</th>
+                        <th class="col-sm-3">Race</th>
                         <td>{{ patient_doc.race_display}}</td>
-                        <th class="span3">Latino</th>
+                        <th class="col-sm-3">Latino</th>
                         <td>{% if  patient_doc.is_latino %}
                             Yes
                         {% else %}
                             No
                         {% endif %}
                         </td>
-                        <th class="span3">Language</th>
+                        <th class="col-sm-3">Language</th>
                         <td>{{ patient_doc.preferred_language|title }}</td>
                     </tr>
                     <tr>
@@ -51,7 +51,7 @@
                             {% if patient_doc.is_dot %}
                                <a href="/a/{{ domain }}/reports/custom/dots/?dot_patient={{ patient_doc.get_id }}">{{ patient_doc.dot_status_display }}</a>
                             {% else %}
-                               <span class="label">No DOT</span>
+                               <span class="label label-default">No DOT</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -66,7 +66,7 @@
                     {% endif %}
 
                     <tr>
-                        <th class="span3">MassHealth Expiration</th>
+                        <th class="col-sm-3">MassHealth Expiration</th>
                         <td>
                             {% if patient_doc.mass_health_expiration %}
                             {{ patient_doc.mass_health_expiration }}
@@ -96,7 +96,7 @@
     <div class="commit-group">
         <table class="table">
             <tr>
-                <th class="span3">
+                <th class="col-sm-3">
                     Address(es)<br>
                 </th>
                 <td>
@@ -113,7 +113,7 @@
             </tr>
 
             <tr>
-                <th class="span3">
+                <th class="col-sm-3">
                     Phone(s)
                 </th>
                 <td>
@@ -140,8 +140,8 @@
         <table class="table table-bordered table-striped span5">
             <thead>
             <tr>
-                <th class="span1"></th>
-                <th class="span4">Name</th>
+                <th class="col-sm-1"></th>
+                <th class="col-sm-4">Name</th>
                 <th>Info</th>
             </tr>
             </thead>

@@ -21,7 +21,7 @@ class BlobDeletionProcessor(PillowProcessor):
         self.blob_db = blob_db
         self.bucket_base = bucket_base
 
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
+    def process_change(self, pillow_instance, change):
         if change.deleted:
             bucket = join(self.bucket_base, change.id)
             self.blob_db.delete(bucket=bucket)
@@ -37,7 +37,6 @@ def get_blob_deletion_pillow(pillow_id):
     )
     return ConstructedPillow(
         name=pillow_id,
-        document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.META], group_id='blob-deletion-group'),
         processor=BlobDeletionProcessor(get_blob_db(), get_db(None).dbname),

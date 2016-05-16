@@ -1,4 +1,4 @@
-{% extends "reports/async/bootstrap2/default.html" %}
+{% extends "reports/async/default.html" %}
 {% load i18n %}
 {% load case_tags %}
 {% block reportcontent %}
@@ -13,7 +13,7 @@
     {% endblock patient_header %}
 
     {% block patient_content %}
-        <div class="span11">
+        <div class="col-sm-11">
             <script>
                 // have to do this here too because this page is loaded asynchronously
                 $(function () {
@@ -22,6 +22,9 @@
             </script>
 
             <div class="row">
+                {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
+                {# import error on the case details page: http://manage.dimagi.com/default.asp?223100 #}
+                {% include 'cloudcare/includes/touchforms-inline.html' with exclude_jquery_ui_import=True %}
                 {% render_case_hierarchy case case_hierarchy_options %}
             </div>
         </div>

@@ -18,7 +18,3 @@ class ExportFormValidationException(Exception):
 
 class ExportAsyncException(Exception):
     pass
-
-
-class ExportInvalidTransform(Exception):
-    '''Thrown when an invalid transform constant gets added to an ExportColumn'''

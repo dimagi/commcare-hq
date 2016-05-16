@@ -48,6 +48,7 @@ class CouchAttachmentsBuilder(object):
     and how/whether they call .save() on the object.)
 
     """
+
     def __init__(self, original=None):
         self._dict = original or {}
 
@@ -98,11 +99,22 @@ class CouchAttachmentsBuilder(object):
 
 
 class PaginateViewLogHandler(object):
-    def view_starting(self, db, view_name, kwargs, total_emitted):
+
+    def log(self, message):
+        # subclasses can override this to actually log something
+        # built in implementation swallows it
         pass
 
+    def view_starting(self, db, view_name, kwargs, total_emitted):
+        self.log(u'Fetching rows {}-{} from couch'.format(
+            total_emitted,
+            total_emitted + kwargs['limit'] - 1)
+        )
+        startkey = kwargs.get('startkey')
+        self.log(u'  startkey={!r}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
+
     def view_ending(self, db, view_name, kwargs, total_emitted, time):
-        pass
+        self.log('View call took {}'.format(time))
 
 
 def paginate_view(db, view_name, chunk_size,
@@ -161,6 +173,7 @@ _override_db = threading.local()
 
 
 class OverrideDB(object):
+
     def __init__(self, document_class, database):
         self.document_class = document_class
         self.database = database

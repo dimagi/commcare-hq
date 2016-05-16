@@ -36,6 +36,7 @@ SHARED_ID = "our_group"
 PARENT_TYPE = "mother"
 CHILD_RELATIONSHIP = "child"
 
+
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class SyncBaseTest(TestCase):
     """
@@ -1024,6 +1025,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
 
 
 class ExtensionCasesFirstSync(SyncBaseTest):
+
     def setUp(self):
         super(ExtensionCasesFirstSync, self).setUp()
         self.restore_config = RestoreConfig(project=self.project, user=self.user)
@@ -1804,6 +1806,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
     """
     Test that doing multiple clean syncs with extensions does what we think it will
     """
+
     def setUp(self):
         super(SteadyStateExtensionSyncTest, self).setUp()
         self.other_user = User(user_id=OTHER_USER_ID, username=OTHER_USERNAME,
@@ -1819,10 +1822,7 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
             defaults={'is_clean': True}
         )
 
-    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
-    @run_with_all_backends
-    def test_delegating_extensions(self):
-        """Make an extension, delegate it, send it back, see what happens"""
+    def _create_extension(self):
         host = CaseStructure(case_id='host',
                              attrs={'create': True})
         extension = CaseStructure(
@@ -1837,6 +1837,13 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
         )
         # Make a simple extension
         self.factory.create_or_update_case(extension)
+        return host, extension
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    @run_with_all_backends
+    def test_delegating_extensions(self):
+        """Make an extension, delegate it, send it back, see what happens"""
+        host, extension = self._create_extension()
 
         # Make sure we get it
         assert_user_has_case(self, self.user, host.case_id)
@@ -1886,6 +1893,24 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
                                      restore_id=SyncLog.last_for_user(OTHER_USER_ID)._id)
 
         # Hooray!
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    @run_with_all_backends
+    def test_multiple_syncs(self):
+        host, extension = self._create_extension()
+        assert_user_has_case(self, self.user, host.case_id)
+        assert_user_has_case(self, self.user, extension.case_id)
+
+        sync_log = SyncLog.last_for_user(USER_ID)
+        self.assertItemsEqual(sync_log.case_ids_on_phone, ['host', 'extension'])
+
+        generate_restore_payload(self.project, self.user, restore_id=sync_log._id, version=V2)
+        second_sync_log = SyncLog.last_for_user(USER_ID)
+        self.assertItemsEqual(second_sync_log.case_ids_on_phone, ['host', 'extension'])
+
+        generate_restore_payload(self.project, self.user, restore_id=second_sync_log._id, version=V2)
+        third_sync_log = SyncLog.last_for_user(USER_ID)
+        self.assertItemsEqual(third_sync_log.case_ids_on_phone, ['host', 'extension'])
 
 
 class SyncTokenReprocessingTest(SyncBaseTest):

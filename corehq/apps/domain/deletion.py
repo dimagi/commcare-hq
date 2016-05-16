@@ -4,6 +4,7 @@ from django.db import connection
 
 
 class BaseDeletion(object):
+
     def __init__(self, app_label):
         self.app_label = app_label
 
@@ -15,6 +16,7 @@ class BaseDeletion(object):
 
 
 class CustomDeletion(BaseDeletion):
+
     def __init__(self, app_label, deletion_fn):
         super(CustomDeletion, self).__init__(app_label)
         self.deletion_fn = deletion_fn
@@ -25,6 +27,7 @@ class CustomDeletion(BaseDeletion):
 
 
 class RawDeletion(BaseDeletion):
+
     def __init__(self, app_label, raw_query):
         super(RawDeletion, self).__init__(app_label)
         self.raw_query = raw_query
@@ -35,6 +38,7 @@ class RawDeletion(BaseDeletion):
 
 
 class ModelDeletion(BaseDeletion):
+
     def __init__(self, app_label, model_name, domain_filter_kwarg):
         super(ModelDeletion, self).__init__(app_label)
         self.domain_filter_kwarg = domain_filter_kwarg
@@ -63,6 +67,15 @@ def _delete_domain_backend_mappings(domain_name):
 def _delete_domain_backends(domain_name):
     model = apps.get_model('sms', 'SQLMobileBackend')
     model.objects.filter(is_global=False, domain=domain_name).delete()
+
+
+def _delete_web_user_membership(domain_name):
+    from corehq.apps.users.models import WebUser
+    active_web_users = WebUser.by_domain(domain_name)
+    inactive_web_users = WebUser.by_domain(domain_name, is_active=False)
+    for web_user in list(active_web_users) + list(inactive_web_users):
+        web_user.delete_domain_membership(domain_name)
+        web_user.save()
 
 
 # We use raw queries instead of ORM because Django queryset delete needs to
@@ -102,6 +115,7 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('sms', _delete_domain_backend_mappings),
     ModelDeletion('sms', 'MobileBackendInvitation', 'domain'),
     CustomDeletion('sms', _delete_domain_backends),
+    CustomDeletion('users', _delete_web_user_membership),
 ]
 
 

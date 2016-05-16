@@ -3,6 +3,7 @@ from django.conf.urls import *
 from django.contrib.auth.views import password_reset
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.views.generic import RedirectView
 
@@ -24,7 +25,8 @@ from corehq.apps.domain.views import (
     ActivateTransferDomainView, DeactivateTransferDomainView,
     BulkStripePaymentView, InternalSubscriptionManagementView,
     WireInvoiceView, SubscriptionRenewalView, CreditsWireInvoiceView,
-    CardsView, CardView, PasswordResetView
+    CardsView, CardView, PasswordResetView,
+    CaseSearchConfigView,
 )
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -53,9 +55,12 @@ def exception_safe_password_reset(request, *args, **kwargs):
     try:
         return password_reset(request, *args, **kwargs)
     except None:
-        vals = {'error_msg':'There was a problem with your request',
-                'error_details':sys.exc_info(),
-                'show_homepage_link': 1 }
+        vals = {
+            'current_page': {'page_name': _('Oops!')},
+            'error_msg': 'There was a problem with your request',
+            'error_details': sys.exc_info(),
+            'show_homepage_link': 1,
+        }
         return render_to_response('error.html', vals, context_instance=RequestContext(request))
 
 
@@ -65,6 +70,7 @@ def exception_safe_password_reset(request, *args, **kwargs):
 def auth_pages_path(page):
     return {'template_name':'login_and_password/' + page}
 
+
 def extend(d1, d2):
     return dict(d1.items() + d2.items())
 
@@ -72,7 +78,6 @@ urlpatterns =\
     patterns('corehq.apps.domain.views',
         url(r'^domain/select/$', 'select', name='domain_select'),
         url(r'^domain/autocomplete/(?P<field>\w+)/$', 'autocomplete_fields', name='domain_autocomplete_fields'),
-        url(r'^domain/incomplete_email/$', 'incomplete_email'),
         url(r'^domain/transfer/(?P<guid>\w+)/activate$',
             ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
         url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
@@ -80,20 +85,31 @@ urlpatterns =\
     ) +\
     patterns('django.contrib.auth.views',
         url(r'^accounts/password_change/$', 'password_change', auth_pages_path('password_change_form.html'), name='password_change'),
-        url(r'^accounts/password_change_done/$', 'password_change_done', auth_pages_path('password_change_done.html'),
+        url(r'^accounts/password_change_done/$', 'password_change_done',
+            extend(auth_pages_path('password_change_done.html'),
+                   {'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}}),
             name='password_change_done'),
 
-        url(r'^accounts/password_reset_email/$', exception_safe_password_reset, extend(auth_pages_path('password_reset_form.html'),
-                                                                                       { 'password_reset_form': ConfidentialPasswordResetForm,
-                                                                                         'from_email':settings.DEFAULT_FROM_EMAIL}),
+        url(r'^accounts/password_reset_email/$', exception_safe_password_reset,
+            extend(auth_pages_path('password_reset_form.html'),
+                   {'password_reset_form': ConfidentialPasswordResetForm,
+                    'from_email': settings.DEFAULT_FROM_EMAIL,
+                    'extra_context': {'current_page': {'page_name': _('Password Reset')}}}),
             name='password_reset_email'),
-        url(r'^accounts/password_reset_email/done/$', 'password_reset_done', auth_pages_path('password_reset_done.html'),
+        url(r'^accounts/password_reset_email/done/$', 'password_reset_done',
+            extend(auth_pages_path('password_reset_done.html'),
+                   {'extra_context': {'current_page': {'page_name': _('Reset My Password')}}}),
             name='password_reset_done'),
 
         url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
             PasswordResetView.as_view(),  extend(auth_pages_path('password_reset_confirm.html'),
-                                                    {'set_password_form': HQSetPasswordForm}), name=PasswordResetView.urlname),
-        url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete', auth_pages_path('password_reset_complete.html'),
+                                                    {'set_password_form': HQSetPasswordForm,
+                                                    'extra_context': {'current_page':
+                                                        {'page_name': _('Password Reset Confirmation')}}}),
+            name=PasswordResetView.urlname),
+        url(r'^accounts/password_reset_confirm/done/$', 'password_reset_complete',
+            extend(auth_pages_path('password_reset_complete.html'),
+                   {'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}}),
             name='password_reset_complete')
     )
 
@@ -155,6 +171,7 @@ domain_settings = patterns(
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
+    url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings')),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),

@@ -1,5 +1,6 @@
-{% extends "reports/async/bootstrap2/tabular.html" %}
+{% extends "reports/async/tabular.html" %}
 {% load hq_shared_tags %}
+
 {% block js-inline %}
     <script type="text/javascript">
 
@@ -24,7 +25,7 @@
                 {% endif %}
 
                 {% if report_table.bad_request_error_text %}
-                    badRequestErrorText: "<span class='label label-important'>Sorry!</span> {{ report_table.bad_request_error_text }}",
+                    badRequestErrorText: "<span class='label label-danger'>Sorry!</span> {{ report_table.bad_request_error_text }}",
                 {% endif %}
 
                 {% if report_table.left_col.is_fixed %}
@@ -33,7 +34,9 @@
                     fixColsWidth: {{ report_table.left_col.fixed.width }},
                 {% endif %}
                 includeFilter: true,
-                aaSorting: [[5, 'asc']]
+                aaSorting: [[5, 'asc']],
+                useBootstrap3: true,
+                paginationType: 'bs_normal'
             });
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);

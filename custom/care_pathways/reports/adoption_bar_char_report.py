@@ -1,10 +1,13 @@
-from corehq.apps.reports.graph_models import MultiBarChart, Axis
+from corehq.apps.reports.graph_models import Axis
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import DataFormatter, TableDataFormat
-from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter
+from custom.care_pathways.filters import GeographyFilter, GenderFilter, GroupLeadershipFilter, CBTNameFilter,  GroupByFilter, PPTYearFilter, TypeFilter, ScheduleFilter, \
+    RealOrTestFilter, MalawiPPTYearFilter
 from custom.care_pathways.reports import CareBaseReport
 from custom.care_pathways.sqldata import AdoptionBarChartReportSqlData
+from custom.care_pathways.charts import PathwaysMultiBarChart as MultiBarChart
 import re
+
 
 class AdoptionBarChartReport(CareBaseReport):
     name = 'Adoption Bar Chart'
@@ -14,17 +17,22 @@ class AdoptionBarChartReport(CareBaseReport):
 
     @property
     def fields(self):
-        filters = [GeographyFilter,
-                   PPTYearFilter,
-                   GenderFilter,
-                   GroupLeadershipFilter,
-                   CBTNameFilter]
+        filters = [GeographyFilter]
+        if self.domain == 'care-macf-malawi':
+            filters.append(MalawiPPTYearFilter)
+        else:
+            filters.append(PPTYearFilter)
+        filters.extend([
+            GenderFilter,
+            GroupLeadershipFilter,
+            CBTNameFilter
+        ])
+        if self.domain == 'care-macf-malawi':
+            filters.append(RealOrTestFilter)
         if self.domain == 'pathways-india-mis':
             filters.append(ScheduleFilter)
         filters.append(TypeFilter)
         filters.append(GroupByFilter)
-        print self.report_template_path
-
         return filters
 
     @property
@@ -89,7 +97,6 @@ class AdoptionBarChartReport(CareBaseReport):
     @property
     def data_provider(self):
         return AdoptionBarChartReportSqlData(domain=self.domain, config=self.report_config, request_params=self.request_params)
-
 
     @property
     def headers(self):

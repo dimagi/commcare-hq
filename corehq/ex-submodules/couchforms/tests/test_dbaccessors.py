@@ -55,6 +55,16 @@ class TestDBAccessors(TestCase):
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_xforms(cls.domain)
 
+    def test_get_form_ids_by_type_xforminstance(self):
+        form_ids = get_form_ids_by_type(self.domain, 'XFormInstance')
+        self.assertEqual(len(form_ids), len(self.xforms))
+        self.assertEqual(set(form_ids), {form._id for form in self.xforms})
+
+    def test_get_form_ids_by_type_xformerror(self):
+        form_ids = get_form_ids_by_type(self.domain, 'XFormError')
+        self.assertEqual(len(form_ids), len(self.xform_errors))
+        self.assertEqual(set(form_ids), {form._id for form in self.xform_errors})
+
     def test_get_forms_by_type_xforminstance(self):
         forms = get_forms_by_type(self.domain, 'XFormInstance', limit=10)
         self.assertEqual(len(forms), len(self.xforms))
@@ -70,10 +80,6 @@ class TestDBAccessors(TestCase):
                          {form._id for form in self.xform_errors})
         for form in forms:
             self.assertIsInstance(form, XFormError)
-
-    def test_get_form_ids_by_type(self):
-        form_ids = get_form_ids_by_type(self.domain, 'XFormError')
-        self.assertEqual(form_ids, [form._id for form in self.xform_errors])
 
     def test_get_deleted_form_ids_for_user(self):
         ids = get_deleted_form_ids_for_user(self.user_id2)

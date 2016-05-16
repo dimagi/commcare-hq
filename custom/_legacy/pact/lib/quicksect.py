@@ -15,6 +15,7 @@ import random
 
 
 class IntervalNode( object ):
+
     def __init__( self, start, end, linenum=0, other=None ):
         # Python lacks the binomial distribution, so we convert a
         # uniform into a binomial because it naturally scales with
@@ -30,6 +31,7 @@ class IntervalNode( object ):
         self.right = None
         self.linenum = linenum
         self.other = other
+
     def insert( self, start, end, linenum=0, other=None ):
         root = self
         if start > self.start:
@@ -104,6 +106,7 @@ class IntervalNode( object ):
         if self.left: self.left.traverse( func )
         func( self )
         if self.right: self.right.traverse( func )
+
 
 def main():
     test = None

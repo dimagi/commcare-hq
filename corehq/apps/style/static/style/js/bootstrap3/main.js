@@ -38,7 +38,7 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
             '<a href="#" tabindex="-1">' +
                 '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
     );
-    _.each(['content', 'title', 'html'], function(attr) {
+    _.each(['content', 'title', 'html', 'placement'], function(attr) {
         $('a', el).data(attr, opts[attr]);
     });
     if (wrap) {
@@ -77,14 +77,6 @@ COMMCAREHQ.initBlock = function ($elem) {
     $('.post-link').click(function (e) {
         e.preventDefault();
         $.postGo($(this).attr('href'), {});
-    });
-
-    // trick to give a select menu an initial value
-    $('select[data-value]', $elem).each(function () {
-        var val = $(this).attr('data-value');
-        if (val) {
-            $(this).val(val);
-        }
     });
 
     $(".button", $elem).button().wrap('<span />');
@@ -169,6 +161,10 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                         that.nextState = null;
                         that.setState('retry');
                         var customError = ((data.responseJSON && data.responseJSON.message) ? data.responseJSON.message : data.responseText);
+                        if (customError.indexOf('<head>') > -1) {
+                            // this is sending back a full html page, likely login, so no error message.
+                            customError = null;
+                        }
                         alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
                         error.apply(this, arguments);
                     };

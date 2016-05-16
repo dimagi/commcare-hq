@@ -8,7 +8,6 @@ from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_number_of_cases_per_domain
 from corehq.util.dates import iso_string_to_datetime
-from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.forms import FormES
@@ -32,11 +31,13 @@ def num_web_users(domain, *args):
     row = CouchUser.get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
     return row["value"] if row else 0
 
+
 def num_mobile_users(domain, *args):
     row = CouchUser.get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
+
 
 def active_mobile_users(domain, *args):
     """
@@ -94,6 +95,7 @@ def cases_in_last(domain, days):
                 "to": now}}}}
     data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_index='cases', size=1)
     return data['hits']['total'] if data.get('hits') else 0
+
 
 def inactive_cases_in_last(domain, days):
     """
@@ -206,12 +208,14 @@ def app_list(domain, *args):
     apps = domain.applications()
     return render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})
 
+
 def uses_reminders(domain, *args):
     handlers = CaseReminderHandler.get_handlers(domain)
     return len(handlers) > 0
 
+
 def not_implemented(domain, *args):
-    return '<p class="text-error">not implemented</p>'
+    return '<p class="text-danger">not implemented</p>'
 
 CALC_ORDER = [
     'num_web_users', 'num_mobile_users', 'forms', 'cases',
@@ -314,6 +318,7 @@ def _all_domain_stats():
             "commcare_users": commcare_counts,
             "forms": form_counts,
             "cases": case_counts}
+
 
 def total_distinct_users(domains=None):
     """

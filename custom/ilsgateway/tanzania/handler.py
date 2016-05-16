@@ -22,6 +22,13 @@ from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tanzania.reminders import CONTACT_SUPERVISOR
 
 
+def choose_handler(keyword, handlers):
+    for k, v in handlers.iteritems():
+        if keyword.lower() in k:
+            return v
+    return None
+
+
 def handle(verified_contact, text, msg=None):
     user = verified_contact.owner if verified_contact else None
     domain = user.domain
@@ -55,32 +62,35 @@ def handle(verified_contact, text, msg=None):
         return None
 
     handlers = {
+        ('arrived', 'aliwasili'): ArrivedHandler,
+        ('help', 'msaada'): HelpHandler,
+        ('language', 'lang', 'lugha'): LanguageHandler,
+        ('stop', 'acha', 'hapo'): StopHandler,
+        ('yes', 'ndio', 'ndyo'): YesHandler,
+        ('register', 'reg', 'join', 'sajili'): RegisterHandler,
+        ('test',): MessageInitiatior,
+    }
+
+    location_needed_handlers = {
         ('soh', 'hmk'): SOHHandler,
         ('submitted', 'nimetuma'): RandrHandler,
         ('delivered', 'dlvd', 'nimepokea'): DeliveredHandler,
         ('sijapokea',): NotDeliveredHandler,
         ('sijatuma',): NotSubmittedHandler,
         ('supervision', 'usimamizi'): SupervisionHandler,
-        ('arrived', 'aliwasili'): ArrivedHandler,
-        ('help', 'msaada'): HelpHandler,
-        ('language', 'lang', 'lugha'): LanguageHandler,
-        ('stop', 'acha', 'hapo'): StopHandler,
-        ('yes', 'ndio', 'ndyo'): YesHandler,
         ('la', 'um'): LossAndAdjustment,
         ('stockout', 'hakuna'): StockoutHandler,
-        ('register', 'reg', 'join', 'sajili'): RegisterHandler,
-        ('test',): MessageInitiatior,
         ('not',): not_function(args[0]) if args else None,
         ('trans',): TransferHandler
     }
 
-    def choose_handler(keyword):
-        for k, v in handlers.iteritems():
-            if keyword.lower() in k:
-                return v
-        return None
+    handler_class = choose_handler(keyword, location_needed_handlers)
+    if handler_class and not user.location_id:
+        return True
 
-    handler_class = choose_handler(keyword)
+    if not handler_class:
+        handler_class = choose_handler(keyword, handlers)
+
     handler = handler_class(**params) if handler_class else None
 
     if handler:

@@ -250,7 +250,7 @@ class ESQuery(object):
 
     def set_query(self, query):
         """
-        Add a query.  Most stuff we want is better done with filters, but
+        Set the query.  Most stuff we want is better done with filters, but
         if you actually want Levenshtein distance or prefix querying...
         """
         es = deepcopy(self)
@@ -373,6 +373,7 @@ class ESQuerySet(object):
      * ESQuerySet.raw is the raw response from elasticsearch
      * ESQuerySet.query is the ESQuery object
     """
+
     def __init__(self, raw, query):
         if 'error' in raw:
             msg = ("ElasticSearch Error\n{error}\nIndex: {index}"

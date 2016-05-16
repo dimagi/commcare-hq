@@ -28,6 +28,7 @@ def _get_grouping(prop_dict):
             group_by = []
         return group_by
 
+
 class CareQueryMeta(QueryMeta):
 
     def __init__(self, table_name, filters, group_by, order_by, key):
@@ -158,6 +159,8 @@ class CareSqlData(SqlData):
             filters.append(EQ('group_leadership', 'group_leadership'))
         if 'cbt_name' in self.config and self.config['cbt_name']:
             filters.append(EQ('owner_id', 'cbt_name'))
+        if 'real_or_test' in self.config and self.config['real_or_test']:
+            filters.append(EQ('real_or_test', 'real_or_test'))
         for column_name in ['domains', 'practices', 'schedule']:
             if column_name in self.config and self.config[column_name] and self.config[column_name] != ('0',):
                 filters.append(IN(column_name, get_INFilter_bindparams(column_name, self.config[column_name])))
@@ -277,7 +280,6 @@ class AdoptionDisaggregatedSqlData(CareSqlData):
 
         return display
 
-
     @property
     def columns(self):
         return [
@@ -326,8 +328,6 @@ class TableCardSqlData(CareSqlData):
             elif int(x) == 2:
                 return 'All Women'
 
-
-
     @property
     def columns(self):
         if self.config['table_card_group_by'] == 'group_name':
@@ -368,7 +368,6 @@ class TableCardSqlData(CareSqlData):
             return ['group_name', 'value_chain', 'domains', 'practices']
         else:
             return ['gender', 'value_chain', 'domains', 'practices']
-
 
 
 class TableCardReportGrouppedPercentSqlData(TableCardSqlData):
@@ -437,6 +436,7 @@ class TableCardReportIndividualPercentSqlData(TableCardSqlData):
 
         def _calc_totals(row, idx):
             TAG_RE = re.compile(r'<[^>]+>')
+
             def remove_tags(text):
                 return TAG_RE.sub('', text)
 

@@ -1,4 +1,6 @@
 from django.test import TestCase
+
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.util import format_username
 from corehq.util.dates import iso_string_to_date
 from couchforms.models import XFormInstance
@@ -14,9 +16,7 @@ from corehq.apps.domain.shortcuts import create_domain
 class CreateTestCase(TestCase):
 
     def setUp(self):
-        all_users = CouchUser.all()
-        for user in all_users:
-            user.delete()
+        delete_all_users()
         self.xform = XFormInstance()
         self.xform.form = {}
         self.xform.form['username'] = self.username     = 'test_reg'

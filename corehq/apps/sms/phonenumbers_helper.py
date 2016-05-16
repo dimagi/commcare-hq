@@ -5,9 +5,11 @@ class PhoneNumberParseException(Exception):
 
 
 class PhoneNumber(object):
+
     def __init__(self, country_code, national_number):
         self.country_code = country_code
         self.national_number = national_number
+
 
 def parse_phone_number(number, region=None, failhard=True):
     from phonenumbers.phonenumberutil import parse as phonenumbers_parse, NumberParseException

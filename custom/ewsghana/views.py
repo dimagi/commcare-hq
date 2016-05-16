@@ -19,6 +19,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
@@ -40,23 +41,13 @@ class EWSGlobalStats(GlobalStats):
     root_name = 'Country'
 
 
-class EWSConfigView(BaseConfigView):
-    config = EWSGhanaConfig
-    urlname = 'ews_config'
-    sync_urlname = 'sync_ewsghana'
-    sync_stock_url = 'ews_sync_stock_data'
-    clear_stock_url = 'ews_clear_stock_data'
-    page_title = ugettext_noop("EWS Ghana")
-    template_name = 'ewsghana/ewsconfig.html'
-    source = 'ewsghana'
-
-
 class InputStockView(BaseDomainView):
     section_name = 'Input stock data'
     section_url = ""
     template_name = 'ewsghana/input_stock.html'
 
     @method_decorator(login_and_domain_required)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         couch_user = self.request.couch_user
         site_code = kwargs['site_code']

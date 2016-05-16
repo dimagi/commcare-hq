@@ -1,27 +1,29 @@
 import copy
+import datetime
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlCaseChangeProvider
-from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX
+from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX, CASE_ES_TYPE
 from corehq.pillows.utils import get_user_type
 from dimagi.utils.couch import LockManager
 from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
 import logging
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.es_utils import doc_exists, ElasticsearchIndexMeta
+from pillowtop.es_utils import doc_exists, ElasticsearchIndexInfo, get_index_info_from_pillow
 from pillowtop.listener import lock_manager
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import PillowReindexer
+from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
+    ElasticPillowReindexer
 
 
 UNKNOWN_DOMAIN = "__nodomain__"
 UNKNOWN_TYPE = "__notype__"
-CASE_ES_TYPE = 'case'
 
 
 pillow_logging = logging.getLogger("pillowtop")
@@ -74,6 +76,7 @@ def transform_case_for_elasticsearch(doc_dict):
             doc_ret["owner_id"] = doc_ret["user_id"]
 
     doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
+    doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
 
     return doc_ret
 
@@ -84,12 +87,11 @@ def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow
     )
     case_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
-        index_meta=ElasticsearchIndexMeta(index=CASE_INDEX, type=CASE_ES_TYPE),
+        index_info=ElasticsearchIndexInfo(index=CASE_INDEX, type=CASE_ES_TYPE),
         doc_prep_fn=transform_case_for_elasticsearch
     )
     return ConstructedPillow(
         name=pillow_id,
-        document_store=None,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], group_id='sql-cases-to-es'),
         processor=case_processor,
@@ -100,11 +102,26 @@ def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow
 
 
 def get_couch_case_reindexer():
-    return PillowReindexer(CasePillow(), CouchViewChangeProvider(
-        document_class=CommCareCase,
-        view_name='cases_by_owner/view'
-    ))
+    return get_default_reindexer_for_elastic_pillow(
+        pillow=CasePillow(online=False),
+        change_provider=CouchViewChangeProvider(
+            couch_db=CommCareCase.get_db(),
+            view_name='cases_by_owner/view',
+            view_kwargs={
+                'include_docs': True,
+            }
+        )
+    )
 
 
 def get_sql_case_reindexer():
-    return PillowReindexer(get_sql_case_to_elasticsearch_pillow(), SqlCaseChangeProvider())
+    return ElasticPillowReindexer(
+        pillow=get_sql_case_to_elasticsearch_pillow(),
+        change_provider=SqlCaseChangeProvider(),
+        elasticsearch=get_es_new(),
+        index_info=_get_case_index_info(),
+    )
+
+
+def _get_case_index_info():
+    return get_index_info_from_pillow(CasePillow(online=False))

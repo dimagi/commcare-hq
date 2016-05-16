@@ -39,18 +39,18 @@ class ConvenientBaseMixIn(object):
     # for convenience
 
     base_template_mobile = "bihar/base_template_mobile.html"
-    report_template_path = "reports/async/bootstrap2/tabular.html"
+    report_template_path = "reports/async/tabular.html"
 
     hide_filters = True
     flush_layout = True
     mobile_enabled = True
     fields = []
-    is_bootstrap3 = True
 
     extra_context_providers = [shared_bihar_context]
 
     # for the lazy
     _headers = []  # override
+
     @property
     def headers(self):
         headers = self._headers[self.mode] if isinstance(self._headers, dict) else self._headers
@@ -170,7 +170,7 @@ class BiharSummaryReport(ConvenientBaseMixIn, SummaryTablularReport,
     # this is literally just a way to do a multiple inheritance without having
     # the same 3 classes extended by a bunch of other classes
     base_template_mobile = "bihar/bihar_summary.html"
-    report_template_path = "reports/async/bootstrap2/summary_tabular.html"
+    report_template_path = "reports/async/summary_tabular.html"
     extra_context_providers = [shared_bihar_context, summary_context]
 
 
@@ -235,7 +235,6 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
                 details=url_and_params(self.next_report_class.get_url(domain=self.domain,
                                                                       render_as=self.render_next),
                                        params))
-
 
         return [group.name, _link(group, get_awcc(group))] if self.is_supervisor else [_link(group, group.name)]
 

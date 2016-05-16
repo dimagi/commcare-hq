@@ -86,6 +86,7 @@ class LanguageField(forms.CharField):
     """
     Adds language code validation to a field
     """
+
     def __init__(self, *args, **kwargs):
         super(LanguageField, self).__init__(*args, **kwargs)
         self.min_length = 2
@@ -214,14 +215,14 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         username_controls = []
         if self.username:
             username_controls.append(hqcrispy.StaticField(
-                _('Username'), self.username)
+                ugettext_lazy('Username'), self.username)
             )
 
         api_key_controls = [
-            hqcrispy.StaticField(_('API Key'), api_key),
+            hqcrispy.StaticField(ugettext_lazy('API Key'), api_key),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _('Generate API Key'),
+                    ugettext_lazy('Generate API Key'),
                     type="button",
                     id='generate-api-key',
                     css_class='btn-default',
@@ -230,7 +231,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             ),
         ]
 
-        self.fields['language'].label = _("My Language")
+        self.fields['language'].label = ugettext_lazy("My Language")
 
         self.new_helper = cb3_helper.FormHelper()
         self.new_helper.form_method = 'POST'
@@ -242,7 +243,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         self.new_helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.new_helper.layout = cb3_layout.Layout(
             cb3_layout.Fieldset(
-                _("Basic"),
+                ugettext_lazy("Basic"),
                 cb3_layout.Div(*username_controls),
                 hqcrispy.Field('first_name'),
                 hqcrispy.Field('last_name'),
@@ -250,13 +251,13 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 twbscrispy.PrependedText('email_opt_out', ''),
             ),
             cb3_layout.Fieldset(
-                _("Other Options"),
+                ugettext_lazy("Other Options"),
                 hqcrispy.Field('language'),
                 cb3_layout.Div(*api_key_controls),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Update My Information"),
+                    ugettext_lazy("Update My Information"),
                     type='submit',
                     css_class='btn-primary',
                 )
@@ -364,13 +365,7 @@ class CommCareAccountForm(forms.Form):
 
         return self.cleaned_data
 
-import django
-if django.VERSION < (1, 6):
-    from django.core.validators import email_re
-    validate_username = EmailValidator(email_re,
-            ugettext_lazy(u'Username contains invalid characters.'), 'invalid')
-else:
-    validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
+validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
 
 
 _username_help = """
@@ -537,6 +532,7 @@ class MultipleSelectionForm(forms.Form):
 
 
 class SupplyPointSelectWidget(forms.Widget):
+
     def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
@@ -688,6 +684,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
 
 
 class SelfRegistrationForm(forms.Form):
+
     def __init__(self, *args, **kwargs):
         if 'domain' not in kwargs:
             raise Exception('Expected kwargs: domain')

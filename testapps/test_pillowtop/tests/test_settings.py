@@ -5,24 +5,21 @@ import json
 from corehq.util.test_utils import TestFileMixin
 from pillowtop.listener import AliasedElasticPillow, BasicPillow
 from pillowtop.utils import get_all_pillow_configs
+from testapps.test_pillowtop.utils import real_pillow_settings
 
 
 @override_settings(DEBUG=True)
+@real_pillow_settings()
 class PillowtopSettingsTest(TestCase, TestFileMixin):
+    dependent_apps = [
+        'pillowtop',
+        'casexml.apps.case',
+        'corehq.apps.domain',
+        'corehq.apps.app_manager',
+    ]
     file_path = ('data',)
     root = os.path.dirname(__file__)
     maxDiff = None
-
-    @classmethod
-    def setUpClass(cls):
-        cls._PILLOWTOPS = settings.PILLOWTOPS
-        if not settings.PILLOWTOPS:
-            # assumes HqTestSuiteRunner, which blanks this out and saves a copy here
-            settings.PILLOWTOPS = settings._PILLOWTOPS
-
-    @classmethod
-    def tearDownClass(cls):
-        settings.PILLOWTOPS = cls._PILLOWTOPS
 
     def test_instantiate_all(self):
         all_pillow_configs = list(get_all_pillow_configs())
@@ -35,7 +32,7 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
     def get_expected_meta(self):
         expected_meta = self.get_json('all-pillow-meta')
         for pillow, meta in expected_meta.items():
-            if 'couchdb_uri' in meta:
+            if meta.get('couchdb_uri') is not None:
                 meta['couchdb_uri'] = meta['couchdb_uri'].format(COUCH_SERVER_ROOT=settings.COUCH_SERVER_ROOT)
         return expected_meta
 

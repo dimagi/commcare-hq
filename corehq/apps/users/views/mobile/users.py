@@ -314,6 +314,7 @@ def set_commcare_user_group(request, domain):
     group.add_user(user)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
+
 @require_can_edit_commcare_users
 def archive_commcare_user(request, domain, user_id, is_active=False):
     can_add_extra_users = can_add_extra_mobile_workers(request)
@@ -332,6 +333,7 @@ def archive_commcare_user(request, domain, user_id, is_active=False):
             action=_("Reactivated") if user.is_active else _("Deactivated"),
         )
     )))
+
 
 @require_can_edit_commcare_users
 @require_POST
@@ -357,6 +359,7 @@ def update_user_groups(request, domain, couch_user_id):
         messages.error(request, _("Form not valid. A group may have been deleted while you were viewing this page"
                                   "Please try again."))
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
+
 
 @require_can_edit_commcare_users
 @require_POST
@@ -787,6 +790,10 @@ class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
     page_title = ugettext_noop('Mobile Worker Upload Status')
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(UserUploadStatusView, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         context = super(UserUploadStatusView, self).main_context
         context.update({
@@ -799,7 +806,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
             'next_url_text': _("Return to manage mobile workers"),
         })
-        return render(request, 'style/bootstrap2/soil_status_full.html', context)
+        return render(request, 'style/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -817,7 +824,9 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
         'on_complete_long': _('Mobile Worker upload has finished'),
 
     })
+
     class _BulkUploadResponseWrapper(object):
+
         def __init__(self, context):
             results = context.get('result', defaultdict(lambda: []))
             self.response_rows = results['rows']

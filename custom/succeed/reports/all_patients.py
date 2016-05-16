@@ -117,6 +117,7 @@ class PatientListReport(SqlTabularReport, CustomProjectReport, ProjectReportPara
     slug = 'patient_list'
     use_datatables = True
     table_name = 'fluff_UCLAPatientFluff'
+    base_template = 'succeed/base_template.html'
     report_template_path = 'succeed/ucla_table.html'
 
     fields = ['custom.succeed.fields.CareSite',

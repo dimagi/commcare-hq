@@ -6,25 +6,29 @@ from corehq.apps.reports.models import (
     CaseExportSchema,
 )
 from .const import (
-    TRANSFORM_FUNCTIONS,
     CASE_EXPORT,
     FORM_EXPORT,
+    DEID_TRANSFORM_FUNCTIONS,
+    TRANSFORM_FUNCTIONS,
 )
-from .exceptions import ExportInvalidTransform
 
 
-def is_valid_transform(value):
-    for transform in value:
-        if transform not in TRANSFORM_FUNCTIONS:
-            raise ExportInvalidTransform('{} is not a valid transform'.format(value))
+def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
+    is_deleted = True
+    for app_id, version in app_ids_and_versions.iteritems():
+        if last_occurrences.get(app_id) == version:
+            is_deleted = False
+            break
+    return is_deleted
 
 
-def convert_saved_export_to_export_instance(saved_export):
+def convert_saved_export_to_export_instance(domain, saved_export):
     from .models import (
         FormExportDataSchema,
         FormExportInstance,
         CaseExportDataSchema,
         CaseExportInstance,
+        PathNode,
     )
 
     # Build a new schema and instance
@@ -34,14 +38,14 @@ def convert_saved_export_to_export_instance(saved_export):
     if export_type == FORM_EXPORT:
         instance_cls = FormExportInstance
         schema = FormExportDataSchema.generate_schema_from_builds(
-            saved_export.domain,
+            domain,
             saved_export.app_id,
             _extract_xmlns_from_index(saved_export.index),
         )
     elif export_type == CASE_EXPORT:
         instance_cls = CaseExportInstance
         schema = CaseExportDataSchema.generate_schema_from_builds(
-            saved_export.domain,
+            domain,
             _extract_casetype_from_index(saved_export.index),
         )
 
@@ -72,10 +76,23 @@ def convert_saved_export_to_export_instance(saved_export):
 
         for column in old_table.columns:
             index = column.index
-            transforms = []
+            transform = None  # can be either the deid_transform or the value transform on the ExportItem
+
+            if column.doc_type == 'StockExportColumn':
+                # Handle stock export column separately because it's a messy edge since
+                # it doesn't have a unique index (_id).
+                index, new_column = new_table.get_column(
+                    [PathNode(name='stock')],
+                    'ExportItem',
+                    None,
+                )
+                if new_column:
+                    new_column.selected = True
+                    new_column.label = column.display
+                continue
 
             if column.transform:
-                transforms = [_convert_transform(column.transform)]
+                transform = _convert_transform(column.transform)
 
             if _is_repeat(old_table.index):
                 index = '{table_index}.{column_index}'.format(
@@ -89,28 +106,38 @@ def convert_saved_export_to_export_instance(saved_export):
 
             system_property = _get_system_property(
                 column.index,
-                _convert_transform(column.transform) if column.transform else None,
+                transform,
                 export_type,
                 new_table.path
             )
             if system_property:
                 column_path, transform = system_property
-                transforms = [transform] if transform else []
 
-            new_column = new_table.get_column(
-                column_path,
-                transforms,
-            )
+            guess_types = ['ScalarItem', 'MultipleChoiceItem', 'ExportItem']
+            # Since old exports had no concept of item type, we just guess all
+            # the types and see if there are any matches.
+            for guess_type in guess_types:
+                index, new_column = new_table.get_column(
+                    column_path,
+                    guess_type,
+                    _strip_deid_transform(transform),
+                )
+                if new_column:
+                    break
+
             if not new_column:
                 continue
             new_column.label = column.display
             new_column.selected = True
-            if transforms:
-                new_column.transforms = transforms
+            if transform and not _strip_deid_transform(transform):
+                # Must be deid transform
+                new_column.deid_transform = transform
+
+    instance.save()
 
     saved_export.doc_type += DELETED_SUFFIX
+    saved_export.converted_saved_export_id = instance._id
     saved_export.save()
-    instance.save()
 
     return instance
 
@@ -133,11 +160,15 @@ def _strip_repeat_index(index):
     return index
 
 
+def _strip_deid_transform(transform):
+    return None if transform in DEID_TRANSFORM_FUNCTIONS.keys() else transform
+
+
 def _convert_transform(serializable_transform):
     transform_fn = to_function(serializable_transform.dumps_simple())
     if not transform_fn:
         return None
-    for slug, fn in TRANSFORM_FUNCTIONS.iteritems():
+    for slug, fn in list(TRANSFORM_FUNCTIONS.iteritems()) + list(DEID_TRANSFORM_FUNCTIONS.iteritems()):
         if fn == transform_fn:
             return slug
     return None
@@ -158,6 +189,7 @@ def _get_system_property(index, transform, export_type, table_path):
     )
 
     system_property = None
+    transform = _strip_deid_transform(transform)
     if export_type == FORM_EXPORT:
         if table_path == MAIN_TABLE:
             system_property = FORM_PROPERTY_MAPPING.get((index, transform))

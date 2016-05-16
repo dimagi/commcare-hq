@@ -1,8 +1,11 @@
 Syncing local HQ instance with an Android Phone
 ===========================
 
-If you would like to use a url or barcode scanner to download the application
-to your phone here is what you need to setup.
+## No syncing or submitting, easy method
+
+If you would like to use a url or barcode scanner to download the application to
+your phone here is what you need to setup. You won't be able to submit or sync
+using this method, but it is easier.
 
 ### Make sure your local django application is accessible over the network
 
@@ -33,6 +36,41 @@ If it is currently displaying a `localhost:8000/a/yourapp/...` url then open
 With this set up, you should be able to scan the barcode from your phone to
 download and install your own locally built CommCare application!
 
+## Submitting and syncing from your local HQ instance (harder method)
+
+### Install nginx
+
+`sudo apt-get install nginx` or
+
+`brew install nginx`
+
+### Install the configuration file
+
+At the bottom of the `http{}` block in `/etc/nging/nginx.conf` add the line
+
+`include /path/to/commcarehq/deployment/nginx/cchq_local_nginx.conf;`
+
+### Start nginx
+
+`sudo nginx`
+
+### Make sure your local django application is accessible over the network
+
+`./manage.py runserver`
+
+Try accessing `http://localhost/a/domain` and see if it works. nginx should
+proxy all requests to localhost to your django server. You should also be able
+to access `http://your_ip_address/a/domain` from a phone or other device on the
+same network.
+
+### Make Commcare use your local IP address
+
+Set the `BASE_ADDRESS` setting in `localsettings.py` to your IP address (e.g.
+`192.168.0.10`), without a port. You'll have to update this if you ever change
+networks or get a new IP address.
+
+### Rebuild and redeploy your application
+You'll have to rebuild and redeploy your application to get it to sync.
 
 Adding CommCare (J2ME) Builds to CommCare HQ
 =====================================

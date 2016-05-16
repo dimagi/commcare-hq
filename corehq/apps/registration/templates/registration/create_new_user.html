@@ -2,21 +2,40 @@
 {% load i18n %}{% load hq_shared_tags %}
 
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
-{% block step-title %}{% trans "Create an Account" %}{% endblock %}
+
 {% block js-inline  %}{{ block.super }}
     {% url "eula_basic" as eula_url %}
     {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+    {% if not hide_password_feedback %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-    {% if legacy_password %}
     <script src="{% static 'registration/js/password.js' %}"></script>
     {% endif %}
+    <script>
+        // A/B test for displaying background photo on this page
+        $(document).ready(function() {
+            var $element = $(".hq-container");
+
+            // Make sure .hide gets removed, even if something goes wrong with KISSmetrics
+            _.delay(function() {
+                $element.removeClass("hide");
+            }, 1000);
+
+            _kmq.push(function () {
+                // When KISSmetrics is loaded, get the variant for this user.
+                if (KM.ab('Account creation photo', ["photo", "plain"]) === "photo") {
+                    $element.addClass("molly");
+                }
+                $element.removeClass("hide");
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block registration-content %}
     <form name="form" class="form-horizontal" method="post" action="{% url "register_user" %}?">
         {% csrf_token %}
         {% for global_error in form.non_field_errors %}
-            <div class="alert alert-error">
+            <div class="alert alert-danger">
                 {{ global_error }}
             </div>
         {% endfor %}
@@ -28,6 +47,9 @@
             {% include "registration/partials/field.html" with field=form.email %}
             {% include "registration/partials/field.html" with field=form.password %}
             {% include "registration/partials/field.html" with field=form.eula_confirmed %}
+            {% if form.captcha %}
+                {% include "registration/partials/field.html" with field=form.captcha %}
+            {% endif %}
             {% if create_domain %}
                 <legend>{% trans "Create your first project" %}</legend>
                 {% include "registration/partials/field.html" with field=form.hr_name %}
@@ -37,9 +59,11 @@
             {% endfor %}
         </fieldset>
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-large disable-on-submit">
-                {% trans "Create Account" %}
-            </button>
+            <div class="col-sm-offset-4 col-sm-8">
+                <button type="submit" class="btn btn-primary btn-large disable-on-submit">
+                    {% trans "Create Account" %}
+                </button>
+            </div>
         </div>
     </form>
 {% endblock %}

@@ -1,4 +1,4 @@
-from casexml.apps.case.models import CommCareCase
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from touchforms.formplayer.api import post_data
 import json
@@ -10,6 +10,7 @@ DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
 
 class BaseSessionDataHelper(object):
+
     def __init__(self, domain, couch_user):
         self.domain = domain
         self.couch_user = couch_user
@@ -68,6 +69,7 @@ class BaseSessionDataHelper(object):
 
 
 class CaseSessionDataHelper(BaseSessionDataHelper):
+
     def __init__(self, domain, couch_user, case_id_or_case, app, form, delegation=False):
         super(CaseSessionDataHelper, self).__init__(domain, couch_user)
         self.form = form
@@ -83,7 +85,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
     @property
     def case(self):
         if not self._case:
-            self._case = CommCareCase.get(self.case_id)
+            self._case = CaseAccessors(self.domain).get_case(self.case_id)
         return self._case
 
     @property
@@ -129,7 +131,7 @@ def get_user_contributions_to_touchforms_session(couch_user_or_commconnect_case)
         'username': couch_user_or_commconnect_case.raw_username,
         'user_id': couch_user_or_commconnect_case.get_id,
         # This API is used by smsforms, so sometimes "couch_user" can be
-        # a CommConnectCase, in which case there is no user_data.
+        # a case, in which case there is no user_data.
         'user_data': (couch_user_or_commconnect_case.user_session_data
             if isinstance(couch_user_or_commconnect_case, CouchUser) else {}),
     }

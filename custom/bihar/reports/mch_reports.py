@@ -302,6 +302,7 @@ class MotherMCHRegister(MCHBaseReport):
     def fixed_cols_spec(self):
         return dict(num=2, width=350)
 
+
 class ChildMCHRegister(MCHBaseReport):
     name = "Child MCH register"
     slug = "child_mch_register"
@@ -368,7 +369,6 @@ class ChildMCHRegister(MCHBaseReport):
                                        DataTablesColumn(_("JE Vaccine"), sortable=False))
         )
         return headers
-
 
     @classmethod
     def get_cases(self, case_displays):

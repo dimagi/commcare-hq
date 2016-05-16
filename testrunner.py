@@ -1,6 +1,9 @@
 import datetime
+import os
 from collections import defaultdict
 from functools import wraps
+from unittest.case import TestCase
+from unittest.runner import TextTestRunner, TextTestResult
 from unittest.util import strclass
 from urlparse import urlparse
 
@@ -34,6 +37,24 @@ def set_db_enabled(is_enabled):
     return decorator
 
 
+# make django test runner "collect only" (skip every test)
+COLLECT_ONLY = int(os.environ.get("COLLECT_ONLY", False))
+if COLLECT_ONLY:
+    from corehq.tests.noseplugins.uniformresult import uniform_description
+
+    TestCase.__unittest_skip__ = property(
+        fget=lambda self: True,
+        fset=lambda self, value: None,
+    )
+
+    class UniformTestResult(TextTestResult):
+        def getDescription(self, test):
+            return uniform_description(test)
+
+    class UniformResultTestRunner(TextTestRunner):
+        resultclass = UniformTestResult
+
+
 class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
     """
     A test suite runner for Hq.  On top of the couchdb testrunner, also
@@ -45,6 +66,9 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
     """
 
     dbs = []
+
+    if COLLECT_ONLY:
+        test_runner = UniformResultTestRunner
 
     def setup_test_environment(self, **kwargs):
         self._assert_only_test_databases_accessed()
@@ -61,12 +85,16 @@ class HqTestSuiteRunner(CouchDbKitTestSuiteRunner):
         super(HqTestSuiteRunner, self).setup_test_environment(**kwargs)
 
     def setup_databases(self, **kwargs):
+        self._assert_is_a_test_db(settings.COUCH_DATABASE_NAME)
+        if COLLECT_ONLY:
+            return None
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
-        self._assert_is_a_test_db(settings.COUCH_DATABASE_NAME)
         return super(HqTestSuiteRunner, self).setup_databases(**kwargs)
 
     def teardown_databases(self, old_config, **kwargs):
+        if COLLECT_ONLY:
+            return None
         self.blob_db.close()
         for db_uri in settings.EXTRA_COUCHDB_DATABASES.values():
             db = Database(db_uri)

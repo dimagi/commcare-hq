@@ -17,6 +17,7 @@ from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.tour.tours import REPORT_BUILDER_ACCESS, REPORT_BUILDER_NO_ACCESS
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from django_prbac.utils import has_privilege
@@ -108,6 +109,21 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
     urlname = 'dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
     template_name = 'dashboard/dashboard_domain.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self._init_tour()
+        return super(DomainDashboardView, self).dispatch(request, *args, **kwargs)
+
+    def _init_tour(self):
+        """
+        Add properties to the request for any tour that might be active
+        """
+        if self.request.user.is_authenticated():
+            tours = (REPORT_BUILDER_ACCESS, REPORT_BUILDER_NO_ACCESS)
+            for tour in tours:
+                if tour.should_show(self.request, 0, False):
+                    self.request.guided_tour = tour.get_tour_data(self.request, 0)
+                    break  # Only one of these tours may be active.
 
     @property
     def tile_configs(self):

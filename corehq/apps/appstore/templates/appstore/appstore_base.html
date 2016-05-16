@@ -1,4 +1,4 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/bootstrap3/two_column.html" %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
@@ -6,7 +6,7 @@
 
 {% block title %}{% trans "CommCare Exchange" %}{% endblock %}
 
-{% block head %}{{ block.super }}
+{% block stylesheets %}{{ block.super }}
     <style type="text/css">
         .rating_static > span {
             display: inline-block;
@@ -157,7 +157,9 @@
         }
 
         #license-info-label {
-            display: inline;
+            float: right;
+            position: relative;
+            margin-top: -24px;
         }
 
         #license-info-label:hover {
@@ -178,7 +180,7 @@
                     var height = $(this).children(":first").height();
                     highest = (height > highest) ? height : highest;
                 });
-                $wells.css('height', highest + 'px');
+                $wells.height(highest);
             });
         }
         $(window).load(assure_correct_spacing);
@@ -191,17 +193,16 @@
     </script>
 {% endblock %}
 
-{% block sidebar %}
+{% block page_navigation %}
     {% url "appstore" as search_url %}
-    {% include 'appstore/partials/bootstrap2/sidebar.html' with display_ua='true' search_name="search" search_for="apps..." %}
+    {% include 'appstore/partials/bootstrap3/sidebar.html' with display_ua='true' search_name="search" search_for="apps..." %}
 {% endblock %}
 
-{% block page-title %}
-<ul class="breadcrumb">
+{% block page_breadcrumbs %}
+<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
     <li>
         <strong><a href="{% url "appstore" %}">CommCare Exchange</a></strong>
         {% if search_query or filter_by or domain or project or sort_by %}
-            <span class="divider">&gt;</span>
         {% endif %}
     </li>
     {% block breadcrumb %}
@@ -210,37 +211,30 @@
         <li>
             {% trans "Searching for" %} "{{ search_query }}"
             <a href="{% urlencode request.path request.GET without "search" %}" style="font-size: 60%;">{% trans "(cancel)" %}</a>
-            {% if sort_by %}
-                <span class="divider">&gt;</span>
-            {% endif %}
         </li>
     {% endif %}
     {% if filter_by and filter %}
         <li>
             With {{ filter_by }} {{ filter }}
-            {% if sort_by %}
-                <span class="divider">&gt;</span>
-            {% endif %}
         </li>
     {% endif %}
     {% if sort_by == 'newest' %}
         <li>{% trans "Newest" %}</li>
     {% endif %}
-
-</ul>
+</ol>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
 
 <h1>
     {% block store-header %}
     {% endblock %}
 </h1>
 
-<div class="container-fluid">
-<div class="row-fluid">
+<div class="row">
     {% block view-tabs %}
-    <div class="tabbable" style="padding-top: 15px;">
+
+    <div class="tabbable col-sm-12" style="margin-bottom: 20px;">
         <ul class="nav nav-pills">
             <li{% if not sort_by and not show_starter_apps %} class="active"{% endif %}><a href="{% urlencode request.path request.GET without "sort_by" without 'is_starter_app' %}">{% trans "Most Downloaded" %}</a></li>
             <li{% if sort_by == 'newest' %} class="active"{% endif %}><a href="{% urlencode request.path request.GET with "sort_by" as "newest" without 'is_starter_app' %}">{% trans "Newest" %}</a></li>
@@ -249,16 +243,18 @@
     </div>
     {% endblock %}
 </div>
-<div class="row-fluid results">
+
+
+<div class="row results">
 {% block results-display %}
 {% for app in apps %}
     {% if forloop.counter0|divisibleby:"2" and forloop.counter0 != 0 %}
-        </div><div class="row-fluid results">
+        </div><div class="row results">
     {% endif %}
-    <div class="span5">
+    <div class="col-sm-6">
         <div class="well">
-            <div class="row-fluid">
-                <div class="span5">
+            <div class="row">
+                <div class="col-sm-5">
                     <a href="{% url "project_info" app.get_id %}">
                         {% if app.image_path %}
                             <div style="text-align: center;">
@@ -271,7 +267,7 @@
                         {% endif %}
                     </a>
                     <p style="margin-top: .5em;">{% trans "Last updated" %}: {{ app.snapshot_time|date:"N j, Y" }}</p>
-                    <a class="btn"
+                    <a class="btn btn-default"
                        href="{% url "project_info" app.get_id %}"
                        id="view_button_{{ app.get_id }}"
                     >
@@ -285,7 +281,7 @@
                         {% endif %}
                     {% endif %}
                 </div>
-                <div class="span7">
+                <div class="col-sm-7">
                     <h3>
                         <a href="{% url "project_info" app.get_id %}">
                             {{ app.title }}
@@ -307,13 +303,17 @@
         </div>
     </div>
 {% empty %}
-    {% trans "No results were found for your query" %}.
+    <div class="col-sm-12">
+        <div class="alert alert-info">
+            {% trans "No results were found for your query" %}.
+        </div>
+    </div>
 {% endfor %}
 {% endblock %}
 </div>
 
-<div class="row-fluid">
-    <ul class="pager span10">
+<div class="row">
+    <ul class="pager col-sm-10 col-sm-offset-1">
         {% if page > 1 %}
         <li class="previous">
             <a href="{% urlencode request.path request.GET with "page" as prev_page %}">&larr; {% trans "Previous" %}</a>
@@ -325,7 +325,6 @@
         </li>
         {% endif %}
     </ul>
-</div>
 </div>
 
 {% endblock %}

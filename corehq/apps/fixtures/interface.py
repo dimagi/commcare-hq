@@ -18,8 +18,6 @@ class FixtureInterface(FixtureViewMixIn, GenericReportView):
     exportable = False
     needs_filters = False
 
-    is_bootstrap3 = True
-
 
 class FixtureSelectFilter(BaseSingleOptionFilter):
     slug = "table_id"
@@ -73,7 +71,6 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
             "selected_table": self.table.get("table_id", ""),
             'active_tab': ProjectDataTab(
                 self.request,
-                self.slug,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project
@@ -116,7 +113,6 @@ class FixtureEditInterface(FixtureInterface):
         context.update({
             'active_tab': ProjectDataTab(
                 self.request,
-                self.slug,
                 domain=self.domain,
                 couch_user=self.request.couch_user,
                 project=self.request.project

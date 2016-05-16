@@ -1,4 +1,3 @@
-from optparse import make_option
 from django.core.management import BaseCommand
 from corehq.apps.accounting.invoicing import SmsLineItemFactory
 from corehq.apps.accounting.models import LineItem, FeatureType

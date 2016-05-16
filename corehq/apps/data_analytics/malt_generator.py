@@ -1,5 +1,6 @@
 import logging
 
+from collections import namedtuple
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.data_analytics.esaccessors import get_app_submission_breakdown_es
@@ -15,6 +16,8 @@ from django.http.response import Http404
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+MaltAppData = namedtuple('MaltAppData', 'wam pam use_threshold experienced_threshold is_app_deleted')
 
 
 class MALTTableGenerator(object):
@@ -48,7 +51,7 @@ class MALTTableGenerator(object):
             app_id = app_row.app_id
             num_of_forms = app_row.doc_count
             try:
-                wam, pam, threshold, is_app_deleted = self._app_data(domain_name, app_id)
+                app_data = self._app_data(domain_name, app_id)
                 user_id, username, user_type, email = self._user_data(
                     app_row.user_id,
                     app_row.username,
@@ -69,10 +72,11 @@ class MALTTableGenerator(object):
                 'num_of_forms': num_of_forms,
                 'app_id': app_id or MISSING_APP_ID,
                 'device_id': app_row.device_id,
-                'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(wam, MALTRow.NOT_SET),
-                'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(pam, MALTRow.NOT_SET),
-                'threshold': threshold,
-                'is_app_deleted': is_app_deleted,
+                'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.wam, MALTRow.NOT_SET),
+                'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.pam, MALTRow.NOT_SET),
+                'use_threshold': app_data.use_threshold,
+                'experienced_threshold': app_data.experienced_threshold,
+                'is_app_deleted': app_data.is_app_deleted,
             }
             malt_row_dicts.append(malt_dict)
         return malt_row_dicts
@@ -120,7 +124,7 @@ class MALTTableGenerator(object):
     @classmethod
     @quickcache(['domain', 'app_id'])
     def _app_data(cls, domain, app_id):
-        defaults = (AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, 15, False)
+        defaults = MaltAppData(AMPLIFIES_NOT_SET, AMPLIFIES_NOT_SET, 15, 3, False)
         if not app_id:
             return defaults
         try:
@@ -128,10 +132,11 @@ class MALTTableGenerator(object):
         except Http404:
             logger.debug("App not found %s" % app_id)
             return defaults
-        return (getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
-                getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
-                getattr(app, 'minimum_use_threshold', 15),
-                app.is_deleted())
+        return MaltAppData(getattr(app, 'amplifies_workers', AMPLIFIES_NOT_SET),
+                           getattr(app, 'amplifies_project', AMPLIFIES_NOT_SET),
+                           getattr(app, 'minimum_use_threshold', 15),
+                           getattr(app, 'experienced_threshold', 3),
+                           app.is_deleted())
 
     @classmethod
     def _user_data(cls, user_id, username, all_users_by_id):

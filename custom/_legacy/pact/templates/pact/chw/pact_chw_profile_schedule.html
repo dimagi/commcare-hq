@@ -3,19 +3,19 @@
 
 {% block actor-tab-container %}
     <h3>Submission Schedule {{ end_date|date:"m/d/Y" }} - {{ start_date|date:"m/d/Y" }}</h3>
-   <div class="row-fluid">
-        <div class="span4">
+   <div class="row">
+        <div class="col-sm-4">
             {% if total_scheduled == total_visited %}
                 <div class="alert alert-success">
                     <strong>Scheduled Visits: </strong> {{ total_visited }} / {{ total_scheduled }}
                 </div>
             {% else %}
-                <div class="alert alert-error">
+                <div class="alert alert-danger">
                     <strong>Scheduled Visits: </strong> {{ total_visited }} / {{ total_scheduled }}
                 </div>
             {% endif %}
         </div>
-        <div class="span8 pull-right" style="text-align:right;">
+        <div class="col-sm-8" style="text-align:right;">
             <a href="{{ chw_root_url }}&view=schedule&interval=1">Today</a> &nbsp;
             <a href="{{ chw_root_url }}&view=schedule&interval={% now "w" %}">Week to date</a> &nbsp;
             <a href="{{ chw_root_url }}&view=schedule&interval=7">7 days</a> &nbsp;
@@ -23,24 +23,24 @@
             <a href="{{ chw_root_url }}&view=schedule&interval=30">30 days</a>
         </div>
     </div> <!-- end top row -->
-    <div class="row-fluid">
-        <div class="span2"><h3>Date</h3></div>
-        <div class="span3"><h3>Patient Scheduled</h3></div>
-        <div class="span7"><h3>Visits</h3></div>
+    <div class="row">
+        <div class="col-sm-2"><h3>Date</h3></div>
+        <div class="col-sm-3"><h3>Patient Scheduled</h3></div>
+        <div class="col-sm-7"><h3>Visits</h3></div>
     </div>
 
     {% for visit_date, patient_visits in date_arr %}
         {% if patient_visits %}
             {% for cpatient, visit in patient_visits %}
-                <div class="row-fluid">
+                <div class="row">
                     {% if forloop.counter0 == 0 %}
-                        <div class="span2">
+                        <div class="col-sm-2">
                             <h4>{{ visit_date|date:"D N j, Y" }}</h4>
                         </div>
                     {% else %}
-                        <div class="span2">&nbsp;</div>
+                        <div class="col-sm-2">&nbsp;</div>
                     {% endif %}
-                    <div class="span3">
+                    <div class="col-sm-3">
                         <div class="alert alert-success">
                             <h4>
                                 <a href="{{ cpatient.url }}">
@@ -49,7 +49,7 @@
                             </h4>
                         </div>
                     </div>
-                    <div class="span7">
+                    <div class="col-sm-7">
                         {% if visit %}
                                 <table class="table table-condensed">
                                     <thead>
@@ -117,21 +117,23 @@
                                     </tbody>
                                 </table>
                         {% else %}
-                            <div class="alert alert-error"><h4>No Visit</h4></div>
+                            <div class="alert alert-danger"><h4>No Visit</h4></div>
                         {% endif %}
                     </div>
                 </div>
             {% endfor %}
         {% else %}
-            <div class="row-fluid">
-                <div class="span2">
+            <div class="row">
+                <div class="col-sm-2">
                     <strong>{{ visit_date|date:"D N j, Y" }}</strong>
                 </div>
-                <div class="span3">
+                <div class="col-sm-3">
                     -- No Patients Scheduled --
                 </div>
-                <div class="span7">
-                    <div class="span9" style="padding:.8em;margin-bottom:1em;border:2px solid #fff;">
+                <div class="col-sm-7">
+                    <div class="row">
+                        <div class="col-sm-9" style="padding:.8em;margin-bottom:1em;border:2px solid #fff;">
+                        </div>
                     </div>
                 </div>
             </div>

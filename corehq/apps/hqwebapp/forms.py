@@ -20,7 +20,9 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
-    username = forms.EmailField(label=_("E-mail"), max_length=75)
+    username = forms.EmailField(label=_("E-mail"), max_length=75,
+                                widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
     def clean_username(self):
         username = self.cleaned_data['username'].lower()
@@ -28,9 +30,15 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
     def clean(self):
         lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password.'))
+
         username = self.cleaned_data.get('username')
         if username is None:
             raise ValidationError(_('Please enter a valid email address.'))
+
+        password = self.cleaned_data.get('password')
+        if not password:
+            raise ValidationError(_("Please enter a password."))
+
         try:
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
@@ -45,9 +53,9 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         return cleaned_data
 
 
-
 class CloudCareAuthenticationForm(EmailAuthenticationForm):
-    username = forms.CharField(label=_("Username"), max_length=75)
+    username = forms.CharField(label=_("Username"), max_length=75,
+                               widget=forms.TextInput(attrs={'class': 'form-control'}))
 
 
 class BulkUploadForm(forms.Form):
@@ -222,6 +230,7 @@ class FormListForm(object):
         Converts a child form to JSON for rendering
         """
         cleaned_data = getattr(form, 'cleaned_data', {})
+
         def get_data(key):
             if key in cleaned_data:
                 return cleaned_data[key]

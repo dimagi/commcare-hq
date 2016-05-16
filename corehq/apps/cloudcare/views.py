@@ -16,14 +16,11 @@ from django.views.generic import View
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 
-from casexml.apps.case.models import CommCareCase, CASE_STATUS_OPEN
+from casexml.apps.case.models import CASE_STATUS_OPEN
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.stock.models import StockTransaction
-from casexml.apps.stock.utils import get_current_ledger_transactions
-from couchforms.const import ATTACHMENT_NAME
-from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import iter_docs
+from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
@@ -64,15 +61,17 @@ from corehq.apps.style.decorators import (
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
-from corehq.util.view_utils import expect_GET
 from corehq.util.xml_utils import indent_xml
 
 
 @require_cloudcare_access
 def default(request, domain):
     return HttpResponseRedirect(reverse('cloudcare_main', args=[domain, '']))
+
 
 def insufficient_privilege(request, domain, *args, **kwargs):
     context = {
@@ -101,6 +100,7 @@ class CloudcareMain(View):
             preview = True
 
         app_access = ApplicationAccess.get_by_domain(domain)
+        accessor = CaseAccessors(domain)
 
         if not preview:
             apps = get_cloudcare_apps(domain)
@@ -176,9 +176,9 @@ class CloudcareMain(View):
                 app = look_up_app_json(domain, apps[0]['_id'])
 
             def _get_case(domain, case_id):
-                case = CommCareCase.get(case_id)
+                case = accessor.get_case(case_id)
                 assert case.domain == domain, "case %s not in %s" % (case_id, domain)
-                return case.get_json()
+                return case.to_api_json()
 
             case = _get_case(domain, case_id) if case_id else None
             if parent_id is None and case is not None:
@@ -211,7 +211,10 @@ class CloudcareMain(View):
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def form_context(request, domain, app_id, module_id, form_id):
     app = Application.get(app_id)
-    form_url = "%s%s" % (get_url_base(), reverse('download_xform', args=[domain, app_id, module_id, form_id]))
+    form_url = '{}{}'.format(
+        settings.CLOUDCARE_BASE_URL or get_url_base(),
+        reverse('download_xform', args=[domain, app_id, module_id, form_id])
+    )
     case_id = request.GET.get('case_id')
     instance_id = request.GET.get('instance_id')
     try:
@@ -226,9 +229,9 @@ def form_context(request, domain, app_id, module_id, form_id):
         app=app.name,
         form=form_name,
     )
-    case = None
+
     if case_id:
-        case = CommCareCase.get(case_id)
+        case = CaseAccessors(domain).get_case(case_id)
         session_name = u'{0} - {1}'.format(session_name, case.name)
 
     root_context = {
@@ -236,10 +239,8 @@ def form_context(request, domain, app_id, module_id, form_id):
     }
     if instance_id:
         try:
-            root_context['instance_xml'] = XFormInstance.get_db().fetch_attachment(
-                instance_id, ATTACHMENT_NAME
-            )
-        except ResourceNotFound:
+            root_context['instance_xml'] = FormAccessors(domain).get_form(instance_id).get_xml()
+        except XFormNotFound:
             raise Http404()
 
     session_extras = {'session_name': session_name, 'app_id': app._id}
@@ -257,7 +258,7 @@ cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
 
 def get_cases_vary_on(request, domain):
-    request_params = expect_GET(request)
+    request_params = request.GET
 
     return [
         request.couch_user.get_id
@@ -282,7 +283,7 @@ def get_cases_skip_arg(request, domain):
     """
     if not toggles.CLOUDCARE_CACHE.enabled(domain):
         return True
-    request_params = expect_GET(request)
+    request_params = request.GET
     return (not string_to_boolean(request_params.get('use_cache', 'false')) or
         not string_to_boolean(request_params.get('ids_only', 'false')))
 
@@ -290,7 +291,7 @@ def get_cases_skip_arg(request, domain):
 @cloudcare_api
 @skippable_quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
-    request_params = expect_GET(request)
+    request_params = request.GET
 
     if request.couch_user.is_commcare_user():
         user_id = request.couch_user.get_id
@@ -303,13 +304,14 @@ def get_cases(request, domain):
     ids_only = string_to_boolean(request_params.get("ids_only", "false"))
     case_id = request_params.get("case_id", "")
     footprint = string_to_boolean(request_params.get("footprint", "false"))
+    accessor = CaseAccessors(domain)
 
     if toggles.HSPH_HACK.enabled(domain):
         hsph_case_id = request_params.get('hsph_hack', None)
         if hsph_case_id != 'None' and hsph_case_id and user_id:
-            case = CommCareCase.get(hsph_case_id)
+            case = accessor.get_case(hsph_case_id)
             usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
-            usercase = CommCareCase.get(usercase_id) if usercase_id else None
+            usercase = accessor.get_case(usercase_id) if usercase_id else None
             return json_response(map(
                 lambda case: CaseAPIResult(id=case['_id'], couch_doc=case, id_only=ids_only),
                 filter(None, [case, case.parent, usercase])
@@ -322,7 +324,7 @@ def get_cases(request, domain):
         # behavior (can only access things you own + footprint). If we want to
         # change this contract we would need to update this to check the
         # owned case list + footprint
-        case = CommCareCase.get(case_id)
+        case = accessor.get_case(case_id)
         assert case.domain == domain
         cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
     else:
@@ -335,6 +337,7 @@ def get_cases(request, domain):
                                    strip_history=True)
     return json_response(cases)
 
+
 @cloudcare_api
 def filter_cases(request, domain, app_id, module_id, parent_id=None):
     app = Application.get(app_id)
@@ -346,12 +349,13 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     instances = get_instances_for_module(app, module, additional_xpaths=[xpath])
     extra_instances = [{'id': inst.id, 'src': inst.src} for inst in instances]
     use_formplayer = toggles.USE_FORMPLAYER.enabled(domain)
+    accessor = CaseAccessors(domain)
 
     # touchforms doesn't like this to be escaped
     xpath = HTMLParser.HTMLParser().unescape(xpath)
     case_type = module.case_type
 
-    if xpath:
+    if xpath or should_use_sql_backend(domain):
         # if we need to do a custom filter, send it to touchforms for processing
         additional_filters = {
             "properties/case_type": case_type,
@@ -380,7 +384,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
             ids_only=True,
         )]
 
-    cases = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), case_ids)]
+    cases = accessor.get_cases(case_ids)
 
     if parent_id:
         cases = filter(lambda c: c.parent and c.parent.case_id == parent_id, cases)
@@ -389,22 +393,24 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     # in the results from touchforms. this is a little hacky but the easiest
     # (quick) workaround. should be revisted when we optimize the case list.
     cases = filter(lambda c: c.type == case_type, cases)
-    cases = [c.get_json(lite=True) for c in cases if c]
+    cases = [c.to_api_json(lite=True) for c in cases if c]
 
     response = {'cases': cases}
     if requires_parent_cases:
         # Subtract already fetched cases from parent list
         parent_ids = set(map(lambda c: c['indices']['parent']['case_id'], cases)) - \
             set(map(lambda c: c['case_id'], cases))
-        parents = [CommCareCase.wrap(doc) for doc in iter_docs(CommCareCase.get_db(), parent_ids)]
-        parents = [c.get_json(lite=True) for c in parents]
+        parents = accessor.get_cases(list(parent_ids))
+        parents = [c.to_api_json(lite=True) for c in parents]
         response.update({'parents': parents})
 
     return json_response(response)
 
+
 @cloudcare_api
 def get_apps_api(request, domain):
     return json_response(get_cloudcare_apps(domain))
+
 
 @cloudcare_api
 def get_app_api(request, domain, app_id):
@@ -486,18 +492,23 @@ def get_ledgers(request, domain):
         },
         ...
     }
+
+    Note: this only works for the Couch backend
     """
-    request_params = expect_GET(request)
+    request_params = request.GET
     case_id = request_params.get('case_id')
     if not case_id:
         return json_response(
             {'message': 'You must specify a case id to make this query.'},
             status_code=400
         )
-    case = get_document_or_404(CommCareCase, domain, case_id)
-    ledger_map = get_current_ledger_transactions(case._id)
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+    except CaseNotFound:
+        raise Http404()
+    ledger_map = LedgerAccessors(domain).get_case_ledger_state(case.case_id)
     def custom_json_handler(obj):
-        if isinstance(obj, StockTransaction):
+        if hasattr(obj, 'stock_on_hand'):
             return obj.stock_on_hand
         return json_handler(obj)
 

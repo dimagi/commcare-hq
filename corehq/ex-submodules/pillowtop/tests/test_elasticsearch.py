@@ -7,11 +7,10 @@ from elasticsearch.exceptions import ConnectionError
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, update_settings, \
-    set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, assume_alias_for_pillow, \
-    pillow_index_exists, pillow_mapping_exists, completely_initialize_pillow_index
+    set_index_reindex_settings, set_index_normal_settings, assume_alias_for_pillow, \
+    completely_initialize_pillow_index, mapping_exists, get_index_info_from_pillow, initialize_index
 from pillowtop.feed.interface import Change
 from pillowtop.listener import send_to_elasticsearch, PillowtopIndexingError
-from pillowtop.pillow.interface import PillowRuntimeContext
 from django.conf import settings
 from .utils import get_doc_count, get_index_mapping, TestElasticPillow
 
@@ -48,7 +47,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def test_mapping_initialization_on_pillow_creation(self):
         pillow = TestElasticPillow()
-        self.assertTrue(pillow_mapping_exists(pillow))
+        self.assertTrue(mapping_exists(self.es, get_index_info_from_pillow(pillow)))
         mapping = get_index_mapping(self.es, self.index, pillow.es_type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
@@ -69,17 +68,14 @@ class ElasticPillowTest(SimpleTestCase):
     def test_index_operations(self):
         pillow = TestElasticPillow()
         self.assertTrue(self.es.indices.exists(self.index))
-        self.assertTrue(pillow_index_exists(pillow))
 
         # delete and check
         pillow.get_es_new().indices.delete(self.index)
         self.assertFalse(self.es.indices.exists(self.index))
-        self.assertFalse(pillow_index_exists(pillow))
 
         # create and check
-        create_index_for_pillow(pillow)
+        initialize_index(pillow.get_es_new(), get_index_info_from_pillow(pillow))
         self.assertTrue(self.es.indices.exists(self.index))
-        self.assertTrue(pillow_index_exists(pillow))
 
     def test_send_doc_to_es(self):
         pillow = TestElasticPillow()
@@ -189,10 +185,11 @@ def _send_doc_to_pillow(pillow, doc_id, doc):
         sequence_id=0,
         document=doc
     )
-    pillow.processor(change, PillowRuntimeContext(do_set_checkpoint=False))
+    pillow.process_change(change)
 
 
 class TestSendToElasticsearch(SimpleTestCase):
+
     def setUp(self):
         self.pillow = TestElasticPillow(online=False)
         self.es = self.pillow.get_es_new()

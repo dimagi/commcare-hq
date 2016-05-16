@@ -89,8 +89,11 @@
                 djangoRMI.get_form_data({}).success(function (data) {
                     self.formData = data;
                     deferred.resolve(data);
-                }).error(function () {
-                    deferred.reject();
+                }).error(function (error) {
+                    deferred.resolve({
+                        success: false,
+                        error: error
+                    });
                 });
             } else {
                 deferred.resolve(self.formData);
@@ -129,6 +132,12 @@
         self.updateView = function (data) {
             if (data.success) {
                 $scope.modules = data.response;
+            }
+            if (data.errors) {
+                $scope.errors = data.errors;
+            }
+            if (data.error) {
+                $scope.error = data.error;
             }
         };
 

@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-23 21:03+0000\n"
+"POT-Creation-Date: 2016-05-04 16:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:78
@@ -36,62 +36,49 @@ msgstr ""
 msgid "Auto-set by "
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:474
+msgid "Select One"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/password_setter.jquery.js:8
 msgid "Reset"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:16
-#: corehq/apps/export/static/export/js/models.js:22
+#: corehq/apps/export/static/export/js/models.js:23
 msgid "Web Page (Excel Dashboards)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:18
+#: corehq/apps/export/static/export/js/models.js:25
 msgid "CSV (Zip file)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:20
+#: corehq/apps/export/static/export/js/models.js:27
+msgid "Excel (older versions)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:29
 msgid "Excel 2007"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:31
+#: corehq/apps/export/static/export/js/models.js:38
 msgid "Create"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:31
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:227
+#: corehq/apps/export/static/export/js/models.js:38
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:224
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:170
+#: corehq/apps/export/static/export/js/models.js:211
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:172
+#: corehq/apps/export/static/export/js/models.js:213
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:174
+#: corehq/apps/export/static/export/js/models.js:215
 msgid "None"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/utils.js:28
-msgid "Forms"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/utils.js:30
-msgid "Repeat: "
-msgstr ""
-
-#: corehq/apps/export/static/export/js/utils.js:34
-msgid "Cases"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/utils.js:36
-msgid "Case History"
-msgstr ""
-
-#: corehq/apps/export/static/export/js/utils.js:39
-msgid "Unknown"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:22
@@ -118,35 +105,35 @@ msgstr ""
 msgid "Show All Dates"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:228
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:225
 msgid "Saving..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:229
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:226
 msgid "Saved"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:230
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:238
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:227
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:235
 msgid "Try Again"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:231
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:228
 msgid "There was an error saving"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:235
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:232
 msgid "Delete"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:236
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:233
 msgid "Deleting..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:237
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:234
 msgid "Deleted"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:239
+#: corehq/apps/style/static/style/js/bootstrap3/main.js:236
 msgid "There was an error deleting"
 msgstr ""

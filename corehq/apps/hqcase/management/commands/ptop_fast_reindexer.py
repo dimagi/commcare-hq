@@ -5,14 +5,13 @@ import sys
 
 from django.core.management.base import NoArgsCommand
 import json
-from corehq.util.couch_helpers import paginate_view
+from corehq.util.couch_helpers import paginate_view, PaginateViewLogHandler
 from pillowtop.couchdb import CachedCouchDB
-from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_settings, create_index_for_pillow, \
-    initialize_mapping_if_necessary
+from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_settings, \
+    get_index_info_from_pillow, initialize_index_and_mapping
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
-from pillowtop.pillow.interface import PillowRuntimeContext
 
 CHUNK_SIZE = 10000
 POOL_SIZE = 15
@@ -22,23 +21,13 @@ RETRY_DELAY = 60
 RETRY_TIME_DELAY_FACTOR = 15
 
 
-class PaginateViewLogHandler(object):
+class ReindexLogHandler(PaginateViewLogHandler):
+
     def __init__(self, reindexer):
         self.reindexer = reindexer
 
-    def log(self, *args, **kwargs):
-        self.reindexer.log(*args, **kwargs)
-
-    def view_starting(self, db, view_name, kwargs, total_emitted):
-        self.log('Fetching rows {}-{} from couch'.format(
-            total_emitted,
-            total_emitted + kwargs['limit'] - 1)
-        )
-        startkey = kwargs.get('startkey')
-        self.log(u'  startkey={!r}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
-
-    def view_ending(self, db, view_name, kwargs, total_emitted, time):
-        self.log('View call took {}'.format(time))
+    def log(self, message):
+        self.reindexer.log(message)
 
 
 class PtopReindexer(NoArgsCommand):
@@ -64,7 +53,7 @@ class PtopReindexer(NoArgsCommand):
                     action='store',
                     dest='seq',
                     default=0,
-                    help='Sequence id to resume from'),
+                    help='The offset number to resume loading from'),
         make_option('--noinput',
                     action='store_true',
                     dest='noinput',
@@ -134,15 +123,11 @@ class PtopReindexer(NoArgsCommand):
         if 'chunk_size' not in kwargs:
             kwargs['chunk_size'] = self.chunk_size
         if 'log_handler' not in kwargs:
-            kwargs['log_handler'] = PaginateViewLogHandler(self)
+            kwargs['log_handler'] = ReindexLogHandler(self)
         return paginate_view(*args, **kwargs)
 
     def full_couch_view_iter(self):
-        if hasattr(self.pillow, 'include_docs_when_preindexing'):
-            include_docs = self.pillow.include_docs_when_preindexing
-        else:
-            include_docs = self.pillow.include_docs
-        view_kwargs = {"include_docs": include_docs}
+        view_kwargs = {"include_docs": self.pillow.include_docs}
         if self.couch_key is not None:
             view_kwargs["key"] = self.couch_key
 
@@ -259,7 +244,7 @@ class PtopReindexer(NoArgsCommand):
                     if not isinstance(row, Change):
                         assert isinstance(row, dict)
                         row = change_from_couch_row(row)
-                    self.pillow.processor(row, PillowRuntimeContext(do_set_checkpoint=False))
+                    self.pillow.process_change(row)
                     break
                 except Exception, ex:
                     retries += 1
@@ -367,8 +352,10 @@ class ElasticReindexer(PtopReindexer):
             self.log("Deleting index")
             self.indexing_pillow.get_es_new().indices.delete(self.indexing_pillow.es_index)
             self.log("Recreating index")
-            create_index_for_pillow(self.indexing_pillow)
-            initialize_mapping_if_necessary(self.indexing_pillow)
+            initialize_index_and_mapping(
+                es=self.indexing_pillow.get_es_new(),
+                index_info=get_index_info_from_pillow(self.indexing_pillow),
+            )
 
     def post_load_hook(self):
         if not self.in_place:

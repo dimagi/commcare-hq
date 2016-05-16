@@ -80,6 +80,7 @@ class LoginAndDomainAuthentication(Authentication):
 
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'
+
         def dummy(request, domain, **kwargs):
             return PASSED_AUTH
 
@@ -105,6 +106,7 @@ class LoginAndDomainAuthentication(Authentication):
 
 
 class RequirePermissionAuthentication(LoginAndDomainAuthentication):
+
     def __init__(self, permission, *args, **kwargs):
         super(RequirePermissionAuthentication, self).__init__(*args, **kwargs)
         self.permission = permission
@@ -149,6 +151,7 @@ class AdminAuthentication(LoginAndDomainAuthentication):
 
 
 class HQThrottle(CacheThrottle):
+
     def should_be_throttled(self, identifier, **kwargs):
         if API_THROTTLE_WHITELIST.enabled(identifier):
             return False
@@ -289,10 +292,10 @@ class CommCareCaseResource(CouchResourceMixin, HqBaseResource, DomainSpecificRes
     indices = fields.ListField(null=True)
 
     def dehydrate_properties(self, bundle):
-        return bundle.obj.get_json()['properties']
+        return bundle.obj.to_api_json()['properties']
 
     def dehydrate_indices(self, bundle):
-        return bundle.obj.get_json()['indices']
+        return bundle.obj.to_api_json()['indices']
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(CommCareCase, kwargs['pk'],
@@ -356,6 +359,7 @@ class XFormInstanceResource(HqBaseResource, DomainSpecificResourceMixin):
         resource_name = 'form'
         ordering = ['received_on']
         serializer = XFormInstanceSerializer(formats=['json'])
+
 
 def _safe_bool(bundle, param, default=False):
     try:

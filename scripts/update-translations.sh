@@ -26,6 +26,7 @@ then
     echo "It looks like you haven't yet configured transifex."
     echo "Please visit the wiki page for instructions on how to do so:"
     echo "https://confluence.dimagi.com/display/commcarehq/Internationalization+and+Localization+-+Transifex+Translations"
+    abort
 fi
 
 echo "Pulling translations from transifex"
@@ -35,6 +36,9 @@ echo "Gathering all translation strings.  Note that this will probably take a wh
 ./manage.py makemessages --all
 echo "Gathering javascript translation strings.  This will also probably take a while"
 ./manage.py makemessages -d djangojs --all
+# See http://manage.dimagi.com/default.asp?224619 for details - we can remove this when transifex fixes that
+echo "Removing untranslated plural strings"
+./manage.py remove_untranslated_plural_strings
 echo "Compiling translation files."
 ./manage.py compilemessages
 

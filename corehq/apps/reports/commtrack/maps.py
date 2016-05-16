@@ -3,6 +3,7 @@ from corehq.apps.products.models import Product
 from django.template.loader import render_to_string
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
+from corehq.apps.style.decorators import use_maps
 
 
 class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
@@ -20,6 +21,10 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         'geo_column': 'geo',
         'report': 'corehq.apps.reports.commtrack.data_sources.StockStatusBySupplyPointDataSource',
     }
+
+    @use_maps
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(StockStatusMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
 
     @property
     def display_config(self):
@@ -185,3 +190,7 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
             },
         ],
     }
+
+    @use_maps
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(ReportingStatusMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)

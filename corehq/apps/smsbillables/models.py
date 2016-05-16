@@ -1,17 +1,27 @@
+from collections import namedtuple
 from decimal import Decimal
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 from django.db import models
 
 from corehq.apps.accounting import models as accounting
 from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
-from corehq.apps.sms.models import DIRECTION_CHOICES, SQLMobileBackend
+from corehq.apps.sms.models import (
+    DIRECTION_CHOICES,
+    INCOMING,
+    OUTGOING,
+    SQLMobileBackend,
+)
 from corehq.apps.sms.phonenumbers_helper import get_country_code_and_national_number
-from corehq.apps.smsbillables.utils import log_smsbillables_error
+from corehq.apps.smsbillables.utils import (
+    get_twilio_message,
+    log_smsbillables_error,
+)
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException
+from corehq.apps.smsbillables.exceptions import AmbiguousPrefixException, RetryBillableTaskException
+from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.util.quickcache import quickcache
 
 
@@ -64,27 +74,27 @@ class SmsGatewayFeeCriteria(models.Model):
             for criteria in criteria_list:
                 if national_number.startswith(criteria.prefix):
                     return criteria
-            raise ObjectDoesNotExist
+            raise cls.DoesNotExist
 
         try:
             return get_criteria_with_longest_matching_prefix(
                 list(all_possible_criteria.filter(country_code=country_code, backend_instance=backend_instance))
             )
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=backend_instance)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return get_criteria_with_longest_matching_prefix(
                 list(all_possible_criteria.filter(country_code=country_code, backend_instance=None))
             )
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=None)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
 
         return None
@@ -99,7 +109,7 @@ class SmsGatewayFee(models.Model):
     Once an SmsFee is created, it cannot be modified.
     """
     criteria = models.ForeignKey(SmsGatewayFeeCriteria, on_delete=models.PROTECT)
-    amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
+    amount = models.DecimalField(max_digits=10, decimal_places=4, null=True)
     currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
     date_created = models.DateTimeField(auto_now_add=True)
 
@@ -141,7 +151,6 @@ class SmsGatewayFee(models.Model):
         if save:
             new_fee.save()
         return new_fee
-
 
     @classmethod
     def get_by_criteria(cls, backend_api_id, direction,
@@ -189,11 +198,11 @@ class SmsUsageFeeCriteria(models.Model):
 
         try:
             return all_possible_criteria.get(domain=domain)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(domain=None)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
 
         return None
@@ -250,18 +259,19 @@ class SmsBillable(models.Model):
     """
     A record of matching a fee to a particular SMS.
 
-    If on closer inspection we determine a particular SmsBillable is invalid (whether something is
-    awry with the api_response, or we used the incorrect fee and want to recalculate) we can set
-    this billable to is_valid = False and it will not be used toward calculating the SmsLineItem in
-    the monthly Invoice.
+    If on closer inspection we determine a particular SmsBillable is invalid
+    (we used the incorrect fee and want to recalculate)
+    we can set this billable to is_valid = False and it will not be used toward
+    calculating the SmsLineItem in the monthly Invoice.
     """
     gateway_fee = models.ForeignKey(SmsGatewayFee, null=True, on_delete=models.PROTECT)
+    direct_gateway_fee = models.DecimalField(null=True, max_digits=10, decimal_places=4)
     gateway_fee_conversion_rate = models.DecimalField(default=Decimal('1.0'), null=True, max_digits=20,
                                                       decimal_places=EXCHANGE_RATE_DECIMAL_PLACES)
     usage_fee = models.ForeignKey(SmsUsageFee, null=True, on_delete=models.PROTECT)
+    multipart_count = models.IntegerField(default=1)
     log_id = models.CharField(max_length=50, db_index=True)
     phone_number = models.CharField(max_length=50)
-    api_response = models.TextField(null=True, blank=True)
     is_valid = models.BooleanField(default=True, db_index=True)
     domain = models.CharField(max_length=25, db_index=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
@@ -273,28 +283,35 @@ class SmsBillable(models.Model):
 
     @property
     def gateway_charge(self):
-        if self.gateway_fee is not None:
-            try:
-                charge = SmsGatewayFee.objects.get(id=self.gateway_fee.id)
-                if self.gateway_fee_conversion_rate is not None:
-                    return charge.amount / self.gateway_fee_conversion_rate
-                return charge.amount
-            except ObjectDoesNotExist:
-                pass
-        return Decimal('0.0')
+        if self.direct_gateway_fee is None:
+            return self.multipart_count * self._single_gateway_charge
+        else:
+            return self._single_gateway_charge
 
     @property
     def usage_charge(self):
+        return self.multipart_count * self._single_usage_charge
+
+    @property
+    def _single_gateway_charge(self):
+        amount = None
+        if self.gateway_fee is not None:
+            amount = self.gateway_fee.amount
+        if amount is None:
+            amount = self.direct_gateway_fee or Decimal('0.0')
+
+        if self.gateway_fee_conversion_rate is not None:
+            return amount / self.gateway_fee_conversion_rate
+        return amount
+
+    @property
+    def _single_usage_charge(self):
         if self.usage_fee is not None:
-            try:
-                charge = SmsUsageFee.objects.get(id=self.usage_fee.id)
-                return charge.amount
-            except ObjectDoesNotExist:
-                pass
+            return self.usage_fee.amount
         return Decimal('0.0')
 
     @classmethod
-    def create(cls, message_log, api_response=None):
+    def create(cls, message_log, multipart_count=1):
         phone_number = clean_phone_number(message_log.phone_number)
         direction = message_log.direction
         domain = message_log.domain
@@ -307,13 +324,18 @@ class SmsBillable(models.Model):
             date_sent=message_log.date,
             domain=domain,
         )
-        billable.gateway_fee, billable.gateway_fee_conversion_rate = cls._get_gateway_fee(
-            message_log.backend_api, message_log.backend_id, phone_number, direction, log_id
+
+        gateway_charge_info = cls._get_gateway_fee(
+            message_log.backend_api, message_log.backend_id, phone_number, direction, log_id,
+            message_log.backend_message_id
+        )
+        billable.gateway_fee = gateway_charge_info.gateway_fee
+        billable.gateway_fee_conversion_rate = gateway_charge_info.conversion_rate
+        billable.direct_gateway_fee = gateway_charge_info.direct_gateway_fee
+        billable.multipart_count = cls._get_multipart_count(
+            message_log.backend_api, message_log.backend_id, message_log.backend_message_id, multipart_count
         )
         billable.usage_fee = cls._get_usage_fee(domain, direction)
-
-        if api_response is not None:
-            billable.api_response = api_response
 
         if message_log.backend_api == SQLTestSMSBackend.get_api_id():
             billable.is_valid = False
@@ -322,33 +344,54 @@ class SmsBillable(models.Model):
         return billable
 
     @classmethod
-    def _get_gateway_fee(cls, backend_api_id, backend_instance, phone_number, direction, couch_id):
+    def _get_multipart_count(cls, backend_api_id, backend_instance, backend_message_id, multipart_count):
+        if backend_api_id == SQLTwilioBackend.get_api_id():
+            twilio_message = get_twilio_message(backend_instance, backend_message_id)
+            if twilio_message.num_segments is not None:
+                return int(twilio_message.num_segments)
+            else:
+                raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
+        else:
+            return multipart_count
+
+    @classmethod
+    def _get_gateway_fee(cls, backend_api_id, backend_instance,
+                         phone_number, direction, couch_id, backend_message_id):
         country_code, national_number = get_country_code_and_national_number(phone_number)
         is_gateway_billable = backend_instance is None or _sms_backend_is_global(backend_instance)
 
         if is_gateway_billable:
-            gateway_fee = SmsGatewayFee.get_by_criteria(
-                backend_api_id,
-                direction,
-                backend_instance=backend_instance,
-                country_code=country_code,
-                national_number=national_number,
-            )
+            is_twilio_message = backend_api_id == SQLTwilioBackend.get_api_id()
+            if is_twilio_message:
+                twilio_charges = cls._get_twilio_charges(
+                    backend_message_id, backend_instance, direction, couch_id
+                )
+                gateway_fee = twilio_charges.gateway_fee
+                direct_gateway_fee = twilio_charges.twilio_gateway_fee
+            else:
+                gateway_fee = SmsGatewayFee.get_by_criteria(
+                    backend_api_id,
+                    direction,
+                    backend_instance=backend_instance,
+                    country_code=country_code,
+                    national_number=national_number,
+                )
+                direct_gateway_fee = None
             if gateway_fee:
                 conversion_rate = gateway_fee.currency.rate_to_default
                 if conversion_rate != 0:
-                    return gateway_fee, conversion_rate
+                    return _GatewayChargeInfo(gateway_fee, conversion_rate, direct_gateway_fee)
                 else:
                     log_smsbillables_error(
                         "Gateway fee conversion rate for currency %s is 0"
                         % gateway_fee.currency.code
                     )
-                    return gateway_fee, None
+                    return _GatewayChargeInfo(gateway_fee, None, direct_gateway_fee)
             else:
                 log_smsbillables_error(
                     "No matching gateway fee criteria for SMS %s" % couch_id
                 )
-        return None, None
+        return _GatewayChargeInfo(None, None, None)
 
     @classmethod
     def _get_usage_fee(cls, domain, direction):
@@ -361,3 +404,48 @@ class SmsBillable(models.Model):
                 % (direction, domain)
             )
         return usage_fee
+
+    @classmethod
+    def _get_twilio_charges(cls, backend_message_id, backend_instance, direction, couch_id):
+        if backend_message_id:
+            twilio_message = get_twilio_message(backend_instance, backend_message_id)
+            if twilio_message.status in [
+                'accepted',
+                'queued',
+                'sending',
+                'receiving',
+            ] or twilio_message.price is None:
+                raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
+            return _TwilioChargeInfo(
+                Decimal(twilio_message.price) * -1,
+                SmsGatewayFee.get_by_criteria(
+                    SQLTwilioBackend.get_api_id(),
+                    direction,
+                )
+            )
+        else:
+            log_smsbillables_error(
+                "Could not create gateway fee for Twilio message %s: no backend_message_id" % couch_id
+            )
+            return _TwilioChargeInfo(None, None)
+
+_TwilioChargeInfo = namedtuple('_TwilioCharges', ['twilio_gateway_fee', 'gateway_fee'])
+_GatewayChargeInfo = namedtuple('_GatewayChargeInfo', ['gateway_fee', 'conversion_rate', 'direct_gateway_fee'])
+
+
+def add_twilio_gateway_fee(apps):
+    default_currency, _ = apps.get_model(
+        'accounting', 'Currency'
+    ).objects.get_or_create(
+        code=settings.DEFAULT_CURRENCY
+    )
+
+    for direction in [INCOMING, OUTGOING]:
+        SmsGatewayFee.create_new(
+            SQLTwilioBackend.get_api_id(),
+            direction,
+            None,
+            fee_class=apps.get_model('smsbillables', 'SmsGatewayFee'),
+            criteria_class=apps.get_model('smsbillables', 'SmsGatewayFeeCriteria'),
+            currency=default_currency,
+        )

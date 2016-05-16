@@ -63,13 +63,13 @@ class FormProcessorCouch(object):
         case.get_db().bulk_delete(docs)
 
     @classmethod
-    def save_processed_models(cls, processed_forms, cases=None, stock_updates=None):
+    def save_processed_models(cls, processed_forms, cases=None, stock_result=None):
         docs = list(processed_forms) + (cases or [])
         docs = filter(None, docs)
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         XFormInstance.get_db().bulk_save(docs)
-        for stock_update in stock_updates or []:
-            stock_update.commit()
+        if stock_result:
+            stock_result.commit()
 
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):

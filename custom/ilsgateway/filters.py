@@ -13,7 +13,7 @@ from custom.common import ALL_OPTION
 class ProductByProgramFilter(BaseDrilldownOptionFilter):
     slug = "filter_by"
     single_option_select = 0
-    template = "common/bootstrap2/drilldown_options.html"
+    template = "common/drilldown_options.html"
     label = ugettext_noop("Filter By")
 
     @property
@@ -72,9 +72,10 @@ class ProgramFilter(BaseSingleOptionFilter):
 
 class ILSDateFilter(BaseReportFilter):
 
-    template = "ilsgateway/datespan.html"
     slug = "datespan"
     label = "Filter By:"
+    css_class = 'col-md-4'
+    template = 'ilsgateway/datespan.html'
 
     def selected(self, type):
         slug = '{0}_{1}'.format(self.slug, type)
@@ -120,6 +121,11 @@ class ILSDateFilter(BaseReportFilter):
         )
 
 
+class B3ILSDateFilter(ILSDateFilter):
+    css_class = 'col-md-4'
+    template = 'ilsgateway/datespan.html'
+
+
 class ILSAsyncLocationFilter(AsyncLocationFilter):
 
     @property
@@ -127,3 +133,8 @@ class ILSAsyncLocationFilter(AsyncLocationFilter):
         return reverse('api_dispatch_list', kwargs={'domain': self.domain,
                                                     'resource_name': 'ils_location',
                                                     'api_name': 'v0.3'})
+
+
+class B3ILSAsyncLocationFilter(ILSAsyncLocationFilter):
+    css_class = 'col-md-8'
+    template = 'ilsgateway/location_async.html'

@@ -334,7 +334,7 @@ class StockStatus(MultiReport):
     def get_stock_transactions_for_supply_points_and_products(self, supply_points, unique_products,
                                                               **additional_params):
         return StockTransaction.objects.filter(
-            type='stockonhand',
+            type__in=['stockonhand', 'stockout'],
             case_id__in=list(supply_points.values_list('supply_point_id', flat=True)),
             report__domain=self.report_config['domain'],
             report__date__lte=self.report_config['enddate'],

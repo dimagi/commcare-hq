@@ -68,7 +68,6 @@ def check_celery_health():
         except Exception:
             return {}
 
-
     def get_task_html(detailed_stats, worker_name):
         tasks_ok = 'label-success'
         tasks_full = 'label-warning'
@@ -91,7 +90,6 @@ def check_celery_health():
             pass
 
         return tasks_html
-
 
     ret = {}
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)

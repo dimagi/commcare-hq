@@ -188,7 +188,7 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
     try:
         send_html_email_async.delay(subject, recipient, message_html,
                                     text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -232,6 +232,7 @@ You may access your project by following this link: {registration_link}
                                     email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
+
 
 def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain", is_new_user=False, is_confirming=False):
     entity_texts = {"domain": ["project space", "Project"],

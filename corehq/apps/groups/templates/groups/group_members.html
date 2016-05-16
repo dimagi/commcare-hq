@@ -166,13 +166,13 @@
                 {% endblocktrans %}
             </a>
             {% if bulk_sms_verification_enabled %}
-            <form id="initiate-verification-workflow" class="form form-horizontal" method="post" action="{% url "bulk_sms_verification" domain group.get_id %}">
+            <form id="initiate-verification-workflow" class="form" style="display: inline;" method="post" action="{% url "bulk_sms_verification" domain group.get_id %}">
                 {% csrf_token %}
                 <button id="submit-verification" type="submit" class="btn">
-                    <i class="icon icon-signal"></i> {% trans 'Initiate Phone Verification for All Members' %}
+                    <i class="icon icon-signal"></i> {% trans 'Verify Phone Numbers' %}
                 </button>
                 <span class="hq-help-template"
-                    data-title="{% trans 'Initiate Phone Verification for All Members' %}"
+                    data-title="{% trans 'Initiate Phone Number Verification for All Mobile Workers In This Group' %}"
                     data-content="{% blocktrans %}
                         For all active mobile workers in this group, and for each phone number, this will
                         initiate an SMS verification workflow. If the phone number is already verified or
@@ -206,9 +206,9 @@
                     <div class="control-group">
                         <label class="control-label" for="group-case-sharing-input">{% trans "Case Sharing" %}</label>
                         <div class="controls">
-                            <select class="input-small" name="case_sharing" id="group-case-sharing-input" data-value="{{ group.case_sharing|BOOL }}">
+                            <select class="input-small" name="case_sharing" id="group-case-sharing-input">
                                 <option value="true">{% trans "On" %}</option>
-                                <option value="false">{% trans "Off" %}</option>
+                                <option value="false"{% if not group.case_sharing %} selected{% endif %}>{% trans "Off" %}</option>
                             </select>
                             <p class="help-block">{% trans "Determines whether users within this group will share cases with each other." %}</p>
                             <div id="group-case-sharing-warning" hidden="hidden">
@@ -222,9 +222,9 @@
                     <div class="control-group">
                         <label class="control-label" for="group-reporting-input">{% trans "Reporting" %}</label>
                         <div class="controls">
-                            <select class="input-small" name="reporting" id="group-reporting-input" data-value="{{ group.reporting|BOOL }}">
+                            <select class="input-small" name="reporting" id="group-reporting-input">
                                 <option value="true">{% trans "On" %}</option>
-                                <option value="false">{% trans "Off" %}</option>
+                                <option value="false"{% if not group.reporting %} selected{% endif %}>{% trans "Off" %}</option>
                             </select>
                             <p class="help-block">{% trans "Indicate whether this group's name should appear in the group filter for reports." %}</p>
                         </div>

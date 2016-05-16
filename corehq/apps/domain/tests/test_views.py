@@ -14,7 +14,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import Application, APP_V1
 from corehq.apps.domain.views import CreateNewExchangeSnapshotView
 
+
 class TestDomainViews(TestCase):
+
     def setUp(self):
         self.client = Client()
 
@@ -133,7 +135,7 @@ class BaseAutocompleteTest(TestCase):
         setting_path = 'django.conf.settings.ENABLE_DRACONIAN_SECURITY_FEATURES'
         # HACK use patch to work around bug in override_settings
         # https://github.com/django-compressor/django-appconf/issues/30
-        with patch(setting_path, flag, create=True):
+        with patch(setting_path, flag):
             response = self.client.get(view_path)
             soup = BeautifulSoup(response.content)
             for field in fields:
