@@ -382,7 +382,7 @@ class LanguageProfilesView(View):
 
     def post(self, request, domain, app_id, *args, **kwargs):
         profiles = json.loads(request.body).get('profiles')
-        app = Application.get(app_id)
+        app = get_app(domain, app_id)
         build_profiles = {}
         if profiles:
             for profile in profiles:
