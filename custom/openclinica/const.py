@@ -1,3 +1,6 @@
+# Only for the KEMRI study. This whole file is dropped for generic study apps
+STUDY_APPS = ('Captopril Study',)
+
 # CommCare case type of OpenClinica study subjects
 CC_SUBJECT_CASE_TYPE = 'subject'
 
