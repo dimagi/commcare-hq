@@ -34,6 +34,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.commtrack.util import get_commtrack_location_id
 from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
@@ -902,6 +903,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def get_django_user(self):
         return User.objects.get(username__iexact=self.username)
 
+    def get_fixture_dataitems(self, domain):
+        raise NotImplementedError()
+
+    def get_groups(self, domain):
+        raise NotImplementedError()
+
+    def get_commtrack_location_id(self, domain):
+        raise NotImplementedError()
+
+    def get_owner_ids(self, domain):
+        raise NotImplementedError()
+
+    def get_call_center_indicators(self, domain):
+        raise NotImplementedError()
+
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
         if not isinstance(phone_number, basestring):
@@ -1515,7 +1531,26 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_case_ids(self):
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
-    def get_owner_ids(self):
+    def get_fixture_dataitems(self, domain):
+        from corehq.apps.fixtures.models import FixtureDataItem
+
+        return FixtureDataItem.by_user(self)
+
+    def get_groups(self, domain):
+        return Group.by_user(restore_user)
+
+    def get_commtrack_location_id(self, domain):
+        return get_commtrack_location_id(self, domain)
+
+    def get_call_center_indicators(self, domain):
+        return CallCenterIndicators(
+            self.project.name,
+            self.project.default_timezone,
+            self.project.call_center_config.case_type,
+            self,
+        )
+
+    def get_owner_ids(self, domain=None):
         owner_ids = [self.user_id]
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
@@ -1922,6 +1957,21 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             domain,
             self,
         )
+
+    def get_fixture_dataitems(self, domain):
+        return []
+
+    def get_groups(self, domain):
+        return []
+
+    def get_commtrack_location_id(self, domain):
+        return None
+
+    def get_owner_ids(self, domain):
+        return [self.user_id]
+
+    def get_call_center_indicators(self, domain):
+        return None
 
     def get_email(self):
         # Do not change the name of this method because this is implementing

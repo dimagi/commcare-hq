@@ -111,6 +111,9 @@ def gen_fixture(restore_user, indicator_set):
         </indicators>
     </fixture>
     """
+    if indicator_set is None:
+        return []
+
     name = indicator_set.name
     data = indicator_set.get_data()
 
