@@ -62,7 +62,7 @@ class IndicatorSqlAdapter(object):
     def handle_exception(self, doc, exception):
         notify_exception(
             None,
-            u'unexpected error saving UCR doc: {}'.format(e),
+            u'unexpected error saving UCR doc: {}'.format(exception),
             details={
                 'domain': self.config.domain,
                 'doc_id': doc.get('_id', '<unknown>'),
