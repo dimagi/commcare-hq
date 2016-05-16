@@ -287,7 +287,7 @@ class SystemInfoView(BaseAdminSectionView):
     @use_jquery_ui
     @method_decorator(require_superuser_or_developer)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseAdminSectionView, self).dispatch(request, *args, **kwargs)
+        return super(SystemInfoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
