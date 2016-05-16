@@ -9,6 +9,7 @@ from corehq.apps.accounting.models import (
     SubscriptionType, PreOrPostPay
 )
 from corehq.apps.registration.models import RegistrationRequest
+from corehq.toggles import _enable_toggles_for_scale_beta
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
@@ -79,6 +80,9 @@ def request_new_domain(request, form, is_new_user=True):
 
         if not is_new_user:
             new_domain.is_active = True
+
+        if current_user.is_superuser and form.cleaned_data.get('use_new_backend') == ['yes']:
+            _enable_toggles_for_scale_beta(new_domain.name)
 
         # ensure no duplicate domain documents get created on cloudant
         new_domain.save(**get_safe_write_kwargs())
