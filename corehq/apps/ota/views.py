@@ -115,18 +115,23 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None):
     # not a view just a view util
-    if not couch_user.is_commcare_user():
-        return HttpResponse("No linked chw found for %s" % couch_user.username,
-                            status=401)  # Authentication Failure
-    elif domain != couch_user.domain:
+    if couch_user.is_commcare_user() and domain != couch_user.domain:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
                             status=401)
+    elif couch_user.is_web_user() and domain not in couch_user.domains:
+        return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
+                            status=401)
+
+    if couch_user.is_commcare_user():
+        restore_user = couch_user.to_ota_restore_user()
+    elif couch_user.is_web_user():
+        restore_user = couch_user.to_ota_restore_user(domain)
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
-        user=couch_user.to_casexml_user(),
+        user=restore_user,
         params=RestoreParams(
             sync_log_id=since,
             version=version,

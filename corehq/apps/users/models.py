@@ -34,7 +34,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from casexml.apps.phone.models import User as CaseXMLUser
+from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
@@ -1503,25 +1503,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_web_user(self):
         return False
 
-    def to_casexml_user(self):
-        user = CaseXMLUser(
-            user_id=self.userID,
-            username=self.raw_username,
-            password=self.password,
-            date_joined=self.date_joined,
-            user_data=self.user_data,
-            domain=self.domain,
-            loadtest_factor=self.loadtest_factor,
-            first_name=self.first_name,
-            last_name=self.last_name,
-            phone_number=self.phone_number,
+    def to_ota_restore_user(self):
+        return OTARestoreUser(
+            self.domain,
+            self,
         )
-
-        def get_owner_ids():
-            return self.get_owner_ids()
-        user.get_owner_ids = get_owner_ids
-        user._hq_user = self # don't tell anyone that we snuck this here
-        return user
 
     def _get_form_ids(self):
         return FormAccessors(self.domain).get_form_ids_for_user(self.user_id)
@@ -1930,6 +1916,12 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def is_web_user(self):
         return True
+
+    def to_ota_restore_user(self, domain):
+        return OTARestoreUser(
+            domain,
+            self,
+        )
 
     def get_email(self):
         # Do not change the name of this method because this is implementing

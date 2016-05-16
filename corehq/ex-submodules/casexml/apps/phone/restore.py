@@ -433,15 +433,15 @@ class RestoreConfig(object):
     A collection of attributes associated with an OTA restore
 
     :param domain:          The domain object. An instance of `Domain`.
-    :param user:            The mobile user requesting the restore
+    :param user:            The restore user requesting the restore
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     """
 
-    def __init__(self, project=None, user=None, params=None, cache_settings=None):
+    def __init__(self, project=None, restore_user=None, params=None, cache_settings=None):
         self.project = project
         self.domain = project.name if project else ''
-        self.user = user
+        self.user = restore_user
         self.params = params or RestoreParams()
         self.cache_settings = cache_settings or RestoreCacheSettings()
 

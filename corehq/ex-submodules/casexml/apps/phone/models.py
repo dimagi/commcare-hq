@@ -22,54 +22,18 @@ import logging
 logger = logging.getLogger('phone.models')
 
 
-class User(object):
+class OTARestoreUser(object):
     """
-    This is a basic user model that's used for OTA restore to properly
-    find cases and generate the user XML.
-    """
-    # todo: this model is now useless since casexml and HQ are no longer separate repos.
-    # we should remove this abstraction layer and switch all the restore code to just
-    # work off CouchUser objects
+    This is the OTA restore user's interface that's used for OTA restore to properly
+    find cases and generate the user XML for both a web user and mobile user.
 
-    def __init__(self, user_id, username, password, date_joined, first_name=None,
-                 last_name=None, phone_number=None, user_data=None,
-                 additional_owner_ids=None, domain=None, loadtest_factor=1):
-        self.user_id = user_id
-        self.username = username
-        self.first_name = first_name
-        self.last_name = last_name
-        self.phone_number = phone_number
-        self.password = password
-        self.date_joined = date_joined
-        self.user_data = user_data or {}
-        self.additional_owner_ids = additional_owner_ids or []
+    Note: When adding methods to this user, you'll need to ensure that it is
+    functional with both a CommCareUser and WebUser.
+    """
+
+    def __init__(self, domain, couch_user):
         self.domain = domain
-        self.loadtest_factor = loadtest_factor
-
-    @property
-    def user_session_data(self):
-        # todo: this is redundant with the implementation in CouchUser.
-        # this will go away when the two are reconciled
-        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
-
-        session_data = copy(self.user_data)
-        session_data.update({
-            '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
-            '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
-            '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
-        })
-        return session_data
-
-    def get_owner_ids(self):
-        ret = [self.user_id]
-        ret.extend(self.additional_owner_ids)
-        return list(set(ret))
-
-    @classmethod
-    def from_django_user(cls, django_user):
-        return cls(user_id=str(django_user.pk), username=django_user.username,
-                   password=django_user.password, date_joined=django_user.date_joined,
-                   user_data={})
+        self._couch_user = couch_user
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
