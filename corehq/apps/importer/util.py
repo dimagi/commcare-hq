@@ -13,6 +13,7 @@ from corehq.apps.importer.exceptions import (
     ImporterExcelError,
     ImporterFileNotFound,
     ImporterRefError,
+    InvalidCustomFieldNameException,
     InvalidDateException,
     InvalidIntegerException
 )
@@ -25,6 +26,11 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.soft_assert import soft_assert
 from couchexport.export import SCALAR_NEVER_WAS
+
+
+# Don't allow users to change the case type by accident using a custom field. But do allow users to change
+# owner_id, external_id, etc. (See also custom_data_fields.models.RESERVED_WORDS)
+RESERVED_FIELDS = ('type',)
 
 
 class ImporterConfig(object):
@@ -404,10 +410,13 @@ def populate_updated_fields(config, columns, row, datemode):
             continue
 
         if 'field_name' in field_map[key]:
-            update_field_name = field_map[key]['field_name']
+            update_field_name = field_map[key]['field_name'].strip()
         else:
             # nothing was selected so don't add this value
             continue
+
+        if update_field_name in RESERVED_FIELDS:
+            raise InvalidCustomFieldNameException(_('Field name "{}" is reserved').format(update_field_name))
 
         if isinstance(update_value, basestring) and update_value.strip() == SCALAR_NEVER_WAS:
             # If we find any instances of blanks ('---'), convert them to an
@@ -428,7 +437,7 @@ def populate_updated_fields(config, columns, row, datemode):
             else:
                 update_value = convert_field_value(update_value)
 
-        fields_to_update[update_field_name.strip()] = update_value
+        fields_to_update[update_field_name] = update_value
 
     return fields_to_update
 
