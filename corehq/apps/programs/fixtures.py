@@ -1,3 +1,4 @@
+from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
 
@@ -33,9 +34,11 @@ def program_fixture_generator_json(domain):
 class ProgramFixturesProvider(object):
     id = 'commtrack:programs'
 
-    def __call__(self, user, version, last_sync=None, app=None):
-        data_fn = lambda: Program.by_domain(user.domain)
-        return simple_fixture_generator(user, self.id, "program",
+    def __call__(self, restore_user, version, last_sync=None, app=None):
+        assert isinstance(restore_user, OTARestoreUser)
+
+        data_fn = lambda: Program.by_domain(restore_user.domain)
+        return simple_fixture_generator(restore_user, self.id, "program",
                                          PROGRAM_FIELDS, data_fn, last_sync)
 
 program_fixture_generator = ProgramFixturesProvider()

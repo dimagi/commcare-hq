@@ -1,5 +1,6 @@
 from collections import defaultdict
 from xml.etree.ElementTree import Element
+from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.locations.models import SQLLocation
 from corehq import toggles
 from corehq.apps.fixtures.models import UserFixtureType
@@ -28,12 +29,12 @@ class LocationSet(object):
         return item in self.by_id
 
 
-def fixture_last_modified(user):
+def fixture_last_modified(restore_user):
     """Return when the fixture was last modified"""
-    return user.fixture_status(UserFixtureType.LOCATION)
+    return restore_user.fixture_status(UserFixtureType.LOCATION)
 
 
-def should_sync_locations(last_sync, location_db, user):
+def should_sync_locations(last_sync, location_db, restore_user):
     """
     Determine if any locations (already filtered to be relevant
     to this user) require syncing.
@@ -41,7 +42,7 @@ def should_sync_locations(last_sync, location_db, user):
     if (
         not last_sync or
         not last_sync.date or
-        fixture_last_modified(user) >= last_sync.date
+        fixture_last_modified(restore_user) >= last_sync.date
     ):
         return True
 
@@ -59,7 +60,7 @@ def should_sync_locations(last_sync, location_db, user):
 class LocationFixtureProvider(object):
     id = 'commtrack:locations'
 
-    def __call__(self, user, version, last_sync=None, app=None):
+    def __call__(self, restore_user, version, last_sync=None, app=None):
         """
         By default this will generate a fixture for the users
         location and it's "footprint", meaning the path
@@ -68,13 +69,15 @@ class LocationFixtureProvider(object):
         There is an admin feature flag that will make this generate
         a fixture with ALL locations for the domain.
         """
-        if not user.project.uses_locations:
+        assert isinstance(restore_user, OTARestoreUser)
+
+        if not restore_user.project.uses_locations:
             return []
-        if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-            locations = SQLLocation.active_objects.filter(domain=user.domain)
+        if toggles.SYNC_ALL_LOCATIONS.enabled(restore_user.domain):
+            locations = SQLLocation.active_objects.filter(domain=restore_user.domain)
         else:
             locations = []
-            user_location = user.sql_location
+            user_location = restore_user.sql_location
             if user_location:
                 # add users location (and ancestors) to fixture
                 locations.append(user_location)
@@ -83,21 +86,21 @@ class LocationFixtureProvider(object):
                 locations += (user_location.get_descendants()
                                            .filter(is_archived=False))
 
-            if user.project.supports_multiple_locations_per_user:
+            if restore_user.project.supports_multiple_locations_per_user:
                 # this might add duplicate locations but we filter that out later
-                location_ids = [loc.location_id for loc in user.locations]
+                location_ids = [loc.location_id for loc in restore_user.locations]
                 locations += SQLLocation.active_objects.filter(
                     location_id__in=location_ids
                 )
 
         location_db = _location_footprint(locations)
 
-        if not should_sync_locations(last_sync, location_db, user):
+        if not should_sync_locations(last_sync, location_db, restore_user):
             return []
 
         root = Element('fixture',
                        {'id': self.id,
-                        'user_id': user.user_id})
+                        'user_id': restore_user.user_id})
 
         root_locations = filter(
             lambda loc: loc.parent is None, location_db.by_id.values()
