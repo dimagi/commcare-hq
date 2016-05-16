@@ -424,7 +424,7 @@ class RestoreState(object):
     @property
     @memoized
     def loadtest_factor(self):
-        return self.restore_user.load_testfactor
+        return self.restore_user.loadtest_factor
 
 
 class RestoreConfig(object):

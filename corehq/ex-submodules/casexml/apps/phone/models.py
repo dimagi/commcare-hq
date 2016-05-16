@@ -58,10 +58,6 @@ class OTARestoreUser(object):
         return self._couch_user.username
 
     @property
-    def domain(self):
-        return self.domain
-
-    @property
     def password(self):
         return self._couch_user.password
 

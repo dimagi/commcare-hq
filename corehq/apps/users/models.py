@@ -34,7 +34,6 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from corehq.apps.commtrack.util import get_commtrack_location_id
 from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
@@ -1540,6 +1539,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return Group.by_user(restore_user)
 
     def get_commtrack_location_id(self, domain):
+        from corehq.apps.commtrack.util import get_commtrack_location_id
+
         return get_commtrack_location_id(self, domain)
 
     def get_call_center_indicators(self, domain):

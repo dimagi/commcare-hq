@@ -131,7 +131,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     app = get_app(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
-        user=restore_user,
+        restore_user=restore_user,
         params=RestoreParams(
             sync_log_id=since,
             version=version,
