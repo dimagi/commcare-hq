@@ -127,14 +127,9 @@ jQuery(document).ready(function($) {
         var msgObj = JSON.parse(msg);
         // var renderedMsg = '<strong>' + msgObj.username + '</strong>: ' + msgObj.message;
 
-        dimagisphere.formData.domainToCountry[msgObj.domain] = msgObj.country;
 
         addDataToMap(msgObj);
-
         // add data to chart
-        var currentCount = dimagisphere.formData.totalFormsByDomain[msgObj.domain] || 0;
-        currentCount += 1;
-        dimagisphere.formData.totalFormsByDomain[msgObj.domain] = currentCount;
         if (chart !== undefined) {
             chartData.datum(formatChartData(dimagisphere.formData.totalFormsByDomain)).call(chart);
 
