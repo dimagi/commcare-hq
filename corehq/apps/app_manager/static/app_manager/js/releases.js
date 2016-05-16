@@ -31,6 +31,14 @@ hqDefine('app_manager/js/releases.js', function () {
             return profiles;
         };
 
+        self.changeAppCode = function () {
+            self.app_code(null);
+            self.failed_url_generation(false);
+            self.generating_url(false);
+        };
+
+        self.build_profile.subscribe(self.changeAppCode);
+
         self.should_generate_url = function(url_type) {
             var types = _.values(SavedApp.URL_TYPES);
             return (types.indexOf(url_type) !== 1 &&
@@ -49,7 +57,9 @@ hqDefine('app_manager/js/releases.js', function () {
                     url: base_url + url_type + '/?profile=' + self.build_profile()
                 }).done(function(data){
                     var bitly_code = self.parse_bitly_url(data);
-                    self[url_type](data);
+                    if (!self.build_profile()) {
+                        self[url_type](data);
+                    }
 
                     self.failed_url_generation(!bitly_code);
                     self.app_code(bitly_code);
@@ -70,7 +80,7 @@ hqDefine('app_manager/js/releases.js', function () {
             } else {
                 url_type = SavedApp.URL_TYPES.SHORT_ODK_URL;
             }
-            if (!ko.utils.unwrapObservable(self[url_type])) {
+            if (!(ko.utils.unwrapObservable(self[url_type])) || self.build_profile()) {
                 return self.generate_short_url(url_type);
             } else {
                 return ko.utils.unwrapObservable(self[url_type]);
