@@ -1,17 +1,16 @@
 from collections import namedtuple
+import json
+
 from django.core import cache
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from restkit import Resource
-import json
 from soil import heartbeat
 
 ServiceStatus = namedtuple("ServiceStatus", "success msg")
 
 
 def check_redis():
-    redis_status = ""
-    redis_results = ""
     if 'redis' in settings.CACHES:
         rc = cache.caches['redis']
         try:
@@ -27,7 +26,7 @@ def check_redis():
 
 def check_rabbitmq():
     if settings.BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
+        amqp_parts = settings.BROKER_URL.replace('amqp://', '').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         vhost = amqp_parts[1]
         try:
@@ -88,9 +87,9 @@ def check_celery():
         worker_bad = '<span class="label label-important">Down</span>'
 
         worker_info = []
-        worker_status = get_stats(celery_monitoring, status_only=True)
+        worker_stats = get_stats(celery_monitoring, status_only=True)
         detailed_stats = get_stats(celery_monitoring, refresh=True)
-        for worker_name, status in worker_status.items():
+        for worker_name, status in worker_stats.items():
             status_html = mark_safe(worker_ok if status else worker_bad)
             tasks_html = get_task_html(detailed_stats, worker_name)
             worker_info.append(' '.join([worker_name, status_html, tasks_html]))
