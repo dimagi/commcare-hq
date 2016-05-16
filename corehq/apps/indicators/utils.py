@@ -1,15 +1,18 @@
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from corehq.util.quickcache import quickcache
-from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_db
+
+
+INDICATOR_CONFIG_DOC_ID = 'INDICATOR_CONFIGURATION'
+INDICATOR_CONFIG_LOCK_KEY = 'udpate-indicator-configuration-doc'
 
 
 @quickcache([], timeout=60)
 def get_indicator_config():
     try:
-        doc = get_db().open_doc('INDICATOR_CONFIGURATION')
+        doc = get_db().open_doc(INDICATOR_CONFIG_DOC_ID)
     except ResourceNotFound:
         return {}
     else:
@@ -17,12 +20,12 @@ def get_indicator_config():
 
 
 def set_domain_namespace_entry(domain, entry):
-    with CriticalSection(['udpate-indicator-configuration-doc']):
+    with CriticalSection([INDICATOR_CONFIG_LOCK_KEY]):
         try:
-            doc = get_db().open_doc('INDICATOR_CONFIGURATION')
+            doc = get_db().open_doc(INDICATOR_CONFIG_DOC_ID)
         except ResourceNotFound:
             doc = {
-                '_id': 'INDICATOR_CONFIGURATION',
+                '_id': INDICATOR_CONFIG_DOC_ID,
             }
 
         if 'namespaces' not in doc:
@@ -31,16 +34,6 @@ def set_domain_namespace_entry(domain, entry):
         doc['namespaces'][domain] = entry
         get_db().save_doc(doc)
         get_indicator_config.clear()
-
-
-@unit_testing_only
-def delete_indicator_doc():
-    with CriticalSection(['udpate-indicator-configuration-doc']):
-        try:
-            get_db().delete_doc('INDICATOR_CONFIGURATION')
-            get_indicator_config.clear()
-        except ResourceNotFound:
-            pass
 
 
 def get_namespaces(domain, as_choices=False):

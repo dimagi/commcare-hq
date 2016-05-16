@@ -9,7 +9,8 @@ from corehq.apps.indicators.models import (
     FormDataInCaseIndicatorDefinition,
     FormDataAliasIndicatorDefinition,
     CaseDataInFormIndicatorDefinition, IndicatorDefinition)
-from corehq.apps.indicators.utils import set_domain_namespace_entry, delete_indicator_doc
+from corehq.apps.indicators.utils import set_domain_namespace_entry
+from corehq.apps.indicators.tests.utils import delete_indicator_doc
 from mvp_docs.models import IndicatorXForm, IndicatorCase
 from mvp_docs.pillows import MVPFormIndicatorPillow, MVPCaseIndicatorPillow
 from couchforms.models import XFormInstance
