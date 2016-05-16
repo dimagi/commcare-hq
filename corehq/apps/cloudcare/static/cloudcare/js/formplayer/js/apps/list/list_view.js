@@ -53,6 +53,7 @@ FormplayerFrontend.module("AppSelect.AppList", function (AppList, FormplayerFron
             }
             collectionView.$("tbody").append(itemView.el);
             if (index === this.collection.length) {
+                collectionView.$("tbody").append("<td><img src={% static 'cloudcare/images/sync.png' %}'/></td>")
                 collectionView.$("tbody").append("</tr>");
             }
         },

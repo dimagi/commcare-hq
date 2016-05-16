@@ -12,6 +12,7 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
 
     var API = {
         listApps: function () {
+            FormplayerFrontend.request("clearForm");
             AppSelect.AppList.Controller.listApps();
         },
         selectApp: function (appId) {
@@ -21,6 +22,7 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
             FormplayerFrontend.request("appselect:storeapps", apps);
         },
         listMenus: function (appId) {
+            FormplayerFrontend.request("clearForm");
             var currentFragment = Backbone.history.getFragment();
             var steps = Util.getSteps(currentFragment);
             if (steps && steps.length > 0) {

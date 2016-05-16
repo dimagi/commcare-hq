@@ -57,6 +57,10 @@ FormplayerFrontend.reqres.setHandler('currentApp', function (app_id) {
     return fetchingApp;
 });
 
+FormplayerFrontend.reqres.setHandler('clearForm', function () {
+    $('#webforms').html("");
+});
+
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     var loadSession = function () {
 
