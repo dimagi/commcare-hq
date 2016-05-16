@@ -1,0 +1,34 @@
+{% load i18n %}
+<div data-bind="saveButton: saveButton"></div>
+<table class="table">
+    <thead>
+        <tr class="row form-group">
+            <th>{% trans "Profile Name" %}</th>
+            <th>{% trans "Languages" %}</th>
+            <th>{% trans "Default Language" %}</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody data-bind="foreach: app_profiles">
+        <tr class="row form-group">
+            <td class="col-sm-5"><span class="form-inline"><input class="form-control" data-bind="value: $data.name"/></span></td>
+            <td class="col-sm-2">
+                <select class="language-select form-control"
+                        multiple="true"
+                        data-bind="options: $root.app_langs, selectedOptions: langs, attr: {id: 'profile-' + $index()}">
+                </select>
+            </td>
+            <td class="col-sm-4">
+                <span class="form-inline">
+                    <select class="form-control" data-bind="value: defaultLang, options: langs"></select>
+                </span>
+            </td>
+            <td><a href="#"><i class="fa fa-remove" data-bind="click: $root.removeProfile"></i></a></td>
+            <input type="hidden" data-bind="value: id"/>
+        </tr>
+    </tbody>
+</table>
+<button class="btn btn-default" data-bind="click: newProfile">
+    <i class="fa fa-plus"></i>
+    {% trans "Add Profile" %}
+</button>
