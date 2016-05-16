@@ -4,14 +4,12 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from restkit import Resource
 import json
-from corehq.apps.hqadmin.system_info.utils import human_bytes
 from soil import heartbeat
 
 ServiceStatus = namedtuple("ServiceStatus", "success msg")
 
 
 def check_redis():
-    #redis status
     redis_status = ""
     redis_results = ""
     if 'redis' in settings.CACHES:

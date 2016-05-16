@@ -33,7 +33,7 @@ from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.es import CaseES, aggregations
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
-    use_bootstrap3, use_nvd3, use_nvd3_v3
+    use_bootstrap3, use_nvd3_v3
 from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
@@ -59,7 +59,7 @@ from corehq.apps.hqadmin.escheck import (
     check_reportxform_es_index
 )
 from corehq.apps.hqadmin.management.commands.check_services import service_tests
-from corehq.apps.hqadmin.system_info import checks
+from corehq.apps.hqadmin import service_checks
 from corehq.apps.hqadmin.reporting.reports import (
     get_project_spaces,
     get_stats_data,
@@ -312,10 +312,10 @@ class SystemInfoView(BaseAdminSectionView):
 
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
-        context['redis'] = checks.check_redis()
-        context['rabbitmq'] = checks.check_rabbitmq()
-        context['celery'] = checks.check_celery()
-        context['heartbeat'] = checks.check_heartbeat()
+        context['redis'] = service_checks.check_redis()
+        context['rabbitmq'] = service_checks.check_rabbitmq()
+        context['celery'] = service_checks.check_celery()
+        context['heartbeat'] = service_checks.check_heartbeat()
 
         context['elastic'] = check_es_cluster_health()
 
