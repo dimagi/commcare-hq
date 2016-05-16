@@ -2527,7 +2527,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             scheduler_updates = set()
 
-
         return updates.union(scheduler_updates)
 
     @memoized
