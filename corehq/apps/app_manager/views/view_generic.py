@@ -30,6 +30,7 @@ from corehq.apps.app_manager.util import (
     get_commcare_versions,
     get_usercase_properties,
 )
+from corehq import toggles
 from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.soft_assert import soft_assert
@@ -208,6 +209,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     context.update({
         'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id),
         'domain_names': domain_names,
+        'export_apps_toggle': toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username),
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]

@@ -1,7 +1,11 @@
 import copy
 import json
+import os
+import tempfile
+import zipfile
 from collections import defaultdict
 from StringIO import StringIO
+from wsgiref.util import FileWrapper
 
 from django.utils.translation import ugettext as _
 from django.utils.http import urlencode as django_urlencode
@@ -301,6 +305,41 @@ def app_from_template(request, domain, slug):
     except (ModuleNotFoundException, FormNotFoundException):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
     return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
+
+
+@require_can_edit_apps
+def export_gzip(req, domain, app_id):
+    app_json = get_app(None, app_id)
+    #
+    fd, fpath = tempfile.mkstemp()
+    with os.fdopen(fd, 'w') as tmp:
+        with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr(fpath, app_json.export_json())
+
+    wrapper = FileWrapper(open(fpath))
+    response = HttpResponse(wrapper, content_type='application/zip')
+    response['Content-Length'] = os.path.getsize(fpath)
+    set_file_download(response, app_id)
+    return response
+
+
+@require_can_edit_apps
+def import_gzip(request, domain, app_id, template="app_manager/import_app.html"):
+    gzip_file = request.FILES['gzip']
+    with zipfile.ZipFile(gzip_file, 'r', zipfile.ZIP_DEFLATED) as z:
+        source = z.read(z.filelist[0].filename)
+    valid_request = True
+    if not source:
+        messages.error(request, _("You must submit the source data."))
+        valid_request = False
+
+    if not valid_request:
+        return render(request, template, {'domain': domain})
+
+    source = json.loads(source)
+    assert (source is not None)
+    app = import_app_util(source, domain)
+    return back_to_main(request, domain, app_id=app.id)
 
 
 @require_can_edit_apps
