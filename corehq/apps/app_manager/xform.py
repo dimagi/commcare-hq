@@ -556,6 +556,9 @@ class XForm(WrappedNode):
             xmlns = self.data_node.tag_xmlns
             self.namespaces.update(x="{%s}" % xmlns)
         self.has_casedb = False
+        # A dictionary mapping case types to sets of scheduler case properties
+        # updated by the form
+        self._scheduler_case_updates = defaultdict(set)
 
     def __str__(self):
         return ET.tostring(self.xml) if self.xml is not None else ''
@@ -1520,6 +1523,7 @@ class XForm(WrappedNode):
                 )
             )
             update_block.append(make_case_elem(SCHEDULE_PHASE))
+            self._add_scheduler_case_update(action.case_type, SCHEDULE_PHASE)
 
             self.add_bind(
                 nodeset=u'/data/{}'.format(SCHEDULE_CURRENT_VISIT_NUMBER),
@@ -1540,6 +1544,7 @@ class XForm(WrappedNode):
                 calculate=u"/data/{}".format(SCHEDULE_CURRENT_VISIT_NUMBER),
             )
             update_block.append(make_case_elem(last_visit_num))
+            self._add_scheduler_case_update(action.case_type, last_visit_num)
 
             last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
             self.add_bind(
@@ -1549,6 +1554,7 @@ class XForm(WrappedNode):
                 relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
             )
             update_block.append(make_case_elem(last_visit_date))
+            self._add_scheduler_case_update(action.case_type, last_visit_date)
 
             self._schedule_global_next_visit_date(form, case)
 
@@ -2113,6 +2119,19 @@ class XForm(WrappedNode):
                 case_block.add_close_block(relevance)
                 self.data_node.append(case_block.elem)
 
+    def get_scheduler_case_updates(self):
+        """
+        Return a dictionary where each key is a case type and each value is a
+        set of case properties that this form updates on account of the scheduler module.
+
+        IMPORTANT NOTE!: The returned case property sets will always be empty
+        until you have run create_casexml_2_advanced() on this xform. (which
+        will most likely happen through Form.add_stuff_to_xform()
+        """
+        return self._scheduler_case_updates
+
+    def _add_scheduler_case_update(self, case_type, case_property):
+        self._scheduler_case_updates[case_type].add(case_property)
 
 VELLUM_TYPES = {
     "AndroidIntent": {
