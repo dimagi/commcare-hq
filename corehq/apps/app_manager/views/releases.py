@@ -157,7 +157,8 @@ def save_copy(request, domain, app_id):
     track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
-    app.update_mm_map()
+    if not app.is_remote_app():
+        app.update_mm_map()
     try:
         errors = app.validate_app()
     except ModuleIdMissingException:
