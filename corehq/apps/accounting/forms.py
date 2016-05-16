@@ -181,7 +181,7 @@ class BillingAccountBasicForm(forms.Form):
                     ),
                     css_id='emails-text',
                     css_class='collapse form-group'
-                ),
+                ) if self.initial.get('email_list') else crispy.Div(),
                 crispy.Div(
                     crispy.Div(
                         css_class='col-sm-3 col-md-2'
@@ -197,7 +197,7 @@ class BillingAccountBasicForm(forms.Form):
                         css_class='col-sm-9 col-md-8 col-lg-6'
                     ),
                     css_class='form-group'
-                ),
+                ) if self.initial.get('email_list') else crispy.Div(),
                 'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
