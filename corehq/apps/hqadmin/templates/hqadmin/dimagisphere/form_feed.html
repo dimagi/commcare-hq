@@ -113,13 +113,11 @@ jQuery(document).ready(function($) {
     });
 
     function addDataToMap(msgObj) {
-        if (dimagisphere.addData(msgObj)) {
-            colorAll();
-            // this removes from active after a bit of time
-            window.setTimeout(function () {
-                dimagisphere.formData.recentFormsByCountry[msgObj.country] -= 1;
-            }, 1000);
-        }
+        colorAll();
+        // this removes from active after a bit of time
+        window.setTimeout(function () {
+            dimagisphere.formData.recentFormsByCountry[msgObj.country] -= 1;
+        }, 1000);
     }
 
     // receive a message though the Websocket from the server
@@ -127,8 +125,10 @@ jQuery(document).ready(function($) {
         var msgObj = JSON.parse(msg);
         // var renderedMsg = '<strong>' + msgObj.username + '</strong>: ' + msgObj.message;
 
-
-        addDataToMap(msgObj);
+        dimagisphere.addData(msgObj);
+        if (msgObj.country) {
+            addDataToMap(msgObj);
+        }
         // add data to chart
         if (chart !== undefined) {
             chartData.datum(formatChartData(dimagisphere.formData.totalFormsByDomain)).call(chart);
