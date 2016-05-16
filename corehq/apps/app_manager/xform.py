@@ -559,6 +559,7 @@ class XForm(WrappedNode):
         # A dictionary mapping case types to sets of scheduler case properties
         # updated by the form
         self._scheduler_case_updates = defaultdict(set)
+        self._scheduler_case_updates_populated = False
 
     def __str__(self):
         return ET.tostring(self.xml) if self.xml is not None else ''
@@ -1500,6 +1501,7 @@ class XForm(WrappedNode):
         self.data_node.append(_make_elem(SCHEDULE_NEXT_DUE))
 
     def create_casexml_2_advanced(self, form):
+        self._scheduler_case_updates_populated = True
         from corehq.apps.app_manager.util import split_path
 
         if not form.actions.get_all_actions():
@@ -2123,11 +2125,9 @@ class XForm(WrappedNode):
         """
         Return a dictionary where each key is a case type and each value is a
         set of case properties that this form updates on account of the scheduler module.
-
-        IMPORTANT NOTE!: The returned case property sets will always be empty
-        until you have run create_casexml_2_advanced() on this xform. (which
-        will most likely happen through Form.add_stuff_to_xform()
         """
+        if not self._scheduler_case_updates_populated:
+            raise Exception('Scheduler case updates have not yet been populated')
         return self._scheduler_case_updates
 
     def _add_scheduler_case_update(self, case_type, case_property):
