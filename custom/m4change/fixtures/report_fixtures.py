@@ -41,8 +41,7 @@ class ReportFixtureProvider(object):
         assert isinstance(restore_user, OTARestoreUser)
 
         if restore_user.domain in M4CHANGE_DOMAINS:
-            domain = Domain.get_by_name(restore_user.domain)
-            location_id = get_commtrack_location_id(restore_user, domain)
+            location_id = restore_user.get_commtrack_location_id()
             if location_id is not None:
                 fixture = self.get_fixture(restore_user, domain, location_id)
                 if fixture is None:
@@ -133,12 +132,12 @@ class ReportFixtureProvider(object):
             reports = dict((report.slug, report) for report in m4change_data_source.get_reports())
             for report_slug in report_slugs:
                 report_data[report_slug] = FixtureReportResult.by_composite_key(
-                    domain.name, facility_id, json_format_date(startdate),
+                    domain, facility_id, json_format_date(startdate),
                     json_format_date(enddate), report_slug)
                 if report_data[report_slug] is None:
                     name = reports[report_slug].name
                     rows = reports[report_slug].get_initial_row_data()
-                    fixture_result = FixtureReportResult(domain=domain.name, location_id=facility_id,
+                    fixture_result = FixtureReportResult(domain=domain, location_id=facility_id,
                                                          start_date=startdate, end_date=enddate, report_slug=report_slug,
                                                          rows=rows, name=name)
                     report_data[report_slug] = fixture_result
@@ -162,7 +161,7 @@ class ReportFixtureProvider(object):
 
         root = ElementTree.Element('fixture', attrib={
             'id': self.id,
-            'user_id': restore_user._id
+            'user_id': restore_user.user_id
         })
 
         months_element = ElementTree.Element('monthly-reports')

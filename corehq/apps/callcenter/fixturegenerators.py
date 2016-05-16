@@ -68,16 +68,10 @@ class IndicatorsFixturesProvider(object):
             })
 
         try:
-            fixtures.append(gen_fixture(restore_user, CallCenterIndicators(
-                domain.name,
-                domain.default_timezone,
-                domain.call_center_config.case_type,
-                restore_user,
-                indicator_config=config
-            )))
+            fixtures.append(gen_fixture(restore_user, restore_user.get_call_center_indicators(config)))
         except Exception:  # blanket exception catching intended
             notify_exception(None, 'problem generating callcenter fixture', details={
-                'user_id': restore_user._id,
+                'user_id': restore_user.user_id,
                 'domain': restore_user.domain
             })
 

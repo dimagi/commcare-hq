@@ -66,7 +66,7 @@ class ItemListsProvider(object):
             _ = [_set_cached_type(item, global_fixture) for item in items]
             items_by_type[global_fixture._id] = items
 
-        other_items = FixtureDataItem.by_user(restore_user)
+        other_items = restore_user.get_fixture_dataitems()
         data_types = {}
 
         for item in other_items:

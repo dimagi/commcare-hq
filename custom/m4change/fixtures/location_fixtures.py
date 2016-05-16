@@ -13,8 +13,7 @@ class LocationFixtureProvider(object):
         assert isinstance(restore_user, OTARestoreUser)
 
         if restore_user.domain in M4CHANGE_DOMAINS:
-            domain = Domain.get_by_name(restore_user.domain)
-            location_id = get_commtrack_location_id(restore_user, domain)
+            location_id = restore_user.get_commtrack_location_id()
             if location_id is not None:
                 fixture = self.get_fixture(restore_user, location_id)
                 if fixture is None:

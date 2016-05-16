@@ -8,7 +8,6 @@ import hashlib
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
-from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
@@ -425,7 +424,7 @@ class RestoreState(object):
     @property
     @memoized
     def loadtest_factor(self):
-        return get_loadtest_factor(self.domain, self.user)
+        return self.user.load_testfactor
 
 
 class RestoreConfig(object):

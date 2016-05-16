@@ -8,6 +8,8 @@ from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
+from corehq.toggles import ENABLE_LOADTEST_USERS
+from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
@@ -31,9 +33,65 @@ class OTARestoreUser(object):
     functional with both a CommCareUser and WebUser.
     """
 
-    def __init__(self, domain, couch_user):
+    def __init__(self, domain, couch_user, loadtest_factor=1):
         self.domain = domain
+        self._loadtest_factor = loadtest_factor
         self._couch_user = couch_user
+
+    @property
+    def user_id(self):
+        return self._couch_user.user_id
+
+    @property
+    def loadtest_factor(self):
+        """
+        Gets the loadtest factor for a domain and user. Is always 1 unless
+        both the toggle is enabled for the domain, and the user has a non-zero,
+        non-null factor set.
+        """
+        if ENABLE_LOADTEST_USERS.enabled(self.domain):
+            return self._loadtest_factor or 1
+        return 1
+
+    @property
+    def username(self):
+        return self._couch_user.username
+
+    @property
+    def domain(self):
+        return self.domain
+
+    @property
+    def password(self):
+        return self._couch_user.password
+
+    @property
+    def user_session_data(self):
+        return self._couch_user.user_data
+
+    @property
+    def date_joined(self):
+        return self._couch_user.date_joined
+
+    @property
+    @memoized
+    def project(self):
+        return Domain.get_by_name(self.domain)
+
+    def get_fixture_dataitems(self):
+        return self._couch_user.get_fixture_dataitems(self.domain)
+
+    def get_groups(self):
+        return self._couch_user.get_groups(self.domain)
+
+    def get_commtrack_location_id(self):
+        return self._couch_user.get_commtrack_location_id(self.domain)
+
+    def get_owner_ids(self):
+        return self._couch_user.get_owner_ids(self.domain)
+
+    def get_call_center_indicators(self):
+        return self._couch_user.get_call_center_indicators(self.domain)
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
