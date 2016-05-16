@@ -2,8 +2,51 @@ import corehq.apps.app_manager.util as util
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
     Application, Module, OpenCaseAction, OpenSubCaseAction)
+from corehq.apps.app_manager.tests import TestXmlMixin
 from django.test.testcases import SimpleTestCase
 from mock import patch
+
+
+class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
+    file_path = ('data', 'test_util')
+
+    def assertCaseProperties(self, app, case_type, expected_properties):
+        properties = util.get_case_properties(app, [case_type])
+        self.assertEqual(
+            set(properties[case_type]),
+            set(expected_properties),
+        )
+
+    def test_normal_app(self):
+        app = Application.wrap(self.get_json('simple_case_management_app'))
+        self.assertCaseProperties(app, 'case', [
+            'close_reason',
+            'sample_choice_question',
+            'sample_number_question'
+        ])
+
+    def test_advanced_app(self):
+        app = Application.wrap(self.get_json('advanced_module_case_management_app'))
+        self.assertCaseProperties(app, 'case', [
+            'close_reason',
+            'sample_choice_question',
+            'sample_number_question',
+            'foo'
+        ])
+
+    def test_scheduler_module(self):
+        app = Application.wrap(self.get_json('scheduler_app'))
+        self.assertCaseProperties(app, 'patient', [
+            'dob',
+            'taking_meds',
+            # Scheduler properties:
+            'last_visit_date_cu',
+            'last_visit_number_cu',
+            'current_schedule_phase',
+
+        ])
+
+        self.assertCaseProperties(app, 'some_unrelated_case_type', [])
 
 
 class SchemaTest(SimpleTestCase):
