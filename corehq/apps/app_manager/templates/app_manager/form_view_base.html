@@ -255,8 +255,6 @@
         name: 'comment',
         id:'comment-id',
         value: '{{ form.comment|escapejs }}',
-        helpTitle: 'Comment',
-        helpContent: 'A comment to document or explain this module for other app builders or maintainers.',
         url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
         saveValueName: 'comment',
     "></inline-edit>
@@ -337,8 +335,10 @@
                     </p>
                 {% elif form.source %}
                     <div class="help-block">
-                        Cases give you a way to track patients, farms, etc. over time. You can choose to save 
-                        data from a form to the case, which will store the data locally on the phone to use later.
+                        {% blocktrans %}
+                            Cases give you a way to track patients, farms, etc. over time. You can choose to save
+                            data from a form to the case, which will store the data locally on the phone to use later.
+                        {% endblocktrans %}
                     </div>
                     <div class="casexml" id="casexml_home">
                     {% if app.application_version != '1.0' %}
