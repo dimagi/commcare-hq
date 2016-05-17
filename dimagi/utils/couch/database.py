@@ -110,13 +110,15 @@ def iter_bulk_delete(database, ids, chunksize=100, doc_callback=None, wait_time=
     return total_count
 
 
-def iter_bulk_delete_with_doc_type_verification(database, ids, doc_type, chunksize=100, wait_time=None):
+def iter_bulk_delete_with_doc_type_verification(database, ids, doc_type, chunksize=100, wait_time=None,
+        max_fetch_attempts=1):
     def verify_doc_type(doc):
         actual_doc_type = doc.get('doc_type')
         if actual_doc_type != doc_type:
             raise DocTypeMismatchException("Expected %s, got %s" % (doc_type, actual_doc_type))
 
-    return iter_bulk_delete(database, ids, chunksize=chunksize, doc_callback=verify_doc_type, wait_time=wait_time)
+    return iter_bulk_delete(database, ids, chunksize=chunksize, doc_callback=verify_doc_type, wait_time=wait_time,
+        max_fetch_attempts=max_fetch_attempts)
 
 
 def is_bigcouch():
