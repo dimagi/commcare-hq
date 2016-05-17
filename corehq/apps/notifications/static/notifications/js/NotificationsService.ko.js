@@ -33,7 +33,7 @@
         self.notifications = ko.observableArray();
         self.hasError = ko.observable(false);
 
-        self.hasUnread = ko.pureComputed(function () {
+        self.hasUnread = ko.computed(function () {
             return _.some(self.notifications(), function(note) {
                 return !note.isRead();
             });

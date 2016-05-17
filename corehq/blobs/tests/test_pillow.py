@@ -15,7 +15,7 @@ class TestBlobDeletionPillow(BaseTestCase):
     def test_process_change_with_deleted_document(self):
         self.obj.put_attachment("content", "name")
         change = Config(id=self.obj._id, deleted=True)
-        self.processor.process_change(None, change, None)
+        self.processor.process_change(None, change)
         msg = "FakeCouchDocument attachment: 'name'"
         with assert_raises(ResourceNotFound, msg=msg):
             self.obj.fetch_attachment("name")
@@ -23,5 +23,5 @@ class TestBlobDeletionPillow(BaseTestCase):
     def test_process_change_with_existing_document(self):
         self.obj.put_attachment("content", "name")
         change = Config(id=self.obj._id, deleted=False)
-        self.processor.process_change(None, change, None)
+        self.processor.process_change(None, change)
         self.assertEqual(self.obj.fetch_attachment("name"), "content")

@@ -245,11 +245,12 @@ class MySavedReportsView(BaseProjectReportSectionView):
         """
         Add properties to the request for any tour that might be active
         """
-        tours = ((REPORT_BUILDER_ACCESS, 1), (REPORT_BUILDER_NO_ACCESS, 2))
-        for tour, step in tours:
-            if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
-                self.request.guided_tour = tour.get_tour_data(self.request, step)
-                break  # Only one of these tours may be active.
+        if self.request.user.is_authenticated():
+            tours = ((REPORT_BUILDER_ACCESS, 1), (REPORT_BUILDER_NO_ACCESS, 2))
+            for tour, step in tours:
+                if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
+                    self.request.guided_tour = tour.get_tour_data(self.request, step)
+                    break  # Only one of these tours may be active.
 
     @property
     def language(self):
@@ -1697,6 +1698,12 @@ class EditFormInstance(View):
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
 
         edit_session_data['is_editing'] = True
+        edit_session_data['function_context'] = {
+            'static-date': [
+                {'name': 'now', 'value': instance.metadata.timeEnd},
+                {'name': 'today', 'value': instance.metadata.timeEnd.date()},
+            ]
+        }
 
         context.update({
             'domain': domain,

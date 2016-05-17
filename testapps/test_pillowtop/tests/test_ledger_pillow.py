@@ -6,7 +6,8 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.elastic import get_es_new
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.ledger import get_ledger_to_elasticsearch_pillow
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -15,10 +16,15 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class LedgerPillowTest(TestCase):
 
     domain = 'ledger-pillowtest-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        from corehq.apps.commtrack.helpers import make_product
+        product = make_product(cls.domain, 'Product A', 'prod_a')
+        cls.product_id = product._id
 
     def setUp(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
@@ -29,30 +35,36 @@ class LedgerPillowTest(TestCase):
         ensure_index_deleted(LEDGER_INDEX_INFO.index)
         initialize_index_and_mapping(get_es_new(), LEDGER_INDEX_INFO)
 
-        self.factory = CaseFactory(domain=self.domain)
-        self.case = self.factory.create_case()
-
     def tearDown(self):
         ensure_index_deleted(LEDGER_INDEX_INFO.index)
 
+    @run_with_all_backends
     def test_ledger_pillow_sql(self):
+        factory = CaseFactory(domain=self.domain)
+        case = factory.create_case()
+
         consumer = get_test_kafka_consumer(topics.LEDGER)
         # have to get the seq id before the change is processed
         kafka_seq = consumer.offsets()['fetch'][(topics.LEDGER, 0)]
 
-        product_id = 'prod_1'
         from corehq.apps.commtrack.tests import get_single_balance_block
         from corehq.apps.hqcase.utils import submit_case_blocks
         submit_case_blocks([
-            get_single_balance_block(self.case.case_id, product_id, 100)],
+            get_single_balance_block(case.case_id, self.product_id, 100)],
             self.domain
         )
 
-        ref = UniqueLedgerReference(self.case.case_id, 'stock', product_id)
+        ref = UniqueLedgerReference(case.case_id, 'stock', self.product_id)
         # confirm change made it to kafka
         message = consumer.next()
         change_meta = change_meta_from_kafka_message(message.value)
-        self.assertEqual(ref.as_id(), change_meta.document_id)
+        if should_use_sql_backend(self.domain):
+            self.assertEqual(ref.as_id(), change_meta.document_id)
+        else:
+            from corehq.apps.commtrack.models import StockState
+            state = StockState.objects.all()
+            self.assertEqual(1, len(state))
+            self.assertEqual(state[0].pk, change_meta.document_id)  #
         self.assertEqual(self.domain, change_meta.domain)
 
         # send to elasticsearch
