@@ -1,6 +1,6 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
+FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
         template: "#menu-view-item",
@@ -55,12 +55,12 @@ FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFr
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("app:show:detail", this);
+            FormplayerFrontend.trigger("menu:show:detail", this);
         },
 
         templateHelpers: function () {
             return {
-                data: this.options.model.attributes.data
+                data: this.options.model.attributes.data,
             };
         },
     });

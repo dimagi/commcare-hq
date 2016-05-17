@@ -1,6 +1,6 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("AppSelect.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $, _) {
+FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $, _) {
     MenuList.Controller = {
         selectMenu: function (appId, stepList, page) {
 

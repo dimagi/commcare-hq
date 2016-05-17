@@ -1,7 +1,7 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("AppSelect.AppList", function (AppList, FormplayerFrontend, Backbone, Marionette) {
-    AppList.AppSelect = Marionette.ItemView.extend({
+FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, FormplayerFrontend, Backbone, Marionette) {
+    AppList.SessionNavigate = Marionette.ItemView.extend({
         tagName: "tr",
         template: "#app-select-list-item",
 
@@ -15,10 +15,10 @@ FormplayerFrontend.module("AppSelect.AppList", function (AppList, FormplayerFron
         },
     });
 
-    AppList.AppSelectView = Marionette.CompositeView.extend({
+    AppList.SessionNavigateView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#app-select-list",
-        childView: AppList.AppSelect,
+        childView: AppList.SessionNavigate,
         childViewContainer: "tbody",
     });
 

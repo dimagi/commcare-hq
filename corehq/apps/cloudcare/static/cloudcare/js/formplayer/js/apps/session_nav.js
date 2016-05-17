@@ -1,25 +1,21 @@
 /*global FormplayerFrontend, Util */
 
-FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, Backbone, Marionette) {
-    AppSelect.Router = Marionette.AppRouter.extend({
+FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, FormplayerFrontend, Backbone, Marionette) {
+    SessionNavigate.Router = Marionette.AppRouter.extend({
         appRoutes: {
-            "apps": "listApps",
-            "apps/:id": "selectApp",
-            "apps/:id/menu": "listMenus",
-            "apps/:apps/store": "storeApps",
+            "apps": "listApps", // list all apps available to this user
+            "apps/:id": "selectApp", // select the app under :id and list root commands
+            "apps/:id/menu": "listMenus", // select the app under :id, make session steps in params, display screen
         },
     });
 
     var API = {
         listApps: function () {
             FormplayerFrontend.request("clearForm");
-            AppSelect.AppList.Controller.listApps();
+            SessionNavigate.AppList.Controller.listApps();
         },
         selectApp: function (appId) {
-            AppSelect.MenuList.Controller.selectMenu(appId);
-        },
-        storeApps: function (apps) {
-            FormplayerFrontend.request("appselect:storeapps", apps);
+            SessionNavigate.MenuList.Controller.selectMenu(appId);
         },
         listMenus: function (appId) {
             FormplayerFrontend.request("clearForm");
@@ -28,19 +24,15 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
             var steps = paramMap.steps;
             var page = paramMap.page || 0;
             if (steps && steps.length > 0) {
-                AppSelect.MenuList.Controller.selectMenu(appId, steps, page);
+                SessionNavigate.MenuList.Controller.selectMenu(appId, steps, page);
             } else {
-                AppSelect.MenuList.Controller.selectMenu(appId);
+                SessionNavigate.MenuList.Controller.selectMenu(appId);
             }
         },
         showDetail: function (model) {
-            AppSelect.MenuList.Controller.showDetail(model);
+            SessionNavigate.MenuList.Controller.showDetail(model);
         },
     };
-
-    FormplayerFrontend.on("app:show:detail", function (model) {
-        API.showDetail(model);
-    });
 
     FormplayerFrontend.on("apps:list", function () {
         FormplayerFrontend.navigate("apps");
@@ -50,10 +42,6 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
     FormplayerFrontend.on("app:select", function (appId) {
         FormplayerFrontend.navigate("apps/" + appId);
         API.selectApp(appId);
-    });
-
-    FormplayerFrontend.on("apps:storeapps", function (apps) {
-        API.storeApps(apps);
     });
 
     FormplayerFrontend.on("menu:select", function (index, appId) {
@@ -78,8 +66,12 @@ FormplayerFrontend.module("AppSelect", function (AppSelect, FormplayerFrontend, 
         API.listMenus(appId);
     });
 
-    AppSelect.on("start", function () {
-        new AppSelect.Router({
+    FormplayerFrontend.on("menu:show:detail", function (model) {
+        API.showDetail(model);
+    });
+
+    SessionNavigate.on("start", function () {
+        new SessionNavigate.Router({
             controller: API,
         });
     });
