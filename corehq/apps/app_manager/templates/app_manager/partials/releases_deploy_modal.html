@@ -47,6 +47,10 @@
                                                 </a>
                                                 {% trans "to your Android device." %}
                                             </p>
+                                            {% if build_profile_access %}
+                                            <label>{% trans "Build Profile" %}</label>
+                                            <select data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
+                                            {% endif %}
                                             {% if multimedia_state.has_media %}
                                                 <div class="checkbox">
                                                     <label data-bind="visible: allow_media_install">
@@ -65,7 +69,7 @@
                                                 </p>
                                                 <p>
                                                     <a href="#" data-bind="
-                                                        openRemoteModal: get_odk_install_url,
+                                                        openRemoteModal: full_odk_install_url,
                                                         click: clickScan
                                                     ">
                                                         {% trans "Scan Application Barcode" %}
@@ -102,11 +106,15 @@
                                                 Offline install is unavailable for Remote Apps.
                                             </div>
                                             <div data-bind="if: hqImport('app_manager/js/app_manager.js').versionGE(build_spec.version(), '2.13.0') && allow_media_install()">
+                                                {% if build_profile_access %}
+                                                <label>{% trans "Build Profile" %}</label>
+                                                <select data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
+                                                {% endif %}
                                                 <ol>
                                                     <li>
                                                         {% trans "Download" %}
                                                         <a href="#" data-bind="click: function () {
-                                                            download_application_zip(false);
+                                                            download_application_zip(false, build_profile());
                                                         }">
                                                             CommCare.ccz
                                                         </a>
