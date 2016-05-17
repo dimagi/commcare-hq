@@ -209,12 +209,14 @@ class Command(BaseCommand):
 
         print 'Deleting ExpectedCallbackEventLogs...'
         count = iter_bulk_delete_with_doc_type_verification(ExpectedCallbackEventLog.get_db(),
-            self.get_callback_couch_ids(), 'ExpectedCallbackEventLog', wait_time=delete_interval, max_fetch_attempts=5)
+            self.get_callback_couch_ids(), 'ExpectedCallbackEventLog', wait_time=delete_interval,
+            max_fetch_attempts=5)
         print 'Deleted %s documents' % count
 
         print 'Deleting LastReadMessages...'
         count = iter_bulk_delete_with_doc_type_verification(LastReadMessage.get_db(),
-            self.get_lastreadmessage_couch_ids(), 'LastReadMessage', wait_time=delete_interval, max_fetch_attempts=5)
+            self.get_lastreadmessage_couch_ids(), 'LastReadMessage', wait_time=delete_interval,
+            max_fetch_attempts=5)
         print 'Deleted %s documents' % count
 
     def handle(self, *args, **options):
