@@ -7,10 +7,6 @@ FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, Formplaye
 
             $.when(fetchingApps).done(function (apps) {
 
-                var appListView = new AppList.SessionNavigateView({
-                    collection: apps,
-                });
-
                 var appGridView = new AppList.GridView({
                     collection: apps,
                 });

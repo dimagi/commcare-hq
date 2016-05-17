@@ -1,5 +1,9 @@
 /*global FormplayerFrontend */
 
+/**
+ * Backbone model and functions for managing CommCare apps
+ */
+
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
     Entities.AppModel = Backbone.Model.extend({
         urlRoot: "appSelects",

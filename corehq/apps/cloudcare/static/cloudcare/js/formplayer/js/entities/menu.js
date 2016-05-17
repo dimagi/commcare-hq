@@ -2,18 +2,13 @@
 
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
 
-    Entities.UserModel = Backbone.Model.extend({});
-
-    Entities.MenuSelect = Backbone.Model.extend({
-        urlRoot: "menuSelects",
-    });
+    Entities.MenuSelect = Backbone.Model.extend({});
 
     Entities.MenuSelectCollection = Backbone.Collection.extend({
 
         model: Entities.MenuSelect,
 
         parse: function (response) {
-            this.sequenceId = response.seq_id;
             this.title = response.title;
 
             if (response.commands) {
@@ -40,7 +35,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             this.domain = params.domain;
             this.appId = params.appId;
             this.fetch = params.fetch;
-            this.sequenceId = params.sequenceId;
             this.selection = params.selection;
         },
     });
