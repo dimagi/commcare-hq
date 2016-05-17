@@ -139,7 +139,6 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 </span>\
             <!--/ko-->\
             <div class="read-only" data-bind="visible: !isEditing(), click: edit">\
-                <i class="fa fa-pencil pull-right" data-bind="visible: !isSaving()"></i>\
                 <span data-bind="visible: isSaving()" class="pull-right">\
                     <img src="/static/hqstyle/img/loading.gif"/>\
                 </span>\
