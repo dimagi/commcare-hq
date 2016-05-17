@@ -28,8 +28,13 @@ FormplayerFrontend.getCurrentRoute = function () {
     return Backbone.history.fragment;
 };
 
+/**
+ * This function maps a jr:// media path to its HTML path IE
+ * jr://images/icon/mother.png -> https://commcarehq.org/hq/multimedia/file/CommCareImage/[app_id]/mother.png
+ * The actual mapping is contained in the app Couch document
+ */
 FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app_id) {
-    var currentApp = FormplayerFrontend.request('currentApp', app_id);
+    var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
     if (resource_path.substring(0, 7) === 'http://') {
         return resource_path;
     } else if (currentApp.attributes.hasOwnProperty("multimedia_map") &&
@@ -47,11 +52,6 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
         FormplayerFrontend.currentUser = new FormplayerFrontend.Entities.UserModel();
     }
     return FormplayerFrontend.currentUser;
-});
-
-FormplayerFrontend.reqres.setHandler('currentApp', function (app_id) {
-    var fetchingApp = FormplayerFrontend.request("appselect:getApp", app_id);
-    return fetchingApp;
 });
 
 FormplayerFrontend.reqres.setHandler('clearForm', function () {
