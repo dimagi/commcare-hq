@@ -12,6 +12,7 @@
  *  - placeholder: Text to display when in read-only mode if value is blank
  *  - lang: Display this language code in a badge next to the widget.
  *  - rows: Number of rows in textarea.
+ *  - cols: Number of cols in textarea.
  *  - saveValueName: Name to associate with text value when saving. Defaults to 'value'.
  *  - saveParams: Any additional data to pass along. May contain observables.
  *  - errorMessage: Message to display if server returns an error.
@@ -39,6 +40,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
 
             // Styling
             self.rows = params.rows || 2;
+            self.cols = params.cols || "";
             self.readOnlyClass = params.readOnlyClass || '';
 
             // Interaction: determine whether widget is in read or write mode
@@ -142,7 +144,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             <div class="read-write form-inline" data-bind="visible: isEditing()">\
                 <div class="form-group langcode-container">\
                     <textarea class="form-control" data-bind="\
-                        attr: {name: name, id: id, placeholder: placeholder, rows: rows},\
+                        attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
                         value: value,\
                         hasFocus: isEditing(),\
                         event: {blur: blur},\
