@@ -49,6 +49,7 @@ from corehq.apps.accounting.models import (
     PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
+    SoftwarePlanVersion,
     Subscription,
     SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
@@ -58,7 +59,11 @@ from corehq.apps.accounting.models import (
     FundingSource
 )
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
-from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
+from corehq.apps.accounting.utils import (
+    domain_has_privilege,
+    get_privileges,
+    log_accounting_error,
+)
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
@@ -71,6 +76,11 @@ from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
 from corehq.feature_previews import CALLCENTER
+from corehq.privileges import (
+    REPORT_BUILDER_5,
+    REPORT_BUILDER_ADD_ON_PRIVS,
+    REPORT_BUILDER_TRIAL,
+)
 from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
@@ -1914,9 +1924,24 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain, edition=self.cleaned_data['software_plan_edition'],
-        )
+        new_plan_version = None
+        edition = self.cleaned_data['software_plan_edition']
+        for plan_version in SoftwarePlanVersion.objects.filter(plan__edition=edition).order_by('-date_created'):
+            privileges = get_privileges(plan_version)
+            if (
+                REPORT_BUILDER_5 in privileges
+                and not (REPORT_BUILDER_ADD_ON_PRIVS - REPORT_BUILDER_5 - REPORT_BUILDER_TRIAL) & privileges
+            ):
+                new_plan_version = plan_version
+                break
+        if not new_plan_version:
+            log_accounting_error(
+                "CommCare %s edition with privilege REPORT_BUILDER_5 was not found! Requires manual setup."
+                % edition
+            )
+            new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
+                self.domain, edition=self.cleaned_data['software_plan_edition'],
+            )
 
         if (
             self.current_subscription
