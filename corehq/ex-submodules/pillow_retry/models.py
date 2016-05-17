@@ -10,6 +10,7 @@ from pillowtop.feed.couch import change_from_couch_row, force_to_change
 
 ERROR_MESSAGE_LENGTH = 512
 
+
 def _get_extra_args(limit, reduce, skip):
     extra_args = dict()
     if not reduce and limit is not None:
@@ -18,6 +19,7 @@ def _get_extra_args(limit, reduce, skip):
                 skip=skip
             )
     return extra_args
+
 
 def path_from_object(obj):
     path = "{0}.{1}".format(obj.__class__.__module__, obj.__class__.__name__)
@@ -75,7 +77,6 @@ class PillowError(models.Model):
     @classmethod
     def get_or_create(cls, change, pillow, change_meta=None):
         change = force_to_change(change)
-        change.document
         doc_id = change.id
         try:
             error = cls.objects.get(doc_id=doc_id, pillow=pillow.pillow_id)

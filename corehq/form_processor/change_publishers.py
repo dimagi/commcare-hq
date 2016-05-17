@@ -52,3 +52,31 @@ def publish_case_deleted(domain, case_id):
         domain=domain,
         is_deletion=True,
     ))
+
+
+def publish_ledger_v2_saved(ledger_value):
+    producer.send_change(topics.LEDGER, change_meta_from_ledger_v2(ledger_value))
+
+
+def change_meta_from_ledger_v2(ledger_value):
+    return ChangeMeta(
+        document_id=ledger_value.ledger_reference.as_id(),
+        data_source_type=data_sources.LEDGER_V2,
+        data_source_name='ledger-v2',  # todo: this isn't really needed.
+        domain=ledger_value.domain,
+        is_deletion=False,
+    )
+
+
+def publish_ledger_v1_saved(stock_state):
+    producer.send_change(topics.LEDGER, change_meta_from_ledger_v1(stock_state))
+
+
+def change_meta_from_ledger_v1(stock_state):
+    return ChangeMeta(
+        document_id=stock_state.pk,
+        data_source_type=data_sources.LEDGER_V1,
+        data_source_name='ledger',  # todo: this isn't really needed.
+        domain=stock_state.domain,
+        is_deletion=False,
+    )

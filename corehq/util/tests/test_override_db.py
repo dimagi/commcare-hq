@@ -8,6 +8,7 @@ from django.conf import settings
 
 
 class OverrideDBTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.other_db_1 = Database(settings.COUCH_DATABASE + '_foo-test', create=True)

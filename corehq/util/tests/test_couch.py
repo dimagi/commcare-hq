@@ -13,11 +13,13 @@ from ..couch import (get_document_or_404, IterDB, iter_update, IterUpdateError,
 
 
 class MockDb(object):
+
     def get(self, doc_id):
         return {'_id': doc_id, 'domain': 'ham', 'doc_type': 'MockModel'}
 
 
 class MockModel(object):
+
     @staticmethod
     def get_db():
         return MockDb()
@@ -93,6 +95,7 @@ class GetDocMockTestCase(SimpleTestCase):
 
 
 class TestLoggingDB(object):
+
     def __init__(self):
         self.docs_saved = []
         self.num_writes = 0
@@ -106,6 +109,7 @@ class TestLoggingDB(object):
 
 
 class IterDBSimpleTest(SimpleTestCase):
+
     def test_number_of_calls(self):
         db = TestLoggingDB()
         with IterDB(db, chunksize=50) as iter_db:
@@ -122,6 +126,7 @@ class IterDBSimpleTest(SimpleTestCase):
 
 
 class IterDBTest(TestCase):
+
     def setUp(self):
         self.domain = "TEST"
         # use Group just 'cause it's a simple model,

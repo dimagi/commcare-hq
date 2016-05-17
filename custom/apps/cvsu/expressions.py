@@ -230,6 +230,7 @@ def date_reported_provided_mediated(item):
 
 
 class ExpressionsFactory(object):
+
     @staticmethod
     def get_expression_function(name):
         if name == 'group_id':

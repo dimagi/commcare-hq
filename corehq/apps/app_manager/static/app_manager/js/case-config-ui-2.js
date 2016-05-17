@@ -312,6 +312,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
             };
 
             self.removeProperty = function (property) {
+                ga_track_event('Case Management', 'Form Level', 'Save Properties (remove)');
                 self.case_properties.remove(property);
                 self.caseConfig.saveButton.fire('change');
             };
@@ -340,6 +341,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
                 };
 
                 self.removePreload = function (property) {
+                    ga_track_event('Case Management', 'Form Level', 'Load Properties (remove)');
                     self.case_preload.remove(property);
                     self.caseConfig.saveButton.fire('change');
                 };

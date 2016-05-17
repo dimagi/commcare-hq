@@ -11,6 +11,7 @@ from corehq.apps.app_manager.models import Application
 
 
 class CommCareSettingsTest(SimpleTestCase):
+
     def set_up_apps(self, how_many):
         apps = []
         for _ in range(how_many):

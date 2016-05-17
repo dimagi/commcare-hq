@@ -60,7 +60,7 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    DEFAULT, CUSTOM, SendRegistrationInviationsForm,
                                    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
                                    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
-from corehq.apps.sms.util import get_contact, get_sms_backend_classes
+from corehq.apps.sms.util import get_contact, get_sms_backend_classes, ContactNotFoundException
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
 from corehq.apps.groups.models import Group
@@ -70,6 +70,8 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     require_superuser,
 )
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
@@ -342,35 +344,61 @@ def send_to_recipients(request, domain):
     )
 
 
-@domain_admin_required
-@requires_privilege_with_fallback(privileges.INBOUND_SMS)
-def message_test(request, domain, phone_number):
-    if request.method == "POST":
+class TestSMSMessageView(BaseDomainView):
+    urlname = 'message_test'
+    template_name = 'sms/message_tester.html'
+    section_name = ugettext_lazy("Messaging")
+    page_title = ugettext_lazy("Test SMS Message")
+
+    @property
+    def section_url(self):
+        return reverse('sms_default', args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.phone_number,))
+
+    @method_decorator(domain_admin_required)
+    @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(TestSMSMessageView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def phone_number(self):
+        return self.kwargs['phone_number']
+
+    @property
+    def page_context(self):
+        return {
+            'phone_number': self.phone_number,
+        }
+
+    def post(self, request, *args, **kwargs):
         message = request.POST.get("message", "")
-        domain_scope = None if request.couch_user.is_superuser else domain
+        domain_scope = None if request.couch_user.is_superuser else self.domain
         try:
-            incoming(phone_number, message, "TEST", domain_scope=domain_scope)
+            incoming(self.phone_number, message, "TEST", domain_scope=domain_scope)
+            messages.success(
+                request,
+                _("Test message sent.")
+            )
         except DomainScopeValidationError:
             messages.error(
                 request,
-                _("Invalid phone number being simulated. You may only " \
-                  "simulate SMS from verified numbers belonging to contacts " \
+                _("Invalid phone number being simulated. You may only "
+                  "simulate SMS from verified numbers belonging to contacts "
                   "in this domain.")
             )
         except Exception:
             notify_exception(request)
             messages.error(
                 request,
-                _("An error has occurred. Please try again in a few minutes " \
-                  "and if the issue persists, please contact CommCareHQ " \
+                _("An error has occurred. Please try again in a few minutes "
+                  "and if the issue persists, please contact CommCareHQ "
                   "Support.")
             )
-
-    context = get_sms_autocomplete_context(request, domain)
-    context['domain'] = domain
-    context['layout_flush_content'] = True
-    context['phone_number'] = phone_number
-    return render(request, "sms/message_tester.html", context)
+        return self.get(request, *args, **kwargs)
 
 
 @csrf_exempt
@@ -412,7 +440,7 @@ def api_send_sms(request, domain):
             contact = vn.owner
         elif contact_id is not None:
             try:
-                contact = get_contact(contact_id)
+                contact = get_contact(domain, contact_id)
                 assert contact is not None
                 assert contact.domain == domain
             except Exception:
@@ -430,7 +458,7 @@ def api_send_sms(request, domain):
             chat_workflow = False
 
         if chat_workflow:
-            chat_user_id = request.couch_user._id
+            chat_user_id = request.couch_user.get_id
         else:
             chat_user_id = None
 
@@ -464,50 +492,118 @@ def api_send_sms(request, domain):
         return HttpResponseBadRequest("POST Expected.")
 
 
-@login_and_domain_required
-@require_superuser
-def list_forwarding_rules(request, domain):
-    forwarding_rules = get_forwarding_rules_for_domain(domain)
+class BaseForwardingRuleView(BaseDomainView):
+    section_name = ugettext_noop("Messaging")
 
-    context = {
-        "domain" : domain,
-        "forwarding_rules" : forwarding_rules,
-    }
-    return render(request, "sms/list_forwarding_rules.html", context)
+    @use_bootstrap3
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseForwardingRuleView, self).dispatch(request, *args, **kwargs)
 
-@login_and_domain_required
-@require_superuser
-def add_forwarding_rule(request, domain, forwarding_rule_id=None):
-    forwarding_rule = None
-    if forwarding_rule_id is not None:
-        forwarding_rule = ForwardingRule.get(forwarding_rule_id)
-        if forwarding_rule.domain != domain:
-            raise Http404
+    @property
+    def section_url(self):
+        return reverse("sms_default", args=(self.domain,))
 
-    if request.method == "POST":
-        form = ForwardingRuleForm(request.POST)
-        if form.is_valid():
-            if forwarding_rule is None:
-                forwarding_rule = ForwardingRule(domain=domain)
-            forwarding_rule.forward_type = form.cleaned_data.get("forward_type")
-            forwarding_rule.keyword = form.cleaned_data.get("keyword")
-            forwarding_rule.backend_id = form.cleaned_data.get("backend_id")
-            forwarding_rule.save()
-            return HttpResponseRedirect(reverse('list_forwarding_rules', args=[domain]))
-    else:
+
+class ListForwardingRulesView(BaseForwardingRuleView):
+    urlname = 'list_forwarding_rules'
+    template_name = 'sms/list_forwarding_rules.html'
+    page_title = ugettext_lazy("Forwarding Rules")
+
+    @property
+    def page_context(self):
+        forwarding_rules = get_forwarding_rules_for_domain(self.domain)
+        return {
+            'forwarding_rules': forwarding_rules,
+        }
+
+
+class BaseEditForwardingRuleView(BaseForwardingRuleView):
+    template_name = 'sms/add_forwarding_rule.html'
+
+    @property
+    def forwarding_rule_id(self):
+        return self.kwargs.get('forwarding_rule_id')
+
+    @property
+    def forwarding_rule(self):
+        raise NotImplementedError("must return ForwardingRule")
+
+    @property
+    @memoized
+    def rule_form(self):
+        if self.request.method == 'POST':
+            return ForwardingRuleForm(self.request.POST)
         initial = {}
-        if forwarding_rule is not None:
-            initial["forward_type"] = forwarding_rule.forward_type
-            initial["keyword"] = forwarding_rule.keyword
-            initial["backend_id"] = forwarding_rule.backend_id
-        form = ForwardingRuleForm(initial=initial)
+        if self.forwarding_rule_id:
+            initial["forward_type"] = self.forwarding_rule.forward_type
+            initial["keyword"] = self.forwarding_rule.keyword
+            initial["backend_id"] = self.forwarding_rule.backend_id
+        return ForwardingRuleForm(initial=initial)
 
-    context = {
-        "domain" : domain,
-        "form" : form,
-        "forwarding_rule_id" : forwarding_rule_id,
-    }
-    return render(request, "sms/add_forwarding_rule.html", context)
+    @property
+    def page_url(self):
+        if self.forwarding_rule_id:
+            return reverse(self.urlname, args=(self.domain, self.forwarding_rule_id,))
+        return super(BaseEditForwardingRuleView, self).page_url
+
+    def post(self, request, *args, **kwargs):
+        if self.rule_form.is_valid():
+            self.forwarding_rule.forward_type = self.rule_form.cleaned_data.get(
+                'forward_type'
+            )
+            self.forwarding_rule.keyword = self.rule_form.cleaned_data.get(
+                'keyword'
+            )
+            self.forwarding_rule.backend_id = self.rule_form.cleaned_data.get(
+                'backend_id'
+            )
+            self.forwarding_rule.save()
+            return HttpResponseRedirect(reverse(
+                ListForwardingRulesView.urlname, args=(self.domain,)))
+
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.rule_form,
+            'forwarding_rule_id': self.forwarding_rule_id,
+        }
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'url': reverse(ListForwardingRulesView.urlname, args=(self.domain,)),
+                'title': ListForwardingRulesView.page_title,
+            }
+        ]
+
+
+class AddForwardingRuleView(BaseEditForwardingRuleView):
+    urlname = 'add_forwarding_rule'
+    page_title = ugettext_lazy("Add Forwarding Rule")
+
+    @property
+    @memoized
+    def forwarding_rule(self):
+        return ForwardingRule(domain=self.domain)
+
+
+class EditForwardingRuleView(BaseEditForwardingRuleView):
+    urlname = 'edit_forwarding_rule'
+    page_title = ugettext_lazy("Edit Forwarding Rule")
+
+    @property
+    @memoized
+    def forwarding_rule(self):
+        forwarding_rule = ForwardingRule.get(self.forwarding_rule_id)
+        if forwarding_rule.domain != self.domain:
+            raise Http404()
+        return forwarding_rule
+
 
 @login_and_domain_required
 @require_superuser
@@ -611,12 +707,12 @@ class ChatOverSMSView(BaseMessagingSectionView):
 
 def get_case_contact_info(domain_obj, case_ids):
     data = {}
-    for doc in iter_docs(CommCareCase.get_db(), case_ids):
+    for case in CaseAccessors(domain_obj.name).iter_cases(case_ids):
         if domain_obj.custom_case_username:
-            name = doc.get(domain_obj.custom_case_username)
+            name = case.get_case_property(domain_obj.custom_case_username)
         else:
-            name = doc.get('name')
-        data[doc['_id']] = [name or _('(unknown)')]
+            name = case.name
+        data[case.case_id] = [name or _('(unknown)')]
     return data
 
 
@@ -725,6 +821,20 @@ def chat_contact_list(request, domain):
     return HttpResponse(json.dumps(result))
 
 
+def get_contact_name_for_chat(contact, domain_obj):
+    if is_commcarecase(contact):
+        if domain_obj.custom_case_username:
+            contact_name = contact.get_case_property(domain_obj.custom_case_username)
+        else:
+            contact_name = contact.name
+    else:
+        if contact.first_name:
+            contact_name = contact.first_name
+        else:
+            contact_name = contact.raw_username
+    return contact_name
+
+
 @require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id, vn_id=None):
@@ -749,13 +859,15 @@ def chat(request, domain, contact_id, vn_id=None):
         (_("All Time"), json_format_datetime(datetime(1970, 1, 1)))
     )
 
+    contact = get_contact(domain, contact_id)
+
     context = {
         "domain": domain,
         "contact_id": contact_id,
-        "contact": get_contact(contact_id),
+        "contact": contact,
+        "contact_name": get_contact_name_for_chat(contact, domain_obj),
         "use_message_counter": domain_obj.chat_message_count_threshold is not None,
         "message_count_threshold": domain_obj.chat_message_count_threshold or 0,
-        "custom_case_username": domain_obj.custom_case_username,
         "history_choices": history_choices,
         "vn_id": vn_id,
     }
@@ -782,22 +894,15 @@ class ChatMessageHistory(View, DomainViewMixin):
         if not self.contact_id:
             return None
 
-        contact = get_contact(self.contact_id)
-        if not contact or contact.domain != self.domain:
+        try:
+            return get_contact(self.domain, self.contact_id)
+        except ContactNotFoundException:
             return None
-
-        return contact
 
     @property
     @memoized
     def contact_name(self):
-        if self.contact.doc_type == 'CommCareCase':
-            if self.domain_object.custom_case_username:
-                return self.contact.get_case_property(self.domain_object.custom_case_username)
-            else:
-                return self.contact.name
-        else:
-            return self.contact.first_name or self.contact.raw_username
+        return get_contact_name_for_chat(self.contact, self.domain_object)
 
     @quickcache(['user_id'], timeout=60 * 60, memoize_timeout=5 * 60)
     def get_chat_user_name(self, user_id):
@@ -1909,6 +2014,10 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     loading_message = ugettext_noop("Loading invitations...")
     strict_domain_fetching = True
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManageRegistrationInvitationsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def invitations_form(self):
@@ -2068,6 +2177,7 @@ class InvitationAppInfoView(View, DomainViewMixin):
 
 
 class IncomingBackendView(View):
+
     def dispatch(self, request, api_key, *args, **kwargs):
         try:
             api_user = ApiUser.get('ApiUser-%s' % api_key)

@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from django.db import transaction
 from django.db.models import F, Q, Min, Max
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ungettext
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -39,7 +39,7 @@ class DomainInvoiceFactory(object):
     This handles all the little details when generating an Invoice.
     """
 
-    def __init__(self, date_start, date_end, domain):
+    def __init__(self, date_start, date_end, domain, recipients=None):
         """
         The Invoice generated will always be for the month preceding the
         invoicing_date.
@@ -49,6 +49,7 @@ class DomainInvoiceFactory(object):
         self.date_start = date_start
         self.date_end = date_end
         self.domain = ensure_domain_instance(domain)
+        self.recipients = recipients
         self.logged_throttle_error = False
         if self.domain is None:
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
@@ -77,10 +78,16 @@ class DomainInvoiceFactory(object):
         ).plan.get_version()
         if not plan_version.feature_charges_exist_for_domain(self.domain):
             return
+
         community_ranges = self._get_community_ranges(subscriptions)
         if not community_ranges:
             return
+
+        # First check to make sure none of the existing subscriptions is set
+        # to do not invoice. Let's be on the safe side and not send a
+        # community invoice out, if that's the case.
         do_not_invoice = any([s.do_not_invoice for s in subscriptions])
+
         account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,
             created_by=self.__class__.__name__,
@@ -92,18 +99,16 @@ class DomainInvoiceFactory(object):
                 "was null for domain %s" % self.domain.name
             )
             do_not_invoice = True
-        # First check to make sure none of the existing subscriptions is set
-        # to do not invoice. Let's be on the safe side and not send a
-        # community invoice out, if that's the case.
-        for c in community_ranges:
+
+        for start_date, end_date in community_ranges:
             # create a new community subscription for each
             # date range that the domain did not have a subscription
             community_subscription = Subscription(
                 account=account,
                 plan_version=plan_version,
                 subscriber=self.subscriber,
-                date_start=c[0],
-                date_end=c[1],
+                date_start=start_date,
+                date_end=end_date,
                 do_not_invoice=do_not_invoice,
             )
             community_subscription.save()
@@ -140,7 +145,7 @@ class DomainInvoiceFactory(object):
             record = BillingRecord.generate_record(invoice)
         if record.should_send_email:
             try:
-                record.send_email()
+                record.send_email(contact_emails=self.recipients)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
                     log_accounting_error(e.message)
@@ -418,9 +423,12 @@ class ProductLineItemFactory(LineItemFactory):
     @property
     def unit_description(self):
         if self.is_prorated:
-            return _("%(num_days)s day%(pluralize)s of %(plan_name)s Software Plan.") % {
+            return ungettext(
+                "%(num_days)s day of %(plan_name)s Software Plan.",
+                "%(num_days)s days of %(plan_name)s Software Plan.",
+                self.num_prorated_days
+            ) % {
                 'num_days': self.num_prorated_days,
-                'pluralize': "" if self.num_prorated_days == 1 else "s",
                 'plan_name': self.plan_name,
             }
 
@@ -490,10 +498,13 @@ class UserLineItemFactory(FeatureLineItemFactory):
     @property
     def unit_description(self):
         if self.num_excess_users > 0:
-            return _("Per User fee exceeding monthly limit of "
-                     "%(monthly_limit)s users.") % {
-                         'monthly_limit': self.rate.monthly_limit,
-                     }
+            return ungettext(
+                "Per User fee exceeding monthly limit of %(monthly_limit)s user.",
+                "Per User fee exceeding monthly limit of %(monthly_limit)s users.",
+                self.rate.monthly_limit
+            ) % {
+                'monthly_limit': self.rate.monthly_limit,
+            }
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):
@@ -526,9 +537,12 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @memoized
     def unit_description(self):
         if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
-            return _("%(num_sms)d SMS Message%(plural)s") % {
+            return ungettext(
+                "%(num_sms)d SMS Message",
+                "%(num_sms)d SMS Messages",
+                self.num_sms
+            ) % {
                 'num_sms': self.num_sms,
-                'plural': '' if self.num_sms == 1 else 's',
             }
         elif self.is_within_monthly_limit:
             return _(
@@ -542,13 +556,12 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             assert self.rate.monthly_limit < self.num_sms
             num_extra = self.num_sms - self.rate.monthly_limit
             assert num_extra > 0
-            return _(
-                "%(num_extra_sms)d SMS %(messages)s beyond "
-                "%(monthly_limit)d messages included."
+            return ungettext(
+                "%(num_extra_sms)d SMS Message beyond %(monthly_limit)d messages included.",
+                "%(num_extra_sms)d SMS Messages beyond %(monthly_limit)d messages included.",
+                num_extra
             ) % {
                 'num_extra_sms': num_extra,
-                'messages': (_('Messages') if num_extra == 1
-                             else _('Messages')),
                 'monthly_limit': self.rate.monthly_limit,
             }
 

@@ -5,6 +5,7 @@ from custom.care_pathways.utils import get_domain_configuration
 
 
 class CareReportMixin(object):
+
     @property
     def report_config(self):
         config = dict(
@@ -34,7 +35,6 @@ class CareReportMixin(object):
 
 
 class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, CareReportMixin):
-    is_bootstrap3 = True
 
     @use_nvd3_v3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):

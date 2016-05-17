@@ -4,6 +4,7 @@ from .case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow
 
 
 class TestCaseProperties(OPMCaseReportTestBase):
+
     def test_future_lmp(self):
         case = OPMCase(
             forms=[],

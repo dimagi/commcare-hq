@@ -7,6 +7,7 @@ import six
 from tastypie.fields import ApiField, CharField
 import dimagi.utils.modules
 
+
 def get_referenced_class(class_or_str):
     # Simplified from https://github.com/toastdriven/django-tastypie/blob/master/tastypie/fields.py#L519
 
@@ -15,7 +16,9 @@ def get_referenced_class(class_or_str):
     else:
         return class_or_str
 
+
 class AttributeOrCallable(object):
+
     def __init__(self, attribute):
         self.attribute = attribute
 
@@ -27,6 +30,7 @@ class AttributeOrCallable(object):
 
         return accessor(v)
 
+
 class UseIfRequested(object):
     '''
     Returns a field identical to the one provided in
@@ -34,6 +38,7 @@ class UseIfRequested(object):
     the API output if <fieldname>__full=true is passed
     on the querystring
     '''
+
     def __init__(self, underlying_field):
         self.underlying_field = underlying_field
 
@@ -43,6 +48,7 @@ class UseIfRequested(object):
 
     def __getattr__(self, attr):
         return getattr(self.underlying_field, attr)
+
 
 class CallableApiField(ApiField):
     """
@@ -55,6 +61,7 @@ class CallableApiField(ApiField):
             return self.convert(self.attribute(bundle.obj))
         else:
             return super(CallableApiField, self).dehydrate(bundle)
+
 
 class CallableCharField(CharField, CallableApiField):
     pass
@@ -101,6 +108,7 @@ class ToManyDocumentsField(ApiField):
             return [self.related_resource.full_dehydrate(self.related_resource.build_bundle(obj=obj, request=bundle.request)).data
                     for obj in hydrated]
 
+
 class ToManyDictField(ApiField):
     '''
     A field that references multiple documents in the couch database.
@@ -144,6 +152,7 @@ class ToManyDictField(ApiField):
         else:
             return dict([(key, self.related_resource.full_dehydrate(self.related_resource.build_bundle(obj=obj, request=bundle.request)).data)
                          for key, obj in hydrated.items()])
+
 
 class ToManyListDictField(ApiField):
     '''

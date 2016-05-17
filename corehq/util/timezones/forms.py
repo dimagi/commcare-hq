@@ -4,6 +4,7 @@ from corehq.util.timezones.utils import coerce_timezone_value
 
 
 class TimeZoneChoiceField(forms.TypedChoiceField):
+
     def __init__(self, *args, **kwargs):
         if not "choices" in kwargs:
             kwargs["choices"] = zones.PRETTY_TIMEZONE_CHOICES

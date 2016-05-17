@@ -9,8 +9,10 @@ from pact.enums import PACT_DOMAIN
 
 DAYS_OF_WEEK = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
 
+
 def make_uuid():
     return uuid.uuid4().hex
+
 
 class ScheduleForm(forms.Form):
     """
@@ -40,7 +42,6 @@ class ScheduleForm(forms.Form):
         yield (None, "-- unassigned --")
         for x in users:
             yield (x.raw_username, x.raw_username)
-
 
     def __init__(self, *args, **kwargs):
         super(ScheduleForm, self).__init__(*args, **kwargs)

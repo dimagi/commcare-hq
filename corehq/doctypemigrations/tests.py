@@ -13,6 +13,7 @@ from django.conf import settings
 
 
 class TestDocTypeMigrations(TestCase):
+
     def setUp(self):
         self.migration = Migrator(
             slug='user_db_migration',

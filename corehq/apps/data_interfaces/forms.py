@@ -27,7 +27,7 @@ class AddCaseGroupForm(forms.Form):
         self.helper.layout = Layout(
             InlineField('name'),
             StrictButton(
-                mark_safe('<i class="icon-plus"></i> %s' % _("Create Group")),
+                mark_safe('<i class="fa fa-plus"></i> %s' % _("Create Group")),
                 css_class='btn-success',
                 type="submit"
             )

@@ -2,7 +2,6 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
-from elasticsearch import NotFoundError
 from casexml.apps.case.cleanup import claim_case
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
@@ -18,10 +17,9 @@ from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCac
 from corehq.apps.ota.tasks import prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.form_processor.serializers import CommCareCaseSQLSerializer, get_instance_from_data
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.tabs.tabclasses import ProjectSettingsTab
-from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -62,14 +60,9 @@ def search(request, domain):
     fuzzies = config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
-    try:
-        results = search_es.values()
-    except NotFoundError:
-        results = []
-    if should_use_sql_backend(domain):
-        cases = [get_instance_from_data(CommCareCaseSQLSerializer, result) for result in results]
-    else:
-        cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
+    results = search_es.values()
+    # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
+    cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml")
 
@@ -78,13 +71,18 @@ def search(request, domain):
 @login_or_digest_or_basic_or_apikey()
 def claim(request, domain):
     couch_user = CouchUser.from_django_user(request.user)
+    case_id = request.POST['case_id']
     if request.method == 'POST':
-        if request.session.get('last_claimed_case_id') == request.POST['case_id']:
+        if request.session.get('last_claimed_case_id') == case_id:
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
                                 status=400)
-        claim_case(domain, couch_user.user_id, request.POST['case_id'],
-                   host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
-        request.session['last_claimed_case_id'] = request.POST['case_id']
+        try:
+            claim_case(domain, couch_user.user_id, case_id,
+                       host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
+        except CaseNotFound:
+            return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
+                                status=404)
+        request.session['last_claimed_case_id'] = case_id
     return HttpResponse(status=200)
 
 

@@ -47,6 +47,8 @@ class WriterTest(SimpleTestCase):
 
     docs = [
         {
+            'domain': 'my-domain',
+            '_id': '1234',
             "form": {
                 "q1": "foo",
                 "q2": {
@@ -57,6 +59,8 @@ class WriterTest(SimpleTestCase):
             }
         },
         {
+            'domain': 'my-domain',
+            '_id': '12345',
             "form": {
                 "q1": "bip",
                 "q2": {
@@ -579,6 +583,7 @@ class ExportTest(SimpleTestCase):
 
 
 class TableHeaderTest(SimpleTestCase):
+
     def test_deid_column_headers(self):
         col = ExportColumn(
             label="my column",

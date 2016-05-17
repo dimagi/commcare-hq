@@ -2,6 +2,12 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+if [ `uname` == 'Linux' ]; then
+    UDO="sudo"
+else
+    UDO=""
+fi
+
 docker_run() {
     args=$@
     flavour="${FLAVOUR:-travis}"
@@ -9,14 +15,12 @@ docker_run() {
 }
 
 get_container_id() {
-    label_name=$1
-    value=$2
-    sudo docker ps -qf label=$label_name=$value -f status=running
+    $UDO docker ps -qf name=$1 -f status=running
 }
 
 get_container_ip() {
     CID=$(get_container_id $@)
-    sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID} | tr -d '\n' | tr -d '\r'
+    $UDO docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID} | tr -d '\n' | tr -d '\r'
 }
 
 create_topics() {
@@ -31,6 +35,6 @@ create_topics() {
 
 create_kafka_topics() {
     kafka_topics=$(docker_run kafka find /opt -name kafka-topics.sh | tr -d '\n' | tr -d '\r')
-    zookeeper_ip=$(get_container_ip "commcare.name" "kafka")
-    create_topics $kafka_topics $zookeeper_ip "case form meta case-sql form-sql sms domain commcare-user web-user group"
+    zookeeper_ip=$(get_container_ip "${PROJECT_NAME:-travis}_kafka_1")
+    create_topics $kafka_topics $zookeeper_ip "case form meta case-sql form-sql sms domain commcare-user web-user group ledger"
 }

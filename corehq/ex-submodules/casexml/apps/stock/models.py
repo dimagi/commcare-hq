@@ -28,6 +28,7 @@ class StockReport(models.Model):
 
 
 class ConsumptionMixin(object):
+
     @property
     def is_stockout(self):
         return (
@@ -97,6 +98,13 @@ class StockTransaction(models.Model, ConsumptionMixin):
     @property
     def received_on(self):
         return self.report.date
+
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.product_id
+        )
 
     @classmethod
     def latest(cls, case_id, section_id, product_id):

@@ -3,9 +3,9 @@
 <form class="form-horizontal" action="{% url "domain_clear_published" domain %}" method="POST">
 {% csrf_token %}
 <div class="row-fluid">
-    <div class="span4"><h3>This project has been published</h3></div>
-    <div class="span8">
-        <h3><button class="btn btn-danger" type="submit">Unpublish</button></h3>
+    <div class="col-sm-4"><h3>{% trans 'This project has been published' %}</h3></div>
+    <div class="col-sm-8">
+        <h3><button class="btn btn-danger" type="submit">{% trans 'Unpublish' %}</button></h3>
     </div>
 </div>
 </form>
@@ -13,7 +13,7 @@
 <dl class="dl-horizontal">
 {% else %}
     <dl class="dl-horizontal">
-        <dt><h4>Most Recent Version</h4></dt>
+        <dt><h4>{% trans 'Most Recent Version' %}</h4></dt>
         <dd>
             <form method="get" action="{% url "domain_create_snapshot" domain %}">
                 {% csrf_token %}
@@ -25,7 +25,7 @@
                 >
                     Publish
                 </a>
-                <button type="submit" class="btn btn-primary">Edit</button>
+                <button type="submit" class="btn btn-primary">{% trans 'Edit' %}</button>
             </form>
         </dd>
 {% endif %}
@@ -35,13 +35,13 @@
     <dt>{% trans 'License' %}</dt>
     <dd><a href="{{ project.get_license_url }}">{{ project.get_license_display }}</a> </dd>
     <dt>{% trans 'Status' %}</dt>
-    <dd>{% if version.is_approved %}Approved{% else %}Not yet approved{% endif %}</dd>
+    <dd>{% if version.is_approved %}{% trans 'Approved' %}{% else %}{% trans 'Not yet approved' %}{% endif %}</dd>
     <dd>
         <a href="{% url "project_info" version.name %}"
            id="view-on-exchange"
            onclick="view_on_exchange('{{ version.name }}');"
         >
-            View on exchange
+            {% trans 'View on exchange' %}
         </a>
     </dd>
 </dl>

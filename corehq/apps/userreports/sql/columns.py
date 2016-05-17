@@ -11,6 +11,7 @@ class SqlColumnConfig(object):
     """
     Stub object to send column information to the data source
     """
+
     def __init__(self, columns, headers=None, warnings=None):
         self.columns = columns
         # default headers to column headers, but allow subclasses to override

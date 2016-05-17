@@ -291,7 +291,7 @@ class CommCareMultimedia(SafeSaveDocument):
 
     @classmethod
     def get_icon_class(cls):
-        return "icon-desktop"
+        return "fa fa-desktop"
 
 
 class ImageThumbnailError(Exception):
@@ -352,7 +352,7 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_icon_class(cls):
-        return "icon-picture"
+        return "fa fa-picture-o"
 
         
 class CommCareAudio(CommCareMultimedia):
@@ -366,7 +366,7 @@ class CommCareAudio(CommCareMultimedia):
 
     @classmethod
     def get_icon_class(cls):
-        return "icon-volume-up"
+        return "fa fa-volume-up"
 
 
 class CommCareVideo(CommCareMultimedia):
@@ -377,7 +377,7 @@ class CommCareVideo(CommCareMultimedia):
 
     @classmethod
     def get_icon_class(cls):
-        return "icon-facetime-video"
+        return "fa fa-video-camera"
 
 
 class HQMediaMapItem(DocumentSchema):

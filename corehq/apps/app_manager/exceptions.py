@@ -55,6 +55,7 @@ class ScheduleError(XFormException):
 
 
 class XFormValidationError(XFormException):
+
     def __init__(self, fatal_error, version="1.0", validation_problems=None):
         self.fatal_error = fatal_error
         self.version = version
@@ -129,6 +130,7 @@ class NoMatchingFilterException(ConfigurableReportException):
 
 
 class XPathValidationError(SuiteValidationError):
+
     def __init__(self, *args, **kwargs):
         self.module = kwargs.pop('module', None)
         self.form = kwargs.pop('form', None)

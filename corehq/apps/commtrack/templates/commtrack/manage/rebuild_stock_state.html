@@ -1,8 +1,8 @@
-{% extends "settings/bootstrap2/base_template.html" %}
+{% extends "settings/bootstrap3/base_template.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block main_column %}
+{% block page_content %}
     {% if stock_state_limit_exceeded %}
     <div class="alert alert-warning">
     {% blocktrans %}
@@ -75,15 +75,15 @@
             {% if action_type == '_SaveStockTransaction' %}
             <td>
                 {% if stock_transaction.quantity != action.ledger_values.delta %}
-                <span class="text-error">
+                <span class="text-danger">
                 {% else %}
-                <span class="muted">
+                <span class="text-muted">
                 {% endif %}
                 {{ action.ledger_values.delta }}</span>
             </td>
             <td>
                 {% if stock_transaction.stock_on_hand != action.ledger_values.balance %}
-                <span class="text-error">
+                <span class="text-danger">
                 {% else %}
                 <span class="muted">
                 {% endif %}

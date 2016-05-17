@@ -10,6 +10,7 @@ from .util import make_loc, delete_all_locations
 
 
 class TestUsersByLocation(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'test-domain'

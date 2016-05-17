@@ -11,7 +11,6 @@ from pillowtop.es_utils import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS, 
     completely_initialize_pillow_index, mapping_exists, get_index_info_from_pillow, initialize_index
 from pillowtop.feed.interface import Change
 from pillowtop.listener import send_to_elasticsearch, PillowtopIndexingError
-from pillowtop.pillow.interface import PillowRuntimeContext
 from django.conf import settings
 from .utils import get_doc_count, get_index_mapping, TestElasticPillow
 
@@ -186,10 +185,11 @@ def _send_doc_to_pillow(pillow, doc_id, doc):
         sequence_id=0,
         document=doc
     )
-    pillow.processor(change, PillowRuntimeContext(do_set_checkpoint=False))
+    pillow.process_change(change)
 
 
 class TestSendToElasticsearch(SimpleTestCase):
+
     def setUp(self):
         self.pillow = TestElasticPillow(online=False)
         self.es = self.pillow.get_es_new()

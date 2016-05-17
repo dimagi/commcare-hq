@@ -53,5 +53,6 @@ class CommCareCaseGroup(UndoableDocument):
 
 
 class DeleteCaseGroupRecord(DeleteDocRecord):
+
     def get_doc(self):
         return CommCareCaseGroup.get(self.doc_id)

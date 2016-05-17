@@ -62,6 +62,7 @@ def get_simple_form_xml(form_id, case_id=None, metadata=None):
 def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
+    metadata = metadata or TestFormMetadata()
     xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
     form_json = convert_xform_to_json(xml)
     interface = FormProcessorInterface(domain=metadata.domain)

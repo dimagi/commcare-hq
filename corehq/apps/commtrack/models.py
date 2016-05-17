@@ -5,6 +5,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
+
+from corehq.form_processor.change_publishers import publish_ledger_v1_saved
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 
@@ -370,6 +372,7 @@ class StockState(models.Model):
     stock_on_hand = models.DecimalField(max_digits=20, decimal_places=5, default=Decimal(0))
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
+    last_modified_form_id = models.CharField(max_length=100, null=True)
     sql_product = models.ForeignKey(SQLProduct)
     sql_location = models.ForeignKey(SQLLocation, null=True)
 
@@ -410,11 +413,24 @@ class StockState(models.Model):
     def stock_category(self):
         return state_stock_category(self)
 
+    @property
+    @memoized
+    def domain(self):
+        try:
+            domain_name = self.__domain
+            if domain_name:
+                return domain_name
+        except AttributeError:
+            pass
+
+        try:
+            return DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
+        except DocDomainMapping.DoesNotExist:
+            return CommCareCase.get(self.case_id).domain
+
     @memoized
     def get_domain(self):
-        return Domain.get_by_name(
-            DocDomainMapping.objects.get(doc_id=self.case_id).domain_name
-        )
+        return Domain.get_by_name(self.domain)
 
     def get_daily_consumption(self):
         if self.daily_consumption is not None:
@@ -443,6 +459,11 @@ class StockState(models.Model):
             self.product_id,
             config
         )
+
+    def to_json(self):
+        from corehq.form_processor.serializers import StockStateSerializer
+        serializer = StockStateSerializer(self)
+        return serializer.data
 
     class Meta:
         app_label = 'commtrack'
@@ -535,7 +556,7 @@ def sync_supply_point(location):
 def update_domain_mapping(sender, instance, *args, **kwargs):
     case_id = unicode(instance.case_id)
     try:
-        domain_name = instance.domain
+        domain_name = instance.__domain
         if not domain_name:
             raise ValueError()
     except (AttributeError, ValueError):
@@ -549,18 +570,18 @@ def update_domain_mapping(sender, instance, *args, **kwargs):
         mapping.save()
 
 
+@receiver(post_save, sender=StockState)
+def publish_stock_state_to_kafka(sender, instance, *args, **kwargs):
+    publish_ledger_v1_saved(instance)
+
+
 @receiver(xform_archived)
 def remove_data(sender, xform, *args, **kwargs):
-    # todo: use LedgerProcessor
-    StockReport.objects.filter(form_id=xform.form_id).delete()
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    FormProcessorInterface(xform.domain).ledger_processor.process_form_archived(xform)
 
 
 @receiver(xform_unarchived)
 def reprocess_form(sender, xform, *args, **kwargs):
-    from corehq.apps.commtrack.processing import process_stock
-    result = process_stock([xform])
-    result.populate_models()
-    result.commit()
-    result.finalize()
-    # todo: use LedgerProcessor
-    CommCareCase.get_db().bulk_save(result.relevant_cases)
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    FormProcessorInterface(xform.domain).ledger_processor.process_form_unarchived(xform)

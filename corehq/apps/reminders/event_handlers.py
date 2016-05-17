@@ -25,6 +25,7 @@ from corehq.apps.sms.models import (
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.tasks import initiate_outbound_call
+from corehq.form_processor.utils import is_commcarecase
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext_noop
@@ -63,6 +64,7 @@ Any changes to the reminder object made by the event handler method will be save
 after the method returns.
 
 """
+
 
 def get_workflow(handler):
     from corehq.apps.reminders.models import REMINDER_TYPE_ONE_TIME, REMINDER_TYPE_KEYWORD_INITIATED
@@ -105,12 +107,12 @@ def get_message_template_params(case):
     """
     result = {"case": {}}
     if case:
-        result["case"] = case.case_properties()
+        result["case"] = case.to_json()
 
     parent_case = case.parent if case else None
     result["case"]["parent"] = {}
     if parent_case:
-        result["case"]["parent"] = parent_case.case_properties()
+        result["case"]["parent"] = parent_case.to_json()
     return result
 
 
@@ -172,7 +174,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
             elif isinstance(recipient, CouchUser) and unverified_number:
                 send_sms(reminder.domain, recipient, unverified_number,
                     message, metadata)
-            elif (isinstance(recipient, CommCareCase) and unverified_number and
+            elif (is_commcarecase(recipient) and unverified_number and
                     domain_obj.send_to_duplicated_case_numbers):
                 send_sms(reminder.domain, recipient, unverified_number,
                     message, metadata)
@@ -292,9 +294,9 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
             key = "start-sms-survey-for-contact-%s" % recipient.get_id
             with CriticalSection([key], timeout=60):
                 # Get the case to submit the form against, if any
-                if (isinstance(recipient, CommCareCase) and
+                if (is_commcarecase(recipient) and
                     not handler.force_surveys_to_use_triggered_case):
-                    case_id = recipient.get_id
+                    case_id = recipient.case_id
                 else:
                     case_id = reminder.case_id
 
@@ -366,9 +368,9 @@ def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers, logge
             )
 
         if initiate_call:
-            if (isinstance(recipient, CommCareCase) and
+            if (is_commcarecase(recipient) and
                 not handler.force_surveys_to_use_triggered_case):
-                case_id = recipient.get_id
+                case_id = recipient.case_id
             else:
                 case_id = reminder.case_id
             verified_number, unverified_number = get_recipient_phone_number(

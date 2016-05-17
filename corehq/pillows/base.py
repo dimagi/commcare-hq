@@ -32,6 +32,7 @@ def map_types(item, mapping, override_root_keys=None):
     else:
         return {VALUE_TAG: item}
 
+
 def convert_property_dict(sub_dict, mapping, override_root_keys=None):
     """
     For mapping out ALL nested properties on cases, convert everything to a dict so as to
@@ -52,6 +53,7 @@ def convert_property_dict(sub_dict, mapping, override_root_keys=None):
         if dynamic_mapping is not False:
             sub_dict[k] = map_types(v, sub_mapping, override_root_keys=override_root_keys)
     return sub_dict
+
 
 def restore_property_dict(report_dict_item):
     """

@@ -71,7 +71,6 @@ class DownloadBase(object):
         else:
             return cache.cache.get(download_id, None)
 
-
     def save(self, expiry=None):
         self.get_cache().set(self.download_id, self, expiry)
 
@@ -193,6 +192,7 @@ class CachedDownload(DownloadBase):
         ret = cls(download_id, **kwargs)
         cache.caches[ret.cache_backend].set(download_id, payload, expiry)
         return ret
+
 
 class FileDownload(DownloadBase):
     """

@@ -12,6 +12,7 @@ from corehq.apps.userreports.indicators import LedgerBalancesIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.products.models import SQLProduct
+from corehq.util.context_managers import drop_connected_signals
 
 
 class SingleIndicatorTestBase(SimpleTestCase):
@@ -164,6 +165,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
 
 
 class CountIndicatorTest(SingleIndicatorTestBase):
+
     def testCount(self):
         indicator = IndicatorFactory.from_spec({
             "type": "count",
@@ -379,6 +381,7 @@ class ExpressionIndicatorTest(SingleIndicatorTestBase):
 
 
 class ChoiceListIndicatorTest(SimpleTestCase):
+
     def setUp(self):
         self.spec = {
             "type": "choice_list",
@@ -460,6 +463,7 @@ class IndicatorDatatypeTest(SingleIndicatorTestBase):
 
 
 class LedgerBalancesIndicatorTest(SimpleTestCase):
+
     def setUp(self):
         self.spec = {
             "type": "ledger_balances",
@@ -489,6 +493,7 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
 
 
 class TestGetValuesByProduct(TestCase):
+
     @classmethod
     def setUpClass(cls):
         post_save.disconnect(update_domain_mapping, StockState)
@@ -517,14 +522,15 @@ class TestGetValuesByProduct(TestCase):
 
     @staticmethod
     def _make_stock_state(product, section_id, value):
-        return StockState.objects.create(
-            stock_on_hand=value,
-            case_id='case1',
-            product_id=product.product_id,
-            sql_product=product,
-            section_id=section_id,
-            last_modified_date=datetime.datetime.now(),
-        )
+        with drop_connected_signals(post_save):
+            return StockState.objects.create(
+                stock_on_hand=value,
+                case_id='case1',
+                product_id=product.product_id,
+                sql_product=product,
+                section_id=section_id,
+                last_modified_date=datetime.datetime.now(),
+            )
 
     def test_get_soh_values_by_product(self):
         values = LedgerBalancesIndicator._get_values_by_product(

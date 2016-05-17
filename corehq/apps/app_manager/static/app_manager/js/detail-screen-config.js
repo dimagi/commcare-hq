@@ -1063,6 +1063,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     }
                 },
                 addProperty: function () {
+                    var type = this.columnKey === "short" ? "List" : "Detail";
+                    ga_track_event('Case Management', 'Module Level Case ' + type, 'Add Property');
                     this.addItem({hasAutocomplete: true});
                 },
                 addCalculation: function () {
@@ -1131,7 +1133,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             containsFixtureConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('FIXTURE_CASE_SELECTION')),
                             containsFilterConfiguration: columnType == "short",
                             containsCaseListLookupConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('CASE_LIST_LOOKUP')),
-                            containsSearchConfiguration: columnType === "short",
+                            // TODO: Check case_search_enabled_for_domain(), not toggle. FB 225343
+                            containsSearchConfiguration: (columnType === "short" && COMMCAREHQ.toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
                             containsCustomXMLConfiguration: columnType == "short",
                             allowsTabs: columnType == 'long',
                             allowsEmptyColumns: columnType == 'long'

@@ -21,7 +21,7 @@ class BlobDeletionProcessor(PillowProcessor):
         self.blob_db = blob_db
         self.bucket_base = bucket_base
 
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
+    def process_change(self, pillow_instance, change):
         if change.deleted:
             bucket = join(self.bucket_base, change.id)
             self.blob_db.delete(bucket=bucket)

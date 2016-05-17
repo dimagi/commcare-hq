@@ -2,7 +2,6 @@ from collections import namedtuple
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from corehq.apps.accounting import models as accounting
@@ -75,27 +74,27 @@ class SmsGatewayFeeCriteria(models.Model):
             for criteria in criteria_list:
                 if national_number.startswith(criteria.prefix):
                     return criteria
-            raise ObjectDoesNotExist
+            raise cls.DoesNotExist
 
         try:
             return get_criteria_with_longest_matching_prefix(
                 list(all_possible_criteria.filter(country_code=country_code, backend_instance=backend_instance))
             )
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=backend_instance)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return get_criteria_with_longest_matching_prefix(
                 list(all_possible_criteria.filter(country_code=country_code, backend_instance=None))
             )
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=None)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
 
         return None
@@ -199,11 +198,11 @@ class SmsUsageFeeCriteria(models.Model):
 
         try:
             return all_possible_criteria.get(domain=domain)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(domain=None)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
 
         return None
@@ -351,11 +350,7 @@ class SmsBillable(models.Model):
             if twilio_message.num_segments is not None:
                 return int(twilio_message.num_segments)
             else:
-                log_smsbillables_error(
-                    "num_segments is None: backend_message_id=%s, status=%s"
-                    % (backend_message_id, twilio_message.status)
-                )
-                return 0
+                raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
         else:
             return multipart_count
 
@@ -419,14 +414,8 @@ class SmsBillable(models.Model):
                 'queued',
                 'sending',
                 'receiving',
-            ]:
-                raise RetryBillableTaskException
-            if twilio_message.price is None:
-                log_smsbillables_error(
-                    "price is None: backend_message_id=%s, status=%s"
-                    % (backend_message_id, twilio_message.status)
-                )
-                return _TwilioChargeInfo(None, None)
+            ] or twilio_message.price is None:
+                raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
             return _TwilioChargeInfo(
                 Decimal(twilio_message.price) * -1,
                 SmsGatewayFee.get_by_criteria(

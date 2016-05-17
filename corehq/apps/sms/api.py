@@ -51,6 +51,7 @@ def get_utcnow():
 
 
 class MessageMetadata(object):
+
     def __init__(self, *args, **kwargs):
         self.workflow = kwargs.get("workflow", None)
         self.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)
@@ -119,7 +120,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
         text = text
     )
     if contact:
-        msg.couch_recipient = contact._id
+        msg.couch_recipient = contact.get_id
         msg.couch_recipient_doc_type = contact.doc_type
     add_msg_tags(msg, metadata)
 
@@ -509,8 +510,10 @@ def process_incoming(msg):
 
     can_receive_sms = PhoneBlacklist.can_receive_sms(msg.phone_number)
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
+    domain = v.domain if v else None
+
     if is_opt_message(msg.text, opt_out_keywords) and can_receive_sms:
-        if PhoneBlacklist.opt_out_sms(msg.phone_number):
+        if PhoneBlacklist.opt_out_sms(msg.phone_number, domain=domain):
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
             if v:
@@ -518,7 +521,7 @@ def process_incoming(msg):
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
     elif is_opt_message(msg.text, opt_in_keywords) and not can_receive_sms:
-        if PhoneBlacklist.opt_in_sms(msg.phone_number):
+        if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
             text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
             if v:
                 send_sms_to_verified_number(v, text)

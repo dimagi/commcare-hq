@@ -11,6 +11,7 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 
 EMPTY_FIELD = "---"
 
+
 def get_property(dict_obj, name, default=None):
     if name in dict_obj:
         if type(dict_obj[name]) is dict:
@@ -471,6 +472,7 @@ class MCHMotherDisplay(MCHDisplay):
 
 
 class MCHChildDisplay(MCHDisplay):
+
     def __init__(self, report, case_dict):
 
         # get mother case

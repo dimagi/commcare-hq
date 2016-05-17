@@ -42,7 +42,31 @@
                     <input class="btn btn-primary form-control" type="submit"/>
                 </form>
             </div>
-            {% if doc_id %}
+        </div>
+
+        {% if doc_id %}
+        <div class="container-fluid">
+            <div class="col-xs-2">
+                <div>
+                    <h3>Databases Searched:</h3>
+                    <table class="table">
+                        {% for db in db_results %}
+                        <tr>
+                            <td><span class="label label-{{ db.status }}">{{ db.result }}</span></td>
+                            {% if db.result == "found"  %}
+                                <td><a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
+                                    {{ db.dbname }}
+                                </a></td>
+                            {% else %}
+                                <td>{{ db.dbname }}</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-xs-10">
                 <h3>Doc {{ doc_id }}</h3>
                 <p>Doc type: {{ doc_type }}</p>
                 <p>Couch database: {{ dbname }}</p>
@@ -50,8 +74,9 @@
                     <h3>Couch Doc:</h3>
                     <pre id="couch-document">{{ doc }}</pre>
                 </div>
-            {% endif %}
+            </div>
         </div>
+        {% endif %}
 
         <script>
             // don't break if offline (Also why I left it as a <pre/>)

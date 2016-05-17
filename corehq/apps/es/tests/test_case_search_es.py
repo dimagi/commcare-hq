@@ -6,6 +6,7 @@ from corehq.elastic import SIZE_LIMIT
 
 
 class TestCaseSearchES(ElasticTestMixin, TestCase):
+
     def setUp(self):
         self.es = CaseSearchES()
 

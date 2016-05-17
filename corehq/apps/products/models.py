@@ -60,6 +60,7 @@ class Product(Document):
             return codes_by_domain[domain]
 
         for doc in docs:
+            doc.last_modified = datetime.utcnow()
             if not doc['code_']:
                 doc['code_'] = generate_code(
                     doc['name'],
@@ -266,6 +267,7 @@ class Product(Document):
 
 
 class ProductQueriesMixin(object):
+
     def product_ids(self):
         return self.values_list('product_id', flat=True)
 
@@ -285,6 +287,7 @@ class ProductQuerySet(ProductQueriesMixin, models.query.QuerySet):
 
 
 class ProductManager(ProductQueriesMixin, models.Manager):
+
     def get_queryset(self):
         return ProductQuerySet(self.model, using=self._db)
 
@@ -326,6 +329,10 @@ class SQLProduct(models.Model):
     @classmethod
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain).all()
+
+    @property
+    def get_id(self):
+        return self.product_id
 
     class Meta:
         app_label = 'products'

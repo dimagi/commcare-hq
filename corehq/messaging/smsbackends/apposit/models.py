@@ -13,6 +13,7 @@ class AppositException(Exception):
 
 
 class SQLAppositBackend(SQLSMSBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True

@@ -5,6 +5,7 @@ import sys
 
 
 class Command(BaseCommand):
+
     def handle(self, *args, **options):
         csvWriter = csv.writer(sys.stdout)
         for domain in Domain.get_all():

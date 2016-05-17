@@ -74,12 +74,12 @@
                             <th>{% trans "Last Updated" %}</th>
                         </tr>
                     </thead>
-                    {% for product_name, transaction in product_map %}
+                    {% for product_name, stock_state in product_map %}
                     <tr>
                         <td>{{ product_name }}</td>
-                        <td>{{ transaction.stock_on_hand }}</td>
-                        {% if transaction %}
-                        <td><a href="{% url 'render_form_data' case.domain transaction.report.form_id %}">{{ transaction.report.date }}</a></td>
+                        <td>{{ stock_state.stock_on_hand }}</td>
+                        {% if stock_state %}
+                        <td><a href="{% url 'render_form_data' case.domain stock_state.last_modified_form_id %}">{{ stock_state.last_modified_date }}</a></td>
                         {% else %}
                         <td>{% trans "No transaction found" %}</td>
                         {% endif %}

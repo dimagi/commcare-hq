@@ -32,6 +32,7 @@ variable CCHQ_IS_FRESH_INSTALL set to 1):
 
 
 class MigrationInfo(object):
+
     def __init__(self, migration_names, tag_name, commands):
         """
         migration_names - A list of MigrationStatus.MIGRATION_* constants

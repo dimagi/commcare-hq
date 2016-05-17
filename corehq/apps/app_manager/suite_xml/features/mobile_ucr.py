@@ -4,7 +4,7 @@ from corehq.apps.app_manager.models import ReportModule, ReportGraphConfig, \
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
-    ConfigurationItem, GraphTemplate, Graph, Xpath
+    ConfigurationItem, GraphTemplate, Graph, Xpath, XpathVariable
 from corehq.util.quickcache import quickcache
 
 
@@ -18,9 +18,11 @@ def _load_reports(report_module):
 
 
 class ReportModuleSuiteHelper(object):
+
     def __init__(self, report_module):
         assert isinstance(report_module, ReportModule)
         self.report_module = report_module
+        self.domain = self.report_module.get_app().domain
         self._loaded = None
 
     def get_details(self):
@@ -28,9 +30,9 @@ class ReportModuleSuiteHelper(object):
         for config in self.report_module.report_configs:
             for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config):
                 yield (_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
-                       _MobileSelectFilterHelpers.get_select_details(config, filter_slug), True)
+                       _MobileSelectFilterHelpers.get_select_details(config, filter_slug, self.domain), True)
             yield (_get_select_detail_id(config), _get_select_details(config), True)
-            yield (_get_summary_detail_id(config), _get_summary_details(config), True)
+            yield (_get_summary_detail_id(config), _get_summary_details(config, self.domain), True)
 
     def get_custom_entries(self):
         _load_reports(self.report_module)
@@ -98,11 +100,11 @@ def _get_select_details(config):
     ).serialize())
 
 
-def _get_summary_details(config):
+def _get_summary_details(config, domain):
     def _get_graph_fields():
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
         # todo: make this less hard-coded
-        for chart_config in config.report.charts:
+        for chart_config in config.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
                 graph_config = config.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
 
@@ -110,7 +112,11 @@ def _get_summary_details(config):
                     return Series(
                         nodeset=(
                             "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
-                            .format(config.uuid, _MobileSelectFilterHelpers.get_data_filter_xpath(config))),
+                            .format(
+                                config.uuid,
+                                _MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
+                            )
+                        ),
                         x_function="column[@id='{}']".format(chart_config.x_axis_column),
                         y_function="column[@id='{}']".format(column),
                         configuration=ConfigurationGroup(configs=[
@@ -193,13 +199,61 @@ def _get_summary_details(config):
                     ),
                 ] + list(_get_graph_fields()),
             ),
-            _get_data_detail(config),
+            _get_data_detail(config, domain),
         ],
     ).serialize())
 
 
-def _get_data_detail(config):
+def _get_data_detail(config, domain):
     def _column_to_field(column):
+        def _get_xpath(col):
+            def _get_conditional(condition, if_true, if_false):
+                return 'if({condition}, {if_true}, {if_false})'.format(
+                    condition=condition,
+                    if_true=if_true,
+                    if_false=if_false,
+                )
+
+            def _get_word_eval(word_translations, default_value):
+                word_eval = default_value
+                for lang_translation_pair in word_translations:
+                    lang = lang_translation_pair[0]
+                    translation = lang_translation_pair[1]
+                    word_eval = _get_conditional(
+                        "$lang = '{lang}'".format(
+                            lang=lang,
+                        ),
+                        "'{translation}'".format(
+                            translation=translation.replace("'", "''"),
+                        ),
+                        word_eval
+                    )
+                return word_eval
+
+            transform = col['transform']
+            if transform.get('type') == 'translation':
+                default_val = "column[@id='{column_id}']"
+                xpath_function = default_val
+                for word, translations in transform['translations'].items():
+                    xpath_function = _get_conditional(
+                        "{value} = '{word}'".format(
+                            value=default_val,
+                            word=word,
+                        ),
+                        _get_word_eval(translations, default_val),
+                        xpath_function
+                    )
+                return Xpath(
+                    function=xpath_function.format(
+                        column_id=col.column_id
+                    ),
+                    variables=[XpathVariable(name='lang', locale_id='lang.current')],
+                )
+            else:
+                return Xpath(
+                    function="column[@id='{}']".format(col.column_id),
+                )
+
         return Field(
             header=Header(
                 text=Text(
@@ -210,21 +264,23 @@ def _get_data_detail(config):
             ),
             template=Template(
                 text=Text(
-                    xpath=Xpath(function="column[@id='{}']".format(column.column_id)))
+                    xpath=_get_xpath(column),
+                )
             ),
         )
 
     return Detail(
         id='reports.{}.data'.format(config.uuid),
-        nodeset='rows/row{}'.format(_MobileSelectFilterHelpers.get_data_filter_xpath(config)),
+        nodeset='rows/row{}'.format(_MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)),
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
-        fields=[_column_to_field(c) for c in config.report.report_columns]
+        fields=[_column_to_field(c) for c in config.report(domain).report_columns]
     )
 
 
 class _MobileSelectFilterHelpers(object):
+
     @staticmethod
     def get_options_nodeset(config, filter_slug):
         return (
@@ -247,14 +303,14 @@ class _MobileSelectFilterHelpers(object):
             report_id=config.uuid, filter_slug=filter_slug)
 
     @staticmethod
-    def get_select_details(config, filter_slug):
+    def get_select_details(config, filter_slug, domain):
         return models.Detail(custom_xml=Detail(
             id=_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
-            title=Text(config.report.get_ui_filter(filter_slug).label),
+            title=Text(config.report(domain).get_ui_filter(filter_slug).label),
             fields=[
                 Field(
                     header=Header(
-                        text=Text(config.report.get_ui_filter(filter_slug).label)
+                        text=Text(config.report(domain).get_ui_filter(filter_slug).label)
                     ),
                     template=Template(
                         text=Text(xpath_function='.')
@@ -264,9 +320,9 @@ class _MobileSelectFilterHelpers(object):
         ).serialize())
 
     @staticmethod
-    def get_data_filter_xpath(config):
+    def get_data_filter_xpath(config, domain):
         return ''.join([
             "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]".format(
-                column_id=config.report.get_ui_filter(slug).field,
+                column_id=config.report(domain).get_ui_filter(slug).field,
                 datum_id=_MobileSelectFilterHelpers.get_datum_id(config, slug))
             for slug, f in _MobileSelectFilterHelpers.get_filters(config)])

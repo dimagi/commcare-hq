@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Q
@@ -407,7 +407,7 @@ class BillingAccount(models.Model):
             last_subscription = Subscription.objects.filter(
                 is_trial=False, subscriber__domain=domain).latest('date_end')
             return last_subscription.account
-        except ObjectDoesNotExist:
+        except Subscription.DoesNotExist:
             pass
         try:
             return cls.objects.exclude(
@@ -814,8 +814,10 @@ class SoftwarePlanVersion(models.Model):
             'description': self.plan.description,
         }
         try:
-            if (self.plan.visibility == SoftwarePlanVisibility.PUBLIC
-                or self.plan.visibility == SoftwarePlanVisibility.TRIAL):
+            if (
+                self.plan.visibility == SoftwarePlanVisibility.PUBLIC
+                or self.plan.visibility == SoftwarePlanVisibility.TRIAL
+            ):
                 desc['description'] = DESC_BY_EDITION[self.plan.edition]['description']
             else:
                 for desc_key in desc:
@@ -995,6 +997,7 @@ class Subscriber(models.Model):
 
 
 class SubscriptionManager(models.Manager):
+
     def get_queryset(self):
         return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
@@ -1157,7 +1160,8 @@ class Subscription(models.Model):
                 date_end is not None and date_end > sub.date_start
             )
 
-            if ((start_before_related_end and start_after_related_start)
+            if (
+                (start_before_related_end and start_after_related_start)
                 or (start_after_related_start and related_has_no_end)
                 or (end_after_related_start and end_before_related_end)
                 or (end_after_related_start and related_has_no_end)
@@ -1461,17 +1465,19 @@ class Subscription(models.Model):
             template = 'accounting/trial_ending_reminder_email.html'
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
-            subject = _("%(product)s Alert: %(domain)s's subscription to "
-                        "%(plan_name)s ends %(ending_on)s") % {
-                            'product': product,
-                            'plan_name': plan_name,
-                            'domain': domain_name,
-                            'ending_on': ending_on,
-                        }
+            subject = _(
+                "%(product)s Alert: %(domain)s's subscription to "
+                "%(plan_name)s ends %(ending_on)s"
+            ) % {
+                'product': product,
+                'plan_name': plan_name,
+                'domain': domain_name,
+                'ending_on': ending_on,
+            }
 
             billing_contact_emails = self.account.billingcontactinfo.email_list
             if not billing_contact_emails:
-                raise SubscriptionReminderError(
+                log_accounting_error(
                     "Billing account %d doesn't have any contact emails" % self.account.id
                 )
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
@@ -1625,10 +1631,12 @@ class Subscription(models.Model):
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(unicode(_(
-                "There is already a subscription '%(sub)s' that has an end date "
-                "that conflicts with the start and end dates of this "
-                "subscription %(start)s - %(end)s.") % {
+            raise NewSubscriptionError(unicode(
+                _(
+                    "There is already a subscription '%(sub)s' that has an end date "
+                    "that conflicts with the start and end dates of this "
+                    "subscription %(start)s - %(end)s."
+                ) % {
                     'sub': future_subscriptions.latest('date_created'),
                     'start': date_start,
                     'end': date_end
@@ -1690,6 +1698,7 @@ class Subscription(models.Model):
 
 
 class InvoiceBaseManager(models.Manager):
+
     def get_queryset(self):
         return super(InvoiceBaseManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
@@ -1785,6 +1794,7 @@ class WireInvoice(InvoiceBase):
 
 
 class WirePrepaymentInvoice(WireInvoice):
+
     class Meta:
         app_label = 'accounting'
         proxy = True
@@ -2136,6 +2146,7 @@ class WireBillingRecord(BillingRecordBase):
 
 
 class WirePrepaymentBillingRecord(WireBillingRecord):
+
     class Meta:
         app_label = 'accounting'
         proxy = True
@@ -2486,7 +2497,8 @@ class InvoicePdf(SafeSaveDocument):
         self.is_wire = invoice.is_wire
         self.save()
 
-    def get_filename(self, invoice):
+    @staticmethod
+    def get_filename(invoice):
         return "statement_%(year)d_%(month)d.pdf" % {
             'year': invoice.date_start.year,
             'month': invoice.date_start.month,
@@ -2506,6 +2518,7 @@ class InvoicePdf(SafeSaveDocument):
 
 
 class LineItemManager(models.Manager):
+
     def get_products(self):
         return self.get_queryset().filter(feature_rate__exact=None)
 
@@ -2559,7 +2572,7 @@ class LineItem(models.Model):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
-class CreditLine(models.Model):
+class CreditLine(ValidateModelMixin, models.Model):
     """
     The amount of money in USD that exists can can be applied toward a specific account,
     a specific subscription, or specific rates in that subscription.
@@ -2568,7 +2581,7 @@ class CreditLine(models.Model):
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     product_type = models.CharField(max_length=25, null=True, blank=True,
                                     choices=((SoftwareProductType.ANY, SoftwareProductType.ANY),))
-    feature_type = models.CharField(max_length=10, null=True,
+    feature_type = models.CharField(max_length=10, null=True, blank=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
@@ -2636,18 +2649,34 @@ class CreditLine(models.Model):
             line_item.feature_rate.feature.feature_type
             if line_item.feature_rate is not None else None
         )
-        return itertools.chain(
-            cls.get_credits_by_subscription_and_features(
+
+        for credit_line in cls.get_credits_by_subscription_and_features(
+            line_item.invoice.subscription,
+            product_type=product_type,
+            feature_type=feature_type,
+        ):
+            yield credit_line
+
+        if product_type is not None:
+            for credit_line in cls.get_credits_by_subscription_and_features(
                 line_item.invoice.subscription,
-                product_type=product_type,
-                feature_type=feature_type,
-            ),
-            cls.get_credits_for_account(
+                product_type=SoftwareProductType.ANY,
+            ):
+                yield credit_line
+
+        for credit_line in cls.get_credits_for_account(
+            line_item.invoice.subscription.account,
+            product_type=product_type,
+            feature_type=feature_type,
+        ):
+            yield credit_line
+
+        if product_type is not None:
+            for credit_line in cls.get_credits_for_account(
                 line_item.invoice.subscription.account,
-                product_type=product_type,
-                feature_type=feature_type,
-            )
-        )
+                product_type=SoftwareProductType.ANY,
+            ):
+                yield credit_line
 
     @classmethod
     def get_credits_for_invoice(cls, invoice):

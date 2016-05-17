@@ -29,8 +29,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
 
     name = "Patient Info"
 
-    is_bootstrap3 = True
-
     @use_timeago
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
         return super(PactPatientInfoReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
@@ -108,7 +106,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
             raise Http404
         return ret
 
-
     @property
     def headers(self):
         return DataTablesHeader(
@@ -173,7 +170,6 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         full_query['script_fields'] = pact_script_fields()
         res = self.xform_es.run_query(full_query)
         return res
-
 
     @property
     def rows(self):

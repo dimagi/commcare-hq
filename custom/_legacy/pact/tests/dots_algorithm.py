@@ -11,41 +11,48 @@ def _observationGenerator(encounter_date, observation_date, adherence=DOT_ADHERE
                         observed_date=observation_date,
                         adherence=adherence,)
 
+
 def generateDirect(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
     obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
     obs.method=DOT_OBSERVATION_DIRECT
     return obs
+
 
 def generateUnchecked(encounter_date, observation_date, adherence=DOT_ADHERENCE_UNCHECKED):
     obs = _observationGenerator(encounter_date, observation_date, adherence=adherence)
     obs.method = DOT_OBSERVATION_PILLBOX
     return obs
 
+
 def generateReconciliation():
     pass
+
 
 def generatePillbox(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
     obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
     obs.method=DOT_OBSERVATION_PILLBOX
     return obs
 
+
 def generateSelf(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
     obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
     obs.method=DOT_OBSERVATION_SELF
     return obs
+
 
 def generateAny(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
     obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
     obs.method=random.choice([DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_PILLBOX])
     return obs
 
+
 class dotsAlgorithmTests(TestCase):
+
     def setUp(self):
 
         self.observed_date = datetime.utcnow()
         self.encounter_dates = [datetime.utcnow() - timedelta(days=2), datetime.utcnow()-timedelta(days=1)]
         pass
-
 
     def testDirectTrumpsAll(self):
         direct = generateDirect(self.encounter_dates[0], self.observed_date)
@@ -82,14 +89,12 @@ class dotsAlgorithmTests(TestCase):
         self.assertEqual(cmp_observation(unchecked, pillbox), -1)
         self.assertEqual(cmp_observation(pillbox, unchecked), 1)
 
-
     def testDirects(self):
         direct = generateDirect(self.encounter_dates[0], self.observed_date)
         direct_later = generateDirect(self.encounter_dates[1], self.observed_date)
 
         self.assertEqual(cmp_observation(direct, direct_later), 1)
         self.assertEqual(cmp_observation(direct_later, direct), -1)
-
 
     def testNonDirects(self):
         #by date
@@ -127,7 +132,6 @@ class dotsAlgorithmTests(TestCase):
 
         self.assertEqual(no_direct_winner.encounter_date, no_direct_sorted[0].encounter_date)
 
-
         #at least one direct
         direct = generateDirect(datetime.utcnow() + timedelta(days=random.randint(-100,100)), observed_date)
         with_direct = [generateAny(x, observed_date) for x in encounter_dates] + [direct]
@@ -140,13 +144,6 @@ class dotsAlgorithmTests(TestCase):
     def testDayCellSort(self):
         day1 = [[['unchecked', 'pillbox', '', 0], ['empty', 'pillbox', '', 3]], [['unchecked', 'pillbox', '', 0], ['empty', 'pillbox', '', 3]]]
         day2 = [[['full', 'pillbox', '', 0], ['unchecked', 'pillbox', '', 3]], [['full', 'self', '', 0], ['unchecked', 'pillbox', '', 3]]]
-
-
-
-
-
-
-
 
     #basic test cases for the merging of dots data - no Couch involved
 

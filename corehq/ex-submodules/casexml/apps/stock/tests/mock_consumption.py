@@ -6,6 +6,7 @@ import collections
 
 to_ts = dateparse.json_format_datetime
 
+
 class MockTransaction(
     collections.namedtuple('MockTransaction', ['type', 'normalized_value', 'received_on']),
     ConsumptionMixin):

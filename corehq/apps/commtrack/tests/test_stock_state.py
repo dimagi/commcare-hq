@@ -1,5 +1,7 @@
 from decimal import Decimal
 import functools
+
+from corehq.apps.change_feed import topics
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import SQLProduct
@@ -8,9 +10,11 @@ from casexml.apps.stock.tests.base import _stock_report
 from corehq.apps.commtrack.tests.util import CommTrackTest
 from datetime import datetime
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
+from testapps.test_pillowtop.utils import process_kafka_changes
 
 
 class StockStateTest(CommTrackTest):
+
     def report(self, amount, days_ago):
         return _stock_report(
             self.domain.name,
@@ -22,9 +26,11 @@ class StockStateTest(CommTrackTest):
 
 
 class StockStateBehaviorTest(StockStateTest):
+
     def test_stock_state(self):
-        self.report(25, 5)
-        self.report(10, 0)
+        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+            self.report(25, 5)
+            self.report(10, 0)
 
         state = StockState.objects.get(
             section_id='stock',
@@ -114,7 +120,6 @@ class StockStateBehaviorTest(StockStateTest):
                 product_id=self.products[0]._id,
             )
 
-
     def test_domain_mapping(self):
         # make sure there's a fake case setup for this
         with self.assertRaises(DocDomainMapping.DoesNotExist):
@@ -135,9 +140,11 @@ class StockStateBehaviorTest(StockStateTest):
 
 
 class StockStateConsumptionTest(StockStateTest):
+
     def test_none_with_no_defaults(self):
         # need to submit something to have a state initialized
-        self.report(25, 0)
+        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+            self.report(25, 0)
 
         state = StockState.objects.get(
             section_id='stock',
@@ -149,7 +156,8 @@ class StockStateConsumptionTest(StockStateTest):
 
     def test_pre_set_defaults(self):
         set_default_monthly_consumption_for_domain(self.domain.name, 5 * 30)
-        self.report(25, 0)
+        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+            self.report(25, 0)
         state = StockState.objects.get(
             section_id='stock',
             case_id=self.sp.case_id,
@@ -159,7 +167,8 @@ class StockStateConsumptionTest(StockStateTest):
         self.assertEqual(5, float(state.get_daily_consumption()))
 
     def test_defaults_set_after_report(self):
-        self.report(25, 0)
+        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+            self.report(25, 0)
         set_default_monthly_consumption_for_domain(self.domain.name, 5 * 30)
 
         state = StockState.objects.get(
@@ -170,7 +179,6 @@ class StockStateConsumptionTest(StockStateTest):
 
         self.assertEqual(5, float(state.get_daily_consumption()))
 
-
     def test_rebuild_for_domain(self):
         # 5 days, 1 transaction
         self.report(25, 5)
@@ -178,12 +186,12 @@ class StockStateConsumptionTest(StockStateTest):
         expected_result = Decimal(3)
 
         commtrack_settings = self.domain.commtrack_settings
+
         def _update_consumption_config(min_transactions, min_window, optimal_window):
             commtrack_settings.consumption_config.min_transactions = min_transactions
             commtrack_settings.consumption_config.min_window = min_window
             commtrack_settings.consumption_config.optimal_window = optimal_window
             commtrack_settings.save()
-
 
         _reset = functools.partial(_update_consumption_config, 0, 3, 100)  # should fall in range
 
@@ -198,17 +206,29 @@ class StockStateConsumptionTest(StockStateTest):
             _reset()
             recalculate_domain_consumption(self.domain.name)
             state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
-            self.assertEqual(expected_result, state.daily_consumption,
-                             'reset state failed for arguments: {}'.format(consumption_params))
+            self.assertEqual(
+                expected_result,
+                state.daily_consumption,
+                'reset state failed for arguments: {}: {} != {}'.format(
+                    consumption_params, test_result, state.daily_consumption)
+            )
 
             # just changing the config shouldn't change the state
             _update_consumption_config(*consumption_params)
             state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
-            self.assertEqual(expected_result, state.daily_consumption,
-                             'update config failed for arguments: {}'.format(consumption_params))
+            self.assertEqual(
+                expected_result,
+                state.daily_consumption,
+                'update config failed for arguments: {}: {} != {}'.format(
+                    consumption_params, test_result, state.daily_consumption)
+            )
 
             # recalculating should though
             recalculate_domain_consumption(self.domain.name)
             state = StockState.objects.get(section_id='stock', case_id=self.sp.case_id, product_id=self.products[0]._id)
-            self.assertEqual(test_result, state.daily_consumption,
-                             'test failed for arguments: {}'.format(consumption_params))
+            self.assertEqual(
+                test_result,
+                state.daily_consumption,
+                'test failed for arguments: {}: {} != {}'.format(
+                    consumption_params, test_result, state.daily_consumption)
+            )

@@ -19,6 +19,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import get_current_site
 from django.core.urlresolvers import reverse
@@ -34,11 +35,6 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from django_countries.data import COUNTRIES
 from PIL import Image
 from pyzxcvbn import zxcvbn
-
-if django.VERSION < (1, 6):
-    from django.contrib.auth.hashers import UNUSABLE_PASSWORD as UNUSABLE_PASSWORD_PREFIX
-else:
-    from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 
 from corehq import privileges
 from corehq.apps.accounting.models import (
@@ -441,6 +437,7 @@ class TransferDomainForm(forms.ModelForm):
 
 
 class SubAreaMixin():
+
     def clean_sub_area(self):
         area = self.cleaned_data['area']
         sub_area = self.cleaned_data['sub_area']
@@ -956,13 +953,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
 
 
-
-
 ########################################################################################################
 
 min_pwd = 4
 max_pwd = 20
 pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
+
 
 def clean_password(txt):
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
@@ -1104,6 +1100,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
+
     def clean_email(self):
         try:
             return super(ConfidentialPasswordResetForm, self).clean_email()
@@ -1149,6 +1146,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         self.account = account
         self.domain = domain
         self.creating_user = creating_user
+        is_ops_user = kwargs.pop('is_ops_user', False)
 
         try:
             self.current_country = self.account.billingcontactinfo.country
@@ -1171,14 +1169,49 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        fields = [
+            'company_name',
+            'first_name',
+            'last_name',
+            crispy.Field('email_list', css_class='input-xxlarge'),
+            'phone_number'
+        ]
+
+        if is_ops_user and self.initial.get('email_list'):
+            fields.insert(4, crispy.Div(
+                crispy.Div(
+                    css_class='col-sm-3 col-md-2'
+                ),
+                crispy.Div(
+                    crispy.HTML(self.initial['email_list']),
+                    css_class='col-sm-9 col-md-8 col-lg-6'
+                ),
+                css_id='emails-text',
+                css_class='collapse form-group'
+            ))
+
+            fields.insert(5, crispy.Div(
+                crispy.Div(
+                    css_class='col-sm-3 col-md-2'
+                ),
+                crispy.Div(
+                    StrictButton(
+                        _("Show contact emails as text"),
+                        type="button",
+                        css_class='btn btn-default',
+                        css_id='show_emails'
+                    ),
+                    crispy.HTML('<p class="help-block">%s</p>' %
+                                _('Useful when you want to copy contact emails')),
+                    css_class='col-sm-9 col-md-8 col-lg-6'
+                ),
+                css_class='form-group'
+            ))
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
-                'company_name',
-                'first_name',
-                'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge'),
-                'phone_number',
+                *fields
             ),
             crispy.Fieldset(
                 _("Mailing Address"),
@@ -1446,7 +1479,9 @@ class ProBonoForm(forms.Form):
         if not use_domain_field:
             self.fields['domain'].required = False
         self.helper = FormHelper()
-        self.helper.form_class = 'form form-horizontal'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
             _('Pro-Bono Application'),
@@ -1462,7 +1497,7 @@ class ProBonoForm(forms.Form):
                 'num_expected_users',
                 'dimagi_contact',
             ),
-            FormActions(
+            hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Submit('submit_pro_bono', _('Submit Pro-Bono Application'))
                 )
