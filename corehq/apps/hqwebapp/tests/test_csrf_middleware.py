@@ -3,10 +3,9 @@ from django.test import TestCase, Client
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
-from corehq.util.test_utils import softer_assert
 
 
-class TestHQCsrfMiddleware(TestCase):
+class TestCSRF(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -24,16 +23,9 @@ class TestHQCsrfMiddleware(TestCase):
         cls.domain.delete()
 
     def test_csrf_ON(self):
-        with self.settings(CSRF_SOFT_MODE=False), softer_assert():
-            csrf_sent, csrf_missing = self._form_post_with_and_without_csrf()
-            self.assertEqual(csrf_sent, 200)
-            self.assertEqual(csrf_missing, 403)
-
-    def test_csrf_OFF(self):
-        with self.settings(CSRF_SOFT_MODE=True), softer_assert():
-            csrf_sent, csrf_missing = self._form_post_with_and_without_csrf()
-            self.assertEqual(csrf_sent, 200)
-            self.assertEqual(csrf_missing, 200)
+        csrf_sent, csrf_missing = self._form_post_with_and_without_csrf()
+        self.assertEqual(csrf_sent, 200)
+        self.assertEqual(csrf_missing, 403)
 
     def _form_post_with_and_without_csrf(self):
         client = Client(enforce_csrf_checks=True)
@@ -46,6 +38,8 @@ class TestHQCsrfMiddleware(TestCase):
             'message': 'sms',
             'send_sms_button': ''
         }
+        # There is no particular reason in using 'send_to_recipients' as the CSRF test view,
+        # all views unless decorated with csrf_exempt should be CSRF protected by default via Django's middleware
         csrf_missing = client.post(reverse('send_to_recipients', args=[self.domain.name]), form_data).status_code
 
         form_data['csrfmiddlewaretoken'] = csrf_token.value
