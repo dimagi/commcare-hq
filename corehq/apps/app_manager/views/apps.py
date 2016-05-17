@@ -457,6 +457,16 @@ def edit_app_langs(request, domain, app_id):
         if old != new:
             app.rename_lang(old, new)
 
+    #remove deleted languages from build profiles
+    new_langs = set(langs)
+    deleted = [lang for lang in app.langs if lang not in new_langs]
+    for id in app.build_profiles:
+        for lang in deleted:
+            try:
+                app.build_profiles[id].langs.remove(lang)
+            except ValueError:
+                pass
+
     def replace_all(list1, list2):
         if list1 != list2:
             while list1:
