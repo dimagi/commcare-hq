@@ -441,5 +441,8 @@ def _log_response(target, data, response):
 
 def get_ab_test_properties(user):
     return {
-        'a_b_test_variable_1': 'A' if deterministic_random(user.username + 'a_b_test_variable_1') > 0.5 else 'B',
+        'a_b_test_variable_1':
+            'A' if deterministic_random(user.username + 'a_b_test_variable_1') > 0.5 else 'B',
+        'a_b_test_variable_first_submission':
+            'A' if deterministic_random(user.username + 'a_b_test_variable_first_submission') > 0.5 else 'B',
     }
