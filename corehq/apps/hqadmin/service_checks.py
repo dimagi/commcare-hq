@@ -1,10 +1,17 @@
+"""
+A collection of functions which test the most basic operations of various services.
+"""
 from collections import namedtuple
 import json
+import time
+from StringIO import StringIO
 
 from django.core import cache
 from django.conf import settings
 from restkit import Resource
 from soil import heartbeat
+
+from corehq.blobs import get_blob_db
 
 ServiceStatus = namedtuple("ServiceStatus", "success msg")
 
@@ -48,3 +55,66 @@ def check_celery():
 def check_heartbeat():
     is_alive = heartbeat.is_alive()
     return ServiceStatus(is_alive, "OK" if is_alive else "DOWN")
+
+
+def check_pillowtop():
+    return ServiceStatus(False, "Not implemented")
+
+
+def check_kafka():
+    return ServiceStatus(False, "Not implemented")
+
+
+def check_redis():
+    return ServiceStatus(False, "Not implemented")
+
+
+def check_postgres():
+    return ServiceStatus(False, "Not implemented")
+
+
+def check_couch():
+    return ServiceStatus(False, "Not implemented")
+
+
+def check_celery():
+    return ServiceStatus(False, "Not implemented")
+
+
+def check_touchforms():
+    return ServiceStatus(False, "Not implemented")
+
+
+def check_elasticsearch():
+    return ServiceStatus(False, "Not implemented")
+
+
+def check_shared_dir():
+    return ServiceStatus(False, "Not implemented")
+
+
+def check_blobdb():
+    """Save something to the blobdb and try reading it back."""
+    db = get_blob_db()
+    contents = "It takes Pluto 248 Earth years to complete one orbit!"
+    info = db.put(StringIO(contents))
+    with db.get(info.identifier) as fh:
+        res = fh.read()
+    db.delete(info.identifier)
+    if res == contents:
+        return ServiceStatus(True, "Successfully saved a file to the blobdb")
+    return ServiceStatus(False, "Failed to save a file to the blobdb")
+
+
+checks = (
+    check_pillowtop,
+    check_kafka,
+    check_redis,
+    check_postgres,
+    check_couch,
+    check_celery,
+    check_touchforms,
+    check_elasticsearch,
+    check_shared_dir,
+    check_blobdb,
+)
