@@ -9,10 +9,10 @@ var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
-        el: "#app-container",
+        el: "#menu-container",
 
         regions: {
-            main: "#main-region",
+            main: "#menu-region",
         },
     });
 
@@ -58,10 +58,14 @@ FormplayerFrontend.reqres.setHandler('clearForm', function () {
     $('#webforms').html("");
 });
 
+FormplayerFrontend.reqres.setHandler('clearMenu', function () {
+    $('#menu-region').html("");
+});
+
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     var loadSession = function () {
 
-        $('#main-region').html("");
+        FormplayerFrontend.request("clearMenu");
 
         data.onLoading = tfLoading;
         data.onLoadingComplete = tfLoadingComplete;
