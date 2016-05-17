@@ -101,28 +101,8 @@
     </script>
 {% endblock %}
 
-{% block page_navigation %}
-    <div class="nav-input" id="sync-container">
-        <button
-                class="btn btn-block btn-success"
-                type="button"
-                id="sync-button">
-            {% trans "Sync Data" %}
-        </button>
-        <small>
-            <i class="fa fa-info-circle"></i>&nbsp;
-            {% trans "Click to refresh the data and process all recently submitted cases" %}
-        </small>
-    </div>
-    <section id="app-main">
-        <nav id="app-list"></nav>
-        {% if sessions_enabled %}
-            <nav id="sessions"></nav>
-        {% endif %}
-    </section>
-{% endblock %}
-
 {% block page_content %}
+
     <div id="app-container">
         <div id="main-region" class="container">
             <p>Here is static content in the web page. You'll notice that it gets replaced by our app as soon as we
@@ -146,143 +126,10 @@
         {% endif %}
     </div>
 
-    <script type="text/template" id="app-select-list">
-        <p id="title">Apps</p>
-        <table class="table table-hover table-striped table-bordered">
-            <tbody>
-            </tbody>
-        </table>
-    </script>
-
-    <script type="text/template" id="app-select-list-item">
-        <td><%- name %></td>
-    </script>
-
-    <script id="grid-template" type="text/template">
-    
-        <div>
-            <h1>Applications</h1>
-        </div>
-
-        <table>
-            <col width="300px"/>
-            <col width="300px"/>
-            <col width="300px"/>
-            <tbody></tbody>
-        </table>
-    </script>
-
-    <script type="text/template" id="menu-view-list">
-        <p><h2><%- title %></h2></p>
-        <table style="width:600px" class="table table-hover table-striped table-bordered">
-            <tbody>
-            </tbody>
-        </table>
-    </script>
-
-    <script type="text/template" id="menu-view-item-audio">
-        <td style="width:60px"><img style="max-height:50px"
-                                    src="<%- imageUrl ? imageUrl : '{% static 'cloudcare/images/avatar_form.png' %}' %>"/>
-        </td>
-        <td>
-            <div style="display:inline-block;margin-right:10px;"><h3><%- displayText ? displayText : "" %></h3></div>
-            <div style="float: right; display:inline-block;">
-                <audio style="width: 200px;" controls>
-                    <source src="<%- audioUrl ? audioUrl : '' %>" type="audio/mpeg">
-                </audio>
-            </div>
-
-        </td>
-    </script>
-
-    <script type="text/template" id="menu-view-item">
-        <td style="width:60px"><img style="max-height:50px"
-                                    src="<%- imageUrl ? imageUrl : '{% static 'cloudcare/images/avatar_form.png' %}' %>"/>
-        </td>
-        <td><h3><%- displayText ? displayText : "" %></h3></td>
-    </script>
-
-    <script type="text/template" id="case-view-list">
-        <h2 id="title"><%= title %></h2>
-        <table class="table table-hover table-striped table-bordered">
-            <thead>
-            <tr>
-                <% _.each(headers, function(header) { %>
-                <td> <%= header %></td>
-                <% }); %>
-            </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
-        <% if (action) { %>
-        <div>
-            <button type="button" class="btn btn-default" id="double-management"><%= action.text %></button>
-        </div>
-        <% } %>
-        <% if (pageCount) { %>
-        <div>
-            <nav>
-                <ul class="pagination">
-                    <li class="page-item">
-                        <a class="page-link" aria-label="Previous" data-id="<%= currentPage - 1 %>">
-                            <span aria-hidden="true">&laquo;</span>
-                            <span class="sr-only">Previous</span>
-                        </a>
-                    </li>
-                    <% for (i = 0; i < pageCount; i++) { %>
-                    <li class="page-item"><a class="page-link" data-id="<%= i %>"><%= i %></a></li>
-                    <% } %>
-                    <li class="page-item">
-                        <a class="page-link" aria-label="Next" data-id="<%= currentPage + 1 %>">
-                            <span aria-hidden="true">&raquo;</span>
-                            <span class="sr-only">Next</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-        <% } %>
-
-    </script>
-
-    <script type="text/template" id="case-view-item">
-        <% _.each(data, function(datum) { %>
-        <td> <%= datum %></td>
-        <% }); %>
-    </script>
-
-    <script type="text/template" id="detail-view-list">
-        <tbody>
-        </tbody>
-    </script>
-
-    <script type="text/template" id="detail-view-item">
-        <td><%- header %></td>
-        <td><%- data %></td>
-    </script>
-
-    <!-- Modal -->
-    <div id="case-detail-modal" class="modal fade" role="dialog">
-        <div class="modal-dialog">
-            <!-- Modal content-->
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Case Detail</h4>
-                </div>
-                <div class="modal-body">
-                    <p>Some text in the modal.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" id="select-case" data-dismiss="modal">Select</button>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
     {% include 'formplayer/fullform-ui/templates.html' %}
     {% include 'formplayer/grid_view.html' %}
+    {% include 'formplayer/case_detail.html' %}
+    {% include 'formplayer/case_list.html' %}
+    {% include 'formplayer/menu_list.html' %}
 
 {% endblock %}

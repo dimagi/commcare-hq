@@ -1,0 +1,28 @@
+{% load hq_shared_tags %}
+
+<script type="text/template" id="detail-view-list">
+    <tbody>
+    </tbody>
+</script>
+
+<script type="text/template" id="detail-view-item">
+    <td><%- header %></td>
+    <td><%- data %></td>
+</script>
+
+<div id="case-detail-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Case Detail</h4>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" id="select-case" data-dismiss="modal">Select</button>
+            </div>
+        </div>
+
+    </div>
+</div>

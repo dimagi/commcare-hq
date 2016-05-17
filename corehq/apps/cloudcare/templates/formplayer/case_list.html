@@ -1,0 +1,51 @@
+{% load hq_shared_tags %}
+
+<script type="text/template" id="case-view-list">
+    <h2 id="title"><%= title %></h2>
+    <table class="table table-hover table-striped table-bordered">
+        <thead>
+        <tr>
+            <% _.each(headers, function(header) { %>
+            <td> <%= header %></td>
+            <% }); %>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <% if (action) { %>
+    <div>
+        <button type="button" class="btn btn-default" id="double-management"><%= action.text %></button>
+    </div>
+    <% } %>
+    <% if (pageCount) { %>
+    <div>
+        <nav>
+            <ul class="pagination">
+                <li class="page-item">
+                    <a class="page-link" aria-label="Previous" data-id="<%= currentPage - 1 %>">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                </li>
+                <% for (i = 0; i < pageCount; i++) { %>
+                <li class="page-item"><a class="page-link" data-id="<%= i %>"><%= i %></a></li>
+                <% } %>
+                <li class="page-item">
+                    <a class="page-link" aria-label="Next" data-id="<%= currentPage + 1 %>">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    <% } %>
+
+</script>
+
+<script type="text/template" id="case-view-item">
+    <% _.each(data, function(datum) { %>
+    <td> <%= datum %></td>
+    <% }); %>
+</script>
