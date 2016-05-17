@@ -159,7 +159,7 @@
     postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
     saveValueName: 'name',
 "></inline-edit>
-
+<br />
 <inline-edit params="
     value: '{{ app.short_comment|escapejs }}',
     url: '{% url "edit_app_attr" domain app.id 'comment' %}',

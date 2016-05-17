@@ -251,6 +251,7 @@
 {% block form-view %}
     <div id="build_errors"></div>
     {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+    <br />
     <inline-edit params="
         name: 'comment',
         id:'comment-id',
@@ -258,6 +259,7 @@
         url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
         saveValueName: 'comment',
     "></inline-edit>
+    <br />
     <br />
     <div class="pull-right">
         <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">

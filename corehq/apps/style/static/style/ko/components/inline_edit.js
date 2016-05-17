@@ -10,7 +10,6 @@
  *  - name: HTML name of textarea
  *  - id: HTML id of textarea
  *  - placeholder: Text to display when in read-only mode if value is blank
- *  - inline: Whether or not to display widget in line with surrounding content. Defaults to false.
  *  - lang: Display this language code in a badge next to the widget.
  *  - rows: Number of rows in textarea.
  *  - saveValueName: Name to associate with text value when saving. Defaults to 'value'.
@@ -39,7 +38,6 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             self.lang = params.lang || '';
 
             // Styling
-            self.inline = params.inline || false;
             self.rows = params.rows || 2;
             self.readOnlyClass = params.readOnlyClass || '';
 
@@ -128,7 +126,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 }, 200);
             };
         },
-        template: '<div class="ko-inline-edit" data-bind="css: {inline: inline, \'has-error\': hasError()}">\
+        template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
             <div class="read-only" data-bind="visible: !isEditing(), click: edit">\
                 <span data-bind="visible: isSaving()" class="pull-right">\
                     <img src="/static/hqstyle/img/loading.gif"/>\
@@ -141,7 +139,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 <span class="text" data-bind="text: value, css: readOnlyClass"></span>\
                 <span class="placeholder" data-bind="text: placeholder, css: readOnlyClass, visible: !value()"></span>\
             </div>\
-            <div class="read-write" data-bind="visible: isEditing(), css: {\'form-inline\': inline}">\
+            <div class="read-write form-inline" data-bind="visible: isEditing()">\
                 <div class="form-group langcode-container">\
                     <textarea class="form-control" data-bind="\
                         attr: {name: name, id: id, placeholder: placeholder, rows: rows},\

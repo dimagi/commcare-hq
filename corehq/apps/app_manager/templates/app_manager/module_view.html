@@ -185,6 +185,7 @@
 
 {% block form-view %}
     {% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+    <br />
     <inline-edit params="
         name: 'comment',
         id:'comment-id',
