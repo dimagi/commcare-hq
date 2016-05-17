@@ -184,6 +184,18 @@
 {% endblock %}
 
 {% block form-view %}
+    {% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+    <br />
+    <inline-edit params="
+        name: 'comment',
+        id:'comment-id',
+        value: '{{ module.comment|escapejs }}',
+        placeholder: '{% trans "Enter module description here"|escapejs %}',
+        url: '{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'comment' %}',
+        saveValueName: 'comment',
+        cols: 50,
+    "></inline-edit>
+    <br />
     {% include 'app_manager/partials/module_view_heading.html' %}
 <div class="tabbable">
 <ul class="nav nav-tabs" id="module-view-tabs">
@@ -216,12 +228,6 @@
             {% csrf_token %}
             <div class="save-button-holder clearfix"></div>
             <fieldset>
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">{% trans "Module Name" %}</label>
-                    <div class="col-sm-4">
-                        {% input_trans module.name langs cssClass='form-control' %}
-                    </div>
-                </div>
                 {% block settings_fields %}
                 {% if module.module_type == 'shadow' %}
                 <div class="form-group">
@@ -274,12 +280,6 @@
                     </div>
                 </div>
                 {% endif %}
-                <div class="form-group">
-                    <label class="col-sm-2 control-label" for="comment-id">{% trans "Comment" %}</label>
-                    <div class="col-sm-4">
-                        <textarea id="comment-id" name="comment" class="form-control">{{ module.comment }}</textarea>
-                    </div>
-                </div>
                 {% endblock %}
             </fieldset>
         </form>

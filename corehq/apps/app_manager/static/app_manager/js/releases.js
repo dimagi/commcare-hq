@@ -143,31 +143,6 @@ hqDefine('app_manager/js/releases.js', function () {
             }
         };
 
-        self.editing_comment = ko.observable(false);
-        self.new_comment = ko.observable(self.build_comment());
-        self.pending_comment_update = ko.observable(false);
-        self.comment_update_error = ko.observable(false);
-
-        self.submit_new_comment = function () {
-            self.pending_comment_update(true);
-            $.ajax({
-                url: releasesMain.options.urls.update_build_comment,
-                type: 'POST',
-                dataType: 'JSON',
-                data: {"build_id": self.id(), "comment": self.new_comment()},
-                success: function (data) {
-                    self.pending_comment_update(false);
-                    self.editing_comment(false);
-                    self.build_comment(self.new_comment());
-                },
-                error: function () {
-                    self.pending_comment_update(false);
-                    self.editing_comment(false);
-                    self.comment_update_error(true);
-                }
-            });
-        };
-
         self.download_application_zip = function (multimedia_only, build_profile) {
             releasesMain.download_application_zip(self.id(), multimedia_only, build_profile);
         };

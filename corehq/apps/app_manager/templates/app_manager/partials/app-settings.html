@@ -151,26 +151,27 @@
         </div>
     </aside>
 </script>
-{% comment %}
-todo fix
-<script>
-    $(function () {
-        $('#show-user-registration-select').change(function () {
-            if (JSON.parse($(this).val())) {
-                $('#user-registration-nav-link').slideDown();
-            } else {
-                $('#user-registration-nav-link').slideUp();
-            }
-        });
-    });
-</script>
-{% endcomment %}
 
+<inline-edit params="
+    value: '{{ app.name|escapejs }}',
+    readOnlyClass: 'h3',
+    url: '{% url "edit_app_attr" domain app.id 'name' %}',
+    placeholder: '{% trans "Untitled App"|escapejs %}',
+    postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
+    rows: 1,
+    saveValueName: 'name',
+"></inline-edit>
+<br />
+<inline-edit params="
+    value: '{{ app.short_comment|escapejs }}',
+    url: '{% url "edit_app_attr" domain app.id 'comment' %}',
+    placeholder: '{% trans "Enter app description here"|escapejs %}',
+    saveValueName: 'comment',
+    cols: 50,
+"></inline-edit>
 
 <div class="tab-pane" id="commcare-settings">
-    {% if app.short_comment %}
-        <div id="app_short_comment" class="app-comment well">{{ app.short_comment }}</div>
-    {% endif %}
+    <br />
     <form class="form-horizontal">
         <div class="clearfix">
             <div class="pull-right">
@@ -186,6 +187,7 @@ todo fix
                     </a>
                 </legend>
                 <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
+                    <!-- ko if: widget !== 'none' -->
                     <div class="form-group" data-bind="
                         visible: visible,
                         css: {error: hasError()}
@@ -223,6 +225,7 @@ todo fix
                             </div>
                         </div>
                     </div>
+                    <!-- /ko -->
                 </div>
             </fieldset>
         </div>
