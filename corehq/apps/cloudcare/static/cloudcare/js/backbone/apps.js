@@ -28,7 +28,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
             "view/:app/:module/:form/enter/":                   "app:module:form:enter",
             "view/:app/:module/:form/case/:case":               "app:module:form:case",
             "view/:app/:module/:form/parent/:parent":           "app:module:form:parent",
-            "view/:Loadingapp/:module/:form/parent/:parent/case/:case":"app:module:form:parent:case",
+            "view/:app/:module/:form/parent/:parent/case/:case":"app:module:form:parent:case",
             "view/:app/:module/:form/case/:case/enter/":        "app:module:form:case:enter",
             "":                                                 "clear"
         },

@@ -1,0 +1,22 @@
+{% load hq_shared_tags %}
+
+<script id="grid-template" type="text/template">
+
+    <div>
+        <h1>Applications</h1>
+    </div>
+
+    <table>
+        <col width="300px"/>
+        <col width="300px"/>
+        <col width="300px"/>
+        <tbody></tbody>
+    </table>
+</script>
+
+<script id="row-template" type="text/template">
+    <div style="text-align: center">
+        <h3><%- name %></h3>
+        <image style="max-height:150px" src="{% static 'cloudcare/images/cc_flower.png' %}"/>
+    </div>
+</script>

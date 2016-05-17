@@ -172,16 +172,6 @@
         </table>
     </script>
 
-    <script id="row-template" type="text/template">
-        <div style="text-align: center">
-            <h3><%- name %></h3>
-            <image style="max-height:150px" src="{% static 'cloudcare/images/cc_flower.png' %}"/>
-        </div>
-    </script>
-
-    <div id="grid">
-    </div>
-
     <script type="text/template" id="menu-view-list">
         <p><h2><%- title %></h2></p>
         <table style="width:600px" class="table table-hover table-striped table-bordered">
@@ -293,5 +283,6 @@
     </div>
 
     {% include 'formplayer/fullform-ui/templates.html' %}
+    {% include 'formplayer/grid_view.html' %}
 
 {% endblock %}

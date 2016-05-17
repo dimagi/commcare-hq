@@ -2,13 +2,10 @@
 
 var FormplayerFrontend = new Marionette.Application();
 
-var hideLoading = hqImport('cloudcare/js/util.js').hideLoading;
 var showError = hqImport('cloudcare/js/util.js').showError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
-var showLoading = hqImport('cloudcare/js/util.js').showLoading;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
-var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
