@@ -1,6 +1,19 @@
 {% load i18n %}
 {% if multimedia_state.has_media %}
-    <p>{% blocktrans %}This .zip file is structured to match the multimedia paths referenced in your CommCare Application.{% endblocktrans %}</p>
+    <p>
+        {% blocktrans %}
+            This .zip file is structured to match the multimedia paths referenced in your CommCare Application.
+        {% endblocktrans %}
+    </p>
+    <ul class="list-unstyled">
+        {% for total in multimedia_totals %}
+            <li>
+                <i class="fa {{ total.icon_class }}"></i>
+                {{ total.matched }}/{{ total.totals }}
+                {{ total.media_type }} {% trans 'References' %}
+            </li>
+        {% endfor %}
+    </ul>
     <p>
         <a class="btn {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}btn-warning{% else %}btn-primary{% endif %}"
             {% if include_modal %}
@@ -15,7 +28,7 @@
             {% endif %}
         >
         {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
-            <i class="fa fa-bolt"></i> {% trans 'Download Incomplete ZIP' %}
+            <i class="fa fa-exclamation-triangle"></i> {% trans 'Download Incomplete ZIP' %}
         {% else %}
             <i class="fa fa-download"></i> {% trans 'Download ZIP' %}
         {% endif %}
@@ -25,21 +38,26 @@
     <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}
 {% if multimedia_state.has_form_errors %}
-    <div class="alert alert-error"><i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Warning:</strong>
-        This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
-    {% endblocktrans %}</div>
+    <div class="alert alert-danger">
+        <i class="fa fa-exclamation-triangle"></i>
+        {% blocktrans %}
+              This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
+        {% endblocktrans %}
+    </div>
 {% endif %}
 {% if multimedia_state.has_missing_refs %}
     <div class="alert alert-warning">
+        {% blocktrans %}
         <p>
-            <i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Note:</strong> This application is
-            missing references, so this zip will be incomplete.
+            <i class="fa fa-exclamation-triangle"></i>
+            This application is missing references, so this zip will be incomplete.
         </p>
         <p>
             Please make sure all of your application's multimedia references are linked to media files before
-            starting your Application, or it might be unstable.
+            starting your application, or it might be unstable.
         </p>
-    {% endblocktrans %}</div>
+        {% endblocktrans %}
+    </div>
 {% endif %}
 
 {% if include_modal %}
