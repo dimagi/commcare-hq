@@ -65,6 +65,7 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -764,7 +765,7 @@ class DefaultProductPlan(models.Model):
             plan_version = cls.get_default_plan_by_domain(
                 domain, edition=edition
             )
-            privileges = get_privileges(plan_version)
+            privileges = get_privileges(plan_version) - REPORT_BUILDER_ADD_ON_PRIVS
             if privileges.issuperset(requested_privileges):
                 return (plan_version if return_plan
                         else plan_version.plan.edition)
