@@ -11,7 +11,7 @@ class Command(BaseCommand):
             try:
                 status = service_check()
             except Exception as e:
-                print "Service check '{}' errored with exception '{}'".format(
+                print "EXCEPTION Service check '{}' errored with exception '{}'".format(
                     check_name,
                     repr(e)
                 )

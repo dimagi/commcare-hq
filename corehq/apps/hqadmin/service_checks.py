@@ -12,6 +12,7 @@ from restkit import Resource
 from soil import heartbeat
 
 from corehq.blobs import get_blob_db
+from .tasks import dummy_task
 
 ServiceStatus = namedtuple("ServiceStatus", "success msg")
 
@@ -48,10 +49,6 @@ def check_rabbitmq():
         return ServiceStatus(False, "RabbitMQ Not configured")
 
 
-def check_celery():
-    pass
-
-
 def check_heartbeat():
     is_alive = heartbeat.is_alive()
     return ServiceStatus(is_alive, "OK" if is_alive else "DOWN")
@@ -78,7 +75,14 @@ def check_couch():
 
 
 def check_celery():
-    return ServiceStatus(False, "Not implemented")
+    res = dummy_task.delay()
+    for _ in range(5):
+        time.sleep(1)
+        if res.ready():
+            assert res.result == "expected return value"
+            msg = "Celery completed task with status '{}'".format(res.status)
+            return ServiceStatus(res.successful(), msg)
+    return ServiceStatus(False, "Celery didn't complete task in allotted time")
 
 
 def check_touchforms():
