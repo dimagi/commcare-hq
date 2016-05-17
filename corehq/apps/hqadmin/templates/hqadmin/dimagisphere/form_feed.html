@@ -105,12 +105,15 @@ jQuery(document).ready(function($) {
     // courtesy of http://colorbrewer2.org/
     var COUNTRY_COLORS = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
     var COUNTRY_ACTIVE_COLORS = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
-
     var ws4redis = WS4Redis({
         uri: '{{ WEBSOCKET_URI }}form-feed?subscribe-broadcast',
         receive_message: receiveMessage,
         heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
     });
+
+    // in tv mode we don't show domains in the graph but just countries
+    var tvmode = {{ tvmode|JSON }};
+    var chartSourceData = tvmode ? dimagisphere.formData.totalFormsByCountry : dimagisphere.formData.totalFormsByDomain;
 
     function addDataToMap(msgObj) {
         colorAll();
@@ -131,7 +134,7 @@ jQuery(document).ready(function($) {
         }
         // add data to chart
         if (chart !== undefined) {
-            chartData.datum(formatChartData(dimagisphere.formData.totalFormsByDomain)).call(chart);
+            chartData.datum(formatChartData(chartSourceData)).call(chart);
 
             // when the bar for a domain is clicked on, we can filter on that domain
             // isn't in use with just this one chart and the map, but maybe if there are other charts added
@@ -161,7 +164,7 @@ jQuery(document).ready(function($) {
           .showValues(true)
           .transitionDuration(350)
         ;
-        chartData = d3.select('#chart svg').datum(formatChartData(dimagisphere.formData.totalFormsByDomain));
+        chartData = d3.select('#chart svg').datum(formatChartData(chartSourceData));
         chartData.call(chart);
         nv.utils.windowResize(chart.update);
         return chart;
@@ -267,7 +270,7 @@ jQuery(document).ready(function($) {
                     filter.country = layer.feature.properties.name;
                     // show the name in text somewhere to avoid scanning the map? maybe in the top right?
                 }
-                chartData.datum(formatChartData(dimagisphere.formData.totalFormsByDomain)).call(chart);
+                chartData.datum(formatChartData(chartSourceData)).call(chart);
                 countriesGeo.setStyle(style);
             }
         });

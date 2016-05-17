@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.http import (
@@ -926,4 +926,12 @@ class CallcenterUCRCheck(BaseAdminSectionView):
             'domain': domain
         }
 
+        return context
+
+
+class DimagisphereView(TemplateView):
+
+    def get_context_data(self, **kwargs):
+        context = super(DimagisphereView, self).get_context_data(**kwargs)
+        context['tvmode'] = 'tvmode' in self.request.GET
         return context
