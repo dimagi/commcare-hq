@@ -3,6 +3,8 @@ import os
 import tempfile
 from StringIO import StringIO
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.reports.util import \
+    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
 from corehq.apps.style.decorators import use_bootstrap3, \
     use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
@@ -58,6 +60,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     slug = "configurable"
     prefix = slug
     emailable = True
+    show_filters = True
 
     _domain = None
 
@@ -220,6 +223,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
             'has_report_builder_trial': has_report_builder_trial(self.request),
+            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
         }
         context.update(self.saved_report_context_data)
         context.update(self.pop_report_builder_context_data())
