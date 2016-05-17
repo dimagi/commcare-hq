@@ -1,4 +1,8 @@
-/*global Marionette, Backbone */
+/*global Marionette, Backbone, WebFormSession, translatedStrings */
+
+/**
+ * The primary Marionette application managing menu navigation and launching form entry
+ */
 
 var FormplayerFrontend = new Marionette.Application();
 
@@ -75,8 +79,8 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
             showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
         };
         data.onsubmit = function (resp) {
-            // window.mainView.router.view.dirty = false;
-            // post to receiver
+            //TODO: Old Touchforms gets the "submit-all" action then returns the XML to the frontend
+            // to be submitted (here). Is there any reason FormPlayer shouldn't do the submitting itself?
             var xml = resp.output;
             var postUrl = resp.postUrl;
             $.ajax({
