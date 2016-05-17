@@ -2,6 +2,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
+from couchdbkit import ResourceNotFound
 
 from corehq.apps.consumption.shortcuts import get_default_consumption, set_default_consumption_for_supply_point
 from corehq.apps.products.models import Product
@@ -102,8 +103,8 @@ class LocationImporter(object):
         data = dict(location_data)
 
         provided_code = data.pop('site_code', None)
-
         parent_site_code = data.pop('parent_site_code', None)
+        location_id = data.pop('location_id', None)
 
         if not parent_child_map:
             parent_child_map = parent_child(self.domain)
@@ -126,16 +127,32 @@ class LocationImporter(object):
         parent = parent_id
         if provided_code:
             existing = Location.by_site_code(self.domain, provided_code)
-            if existing:
-                if existing.location_type != location_type:
+        if location_id:
+            try:
+                # overwrite previous existing location since location_id takes precedence over side_code
+                existing = Location.get(location_id)
+            except ResourceNotFound:
+                return {
+                    'id': location_id,
+                    'message': _('Unable to find location for location_id {}').format(location_id),
+                }
+            else:
+                if existing.domain != self.domain:
                     return {
-                        'id': None,
-                        'message': _("Existing location type error, type of {0} is not {1}").format(
-                            existing.name, location_type
-                        )
+                        'id': location_id,
+                        'message': _('Invalid location_id {}').format(location_id),
                     }
 
-                parent = parent_id or existing.parent_id
+        if existing:
+            if existing.location_type != location_type:
+                return {
+                    'id': None,
+                    'message': _("Existing location type error, type of {0} is not {1}").format(
+                        existing.name, location_type
+                    )
+                }
+
+            parent = parent_id or existing.parent_id
 
         form_data['site_code'] = provided_code
 

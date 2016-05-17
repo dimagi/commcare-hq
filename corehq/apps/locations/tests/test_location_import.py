@@ -1,3 +1,4 @@
+from couchdbkit import ResourceNotFound
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.domain.shortcuts import create_domain
@@ -19,8 +20,13 @@ class LocationImportTest(CommTrackTest):
     def setUp(self):
         super(LocationImportTest, self).setUp()
         # set up a couple locations that make tests a little more DRY
+        self.wrong_domain = create_domain('wrong-domain')
         self.test_state = make_loc('sillyparentstate', type='state')
         self.test_village = make_loc('sillyparentvillage', type='village')
+
+    def tearDown(self):
+        super(LocationImportTest, self).tearDown()
+        self.wrong_domain.delete()
 
     def names_of_locs(self):
         return [loc.name for loc in Location.by_domain(self.domain.name)]
@@ -48,6 +54,70 @@ class LocationImportTest(CommTrackTest):
         self.assertTrue(data['name'] in self.names_of_locs())
         new_loc = Location.get(result['id'])
         self.assertEqual(new_loc.parent_id, self.test_state._id)
+
+    def test_import_with_location_id(self):
+        """
+        When updating with location_id and site_code, location_id should
+        take precedence in uniqueness over site_code.
+        """
+        data = {
+            'name': 'importedloc',
+            'site_code': 'man',
+        }
+
+        result = import_location(self.domain.name, 'state', data)
+
+        new_loc = Location.get(result['id'])
+        data = {
+            'location_id': new_loc._id,
+            'name': 'updatedLoc',
+            'site_code': 'woman',
+        }
+
+        result = import_location(self.domain.name, 'state', data)
+        updated_loc = Location.get(result['id'])
+        self.assertEqual(updated_loc._id, new_loc._id)
+        self.assertEqual(updated_loc.name, 'updatedLoc')
+        self.assertEqual(updated_loc.site_code, 'woman')
+
+    def test_import_with_missing_location_id(self):
+        """
+        When importing with a missing location id, import_location should not
+        create a new location
+        """
+        data = {
+            'location_id': 'i-am-missing',
+            'name': 'importedloc',
+        }
+        result = import_location(self.domain.name, 'state', data)
+
+        self.assertEqual(result['id'], 'i-am-missing')
+        with self.assertRaises(ResourceNotFound):
+            Location.get(result['id'])
+
+    def test_import_with_location_id_and_wrong_domain(self):
+        """
+        When updating with location_id and the wrong domain, the location
+        should not be updated.
+        """
+        data = {
+            'name': 'importedloc',
+            'site_code': 'alice',
+        }
+        result = import_location(self.domain.name, 'state', data)
+
+        new_loc = Location.get(result['id'])
+        data = {
+            'location_id': new_loc._id,
+            'name': 'updatedLoc',
+            'site_code': 'bob',
+        }
+
+        result = import_location(self.wrong_domain.name, 'state', data)
+        updated_loc = Location.get(result['id'])
+        self.assertEqual(updated_loc._id, new_loc._id)
+        self.assertEqual(updated_loc.name, 'importedLoc')
+        self.assertEqual(updated_loc.site_code, 'alice')
 
     def test_id_of_invalid_parent_type(self):
         # state can't have outlet as child
