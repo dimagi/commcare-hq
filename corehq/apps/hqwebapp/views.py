@@ -60,6 +60,7 @@ from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
 from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
+from corehq.apps.hqadmin import service_checks as checks
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
@@ -73,84 +74,9 @@ from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
 
 
-def pg_check():
-    """check django db"""
-    try:
-        a_user = User.objects.all()[:1].get()
-    except:
-        a_user = None
-    return (a_user is not None, None)
-
-
-def couch_check():
-    """Confirm CouchDB is up and running, by hitting an arbitrary view."""
-    try:
-        results = Application.view('app_manager/builds_by_date', limit=1).all()
-    except Exception:
-        return False, None
-    else:
-        return isinstance(results, list), None
-
-
 def is_deploy_in_progress():
     cache = get_redis_default_cache()
     return cache.get(DEPLOY_IN_PROGRESS_FLAG) is not None
-
-
-def celery_check():
-    try:
-        from celery import Celery
-        from django.conf import settings
-        app = Celery()
-        app.config_from_object(settings)
-        i = app.control.inspect()
-        ping = i.ping()
-        if not ping:
-            chk = (False, 'No running Celery workers were found.')
-        else:
-            chk = (True, None)
-    except IOError as e:
-        chk = (False, "Error connecting to the backend: " + str(e))
-    except ImportError as e:
-        chk = (False, str(e))
-
-    return chk
-
-
-def hb_check():
-    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
-    if celery_monitoring:
-        try:
-            cresource = Resource(celery_monitoring, timeout=3)
-            t = cresource.get("api/workers", params_dict={'status': True}).body_string()
-            all_workers = json.loads(t)
-            bad_workers = []
-            for hostname, status in all_workers.items():
-                if not status:
-                    bad_workers.append('* {} celery worker down'.format(hostname))
-            if bad_workers:
-                return (False, '\n'.join(bad_workers))
-            else:
-                hb = heartbeat.is_alive()
-        except Exception:
-            hb = False
-    else:
-        try:
-            hb = heartbeat.is_alive()
-        except Exception:
-            hb = False
-    return (hb, None)
-
-
-def redis_check():
-    try:
-        redis = cache.caches['redis']
-        result = redis.set('serverup_check_key', 'test')
-    except (InvalidCacheBackendError, ValueError):
-        result = True  # redis not in use, ignore
-    except:
-        result = False
-    return (result, None)
 
 
 def server_error(request, template_name='500.html'):
@@ -288,27 +214,27 @@ def server_up(req):
         "heartbeat": {
             "always_check": False,
             "message": "* celery heartbeat is down",
-            "check_func": hb_check
+            "check_func": checks.hb_check
         },
         "celery": {
             "always_check": True,
             "message": "* celery is down",
-            "check_func": celery_check
+            "check_func": checks.celery_check
         },
         "postgres": {
             "always_check": True,
             "message": "* postgres has issues",
-            "check_func": pg_check
+            "check_func": checks.pg_check
         },
         "couch": {
             "always_check": True,
             "message": "* couch has issues",
-            "check_func": couch_check
+            "check_func": checks.couch_check
         },
         "redis": {
             "always_check": True,
             "message": "* redis has issues",
-            "check_func": redis_check
+            "check_func": checks.redis_check
         },
     }
 

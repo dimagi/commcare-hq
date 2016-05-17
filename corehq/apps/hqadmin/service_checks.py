@@ -110,6 +110,81 @@ def check_blobdb():
     return ServiceStatus(False, "Failed to save a file to the blobdb")
 
 
+def celery_check():
+    try:
+        from celery import Celery
+        from django.conf import settings
+        app = Celery()
+        app.config_from_object(settings)
+        i = app.control.inspect()
+        ping = i.ping()
+        if not ping:
+            chk = (False, 'No running Celery workers were found.')
+        else:
+            chk = (True, None)
+    except IOError as e:
+        chk = (False, "Error connecting to the backend: " + str(e))
+    except ImportError as e:
+        chk = (False, str(e))
+
+    return chk
+
+
+def hb_check():
+    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
+    if celery_monitoring:
+        try:
+            cresource = Resource(celery_monitoring, timeout=3)
+            t = cresource.get("api/workers", params_dict={'status': True}).body_string()
+            all_workers = json.loads(t)
+            bad_workers = []
+            for hostname, status in all_workers.items():
+                if not status:
+                    bad_workers.append('* {} celery worker down'.format(hostname))
+            if bad_workers:
+                return (False, '\n'.join(bad_workers))
+            else:
+                hb = heartbeat.is_alive()
+        except Exception:
+            hb = False
+    else:
+        try:
+            hb = heartbeat.is_alive()
+        except Exception:
+            hb = False
+    return (hb, None)
+
+
+def redis_check():
+    try:
+        redis = cache.caches['redis']
+        result = redis.set('serverup_check_key', 'test')
+    except (InvalidCacheBackendError, ValueError):
+        result = True  # redis not in use, ignore
+    except:
+        result = False
+    return (result, None)
+
+
+def pg_check():
+    """check django db"""
+    try:
+        a_user = User.objects.all()[:1].get()
+    except:
+        a_user = None
+    return (a_user is not None, None)
+
+
+def couch_check():
+    """Confirm CouchDB is up and running, by hitting an arbitrary view."""
+    try:
+        results = Application.view('app_manager/builds_by_date', limit=1).all()
+    except Exception:
+        return False, None
+    else:
+        return isinstance(results, list), None
+
+
 checks = (
     check_pillowtop,
     check_kafka,
