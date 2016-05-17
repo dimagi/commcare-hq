@@ -70,13 +70,13 @@
             <h1>Incoming Forms <small>This should update in real time.</small></h1>
             <div>
                 <div class="chart-wrapper">
-                    <h3>By Domain</h3>
+                    {% if not tvmode %}<h3>By Domain</h3>{% endif %}
                     <div id="chart">
                         <svg style='height:500px'></svg>
                     </div>
                 </div>
                 <div class="map-wrapper">
-                    <h3>By Country</h3>
+                    {% if not tvmode %}<h3>By Country</h3>{% endif %}
                     <div id="map"></div>
                 </div>
             </div>
