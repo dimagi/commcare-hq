@@ -116,7 +116,7 @@ class LocationImportTest(CommTrackTest):
         result = import_location(self.wrong_domain.name, 'state', data)
         updated_loc = Location.get(result['id'])
         self.assertEqual(updated_loc._id, new_loc._id)
-        self.assertEqual(updated_loc.name, 'importedLoc')
+        self.assertEqual(updated_loc.name, 'importedloc')
         self.assertEqual(updated_loc.site_code, 'alice')
 
     def test_id_of_invalid_parent_type(self):
