@@ -2520,7 +2520,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if action.case_type == case_type:
                 updates.update(format_key(*item)
                                for item in action.case_properties.iteritems())
-        if self.source:
+        if self.schedule and self.schedule.enabled and self.source:
             xform = self.wrapped_xform()
             self.add_stuff_to_xform(xform)
             scheduler_updates = xform.get_scheduler_case_updates()[case_type]
