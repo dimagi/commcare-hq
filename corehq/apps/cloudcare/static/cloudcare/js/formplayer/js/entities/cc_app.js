@@ -4,7 +4,7 @@
  * Backbone model and functions for listing and selecting CommCare apps
  */
 
-FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
+FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone) {
     Entities.AppModel = Backbone.Model.extend({
         urlRoot: "appSelects",
         idAttribute: "_id",

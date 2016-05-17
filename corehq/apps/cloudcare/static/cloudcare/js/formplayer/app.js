@@ -74,7 +74,8 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
         data.onLoading = tfLoading;
         data.onLoadingComplete = tfLoadingComplete;
         data.xform_url = "/webforms/player_proxy";
-        data.domain = "test"
+        //TODO yeah
+        data.domain = "test";
         data.onerror = function (resp) {
             showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
         };
@@ -107,7 +108,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
                     // TODO change submit button text to something other than
                     // "Submitting..." and prevent "All changes saved!" message
                     // banner at top of the form.
-                }
+                },
             });
         };
         var sess = new WebFormSession(data);

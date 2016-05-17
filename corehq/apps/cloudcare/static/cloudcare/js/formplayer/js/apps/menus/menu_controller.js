@@ -20,7 +20,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                     widthHints: menuResponse.widthHints,
                     action: menuResponse.action,
                     pageCount: menuResponse.pageCount,
-                    currentPage: menuResponse.currentPage
+                    currentPage: menuResponse.currentPage,
                 };
                 if (menuResponse.type === "commands") {
                     menuListView = new MenuList.MenuListView(menuData);

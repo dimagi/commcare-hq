@@ -30,7 +30,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri, appId) : "",
             };
-        }
+        },
     });
 
     MenuList.MenuListView = Marionette.CompositeView.extend({
