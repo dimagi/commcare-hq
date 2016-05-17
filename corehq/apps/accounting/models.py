@@ -137,13 +137,11 @@ class SoftwarePlanEdition(object):
         (RESELLER, RESELLER),
         (MANAGED_HOSTING, MANAGED_HOSTING),
     )
-    ORDER = [
+    SELF_SERVICE_ORDER = [
         COMMUNITY,
         STANDARD,
         PRO,
         ADVANCED,
-        RESELLER,
-        MANAGED_HOSTING,
     ]
 
 
@@ -762,7 +760,7 @@ class DefaultProductPlan(models.Model):
     @classmethod
     def get_lowest_edition_by_domain(cls, domain, requested_privileges,
                                      return_plan=False):
-        for edition in SoftwarePlanEdition.ORDER:
+        for edition in SoftwarePlanEdition.SELF_SERVICE_ORDER:
             plan_version = cls.get_default_plan_by_domain(
                 domain, edition=edition
             )
