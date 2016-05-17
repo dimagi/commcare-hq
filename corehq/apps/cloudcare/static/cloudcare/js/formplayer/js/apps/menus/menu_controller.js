@@ -10,17 +10,18 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
              Determine the next screen to display.  Could be
              a list of commands (modules and/or forms)
              a list of entities (cases) and their details
-             a form to trigger form entry with
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
                 var menuListView;
-                var menuData = {collection: menuResponse,
+                var menuData = {
+                    collection: menuResponse,
                     title: menuResponse.title,
                     headers: menuResponse.headers,
                     widthHints: menuResponse.widthHints,
                     action: menuResponse.action,
                     pageCount: menuResponse.pageCount,
-                    currentPage: menuResponse.currentPage};
+                    currentPage: menuResponse.currentPage
+                };
                 if (menuResponse.type === "commands") {
                     menuListView = new MenuList.MenuListView(menuData);
                     FormplayerFrontend.regions.main.show(menuListView.render());
@@ -54,14 +55,14 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 collection: detailCollection,
             });
 
-            var selectCase = function(){
+            var selectCase = function () {
                 FormplayerFrontend.trigger("menu:select", model._index, model.options.model.collection.appId);
             };
 
-            $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
-            $('#select-case').click(function (){
+            $('#select-case').click(function () {
                 selectCase();
             });
+            $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
             $('#case-detail-modal').modal('toggle');
         },
     };

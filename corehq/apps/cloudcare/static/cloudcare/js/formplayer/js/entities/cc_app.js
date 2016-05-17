@@ -1,7 +1,7 @@
 /*global FormplayerFrontend */
 
 /**
- * Backbone model and functions for managing CommCare apps
+ * Backbone model and functions for listing and selecting CommCare apps
  */
 
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {

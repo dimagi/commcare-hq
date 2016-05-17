@@ -1,5 +1,9 @@
 /*global FormplayerFrontend */
 
+/**
+ * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
+ */
+
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
 
     Entities.MenuSelect = Backbone.Model.extend({});
