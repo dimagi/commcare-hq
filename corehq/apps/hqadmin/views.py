@@ -67,7 +67,6 @@ from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_co
 from . import service_checks, escheck
 from .forms import AuthenticateAsForm, BrokenBuildsForm
 from .history import get_recent_changes, download_changes
-from .management.commands.check_services import service_tests
 from .models import HqDeploy
 from .multimech import GlobalConfig
 from .reporting.reports import get_project_spaces, get_stats_data
@@ -268,14 +267,17 @@ def system_ajax(request):
 def check_services(request):
 
     def run_test(test):
-        result = test()
-        return "{} {}: {}<br/>".format(
-            "SUCCESS" if result.success else "FAILURE",
-            test.__name__,
-            result.msg,
-        )
+        try:
+            result = test()
+        except Exception as e:
+            status = "EXCEPTION"
+            msg = repr(e)
+        else:
+            status = "SUCCESS" if result.success else "FAILURE"
+            msg = result.msg
+        return "{} {}: {}<br/>".format(status, test.__name__, msg)
 
-    return HttpResponse("<pre>" + "".join(map(run_test, service_tests)) + "</pre>")
+    return HttpResponse("<pre>" + "".join(map(run_test, service_checks.checks)) + "</pre>")
 
 
 class SystemInfoView(BaseAdminSectionView):
