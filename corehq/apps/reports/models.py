@@ -228,7 +228,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         kwargs = {}
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
-            pass
 
         if report_slug is not None:
             key = ["name slug", domain, owner_id, report_slug]
