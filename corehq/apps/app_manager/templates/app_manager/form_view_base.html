@@ -256,6 +256,7 @@
         name: 'comment',
         id:'comment-id',
         value: '{{ form.comment|escapejs }}',
+        placeholder: '{% trans "Enter form description here"|escapejs %}',
         url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
         saveValueName: 'comment',
     "></inline-edit>

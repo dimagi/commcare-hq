@@ -1,6 +1,7 @@
 from django import template
 from django.utils import html
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
 
 import re
 
@@ -75,25 +76,28 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
             postSave: {},
         "></inline-edit>
     '''.format(url, saveValueName, readOnlyClass, postSave)
-    return _input_trans(template, name, langs=langs)
+    return _input_trans(template, name, langs=langs, allow_blank=False)
 
 
 # template may have replacements for lang, placeholder, and value
-def _input_trans(template, name, langs=None):
+def _input_trans(template, name, langs=None, allow_blank=True):
     if langs is None:
         langs = ["default"]
+    placeholder = _("Untitled")
+    if 'en' in name and (allow_blank or name['en'] != ''):
+        placeholder = name['en']
     options = {
         'value': '',
-        'placeholder': name['en'] if 'en' in name else "Untitled",
+        'placeholder': placeholder,
         'lang': '',
     }
     for lang in langs:
         if lang in name:
             if langs and lang == langs[0]:
                 options['value'] = name[lang]
-                options['placeholder'] = ''
+                options['placeholder'] = '' if allow_blank else placeholder
             else:
-                options['placeholder'] = name[lang]
+                options['placeholder'] = name[lang] if (allow_blank or name[lang] != '') else placeholder
                 options['lang'] = lang
             break
     options = {key: re.sub(r"'", "\\'", value) for (key, value) in options.iteritems()}

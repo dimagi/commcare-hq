@@ -137,7 +137,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                     ></span>\
                 <!-- /ko -->\
                 <span class="text" data-bind="text: value, css: readOnlyClass"></span>\
-                <span class="placeholder" data-bind="text: placeholder, css: readOnlyClass, visible: !value()"></span>\
+                <span class="placeholder text-muted" data-bind="text: placeholder, css: readOnlyClass, visible: !value()"></span>\
             </div>\
             <div class="read-write form-inline" data-bind="visible: isEditing()">\
                 <div class="form-group langcode-container">\
