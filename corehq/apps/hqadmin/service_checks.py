@@ -3,30 +3,29 @@ A collection of functions which test the most basic operations of various servic
 """
 from collections import namedtuple
 import json
-import time
 from StringIO import StringIO
 
 from django.core import cache
 from django.conf import settings
+from django.contrib.auth.models import User
 from restkit import Resource
 from soil import heartbeat
 
+from corehq.apps.app_manager.models import Application
+from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.blobs import get_blob_db
-from .tasks import dummy_task
 
 ServiceStatus = namedtuple("ServiceStatus", "success msg")
 
 
 def check_redis():
     if 'redis' in settings.CACHES:
+        import redis
         rc = cache.caches['redis']
-        try:
-            import redis
-            redis_api = redis.StrictRedis.from_url('%s' % rc._server)
-            info_dict = redis_api.info()
-            return ServiceStatus(True, "Used Memory: %s" % info_dict['used_memory_human'])
-        except Exception, ex:
-            return ServiceStatus(False, "Redis connection error: %s" % ex)
+        redis_api = redis.StrictRedis.from_url('%s' % rc._server)
+        memory = redis_api.info()['used_memory_human']
+        result = rc.set('serverup_check_key', 'test')
+        return ServiceStatus(result, "Redis is up and using {} memory".format(memory))
     else:
         return ServiceStatus(False, "Redis is not configured on this system!")
 
@@ -49,40 +48,16 @@ def check_rabbitmq():
         return ServiceStatus(False, "RabbitMQ Not configured")
 
 
-def check_heartbeat():
-    is_alive = heartbeat.is_alive()
-    return ServiceStatus(is_alive, "OK" if is_alive else "DOWN")
-
-
 def check_pillowtop():
     return ServiceStatus(False, "Not implemented")
 
 
 def check_kafka():
-    return ServiceStatus(False, "Not implemented")
-
-
-def check_redis():
-    return ServiceStatus(False, "Not implemented")
-
-
-def check_postgres():
-    return ServiceStatus(False, "Not implemented")
-
-
-def check_couch():
-    return ServiceStatus(False, "Not implemented")
-
-
-def check_celery():
-    res = dummy_task.delay()
-    for _ in range(5):
-        time.sleep(1)
-        if res.ready():
-            assert res.result == "expected return value"
-            msg = "Celery completed task with status '{}'".format(res.status)
-            return ServiceStatus(res.successful(), msg)
-    return ServiceStatus(False, "Celery didn't complete task in allotted time")
+    # TODO mute kafka info
+    client = get_kafka_client_or_none()
+    if not client:
+        return ServiceStatus(False, "Could not connect to Kafka")
+    return ServiceStatus(True, "Kafka's fine. Probably.")
 
 
 def check_touchforms():
@@ -110,79 +85,48 @@ def check_blobdb():
     return ServiceStatus(False, "Failed to save a file to the blobdb")
 
 
-def celery_check():
-    try:
-        from celery import Celery
-        from django.conf import settings
-        app = Celery()
-        app.config_from_object(settings)
-        i = app.control.inspect()
-        ping = i.ping()
-        if not ping:
-            chk = (False, 'No running Celery workers were found.')
-        else:
-            chk = (True, None)
-    except IOError as e:
-        chk = (False, "Error connecting to the backend: " + str(e))
-    except ImportError as e:
-        chk = (False, str(e))
-
-    return chk
+def check_celery():
+    from celery import Celery
+    from django.conf import settings
+    celery = Celery()
+    celery.config_from_object(settings)
+    worker_responses = celery.control.ping(timeout=10)
+    if not worker_responses:
+        return ServiceStatus(False, 'No running Celery workers were found.')
+    else:
+        msg = 'Successfully pinged {} workers'.format(len(worker_responses))
+        return ServiceStatus(True, msg)
 
 
-def hb_check():
+def check_heartbeat():
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     if celery_monitoring:
-        try:
-            cresource = Resource(celery_monitoring, timeout=3)
-            t = cresource.get("api/workers", params_dict={'status': True}).body_string()
-            all_workers = json.loads(t)
-            bad_workers = []
-            for hostname, status in all_workers.items():
-                if not status:
-                    bad_workers.append('* {} celery worker down'.format(hostname))
-            if bad_workers:
-                return (False, '\n'.join(bad_workers))
-            else:
-                hb = heartbeat.is_alive()
-        except Exception:
-            hb = False
-    else:
-        try:
-            hb = heartbeat.is_alive()
-        except Exception:
-            hb = False
-    return (hb, None)
+        cresource = Resource(celery_monitoring, timeout=3)
+        t = cresource.get("api/workers", params_dict={'status': True}).body_string()
+        all_workers = json.loads(t)
+        bad_workers = []
+        for hostname, status in all_workers.items():
+            if not status:
+                bad_workers.append('* {} celery worker down'.format(hostname))
+        if bad_workers:
+            return ServiceStatus(False, '\n'.join(bad_workers))
+
+    is_alive = heartbeat.is_alive()
+    return ServiceStatus(is_alive, "OK" if is_alive else "DOWN")
 
 
-def redis_check():
-    try:
-        redis = cache.caches['redis']
-        result = redis.set('serverup_check_key', 'test')
-    except (InvalidCacheBackendError, ValueError):
-        result = True  # redis not in use, ignore
-    except:
-        result = False
-    return (result, None)
+def check_postgres():
+    a_user = User.objects.first()
+    if a_user is None:
+        return ServiceStatus(False, "No users found in postgres")
+    return ServiceStatus(True, "Successfully got a user from postgres")
 
 
-def pg_check():
-    """check django db"""
-    try:
-        a_user = User.objects.all()[:1].get()
-    except:
-        a_user = None
-    return (a_user is not None, None)
-
-
-def couch_check():
+def check_couch():
     """Confirm CouchDB is up and running, by hitting an arbitrary view."""
-    try:
-        results = Application.view('app_manager/builds_by_date', limit=1).all()
-    except Exception:
-        return False, None
-    else:
-        return isinstance(results, list), None
+    results = Application.view('app_manager/builds_by_date', limit=1).all()
+    assert isinstance(results, list), "Couch didn't return a list of builds"
+    return ServiceStatus(True, "Successfully queried an arbitrary couch view")
 
 
 checks = (
@@ -192,6 +136,7 @@ checks = (
     check_postgres,
     check_couch,
     check_celery,
+    check_heartbeat,
     check_touchforms,
     check_elasticsearch,
     check_shared_dir,

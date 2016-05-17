@@ -16,7 +16,6 @@ from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
-from django.core.cache import InvalidCacheBackendError
 from django.core.mail.message import EmailMessage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
@@ -35,23 +34,19 @@ from django.views.generic import TemplateView
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
-from restkit import Resource
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
-from soil import heartbeat, DownloadBase
+from soil import DownloadBase
 from soil import views as soil_views
 
 from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
@@ -59,8 +54,8 @@ from corehq.apps.dropbox.decorators import require_dropbox_session
 from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
-from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.hqadmin import service_checks as checks
+from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
@@ -68,6 +63,8 @@ from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
@@ -213,28 +210,23 @@ def server_up(req):
     checkers = {
         "heartbeat": {
             "always_check": False,
-            "message": "* celery heartbeat is down",
-            "check_func": checks.hb_check
+            "check_func": checks.check_heartbeat,
         },
         "celery": {
             "always_check": True,
-            "message": "* celery is down",
-            "check_func": checks.celery_check
+            "check_func": checks.check_celery,
         },
         "postgres": {
             "always_check": True,
-            "message": "* postgres has issues",
-            "check_func": checks.pg_check
+            "check_func": checks.check_postgres,
         },
         "couch": {
             "always_check": True,
-            "message": "* couch has issues",
-            "check_func": checks.couch_check
+            "check_func": checks.check_couch,
         },
         "redis": {
             "always_check": True,
-            "message": "* redis has issues",
-            "check_func": checks.redis_check
+            "check_func": checks.check_redis,
         },
     }
 
@@ -242,13 +234,15 @@ def server_up(req):
     message = ['Problems with HQ (%s):' % os.uname()[1]]
     for check, check_info in checkers.items():
         if check_info['always_check'] or req.GET.get(check, None) is not None:
-            check_results, custom_msg = check_info['check_func']()
-            if not check_results:
+            try:
+                status = check_info['check_func']()
+            except Exception as e:
+                # Don't display the exception message
+                status = checks.ServiceStatus(False, "{} has issues".format(check))
+            if not status.success:
                 failed = True
-                if custom_msg:
-                    message.append(custom_msg)
-                else:
-                    message.append(check_info['message'])
+                message.append(status.msg)
+
     if failed and not is_deploy_in_progress():
         create_datadog_event(
             'Serverup check failed', '\n'.join(message),
