@@ -73,10 +73,6 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
         data.domain = "test"
         data.onerror = function (resp) {
             showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
-            //cloudCare.dispatch.trigger("form:error", form, caseModel);
-        };
-        data.onload = function (adapter, resp) {
-            //cloudCare.dispatch.trigger("form:ready", form, caseModel);
         };
         data.onsubmit = function (resp) {
             // window.mainView.router.view.dirty = false;
