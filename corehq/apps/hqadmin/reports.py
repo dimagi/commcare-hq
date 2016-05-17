@@ -1115,6 +1115,7 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.reports.filters.devicelog.DeviceLogDomainFilter',
+        'corehq.apps.reports.filters.devicelog.DeviceLogCommCareVersionFilter',
     ]
     emailable = False
     default_rows = 10
@@ -1128,6 +1129,11 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
     def selected_domain(self):
         selected_domain = self.request.GET.get('domain', None)
         return selected_domain if selected_domain != u'' else None
+
+    @property
+    def selected_commcare_version(self):
+        commcare_version = self.request.GET.get('commcare_version', None)
+        return commcare_version if commcare_version != u'' else None
 
     @property
     def headers(self):
@@ -1151,6 +1157,9 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
 
         if self.selected_domain is not None:
             logs = logs.filter(domain__exact=self.selected_domain)
+
+        if self.selected_commcare_version is not None:
+            logs = logs.filter(app_version__contains='"{}"'.format(self.selected_commcare_version))
 
         return logs
 

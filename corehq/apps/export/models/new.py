@@ -24,6 +24,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.global_request import get_request
+from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
@@ -99,6 +100,8 @@ class ExportItem(DocumentSchema):
                 return GeopointItem.wrap(data)
             elif doc_type == 'CaseIndexItem':
                 return CaseIndexItem.wrap(data)
+            elif doc_type == 'MultiMediaItem':
+                return MultiMediaItem.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export item', doc_type)
         else:
@@ -135,11 +138,13 @@ class ExportColumn(DocumentSchema):
     # A transforms that deidentifies the value
     deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
 
-    def get_value(self, doc, base_path, transform_dates=False, row_index=None, split_column=False):
+    def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, split_column=False):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
         when base_path is non empty, doc is a repeat group from a form submission.
+        :param domain: Domain that the document belongs to
+        :param doc_id: The form submission or case id
         :param doc: A form submission or instance of a repeat group in a submission or case
         :param base_path: The PathNode list to the column
         :param transform_dates: If set to True, will convert dates to be compatible with Excel
@@ -187,6 +192,8 @@ class ExportColumn(DocumentSchema):
 
         if isinstance(item, GeopointItem):
             column = SplitGPSExportColumn(**constructor_args)
+        elif isinstance(item, MultiMediaItem):
+            column = MultiMediaExportColumn(**constructor_args)
         elif isinstance(item, MultipleChoiceItem):
             column = SplitExportColumn(**constructor_args)
         elif isinstance(item, CaseIndexItem):
@@ -250,6 +257,8 @@ class ExportColumn(DocumentSchema):
                 return SplitUserDefinedExportColumn.wrap(data)
             elif doc_type == 'SplitGPSExportColumn':
                 return SplitGPSExportColumn.wrap(data)
+            elif doc_type == 'MultiMediaExportColumn':
+                return MultiMediaExportColumn.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for export column', doc_type)
         else:
@@ -301,6 +310,13 @@ class TableConfiguration(DocumentSchema):
         :return: List of ExportRows
         """
         sub_documents = self._get_sub_documents(document, row_number)
+
+        domain = document.get('domain')
+        document_id = document.get('_id')
+
+        assert domain is not None, 'Form or Case must be associated with domain'
+        assert document_id is not None, 'Form or Case must have an id'
+
         rows = []
         for doc_row in sub_documents:
             doc, row_index = doc_row.doc, doc_row.row
@@ -308,6 +324,8 @@ class TableConfiguration(DocumentSchema):
             row_data = []
             for col in self.selected_columns:
                 val = col.get_value(
+                    domain,
+                    document_id,
                     doc,
                     self.path,
                     row_index=row_index,
@@ -722,6 +740,12 @@ class GeopointItem(ExportItem):
     """
 
 
+class MultiMediaItem(ExportItem):
+    """
+    An item that references multimedia
+    """
+
+
 class Option(DocumentSchema):
     """
     This object represents a multiple choice question option.
@@ -789,10 +813,6 @@ class ExportDataSchema(Document):
 
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
     last_app_versions = DictProperty()
-    datatype_mapping = defaultdict(lambda: ScalarItem, {
-        'MSelect': MultipleChoiceItem,
-        'Geopoint': GeopointItem,
-    })
 
     class Meta:
         app_label = 'export'
@@ -861,6 +881,13 @@ class FormExportDataSchema(ExportDataSchema):
 
     app_id = StringProperty()
     xmlns = StringProperty()
+    datatype_mapping = defaultdict(lambda: ScalarItem, {
+        'MSelect': MultipleChoiceItem,
+        'Geopoint': GeopointItem,
+        'Image': MultiMediaItem,
+        'Audio': MultiMediaItem,
+        'Video': MultiMediaItem,
+    })
 
     @property
     def type(self):
@@ -918,7 +945,10 @@ class FormExportDataSchema(ExportDataSchema):
     @staticmethod
     def _generate_schema_from_xform(xform, case_updates, langs, app_id, app_version):
         questions = xform.get_questions(langs)
-        repeats = [r['value'] for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat']
+        repeats = [
+            r['value']
+            for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat'
+        ]
         schema = FormExportDataSchema()
         question_keyfn = lambda q: q['repeat']
 
@@ -1238,7 +1268,7 @@ class SplitUserDefinedExportColumn(ExportColumn):
     )
     user_defined_options = ListProperty()
 
-    def get_value(self, doc, base_path, transform_dates=False, **kwargs):
+    def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, **kwargs):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
@@ -1246,6 +1276,8 @@ class SplitUserDefinedExportColumn(ExportColumn):
         doc is a form submission or instance of a repeat group in a submission or case
         """
         value = super(SplitUserDefinedExportColumn, self).get_value(
+            domain,
+            doc_id,
             doc,
             base_path,
             transform_dates=transform_dates
@@ -1285,6 +1317,29 @@ class SplitUserDefinedExportColumn(ExportColumn):
         return headers
 
 
+class MultiMediaExportColumn(ExportColumn):
+    """
+    A column that will take a multimedia file and transform it to the absolute download URL.
+    If transform_dates is set to True it will render the link with Excel formatting
+    in order to make the link clickable.
+    """
+
+    def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, **kwargs):
+        value = super(MultiMediaExportColumn, self).get_value(domain, doc_id, doc, base_path, **kwargs)
+
+        if not value:
+            return value
+
+        download_url = u'{url}?attachment={attachment}'.format(
+            url=absolute_reverse('download_attachment', args=(domain, doc_id)),
+            attachment=value,
+        )
+        if transform_dates:
+            download_url = u'=HYPERLINK("{}")'.format(download_url)
+
+        return download_url
+
+
 class SplitGPSExportColumn(ExportColumn):
     item = SchemaProperty(GeopointItem)
 
@@ -1300,8 +1355,14 @@ class SplitGPSExportColumn(ExportColumn):
         ]
         return map(lambda header_template: header_template.format(header), header_templates)
 
-    def get_value(self, doc, base_path, row_index=None, split_column=False, transform_dates=False):
-        value = super(SplitGPSExportColumn, self).get_value(doc, base_path, transform_dates=transform_dates)
+    def get_value(self, domain, doc_id, doc, base_path, split_column=False, **kwargs):
+        value = super(SplitGPSExportColumn, self).get_value(
+            domain,
+            doc_id,
+            doc,
+            base_path,
+            **kwargs
+        )
         if not split_column:
             return value
         values = [None] * 4
@@ -1335,14 +1396,14 @@ class SplitExportColumn(ExportColumn):
     item = SchemaProperty(MultipleChoiceItem)
     ignore_unspecified_options = BooleanProperty(default=False)
 
-    def get_value(self, doc, base_path, row_index=None, split_column=False, transform_dates=False):
+    def get_value(self, domain, doc_id, doc, base_path, split_column=False, **kwargs):
         """
         Get the value of self.item of the given doc.
         When base_path is [], doc is a form submission or case,
         when base_path is non empty, doc is a repeat group from a form submission.
         doc is a form submission or instance of a repeat group in a submission or case
         """
-        value = super(SplitExportColumn, self).get_value(doc, base_path, transform_dates=transform_dates)
+        value = super(SplitExportColumn, self).get_value(domain, doc_id, doc, base_path, **kwargs)
         if not split_column:
             return value
 
@@ -1389,7 +1450,7 @@ class RowNumberColumn(ExportColumn):
             headers += ["{}__{}".format(self.label, i) for i in range(self.repeat + 1)]
         return headers
 
-    def get_value(self, doc, base_path, transform_dates=False, row_index=None, **kwargs):
+    def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, **kwargs):
         assert row_index, 'There must be a row_index for number column'
         return (
             [".".join([unicode(i) for i in row_index])]
@@ -1402,7 +1463,7 @@ class RowNumberColumn(ExportColumn):
 
 class CaseIndexExportColumn(ExportColumn):
 
-    def get_value(self, doc, **kwargs):
+    def get_value(self, domain, doc_id, doc, **kwargs):
         path = [self.item.path[0].name]  # Index columns always are just a reference to 'indices'
         case_type = self.item.case_type
 
@@ -1447,10 +1508,8 @@ class StockExportColumn(ExportColumn):
                 section=section
             )
 
-    def get_value(self, doc, base_path, **kwargs):
-        case_id = doc.get('_id')
-
-        states = self.accessor.get_ledger_values_for_case(case_id)
+    def get_value(self, domain, doc_id, doc, base_path, **kwargs):
+        states = self.accessor.get_ledger_values_for_case(doc_id)
 
         # use a list to make sure the stock states end up
         # in the same order as the headers

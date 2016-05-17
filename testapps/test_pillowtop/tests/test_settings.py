@@ -5,9 +5,11 @@ import json
 from corehq.util.test_utils import TestFileMixin
 from pillowtop.listener import AliasedElasticPillow, BasicPillow
 from pillowtop.utils import get_all_pillow_configs
+from testapps.test_pillowtop.utils import real_pillow_settings
 
 
 @override_settings(DEBUG=True)
+@real_pillow_settings()
 class PillowtopSettingsTest(TestCase, TestFileMixin):
     dependent_apps = [
         'pillowtop',
@@ -18,17 +20,6 @@ class PillowtopSettingsTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
     maxDiff = None
-
-    @classmethod
-    def setUpClass(cls):
-        cls._PILLOWTOPS = settings.PILLOWTOPS
-        if not settings.PILLOWTOPS:
-            # assumes HqTestSuiteRunner, which blanks this out and saves a copy here
-            settings.PILLOWTOPS = settings._PILLOWTOPS
-
-    @classmethod
-    def tearDownClass(cls):
-        settings.PILLOWTOPS = cls._PILLOWTOPS
 
     def test_instantiate_all(self):
         all_pillow_configs = list(get_all_pillow_configs())

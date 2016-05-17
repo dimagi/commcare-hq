@@ -2,8 +2,6 @@ from decimal import Decimal
 import random
 import datetime
 
-from django.core.exceptions import ObjectDoesNotExist
-
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -124,7 +122,7 @@ class TestInvoice(BaseInvoiceTestCase):
         """
         domain = generator.arbitrary_domain()
         tasks.generate_invoices()
-        self.assertRaises(ObjectDoesNotExist,
+        self.assertRaises(Invoice.DoesNotExist,
                           lambda: Invoice.objects.get(subscription__subscriber__domain=domain.name))
         domain.delete()
 

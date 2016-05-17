@@ -1,4 +1,7 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
+
+import sys
+
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
 from pillowtop.const import CHECKPOINT_MIN_WAIT
@@ -85,7 +88,7 @@ class PillowBase(object):
                 if change:
                     try:
                         context.changes_seen += 1
-                        self.processor(change, context)
+                        self.process_with_error_handling(change)
                     except Exception as e:
                         notify_exception(None, u'processor error in pillow {} {}'.format(
                             self.get_name(), e,
@@ -98,8 +101,14 @@ class PillowBase(object):
         except PillowtopCheckpointReset:
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
+    def process_with_error_handling(self, change):
+        try:
+            self.process_change(change)
+        except Exception, ex:
+            handle_pillow_error(self, change, ex)
+
     @abstractmethod
-    def processor(self, change, context):
+    def process_change(self, change, is_retry_attempt=False):
         pass
 
     @abstractmethod
@@ -152,9 +161,32 @@ class ConstructedPillow(PillowBase):
     def get_change_feed(self):
         return self._change_feed
 
-    def processor(self, change, do_set_checkpoint=True):
-        self._processor.process_change(self, change, do_set_checkpoint)
+    def process_change(self, change, is_retry_attempt=False):
+        self._processor.process_change(self, change)
 
     def fire_change_processed_event(self, change, context):
         if self._change_processed_event_handler is not None:
             self._change_processed_event_handler.fire_change_processed(change, context)
+
+
+def handle_pillow_error(pillow, change, exception):
+    from couchdbkit import ResourceNotFound
+    from pillow_retry.models import PillowError
+    meta = None
+    if hasattr(pillow, 'get_couch_db'):
+        try:
+            meta = pillow.get_couch_db().show('domain_shows/domain_date', change['id'])
+        except ResourceNotFound:
+            pass
+
+    error = PillowError.get_or_create(change, pillow, change_meta=meta)
+    error.add_attempt(exception, sys.exc_info()[2])
+    error.save()
+    pillow_logging.exception(
+        "[%s] Error on change: %s, %s. Logged as: %s" % (
+            pillow.get_name(),
+            change['id'],
+            exception,
+            error.id
+        )
+    )

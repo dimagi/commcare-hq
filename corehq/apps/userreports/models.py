@@ -39,6 +39,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
+from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
@@ -542,6 +543,25 @@ class StaticReportConfiguration(JsonObject):
                              'not be found.'))
 
     @classmethod
+    def by_ids(cls, config_ids):
+        config_ids = set(config_ids)
+        found_config_ids = set()
+        all_configs = cls.all()
+        return_configs = []
+        for ds in all_configs:
+            if ds.get_id in config_ids:
+                return_configs.append(ds)
+                found_config_ids.add(ds.get_id)
+        missing_ids = config_ids - found_config_ids
+        if missing_ids:
+            raise ReportConfigurationNotFoundError(_(
+                "The following report configurations could not be found: {}".format(
+                    ", ".join(missing_ids)
+                )
+            ))
+        return return_configs
+
+    @classmethod
     def report_class_by_domain_and_id(cls, domain, config_id):
         for wrapped in cls._all():
             if cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report) == config_id:
@@ -575,18 +595,52 @@ def _id_is_static(data_source_id):
     return data_source_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
 
 
-def get_report_config(config_id, domain):
-    is_static = any(
+def _config_id_is_static(config_id):
+    """
+    Return True if the given report configuration id refers to a static report
+    configuration.
+    """
+    return any(
         config_id.startswith(prefix)
         for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
     )
-    if is_static:
-        config = StaticReportConfiguration.by_id(config_id)
-        if not config or config.domain != domain:
+
+
+def get_report_configs(config_ids, domain):
+    """
+    Return a list of ReportConfigurations.
+    config_ids may be ReportConfiguration or StaticReportConfiguration ids.
+    """
+
+    static_report_config_ids = []
+    dynamic_report_config_ids = []
+    for config_id in config_ids:
+        if _config_id_is_static(config_id):
+            static_report_config_ids.append(config_id)
+        else:
+            dynamic_report_config_ids.append(config_id)
+    static_report_configs = StaticReportConfiguration.by_ids(static_report_config_ids)
+    for config in static_report_configs:
+        if config.domain != domain:
             raise ReportConfigurationNotFoundError
-    else:
-        try:
-            config = get_document_or_not_found(ReportConfiguration, domain, config_id)
-        except DocumentNotFound:
+
+    dynamic_report_configs = [
+        ReportConfiguration.wrap(doc) for doc in
+        get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
+    ]
+    if len(dynamic_report_configs) != len(dynamic_report_config_ids):
+        raise ReportConfigurationNotFoundError
+    for config in dynamic_report_configs:
+        if config.domain != domain:
             raise ReportConfigurationNotFoundError
-    return config, is_static
+
+    return dynamic_report_configs + static_report_configs
+
+
+def get_report_config(config_id, domain):
+    """
+    Return a ReportConfiguration, and if it is static or not.
+    config_id may be a ReportConfiguration or StaticReportConfiguration id
+    """
+    config = get_report_configs([config_id], domain)[0]
+    return config, _config_id_is_static(config_id)

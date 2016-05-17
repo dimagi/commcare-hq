@@ -2478,14 +2478,15 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_tag=action.case_tag
             ))
 
-        form_filter_references_case = (
-            xpath_references_case(self.form_filter) or
-            xpath_references_user_case(self.form_filter)
-        )
+        if self.form_filter:
+            form_filter_references_case = (
+                xpath_references_case(self.form_filter) or
+                xpath_references_user_case(self.form_filter)
+            )
 
-        if form_filter_references_case:
-            if not any(action for action in self.actions.load_update_cases if not action.auto_select):
-                errors.append({'type': "filtering without case"})
+            if form_filter_references_case:
+                if not any(action for action in self.actions.load_update_cases if not action.auto_select):
+                    errors.append({'type': "filtering without case"})
 
         def generate_paths():
             for action in self.actions.get_all_actions():
@@ -3626,11 +3627,10 @@ class ReportAppConfig(DocumentSchema):
 
         return super(ReportAppConfig, cls).wrap(doc)
 
-    @property
-    def report(self):
-        from corehq.apps.userreports.models import ReportConfiguration
+    def report(self, domain):
         if self._report is None:
-            self._report = ReportConfiguration.get(self.report_id)
+            from corehq.apps.userreports.models import get_report_config
+            self._report = get_report_config(self.report_id, domain)[0]
         return self._report
 
 
@@ -3648,11 +3648,8 @@ class ReportModule(ModuleBase):
     @property
     @memoized
     def reports(self):
-        from corehq.apps.userreports.models import ReportConfiguration
-        return [
-            ReportConfiguration.wrap(doc) for doc in
-            get_docs(ReportConfiguration.get_db(), [r.report_id for r in self.report_configs])
-        ]
+        from corehq.apps.userreports.models import get_report_configs
+        return get_report_configs([r.report_id for r in self.report_configs], self.get_app().domain)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -5428,8 +5425,9 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         source = source.export_json()
         source = json.loads(source)
     else:
+        cls = str_to_cls[app_id_or_source['doc_type']]
         # Don't modify original app source
-        app = Application.wrap(deepcopy(app_id_or_source))
+        app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']

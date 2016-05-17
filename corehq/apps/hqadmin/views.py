@@ -58,6 +58,7 @@ from corehq.apps.hqadmin.escheck import (
     check_case_es_index,
     check_reportxform_es_index
 )
+from corehq.apps.hqadmin.management.commands.check_services import service_tests
 from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health
 from corehq.apps.hqadmin.reporting.reports import (
     get_project_spaces,
@@ -67,7 +68,6 @@ from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.blobs import get_blob_db
 from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
 from dimagi.utils.couch.database import get_db, is_bigcouch
@@ -270,17 +270,11 @@ def system_ajax(request):
 
 
 @require_superuser_or_developer
-def test_blobdb(request):
-    """Save something to the blobdb and try reading it back."""
-    db = get_blob_db()
-    contents = "It takes Pluto 248 Earth years to complete one orbit!"
-    info = db.put(StringIO(contents))
-    with db.get(info.identifier) as fh:
-        res = fh.read()
-    db.delete(info.identifier)
-    if res == contents:
-        return HttpResponse("Successfully saved a file to the blobdb")
-    return HttpResponse("Did not successfully save a file to the blobdb")
+def check_services(request):
+    return HttpResponse("".join(
+        "{}: {}<br/>".format(service_test.__name__, service_test().msg)
+        for service_test in service_tests
+    ))
 
 
 class SystemInfoView(BaseAdminSectionView):
@@ -866,9 +860,6 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         if 'domain' not in self.request.GET:
             return {}
 
-        context = {
-            'domains': []
-        }
         domain = self.request.GET.get('domain', None)
         if domain:
             domains = [domain]
@@ -892,28 +883,38 @@ class CallcenterUCRCheck(BaseAdminSectionView):
 
         domains_to_cases = results.aggregations.domain.buckets_dict
 
+        context = {
+            'data': [],
+            'domain': domain
+        }
         for domain in domains:
-            adapters = get_sql_adapters_for_domain(domain)
-            context['domains'].append({
+            domain_context = {
                 'name': domain,
-                'stats': [
+                'stats': []
+            }
+            context['data'].append(domain_context)
+            try:
+                adapters = get_sql_adapters_for_domain(domain)
+                domain_cases = domains_to_cases.get(domain, 0)
+                domain_context['stats'] = [
                     {
                         'name': 'forms',
                         'ucr': adapters.forms.get_query_object().count(),
-                        'es': domains_to_forms[domain]
+                        'es': domains_to_forms.get(domain, 0)
                     },
                     {
                         'name': 'cases',
                         'ucr': adapters.cases.get_query_object().count(),
-                        'es': domains_to_cases[domain].doc_count
+                        'es': domain_cases.doc_count if domain_cases else 0
                     },
                     {
                         'name': 'case_actions',
                         'ucr': adapters.case_actions.get_query_object().count(),
-                        'es': domains_to_cases[domain].actions.doc_count
+                        'es': domain_cases.actions.doc_count if domain_cases else 0
                     }
                 ]
-            })
+            except Exception as e:
+                domain_context['error'] = str(e)
 
         scale = [
             (40, 'warning'),
@@ -921,16 +922,22 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         ]
 
         stat_names = ['es', 'ucr']
-        for info in context['domains']:
+        for info in context['data']:
             for stat in info['stats']:
                 total = sum([stat[name] for name in stat_names])
                 stat['total'] = total
                 stat['es_class'] = 'info'
                 stat['ucr_class'] = 'success'
+                percent = None
                 for name in stat_names:
-                    percent = int(100 * stat[name] / total)
+                    percent = 0 if total == 0 else int(100 * stat[name] / total)
                     stat[name + '_percent'] = percent
                     for range in scale:
                         if percent <= range[0]:
                             stat[name + '_class'] = range[1]
+
+                if 5 >= percent or percent >= 95:
+                    stat['es_class'] = 'danger'
+                    stat['ucr_class'] = 'danger'
+
         return context

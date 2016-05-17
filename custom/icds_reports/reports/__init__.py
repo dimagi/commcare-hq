@@ -54,11 +54,13 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
 
     def get_report_context(self, data_provider):
         context = dict(
+            has_sections=data_provider.has_sections,
             report_table=dict(
                 title=data_provider.title,
                 slug=data_provider.slug,
                 headers=data_provider.headers,
                 rows=data_provider.rows,
+                subtitle=data_provider.subtitle,
                 default_rows=self.default_rows,
                 start_at_row=0
             )
@@ -67,10 +69,23 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
 
     @property
     def export_table(self):
-        reports = [r['report_table'] for r in self.report_context['reports']]
-        return [self._export_table(r['title'], r['headers'], r['rows']) for r in reports]
+        reports = []
+        for report in self.report_context['reports']:
+            if report['has_sections']:
+                for section in report['report_table']['rows']:
+                    reports.append(self._export_table(section['title'], [], section['headers'], section['rows']))
+            else:
+                reports.append(
+                    self._export_table(
+                        report['report_table']['title'],
+                        report['report_table']['subtitle'],
+                        report['report_table']['headers'],
+                        report['report_table']['rows'])
+                )
 
-    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        return reports
+
+    def _export_table(self, export_sheet_name, subtitle, headers, formatted_rows, total_row=None):
         def _unformat_row(row):
             return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
         if headers:
@@ -91,5 +106,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         table.extend(rows)
         if total_row:
             table.append(_unformat_row(total_row))
-
+        for sub in reversed(subtitle):
+            table.insert(0, [sub])
+        table.insert(0, [export_sheet_name])
         return [export_sheet_name, table]

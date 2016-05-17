@@ -6,6 +6,7 @@
 {% load compress %}
 
 {% block js-inline %}{{ block.super }}
+{% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
 <script>
 $(function() {
     $("#saved-reports").reportConfigList({

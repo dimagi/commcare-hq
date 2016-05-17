@@ -158,7 +158,7 @@ def update_hq(path, branch, base_branch, vellum_dir, vellum_rev, push, target):
         when updating master. To get past this you can run:
 
         git checkout vellum-staging
-        git rebase -X theirs -i origin/master
+        git rebase -X theirs -i origin/master # this will rebase one commit
         get push -f
         """
 

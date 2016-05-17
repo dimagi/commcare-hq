@@ -127,7 +127,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.setup_location()
         from copy import deepcopy
         updated_user_spec = deepcopy(self.user_specs[0])
-        updated_user_spec["location-sms-code"] = self.state_code
+        updated_user_spec["location_code"] = self.state_code
 
         bulk_upload_async(
             self.domain.name,
