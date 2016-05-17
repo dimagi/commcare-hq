@@ -1131,6 +1131,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
+        "unsub_link": get_url_base() + reverse('unsubscribe', kwargs={'user_id': owner_id}),
         "report_type": _("once off report") if once else _("scheduled report"),
     }), excel_attachments
 
