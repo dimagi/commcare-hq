@@ -46,7 +46,7 @@ from corehq.apps.reports.exportfilters import (
 )
 from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
-from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.quickcache import quickcache
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
@@ -228,7 +228,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         kwargs = {}
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
-            pass
 
         if report_slug is not None:
             key = ["name slug", domain, owner_id, report_slug]
@@ -389,8 +388,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @memoized
     def url(self):
         try:
-            from corehq.apps.userreports.reports.view import ConfigurableReport
-
             if self.is_configurable_report:
                 url_base = absolute_reverse(self.report_slug, args=[self.domain, self.subreport_slug])
             else:
