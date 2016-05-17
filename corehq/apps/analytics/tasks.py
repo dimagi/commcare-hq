@@ -255,7 +255,14 @@ def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
 
 @analytics_task()
 def track_clicked_signup_on_hubspot(email, cookies, meta):
-    lifecycle = {'lifecyclestage': 'subscriber'}
+    data = {'lifecyclestage': 'subscriber'}
+    number = deterministic_random(email + 'a_b_test_variable_newsletter')
+    if number < 0.33:
+        data['a_b_test_variable_newsletter'] = 'A'
+    elif number < 0.67:
+        data['a_b_test_variable_newsletter'] = 'B'
+    else:
+        data['a_b_test_variable_newsletter'] = 'C'
     if email:
         _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, extra_fields=lifecycle, email=email)
 
