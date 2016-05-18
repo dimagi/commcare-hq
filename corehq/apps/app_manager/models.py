@@ -4824,10 +4824,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if should_save:
                 self.save()
 
-    def create_app_strings(self, lang):
+    def create_app_strings(self, lang, build_profile_id=None):
         gen = app_strings.CHOICES[self.translation_strategy]
         if lang == 'default':
-            return gen.create_default_app_strings(self)
+            return gen.create_default_app_strings(self, build_profile_id)
         else:
             return gen.create_app_strings(self, lang)
 
@@ -4890,6 +4890,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
+        locale = self.langs[0] if not build_profile_id else self.build_profiles[build_profile_id].langs[0]
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -4900,7 +4901,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'uniqueid': self.copy_of or self.id,
             'name': self.name,
             'descriptor': u"Profile File",
-            'build_profile_id': build_profile_id
+            'build_profile_id': build_profile_id,
+            'locale': locale
         }).encode('utf-8')
 
     @property
@@ -4944,7 +4946,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         langs_for_build = self.get_build_langs(build_profile_id)
         for lang in ['default'] + langs_for_build:
-            files["{prefix}{lang}/app_strings.txt".format(prefix=prefix, lang=lang)] = self.create_app_strings(lang)
+            files["{prefix}{lang}/app_strings.txt".format(prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
         for form_stuff in self.get_forms(bare=False):
             filename = prefix + self.get_form_filename(**form_stuff)
             form = form_stuff['form']
