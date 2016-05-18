@@ -1463,7 +1463,7 @@ class RowNumberColumn(ExportColumn):
 
 class CaseIndexExportColumn(ExportColumn):
 
-    def get_value(self, domain, doc_id, doc, **kwargs):
+    def get_value(self, domain, doc_id, doc, base_path, **kwargs):
         path = [self.item.path[0].name]  # Index columns always are just a reference to 'indices'
         case_type = self.item.case_type
 
