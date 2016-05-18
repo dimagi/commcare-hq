@@ -1,5 +1,12 @@
 {% load i18n %}
 <div data-bind="saveButton: saveButton"></div>
+{% if app.is_remote_app %}
+<div class="alert alert-danger" data-bind="visible: app_profiles().length > 1">
+{% blocktrans %}
+    Remote applications only support one build profile. Please remove all but one profile before saving.
+{% endblocktrans %}
+</div>
+{% endif %}
 <table class="table">
     <thead>
         <tr class="row form-group">

@@ -26,7 +26,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
                     });
                 });
                 self.saveButton.ajax({
-                    url: 'profiles/',
+                    url: 'profiles/', // this should resolve to LanguageProfilesView
                     type: 'post',
                     data: JSON.stringify({'profiles': postProfiles}),
                     error: function() {
