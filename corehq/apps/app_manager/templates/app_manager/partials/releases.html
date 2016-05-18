@@ -13,6 +13,7 @@
     });
     $(function () {
         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+        var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
         // init releases
         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
         var urls = {
@@ -31,7 +32,6 @@
             newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
             revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
-            update_build_comment: '{% url "update_build_comment" domain app.id %}',
             hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
             download_zip: '{% url "download_ccz" app.domain '___' %}',
             download_multimedia: '{% url "download_multimedia_zip" app.domain '___' %}',
@@ -48,6 +48,12 @@
         var releasesMain = new ReleasesMain(o);
         _.defer(function(){ releasesMain.getMoreSavedApps(false); });
         el.koApplyBindings(releasesMain);
+
+        var app_langs = {{ app.langs|JSON }};
+        var app_profiles = {{ app.build_profiles|JSON }}
+
+        var profileManager = new ProfileManager(app_profiles, app_langs);
+        $('#profiles-tab').koApplyBindings(profileManager);
     });
 
     analytics.workflow('Visited the Release Manager');
@@ -61,31 +67,41 @@
     });
 </script>
 
-<div id="releases-table" class="hide" data-bind="css: {hide: false}">
-    <div class="alert alert-danger hide" data-bind="visible: brokenBuilds, css: {hide: false}">
-        <p>
-            <i class="fa fa-exclamation-circle"></i>
-            {% blocktrans %}
-                One or more of your versions is broken, please make sure it is
-                not marked as released. Make a new version if needed, and update
-                any live deployments as soon as possible. 
-            {% endblocktrans %}
-        </p>
-        <p><small>
-            {% blocktrans %}
-                All new versions should work, so if problems persist, please
-                report the issue.
-            {% endblocktrans %}
-        </small></p>
-    </div>
-    <button class="btn btn-primary" data-bind="
-        click: function() {
-            analytics.workflow('Clicked Make New Version');
-            return makeNewBuild();
-        },
-        attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
-        css: {disabled: !buildButtonEnabled()}
-    ">{% trans 'Make New Version' %}</button>
+{% if build_profile_access %}
+<div class="tabbable">
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
+        <li><a href="#profiles-tab" data-toggle="tab">{% trans "Build Profiles" %}</a></li>
+    </ul>
+    <div class="spacer"></div>
+    <div class="tab-content">
+        <div id="versions-tab" class="tab-pane active">
+{% endif %}
+            <div id="releases-table" class="hide" data-bind="css: {hide: false}">
+                <div class="alert alert-danger hide" data-bind="visible: brokenBuilds, css: {hide: false}">
+                    <p>
+                        <i class="fa fa-exclamation-circle"></i>
+                        {% blocktrans %}
+                            One or more of your versions is broken, please make sure it is
+                            not marked as released. Make a new version if needed, and update
+                            any live deployments as soon as possible.
+                        {% endblocktrans %}
+                    </p>
+                    <p><small>
+                        {% blocktrans %}
+                            All new versions should work, so if problems persist, please
+                            report the issue.
+                        {% endblocktrans %}
+                    </small></p>
+                </div>
+                <button class="btn btn-primary" data-bind="
+                    click: function() {
+                        analytics.workflow('Clicked Make New Version');
+                        return makeNewBuild();
+                    },
+                    attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
+                    css: {disabled: !buildButtonEnabled()}
+                ">{% trans 'Make New Version' %}</button>
 
     <div id="build-errors-wrapper"></div>
     <table class="table">
@@ -182,46 +198,16 @@
                     ">{% trans "Revert" %}</button>
                 </td>
                 <td>
-                    <div class="hide" data-bind="visible: !editing_comment(), css: {hide: false}">
-                        <b class="hide"
-                           data-bind="visible: comment_user_name, text: comment_user_name, css: {hide: false}">
-                        </b>
-                        <span data-bind="text: build_comment"></span>
-                        <b class="hide" data-bind="visible: !build_comment(), css: {hide: false}">
-                            {% trans "(No Comment)" %}
-                        </b>
-                        <a class="edit-comment-pencil" href="#"
-                           data-bind="click: function () {editing_comment(true);}">
-                            <i class="fa fa-pencil"></i>
-                        </a>
-                    </div>
-                    <div class="hide" data-bind="visible: editing_comment(), css: {hide: false}">
-                        <form class="form-inline" data-bind="submit: submit_new_comment">
-                            <div class="form-group">
-                            <input type="text" class="form-control" data-bind="value: new_comment"></input>
-                            <a href="#" class="hide" data-bind="
-                                click: submit_new_comment,
-                                visible: !pending_comment_update(),
-                                css: {hide: false}
-                            ">
-                                <span class="fa fa-check"></span>
-                            </a>
-                            <a href="#" class="hide" data-bind="
-                                click: function () {editing_comment(false);},
-                                visible: !pending_comment_update(),
-                                css: {hide: false}
-                            ">
-                                <i class="fa fa-remove"></i>
-                            </a>
-                            </div>
-                        </form>
-                        <span class="hide" data-bind="visible: pending_comment_update(), css: {hide: false}">
-                            <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
-                        </span>
-                    </div>
-                    <div data-bind="visible: comment_update_error(), css: {hide: false}" class="alert alert-danger hide">
-                        {% trans "Error updating comment.  Please try again" %}
-                    </div>
+                    <b data-bind="text: comment_user_name"></b>
+                    <inline-edit params="
+                        value: build_comment,
+                        rows: 1,
+                        placeholder: '{% trans "(No Comment)"|escapejs %}',
+                        url: '{% url "update_build_comment" domain app.id %}',
+                        saveParams: {'build_id': id},
+                        saveValueName: 'comment',
+                        errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
+                    "></inline-edit>
                     {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
                         <h6>
                             {% blocktrans %}
@@ -335,7 +321,15 @@
     <script type="text/html" id="deploy-build-modal-template">
         {% include 'app_manager/partials/releases_deploy_modal.html' %}
     </script>
+            </div>
+{% if build_profile_access %}
+        </div>
+        <div id="profiles-tab" class="tab-pane">
+            {% include 'app_manager/partials/build_profiles.html' %}
+        </div>
+     </div>
 </div>
+{% endif %}
 
 <!-- Async Download Modals -->
 {% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' %}
