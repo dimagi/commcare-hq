@@ -2,13 +2,14 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import (
-    LedgerV2ChangeProvider, DjangoModelChangeProvider, _ledger_v1_to_change
+    LedgerV2ChangeProvider, _ledger_v1_to_change
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
