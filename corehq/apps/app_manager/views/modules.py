@@ -12,6 +12,7 @@ from django.contrib import messages
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 
 from dimagi.utils.logging import notify_exception
 
@@ -196,16 +197,20 @@ def _get_report_module_context(app, module):
     all_reports = ReportConfiguration.by_domain(app.domain) + \
                   StaticReportConfiguration.by_domain(app.domain)
     warnings = []
-    validity = module.check_report_validity()
+    try:
+        validity = module.check_report_validity()
 
-    # We're now proactively deleting these references, so after that's been
-    # out for a while, this can be removed (say June 2016 or later)
-    if not validity.is_valid:
-        module.report_configs = validity.valid_report_configs
-        warnings.append(
-            gettext_lazy('Your app contains references to reports that are '
-                         'deleted. These will be removed on save.')
-        )
+        # We're now proactively deleting these references, so after that's been
+        # out for a while, this can be removed (say June 2016 or later)
+        if not validity.is_valid:
+            module.report_configs = validity.valid_report_configs
+            warnings.append(
+                gettext_lazy('Your app contains references to reports that are '
+                             'deleted. These will be removed on save.')
+            )
+    except ReportConfigurationNotFoundError as e:
+        pass
+
     return {
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],
