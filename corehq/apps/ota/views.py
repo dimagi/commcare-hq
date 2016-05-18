@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
 from casexml.apps.case.cleanup import claim_case
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
@@ -67,6 +68,7 @@ def search(request, domain):
     return HttpResponse(fixtures, content_type="text/xml")
 
 
+@csrf_exempt
 @json_error
 @login_or_digest_or_basic_or_apikey()
 def claim(request, domain):
