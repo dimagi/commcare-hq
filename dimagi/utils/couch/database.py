@@ -4,6 +4,7 @@ from dimagi.ext.couchdbkit import Document
 from django.conf import settings
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
+from requests.exceptions import RequestException
 from time import sleep
 
 
@@ -76,7 +77,7 @@ def iter_docs_with_retry(database, ids, chunksize=100, max_attempts=5, **query_p
             try:
                 result = get_docs(database, keys=doc_ids, **query_params)
                 break
-            except Exception:
+            except RequestException:
                 if i == (max_attempts - 1):
                     raise
                 sleep(30)
@@ -93,7 +94,7 @@ def iter_bulk_delete(database, ids, chunksize=100, doc_callback=None, wait_time=
             try:
                 doc_dicts = get_docs(database, keys=doc_ids)
                 break
-            except Exception:
+            except RequestException:
                 if i == (max_fetch_attempts - 1):
                     raise
                 sleep(30)
