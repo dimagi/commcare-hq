@@ -1,4 +1,4 @@
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, FORM
 from corehq.apps.change_feed.topics import FORM_SQL
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -69,13 +69,14 @@ def get_unknown_users_pillow(pillow_id='unknown-users-pillow'):
         pillow_id,
     )
     processor = UnknownUsersProcessor()
+    change_feed = KafkaChangeFeed(topics=[FORM, FORM_SQL], group_id='unknown-users')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[FORM, FORM_SQL], group_id='unknown-users'),
+        change_feed=change_feed,
         processor=processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 
@@ -95,13 +96,14 @@ def get_user_pillow(pillow_id='UserPillow'):
         elasticsearch=get_es_new(),
         index_info=USER_INDEX_INFO,
     )
+    change_feed = KafkaChangeFeed(topics=[COMMCARE_USER, WEB_USER], group_id='users-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[COMMCARE_USER, WEB_USER], group_id='users-to-es'),
+        change_feed=change_feed,
         processor=domain_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 
