@@ -63,7 +63,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
             };
 
             self.beforeUnload = function() {
-                return "You have unsaved changes.";
+                return gettext("You have unsaved changes.");
             };
 
             // Save to server
