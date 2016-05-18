@@ -461,6 +461,7 @@ def get_case_and_action_counts_for_domains(domains):
         .run()
 
     domains_to_cases = results.aggregations.domain.buckets_dict
+
     def _domain_stats(domain_name):
         cases = domains_to_cases.get(domain_name, None)
         return {
