@@ -22,6 +22,14 @@ from . import filters
 
 class DomainES(HQESQuery):
     index = 'domains'
+    default_filters = {
+        'not_snapshot': filters.NOT(filters.term('is_snapshot', True)),
+    }
+
+    def only_snapshots(self):
+        """Normally snapshots are excluded, instead, return only snapshots"""
+        return (self.remove_default_filter('not_snapshot')
+                .filter(filters.term('is_snapshot', True)))
 
     @property
     def builtin_filters(self):
@@ -88,6 +96,7 @@ def is_active(is_active=True):
 
 
 def is_snapshot(is_snapshot=True):
+    # TODO remove
     return filters.term('is_snapshot', is_snapshot)
 
 
