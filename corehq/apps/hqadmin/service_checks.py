@@ -2,8 +2,11 @@
 A collection of functions which test the most basic operations of various services.
 """
 from collections import namedtuple
+import datetime
 import json
+import logging
 from StringIO import StringIO
+import time
 
 from django.core import cache
 from django.conf import settings
@@ -13,7 +16,10 @@ from soil import heartbeat
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
+from corehq.apps.es import GroupES
 from corehq.blobs import get_blob_db
+from corehq.elastic import send_to_elasticsearch
+from corehq.util.decorators import change_log_level
 
 ServiceStatus = namedtuple("ServiceStatus", "success msg")
 
@@ -52,8 +58,8 @@ def check_pillowtop():
     return ServiceStatus(False, "Not implemented")
 
 
+@change_log_level('kafka.client', logging.WARNING)
 def check_kafka():
-    # TODO mute kafka info
     client = get_kafka_client_or_none()
     if not client:
         return ServiceStatus(False, "Could not connect to Kafka")
@@ -64,8 +70,17 @@ def check_touchforms():
     return ServiceStatus(False, "Not implemented")
 
 
+@change_log_level('urllib3.connectionpool', logging.WARNING)
 def check_elasticsearch():
-    return ServiceStatus(False, "Not implemented")
+    doc = {'_id': 'elasticsearch-service-check',
+           'date': datetime.datetime.now().isoformat()}
+    send_to_elasticsearch('groups', doc)
+    time.sleep(1)
+    hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
+    send_to_elasticsearch('groups', doc, delete=True)  # clean up
+    if doc in hits:
+        return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
+    return ServiceStatus(False, "Something went wrong sending a doc to ES")
 
 
 def check_shared_dir():
