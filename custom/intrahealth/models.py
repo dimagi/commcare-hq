@@ -3,7 +3,7 @@ from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
 from couchforms.models import XFormInstance
 from fluff.filters import ORFilter, ANDFilter, CustomFilter
-from corehq.apps.users.models import CommCareCase
+from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import INTRAHEALTH_DOMAINS, report_calcs, OPERATEUR_XMLNSES, get_real_date, \
     get_location_id, get_location_id_by_type, COMMANDE_XMLNSES, get_products, IsExistFormPropertyFilter,\
