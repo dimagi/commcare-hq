@@ -1477,7 +1477,7 @@ class Subscription(models.Model):
 
             billing_contact_emails = self.account.billingcontactinfo.email_list
             if not billing_contact_emails:
-                raise SubscriptionReminderError(
+                log_accounting_error(
                     "Billing account %d doesn't have any contact emails" % self.account.id
                 )
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}

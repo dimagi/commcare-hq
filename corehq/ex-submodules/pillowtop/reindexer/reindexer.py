@@ -1,7 +1,6 @@
 from corehq.elastic import get_es_new
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
-from pillowtop.pillow.interface import PillowRuntimeContext
 
 
 class PillowReindexer(object):
@@ -20,9 +19,8 @@ class PillowReindexer(object):
         pass
 
     def reindex(self, start_from=None):
-        reindexer_context = PillowRuntimeContext(do_set_checkpoint=False)
         for change in self.change_provider.iter_all_changes(start_from=start_from):
-            self.pillow.processor(change, reindexer_context)
+            self.pillow.process_change(change)
 
 
 class ElasticPillowReindexer(PillowReindexer):

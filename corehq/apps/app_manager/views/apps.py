@@ -365,16 +365,6 @@ def import_app(request, domain, template="app_manager/import_app.html"):
 @require_deploy_apps
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
-    # redirect old m=&f= urls
-    module_id = request.GET.get('m', None)
-    form_id = request.GET.get('f', None)
-    if module_id or form_id:
-        soft_assert('{}@{}'.format('skelly', 'dimagi.com')).call(
-            False, 'old m=&f= url still in use'
-        )
-        return back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                            form_id=form_id)
-
     return view_generic(request, domain, app_id)
 
 

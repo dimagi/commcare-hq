@@ -69,7 +69,9 @@
                     var el = $($element),
                         caretPosition = el.caret();
                     el.val(el.val().replace(/ /g,'_'));
-                    el.caret(caretPosition);
+                    if(el.is(':focus')) {
+                        el.caret(caretPosition);
+                    }
                     return true;
                 }
             }

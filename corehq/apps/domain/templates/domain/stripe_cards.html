@@ -4,42 +4,7 @@
 <fieldset style="margin-top: 20px;">
     <legend>{% trans 'Saved Credit Cards' %}</legend>
     <table class='table table-striped'>
-        <tbody>
-            <!-- ko foreach: cards -->
-                <tr>
-                    <td>
-                        <i class="fa fa-credit-card"></i> <strong><span data-bind="text: brand"></span></strong>
-                        <span class="label label-success"
-                              data-bind="visible: is_autopay">
-                            {% trans 'Autopay card' %}
-                        </span>
-                    </td>
-                    <td>
-                        ************<strong><span data-bind="text: last4"></span></strong>
-                    </td>
-                    <td><span data-bind="text: exp_month"></span>/<span data-bind="text: exp_year"></span></td>
-                    <td>
-                        <button data-bind="visible: is_autopay,
-                                           click: unSetAutopay,
-                                           enable: $parent.autoPayButtonEnabled"
-                                class='btn btn-default autopay-button'>
-                            {% trans 'Remove Autopay' %}
-                        </button>
-                        <button data-bind="visible: !is_autopay(),
-                                           click: setAutopay,
-                                           enable: $parent.autoPayButtonEnabled"
-                                class='btn btn-default autopay-button'>
-                            {% trans 'Set as autopay card' %}
-                        </button>
-                    </td>
-                    <td>
-                        <button class="btn btn-danger" href="#" data-bind="openModal: 'delete-card-modal'">
-                            <i class="fa fa-remove"></i> {% trans 'Delete Card' %}
-                        </button>
-                    </td>
-                </tr>
-              <!-- /ko -->
-        </tbody>
+        <tbody data-bind="template: {name: 'card-row', foreach: cards}"></tbody>
     </table>
 </fieldset>
 
@@ -105,4 +70,39 @@
         </div>
     </div>
 </div>
+</script>
+
+<script type="text/html" id="card-row">
+    <tr>
+        <td>
+            <i class="fa fa-credit-card"></i> <strong><span data-bind="text: brand"></span></strong>
+            <span class="label label-success"
+                  data-bind="visible: is_autopay">
+                {% trans 'Autopay card' %}
+            </span>
+        </td>
+        <td>
+            ************<strong><span data-bind="text: last4"></span></strong>
+        </td>
+        <td><span data-bind="text: exp_month"></span>/<span data-bind="text: exp_year"></span></td>
+        <td>
+            <button data-bind="visible: is_autopay,
+                               click: unSetAutopay,
+                               enable: $parent.autoPayButtonEnabled"
+                    class='btn btn-default autopay-button'>
+                {% trans 'Remove Autopay' %}
+            </button>
+            <button data-bind="visible: !is_autopay(),
+                               click: setAutopay,
+                               enable: $parent.autoPayButtonEnabled"
+                    class='btn btn-default autopay-button'>
+                {% trans 'Set as autopay card' %}
+            </button>
+        </td>
+        <td>
+            <button class="btn btn-danger" href="#" data-bind="openModal: 'delete-card-modal'">
+                <i class="fa fa-remove"></i> {% trans 'Delete Card' %}
+            </button>
+        </td>
+    </tr>
 </script>

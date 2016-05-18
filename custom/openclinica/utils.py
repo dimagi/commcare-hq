@@ -9,7 +9,7 @@ from django.conf import settings
 from corehq.apps.app_manager.util import all_apps_by_domain
 from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
-from custom.openclinica.const import MODULE_EVENTS, FORM_QUESTION_ITEM, FORM_EVENTS
+from custom.openclinica.const import MODULE_EVENTS, FORM_QUESTION_ITEM, FORM_EVENTS, STUDY_APPS
 
 
 class OpenClinicaIntegrationError(Exception):
@@ -137,6 +137,8 @@ def get_question_items(domain):
         openclinica_domains = (d for d, m in settings.DOMAIN_MODULE_MAP.iteritems() if m == 'custom.openclinica')
         for domain_ in openclinica_domains:
             for app in all_apps_by_domain(domain_):
+                if app.name not in STUDY_APPS:
+                    continue
                 for ccmodule in app.get_modules():
                     for ccform in ccmodule.get_forms():
                         form = data[ccform.xmlns]

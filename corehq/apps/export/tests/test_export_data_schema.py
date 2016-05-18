@@ -6,8 +6,11 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.export.models.new import MAIN_TABLE, \
     PathNode, _question_path_to_path_nodes
 from dimagi.utils.couch.database import safe_delete
+
+from corehq.util.context_managers import drop_connected_signals
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
+from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
@@ -364,8 +367,9 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             cls.current_app,
             cls.first_build,
         ]
-        for app in cls.apps:
-            app.save()
+        with drop_connected_signals(app_post_save):
+            for app in cls.apps:
+                app.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -440,8 +444,9 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
             cls.current_app,
             cls.first_build,
         ]
-        for app in cls.apps:
-            app.save()
+        with drop_connected_signals(app_post_save):
+            for app in cls.apps:
+                app.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -481,7 +486,8 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         second_build._id = '456'
         second_build.copy_of = app.get_id
         second_build.version = 6
-        second_build.save()
+        with drop_connected_signals(app_post_save):
+            second_build.save()
         self.addCleanup(second_build.delete)
 
         new_schema = CaseExportDataSchema.generate_schema_from_builds(
@@ -508,8 +514,9 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
         cls.apps = [
             cls.current_app,
         ]
-        for app in cls.apps:
-            app.save()
+        with drop_connected_signals(app_post_save):
+            for app in cls.apps:
+                app.save()
 
     @classmethod
     def tearDownClass(cls):

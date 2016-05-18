@@ -1177,7 +1177,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             'phone_number'
         ]
 
-        if is_ops_user:
+        if is_ops_user and self.initial.get('email_list'):
             fields.insert(4, crispy.Div(
                 crispy.Div(
                     css_class='col-sm-3 col-md-2'

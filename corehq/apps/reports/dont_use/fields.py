@@ -6,17 +6,12 @@ from django.template.context import Context
 from django.template.loader import render_to_string
 import pytz
 import warnings
-from corehq.apps.programs.models import Program
-from corehq.apps.groups.models import Group
-from corehq.apps.reports.models import HQUserType
 from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
 import uuid
 from corehq.apps.reports.util import (
     DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER,
     DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER,
 )
-from corehq.apps.users.models import WebUser
 
 
 class ReportField(object):

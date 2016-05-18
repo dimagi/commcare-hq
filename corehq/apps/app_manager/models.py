@@ -2480,14 +2480,15 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_tag=action.case_tag
             ))
 
-        form_filter_references_case = (
-            xpath_references_case(self.form_filter) or
-            xpath_references_user_case(self.form_filter)
-        )
+        if self.form_filter:
+            form_filter_references_case = (
+                xpath_references_case(self.form_filter) or
+                xpath_references_user_case(self.form_filter)
+            )
 
-        if form_filter_references_case:
-            if not any(action for action in self.actions.load_update_cases if not action.auto_select):
-                errors.append({'type': "filtering without case"})
+            if form_filter_references_case:
+                if not any(action for action in self.actions.load_update_cases if not action.auto_select):
+                    errors.append({'type': "filtering without case"})
 
         def generate_paths():
             for action in self.actions.get_all_actions():
@@ -5496,8 +5497,9 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         source = source.export_json()
         source = json.loads(source)
     else:
+        cls = str_to_cls[app_id_or_source['doc_type']]
         # Don't modify original app source
-        app = Application.wrap(deepcopy(app_id_or_source))
+        app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
     try:
         attachments = source['_attachments']
