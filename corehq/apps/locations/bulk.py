@@ -125,11 +125,8 @@ class LocationImporter(object):
 
         existing = None
         parent = parent_id
-        if provided_code:
-            existing = Location.by_site_code(self.domain, provided_code)
         if location_id:
             try:
-                # overwrite previous existing location since location_id takes precedence over side_code
                 existing = Location.get(location_id)
             except ResourceNotFound:
                 return {
@@ -142,6 +139,8 @@ class LocationImporter(object):
                         'id': location_id,
                         'message': _('Invalid location_id {}').format(location_id),
                     }
+        elif provided_code:
+            existing = Location.by_site_code(self.domain, provided_code)
 
         if existing:
             if existing.location_type != location_type:
