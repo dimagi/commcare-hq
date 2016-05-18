@@ -24,15 +24,15 @@ from corehq.util.view_utils import absolute_reverse
 
 
 RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
-SESSION_INSTANCE = 'session'
+SESSION_INSTANCE = 'querysession'
 
 
-class SessionXPath(InstanceXpath):
+class QuerySessionXPath(InstanceXpath):
     id = SESSION_INSTANCE
 
     @property
     def path(self):
-        return '/session/data/{}'.format(self)
+        return 'session/data/{}'.format(self)
 
 
 class SyncRequestContributor(SuiteContributorByModule):
@@ -61,8 +61,8 @@ class SyncRequestContributor(SuiteContributorByModule):
                     data=[
                         QueryData(
                             key='case_id',
-                            ref=SessionXPath('case_id'),
-                            # e.g. instance('session')/session/data/case_id
+                            ref=QuerySessionXPath('case_id').instance(),
+                            # e.g. instance('querysession')/session/data/case_id
                         ),
                     ]
                 ),
