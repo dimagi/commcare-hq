@@ -2521,7 +2521,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if action.case_type == case_type:
                 updates.update(format_key(*item)
                                for item in action.case_properties.iteritems())
-        return updates
+        if self.schedule and self.schedule.enabled and self.source:
+            xform = self.wrapped_xform()
+            self.add_stuff_to_xform(xform)
+            scheduler_updates = xform.get_scheduler_case_updates()[case_type]
+        else:
+            scheduler_updates = set()
+
+        return updates.union(scheduler_updates)
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
