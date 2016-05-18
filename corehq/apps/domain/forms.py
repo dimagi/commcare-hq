@@ -25,7 +25,7 @@ from django.contrib.sites.models import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
-    ImageField)
+    ImageField, IntegerField)
 from django.forms.widgets import  Select
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
@@ -878,6 +878,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text=ugettext_lazy("This app aims to improve the supply of goods and materials")
     )
+    performance_threshold = IntegerField(
+        label=ugettext_noop("Performance Threshold"),
+        required=False,
+        help_text=ugettext_lazy(
+            'The number of forms submitted per month for a user to count as "performing well". '
+            'The default value is 15.'
+        )
+    )
 
     def __init__(self, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -918,6 +926,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'business_unit',
                 'countries',
                 'commtrack_domain',
+                'performance_threshold',
                 crispy.Div(*additional_fields),
             ),
             crispy.Fieldset(
@@ -958,6 +967,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             notes=self.cleaned_data['notes'],
             phone_model=self.cleaned_data['phone_model'],
             commtrack_domain=self.cleaned_data['commtrack_domain'] == 'true',
+            performance_threshold=self.cleaned_data['performance_threshold'],
             business_unit=self.cleaned_data['business_unit'],
             **kwargs
         )
