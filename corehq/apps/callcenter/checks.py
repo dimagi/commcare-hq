@@ -6,7 +6,11 @@ from corehq.apps.reports.analytics.esaccessors import get_case_and_action_counts
 
 DataSourceStats = namedtuple(
     'DataSourceStats',
-    'name, ucr_count, ucr_percent, ucr_css_class, es_count, es_percent, es_css_class'
+    [
+        'name',
+        'ucr_count', 'ucr_percent', 'ucr_css_class',
+        'es_count', 'es_percent', 'es_css_class'
+    ]
 )
 
 
