@@ -840,8 +840,9 @@ class FormBase(DocumentSchema):
             form = self.wrapped_xform()
             form.strip_vellum_ns_attributes()
             try:
-                validate_xform(etree.tostring(form.xml),
-                               version=self.get_app().application_version)
+                if form.xml is not None:
+                    validate_xform(etree.tostring(form.xml),
+                                   version=self.get_app().application_version)
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
