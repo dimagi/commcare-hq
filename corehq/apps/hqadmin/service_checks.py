@@ -12,6 +12,7 @@ from django.core import cache
 from django.conf import settings
 from django.contrib.auth.models import User
 from restkit import Resource
+import requests
 from soil import heartbeat
 
 from corehq.apps.app_manager.models import Application
@@ -67,7 +68,17 @@ def check_kafka():
 
 
 def check_touchforms():
-    return ServiceStatus(False, "Not implemented")
+    try:
+        res = requests.post(settings.XFORMS_PLAYER_URL,
+                            data='{"action": "heartbeat"}',
+                            timeout=5)
+    except requests.exceptions.ConnectTimeout:
+        return ServiceStatus(False, "Could not establish a connection in time")
+    except requests.ConnectionError:
+        return ServiceStatus(False, "Could not connect to touchforms")
+    else:
+        msg = "Touchforms returned a {} status code".format(res.status_code)
+        return ServiceStatus(res.ok, msg)
 
 
 @change_log_level('urllib3.connectionpool', logging.WARNING)
