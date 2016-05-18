@@ -1,14 +1,29 @@
 import functools
+
+from django.utils.translation import ugettext
+
 from corehq.apps.app_manager import id_strings
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.util import is_sort_only_column, module_offers_search
 import langcodes
 import commcare_translations
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
+from corehq.util.translation import localize
+from langcodes import langs_by_code
 
 
 def non_empty_only(dct):
     return dict([(key, value) for key, value in dct.items() if value])
+
+
+def convert_to_two_letter_code(lc):
+    if len(lc) == 2:
+        return lc
+
+    lang = langs_by_code.get(lc)
+    if lang:
+        return lang['two']
+    return lc
 
 
 def _create_custom_app_strings(app, lang, for_default=False):
@@ -30,11 +45,16 @@ def _create_custom_app_strings(app, lang, for_default=False):
     yield 'cchq.case', "Case"
     yield 'cchq.referral', "Referral"
 
-    # include language code names and current language
-    for lc in app.langs:
-        name = langcodes.get_name(lc) or lc
-        if name:
+    if for_default:
+        # include language code names and current language
+        for lc in app.langs:
+            name = langcodes.get_name(lc) or lc
+            if not name:
+                continue
+            with localize(convert_to_two_letter_code(lc)):
+                name = ugettext(name)
             yield lc, name
+
     yield id_strings.current_language(), lang
 
     for module in app.get_modules():
