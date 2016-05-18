@@ -2478,14 +2478,15 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 case_tag=action.case_tag
             ))
 
-        form_filter_references_case = (
-            xpath_references_case(self.form_filter) or
-            xpath_references_user_case(self.form_filter)
-        )
+        if self.form_filter:
+            form_filter_references_case = (
+                xpath_references_case(self.form_filter) or
+                xpath_references_user_case(self.form_filter)
+            )
 
-        if form_filter_references_case:
-            if not any(action for action in self.actions.load_update_cases if not action.auto_select):
-                errors.append({'type': "filtering without case"})
+            if form_filter_references_case:
+                if not any(action for action in self.actions.load_update_cases if not action.auto_select):
+                    errors.append({'type': "filtering without case"})
 
         def generate_paths():
             for action in self.actions.get_all_actions():

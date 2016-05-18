@@ -1,6 +1,7 @@
 from .deprecated import QuestionMeta, FormQuestionSchema
 from .new import (
     ExportItem,
+    DocRow,
     ExportColumn,
     RowNumberColumn,
     CaseIndexExportColumn,
@@ -8,6 +9,7 @@ from .new import (
     SplitGPSExportColumn,
     SplitUserDefinedExportColumn,
     StockExportColumn,
+    MultiMediaExportColumn,
     ExportRow,
     ExportInstance,
     FormExportInstance,
@@ -24,6 +26,7 @@ from .new import (
     CaseIndexItem,
     Option,
     MultipleChoiceItem,
+    MultiMediaItem,
     PathNode,
     MAIN_TABLE,
     CASE_HISTORY_TABLE,

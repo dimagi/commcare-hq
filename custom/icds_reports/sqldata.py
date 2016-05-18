@@ -473,7 +473,7 @@ class SupplementaryNutrition(ICDSMixin):
     @property
     def subtitle(self):
         return 'Average no. days AWCs were open during the month? {}'.format(
-            div(self.awc_open_count, self.awc_number)
+            div(self.awc_open_count, (self.awc_number or 1))
         ),
 
     @property

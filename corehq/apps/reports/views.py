@@ -75,7 +75,7 @@ from couchexport.shortcuts import (export_data_shared, export_raw_data,
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
-from couchforms.models import XFormInstance, doc_types, XFormDeprecated
+from couchforms.models import XFormDeprecated, XFormInstance
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -94,7 +94,6 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
@@ -108,7 +107,6 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
@@ -143,7 +141,7 @@ from .models import (
     HQGroupExportConfiguration
 )
 
-from .standard import inspect, export, ProjectReport
+from .standard import inspect, ProjectReport
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -245,11 +243,12 @@ class MySavedReportsView(BaseProjectReportSectionView):
         """
         Add properties to the request for any tour that might be active
         """
-        tours = ((REPORT_BUILDER_ACCESS, 1), (REPORT_BUILDER_NO_ACCESS, 2))
-        for tour, step in tours:
-            if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
-                self.request.guided_tour = tour.get_tour_data(self.request, step)
-                break  # Only one of these tours may be active.
+        if self.request.user.is_authenticated():
+            tours = ((REPORT_BUILDER_ACCESS, 1), (REPORT_BUILDER_NO_ACCESS, 2))
+            for tour, step in tours:
+                if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
+                    self.request.guided_tour = tour.get_tour_data(self.request, step)
+                    break  # Only one of these tours may be active.
 
     @property
     def language(self):
@@ -1697,6 +1696,12 @@ class EditFormInstance(View):
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
 
         edit_session_data['is_editing'] = True
+        edit_session_data['function_context'] = {
+            'static-date': [
+                {'name': 'now', 'value': instance.metadata.timeEnd},
+                {'name': 'today', 'value': instance.metadata.timeEnd.date()},
+            ]
+        }
 
         context.update({
             'domain': domain,

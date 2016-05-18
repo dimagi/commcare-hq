@@ -148,7 +148,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     initiative = StringListProperty()
     workshop_region = StringProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
-    self_started = BooleanProperty()
+    self_started = BooleanProperty(default=True)
     area = StringProperty()
     sub_area = StringProperty()
     using_adm = BooleanProperty()

@@ -162,6 +162,7 @@ corehq.apps.commtrack:
   - corehq.apps.hqcase
   - corehq.apps.fixtures
   - corehq.apps.groups
+  - corehq.apps.notifications
   - corehq.apps.locations
   - corehq.apps.products
   - corehq.apps.reminders
@@ -331,6 +332,7 @@ corehq.apps.export:
   - corehq.apps.export
   - corehq.apps.domain
   - corehq.apps.app_manager
+  - corehq.couchapps
   - couchexport
 corehq.apps.callcenter:
   - auditcare

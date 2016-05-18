@@ -9,6 +9,8 @@ from corehq.apps.indicators.models import (
     FormDataInCaseIndicatorDefinition,
     FormDataAliasIndicatorDefinition,
     CaseDataInFormIndicatorDefinition, IndicatorDefinition)
+from corehq.apps.indicators.utils import set_domain_namespace_entry
+from corehq.apps.indicators.tests.utils import delete_indicator_doc
 from mvp_docs.models import IndicatorXForm, IndicatorCase
 from mvp_docs.pillows import MVPFormIndicatorPillow, MVPCaseIndicatorPillow
 from couchforms.models import XFormInstance
@@ -22,21 +24,9 @@ class IndicatorPillowTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        try:
-            get_db().delete_doc('INDICATOR_CONFIGURATION')
-        except ResourceNotFound:
-            pass
-        get_db().save_doc({
-            '_id': 'INDICATOR_CONFIGURATION',
-            'namespaces': {
-                INDICATOR_TEST_DOMAIN: [
-                    [
-                        INDICATOR_TEST_NAMESPACE,
-                        "INDICATOR TEST Namespace",
-                    ],
-                ],
-            }
-        })
+        set_domain_namespace_entry(INDICATOR_TEST_DOMAIN, [
+            [INDICATOR_TEST_NAMESPACE, "INDICATOR TEST Namespace"],
+        ])
         cls.form_pillow = MVPFormIndicatorPillow()
         cls.case_pillow = MVPCaseIndicatorPillow()
 
@@ -46,7 +36,7 @@ class IndicatorPillowTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        get_db().delete_doc('INDICATOR_CONFIGURATION')
+        delete_indicator_doc()
 
     def _save_doc_to_db(self, docname, doc_class):
         doc_dict = _get_doc_data(docname)
