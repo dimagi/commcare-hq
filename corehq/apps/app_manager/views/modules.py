@@ -208,7 +208,7 @@ def _get_report_module_context(app, module):
                 gettext_lazy('Your app contains references to reports that are '
                              'deleted. These will be removed on save.')
             )
-    except ReportConfigurationNotFoundError as e:
+    except ReportConfigurationNotFoundError:
         pass
 
     return {

@@ -191,7 +191,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         })
         try:
             context['multimedia']['references'] = app.get_references()
-        except ReportConfigurationNotFoundError as e:
+        except ReportConfigurationNotFoundError:
             pass
         context['multimedia'].update(specific_media)
 
