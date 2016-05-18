@@ -386,7 +386,7 @@ class LanguageProfilesView(View):
         app = get_app(domain, app_id)
         build_profiles = {}
         if profiles:
-            ifgi app.is_remote_app() and len(profiles) > 1:
+            if app.is_remote_app() and len(profiles) > 1:
                 # return bad request if they attempt to save more than one profile to a remote app
                 return HttpResponse(status=400)
             for profile in profiles:
