@@ -31,14 +31,14 @@
             {% if domain.error %}
             <td colspan="3" class="alert alert-danger">{{ domain.error }}</td>
             {% else %}
-            {% for stats in domain.stats %}
+            {% for stats in domain.iter_data_source_stats %}
             <td>
                 <div class="progress">
-                  <div class="progress-bar progress-bar-{{ stats.es_class }}" style="width: {{ stats.es_percent }}%">
-                    ES: {{ stats.es_percent }} ({{ stats.es }} / {{ stats.total }})
+                  <div class="progress-bar progress-bar-{{ stats.es_css_class }}" style="width: {{ stats.es_percent }}%">
+                    ES: {{ stats.es_percent }} ({{ stats.es }})
                   </div>
-                  <div class="progress-bar progress-bar-{{ stats.ucr_class }}" style="width: {{ stats.ucr_percent }}%">
-                    UCR: {{ stats.ucr_percent }} ({{ stats.ucr }} / {{ stats.total }})
+                  <div class="progress-bar progress-bar-{{ stats.ucr_css_class }}" style="width: {{ stats.ucr_percent }}%">
+                    UCR: {{ stats.ucr_percent }} ({{ stats.ucr }})
                   </div>
                 </div>
             </td>
