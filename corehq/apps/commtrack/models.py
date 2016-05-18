@@ -279,6 +279,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
             consumption_config=self.get_consumption_config(),
             default_product_list=default_product_ids,
             force_consumption_case_filter=case_filter,
+            sync_consumption_ledger=self.sync_consumption_fixtures
         )
 
     @property

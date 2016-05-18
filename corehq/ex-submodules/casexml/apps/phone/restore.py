@@ -60,7 +60,8 @@ def stream_response(payload, headers=None):
 class StockSettings(object):
 
     def __init__(self, section_to_consumption_types=None, consumption_config=None,
-                 default_product_list=None, force_consumption_case_filter=None):
+                 default_product_list=None, force_consumption_case_filter=None,
+                 sync_consumption_ledger=False):
         """
         section_to_consumption_types should be a dict of stock section-ids to corresponding
         consumption section-ids. any stock sections not found in the dict will not have
@@ -73,6 +74,7 @@ class StockSettings(object):
         self.consumption_config = consumption_config
         self.default_product_list = default_product_list or []
         self.force_consumption_case_filter = force_consumption_case_filter or (lambda stub: False)
+        self.sync_consumption_ledger = sync_consumption_ledger
 
 
 class RestoreResponse(object):
