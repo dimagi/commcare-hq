@@ -89,7 +89,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
                 url: postUrl,
                 data: xml,
                 success: function () {
-                    $('#webforms').html("");
+                    FormplayerFrontend.request("clearForm");
                     // TODO form linking
                     FormplayerFrontend.trigger("apps:list");
                     showSuccess(translatedStrings.saved, $("#cloudcare-notifications"), 2500);
