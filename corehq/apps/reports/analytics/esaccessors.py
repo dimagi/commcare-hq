@@ -489,3 +489,8 @@ def get_all_user_ids_submitted(domain, app_ids=None):
         query = query.app(app_ids)
 
     return query.run().aggregations.user_id.buckets_dict.keys()
+
+
+def get_username_in_last_form_user_id_submitted(domain, user_id):
+    last_sub = get_last_form_submissions_by_user(domain, [user_id])[user_id][0]
+    return last_sub['form']['meta']['username']
