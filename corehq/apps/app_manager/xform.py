@@ -634,7 +634,8 @@ class XForm(WrappedNode):
         images = self.media_references_by_lang(lang=lang, form="image")
         video = self.media_references_by_lang(lang=lang, form="video")
         audio = self.media_references_by_lang(lang=lang, form="audio")
-        return images + video + audio
+        inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
+        return images + video + audio + inline_video
 
     def set_name(self, new_name):
         title = self.find('{h}head/{h}title')
