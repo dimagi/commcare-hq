@@ -10,9 +10,6 @@ from corehq.util.dates import get_first_last_days
 
 class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin, GenericTabularReport):
 
-    title = 'Block MPR'
-    slug = 'icds_report'
-    name = 'Block MPR'
     report_template_path = "icds_reports/multi_report.html"
     flush_layout = True
     exportable = True
