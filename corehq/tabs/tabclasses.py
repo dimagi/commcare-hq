@@ -1481,9 +1481,7 @@ class AdminTab(UITab):
                     'title': report.name,
                     'url': '{url}{params}'.format(
                         url=reverse('admin_report_dispatcher', args=(report.slug,)),
-                        params="?{}".format(
-                            urlencode(report.default_params, True)
-                        ) if report.default_params else ""
+                        params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
                     )
                 } for report in [
                     RealProjectSpacesReport,
