@@ -61,6 +61,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     slug = "configurable"
     prefix = slug
     emailable = True
+    is_exportable = True
     show_filters = True
 
     _domain = None
