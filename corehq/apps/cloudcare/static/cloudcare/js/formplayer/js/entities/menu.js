@@ -55,7 +55,6 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
                     options.data = JSON.stringify({
                         "username": "test",
-                        "password": "123",
                         "domain": "test",
                         "app_id": collection.appId,
                         "selections": stepList,
@@ -69,6 +68,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     options.url = 'http://localhost:8090/navigate_menu';
                     options.type = 'POST';
                     options.dataType = "json";
+                    options.crossDomain = { crossDomain: true};
+                    options.xhrFields = { withCredentials: true};
                     options.contentType = "application/json";
                     return Backbone.Collection.prototype.fetch.call(this, options);
                 },
