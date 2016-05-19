@@ -16,9 +16,9 @@ def _load_reports(report_module):
         try:
             for i, report in enumerate(report_module.reports):
                 report_module.report_configs[i]._report = report
+            report_module._loaded = True
         except ReportConfigurationNotFoundError:
             pass
-    report_module._loaded = True
 
 
 class ReportModuleSuiteHelper(object):
