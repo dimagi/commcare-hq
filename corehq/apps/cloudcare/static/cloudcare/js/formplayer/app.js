@@ -112,7 +112,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
             });
         };
         var sess = new WebFormSession(data);
-        sess.loadDirect(data, $('#webforms'), FormplayerFrontend.request('currentUser').language);
+        sess.renderFormXml(data, $('#webforms'));
     };
     loadSession();
 });
