@@ -21,7 +21,8 @@
         caseType: {{ form.get_case_type|JSON }},
         allowUsercase: {{ allow_usercase|JSON }},
         propertiesMap: {{ case_properties|JSON }},
-        usercasePropertiesMap: {{ usercase_properties|JSON }}
+        usercasePropertiesMap: {{ usercase_properties|JSON }},
+        supportCmitfb: {{ app.support_cmitfb|JSON }}
         {% if app.application_version == '1.0' %}
         ,ejs_urls: {
             template: "{% new_static 'app_manager/ejs/case-config-ui-2.ejs' %}",
