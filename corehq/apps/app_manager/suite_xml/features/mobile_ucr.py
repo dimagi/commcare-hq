@@ -236,7 +236,7 @@ def _get_data_detail(config, domain):
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
                     xpath_function = _get_conditional(
-                        "{value} = '{word}'".format(
+                        u"{value} = '{word}'".format(
                             value=default_val,
                             word=word,
                         ),
