@@ -9,7 +9,7 @@ from corehq.apps.app_manager.models import Application, Module, ReportModule, Re
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.builds.models import BuildSpec
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareVideo
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
 
 import commcare_translations
 
