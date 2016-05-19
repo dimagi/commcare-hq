@@ -59,19 +59,16 @@ def git_check_merge(branch1, branch2, git=None):
         git.checkout(branch2)
         is_behind = git.log('{0}..{1}'.format(branch2, branch1),
                             max_count=1).strip()
+        clean_merge = True
         if is_behind:
             try:
                 git.merge('--no-commit', '--no-ff', branch1).strip()
             except sh.ErrorReturnCode_1:
                 # git merge returns 1 when there's a conflict
-                return False
-            else:
-                return True
-            finally:
-                git.merge('--abort')
-                git.checkout(orig_branch)
-        else:
-            return True
+                clean_merge = False
+            git.merge('--abort')
+        git.checkout(orig_branch)
+        return clean_merge
 
 
 def has_merge_conflict(branch1, branch2, git):
