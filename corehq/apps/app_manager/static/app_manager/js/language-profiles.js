@@ -1,6 +1,6 @@
+/* globals hqDefine, ko, COMMCAREHQ */
 hqDefine('app_manager/js/language-profiles.js', function () {
     function Profile(profile_langs, name, id) {
-        var self = this;
         this.id = id;
         this.langs = ko.observableArray(profile_langs);
         this.name = ko.observable(name);
@@ -14,7 +14,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
             unsavedMessage: gettext("You have unsaved changes to your build profiles"),
             save: function() {
                 var postProfiles = [];
-                _.each(self.app_profiles(), function(element, index, list) {
+                _.each(self.app_profiles(), function(element, index) {
                     // move default lang to first element of array
                     var postLangs = element.langs();
                     postLangs.splice(postLangs.indexOf(element.defaultLang()), 1);
@@ -33,7 +33,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
                         throw gettext("There was an error saving");
                     },
                 });
-            }
+            },
         });
         var changeSaveButton = function () {
             self.saveButton.fire('change');
@@ -45,7 +45,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
             profile.defaultLang.subscribe(changeSaveButton);
             self.app_profiles.push(profile);
         };
-        _.each(app_profiles, function(value, key, list) {
+        _.each(app_profiles, function(value, key) {
             self.addProfile(value.langs, value.name, key);
         });
         this.newProfile = function() {
@@ -53,7 +53,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
             var index = self.app_profiles().length - 1;
             _.delay(function() {
                 $('#profile-' + index).select2();
-            })
+            });
         };
         if (!self.app_profiles()) {
             self.newProfile();

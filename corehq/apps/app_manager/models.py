@@ -4103,7 +4103,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if 'build_langs' in data:
             if data['build_langs'] != data['langs'] and 'build_profiles' not in data:
                 data['build_profiles'] = {
-                    uuid.uuid4().hex : BuildProfile(
+                    uuid.uuid4().hex: BuildProfile(
                         name=', '.join(data['build_langs']),
                         langs=data['build_langs']
                     )
@@ -4836,7 +4836,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         })
         return s
 
-    def create_profile(self, is_odk=False, with_media=False, template='app_manager/profile.xml', build_profile_id=None):
+    def create_profile(self, is_odk=False, with_media=False,
+                       template='app_manager/profile.xml', build_profile_id=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -4930,15 +4931,18 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         files = {
             '{}profile.xml'.format(prefix): self.create_profile(is_odk=False, build_profile_id=build_profile_id),
             '{}profile.ccpr'.format(prefix): self.create_profile(is_odk=True, build_profile_id=build_profile_id),
-            '{}media_profile.xml'.format(prefix): self.create_profile(is_odk=False, with_media=True, build_profile_id=build_profile_id),
-            '{}media_profile.ccpr'.format(prefix): self.create_profile(is_odk=True, with_media=True, build_profile_id=build_profile_id),
+            '{}media_profile.xml'.format(prefix):
+                self.create_profile(is_odk=False, with_media=True, build_profile_id=build_profile_id),
+            '{}media_profile.ccpr'.format(prefix):
+                self.create_profile(is_odk=True, with_media=True, build_profile_id=build_profile_id),
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
 
         langs_for_build = self.get_build_langs(build_profile_id)
         for lang in ['default'] + langs_for_build:
-            files["{prefix}{lang}/app_strings.txt".format(prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
+            files["{prefix}{lang}/app_strings.txt".format(
+                prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
         for form_stuff in self.get_forms(bare=False):
             filename = prefix + self.get_form_filename(**form_stuff)
             form = form_stuff['form']

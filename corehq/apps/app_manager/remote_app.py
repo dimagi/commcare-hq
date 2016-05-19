@@ -82,7 +82,7 @@ def make_remote_profile(app, langs=None):
                     url_base=app.url_base,
                     download_index_url=download_index_url
                 )
-                
+
             if langs:
                 profile_xml.set_property("cur_locale", langs[0])
 

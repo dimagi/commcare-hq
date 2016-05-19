@@ -1,7 +1,6 @@
 import json
 import uuid
 
-from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
@@ -372,6 +371,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.first_app_id, self.second_app_id])
+
 
 class LanguageProfilesView(View):
     urlname = 'build_profiles'

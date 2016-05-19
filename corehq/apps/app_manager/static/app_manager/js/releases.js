@@ -25,7 +25,7 @@ hqDefine('app_manager/js/releases.js', function () {
         };
         self.build_profiles = function() {
             var profiles = [{'label': gettext('all languages'), 'value': ''}];
-            _.each(app_data.build_profiles, function(value, key, list) {
+            _.each(app_data.build_profiles, function(value, key) {
                 profiles.push({'label': value['name'], 'value': key});
             });
             return profiles;
@@ -54,7 +54,7 @@ hqDefine('app_manager/js/releases.js', function () {
             if (should_generate_url && !self.generating_url()){
                 self.generating_url(true);
                 $.ajax({
-                    url: base_url + url_type + '/?profile=' + self.build_profile()
+                    url: base_url + url_type + '/?profile=' + self.build_profile(),
                 }).done(function(data){
                     var bitly_code = self.parse_bitly_url(data);
                     if (!self.build_profile()) {
