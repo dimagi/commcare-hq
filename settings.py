@@ -389,6 +389,7 @@ HQ_APPS = (
     'custom.icds_reports',
 )
 
+# DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
 TEST_APPS = ()
 
 # also excludes any app starting with 'django.'
