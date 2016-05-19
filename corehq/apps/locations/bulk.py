@@ -130,13 +130,13 @@ class LocationImporter(object):
                 existing = Location.get(location_id)
             except ResourceNotFound:
                 return {
-                    'id': location_id,
+                    'id': None,
                     'message': _('Unable to find location for location_id {}').format(location_id),
                 }
             else:
                 if existing.domain != self.domain:
                     return {
-                        'id': location_id,
+                        'id': None,
                         'message': _('Invalid location_id {}').format(location_id),
                     }
         elif provided_code:

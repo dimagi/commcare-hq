@@ -91,9 +91,9 @@ class LocationImportTest(CommTrackTest):
         }
         result = import_location(self.domain.name, 'state', data)
 
-        self.assertEqual(result['id'], 'i-am-missing')
+        self.assertIsNone(result['id'])
         with self.assertRaises(ResourceNotFound):
-            Location.get(result['id'])
+            Location.get('i-am-missing')
 
     def test_import_with_location_id_and_wrong_domain(self):
         """
@@ -114,7 +114,8 @@ class LocationImportTest(CommTrackTest):
         }
 
         result = import_location(self.wrong_domain.name, 'state', data)
-        updated_loc = Location.get(result['id'])
+        self.assertIsNone(result['id'])
+        updated_loc = Location.get(new_loc._id)
         self.assertEqual(updated_loc._id, new_loc._id)
         self.assertEqual(updated_loc.name, 'importedloc')
         self.assertEqual(updated_loc.site_code, 'alice')
