@@ -74,6 +74,10 @@ def git_check_merge(branch1, branch2, git=None):
             return True
 
 
+def has_merge_conflict(branch1, branch2, git):
+    return not git_check_merge(branch1, branch2, git=git)
+
+
 def git_bisect_merge_conflict(branch1, branch2, git=None):
     """
     return the branch2 commit that prevents branch1 from being merged in
