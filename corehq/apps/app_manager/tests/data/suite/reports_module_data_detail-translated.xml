@@ -13,7 +13,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(column[@id='owner'] = '2', if($lang = 'hin', '&#2342;&#2379;', if($lang = 'es', 'dos''', if($lang = 'en', 'two', column[@id='owner']))), if(column[@id='owner'] = '1', if($lang = 'es', 'uno', if($lang = 'en', 'one', column[@id='owner'])), column[@id='owner']))">
+          <xpath function="if(column[@id='owner'] = '2', if($lang = 'hin', '&#2342;&#2379;', if($lang = 'es', 'dos''', if($lang = 'en', 'two', column[@id='owner']))), if(column[@id='owner'] = '&#2319;&#2325;', if($lang = 'es', 'uno', if($lang = 'en', 'one', column[@id='owner'])), column[@id='owner']))">
             <variable name="lang">
               <locale id="lang.current"/>
             </variable>

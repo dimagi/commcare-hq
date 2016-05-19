@@ -732,7 +732,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         report_app_config._report.columns[0]['transform'] = {
             'type': 'translation',
             'translations': {
-                '1': [
+                u'एक': [
                     ['en', 'one'],
                     ['es', 'uno'],
                 ],
