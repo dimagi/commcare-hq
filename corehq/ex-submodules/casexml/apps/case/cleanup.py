@@ -99,26 +99,31 @@ def safe_hard_delete(case):
 
 
 def claim_case(domain, owner_id, host_id, host_type=None, host_name=None):
-        if not (host_type and host_name):
-            case = CaseAccessors(domain).get_case(host_id)
-            host_type = case.type
-            host_name = case.name
-        identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
-        claim_case_block = CaseBlock(
-            create=True,
-            case_id=uuid4().hex,
-            case_name=host_name,
-            case_type=CLAIM_CASE_TYPE,
-            owner_id=owner_id,
-            index={
-                identifier: IndexAttrs(
-                    case_type=host_type,
-                    case_id=host_id,
-                    relationship=CASE_INDEX_EXTENSION,
-                )
-            }
-        ).as_xml()
-        post_case_blocks([claim_case_block], {'domain': domain})
+    """
+    Claim a case identified by host_id for claimant identified by owner_id.
+
+    Creates an extension case so that the claimed case is synced to the claimant's device.
+    """
+    if not (host_type and host_name):
+        case = CaseAccessors(domain).get_case(host_id)
+        host_type = case.type
+        host_name = case.name
+    identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
+    claim_case_block = CaseBlock(
+        create=True,
+        case_id=uuid4().hex,
+        case_name=host_name,
+        case_type=CLAIM_CASE_TYPE,
+        owner_id=owner_id,
+        index={
+            identifier: IndexAttrs(
+                case_type=host_type,
+                case_id=host_id,
+                relationship=CASE_INDEX_EXTENSION,
+            )
+        }
+    ).as_xml()
+    post_case_blocks([claim_case_block], {'domain': domain})
 
 
 def get_first_claim(domain, user_id, case_id):
