@@ -24,6 +24,7 @@ from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -98,10 +99,13 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
-        multimedia_state = app.check_media_state()
-        context.update({
-            'multimedia_state': multimedia_state,
-        })
+        try:
+            multimedia_state = app.check_media_state()
+            context.update({
+                'multimedia_state': multimedia_state,
+            })
+        except ReportConfigurationNotFoundError:
+            pass
     response = render(request, template, context)
     response.set_cookie('lang', encode_if_unicode(context['lang']))
     return response

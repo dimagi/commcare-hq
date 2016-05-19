@@ -3,8 +3,10 @@ from datetime import datetime, timedelta, date
 import itertools
 import json
 
+from django.views.generic.base import TemplateView
+
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views import BaseDomainView, LoginAndDomainMixin
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
     REPORT_BUILDER_ACCESS
@@ -75,7 +77,7 @@ from couchexport.shortcuts import (export_data_shared, export_raw_data,
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
-from couchforms.models import XFormInstance, doc_types, XFormDeprecated
+from couchforms.models import XFormDeprecated, XFormInstance
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -94,7 +96,6 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
@@ -108,7 +109,6 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
@@ -143,7 +143,7 @@ from .models import (
     HQGroupExportConfiguration
 )
 
-from .standard import inspect, export, ProjectReport
+from .standard import inspect, ProjectReport
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -245,11 +245,12 @@ class MySavedReportsView(BaseProjectReportSectionView):
         """
         Add properties to the request for any tour that might be active
         """
-        tours = ((REPORT_BUILDER_ACCESS, 1), (REPORT_BUILDER_NO_ACCESS, 2))
-        for tour, step in tours:
-            if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
-                self.request.guided_tour = tour.get_tour_data(self.request, step)
-                break  # Only one of these tours may be active.
+        if self.request.user.is_authenticated():
+            tours = ((REPORT_BUILDER_ACCESS, 1), (REPORT_BUILDER_NO_ACCESS, 2))
+            for tour, step in tours:
+                if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
+                    self.request.guided_tour = tour.get_tour_data(self.request, step)
+                    break  # Only one of these tours may be active.
 
     @property
     def language(self):
@@ -791,13 +792,18 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     config.filters = filters
 
+    report_id = None
+    if config.report:
+        report_id = config.report._id
+
     body = _render_report_configs(request, [config],
                                   domain,
                                   user_id, request.couch_user,
                                   True,
                                   lang=request.couch_user.language,
                                   notes=form.cleaned_data['notes'],
-                                  once=once)[0].content
+                                  once=once,
+                                  report_id=report_id)[0].content
 
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
@@ -1030,7 +1036,40 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)))
 
         return self.get(request, *args, **kwargs)
-    
+
+
+class ReportNotificationUnsubscribeView(TemplateView, LoginAndDomainMixin):
+    template_name = 'reports/notification_unsubscribe.html'
+    urlname = 'notification_unsubscribe'
+    report = None
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
+            user_email = request.couch_user.get_email()
+            if user_email not in self.report.all_recipient_emails:
+                messages.error(request, _('You are already unsubscribed from this report.'))
+            else:
+                return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
+        except ResourceNotFound:
+            pass
+        return HttpResponseRedirect(reverse('homepage'))
+
+    def get_context_data(self, **kwargs):
+        context = super(ReportNotificationUnsubscribeView, self).get_context_data(**kwargs)
+        context.update({'report': self.report})
+        return context
+
+    def post(self, request, **kwargs):
+        try:
+            report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
+            report.remove_recipient(request.couch_user.get_email())
+            report.save()
+            messages.info(request, _('Successfully unsubscribed from report notification.'))
+        except ResourceNotFound:
+            messages.error(request, _('Could not unsubscribe from report notification.'))
+        return HttpResponseRedirect(reverse('homepage'))
+
 
 @login_and_domain_required
 @require_POST
@@ -1094,12 +1133,13 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
         couch_user,
         email,
         attach_excel=attach_excel,
-        lang=notification.language
+        lang=notification.language,
+        report_id=scheduled_report_id
     )
 
 
 def _render_report_configs(request, configs, domain, owner_id, couch_user, email,
-                           notes=None, attach_excel=False, once=False, lang=None):
+                           notes=None, attach_excel=False, once=False, lang=None, report_id=None):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
@@ -1131,6 +1171,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
+        "unsub_link": get_url_base() + reverse('notification_unsubscribe', kwargs={
+            'scheduled_report_id': report_id, 'domain': domain}) if report_id else None,
         "report_type": _("once off report") if once else _("scheduled report"),
     }), excel_attachments
 
@@ -1697,6 +1739,12 @@ class EditFormInstance(View):
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
 
         edit_session_data['is_editing'] = True
+        edit_session_data['function_context'] = {
+            'static-date': [
+                {'name': 'now', 'value': instance.metadata.timeEnd},
+                {'name': 'today', 'value': instance.metadata.timeEnd.date()},
+            ]
+        }
 
         context.update({
             'domain': domain,

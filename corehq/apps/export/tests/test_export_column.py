@@ -178,7 +178,7 @@ class TestCaseIndexExportColumn(SimpleTestCase):
         }
         item = CaseIndexItem(path=[PathNode(name='indices'), PathNode(name='RegCase')])
         col = CaseIndexExportColumn(item=item)
-        self.assertEqual(col.get_value('domain', 'docid', doc), 'abc def')
+        self.assertEqual(col.get_value('domain', 'docid', doc, []), 'abc def')
 
     def test_get_value_missing_index(self):
         doc = {
@@ -189,8 +189,8 @@ class TestCaseIndexExportColumn(SimpleTestCase):
         item = CaseIndexItem(path=[PathNode(name='indices'), PathNode(name='RegCase')])
         col = CaseIndexExportColumn(item=item)
 
-        self.assertEqual(col.get_value('domain', 'docid', doc), '')
-        self.assertEqual(col.get_value('domain', 'docid', doc2), '')
+        self.assertEqual(col.get_value('domain', 'docid', doc, []), '')
+        self.assertEqual(col.get_value('domain', 'docid', doc2, []), '')
 
 
 class TestGeopointExportColumn(SimpleTestCase):

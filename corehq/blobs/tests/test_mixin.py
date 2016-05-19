@@ -376,6 +376,38 @@ class TestBlobMixin(BaseTestCase):
         blob = self.get_blob(bucket=doc._blobdb_bucket())
         self.assertTrue(not blob.exists() or len(blob.listdir()) == 0)
 
+    def test_atomic_blobs_bug_deleting_existing_blob(self):
+        self.obj.put_attachment("file content", "file")
+        old_meta = self.obj.blobs["file"]
+        saved = []
+
+        def save():
+            self.obj.save()
+            assert self.obj.blobs["file"] is not old_meta
+            saved.append(1)
+
+        with self.obj.atomic_blobs(save):
+            self.obj.put_attachment("new content", "new")
+        self.assertTrue(saved)
+        # bug caused old blobs (not modifed in atomic context) to be deleted
+        self.assertEqual(self.obj.fetch_attachment("file"), "file content")
+
+    def test_atomic_blobs_bug_deleting_existing_blob_on_save_failure(self):
+        self.obj.put_attachment("file content", "file")
+        old_meta = self.obj.blobs["file"]
+
+        def save():
+            self.obj.save()
+            assert self.obj.blobs["file"] is not old_meta
+            raise BlowUp("boom!")
+
+        with self.assertRaises(BlowUp):
+            with self.obj.atomic_blobs(save):
+                self.obj.put_attachment("new content", "new")
+        self.assertNotIn("new", self.obj.blobs)
+        # bug caused old blobs (not modifed in atomic context) to be deleted
+        self.assertEqual(self.obj.fetch_attachment("file"), "file content")
+
     def get_blob(self, name=None, bucket=None):
         return self.TestBlob(self.db, name, bucket)
 
@@ -724,6 +756,9 @@ class BaseFakeDocument(Document):
     saved = False
 
     def save(self):
+        # couchdbkit does this (essentially)
+        # it creates new BlobMeta instances in self.external_blobs
+        self._doc.update(deepcopy(self._doc))
         self.saved = True
 
     @classmethod

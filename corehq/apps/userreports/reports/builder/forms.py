@@ -50,7 +50,6 @@ from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.toggles import UNLIMITED_REPORT_BUILDER_REPORTS
 
 
 class FilterField(JsonField):

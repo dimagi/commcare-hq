@@ -31,7 +31,6 @@
             newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
             revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
             currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
-            update_build_comment: '{% url "update_build_comment" domain app.id %}',
             hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
             download_zip: '{% url "download_ccz" app.domain '___' %}',
             download_multimedia: '{% url "download_multimedia_zip" app.domain '___' %}',
@@ -182,46 +181,16 @@
                     ">{% trans "Revert" %}</button>
                 </td>
                 <td>
-                    <div class="hide" data-bind="visible: !editing_comment(), css: {hide: false}">
-                        <b class="hide"
-                           data-bind="visible: comment_user_name, text: comment_user_name, css: {hide: false}">
-                        </b>
-                        <span data-bind="text: build_comment"></span>
-                        <b class="hide" data-bind="visible: !build_comment(), css: {hide: false}">
-                            {% trans "(No Comment)" %}
-                        </b>
-                        <a class="edit-comment-pencil" href="#"
-                           data-bind="click: function () {editing_comment(true);}">
-                            <i class="fa fa-pencil"></i>
-                        </a>
-                    </div>
-                    <div class="hide" data-bind="visible: editing_comment(), css: {hide: false}">
-                        <form class="form-inline" data-bind="submit: submit_new_comment">
-                            <div class="form-group">
-                            <input type="text" class="form-control" data-bind="value: new_comment"></input>
-                            <a href="#" class="hide" data-bind="
-                                click: submit_new_comment,
-                                visible: !pending_comment_update(),
-                                css: {hide: false}
-                            ">
-                                <span class="fa fa-check"></span>
-                            </a>
-                            <a href="#" class="hide" data-bind="
-                                click: function () {editing_comment(false);},
-                                visible: !pending_comment_update(),
-                                css: {hide: false}
-                            ">
-                                <i class="fa fa-remove"></i>
-                            </a>
-                            </div>
-                        </form>
-                        <span class="hide" data-bind="visible: pending_comment_update(), css: {hide: false}">
-                            <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
-                        </span>
-                    </div>
-                    <div data-bind="visible: comment_update_error(), css: {hide: false}" class="alert alert-danger hide">
-                        {% trans "Error updating comment.  Please try again" %}
-                    </div>
+                    <b data-bind="text: comment_user_name"></b>
+                    <inline-edit params="
+                        value: build_comment,
+                        rows: 1,
+                        placeholder: '{% trans "(No Comment)"|escapejs %}',
+                        url: '{% url "update_build_comment" domain app.id %}',
+                        saveParams: {'build_id': id},
+                        saveValueName: 'comment',
+                        errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
+                    "></inline-edit>
                     {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
                         <h6>
                             {% blocktrans %}

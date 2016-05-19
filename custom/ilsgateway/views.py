@@ -20,7 +20,7 @@ from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway import DashboardReport
 from custom.ilsgateway.forms import SupervisionDocumentForm
@@ -127,6 +127,7 @@ class SupervisionDocumentListView(BaseDomainView):
     urlname = 'supervision'
 
     @use_bootstrap3
+    @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         if not self.request.couch_user.is_web_user():
             raise Http404()
