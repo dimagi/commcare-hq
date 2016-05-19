@@ -31,10 +31,9 @@ class Command(BaseCommand):
             for form in forms:
                 preload = form.actions.case_preload.preload
                 if preload:
-                    f = app.get_form(form.unique_id)
-                    xform = XForm(f.source)
+                    xform = XForm(form.source)
                     xform.add_case_preloads(preload)
-                    save_xform(app, f, ET.tostring(xform.xml))
+                    save_xform(app, form, ET.tostring(xform.xml))
                     form.actions.load_from_form = form.actions.case_preload
                     form.actions.case_preload = PreloadAction()
 
