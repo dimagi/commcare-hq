@@ -868,7 +868,7 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         domain_stats = get_call_center_data_source_stats(domains)
 
         context = {
-            'data': domain_stats.values(),
+            'data': sorted(domain_stats.values(), key=lambda s: s.name),
             'domain': domain
         }
 
