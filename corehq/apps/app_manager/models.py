@@ -49,6 +49,7 @@ from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -3716,11 +3717,16 @@ class ReportModule(ModuleBase):
 
     def validate_for_build(self):
         errors = super(ReportModule, self).validate_for_build()
-        if not self.check_report_validity().is_valid:
-            errors.append({
-                'type': 'report config ref invalid',
-                'module': self.get_module_info()
-            })
+        try:
+            is_valid = self.check_report_validity().is_valid
+        except ReportConfigurationNotFoundError:
+            is_valid = False
+        finally:
+            if not is_valid:
+                errors.append({
+                    'type': 'report config ref invalid',
+                    'module': self.get_module_info()
+                })
         return errors
 
 
