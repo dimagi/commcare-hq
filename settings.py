@@ -1128,19 +1128,15 @@ else:
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
     ]
 
+if helper.is_testing():
+    helper.assign_test_db_names(DATABASES)
+
 ### Reporting database - use same DB as main database
 
 db_settings = DATABASES["default"].copy()
 db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
 db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
-# Use test database name, but only if running the test command.
-# Django uses different database names than the ones in DATABASES
-# when setting up for tests. However, UNIT_TESTING may be true in
-# some cases where django is not running tests (js tests on travis),
-# and therefore does not change the database name.
-db_settings['NAME'] = helper.get_db_name(db_settings['NAME'],
-                                         UNIT_TESTING and helper.is_testing())
 
 if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
