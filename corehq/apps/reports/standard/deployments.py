@@ -99,7 +99,6 @@ class ApplicationStatusReport(DeploymentsReport):
         headers.custom_sort = [[1, 'desc']]
         return headers
 
-
     @property
     @memoized
     def override_user_ids(self):
@@ -170,7 +169,7 @@ class ApplicationStatusReport(DeploymentsReport):
                 last_sync = last_sync_log.date
 
             rows.append(
-                [user.username_in_report, _fmt_date(last_seen)['html'], _fmt_date(last_sync)['html'], app_name or "---"]
+                [user.username_in_report, _fmt_date(last_seen), _fmt_date(last_sync), app_name or "---"]
             )
         return rows
 
