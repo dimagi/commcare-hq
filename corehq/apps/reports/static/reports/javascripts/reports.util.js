@@ -1,7 +1,8 @@
 /* global jQuery */
 hqDefine('reports/javascripts/reports.util.js', function () {
     return {
-        urlSerialize: function (filters) {
+        urlSerialize: function (filters, exclude) {
+            exclude = exclude || [];
             // pulled chiefly from the jquery serialize and serializeArray functions
             var rCRLF = /\r?\n/g,
                 rinput = /^(?:color|date|datetime|email|hidden|month|number|password|range|search|tel|text|time|url|week)$/i,
@@ -10,9 +11,12 @@ hqDefine('reports/javascripts/reports.util.js', function () {
                 return this.elements ? jQuery.makeArray(this.elements) : this;
             })
             .filter(function (i, elem) {
-                return this.name && !this.disabled &&
-                        ( this.checked || rselectTextarea.test( this.nodeName ) ||
-                                rinput.test( this.type ) );
+                return (
+                    this.name &&
+                    !this.disabled &&
+                    (this.checked || rselectTextarea.test(this.nodeName) || rinput.test(this.type)) &&
+                    exclude.indexOf(elem.name) === -1
+                );
             })
             .map(function (i, elem) {
                 var val = jQuery(this).val();

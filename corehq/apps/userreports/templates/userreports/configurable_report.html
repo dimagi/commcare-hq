@@ -3,6 +3,7 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
+    <script src="{% new_static 'reports/javascripts/reports.util.js' %}"></script>
     <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% new_static 'reports/ko/saved_reports.js' %}"></script>
 {% endblock %}
@@ -74,6 +75,11 @@
             emailDefaultSubject: {{ report.title|JSON }},
             emailSuccessMessage: "{% trans 'Report successfully emailed' %}",
             emailErrorMessage: "{% trans 'An error occurred emailing you report. Please try again.' %}",
+            getReportRenderUrl: function(renderType, additionalParams) {
+                var urlSerialize = hqImport('reports/javascripts/reports.util.js').urlSerialize;
+                var params = urlSerialize($('#paramSelectorForm'), ['format']);
+                return window.location.pathname + "?format=" + renderType + "&" + params;
+            },
 
             {% if request.datespan %}
                 datespan: {
