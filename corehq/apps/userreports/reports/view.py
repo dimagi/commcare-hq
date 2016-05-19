@@ -8,6 +8,7 @@ from corehq.apps.reports.util import \
 from corehq.apps.style.decorators import use_bootstrap3, \
     use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from couchexport.shortcuts import export_response
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
@@ -187,6 +188,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 return self.email_response
             elif kwargs.get('render_as') == 'excel':
                 return self.excel_response
+            elif request.GET.get('format', None) == "export":
+                return self.export_response
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request)
             self.content_type = None
@@ -415,6 +418,13 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         file = StringIO()
         export_from_tables(self.export_table, file, Format.XLS_2007)
         return file
+
+    @property
+    @memoized
+    def export_response(self):
+        temp = StringIO()
+        export_from_tables(self.export_table, temp, Format.XLS_2007)
+        return export_response(temp, Format.XLS_2007, self.title)
 
 
 # Base class for classes that provide custom rendering for UCRs
