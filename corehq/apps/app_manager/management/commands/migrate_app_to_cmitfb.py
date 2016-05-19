@@ -11,6 +11,7 @@ from corehq.apps.app_manager.xform import XForm
 logger = logging.getLogger('app_migration')
 logger.setLevel('DEBUG')
 
+
 class Command(BaseCommand):
     help = "Migrate an app from case management in the app builder to form builder"
 
@@ -26,9 +27,9 @@ class Command(BaseCommand):
         modules = [m for m in app.modules if m.module_type == 'basic']
         should_save = False
 
-        for mod_idx, module in enumerate(modules):
+        for module in modules:
             forms = [f for f in module.forms if f.doc_type == 'Form']
-            for form_idx, form in enumerate(module.forms):
+            for form in forms:
                 preload = form.actions.case_preload.preload
                 if preload:
                     f = app.get_form(form.unique_id)
