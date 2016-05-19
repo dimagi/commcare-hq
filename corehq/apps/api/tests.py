@@ -103,6 +103,7 @@ class APIResourceTest(TestCase):
         cls.user.save()
         set_up_subscription(cls)
         cls.domain = Domain.get(cls.domain._id)
+        cls.api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
 
     @classmethod
     def tearDownClass(cls):
@@ -124,6 +125,34 @@ class APIResourceTest(TestCase):
                                                           api_name=self.api_name,
                                                           resource_name=self.resource.Meta.resource_name,
                                                           pk=id))
+
+    def _api_params(self):
+        return {'username': self.username, 'api_key': self.api_key.key}
+
+    def _assert_auth_get_resource(self, url, url_params={}, username=None, password=None):
+        username = username or self.username
+        password = password or self.password
+        api_key = self.api_key.key
+        if username:
+            web_user = WebUser.get_by_username(username)
+            api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(web_user))
+            api_key = api_key.key
+
+        session_url = "%s?%s" % (url, urlencode(url_params))
+        # session based auth should fail
+        self.client.login(username=username, password=password)
+        response = self.client.get(session_url)
+        self.assertEqual(response.status_code, 403)
+
+        # api_key auth should succeed
+        url_params.update({'username': username, 'api_key': api_key})
+        api_url = "%s?%s" % (url, urlencode(url_params))
+        print api_url, "binbong"
+        response = self.client.get(api_url)
+        if response.status_code != 200:
+            import pdb; pdb.set_trace()
+        self.assertEqual(response.status_code, 200)
+        return response
 
 
 class TestXFormInstanceResource(APIResourceTest):
@@ -600,11 +629,8 @@ class TestWebUserResource(APIResourceTest):
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
 
     def test_get_list(self):
-        self.client.login(username=self.username, password=self.password)
-
-        response = self.client.get(self.list_endpoint)
-        self.assertEqual(response.status_code, 200)
-
+        print self.username
+        response = self._assert_auth_get_resource(self.list_endpoint)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 1)
         self._check_user_data(self.user, api_users[0])
@@ -613,35 +639,28 @@ class TestWebUserResource(APIResourceTest):
         another_user.set_role(self.domain.name, 'field-implementer')
         another_user.save()
 
-        response = self.client.get(self.list_endpoint)
-        self.assertEqual(response.status_code, 200)
+        response = self._assert_auth_get_resource(self.list_endpoint)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 2)
 
         # username filter
-        response = self.client.get('%s?username=%s' % (self.list_endpoint, 'anotherguy'))
-        self.assertEqual(response.status_code, 200)
+        response = self._assert_auth_get_resource(self.list_endpoint, {'username': 'anotherguy'})
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 1)
         self._check_user_data(another_user, api_users[0])
 
-        response = self.client.get('%s?username=%s' % (self.list_endpoint, 'nomatch'))
-        self.assertEqual(response.status_code, 200)
+        response = self._assert_auth_get_resource(self.list_endpoint, {'username': 'nomatch'})
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 0)
 
     def test_get_single(self):
-        self.client.login(username=self.username, password=self.password)
-
-        response = self.client.get(self.single_endpoint(self.user._id))
+        response = self._assert_auth_get_resource(self.single_endpoint(self.user._id))
         self.assertEqual(response.status_code, 200)
 
         api_user = json.loads(response.content)
         self._check_user_data(self.user, api_user)
 
     def test_create(self):
-        self.client.login(username=self.username, password=self.password)
-
         user_json = {
             "username":"test_1234",
             "password":"qwer1234",
@@ -660,7 +679,8 @@ class TestWebUserResource(APIResourceTest):
             ],
             "role":"admin"
         }
-        response = self.client.post(self.list_endpoint,
+        url = self.list_endpoint
+        response = self.client.post(url,
                                     json.dumps(user_json),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 201)
@@ -672,8 +692,6 @@ class TestWebUserResource(APIResourceTest):
         user_back.delete()
 
     def test_update(self):
-        self.client.login(username=self.username, password=self.password)
-
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
 
         user_json = {
@@ -694,7 +712,8 @@ class TestWebUserResource(APIResourceTest):
         }
 
         backend_id = user._id
-        response = self.client.put(self.single_endpoint(backend_id),
+        url = self.single_endpoint(backend_id)
+        response = self.client.put(url,
                                    json.dumps(user_json),
                                    content_type='application/json')
         self.assertEqual(response.status_code, 200, response.content)

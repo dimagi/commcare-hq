@@ -30,9 +30,9 @@ from couchforms.models import XFormInstance
 
 # CCHQ imports
 from corehq.apps.domain.decorators import (
-    login_or_digest,
-    login_or_basic,
-    login_or_api_key)
+    digest_auth,
+    basic_auth,
+    api_key_auth)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
@@ -70,9 +70,9 @@ class LoginAndDomainAuthentication(Authentication):
 
     def _get_auth_decorator(self, request):
         decorator_map = {
-            'digest': login_or_digest,
-            'basic': login_or_basic,
-            'api_key': login_or_api_key,
+            'digest': digest_auth,
+            'basic': basic_auth,
+            'api_key': api_key_auth,
         }
         # the initial digest request doesn't have any authorization, so default to
         # digest in order to send back

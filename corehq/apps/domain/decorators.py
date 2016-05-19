@@ -138,7 +138,7 @@ def api_key():
     return real_decorator
 
 
-def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False):
+def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True):
     # ensure someone is logged in, or challenge
     # challenge_fn should itself be a decorator that can handle authentication
     def _outer(fn):
@@ -161,22 +161,26 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False):
                         return HttpResponseForbidden()
 
                 return _inner(request, domain, *args, **kwargs)
-            else:
+            elif allow_sessions:
                 return login_and_domain_required(fn)(request, domain, *args, **kwargs)
+            else:
+                return HttpResponseForbidden()
         return safe_fn
     return _outer
 
 
-def login_or_digest_ex(allow_cc_users=False):
-    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users)
+def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 login_or_digest = login_or_digest_ex()
+digest_auth = login_or_digest_ex(allow_sessions=False)
 
 
-def login_or_basic_ex(allow_cc_users=False):
-    return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users)
+def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 login_or_basic = login_or_basic_ex()
+basic_auth =  login_or_basic_ex(allow_sessions=False)
 
 
 def login_or_digest_or_basic_or_apikey(default=BASIC):
@@ -195,11 +199,17 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
     return decorator
 
 
-def login_or_api_key_ex(allow_cc_users=False):
-    return _login_or_challenge(api_key(), allow_cc_users=allow_cc_users, api_key=True)
+def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(
+        api_key(),
+        allow_cc_users=allow_cc_users,
+        api_key=True,
+        allow_sessions=allow_sessions
+    )
 
 
 login_or_api_key = login_or_api_key_ex()
+api_key_auth = login_or_api_key_ex(allow_sessions=False)
 
 
 def two_factor_check(api_key):
