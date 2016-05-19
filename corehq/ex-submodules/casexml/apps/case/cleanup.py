@@ -119,3 +119,16 @@ def claim_case(domain, owner_id, host_id, host_type=None, host_name=None):
             }
         ).as_xml()
         post_case_blocks([claim_case_block], {'domain': domain})
+
+
+def get_first_claim(domain, user_id, case_id):
+    """
+    Returns the first claim by user_id of case_id, or None
+    """
+    case = CaseAccessors(domain).get_case(case_id)
+    identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[CASE_INDEX_EXTENSION]
+    try:
+        return next((c for c in case.get_subcases(identifier)
+                     if c.type == CLAIM_CASE_TYPE and c.owner_id == user_id))
+    except StopIteration:
+        return None
