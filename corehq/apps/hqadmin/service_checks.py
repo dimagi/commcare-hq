@@ -31,7 +31,7 @@ def check_redis():
         rc = cache.caches['redis']
         redis_api = redis.StrictRedis.from_url('%s' % rc._server)
         memory = redis_api.info()['used_memory_human']
-        result = rc.set('serverup_check_key', 'test')
+        result = rc.set('serverup_check_key', 'test', timeout=5)
         return ServiceStatus(result, "Redis is up and using {} memory".format(memory))
     else:
         return ServiceStatus(False, "Redis is not configured on this system!")
@@ -64,6 +64,7 @@ def check_kafka():
     client = get_kafka_client_or_none()
     if not client:
         return ServiceStatus(False, "Could not connect to Kafka")
+    # TODO elaborate?
     return ServiceStatus(True, "Kafka's fine. Probably.")
 
 

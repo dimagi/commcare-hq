@@ -236,7 +236,7 @@ def server_up(req):
         if check_info['always_check'] or req.GET.get(check, None) is not None:
             try:
                 status = check_info['check_func']()
-            except Exception as e:
+            except Exception:
                 # Don't display the exception message
                 status = checks.ServiceStatus(False, "{} has issues".format(check))
             if not status.success:
