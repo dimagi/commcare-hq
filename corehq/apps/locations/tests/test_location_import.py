@@ -80,20 +80,20 @@ class LocationImportTest(CommTrackTest):
         self.assertEqual(updated_loc.name, 'updatedLoc')
         self.assertEqual(updated_loc.site_code, 'woman')
 
-    def test_import_with_missing_location_id(self):
+    def test_import_with_invalid_location_id(self):
         """
-        When importing with a missing location id, import_location should not
+        When importing with a invalid location id, import_location should not
         create a new location
         """
         data = {
-            'location_id': 'i-am-missing',
+            'location_id': 'i-am-invalid',
             'name': 'importedloc',
         }
         result = import_location(self.domain.name, 'state', data)
 
         self.assertIsNone(result['id'])
         with self.assertRaises(ResourceNotFound):
-            Location.get('i-am-missing')
+            Location.get('i-am-invalid')
 
     def test_import_with_location_id_and_wrong_domain(self):
         """
