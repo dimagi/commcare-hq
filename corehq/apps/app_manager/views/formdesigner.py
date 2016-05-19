@@ -84,7 +84,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'lookup_tables': domain_has_privilege(domain, privileges.LOOKUP_TABLES),
         'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
-        'rich_text': app.support_cmitfb
+        'rich_text': app.support_cmitfb or toggles.VELLUM_RICH_TEXT.enabled(domain)
     })
 
     has_schedule = (
