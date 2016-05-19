@@ -27,7 +27,7 @@ hqDefine('reports/javascripts/reports.util.js', function () {
                     val = val.split(',');
                 }
                 return jQuery.isArray(val) ?
-                    jQuery.map(val, function (val, i) {
+                    jQuery.map(val, function (val) {
                         return {
                             name: elem.name,
                             value: val.replace(rCRLF, "\r\n"),
