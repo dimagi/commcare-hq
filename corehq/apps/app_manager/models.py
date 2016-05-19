@@ -3986,6 +3986,12 @@ class BuildProfile(DocumentSchema):
     name = StringProperty()
     langs = StringListProperty()
 
+    def __eq__(self, other):
+        return self.langs == other.langs
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
 class MediaList(DocumentSchema):
     media_refs = StringListProperty()
@@ -4518,7 +4524,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # but check explicitly so as not to change the _id if it exists
             copy._id = copy.get_db().server.next_uuid()
 
-        copy.set_form_versions(previous_version)
+        force_new_forms = False
+        if self.build_profiles != previous_version.build_profiles:
+            force_new_forms = True
+        copy.set_form_versions(previous_version, force_new_forms)
         copy.set_media_versions(previous_version)
         copy.create_build_files(save=True)
 
@@ -4558,7 +4567,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
 
-    def set_form_versions(self, previous_version):
+    def set_form_versions(self, previous_version, force_new_version=False):
         # by default doing nothing here is fine.
         pass
 
@@ -4745,7 +4754,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = self.get_module(module_id).get_form(form_id)
         return form.validate_form().render_xform(build_profile_id).encode('utf-8')
 
-    def set_form_versions(self, previous_version):
+    def set_form_versions(self, previous_version, force_new_version=False):
         """
         Set the 'version' property on each form as follows to the current app version if the form is new
         or has changed since the last build. Otherwise set it to the version from the last build.
@@ -4757,28 +4766,31 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             for form_stuff in self.get_forms(bare=False):
                 filename = 'files/%s' % self.get_form_filename(**form_stuff)
                 form = form_stuff["form"]
-                form_version = None
-                try:
-                    previous_form = previous_version.get_form(form.unique_id)
-                    # take the previous version's compiled form as-is
-                    # (generation code may have changed since last build)
-                    previous_source = previous_version.fetch_attachment(filename)
-                except (ResourceNotFound, FormNotFoundException):
-                    pass
-                else:
-                    previous_hash = _hash(previous_source)
+                if not force_new_version:
+                    form_version = None
+                    try:
+                        previous_form = previous_version.get_form(form.unique_id)
+                        # take the previous version's compiled form as-is
+                        # (generation code may have changed since last build)
+                        previous_source = previous_version.fetch_attachment(filename)
+                    except (ResourceNotFound, FormNotFoundException):
+                        pass
+                    else:
+                        previous_hash = _hash(previous_source)
 
-                    # hack - temporarily set my version to the previous version
-                    # so that that's not treated as the diff
-                    previous_form_version = previous_form.get_version()
-                    form.version = previous_form_version
-                    my_hash = _hash(self.fetch_xform(form=form))
-                    if previous_hash == my_hash:
-                        form_version = previous_form_version
-                if form_version is None:
-                    form.version = None
+                        # hack - temporarily set my version to the previous version
+                        # so that that's not treated as the diff
+                        previous_form_version = previous_form.get_version()
+                        form.version = previous_form_version
+                        my_hash = _hash(self.fetch_xform(form=form))
+                        if previous_hash == my_hash:
+                            form_version = previous_form_version
+                    if form_version is None:
+                        form.version = None
+                    else:
+                        form.version = form_version
                 else:
-                    form.version = form_version
+                    form.version = None
 
     def set_media_versions(self, previous_version):
         """

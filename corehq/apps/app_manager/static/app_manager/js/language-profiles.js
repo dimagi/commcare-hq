@@ -14,7 +14,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
             unsavedMessage: gettext("You have unsaved changes to your build profiles"),
             save: function() {
                 var postProfiles = [];
-                _.each(self.app_profiles(), function(element, index) {
+                _.each(self.app_profiles(), function(element) {
                     // move default lang to first element of array
                     var postLangs = element.langs();
                     postLangs.splice(postLangs.indexOf(element.defaultLang()), 1);
