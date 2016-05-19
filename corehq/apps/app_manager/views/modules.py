@@ -12,7 +12,6 @@ from django.contrib import messages
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
-from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 
 from dimagi.utils.logging import notify_exception
 
