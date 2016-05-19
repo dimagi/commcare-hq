@@ -17,7 +17,7 @@ from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
+    InvalidFormatException, VerifiedNumber,
     apply_leniency, BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,

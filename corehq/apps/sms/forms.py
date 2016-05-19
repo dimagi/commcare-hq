@@ -10,7 +10,7 @@ from django.forms.fields import *
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from django.utils.safestring import mark_safe
-from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, HiddenFieldWithErrors, FieldsetAccordionGroup)
+from corehq.apps.hqwebapp.crispy import HiddenFieldWithErrors
 from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids

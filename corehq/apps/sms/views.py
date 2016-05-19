@@ -35,7 +35,6 @@ from corehq.apps.style.decorators import (
     use_typeahead,
     use_select2,
     use_jquery_ui,
-    upgrade_knockout_js,
     use_datatables,
 )
 from corehq.apps.users.decorators import require_permission
