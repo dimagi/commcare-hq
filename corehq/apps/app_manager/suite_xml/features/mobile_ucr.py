@@ -201,14 +201,14 @@ def _get_summary_details(config, domain):
             ),
             _get_data_detail(config, domain),
         ],
-    ).serialize())
+    ).serialize().decode('utf-8'))
 
 
 def _get_data_detail(config, domain):
     def _column_to_field(column):
         def _get_xpath(col):
             def _get_conditional(condition, if_true, if_false):
-                return 'if({condition}, {if_true}, {if_false})'.format(
+                return u'if({condition}, {if_true}, {if_false})'.format(
                     condition=condition,
                     if_true=if_true,
                     if_false=if_false,
@@ -223,7 +223,7 @@ def _get_data_detail(config, domain):
                         "$lang = '{lang}'".format(
                             lang=lang,
                         ),
-                        "'{translation}'".format(
+                        u"'{translation}'".format(
                             translation=translation.replace("'", "''"),
                         ),
                         word_eval
