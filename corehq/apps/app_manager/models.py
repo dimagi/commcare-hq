@@ -50,6 +50,7 @@ from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -841,8 +842,9 @@ class FormBase(DocumentSchema):
             form = self.wrapped_xform()
             form.strip_vellum_ns_attributes()
             try:
-                validate_xform(etree.tostring(form.xml),
-                               version=self.get_app().application_version)
+                if form.xml is not None:
+                    validate_xform(etree.tostring(form.xml),
+                                   version=self.get_app().application_version)
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -2523,7 +2525,14 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if action.case_type == case_type:
                 updates.update(format_key(*item)
                                for item in action.case_properties.iteritems())
-        return updates
+        if self.schedule and self.schedule.enabled and self.source:
+            xform = self.wrapped_xform()
+            self.add_stuff_to_xform(xform)
+            scheduler_updates = xform.get_scheduler_case_updates()[case_type]
+        else:
+            scheduler_updates = set()
+
+        return updates.union(scheduler_updates)
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
@@ -3710,11 +3719,16 @@ class ReportModule(ModuleBase):
 
     def validate_for_build(self):
         errors = super(ReportModule, self).validate_for_build()
-        if not self.check_report_validity().is_valid:
-            errors.append({
-                'type': 'report config ref invalid',
-                'module': self.get_module_info()
-            })
+        try:
+            is_valid = self.check_report_validity().is_valid
+        except ReportConfigurationNotFoundError:
+            is_valid = False
+        finally:
+            if not is_valid:
+                errors.append({
+                    'type': 'report config ref invalid',
+                    'module': self.get_module_info()
+                })
         return errors
 
 

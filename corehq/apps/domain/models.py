@@ -164,6 +164,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     goal_followup_rate = DecimalProperty()
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
+    performance_threshold = IntegerProperty()
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
 
 
