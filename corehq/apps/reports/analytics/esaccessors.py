@@ -473,3 +473,19 @@ def get_case_and_action_counts_for_domains(domains):
         domain: _domain_stats(domain)
         for domain in domains
     }
+
+
+def get_all_user_ids_submitted(domain, app_ids=None):
+    query = (
+        FormES()
+        .domain('demo')
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID')
+        )
+        .size(0)
+    )
+
+    if app_ids:
+        query = query.app(app_ids)
+
+    return query.run().aggregations.user_id.buckets_dict.keys()

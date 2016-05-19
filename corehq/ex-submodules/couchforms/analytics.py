@@ -129,18 +129,6 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
         return None
 
 
-def get_all_user_ids_submitted(domain):
-    key = ["submission user", domain]
-    submitted = XFormInstance.get_db().view(
-        'all_forms/view',
-        startkey=key,
-        endkey=key + [{}],
-        group=True,
-        group_level=3
-    ).all()
-    return {user['key'][2] for user in submitted}
-
-
 def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
     key = ["submission xmlns app", domain]
     results = XFormInstance.get_db().view(
