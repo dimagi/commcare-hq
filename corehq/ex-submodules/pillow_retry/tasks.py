@@ -60,7 +60,7 @@ def process_pillow_retry(error_doc_id):
                 return
 
         change = error_doc.change_object
-        if pillow.include_docs:
+        if getattr(pillow, 'include_docs', False):
             try:
                 change.set_document(pillow.get_couch_db().open_doc(change.id))
             except ResourceNotFound:
@@ -73,7 +73,7 @@ def process_pillow_retry(error_doc_id):
                     raise Exception('this is temporarily not supported!')
             except ImportError:
                 pass
-            pillow.process_change(change, is_retry_attempt=True)
+            pillow.process_change(change, is_retry_attempt=False)
         except Exception:
             ex_type, ex_value, ex_tb = sys.exc_info()
             error_doc.add_attempt(ex_value, ex_tb)

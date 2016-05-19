@@ -272,6 +272,13 @@
         "include_docs": false,
         "name": "LdHmisCaseFluffPillow"
     },
+    "LedgerToElasticsearchPillow": {
+        "advertised_name": "LedgerToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "ledger-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "LedgerToElasticsearchPillow"
+    },
     "LivraisonFluffPillow": {
         "advertised_name": "fluff.LivraisonFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",

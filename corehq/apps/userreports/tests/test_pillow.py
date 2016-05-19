@@ -107,7 +107,7 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
     def test_change_transport(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-        self.pillow.processor(doc_to_change(sample_doc))
+        self.pillow.process_change(doc_to_change(sample_doc))
         self._check_sample_doc_state(expected_indicators)
 
     @patch('corehq.apps.userreports.specs.datetime')
@@ -123,7 +123,7 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self.config.save()
         bad_ints = ['a', '', None]
         for bad_value in bad_ints:
-            self.pillow.processor(doc_to_change({
+            self.pillow.process_change(doc_to_change({
                 '_id': uuid.uuid4().hex,
                 'doc_type': 'CommCareCase',
                 'domain': 'user-reports',
@@ -137,7 +137,7 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
     def test_basic_doc_processing(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
-        self.pillow.processor(doc_to_change(sample_doc))
+        self.pillow.process_change(doc_to_change(sample_doc))
         self._check_sample_doc_state(expected_indicators)
 
     @patch('corehq.apps.userreports.specs.datetime')

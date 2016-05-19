@@ -9,6 +9,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
+from corehq.apps.change_feed import topics
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, StockState
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
@@ -40,6 +41,7 @@ from corehq.apps.commtrack.tests.data.balances import (
     receipts_enumerated,
     balance_enumerated,
     products_xml, SohReport)
+from testapps.test_pillowtop.utils import process_kafka_changes
 
 
 class CommTrackOTATest(CommTrackTest):
@@ -191,6 +193,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.sp2 = loc2.linked_supply_point()
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
+    @process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER)
     def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime, **submit_extras):
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
@@ -593,42 +596,30 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         def _assert_initial_state():
             if should_use_sql_backend(self.domain.name):
                 self.assertEqual(3, LedgerTransaction.objects.filter(form_id=second_form_id).count())
-                ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
-                self.assertEqual(3, len(ledger_values))
-                for lv in ledger_values:
-                    self.assertEqual(50, lv.stock_on_hand)
-                    # TODO: hook up consumption for LedgerValues
-                    # self.assertEqual(
-                    #     round(float(lv.daily_consumption), 2),
-                    #     1.67
-                    # )
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
                 # 6 = 3 stockonhand and 3 inferred consumption txns
                 self.assertEqual(6, StockTransaction.objects.filter(report__form_id=second_form_id).count())
-                self.assertEqual(3, StockState.objects.filter(case_id=self.sp.case_id).count())
-                for state in StockState.objects.filter(case_id=self.sp.case_id):
-                    self.assertEqual(Decimal(50), state.stock_on_hand)
-                    self.assertEqual(
-                        round(float(state.daily_consumption), 2),
-                        1.67
-                    )
+
+            ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
+            self.assertEqual(3, len(ledger_values))
+            for lv in ledger_values:
+                self.assertEqual(50, lv.stock_on_hand)
+                self.assertEqual(
+                    round(float(lv.daily_consumption), 2),
+                    1.67
+                )
 
         # check initial setup
         _assert_initial_state()
 
         # archive and confirm commtrack data is deleted
         form = FormAccessors(self.domain.name).get_form(second_form_id)
-        form.archive()
+        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+            form.archive()
+
         if should_use_sql_backend(self.domain.name):
             self.assertEqual(0, LedgerTransaction.objects.filter(form_id=second_form_id).count())
-            ledger_values = ledger_accessors.get_ledger_values_for_case(self.sp.case_id)
-            self.assertEqual(3, len(ledger_values))
-            for lv in ledger_values:
-                # balance should be reverted to 100 in the StockState
-                self.assertEqual(100, lv.stock_on_hand)
-                # consumption should be none since there will only be 1 data point
-                self.assertIsNone(lv.daily_consumption)
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
             self.assertEqual(0, StockTransaction.objects.filter(report__form_id=second_form_id).count())
@@ -642,7 +633,8 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             self.assertIsNone(state.daily_consumption)
 
         # unarchive and confirm commtrack data is restored
-        form.unarchive()
+        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+            form.unarchive()
         _assert_initial_state()
 
     @run_with_all_backends

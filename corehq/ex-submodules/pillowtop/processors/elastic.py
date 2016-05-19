@@ -16,7 +16,7 @@ class ElasticProcessor(PillowProcessor):
     def es_getter(self):
         return self.elasticsearch
 
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
+    def process_change(self, pillow_instance, change):
         if change.deleted and change.id:
             self._delete_doc_if_exists(change.id)
             return

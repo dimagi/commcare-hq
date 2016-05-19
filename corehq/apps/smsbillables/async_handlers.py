@@ -1,7 +1,6 @@
 import json
-from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.accounting.utils import fmt_dollar_amount, log_accounting_error
+from corehq.apps.accounting.utils import fmt_dollar_amount
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend

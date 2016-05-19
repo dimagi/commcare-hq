@@ -141,7 +141,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
-    'corehq.apps.hqwebapp.middleware.HQCsrfViewMiddleWare',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
@@ -1561,11 +1561,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case_search.get_case_search_to_elasticsearch_pillow',
         },
-        # {
-        #     'name': 'LedgerToElasticsearchPillow',
-        #     'class': 'pillowtop.pillow.interface.ConstructedPillow',
-        #     'instance': 'corehq.pillows.ledger.get_ledger_to_elasticsearch_pillow',
-        # },
+        {
+            'name': 'LedgerToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.ledger.get_ledger_to_elasticsearch_pillow',
+        },
     ]
 }
 

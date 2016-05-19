@@ -12,6 +12,7 @@ from corehq.apps.userreports.indicators import LedgerBalancesIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.products.models import SQLProduct
+from corehq.util.context_managers import drop_connected_signals
 
 
 class SingleIndicatorTestBase(SimpleTestCase):
@@ -521,14 +522,15 @@ class TestGetValuesByProduct(TestCase):
 
     @staticmethod
     def _make_stock_state(product, section_id, value):
-        return StockState.objects.create(
-            stock_on_hand=value,
-            case_id='case1',
-            product_id=product.product_id,
-            sql_product=product,
-            section_id=section_id,
-            last_modified_date=datetime.datetime.now(),
-        )
+        with drop_connected_signals(post_save):
+            return StockState.objects.create(
+                stock_on_hand=value,
+                case_id='case1',
+                product_id=product.product_id,
+                sql_product=product,
+                section_id=section_id,
+                last_modified_date=datetime.datetime.now(),
+            )
 
     def test_get_soh_values_by_product(self):
         values = LedgerBalancesIndicator._get_values_by_product(

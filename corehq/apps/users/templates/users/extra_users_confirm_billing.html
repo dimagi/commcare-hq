@@ -4,7 +4,12 @@
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -17,12 +22,12 @@
             $('#id_confirm_product_agreement').click(function () {
                 var $submit = $('#submit-button-pa'),
                     $helpText = $('#submit-button-help-qa');
-                if ($(this).prop('checked')) {
-                    $submit.removeProp('disabled');
+                if ($(this).attr('checked')) {
+                    $submit.removeAttr('disabled');
                     $submit.removeClass('disabled');
                     $helpText.addClass('hide');
                 } else {
-                    $submit.prop('disabled', true);
+                    $submit.attr('disabled', 'disabled');
                     $submit.addClass('disabled');
                     $helpText.removeClass('hide');
                 }
@@ -31,7 +36,7 @@
     </script>
 {% endblock %}
 
-{% block page_content %}
+{% block main_column %}
     <div class="alert alert-info">
         <h3>{% trans 'Notice of Additional Monthly Charges for Mobile Workers' %}</h3>
         <p>

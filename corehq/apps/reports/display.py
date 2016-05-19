@@ -1,16 +1,12 @@
-import json
-from django.core.cache import cache
 from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
 from couchforms.analytics import get_form_analytics_metadata
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
-from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 

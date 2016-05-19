@@ -1,6 +1,8 @@
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
-from corehq.form_processor.change_publishers import change_meta_from_sql_case, change_meta_from_sql_form, \
-    change_meta_from_ledger_v2
+from corehq.form_processor.change_publishers import (
+    change_meta_from_sql_case, change_meta_from_sql_form,
+    change_meta_from_ledger_v2, change_meta_from_ledger_v1
+)
 from pillowtop.feed.interface import Change
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
 
@@ -64,5 +66,16 @@ def _ledger_v2_to_change(ledger_value):
         document=ledger_value.to_json(),
         deleted=False,
         metadata=change_meta_from_ledger_v2(ledger_value),
+        document_store=None,
+    )
+
+
+def _ledger_v1_to_change(stock_state):
+    return Change(
+        id=stock_state.pk,
+        sequence_id=None,
+        document=stock_state.to_json(),
+        deleted=False,
+        metadata=change_meta_from_ledger_v1(stock_state),
         document_store=None,
     )

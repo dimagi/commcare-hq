@@ -1,7 +1,7 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
-from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters
+from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations
 from corehq.apps.es.aggregations import (
     TermsAggregation,
     ExtendedStatsAggregation,
@@ -440,3 +440,36 @@ def get_form_duration_stats_for_users(
         .size(0)
     )
     return query.run().aggregations.duration_stats.result
+
+
+def get_form_counts_for_domains(domains):
+    return FormES() \
+        .filter(filters.term('domain', domains)) \
+        .domain_aggregation() \
+        .size(0) \
+        .run() \
+        .aggregations.domain.counts_by_bucket()
+
+
+def get_case_and_action_counts_for_domains(domains):
+    actions_agg = aggregations.NestedAggregation('actions', 'actions')
+    aggregation = aggregations.TermsAggregation('domain', 'domain').aggregation(actions_agg)
+    results = CaseES() \
+        .filter(filters.term('domain', domains)) \
+        .aggregation(aggregation) \
+        .size(0) \
+        .run()
+
+    domains_to_cases = results.aggregations.domain.buckets_dict
+
+    def _domain_stats(domain_name):
+        cases = domains_to_cases.get(domain_name, None)
+        return {
+            'cases': cases.doc_count if cases else 0,
+            'case_actions': cases.actions.doc_count if cases else 0
+        }
+
+    return {
+        domain: _domain_stats(domain)
+        for domain in domains
+    }
