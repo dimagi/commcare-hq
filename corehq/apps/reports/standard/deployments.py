@@ -23,9 +23,12 @@ from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 
-from corehq.apps.reports.analytics.esaccessors import get_last_form_submissions_by_user
+from corehq.apps.reports.analytics.esaccessors import (
+    get_last_form_submissions_by_user,
+    get_all_user_ids_submitted,
+)
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.apps.reports.filters.select import SelectApplicationFilter
+from corehq.apps.reports.filters.select import SelectApplicationFilter, GroupFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.util import format_datatables_data
@@ -96,6 +99,22 @@ class ApplicationStatusReport(DeploymentsReport):
         headers.custom_sort = [[1, 'desc']]
         return headers
 
+
+    @property
+    @memoized
+    def override_user_ids(self):
+        # attempt to speed up finding users when app is selected
+        app_id = self.request_params.get(SelectApplicationFilter.slug, None)
+        group_id = self.request_params.get(GroupFilter.slug, None)
+
+        if group_id:
+            # this is fast enough
+            return None
+        elif app_id:
+            return get_all_user_ids_submitted(self.domain, app_id)
+
+        return None
+
     @property
     def rows(self):
         rows = []
@@ -151,7 +170,7 @@ class ApplicationStatusReport(DeploymentsReport):
                 last_sync = last_sync_log.date
 
             rows.append(
-                [user.username_in_report, _fmt_date(last_seen), _fmt_date(last_sync), app_name or "---"]
+                [user.username_in_report, _fmt_date(last_seen)['html'], _fmt_date(last_sync)['html'], app_name or "---"]
             )
         return rows
 
