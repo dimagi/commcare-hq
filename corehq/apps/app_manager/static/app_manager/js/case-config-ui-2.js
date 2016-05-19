@@ -28,7 +28,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
         self.allowUsercase = params.allowUsercase;
-        self.supportCmitfb = params.supportCmitfb;
+        self.vellumCaseManagement = params.vellumCaseManagement;
 
         self.setPropertiesMap = function (propertiesMap) {
             self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -773,8 +773,8 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
                     case_preload: ko.computed(function () {
                         return caseConfig.caseConfigViewModel.actionType() === 'update';
                     }),
-                    only_case_save: ko.computed(function () {
-                        return caseConfig.caseConfigViewModel.actionType() === 'update' && caseConfig.supportCmitfb;
+                    vellum_case_management: ko.computed(function () {
+                        return caseConfig.caseConfigViewModel.actionType() === 'update' && caseConfig.vellumCaseManagement;
                     }),
                     repeats: function () {
                         return false;

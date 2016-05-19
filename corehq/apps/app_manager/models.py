@@ -4071,7 +4071,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
-    support_cmitfb = BooleanProperty(default=False)
+    vellum_case_management = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):

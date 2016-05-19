@@ -22,7 +22,7 @@
         allowUsercase: {{ allow_usercase|JSON }},
         propertiesMap: {{ case_properties|JSON }},
         usercasePropertiesMap: {{ usercase_properties|JSON }},
-        supportCmitfb: {{ app.support_cmitfb|JSON }}
+        vellumCaseManagement: {{ app.vellum_case_management|JSON }}
         {% if app.application_version == '1.0' %}
         ,ejs_urls: {
             template: "{% new_static 'app_manager/ejs/case-config-ui-2.ejs' %}",

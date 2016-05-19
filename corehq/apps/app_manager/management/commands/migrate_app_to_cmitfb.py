@@ -38,5 +38,5 @@ class Command(BaseCommand):
                     form.actions.load_from_form = form.actions.case_preload
                     form.actions.case_preload = PreloadAction()
 
-        app.support_cmitfb = True
+        app.vellum_case_management = True
         app.save()

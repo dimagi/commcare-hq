@@ -70,7 +70,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
-    if ((app.support_cmitfb or toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain)) and
+    if ((app.vellum_case_management or toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain)) and
             module and module.case_type and form.requires_case()):
         vellum_plugins.append("databrowser")
 
@@ -84,7 +84,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'lookup_tables': domain_has_privilege(domain, privileges.LOOKUP_TABLES),
         'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
-        'rich_text': app.support_cmitfb or toggles.VELLUM_RICH_TEXT.enabled(domain)
+        'rich_text': app.vellum_case_management or toggles.VELLUM_RICH_TEXT.enabled(domain)
     })
 
     has_schedule = (
