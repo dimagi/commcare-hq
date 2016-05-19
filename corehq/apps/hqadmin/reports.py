@@ -1033,7 +1033,7 @@ class GlobalAdminReports(AdminDomainStatsReport):
 class RealProjectSpacesReport(GlobalAdminReports):
     slug = 'real_project_spaces'
     name = ugettext_noop('All Project Spaces')
-    default_params = {'es_is_test': 'false'}
+    default_params = {'es_is_test': ['none', 'false']}
     indicators = [
         'domain_count',
         'domain_self_started_count',
@@ -1059,7 +1059,7 @@ class CommConnectProjectSpacesReport(GlobalAdminReports):
     slug = 'commconnect_project_spaces'
     name = ugettext_noop('Project Spaces Using Messaging')
     default_params = {
-        'es_is_test': 'false',
+        'es_is_test': ['none', 'false'],
         'es_cp_sms_ever': 'T',
     }
     indicators = [
@@ -1084,7 +1084,7 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
     slug = 'commtrack_project_spaces'
     name = ugettext_noop('CommCare Supply Project Spaces')
     default_params = {
-        'es_is_test': 'false',
+        'es_is_test': ['none', 'false'],
         'es_internal.commtrack_domain': 'T',
     }
     indicators = [
