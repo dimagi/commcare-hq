@@ -4539,7 +4539,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             copy._id = copy.get_db().server.next_uuid()
 
         force_new_forms = False
-        if self.build_profiles != previous_version.build_profiles:
+        if previous_version and self.build_profiles != previous_version.build_profiles:
             force_new_forms = True
         copy.set_form_versions(previous_version, force_new_forms)
         copy.set_media_versions(previous_version)
