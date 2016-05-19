@@ -1,9 +1,7 @@
 from optparse import make_option
 
-import sqlalchemy
 from django.core.management.base import BaseCommand
-from dimagi.utils.modules import to_function
-from django.conf import settings
+from pillowtop.utils import get_pillow_by_name
 
 
 class Command(BaseCommand):
@@ -15,18 +13,19 @@ class Command(BaseCommand):
                                                          help='Skip important confirmation warnings.'),)
 
     def handle(self, *args, **options):
-        pillow_class = to_function(args[0])
+        pillow_class = get_pillow_by_name(args[0], instantiate=False)
         if not options['noinput']:
-            confirm = raw_input("""
+            confirm = raw_input(
+                """
                 You have requested to wipe %s table
 
-                Type 'yes' to continue, or 'no' to cancel: """ % pillow_class.__name__
+                Type 'yes' to continue, or 'no' to cancel:
+                """ % pillow_class.__name__
             )
 
             if confirm != 'yes':
-                print "\tReset cancelled."
+                print "\tWipe cancelled."
                 return
-        engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
-        table_name = 'fluff_{0}'.format(pillow_class.indicator_class.__name__)
-        table = sqlalchemy.Table(table_name, sqlalchemy.MetaData())
+        engine = pillow_class.get_sql_engine()
+        table = pillow_class.indicator_class().table
         engine.execute(table.delete())
