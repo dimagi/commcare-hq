@@ -6,7 +6,6 @@ from unittest import SkipTest
 from nose.case import Test, FunctionTestCase
 from nose.plugins import Plugin
 from nose.suite import ContextSuite
-from nose.util import transplant_func
 
 log = logging.getLogger(__name__)
 
