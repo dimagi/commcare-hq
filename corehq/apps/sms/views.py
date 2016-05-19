@@ -2,24 +2,19 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from StringIO import StringIO
 import base64
-import logging
 from datetime import datetime, timedelta, time
 import re
 import json
 from couchdbkit import ResourceNotFound
-import pytz
-from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from casexml.apps.case.models import CommCareCase
 from corehq import privileges, toggles
 from corehq.apps.hqadmin.views import BaseAdminSectionView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
-from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS, ApiUser
 from corehq.apps.commtrack.models import AlertConfig

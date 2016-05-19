@@ -1,6 +1,6 @@
 import re
 import json
-from crispy_forms.bootstrap import StrictButton, InlineField, FormActions
+from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div
 from django import forms
@@ -17,7 +17,7 @@ from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD, SQLMobileBackend
 from django.core.exceptions import ValidationError
-from corehq.apps.reminders.forms import RecordListField, validate_time
+from corehq.apps.reminders.forms import validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.sms.util import (validate_phone_number, strip_plus,
     get_sms_backend_classes)
