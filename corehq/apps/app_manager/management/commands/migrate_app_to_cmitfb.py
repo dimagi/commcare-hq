@@ -3,7 +3,7 @@ from lxml import etree as ET
 
 from django.core.management import BaseCommand
 
-from corehq.apps.app_manager.models import Application, Form, PreloadAction
+from corehq.apps.app_manager.models import Application, PreloadAction
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import XForm
 
@@ -25,7 +25,6 @@ class Command(BaseCommand):
     def migrate_app(self, app_id):
         app = Application.get(app_id)
         modules = [m for m in app.modules if m.module_type == 'basic']
-        should_save = False
 
         for module in modules:
             forms = [f for f in module.forms if f.doc_type == 'Form']
