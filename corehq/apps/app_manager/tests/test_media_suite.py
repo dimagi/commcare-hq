@@ -9,7 +9,7 @@ from corehq.apps.app_manager.models import Application, Module, ReportModule, Re
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.builds.models import BuildSpec
-from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio
+from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareVideo
 
 import commcare_translations
 
@@ -40,6 +40,13 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
                                [audio_path.format(num) for num in [1, 2, 3, 4]]
         self.assertTrue(app.get_module(0).uses_media())
         self.assertEqual(app.all_media_paths, set(should_contain_media))
+
+    def test_all_media_paths_with_inline_video(self):
+        inline_video_path = 'jr://file/commcare/video-inline/data/inline_video.mp4'
+        app = Application.wrap(self.get_json('app_video_inline'))
+
+        self.assertTrue(app.get_module(0).uses_media())
+        self.assertEqual(app.all_media_paths, [inline_video_path])
 
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
     def test_case_list_media(self):
