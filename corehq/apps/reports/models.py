@@ -780,6 +780,15 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                                             file_attachments=excel_files, ga_track=True,
                                             ga_tracking_info={'project_space_id': self.domain})
 
+    def remove_recipient(self, email):
+        try:
+            if email == self.owner.get_email():
+                self.send_to_owner = False
+            else:
+                self.recipient_emails.remove(email)
+        except ValueError:
+            pass
+
 
 class AppNotFound(Exception):
     pass
