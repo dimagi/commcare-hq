@@ -72,14 +72,22 @@ def get_module_template(module):
 
 
 def get_module_view_context(app, module, lang=None):
+    # shared context
+    context = {
+        'edit_name_url': reverse(
+            'corehq.apps.app_manager.views.edit_module_attr',
+            args=[app.domain, app.id, module.id, 'name']
+        )
+    }
     if isinstance(module, CareplanModule):
-        return _get_careplan_module_view_context(app, module)
+        context.update(_get_careplan_module_view_context(app, module))
     elif isinstance(module, AdvancedModule):
-        return _get_advanced_module_view_context(app, module, lang)
+        context.update(_get_advanced_module_view_context(app, module, lang))
     elif isinstance(module, ReportModule):
-        return _get_report_module_context(app, module)
+        context.update(_get_report_module_context(app, module))
     else:
-        return _get_basic_module_view_context(app, module, lang)
+        context.update(_get_basic_module_view_context(app, module, lang))
+    return context
 
 
 def _get_careplan_module_view_context(app, module):
@@ -198,6 +206,7 @@ def _get_report_module_context(app, module):
             gettext_lazy('Your app contains references to reports that are '
                          'deleted. These will be removed on save.')
         )
+
     return {
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],

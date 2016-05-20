@@ -2,7 +2,9 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
-from casexml.apps.case.cleanup import claim_case
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
@@ -67,22 +69,29 @@ def search(request, domain):
     return HttpResponse(fixtures, content_type="text/xml")
 
 
+@csrf_exempt
+@require_POST
 @json_error
 @login_or_digest_or_basic_or_apikey()
 def claim(request, domain):
+    """
+    Allows a user to claim a case that they don't own.
+    """
     couch_user = CouchUser.from_django_user(request.user)
     case_id = request.POST['case_id']
-    if request.method == 'POST':
-        if request.session.get('last_claimed_case_id') == case_id:
-            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
-                                status=400)
-        try:
-            claim_case(domain, couch_user.user_id, case_id,
-                       host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
-        except CaseNotFound:
-            return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
-                                status=404)
-        request.session['last_claimed_case_id'] = case_id
+    if (
+        request.session.get('last_claimed_case_id') == case_id or
+        get_first_claim(domain, couch_user.user_id, case_id)
+    ):
+        return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
+                            status=400)
+    try:
+        claim_case(domain, couch_user.user_id, case_id,
+                   host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
+    except CaseNotFound:
+        return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
+                            status=404)
+    request.session['last_claimed_case_id'] = case_id
     return HttpResponse(status=200)
 
 

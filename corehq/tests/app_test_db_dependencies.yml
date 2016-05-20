@@ -251,6 +251,7 @@ corehq.apps.receiverwrapper:
   - corehq.apps.domain
   - corehq.apps.dropbox
   - corehq.apps.locations
+  - corehq.apps.notifications
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms

@@ -603,6 +603,11 @@ class XForm(WrappedNode):
         nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
         return list(set([n.text for n in nodes]))
 
+    @requires_itext(list)
+    def media_references_by_lang(self, lang, form):
+        nodes = self.itext_node.findall('{f}translation[@lang="%s"]/{f}text/{f}value[@form="%s"]' % (lang, form))
+        return list(set([n.text for n in nodes]))
+
     @property
     def odk_intents(self):
         nodes = self.findall('{h}head/{odk}intent')
@@ -623,7 +628,14 @@ class XForm(WrappedNode):
 
     @property
     def video_references(self):
-        return self.media_references(form="video")
+        return self.media_references(form="video") + self.media_references(form="video-inline")
+
+    def all_references(self, lang):
+        images = self.media_references_by_lang(lang=lang, form="image")
+        video = self.media_references_by_lang(lang=lang, form="video")
+        audio = self.media_references_by_lang(lang=lang, form="audio")
+        inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
+        return images + video + audio + inline_video
 
     def set_name(self, new_name):
         title = self.find('{h}head/{h}title')
