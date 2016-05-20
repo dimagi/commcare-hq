@@ -10,7 +10,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 from corehq.messaging.ivrbackends.kookoo.models import SQLKooKooBackend
 from mock import patch
-from time import sleep
 from datetime import datetime, time
 import hashlib
 import os
