@@ -19,8 +19,7 @@ function(doc){
             build_broken: doc.build_broken,
             comment_from: doc.comment_from,
             is_released: doc.is_released,
-            case_sharing: doc.case_sharing,
-            build_profiles: doc.build_profiles
+            case_sharing: doc.case_sharing
         });
     }
 }

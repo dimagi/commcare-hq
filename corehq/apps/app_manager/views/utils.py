@@ -97,6 +97,7 @@ def validate_langs(request, existing_langs, validate_build=True):
     o = json.loads(request.body)
     langs = o['langs']
     rename = o['rename']
+    build = o['build']
 
     assert set(rename.keys()).issubset(existing_langs)
     assert set(rename.values()).issubset(langs)
@@ -106,5 +107,8 @@ def validate_langs(request, existing_langs, validate_build=True):
     for old, new in rename.items():
         if old != new:
             assert(new not in existing_langs)
+    # assert that the build langs are in the correct order
+    if validate_build:
+        assert sorted(build, key=lambda lang: langs.index(lang)) == build
 
-    return (langs, rename)
+    return (langs, rename, build)

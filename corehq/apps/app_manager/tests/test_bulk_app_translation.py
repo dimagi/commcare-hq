@@ -436,7 +436,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-        self.app.langs = ['en', 'afr', 'fra']
+        self.app.build_langs = self.app.langs = ['en', 'afr', 'fra']
         module1 = self.app.add_module(Module.new_module('module', None))
         form1 = self.app.new_form(module1.id, "Untitled Form", None)
         form1.source = self.get_xml('initial_xform')

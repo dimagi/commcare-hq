@@ -5,6 +5,7 @@
         <tr class="row form-group" data-bind="css: {'has-error': validateGeneral()}">
             <th></th>
             <th></th>
+            <th>{% if not hide_deploy_column %}{% trans "Deploy" %}{% endif %}</th>
             <th></th>
             <th></th>
             <th></th>
@@ -17,7 +18,7 @@
     <tbody data-bind="sortable: languages">
         <tr class="row form-group"
             data-bind="
-                css: {'has-error': show_error},
+                css: {'has-error': show_error, light: !deploy()},
                 attr: {'data-order': _sortableOrder}
                 ">
             <td class="col-sm-1" data-bind="css: {'sortable-handle': $root.canSortLanguages}">
@@ -26,6 +27,13 @@
             <td class="col-sm-2">
                 <span data-bind="text: $root.languages.indexOf($data) + 1 + '.', visible: !isDefaultLang()"></span>
                 <span class="label label-info" data-bind="visible: isDefaultLang()">1. default</span>
+            </td>
+            <td class="col-sm-2">
+                {% if hide_deploy_column %}
+                    <input type="checkbox" checked="checked" data-bind="value: deploy, visible: false" />
+                {% else %}
+                    <input type="checkbox" checked="checked" data-bind="checked: deploy" />
+                {% endif %}
             </td>
             <td class="col-sm-1">
                 <span class="form-inline">

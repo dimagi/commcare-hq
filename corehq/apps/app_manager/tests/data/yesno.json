@@ -7,6 +7,10 @@
     "application_version": "2.0",
     "attribution_notes": null,
     "build_comment": null,
+    "build_langs": [
+        "en",
+        "es"
+    ],
     "build_signed": true,
     "build_spec": {
         "build_number": null,

@@ -102,7 +102,6 @@ from corehq.apps.app_manager.views.releases import (
     AppDiffView,
     current_app_version,
     delete_copy,
-    LanguageProfilesView,
     odk_install,
     odk_media_qr_code,
     odk_qr_code,
