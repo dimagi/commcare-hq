@@ -20,12 +20,12 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.users.models import WebUser
 
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_new
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pillow
+from corehq.pillows.xform import XFormPillow
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
 FORM_TEMPLATE = """<?xml version='1.0' ?>
@@ -105,7 +105,6 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
             xmlns="http://www.commcarehq.org/export/test",
         )
         return spoof_submission(url, f)
-
 
     def _pillow_process_form(self, form_pair):
         self.pillow.change_transport(form_pair.json_form)

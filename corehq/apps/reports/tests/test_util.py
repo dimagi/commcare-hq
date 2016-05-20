@@ -1,6 +1,6 @@
 from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
-from mock import Mock, patch
+from mock import Mock
 
 from corehq.apps.reports.util import create_export_filter
 from corehq.apps.users.models import CommCareUser
