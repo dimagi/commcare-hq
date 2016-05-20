@@ -1,10 +1,15 @@
 from settings import *
 
-INSTALLED_APPS += (
+# note: the only reason these are prepended to INSTALLED_APPS is because of
+# a weird travis issue with kafka. if for any reason this order causes problems
+# it can be reverted whenever that's figured out.
+# https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
+INSTALLED_APPS = (
     'django_nose',
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
-) + TEST_APPS
+) + tuple(INSTALLED_APPS)
+assert not TEST_APPS, "TEST_APPS is deprecated; use LOCAL_APPS instead"
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
@@ -35,6 +40,8 @@ for key, value in {
     'NOSE_IGNORE_FILES': '^localsettings',
 
     'NOSE_EXCLUDE_DIRS': ';'.join([
+        'corehq/apps/cloudcare/tests/selenium',
+        'corehq/apps/reports/tests/selenium',
         'scripts',
 
         # strange error:
@@ -67,7 +74,6 @@ ENABLE_PRELOGIN_SITE = True
 
 # override dev_settings
 CACHE_REPORTS = True
-
 
 def _set_logging_levels(levels):
     import logging

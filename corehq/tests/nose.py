@@ -214,10 +214,13 @@ class AppLabelsPlugin(Plugin):
     user_specified_test_names = []  # globally referenced singleton
 
     def options(self, parser, env):
-        """Avoid adding a ``--with`` option for this plugin."""
+        parser.add_option('--no-migration-optimizer', action="store_true",
+                          default=env.get('NOSE_NO_MIGRATION_OPTIMIZER'),
+                          help="Disable migration optimizer. "
+                               "[NOSE_NO_MIGRATION_OPTIMIZER]")
 
     def configure(self, options, conf):
-        """Do not call super (always enabled)"""
+        type(self).enabled = not options.no_migration_optimizer
 
     def loadTestsFromNames(self, names, module=None):
         if names == ['.'] and os.getcwd() == settings.BASE_DIR:

@@ -423,6 +423,23 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
 create_test_case.__test__ = False
 
 
+def teardown(do_teardown):
+    """A decorator that adds teardown logic to a test function/method
+
+    NOTE this will not work for nose test generator functions.
+    """
+    def decorate(func):
+        @wraps(func)
+        def wrapper(*args, **kw):
+            try:
+                res = func(*args, **kw)
+                assert res is None, "{} returned value {!r}".format(func, res)
+            finally:
+                do_teardown(*args, **kw)
+        return wrapper
+    return decorate
+
+
 def set_parent_case(domain, child_case, parent_case):
     """
     Creates a parent-child relationship between child_case and parent_case.

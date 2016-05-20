@@ -1,6 +1,6 @@
+import time
 import uuid
 from datetime import datetime
-import time
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
@@ -10,9 +10,11 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import ProcessedForms
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
+from corehq.form_processor.models import (XFormInstanceSQL, XFormOperationSQL,
+    XFormAttachmentSQL, DisabledDbMixin)
 from corehq.form_processor.parsers.form import apply_deprecation
-from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import (create_form_for_test,
+    FormProcessorTestUtils, run_with_all_backends)
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
@@ -356,6 +358,13 @@ class FormAccessorsTests(TestCase):
 
         form = accessors.get_form('f3')
         self.assertFalse(form.is_deleted)
+
+        for form_id in ['f1', 'f2']:
+            form = FormAccessors(DOMAIN).get_form(form_id)
+            if isinstance(form, DisabledDbMixin):
+                super(DisabledDbMixin, form).delete()
+            else:
+                form.delete()
 
 
 def _simulate_form_edit():
