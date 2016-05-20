@@ -3,9 +3,8 @@ from corehq.apps.ivr.models import Call
 from corehq.apps.sms.tests.util import TouchformsTestCase
 from corehq.apps.sms.util import register_sms_contact
 from corehq.apps.reminders.models import (CaseReminderHandler,
-    METHOD_IVR_SURVEY, RECIPIENT_CASE, REMINDER_TYPE_DEFAULT,
-    CASE_CRITERIA, CaseReminderEvent, FIRE_TIME_DEFAULT,
-    EVENT_AS_SCHEDULE, MATCH_EXACT, RECIPIENT_OWNER)
+    CaseReminderEvent, FIRE_TIME_DEFAULT,
+    EVENT_AS_SCHEDULE, MATCH_EXACT)
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 from corehq.messaging.ivrbackends.kookoo.models import SQLKooKooBackend
