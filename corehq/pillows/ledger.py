@@ -14,9 +14,9 @@ from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 def _prepare_ledger_for_es(ledger):
     from corehq.apps.commtrack.models import CommtrackConfig
-    commtrack_config = CommtrackConfig.for_domain(ledger.domain)
+    commtrack_config = CommtrackConfig.for_domain(ledger['domain'])
 
-    if commtrack_config.use_auto_consumption:
+    if commtrack_config and commtrack_config.use_auto_consumption:
         daily_consumption = _get_daily_consumption_for_ledger(ledger)
         ledger['daily_consumption'] = daily_consumption
 

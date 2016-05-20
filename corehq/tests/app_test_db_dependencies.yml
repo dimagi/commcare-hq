@@ -43,6 +43,7 @@ testapps.test_pillowtop:
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
   - pillowtop
+  - pillow_retry
   - corehq.apps.case_search
 casexml.apps.phone:
   - auditcare
