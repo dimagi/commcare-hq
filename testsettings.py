@@ -6,7 +6,7 @@ INSTALLED_APPS += (
     'testapps.test_pillowtop',
 ) + TEST_APPS
 
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
     #'--no-migrations' # trim ~120s from test run with db tests
     #'--with-fixture-bundling',
