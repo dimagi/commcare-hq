@@ -15,6 +15,7 @@ class BulkUiTranslation(SimpleTestCase):
     def setUpClass(cls):
         cls.app = Application.new_app("test-domain", "Test App", application_version=APP_V2)
         cls.app.langs = ["en", "fra"]
+        cls.app.build_langs = ["en", "fra"]
 
     def _build_translation_download_file(self, headers, data=None):
         if data is None:

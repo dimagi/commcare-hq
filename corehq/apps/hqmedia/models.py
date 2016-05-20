@@ -685,33 +685,24 @@ class HQMediaMixin(Document):
                 updated_doc = self.get(self._id)
                 updated_doc.create_mapping(multimedia, form_path)
 
-    def get_media_objects(self, languages=None):
+    def get_media_objects(self):
         """
             Gets all the media objects stored in the multimedia map.
-            If passed a profile, will only get those that are used
-            in a language in the profile.
         """
         found_missing_mm = False
-        filter_multimedia = languages and self.media_language_map
-        if filter_multimedia:
-            media_list = []
-            for lang in languages:
-                media_list += self.media_language_map[lang].media_refs
-            requested_media = set(media_list)
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
         for path, map_item in self.multimedia_map.items():
-            if not filter_multimedia or path in requested_media:
-                media_item = raw_docs.get(map_item.multimedia_id)
-                if media_item:
-                    media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
-                    yield path, media_cls.wrap(media_item)
-                else:
-                    # delete media reference from multimedia map so this doesn't pop up again!
-                    del self.multimedia_map[path]
-                    found_missing_mm = True
+            media_item = raw_docs.get(map_item.multimedia_id)
+            if media_item:
+                media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
+                yield path, media_cls.wrap(media_item)
+            else:
+                # delete media reference from multimedia map so this doesn't pop up again!
+                del self.multimedia_map[path]
+                found_missing_mm = True
         if found_missing_mm:
             self.save()
 

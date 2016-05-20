@@ -18,8 +18,7 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
             version='2.7.0'
             ),
             name=u"TÉST ÁPP",
-            domain="potter",
-            langs=['en']
+            domain="potter"
         )
 
         update_toggle_cache(toggles.CUSTOM_PROPERTIES.slug, 'potter', True, toggles.NAMESPACE_DOMAIN)

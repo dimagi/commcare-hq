@@ -56,14 +56,14 @@ hqDefine('app_manager/js/download_async_modal.js', function () {
                 });
         };
 
-        self.generateDownload = function(download_url, params){
+        self.generateDownload = function(download_url, message){
             // prevent multiple calls
             if (!self.download_in_progress) {
                 self.download_in_progress = true;
                 $.ajax({
                     url: download_url,
                     type: "GET",
-                    data: params,
+                    data: {'message': message},
                     dataType: "json",
                     success: function (data) {
                         self.download_poll_url = data.download_url;

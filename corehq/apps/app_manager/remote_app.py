@@ -54,13 +54,13 @@ def strip_location(profile_url, location):
     return strip_left('./') or strip_left(base) or strip_left('jr://resource/') or location
 
 
-def make_remote_profile(app, langs=None):
+def make_remote_profile(app):
     try:
         profile = urllib2.urlopen(app.profile_url).read()
     except Exception:
         raise AppEditingError('Unable to access profile url: "%s"' % app.profile_url)
 
-    if app.manage_urls:
+    if app.manage_urls or app.build_langs:
         profile_xml = ProfileXML(profile)
 
         if app.manage_urls:
@@ -83,8 +83,8 @@ def make_remote_profile(app, langs=None):
                     download_index_url=download_index_url
                 )
 
-            if langs:
-                profile_xml.set_property("cur_locale", langs[0])
+        if app.build_langs:
+            profile_xml.set_property("cur_locale", app.build_langs[0])
 
         profile = profile_xml.render()
     return profile

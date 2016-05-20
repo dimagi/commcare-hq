@@ -128,7 +128,7 @@ class CloudcareMain(View):
         def _default_lang():
             if apps:
                 # unfortunately we have to go back to the DB to find this
-                return Application.get(apps[0]["_id"]).langs[0]
+                return Application.get(apps[0]["_id"]).build_langs[0]
             else:
                 return "en"
 
