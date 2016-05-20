@@ -277,6 +277,9 @@ class ImportErrorDetail(object):
             "Integer values were specified, but the values in excel were not "
             "all integers"
         ),
+        ImportErrors.ImportError: _(
+            "Problems in importing cases. Please check the excel file."
+        )
     }
 
     def __init__(self, *args, **kwargs):
