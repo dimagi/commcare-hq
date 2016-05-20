@@ -29,7 +29,7 @@ class Command(BaseCommand):
         if not domains and not options['all']:
             raise CommandError('Specify specific domains or --all')
 
-        all_domains = [domain.name for domain in get_call_center_domains()]
+        all_domains = [domain.name for domain in get_call_center_domains() if domain.use_fixtures]
         if domains:
             for domain in domains:
                 assert domain in all_domains, "Domain '{}' is not a Call Center domain".format(domain)
