@@ -284,8 +284,11 @@ class HqdbContext(DatabaseContext):
     """
 
     def __init__(self, tests, runner):
-        self.optimize = os.environ.get("REUSE_DB", "optimize") == "optimize"
-        if self.optimize:
+        reuse_db = os.environ.get("REUSE_DB")
+        self.skip_setup_for_reuse_db = reuse_db and reuse_db not in ["reset", "optimize"]
+        self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
+        self.optimize_migrations = reuse_db in [None, "optimize"]
+        if self.optimize_migrations:
             self.test_labels = AppLabelsPlugin.get_test_labels(tests)
         super(HqdbContext, self).__init__(tests, runner)
 
@@ -303,7 +306,7 @@ class HqdbContext(DatabaseContext):
         if self.should_skip_test_setup():
             return
 
-        if self.optimize:
+        if self.optimize_migrations:
             self.optimizer = optimize_apps_for_test_labels(self.test_labels)
             self.optimizer.__enter__()
 
@@ -317,7 +320,7 @@ class HqdbContext(DatabaseContext):
             databases = {app_name: uri for app_name, uri in databases}
         self.apps = [self.verify_test_db(*item) for item in databases.items()]
 
-        if os.environ.get("REUSE_DB") not in ["reset", "optimize"]:
+        if self.skip_setup_for_reuse_db:
             from django.db import connections
             old_names = []
             for connection in connections.all():
@@ -340,11 +343,10 @@ class HqdbContext(DatabaseContext):
             return
 
         self.blob_db.close()
-        if self.optimize:
+        if self.optimize_migrations:
             self.optimizer.__exit__(None, None, None)
 
-        if os.environ.get("REUSE_DB") != "teardown":
-            # skip remaining teardown
+        if self.skip_teardown_for_reuse_db:
             return
 
         # delete couch databases
