@@ -65,7 +65,6 @@ from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
