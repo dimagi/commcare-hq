@@ -1038,6 +1038,7 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
 
     objects = SubscriptionManager()
+    api_objects = Manager()
 
     class Meta:
         app_label = 'accounting'
