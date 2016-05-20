@@ -349,17 +349,22 @@ def delete_commcare_user(request, domain, user_id):
 @require_POST
 def toggle_demo_mode(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    demo_mode = bool(request.POST.get('demo_mode', False))
+    demo_mode = request.POST.get('demo_mode', 'no')
+    demo_mode = True if demo_mode == 'yes' else False
+
     # handle bad POST param
     if user.is_demo_user == demo_mode:
         warning = _("User is already in Demo mode!") if user.is_demo_user else _("User is not in Demo mode!")
         messages.warning(request, warning)
-        return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
+        return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
-    if user.is_demo_user:
+    if demo_mode:
+        messages.success(request, _("Successfully turned on demo mode!"))
         turn_on_demo_mode(user, domain)
     else:
+        messages.success(request, _("Successfully turned off demo mode!"))
         turn_off_demo_mode(user)
+    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
 
 @require_can_edit_commcare_users

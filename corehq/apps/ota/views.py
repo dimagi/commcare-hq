@@ -26,7 +26,7 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from django.http import HttpResponse
 from soil import DownloadBase
 
-from .models import DemoUserRestore
+from .utils import demo_user_restore_response
 
 
 @json_error
@@ -38,14 +38,7 @@ def restore(request, domain, app_id=None):
     """
     user = request.user
     couch_user = CouchUser.from_django_user(user)
-    if couch_user.is_demo_user:
-        # if user is in demo-mode, return frozen restore
-        # Todo handle case where user is in demo-mode, but frozen restore is not set due to task fail
-        assert couch_user.demo_restore_id is not None
-        restore = DemoUserRestore.objects.get(id=couch_user.demo_restore_id)
-        return restore.get_restore_http_response()
-    else:
-        return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
 
 
 @json_error
@@ -120,6 +113,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     elif domain != couch_user.domain:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
                             status=401)
+
+    if couch_user.is_demo_user:
+        # if user is in demo-mode, return demo restore
+        return demo_user_restore_response(couch_user)
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None

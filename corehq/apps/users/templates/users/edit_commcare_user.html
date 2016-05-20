@@ -194,6 +194,21 @@
                     </div>
                 </fieldset>
             </div>
+            <div>
+                <form class="form form-horizontal"
+                      action="{% url "toggle_demo_mode" domain couch_user.user_id %}"
+                      method="post">
+                    <input type="hidden" name="demo_mode" value="{{ couch_user.is_demo_user|yesno:"no,yes" }}" />
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        {% if couch_user.is_demo_user %}
+                            {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
+                        {% else %}
+                            {% trans 'Turn On Demo Mode for this Mobile Worker' %}
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
         </div>
         {% endif %}
     </div>
