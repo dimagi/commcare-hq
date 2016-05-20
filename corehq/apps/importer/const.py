@@ -14,4 +14,4 @@ class ImportErrors:
     CaseGeneration = ugettext_noop('Case Generation Error')
     DuplicateLocationName = ugettext_noop('Duplicated Location Name')
     InvalidInteger = ugettext_noop('Invalid Integer')
-    ImportError = ugettext_noop('Import Error')
+    ImportErrorMessage = ugettext_noop('Import Error')

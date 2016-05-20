@@ -277,7 +277,7 @@ class ImportErrorDetail(object):
             "Integer values were specified, but the values in excel were not "
             "all integers"
         ),
-        ImportErrors.ImportError: _(
+        ImportErrors.ImportErrorMessage: _(
             "Problems in importing cases. Please check the excel file."
         )
     }

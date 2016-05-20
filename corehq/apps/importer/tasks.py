@@ -76,7 +76,7 @@ def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLO
             except Exception:
                 err = True
                 errors.add(
-                    error=ImportErrors.ImportError,
+                    error=ImportErrors.ImportErrorMessage,
                     row_number=caseblocks[0]._id
                 )
         return err
