@@ -26,6 +26,8 @@ from mock import patch, Mock
 from nose.plugins import Plugin
 from django.apps import AppConfig
 from django.conf import settings
+from django.db.backends.creation import TEST_DATABASE_PREFIX
+from django.db.utils import OperationalError
 from django_nose.plugin import DatabaseContext
 
 from corehq.tests.optimizer import optimize_apps_for_test_labels
@@ -204,7 +206,9 @@ class ErrorOnDbAccessContext(object):
 
 
 class AppLabelsPlugin(Plugin):
-    """A plugin that supplies a list of app labels for the db app optimizer
+    """A plugin that supplies a list of app labels for the migration optimizer
+
+    See `corehq.tests.optimizer`
     """
     enabled = True
     user_specified_test_names = []  # globally referenced singleton
@@ -259,17 +263,34 @@ class AppLabelsPlugin(Plugin):
 
 
 class HqdbContext(DatabaseContext):
-    """Database context with couchdb setup/teardown
+    """Database setup/teardown
 
     In addition to the normal django database setup/teardown, also
-    setup/teardown couchdb databases.
+    setup/teardown couch databases. Database setup/teardown may be
+    skipped, depending on the presence and value of an environment
+    variable (`REUSE_DB`). Typical usage is `REUSE_DB=1` which means
+    skip database setup and migrations if possible and do not teardown
+    databases after running tests. If connection fails for any test
+    database in `settings.DATABASES` all databases will be re-created
+    and migrated.
 
-    This is mostly copied from
-    ``couchdbkit.ext.django.testrunner.CouchDbKitTestSuiteRunner``
+    Other supported `REUSE_DB` values:
+
+    - `REUSE_DB=reset` : drop existing, then create and migrate new test
+      databses, but do not teardown after running tests. This is
+      convenient when the existing databases are outdated and need to be
+      rebuilt.
+    - `REUSE_DB=optimize` : same as reset, but use migration optimizer
+      to reduce the number of database migrations.
+    - `REUSE_DB=teardown` : skip database setup; do normal teardown after
+      running tests.
     """
 
     def __init__(self, tests, runner):
-        self.optimize_migrations = AppLabelsPlugin.enabled
+        reuse_db = os.environ.get("REUSE_DB")
+        self.skip_setup_for_reuse_db = reuse_db and reuse_db not in ["reset", "optimize"]
+        self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
+        self.optimize_migrations = reuse_db in [None, "optimize"]
         if self.optimize_migrations:
             self.test_labels = AppLabelsPlugin.get_test_labels(tests)
         super(HqdbContext, self).__init__(tests, runner)
@@ -302,6 +323,21 @@ class HqdbContext(DatabaseContext):
             databases = {app_name: uri for app_name, uri in databases}
         self.apps = [self.verify_test_db(*item) for item in databases.items()]
 
+        if self.skip_setup_for_reuse_db:
+            from django.db import connections
+            old_names = []
+            for connection in connections.all():
+                db = connection.settings_dict
+                assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
+                try:
+                    connection.ensure_connection()
+                except OperationalError:
+                    break  # cannot connect; resume normal setup
+                old_names.append((connection, db["NAME"], True))
+            else:
+                self.old_names = old_names, []
+                return  # skip remaining setup
+
         sys.__stdout__.write("\n")  # newline for creating database message
         super(HqdbContext, self).setup()
 
@@ -312,6 +348,9 @@ class HqdbContext(DatabaseContext):
         self.blob_db.close()
         if self.optimize_migrations:
             self.optimizer.__exit__(None, None, None)
+
+        if self.skip_teardown_for_reuse_db:
+            return
 
         # delete couch databases
         deleted_databases = []

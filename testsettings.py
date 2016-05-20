@@ -11,7 +11,7 @@ INSTALLED_APPS = (
 ) + tuple(INSTALLED_APPS)
 assert not TEST_APPS, "TEST_APPS is deprecated; use LOCAL_APPS instead"
 
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
     #'--no-migrations' # trim ~120s from test run with db tests
     #'--with-fixture-bundling',
