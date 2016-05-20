@@ -1,11 +1,17 @@
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.models import (SQLMobileBackend, SQLMobileBackendMapping,
+    PhoneNumber)
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from datetime import datetime, timedelta
 from django.test import TestCase
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.utils import is_commcarecase
 from corehq.util.test_utils import create_test_case
 
 
@@ -223,3 +229,216 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
         v1.delete()
         v2.delete()
+
+
+class SQLPhoneNumberTestCase(TestCase):
+
+    def setUp(self):
+        self.domain = 'sql-phone-number-test'
+        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj.save()
+
+    def delete_objects(self, result):
+        for obj in result:
+            # Delete and clear cache
+            obj.delete()
+
+    def tearDown(self):
+        self.delete_objects(PhoneNumber.objects.filter(domain=self.domain))
+        self.delete_objects(SQLMobileBackend.objects.filter(domain=self.domain))
+        SQLMobileBackendMapping.objects.filter(domain=self.domain).delete()
+        self.domain_obj.delete()
+
+    def test_backend(self):
+        backend1 = SQLTestSMSBackend.objects.create(
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+            is_global=False,
+            domain=self.domain,
+            name='BACKEND1'
+        )
+
+        backend2 = SQLTestSMSBackend.objects.create(
+            hq_api_id=SQLTestSMSBackend.get_api_id(),
+            is_global=False,
+            domain=self.domain,
+            name='BACKEND2'
+        )
+
+        SQLMobileBackendMapping.set_default_domain_backend(self.domain, backend1)
+
+        number = PhoneNumber(domain=self.domain, phone_number='+999123')
+        self.assertEqual(number.backend, backend1)
+
+        number.backend_id = backend2.name
+        self.assertEqual(number.backend, backend2)
+
+        number.backend_id = '  '
+        self.assertEqual(number.backend, backend1)
+
+    @run_with_all_backends
+    def test_case_owner(self):
+        with create_test_case(self.domain, 'participant', 'test') as case:
+            number = PhoneNumber(owner_doc_type='CommCareCase', owner_id=case.case_id)
+            owner = number.owner
+            self.assertTrue(is_commcarecase(owner))
+            self.assertEqual(owner.case_id, case.case_id)
+
+    def test_user_owner(self):
+        mobile_user = CommCareUser.create(self.domain, 'abc', 'def')
+        number = PhoneNumber(owner_doc_type='CommCareUser', owner_id=mobile_user.get_id)
+        owner = number.owner
+        self.assertTrue(isinstance(owner, CommCareUser))
+        self.assertEqual(owner.get_id, mobile_user.get_id)
+
+        web_user = WebUser.create(self.domain, 'ghi', 'jkl')
+        number = PhoneNumber(owner_doc_type='WebUser', owner_id=web_user.get_id)
+        owner = number.owner
+        self.assertTrue(isinstance(owner, WebUser))
+        self.assertEqual(owner.get_id, web_user.get_id)
+
+        number = PhoneNumber(owner_doc_type='X')
+        self.assertIsNone(number.owner)
+
+    def test_phone_lookup(self):
+        number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=True
+        )
+
+        self.assertEqual(PhoneNumber.by_phone('999123'), number)
+        self.assertEqual(PhoneNumber.by_phone('+999 123'), number)
+        self.assertIsNone(PhoneNumber.by_phone('999124'))
+
+        # test cache clear on save
+        number.phone_number = '999124'
+        number.save()
+        self.assertIsNone(PhoneNumber.by_phone('999123'))
+        self.assertEqual(PhoneNumber.by_phone('999124'), number)
+
+        # test pending
+        number.verified=False
+        number.save()
+        self.assertIsNone(PhoneNumber.by_phone('999124'))
+        self.assertEqual(PhoneNumber.by_phone('999124', include_pending=True), number)
+
+    def test_suffix_lookup(self):
+        number1 = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=True
+        )
+
+        number2 = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999223',
+            verified=True
+        )
+
+        self.assertEqual(PhoneNumber.by_suffix('1 23'), number1)
+        self.assertEqual(PhoneNumber.by_suffix('2 23'), number2)
+        self.assertIsNone(PhoneNumber.by_suffix('23'))
+
+        # test update
+        number1.phone_number = '999124'
+        number1.save()
+        number2.phone_number = '999224'
+        number2.save()
+        self.assertIsNone(PhoneNumber.by_suffix('1 23'))
+        self.assertIsNone(PhoneNumber.by_suffix('2 23'))
+        self.assertEqual(PhoneNumber.by_suffix('124'), number1)
+        self.assertEqual(PhoneNumber.by_suffix('224'), number2)
+
+        # test pending
+        number1.verified=False
+        number1.save()
+        number2.verified=False
+        number2.save()
+        self.assertIsNone(PhoneNumber.by_suffix('124'))
+        self.assertIsNone(PhoneNumber.by_suffix('224'))
+        self.assertEqual(PhoneNumber.by_suffix('124', include_pending=True), number1)
+        self.assertEqual(PhoneNumber.by_suffix('224', include_pending=True), number2)
+
+    def test_extensive_search(self):
+        number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=True
+        )
+
+        self.assertEqual(PhoneNumber.by_extensive_search('999123'), number)
+        self.assertEqual(PhoneNumber.by_extensive_search('0999123'), number)
+        self.assertEqual(PhoneNumber.by_extensive_search('00999123'), number)
+        self.assertEqual(PhoneNumber.by_extensive_search('000999123'), number)
+        self.assertEqual(PhoneNumber.by_extensive_search('123'), number)
+        self.assertIsNone(PhoneNumber.by_extensive_search('999124'), number)
+
+    def test_by_domain(self):
+        number1 = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=True
+        )
+
+        number2 = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999124',
+            verified=False
+        )
+
+        number3 = PhoneNumber.objects.create(
+            domain=self.domain + 'X',
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999124',
+            verified=True
+        )
+        self.addCleanup(number3.delete)
+
+        self.assertEqual(
+            set(PhoneNumber.by_domain(self.domain)),
+            set([number1, number2])
+        )
+
+        self.assertEqual(
+            set(PhoneNumber.by_domain(self.domain, ids_only=True)),
+            set([number1.couch_id, number2.couch_id])
+        )
+
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
+
+    def test_by_owner_id(self):
+        number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='owner1',
+            phone_number='999123',
+            verified=True
+        )
+
+        [lookup] = PhoneNumber.by_owner_id('owner1')
+        self.assertEqual(lookup, number)
+
+        # test cache clear
+        number.owner_id = 'owner2'
+        number.save()
+        self.assertEqual(PhoneNumber.by_owner_id('owner1').count(), 0)
+        [lookup] = PhoneNumber.by_owner_id('owner2')
+        self.assertEqual(lookup, number)
+
+        number.verified = False
+        number.save()
+        [lookup] = PhoneNumber.by_owner_id('owner2')
+        self.assertFalse(lookup.verified)
