@@ -210,10 +210,13 @@ class AppLabelsPlugin(Plugin):
     user_specified_test_names = []  # globally referenced singleton
 
     def options(self, parser, env):
-        """Avoid adding a ``--with`` option for this plugin."""
+        parser.add_option('--no-migration-optimizer', action="store_true",
+                          default=env.get('NOSE_NO_MIGRATION_OPTIMIZER'),
+                          help="Disable migration optimizer. "
+                               "[NOSE_NO_MIGRATION_OPTIMIZER]")
 
     def configure(self, options, conf):
-        """Do not call super (always enabled)"""
+        type(self).enabled = not options.no_migration_optimizer
 
     def loadTestsFromNames(self, names, module=None):
         if names == ['.'] and os.getcwd() == settings.BASE_DIR:
@@ -266,7 +269,9 @@ class HqdbContext(DatabaseContext):
     """
 
     def __init__(self, tests, runner):
-        self.test_labels = AppLabelsPlugin.get_test_labels(tests)
+        self.optimize_migrations = AppLabelsPlugin.enabled
+        if self.optimize_migrations:
+            self.test_labels = AppLabelsPlugin.get_test_labels(tests)
         super(HqdbContext, self).__init__(tests, runner)
 
     @classmethod
@@ -283,8 +288,9 @@ class HqdbContext(DatabaseContext):
         if self.should_skip_test_setup():
             return
 
-        self.optimizer = optimize_apps_for_test_labels(self.test_labels)
-        self.optimizer.__enter__()
+        if self.optimize_migrations:
+            self.optimizer = optimize_apps_for_test_labels(self.test_labels)
+            self.optimizer.__enter__()
 
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
@@ -304,7 +310,8 @@ class HqdbContext(DatabaseContext):
             return
 
         self.blob_db.close()
-        self.optimizer.__exit__(None, None, None)
+        if self.optimize_migrations:
+            self.optimizer.__exit__(None, None, None)
 
         # delete couch databases
         deleted_databases = []
