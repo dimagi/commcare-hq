@@ -1,9 +1,34 @@
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V1
-from casexml.apps.phone.models import get_properly_wrapped_sync_log, get_sync_log_class_by_format
+from casexml.apps.phone.models import (
+    get_properly_wrapped_sync_log,
+    get_sync_log_class_by_format,
+    OTARestoreWebUser,
+    OTARestoreCommCareUser,
+)
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from casexml.apps.phone.tests.dbaccessors import get_all_sync_logs_docs
 from casexml.apps.phone.xml import SYNC_XMLNS
+
+from corehq.apps.users.models import CommCareUser, WebUser
+
+
+def create_restore_user(
+        domain='restore-domain',
+        username='mclovin',
+        password='***',
+        is_mobile_user=True):
+
+    user_cls = CommCareUser if is_mobile_user else WebUser
+    restore_user_cls = OTARestoreCommCareUser if is_mobile_user else OTARestoreWebUser
+    return restore_user_cls(
+        domain,
+        user_cls.create(
+            domain=domain,
+            username=username,
+            password=password,
+        )
+    )
 
 
 def synclog_id_from_restore_payload(restore_payload):

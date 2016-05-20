@@ -63,7 +63,7 @@ class OTARestoreUser(object):
 
     @property
     def user_session_data(self):
-        return self._couch_user.user_data
+        return self._couch_user.user_session_data
 
     @property
     def date_joined(self):
@@ -74,20 +74,126 @@ class OTARestoreUser(object):
     def project(self):
         return Domain.get_by_name(self.domain)
 
+    @property
+    def locations(self):
+        raise NotImplementedError()
+
+    @property
+    def sql_location(self):
+        raise NotImplementedError()
+
     def get_fixture_dataitems(self):
-        return self._couch_user.get_fixture_dataitems(self.domain)
+        raise NotImplementedError()
 
     def get_groups(self):
-        return self._couch_user.get_groups(self.domain)
+        raise NotImplementedError()
 
     def get_commtrack_location_id(self):
-        return self._couch_user.get_commtrack_location_id(self.domain)
+        raise NotImplementedError()
+
+    def get_owner_ids(self):
+        raise NotImplementedError()
+
+    def get_call_center_indicators(self):
+        raise NotImplementedError()
+
+    def get_case_sharing_groups(self):
+        raise NotImplementedError()
+
+    def get_fixture_last_modified(self):
+        raise NotImplementedError()
+
+
+class OTARestoreWebUser(OTARestoreUser):
+
+    def __init__(self, domain, couch_user, **kwargs):
+        from corehq.apps.users.models import WebUser
+
+        assert isinstance(couch_user, WebUser)
+        super(OTARestoreWebUser, self).__init__(domain, couch_user, **kwargs)
+
+    @property
+    def sql_location(self):
+        return None
+
+    @property
+    def locations(self):
+        return []
+
+    def get_fixture_dataitems(self):
+        return []
+
+    def get_groups(self):
+        return []
+
+    def get_commtrack_location_id(self):
+        return None
+
+    def get_owner_ids(self):
+        return [self.user_id]
+
+    def get_call_center_indicators(self):
+        return None
+
+    def get_case_sharing_groups(self):
+        return []
+
+    def get_fixture_last_modified(self):
+        from corehq.apps.fixtures.models import UserFixtureStatus
+
+        return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+
+
+class OTARestoreCommCareUser(OTARestoreUser):
+
+    def __init__(self, domain, couch_user, **kwargs):
+        from corehq.apps.users.models import CommCareUser
+
+        assert isinstance(couch_user, CommCareUser)
+        super(OTARestoreCommCareUser, self).__init__(domain, couch_user, **kwargs)
+
+    @property
+    def sql_location(self):
+        return self._couch_user.sql_location
+
+    @property
+    def locations(self):
+        return self._couch_user.locations
+
+    def get_fixture_dataitems(self):
+        from corehq.apps.fixtures.models import FixtureDataItem
+
+        return FixtureDataItem.by_user(self._couch_user)
+
+    def get_groups(self):
+        return Group.by_user(self._couch_user)
+
+    def get_commtrack_location_id(self):
+        from corehq.apps.commtrack.util import get_commtrack_location_id
+
+        return get_commtrack_location_id(self._couch_user, domain)
 
     def get_owner_ids(self):
         return self._couch_user.get_owner_ids(self.domain)
 
     def get_call_center_indicators(self):
+        from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
+
+        return CallCenterIndicators(
+            self.project.name,
+            self.project.default_timezone,
+            self.project.call_center_config.case_type,
+            self._couch_user,
+        )
         return self._couch_user.get_call_center_indicators(self.domain)
+
+    def get_case_sharing_groups(self):
+        return self._couch_user.get_case_sharing_groups()
+
+    def get_fixture_last_modified(self):
+        from corehq.apps.fixtures.models import UserFixtureType
+
+        return self._couch_user.fixture_status(UserFixtureType.LOCATION)
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
