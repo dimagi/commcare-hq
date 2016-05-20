@@ -117,16 +117,17 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     loadSession();
 });
 
-FormplayerFrontend.on("start", function (apps, language) {
-    FormplayerFrontend.request('currentUser').language = language;
-    FormplayerFrontend.request('currentUser').apps = apps;
+FormplayerFrontend.on("start", function (options) {
+    var user = FormplayerFrontend.request('currentUser');
+    user.username = options.username;
+    user.language = options.language;
+    user.apps = options.apps;
+    user.domain = options.domain;
     if (Backbone.history) {
         Backbone.history.start();
-        var user = FormplayerFrontend.request('currentUser');
         // will be the same for every domain. TODO: get domain/username/pass from django
-        user.domain = apps[0].domain;
         if (this.getCurrentRoute() === "") {
-            FormplayerFrontend.trigger("apps:list", apps);
+            FormplayerFrontend.trigger("apps:list", options.apps);
         }
     }
 });

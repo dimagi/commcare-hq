@@ -46,16 +46,22 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     var API = {
 
         getMenus: function (appId, stepList, page) {
+
+            var user = FormplayerFrontend.request('currentUser');
+            var username = user.username;
+            var domain = user.domain;
+            var trimmedUsername = username.substring(0, username.indexOf("@"));
+
             var menus = new Entities.MenuSelectCollection({
-                domain: FormplayerFrontend.request('currentUser').domain,
+
                 appId: appId,
 
                 fetch: function (options) {
                     var collection = this;
 
                     options.data = JSON.stringify({
-                        "username": "test",
-                        "domain": "test",
+                        "username": trimmedUsername,
+                        "domain": domain,
                         "app_id": collection.appId,
                         "selections": stepList,
                         "offset": page * 10,
