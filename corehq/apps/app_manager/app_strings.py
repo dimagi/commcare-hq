@@ -165,10 +165,11 @@ class AppStringsBase(object):
     def app_strings_parts(self, app, lang, for_default=False):
         raise NotImplementedError()
 
-    def create_default_app_strings(self, app):
+    def create_default_app_strings(self, app, build_profile_id=None):
         messages = {}
 
-        for lc in reversed(app.langs):
+        langs = app.get_build_langs(build_profile_id)
+        for lc in reversed(langs):
             if lc == "default":
                 continue
             new_messages = commcare_translations.loads(
