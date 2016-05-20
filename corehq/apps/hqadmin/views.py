@@ -863,7 +863,7 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         if domain:
             domains = [domain]
         else:
-            domains = [dom.name for dom in get_call_center_domains()]
+            domains = [dom.name for dom in get_call_center_domains() if dom.use_fixtures]
 
         domain_stats = get_call_center_data_source_stats(domains)
 
