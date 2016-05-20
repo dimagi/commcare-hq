@@ -10,9 +10,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
         getTemplate: function () {
             if (this.model.attributes.audioUri) {
-                return "#menu-view-item-audio";
+                return "#menu-view-item-audio-template";
             } else {
-                return "#menu-view-item";
+                return "#menu-view-item-template";
             }
         },
 
@@ -34,7 +34,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
     MenuList.MenuListView = Marionette.CompositeView.extend({
         tagName: "div",
-        template: "#menu-view-list",
+        template: "#menu-view-list-template",
         childView: MenuList.MenuView,
         childViewContainer: "tbody",
         templateHelpers: function () {
@@ -46,7 +46,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
-        template: "#case-view-item",
+        template: "#case-view-item-template",
 
         events: {
             "click": "rowClick",
@@ -66,7 +66,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
     MenuList.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
-        template: "#case-view-list",
+        template: "#case-view-list-template",
         childView: MenuList.CaseView,
         childViewContainer: "tbody",
 
@@ -103,13 +103,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
     MenuList.DetailView = Marionette.ItemView.extend({
         tagName: "tr",
-        template: "#detail-view-item",
+        template: "#detail-view-item-template",
     });
 
     MenuList.DetailListView = Marionette.CompositeView.extend({
         tagName: "table",
         className: "table table-hover",
-        template: "#detail-view-list",
+        template: "#detail-view-list-template",
         childView: MenuList.DetailView,
         childViewContainer: "tbody",
     });

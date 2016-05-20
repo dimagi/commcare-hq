@@ -1,6 +1,6 @@
 {% load hq_shared_tags %}
 
-<script type="text/template" id="case-view-list">
+<script type="text/template" id="case-view-list-template">
     <h2 id="title"><%= title %></h2>
     <table class="table table-hover table-striped table-bordered">
         <thead>
@@ -44,7 +44,7 @@
 
 </script>
 
-<script type="text/template" id="case-view-item">
+<script type="text/template" id="case-view-item-template">
     <% _.each(data, function(datum) { %>
     <td> <%= datum %></td>
     <% }); %>

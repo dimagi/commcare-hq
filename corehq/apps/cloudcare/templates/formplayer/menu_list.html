@@ -1,6 +1,6 @@
 {% load hq_shared_tags %}
 
-<script type="text/template" id="menu-view-list">
+<script type="text/template" id="menu-view-list-template">
     <p><h2><%- title %></h2></p>
     <table style="width:600px" class="table table-hover table-striped table-bordered">
         <tbody>
@@ -8,7 +8,7 @@
     </table>
 </script>
 
-<script type="text/template" id="menu-view-item-audio">
+<script type="text/template" id="menu-view-item-audio-template">
     <td style="width:60px"><img style="max-height:50px"
                                 src="<%- imageUrl ? imageUrl : '{% static 'cloudcare/images/avatar_form.png' %}' %>"/>
     </td>
@@ -23,7 +23,7 @@
     </td>
 </script>
 
-<script type="text/template" id="menu-view-item">
+<script type="text/template" id="menu-view-item-template">
     <td style="width:60px"><img style="max-height:50px"
                                 src="<%- imageUrl ? imageUrl : '{% static 'cloudcare/images/avatar_form.png' %}' %>"/>
     </td>
