@@ -658,11 +658,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         app1, app2 = '123', '567'
         xmlns1, xmlns2 = 'abc', 'efg'
 
-        start = datetime(2013, 7, 1)
-        end = datetime(2013, 7, 30)
-
         received_on = datetime(2013, 7, 15, 0, 0, 0)
-        received_on_out = datetime(2013, 6, 15, 0, 0, 0)
 
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
         self._send_form_to_es(received_on=received_on, user_id=user2, app_id=app2, xmlns=xmlns2)
@@ -675,28 +671,22 @@ class TestFormESAccessors(BaseESAccessorsTest):
         app1, app2 = '123', '567'
         xmlns1, xmlns2 = 'abc', 'efg'
 
-        start = datetime(2013, 7, 1)
-        end = datetime(2013, 7, 30)
-
         received_on = datetime(2013, 7, 15, 0, 0, 0)
-        received_on_out = datetime(2013, 6, 15, 0, 0, 0)
 
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
         self._send_form_to_es(received_on=received_on, user_id=user2, app_id=app2, xmlns=xmlns2)
 
         user_ids = get_all_user_ids_submitted(self.domain, app1)
         self.assertEqual(user_ids, ['u1'])
+        user_ids = get_all_user_ids_submitted(self.domain, app2)
+        self.assertEqual(user_ids, ['u2'])
 
     def test_get_username_in_last_form_submitted(self):
         user1, user2 = 'u1', 'u2'
-        app1, app2 = '123', '567'
-        xmlns1, xmlns2 = 'abc', 'efg'
-
-        start = datetime(2013, 7, 1)
-        end = datetime(2013, 7, 30)
+        app1 = '123'
+        xmlns1 = 'abc'
 
         received_on = datetime(2013, 7, 15, 0, 0, 0)
-        received_on_out = datetime(2013, 6, 15, 0, 0, 0)
 
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1, username=user1)
         self._send_form_to_es(received_on=received_on, user_id=user2, app_id=app1, xmlns=xmlns1, username=user2)
