@@ -1,6 +1,7 @@
 from django.test import TestCase
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
+    get_current_app,
     get_latest_released_app_doc,
     get_latest_build_doc,
     get_brief_apps_in_domain,
@@ -168,6 +169,10 @@ class TestAppGetters(TestCase):
     def test_get_app_current(self):
         app = get_app(self.domain, self.app_id)
         self.assertEqual(app.version, 4)
+
+    def test_get_current_app(self):
+        app_doc = get_current_app(self.domain, self.app_id)
+        self.assertEqual(app_doc['version'], 4)
 
     def test_get_app_latest_released_build(self):
         app = get_app(self.domain, self.app_id, latest=True)
