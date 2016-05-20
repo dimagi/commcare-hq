@@ -233,13 +233,13 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
     def export_table(self):
         result = super(BaseCommConnectLogReport, self).export_table
         table = result[0][1]
-        table[0].append(_("Contact Type"))
-        table[0].append(_("Contact Id"))
+        table[0].insert(0, _("Contact Id"))
+        table[0].insert(0, _("Contact Type"))
         for row in table[1:]:
             contact_info = row[1].split("|||")
             row[1] = contact_info[0]
-            row.append(contact_info[1])
-            row.append(contact_info[2])
+            row.insert(0, contact_info[2])
+            row.insert(0, contact_info[1])
         return result
 
 
@@ -389,7 +389,7 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = order_by_col(queryset)
         return queryset
 
-    def _get_rows(self, paginate=True, contact_info=False):
+    def _get_rows(self, paginate=True, contact_info=False, include_log_id=False):
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
         abbreviated_phone_number_domains = message_log_options.get("abbreviated_phone_number_domains", [])
         abbreviate_phone_number = (self.domain in abbreviated_phone_number_domains)
@@ -418,7 +418,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
         for message in data:
-            yield [
+            row = [
                 get_timestamp(message.date),
                 get_contact_link(message.couch_recipient, message.couch_recipient_doc_type, raw=contact_info),
                 get_phone_number(message.phone_number),
@@ -426,6 +426,9 @@ class MessageLogReport(BaseCommConnectLogReport):
                 message.text,
                 ', '.join(self._get_message_types(message)),
             ]
+            if include_log_id:
+                row.append(message.couch_id)
+            yield row
 
     @property
     def rows(self):
@@ -449,7 +452,14 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @property
     def export_rows(self):
-        return self._get_rows(paginate=False, contact_info=True)
+        return self._get_rows(paginate=False, contact_info=True, include_log_id=True)
+
+    @property
+    def export_table(self):
+        result = super(MessageLogReport, self).export_table
+        table = result[0][1]
+        table[0].append(_("Message Log ID"))
+        return result
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
