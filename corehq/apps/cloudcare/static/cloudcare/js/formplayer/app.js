@@ -92,16 +92,16 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
                     FormplayerFrontend.request("clearForm");
                     // TODO form linking
                     FormplayerFrontend.trigger("apps:list");
-                    showSuccess(translatedStrings.saved, $("#cloudcare-notifications"), 2500);
+                    showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
                 },
                 error: function (resp, status, message) {
                     if (message) {
-                        message = translatedStrings.errSavingDetail + message;
+                        message = gettext("Error saving!") + message;
                     } else {
-                        message = translatedStrings.unknownError + status + " " + resp.status;
+                        message = gettext("Unknown error: ") + status + " " + resp.status;
                         if (resp.status === 0) {
                             message = (message + ". "
-                            + translatedStrings.unknownErrorDetail + " (" + postUrl + ")");
+                            + gettext("This can happen if you loaded CloudCare from a different address than the server address") + " (" + postUrl + ")");
                         }
                     }
                     data.onerror({message: message});
