@@ -52,6 +52,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import Location
+from corehq.apps.ota.utils import turn_on_demo_mode, turn_off_demo_mode
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
@@ -342,6 +343,23 @@ def delete_commcare_user(request, domain, user_id):
     user.retire()
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
+
+
+@require_can_edit_commcare_users
+@require_POST
+def toggle_demo_mode(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    demo_mode = bool(request.POST.get('demo_mode', False))
+    # handle bad POST param
+    if user.is_demo_user == demo_mode:
+        warning = _("User is already in Demo mode!") if user.is_demo_user else _("User is not in Demo mode!")
+        messages.warning(request, warning)
+        return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
+
+    if user.is_demo_user:
+        turn_on_demo_mode(user, domain)
+    else:
+        turn_off_demo_mode(user)
 
 
 @require_can_edit_commcare_users

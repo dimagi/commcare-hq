@@ -26,17 +26,26 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from django.http import HttpResponse
 from soil import DownloadBase
 
+from .models import DemoUserRestore
+
 
 @json_error
 @login_or_digest_or_basic_or_apikey()
 def restore(request, domain, app_id=None):
     """
-    We override restore because we have to supply our own 
+    We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
     user = request.user
     couch_user = CouchUser.from_django_user(user)
-    return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    if couch_user.is_demo_user:
+        # if user is in demo-mode, return frozen restore
+        # Todo handle case where user is in demo-mode, but frozen restore is not set due to task fail
+        assert couch_user.demo_restore_id is not None
+        restore = DemoUserRestore.objects.get(id=couch_user.demo_restore_id)
+        return restore.get_restore_http_response()
+    else:
+        return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
 
 
 @json_error
