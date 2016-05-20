@@ -33,50 +33,44 @@ from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.es import CaseES, aggregations
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
-    use_bootstrap3, use_nvd3, use_nvd3_v3
+    use_bootstrap3, use_nvd3_v3
 from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
-from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
+from corehq.util.supervisord.api import (
+    PillowtopSupervisorApi,
+    SupervisorException,
+    all_pillows_supervisor_status,
     pillow_supervisor_status
-from couchforms.models import XFormInstance
-from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
+)
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.hqadmin.history import get_recent_changes, download_changes
-from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.hqadmin.forms import BrokenBuildsForm
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.escheck import (
-    check_es_cluster_health,
-    check_xform_es_index,
-    check_reportcase_es_index,
-    check_case_es_index,
-    check_reportxform_es_index
-)
-from corehq.apps.hqadmin.management.commands.check_services import service_tests
-from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health
-from corehq.apps.hqadmin.reporting.reports import (
-    get_project_spaces,
-    get_stats_data,
-)
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
+from pillowtop.exceptions import PillowNotFoundError
+from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
+
+from . import service_checks, escheck
+from .forms import AuthenticateAsForm, BrokenBuildsForm
+from .history import get_recent_changes, download_changes
+from .models import HqDeploy
 from .multimech import GlobalConfig
-from .forms import AuthenticateAsForm
+from .reporting.reports import get_project_spaces, get_stats_data
+from .utils import get_celery_stats
 
 
 @require_superuser
@@ -240,10 +234,10 @@ def system_ajax(request):
         return json_response(sorted(pillow_meta, key=lambda m: m['name']))
     elif type == 'stale_pillows':
         es_index_status = [
-            check_case_es_index(interval=3),
-            check_xform_es_index(interval=3),
-            check_reportcase_es_index(interval=3),
-            check_reportxform_es_index(interval=3)
+            escheck.check_case_es_index(interval=3),
+            escheck.check_xform_es_index(interval=3),
+            escheck.check_reportcase_es_index(interval=3),
+            escheck.check_reportxform_es_index(interval=3)
         ]
         return json_response(es_index_status)
 
@@ -271,10 +265,19 @@ def system_ajax(request):
 
 @require_superuser_or_developer
 def check_services(request):
-    return HttpResponse("".join(
-        "{}: {}<br/>".format(service_test.__name__, service_test().msg)
-        for service_test in service_tests
-    ))
+
+    def run_test(test):
+        try:
+            result = test()
+        except Exception as e:
+            status = "EXCEPTION"
+            msg = repr(e)
+        else:
+            status = "SUCCESS" if result.success else "FAILURE"
+            msg = result.msg
+        return "{} {}: {}<br/>".format(status, test.__name__, msg)
+
+    return HttpResponse("<pre>" + "".join(map(run_test, service_checks.checks)) + "</pre>")
 
 
 class SystemInfoView(BaseAdminSectionView):
@@ -286,7 +289,7 @@ class SystemInfoView(BaseAdminSectionView):
     @use_jquery_ui
     @method_decorator(require_superuser_or_developer)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseAdminSectionView, self).dispatch(request, *args, **kwargs)
+        return super(SystemInfoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -306,10 +309,12 @@ class SystemInfoView(BaseAdminSectionView):
 
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
-        context.update(check_redis())
-        context.update(check_rabbitmq())
-        context.update(check_celery_health())
-        context.update(check_es_cluster_health())
+        context['redis'] = service_checks.check_redis()
+        context['rabbitmq'] = service_checks.check_rabbitmq()
+        context['celery_stats'] = get_celery_stats()
+        context['heartbeat'] = service_checks.check_heartbeat()
+
+        context['elastic'] = escheck.check_es_cluster_health()
 
         return context
 
