@@ -26,7 +26,7 @@ CASE_TYPE = 'case'
 OWNER_ID = 'nerc'
 TIMESTAMP = '2016-04-17T10:13:06.588694Z'
 PATTERN = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z'
-# because http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
+# cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
 
 
 class CaseClaimEndpointTests(TestCase):
