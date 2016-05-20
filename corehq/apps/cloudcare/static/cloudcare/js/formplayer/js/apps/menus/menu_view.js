@@ -3,7 +3,6 @@
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
-        template: "#menu-view-item",
 
         events: {
             "click": "rowClick",
