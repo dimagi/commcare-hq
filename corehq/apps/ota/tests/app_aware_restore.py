@@ -11,6 +11,12 @@ from corehq.apps.userreports.tests import get_sample_report_config
 from corehq.apps.users.models import CommCareUser
 
 
+def setupModule():
+    from unittest import SkipTest
+    raise SkipTest("not run by django test runner because "
+                   "'corehq.apps.ota' in APPS_TO_EXCLUDE_FROM_TESTS")
+
+
 class OtaRestoreUrlTests(TestCase):
     domain = 'test_domain'
 
