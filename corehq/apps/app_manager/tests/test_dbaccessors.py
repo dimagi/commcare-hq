@@ -1,16 +1,17 @@
 from django.test import TestCase
 from corehq.apps.app_manager.dbaccessors import (
-    get_app,
-    get_current_app,
-    get_latest_released_app_doc,
-    get_latest_build_doc,
-    get_brief_apps_in_domain,
-    get_apps_in_domain,
     domain_has_apps,
-    get_built_app_ids_for_app_id,
     get_all_app_ids,
-    get_latest_built_app_ids_and_versions,
     get_all_built_app_ids_and_versions,
+    get_app,
+    get_apps_in_domain,
+    get_brief_apps_in_domain,
+    get_build_doc_by_version,
+    get_built_app_ids_for_app_id,
+    get_current_app,
+    get_latest_build_doc,
+    get_latest_built_app_ids_and_versions,
+    get_latest_released_app_doc,
 )
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
@@ -188,4 +189,8 @@ class TestAppGetters(TestCase):
 
     def test_get_latest_build_doc(self):
         app_doc = get_latest_build_doc(self.domain, self.app_id)
+        self.assertEqual(app_doc['version'], 3)
+
+    def test_get_specific_version(self):
+        app_doc = get_build_doc_by_version(self.domain, self.app_id, version=3)
         self.assertEqual(app_doc['version'], 3)

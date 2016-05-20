@@ -61,6 +61,20 @@ def get_latest_build_id(domain, app_id):
     return res['id'] if res else None
 
 
+def get_build_doc_by_version(domain, app_id, version):
+    from .models import Application
+    res = Application.get_db().view(
+        'app_manager/saved_app',
+        startkey=[domain, app_id, version],
+        endkey=[domain, app_id],
+        descending=True,
+        include_docs=True,
+        reduce=False,
+        limit=1,
+    ).first()
+    return res['doc'] if res else None
+
+
 def wrap_app(app_doc, wrap_cls=None):
     """Will raise DocTypeError if it can't figure out the correct class"""
     from corehq.apps.app_manager.util import get_correct_app_class
