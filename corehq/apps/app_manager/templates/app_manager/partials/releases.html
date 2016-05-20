@@ -52,8 +52,10 @@
         var app_langs = {{ app.langs|JSON }};
         var app_profiles = {{ app.build_profiles|JSON }}
 
+        {% if build_profile_access %}
         var profileManager = new ProfileManager(app_profiles, app_langs);
         $('#profiles-tab').koApplyBindings(profileManager);
+        {% endif %}
     });
 
     analytics.workflow('Visited the Release Manager');
