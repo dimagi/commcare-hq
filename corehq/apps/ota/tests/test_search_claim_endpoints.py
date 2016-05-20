@@ -29,7 +29,7 @@ PATTERN = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z'
 # because http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
 
 
-class ClaimCaseTests(TestCase):
+class CaseClaimEndpointTests(TestCase):
 
     def setUp(self):
         self.domain = create_domain(DOMAIN)
