@@ -65,9 +65,7 @@ def get_build_doc_by_version(domain, app_id, version):
     from .models import Application
     res = Application.get_db().view(
         'app_manager/saved_app',
-        startkey=[domain, app_id, version],
-        endkey=[domain, app_id],
-        descending=True,
+        key=[domain, app_id, version],
         include_docs=True,
         reduce=False,
         limit=1,

@@ -192,5 +192,5 @@ class TestAppGetters(TestCase):
         self.assertEqual(app_doc['version'], 3)
 
     def test_get_specific_version(self):
-        app_doc = get_build_doc_by_version(self.domain, self.app_id, version=3)
-        self.assertEqual(app_doc['version'], 3)
+        app_doc = get_build_doc_by_version(self.domain, self.app_id, version=2)
+        self.assertEqual(app_doc['version'], 2)
