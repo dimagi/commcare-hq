@@ -10,7 +10,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.change_feed import topics
-from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, StockState
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, StockState, CommtrackConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -580,6 +580,11 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
 
 @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
 class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
+
+    def setUp(self):
+        super(CommTrackArchiveSubmissionTest, self).setUp()
+        self.ct_settings.use_auto_consumption = True
+        self.ct_settings.save()
 
     @run_with_all_backends
     def test_archive_last_form(self):
