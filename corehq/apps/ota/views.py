@@ -57,6 +57,7 @@ def search(request, domain):
     search_es = (CaseSearchES()
                  .domain(domain)
                  .case_type(case_type)
+                 .is_closed(False)
                  .size(CASE_SEARCH_MAX_RESULTS))
     config = CaseSearchConfig(domain=domain).config
     fuzzies = config.get_fuzzy_properties_for_case_type(case_type)
