@@ -4668,6 +4668,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         return app
 
+    @property
     def profile_url(self):
         return self.hq_profile_url
 
