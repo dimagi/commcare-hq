@@ -478,7 +478,7 @@ def get_case_and_action_counts_for_domains(domains):
 def get_all_user_ids_submitted(domain, app_ids=None):
     query = (
         FormES()
-        .domain('demo')
+        .domain(domain)
         .aggregation(
             TermsAggregation('user_id', 'form.meta.userID')
         )
