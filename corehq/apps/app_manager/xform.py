@@ -623,7 +623,7 @@ class XForm(WrappedNode):
 
     @property
     def video_references(self):
-        return self.media_references(form="video")
+        return self.media_references(form="video") + self.media_references(form="video-inline")
 
     def set_name(self, new_name):
         title = self.find('{h}head/{h}title')
