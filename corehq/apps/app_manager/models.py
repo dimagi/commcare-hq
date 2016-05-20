@@ -3706,10 +3706,14 @@ class ReportModule(ModuleBase):
 
         """
         all_report_ids = [report._id for report in self.reports]
-        valid_report_configs = [report_config for report_config in self.report_configs
-                                if report_config.report_id in all_report_ids]
+        try:
+            valid_report_configs = [report_config for report_config in self.report_configs
+                                    if report_config.report_id in all_report_ids]
+            is_valid = (len(valid_report_configs) == len(self.report_configs))
+        except ReportConfigurationNotFoundError:
+            valid_report_configs = []  # assuming that if one report is in a different domain, they all are
+            is_valid = False
 
-        is_valid = (len(valid_report_configs) == len(self.report_configs))
         return namedtuple('ReportConfigValidity', 'is_valid valid_report_configs')(
             is_valid=is_valid,
             valid_report_configs=valid_report_configs
@@ -3717,16 +3721,11 @@ class ReportModule(ModuleBase):
 
     def validate_for_build(self):
         errors = super(ReportModule, self).validate_for_build()
-        try:
-            is_valid = self.check_report_validity().is_valid
-        except ReportConfigurationNotFoundError:
-            is_valid = False
-        finally:
-            if not is_valid:
-                errors.append({
-                    'type': 'report config ref invalid',
-                    'module': self.get_module_info()
-                })
+        if not self.check_report_validity().is_valid:
+            errors.append({
+                'type': 'report config ref invalid',
+                'module': self.get_module_info()
+            })
         return errors
 
 

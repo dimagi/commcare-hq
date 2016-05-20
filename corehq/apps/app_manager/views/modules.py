@@ -206,6 +206,7 @@ def _get_report_module_context(app, module):
             gettext_lazy('Your app contains references to reports that are '
                          'deleted. These will be removed on save.')
         )
+
     return {
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],
