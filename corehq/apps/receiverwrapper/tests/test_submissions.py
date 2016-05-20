@@ -12,7 +12,7 @@ from django.core.urlresolvers import reverse
 import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 
 
 class SubmissionTest(TestCase):
@@ -30,6 +30,8 @@ class SubmissionTest(TestCase):
         self.use_sql = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False)
 
     def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms(self.domain.name)
+        FormProcessorTestUtils.delete_all_cases(self.domain.name)
         self.couch_user.delete()
         self.domain.delete()
 
@@ -116,6 +118,10 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
     file_path = ('data',)
     domain = 'test-domain'
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
+        FormProcessorTestUtils.delete_all_cases(self.domain)
 
     def test_case_ledger_form(self):
         form_xml = self.get_xml('case_ledger_form')
