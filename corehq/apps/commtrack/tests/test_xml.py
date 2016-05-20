@@ -104,6 +104,7 @@ class CommTrackOTATest(CommTrackTest):
 
     @run_with_all_backends
     def test_ota_consumption(self):
+        self.ct_settings.sync_consumption_fixtures = True
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
             min_window=0,
@@ -146,6 +147,7 @@ class CommTrackOTATest(CommTrackTest):
 
     @run_with_all_backends
     def test_force_consumption(self):
+        self.ct_settings.sync_consumption_fixtures = True
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
             min_window=0,
