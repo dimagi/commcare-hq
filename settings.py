@@ -1545,7 +1545,12 @@ PILLOWTOPS = {
         {
             'name': 'BlobDeletionPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
+            'instance': 'corehq.blobs.pillow.get_main_blob_deletion_pillow',
+        },
+        {
+            'name': 'ApplicationBlobDeletionPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.blobs.pillow.get_application_blob_deletion_pillow',
         },
         {
             'name': 'CaseSearchToElasticsearchPillow',
