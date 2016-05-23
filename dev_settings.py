@@ -10,11 +10,11 @@ import os
 LOCAL_APPS = (
     'django_extensions',
     'kombu.transport.django',
-    # for tests
-    'testapps.test_elasticsearch',
-    'testapps.test_pillowtop',
 )
 
+# TEST_RUNNER is overridden in testsettings, which is the default settings
+# module for the test command (see manage.py); this has no effect by default.
+# Use ./manage.py test --settings=settings to use this setting.
 TEST_RUNNER = 'testrunner.DevTestRunner'
 
 SKIP_TESTS_REQUIRING_EXTRA_SETUP = True

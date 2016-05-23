@@ -2,30 +2,44 @@
 
 <script type="text/template" id="menu-view-list-template">
     <p><h2><%- title %></h2></p>
-    <table style="width:600px" class="table table-hover table-striped table-bordered">
+    <table class="table table-hover table-striped table-bordered">
         <tbody>
         </tbody>
     </table>
 </script>
 
-<script type="text/template" id="menu-view-item-audio-template">
-    <td style="width:60px"><img style="max-height:50px"
-                                src="<%- imageUrl ? imageUrl : '{% static 'cloudcare/images/avatar_form.png' %}' %>"/>
+<script type="text/template" id="menu-view-item-audio">
+    <td class="col-sm-2">
+        <% if (imageUrl) { %>
+        <img src="<%- imageUrl %>"/>
+        <% } else { %>
+        <i class="fa fa-pencil fa-4x"></i>
+        <% } %>
     </td>
-    <td>
-        <div style="display:inline-block;margin-right:10px;"><h3><%- displayText ? displayText : "" %></h3></div>
-        <div style="float: right; display:inline-block;">
-            <audio style="width: 200px;" controls>
-                <source src="<%- audioUrl ? audioUrl : '' %>" type="audio/mpeg">
-            </audio>
+    <td class="col-sm-10">
+        <div class="row">
+            <div class="col-sm-6">
+                <h3>
+                    <%- displayText ? displayText : "" %>
+                </h3>
+            </div>
+            <div class="col-sm-6">
+                <audio controls>
+                    <source src="<%- audioUrl %>" type="audio/mpeg">
+                </audio>
+            </div>
         </div>
-
     </td>
 </script>
 
-<script type="text/template" id="menu-view-item-template">
-    <td style="width:60px"><img style="max-height:50px"
-                                src="<%- imageUrl ? imageUrl : '{% static 'cloudcare/images/avatar_form.png' %}' %>"/>
+<script type="text/template" id="menu-view-item">
+    <td class="col-sm-2">
+        <% if (imageUrl) { %>
+        <img src="<%- imageUrl %>"/>
+        <% } else { %>
+        <i class="fa fa-pencil fa-4x"></i>
+        <% } %>
     </td>
-    <td><h3><%- displayText ? displayText : "" %></h3></td>
+    <td class="col-sm-10">
+        <h3><%- displayText ? displayText : "" %></h3></td>
 </script>

@@ -47,7 +47,7 @@ class AbstractBlobDB(object):
 
     @abstractmethod
     def delete(self, identifier=NOT_SET, bucket=NOT_SET):
-        """Delete a blob
+        """Delete a blob or bucket of blobs
 
         Either one or both of `identifier` or `bucket` parameters
         is required.
@@ -59,7 +59,8 @@ class AbstractBlobDB(object):
         bucket if an identifier is given but the bucket is not given.
         Pass this parameter alone as a keyword argument to delete the
         entire bucket.
-        :returns: True if the blob was deleted else false.
+        :returns: True if the blob was deleted else false. None if it is
+        not known if the blob was deleted or not.
         """
         raise NotImplementedError
 

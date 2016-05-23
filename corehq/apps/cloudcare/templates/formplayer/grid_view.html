@@ -6,17 +6,12 @@
         <h1>Applications</h1>
     </div>
 
-    <table>
-        <col width="300px"/>
-        <col width="300px"/>
-        <col width="300px"/>
-        <tbody></tbody>
-    </table>
+    <div class="row application-container">
+
+    </div>
 </script>
 
 <script id="row-template" type="text/template">
-    <div style="text-align: center">
         <h3><%- name %></h3>
-        <image style="max-height:150px" src="{% static 'cloudcare/images/cc_flower.png' %}"/>
-    </div>
+        <image class="app-icon" src="{% static 'cloudcare/images/cc_flower.png' %}"/>
 </script>

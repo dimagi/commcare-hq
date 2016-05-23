@@ -919,9 +919,9 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         return {
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
-            'legacy_bulk_download_url': self.legacy_bulk_download_url if not self.is_deid else None,
-            'bulk_download_url': self.bulk_download_url if not self.is_deid else None,
-            'allow_bulk_export': self.allow_bulk_export if not self.is_deid else False,
+            'legacy_bulk_download_url': self.legacy_bulk_download_url,
+            'bulk_download_url': self.bulk_download_url,
+            'allow_bulk_export': self.allow_bulk_export,
             'has_edit_permissions': self.has_edit_permissions,
             'is_deid': self.is_deid,
         }

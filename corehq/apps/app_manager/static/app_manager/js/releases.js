@@ -19,9 +19,25 @@ hqDefine('app_manager/js/releases.js', function () {
         self.num_errors = ko.observable(app_data.num_errors || 0);
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
+        self.build_profile = ko.observable('');
         self.base_url = function() {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
         };
+        self.build_profiles = function() {
+            var profiles = [{'label': gettext('all languages'), 'value': ''}];
+            _.each(app_data.build_profiles, function(value, key) {
+                profiles.push({'label': value['name'], 'value': key});
+            });
+            return profiles;
+        };
+
+        self.changeAppCode = function () {
+            self.app_code(null);
+            self.failed_url_generation(false);
+            self.generating_url(false);
+        };
+
+        self.build_profile.subscribe(self.changeAppCode);
 
         self.should_generate_url = function(url_type) {
             var types = _.values(SavedApp.URL_TYPES);
@@ -38,10 +54,12 @@ hqDefine('app_manager/js/releases.js', function () {
             if (should_generate_url && !self.generating_url()){
                 self.generating_url(true);
                 $.ajax({
-                    url: base_url + url_type + '/'
+                    url: base_url + url_type + '/?profile=' + self.build_profile(),
                 }).done(function(data){
                     var bitly_code = self.parse_bitly_url(data);
-                    self[url_type](data);
+                    if (!self.build_profile()) {
+                        self[url_type](data);
+                    }
 
                     self.failed_url_generation(!bitly_code);
                     self.app_code(bitly_code);
@@ -62,7 +80,7 @@ hqDefine('app_manager/js/releases.js', function () {
             } else {
                 url_type = SavedApp.URL_TYPES.SHORT_ODK_URL;
             }
-            if (!ko.utils.unwrapObservable(self[url_type])) {
+            if (!(ko.utils.unwrapObservable(self[url_type])) || self.build_profile()) {
                 return self.generate_short_url(url_type);
             } else {
                 return ko.utils.unwrapObservable(self[url_type]);
@@ -109,6 +127,10 @@ hqDefine('app_manager/js/releases.js', function () {
             return releasesMain.url(slug, self.id());
         });
 
+        self.full_odk_install_url = ko.computed(function() {
+            return self.get_odk_install_url() + '?profile=' + self.build_profile();
+        });
+
         self.sms_url = function(index) {
             if (index === 0) { // sending to sms
                 return self.short_url();
@@ -120,34 +142,9 @@ hqDefine('app_manager/js/releases.js', function () {
                 }
             }
         };
-
-        self.editing_comment = ko.observable(false);
-        self.new_comment = ko.observable(self.build_comment());
-        self.pending_comment_update = ko.observable(false);
-        self.comment_update_error = ko.observable(false);
-
-        self.submit_new_comment = function () {
-            self.pending_comment_update(true);
-            $.ajax({
-                url: releasesMain.options.urls.update_build_comment,
-                type: 'POST',
-                dataType: 'JSON',
-                data: {"build_id": self.id(), "comment": self.new_comment()},
-                success: function (data) {
-                    self.pending_comment_update(false);
-                    self.editing_comment(false);
-                    self.build_comment(self.new_comment());
-                },
-                error: function () {
-                    self.pending_comment_update(false);
-                    self.editing_comment(false);
-                    self.comment_update_error(true);
-                }
-            });
-        };
-
-        self.download_application_zip = function (multimedia_only) {
-            releasesMain.download_application_zip(self.id(), multimedia_only);
+        
+        self.download_application_zip = function (multimedia_only, build_profile) {
+            releasesMain.download_application_zip(self.id(), multimedia_only, build_profile);
         };
 
         self.clickDeploy = function () {
@@ -200,11 +197,15 @@ hqDefine('app_manager/js/releases.js', function () {
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = new AsyncDownloader(self.download_modal);
 
-        self.download_application_zip = function(appId, multimedia_only) {
+        self.download_application_zip = function(appId, multimedia_only, build_profile) {
             var url_slug = multimedia_only ? 'download_multimedia' : 'download_zip';
             var url = self.url(url_slug, appId);
-            message = "Your application download is ready";
-            self.async_downloader.generateDownload(url, message);
+            var params = {};
+            params.message = "Your application download is ready";
+            if (build_profile) {
+                params.profile = build_profile;
+            }
+            self.async_downloader.generateDownload(url, params);
             // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
             // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
             $('.modal.fade.in').modal('hide');
