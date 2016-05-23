@@ -371,7 +371,6 @@ def get_form_duration_stats_by_user(
     query = (
         FormES()
         .domain(domain)
-        .app(app_id)
         .user_ids_handle_unknown(user_ids)
         .remove_default_filter('has_user')
         .xmlns(xmlns)
@@ -387,6 +386,9 @@ def get_form_duration_stats_by_user(
         )
         .size(0)
     )
+
+    if app_id:
+        query = query.app(app_id)
 
     if missing_users:
         query = query.aggregation(
@@ -425,7 +427,6 @@ def get_form_duration_stats_for_users(
     query = (
         FormES()
         .domain(domain)
-        .app(app_id)
         .user_ids_handle_unknown(user_ids)
         .remove_default_filter('has_user')
         .xmlns(xmlns)
@@ -439,6 +440,10 @@ def get_form_duration_stats_for_users(
         )
         .size(0)
     )
+
+    if app_id:
+        query = query.app(app_id)
+
     return query.run().aggregations.duration_stats.result
 
 
