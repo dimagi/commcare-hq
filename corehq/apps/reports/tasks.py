@@ -368,10 +368,18 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
     properties = set()
     if export_id:
-        schema = FormExportSchema.get(export_id)
-        for table in schema.tables:
-            # - in question id is replaced by . in excel exports
-            properties |= {c.display.replace('.', '-') for c in table.columns}
+        if export_is_legacy:
+            schema = FormExportSchema.get(export_id)
+            for table in schema.tables:
+                # - in question id is replaced by . in excel exports
+                properties |= {c.display.replace('.', '-') for c in table.columns}
+        else:
+            from corehq.apps.export.models import FormExportInstance
+            export = FormExportInstance.get(export_id)
+            for table in export.tables:
+                # - in question id is replaced by . in excel exports
+                properties |= {c.label.replace('.', '-') for c in table.columns}
+
 
     if not app_id:
         zip_name = 'Unrelated Form'
