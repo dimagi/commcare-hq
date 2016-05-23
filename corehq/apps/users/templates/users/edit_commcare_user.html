@@ -31,7 +31,7 @@
                     expires: 1});
         });
 
-        $('.reset-password-form').submit(function(){
+        $('#reset-password-form').submit(function(){
             $(this).ajaxSubmit({
                 url: $(this).attr('action'),
                 type: 'POST',
