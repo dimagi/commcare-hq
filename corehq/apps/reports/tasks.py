@@ -275,7 +275,7 @@ def _store_excel_in_redis(file):
 
 
 @task
-def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id):
+def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id, export_is_legacy):
 
     def find_question_id(form, value):
         for k, v in form.iteritems():
