@@ -290,7 +290,7 @@ class HqdbContext(DatabaseContext):
         reuse_db = os.environ.get("REUSE_DB")
         self.skip_setup_for_reuse_db = reuse_db and reuse_db not in ["reset", "optimize"]
         self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
-        self.optimize_migrations = reuse_db in [None, "optimize"]
+        self.optimize_migrations = AppLabelsPlugin.enabled and reuse_db in [None, "optimize"]
         if self.optimize_migrations:
             self.test_labels = AppLabelsPlugin.get_test_labels(tests)
         super(HqdbContext, self).__init__(tests, runner)
