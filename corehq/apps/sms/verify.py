@@ -1,5 +1,4 @@
 from dimagi.utils.couch import CriticalSection
-from django.utils.translation import ugettext as _, ugettext_noop
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
@@ -7,9 +6,7 @@ from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms import messages
-from corehq.apps.sms import util
 from corehq.apps.sms.models import MessagingEvent, SQLMobileBackend
-from corehq.util.translation import localize
 
 
 VERIFICATION__ALREADY_IN_USE = 1

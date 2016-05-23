@@ -1,5 +1,4 @@
 import uuid
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, SQLLastReadMessage, OUTGOING, INCOMING
 from corehq.apps.sms.views import ChatMessageHistory
