@@ -3707,8 +3707,8 @@ class ReportModule(ModuleBase):
         valid_report_configs is a list of all report configs that refer to existing reports
 
         """
-        all_report_ids = [report._id for report in self.reports]
         try:
+            all_report_ids = [report._id for report in self.reports]
             valid_report_configs = [report_config for report_config in self.report_configs
                                     if report_config.report_id in all_report_ids]
             is_valid = (len(valid_report_configs) == len(self.report_configs))
