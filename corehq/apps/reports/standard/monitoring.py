@@ -310,7 +310,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             add_numeric_cell(row.total_inactive_count())
             return cells
 
-        self.total_row = format_row(self.TotalRow(rows, _("All Users")))
+        self.total_row = format_row(self.TotalRow(es_results, _("All Users")))
         return map(format_row, rows)
 
     @property
@@ -375,6 +375,14 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 .aggregation(inactive_total_aggregation)
             )
 
+        query = (
+            query
+            .aggregation(touched_total_aggregation)
+            .aggregation(active_total_aggregation)
+            .aggregation(inactive_total_aggregation)
+            .aggregation(landmarks_aggregation)
+        )
+
         return query.run()
 
     def _landmarks_aggregation(self, end_date):
@@ -418,27 +426,30 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     class TotalRow(object):
 
-        def __init__(self, rows, header):
-            self.rows = rows
+        def __init__(self, es_results, header):
             self._header = header
-
-        def active_count(self, landmark_key):
-            return sum([row.active_count(landmark_key) for row in self.rows])
+            self.total_touched_bucket = es_results.aggregations.touched_total
+            self.total_active_bucket = es_results.aggregations.active_total
+            self.total_inactive_bucket = es_results.aggregations.inactive_total
+            self.landmark_buckets = es_results.aggregations.landmarks.buckets_dict
 
         def total_touched_count(self):
-            return sum([row.total_touched_count() for row in self.rows])
+            return self.total_touched_bucket.doc_count
 
         def total_inactive_count(self):
-            return sum([row.total_inactive_count() for row in self.rows])
+            return self.total_inactive_bucket.doc_count
 
         def total_active_count(self):
-            return sum([row.total_active_count() for row in self.rows])
+            return self.total_active_bucket.doc_count
+
+        def active_count(self, landmark_key):
+            return self.landmark_buckets[landmark_key].active.doc_count
 
         def modified_count(self, landmark_key):
-            return sum([row.modified_count(landmark_key) for row in self.rows])
+            return self.landmark_buckets[landmark_key].doc_count
 
         def closed_count(self, landmark_key):
-            return sum([row.closed_count(landmark_key) for row in self.rows])
+            return self.landmark_buckets[landmark_key].closed.doc_count
 
         def header(self):
             return self._header
