@@ -1038,7 +1038,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class ReportNotificationUnsubscribeView(TemplateView, LoginAndDomainMixin):
+class ReportNotificationUnsubscribeView(LoginAndDomainMixin, TemplateView):
     template_name = 'reports/notification_unsubscribe.html'
     urlname = 'notification_unsubscribe'
     report = None
