@@ -479,3 +479,32 @@ corehq.apps.notifications:
 corehq.blobs:
   - corehq.couchapps
   - couchexport
+corehq.apps.ota:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.accounting
+  - corehq.apps.app_manager
+  - corehq.apps.case_search
+  - corehq.apps.domain
+  - corehq.apps.dropbox
+  - corehq.apps.locations
+  - corehq.apps.notifications
+  - corehq.apps.products
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
+  - django.contrib.admin
+  - django_digest
+  - django_prbac
+  - phonelog
+  - tastypie
+  - corehq.apps.userhack
+  # required by user.delete()
+  - touchforms.formplayer
+  - corehq.apps.tour
+  - pillowtop

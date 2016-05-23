@@ -400,7 +400,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.ivr',
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
-    'corehq.apps.ota',
     'corehq.apps.settings',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
