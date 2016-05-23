@@ -327,19 +327,22 @@ class SetUserPasswordForm(SetPasswordForm):
         self.helper = FormHelper()
 
         self.helper.form_method = 'POST'
-        self.helper.form_class = 'form form-horizontal reset-password-form'
+        self.helper.form_tag = False
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_action = reverse("change_password", args=[domain, user_id])
         self.helper.layout = crispy.Layout(
-            'new_password1',
-            'new_password2',
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    Submit('submit', _('Reset Password'))
-                )
-            )
+            crispy.Fieldset(
+                _("Reset Password for Mobile Worker"),
+                'new_password1',
+                'new_password2',
+                hqcrispy.FormActions(
+                    crispy.ButtonHolder(
+                        Submit('submit', _('Reset Password'))
+                    )
+                ),
+            ),
         )
 
 
