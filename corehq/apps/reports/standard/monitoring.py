@@ -245,21 +245,31 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return DataTablesHeader(*columns)
 
     @property
-    def rows(self):
+    @memoized
+    def all_users(self):
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         users_data = EMWF.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
         )
-        users_by_id = {user.user_id: user for user in users_data.combined_users}
-        user_ids = users_by_id.keys()
+        return users_data.combined_users
 
-        es_results = self.es_queryset(user_ids)
+    @property
+    def users_by_id(self):
+        return {user.user_id: user for user in self.all_users}
+
+    @property
+    def user_ids(self):
+        return self.users_by_id.keys()
+
+    @property
+    def rows(self):
+        es_results = self.es_queryset(self.user_ids)
         buckets = {user_id: bucket for user_id, bucket in es_results.aggregations.users.buckets_dict.items()}
-        if None in user_ids:
+        if None in self.user_ids:
             buckets[None] = es_results.aggregations.missing_users.bucket
         rows = []
-        for user_id, user in users_by_id.items():
+        for user_id, user in self.users_by_id.items():
             bucket = buckets.get(user_id, None)
             rows.append(self.Row(self, user, bucket))
 
