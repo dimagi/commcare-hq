@@ -20,6 +20,8 @@ from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import FormES
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, \
+    CaseAccessors
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
@@ -303,37 +305,37 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
     def extract_form_info(form, properties=None, case_ids=case_ids):
         unknown_number = 0
-        meta = form['form'].get('meta', dict())
         # get case ids
-        case_blocks = extract_case_blocks(form)
+        case_blocks = extract_case_blocks(form.form_data)
         cases = {c['@case_id'] for c in case_blocks}
         case_ids |= cases
 
         form_info = {
             'form': form,
             'attachments': list(),
-            'name': form['form'].get('@name', 'unknown form'),
-            'user': meta.get('username', 'unknown_user'),
+            'name': form.name or "unknown form",
+            'user': form.user_id or "unknown_user",
             'cases': cases,
-            'id': form['_id']
+            'id': form.form_id,
         }
-        for k, v in form['_attachments'].iteritems():
-            if v['content_type'] == 'text/xml':
+        for attachment_name, attachment in form.attachments.iteritems():
+            content_type = getattr(attachment, 'content_type', attachment['content_type'])
+            if content_type == 'text/xml':
                 continue
             try:
-                question_id = unicode(u'-'.join(find_question_id(form['form'], k)))
+                question_id = unicode(u'-'.join(find_question_id(form.form_data, attachment_name)))
             except TypeError:
                 question_id = unicode(u'unknown' + unicode(unknown_number))
                 unknown_number += 1
 
             if not properties or question_id in properties:
-                extension = unicode(os.path.splitext(k)[1])
+                extension = unicode(os.path.splitext(attachment_name)[1])
                 form_info['attachments'].append({
-                    'size': v['length'],
-                    'name': k,
+                    'size': getattr(attachment, 'length', attachment['length']),
+                    'name': attachment_name,
                     'question_id': question_id,
                     'extension': extension,
-                    'timestamp': parse(form['received_on']).timetuple(),
+                    'timestamp': form.received_on.timetuple(),
                 })
 
         return form_info
@@ -384,9 +386,9 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
     if not app_id:
         zip_name = 'Unrelated Form'
     forms_info = list()
-    for form in iter_docs(XFormInstance.get_db(), form_ids):
+    for form in FormAccessors(domain).iter_forms(form_ids):
         if not zip_name:
-            zip_name = unidecode(form['form'].get('@name', 'unknown form'))
+            zip_name = unidecode(form.name or 'unknown form')
         forms_info.append(extract_form_info(form, properties))
 
     num_forms = len(forms_info)
@@ -394,9 +396,9 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
     # get case names
     case_id_to_name = {c: c for c in case_ids}
-    for case in iter_docs(CommCareCase.get_db(), case_ids):
-        if case['name']:
-            case_id_to_name[case['_id']] = case['name']
+    for case in CaseAccessors(domain).iter_cases(case_ids):
+        if case.name:
+            case_id_to_name[case.case_id] = case.name
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     if use_transfer:
@@ -410,12 +412,13 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
         with open(fpath, 'wb') as zfile:
             with zipfile.ZipFile(zfile, 'w') as z:
                 for form_number, form_info in enumerate(forms_info):
-                    f = XFormInstance.wrap(form_info['form'])
+                    f = form_info['form']
                     form_info['cases'] = {case_id_to_name[case_id] for case_id in form_info['cases']}
                     for a in form_info['attachments']:
                         fname = filename(form_info, a['question_id'], a['extension'])
                         zi = zipfile.ZipInfo(fname, a['timestamp'])
-                        z.writestr(zi, f.fetch_attachment(a['name'], stream=True).read(), zipfile.ZIP_STORED)
+                        # TODO: The attachment was previously streamed.
+                        z.writestr(zi, f.get_attachment(a['name']), zipfile.ZIP_STORED)
                     DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
 
     common_kwargs = dict(
