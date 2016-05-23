@@ -91,7 +91,7 @@ def get_dynamic_db_settings(server_root, username, password, dbname,
         'database': dbname,
     }
     return {
-        'COUCH_SERVER':  server_url,
+        'COUCH_SERVER': server_url,
         'COUCH_DATABASE': database,
     }
 
@@ -102,6 +102,18 @@ def get_db_name(dbname, is_test):
     :param is_test: Add test prefix if true.
     """
     return (TEST_DATABASE_PREFIX + dbname) if is_test else dbname
+
+
+def assign_test_db_names(dbs):
+    """Fix database names for REUSE_DB
+
+    Django automatically uses test database names when testing, but
+    only if the test database setup routine is called. This allows us
+    to safely skip the test database setup with REUSE_DB.
+    """
+    for db in dbs.values():
+        test_db_name = get_db_name(db['NAME'], True)
+        db['NAME'] = db.setdefault('TEST', {}).setdefault('NAME', test_db_name)
 
 
 class CouchSettingsHelper(namedtuple('CouchSettingsHelper',

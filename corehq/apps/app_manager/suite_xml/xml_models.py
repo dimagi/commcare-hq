@@ -430,7 +430,7 @@ class SyncRequestPost(XmlObject):
 
 class SyncRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
-    ORDER = ('data', 'prompt')
+    ORDER = ('data', 'prompts')
 
     url = StringField('@url')
     storage_instance = StringField('@storage-instance')
@@ -440,7 +440,7 @@ class SyncRequestQuery(OrderedXmlObject, XmlObject):
 
 class SyncRequestSession(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'session'
-    ORDER = ('query', 'datum')
+    ORDER = ('queries', 'data')
 
     queries = NodeListField('query', SyncRequestQuery)
     data = NodeListField('datum', SessionDatum)
@@ -457,7 +457,7 @@ class SyncRequest(OrderedXmlObject, XmlObject):
 
     """
     ROOT_NAME = 'sync-request'
-    ORDER = ('post', 'instance', 'command', 'session', 'stack')
+    ORDER = ('post', 'command', 'instances', 'session', 'stack')
 
     post = NodeField('post', SyncRequestPost)
     instances = NodeListField('instance', Instance)

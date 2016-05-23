@@ -1,6 +1,8 @@
 from optparse import make_option
 
 import math
+
+import sys
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.callcenter.checks import get_call_center_data_source_stats
@@ -29,7 +31,7 @@ class Command(BaseCommand):
         if not domains and not options['all']:
             raise CommandError('Specify specific domains or --all')
 
-        all_domains = [domain.name for domain in get_call_center_domains()]
+        all_domains = [domain.name for domain in get_call_center_domains() if domain.use_fixtures]
         if domains:
             for domain in domains:
                 assert domain in all_domains, "Domain '{}' is not a Call Center domain".format(domain)
@@ -51,6 +53,11 @@ class Command(BaseCommand):
                     print "rebuilding data source '{}' in domain '{}': diff = {}".format(
                         stat.name, domain, diff
                     )
-                    rebuild_indicators(
-                        StaticDataSourceConfiguration.get_doc_id(domain, TABLE_IDS[stat.name])
-                    )
+                    try:
+                        rebuild_indicators(
+                            StaticDataSourceConfiguration.get_doc_id(domain, TABLE_IDS[stat.name])
+                        )
+                    except Exception as e:
+                        sys.stderr.write("Error rebuilding data source '{}' in domain '{}':\n{}".format(
+                            stat.name, domain, e
+                        ))
