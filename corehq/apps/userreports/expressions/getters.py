@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
 from six import string_types
 from corehq.util.dates import iso_string_to_date, iso_string_to_datetime
@@ -101,9 +101,16 @@ def transform_datetime(item):
             try:
                 return iso_string_to_datetime(item, strict=True)
             except ValueError:
-                pass
+                try:
+                    parsed_item = iso_string_to_date(item)
+                    return datetime.combine(parsed_item, time(0, 0, 0))
+                except ValueError:
+                    pass
         elif isinstance(item, datetime):
             return item
+        elif isinstance(item, date):
+            return datetime.combine(item, time(0, 0, 0))
+
     return None
 
 

@@ -511,12 +511,17 @@ To run the standard tests for CommCare HQ, simply run
 
 To run a particular test or subset of tests
 
-    $ ./manage.py test <app_name>[.<TestClass>[.<test_name>]]
+    $ ./manage.py test <test.module.path>[:<TestClass>[.<test_name>]]
 
     # examples
-    $ ./manage.py test app_manager
-    $ ./manage.py test app_manager.SuiteTest
-    $ ./manage.py test app_manager.SuiteTest.test_picture_format
+    $ ./manage.py test corehq.apps.app_manager
+    $ ./manage.py test corehq.apps.app_manager.tests.test_suite:SuiteTest
+    $ ./manage.py test corehq.apps.app_manager.tests.test_suite:SuiteTest.test_picture_format
+
+    # alternate: file system path
+    $ ./manage.py test corehq/apps/app_manager
+    $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
+    $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest.test_picture_format
 
 If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database. 
 In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
@@ -580,11 +585,13 @@ For example, you are working on the `retire` method of `CommCareUser`. You are w
 
 ### Sniffer Usage
 
-    $ sniffer -x <app_name>[.<TestClass>[.<test_name>]]
+    $ sniffer -x <test.module.path>[:<TestClass>[.<test_name>]]
 
-In our example, we would run `sniffer -x users.RetireUserTestCase`
+In our example, we would run `sniffer -x corehq.apps.users.tests.retire:RetireUserTestCase`
 You should see beautiful green `In good standing` if all is well, otherwise a `Failed - Back to work!` message is displayed. 
 If you want to run the whole test suite whenever a file is changed (not recommended), you would run sniffer without the `-x` argument
+
+You can also add the regular `nose` environment variables, like `REUSE_DB=1 sniffer -x <test>`
 
 ### Sniffer Installation instructions
 https://github.com/jeffh/sniffer/

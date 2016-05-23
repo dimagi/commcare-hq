@@ -23,7 +23,7 @@ LOCALSETTINGS_TMP=$BASE_DIR/localsettings.tmp.py
 
 set_env() {
     export MATRIX_TYPE=$1
-    export TESTRUNNER=$2
+    export NOSE_DIVIDED_WE_RUN=$2
     export BOWER=$3
     export NODE=$4
 }
@@ -58,7 +58,7 @@ run() {
 
 trap cleanup SIGINT SIGTERM EXIT ERR
 
-OPTIONS="javascript|python-catchall|python-group-0|python-sharded"
+OPTIONS="javascript|python-07|python-8f|python-sharded"
 
 MATRIX="$1"
 shift
@@ -91,11 +91,11 @@ case $MATRIX in
     javascript)
         set_env javascript "" yes yes
         ;;
-    python-catchall)
-        set_env python "testrunner.GroupTestRunnerCatchall" yes yes
+    python-07)
+        set_env python "07" yes yes
         ;;
-    python-group-0)
-        set_env python "testrunner.GroupTestRunner0" yes yes
+    python-8f)
+        set_env python "8f" yes yes
         ;;
     python-sharded)
         set_env python-sharded "" "" ""

@@ -3,7 +3,7 @@ from corehq.apps.change_feed import topics
 from dimagi.ext.couchdbkit import Document
 # ensure our signals get loaded at django bootstrap time
 from . import signals
-from corehq.apps.users.models import CommCareCase
+from casexml.apps.case.models import CommCareCase
 from custom.succeed.reports import VISIT_SCHEDULE, LAST_INTERACTION_LIST, PM3
 import fluff
 from custom.utils.utils import flat_field

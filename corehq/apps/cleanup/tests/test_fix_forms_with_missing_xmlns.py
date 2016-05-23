@@ -5,6 +5,7 @@ import uuid
 from django.core.management import call_command
 from django.test import TestCase
 from elasticsearch import ConnectionError
+from testil import tempdir
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
@@ -147,41 +148,50 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         form, xform = self.build_normal_app()
         self._refresh_pillow()
 
-        call_command('fix_forms_with_missing_xmlns', '/dev/null', 'log.txt')
+        with tempdir() as tmp:
+            log_file = os.path.join(tmp, 'log.txt')
 
-        with open("log.txt") as log_file:
-            log = log_file.read()
-            self.assertTrue(form.unique_id not in log)
-            self.assertTrue(xform._id not in log)
+            call_command('fix_forms_with_missing_xmlns', '/dev/null', log_file)
+
+            with open(log_file) as log_file:
+                log = log_file.read()
+                self.assertTrue(form.unique_id not in log)
+                self.assertTrue(xform._id not in log)
 
     def test_app_with_bad_form(self):
         good_form, bad_form, good_xform, bad_xforms = self.build_app_with_bad_form()
         self._refresh_pillow()
 
-        call_command('fix_forms_with_missing_xmlns', '/dev/null', 'log.txt')
+        with tempdir() as tmp:
+            log_file = os.path.join(tmp, 'log.txt')
 
-        with open("log.txt") as log_file:
-            log = log_file.read()
-            self.assertTrue(good_form.unique_id not in log)
-            self.assertTrue(bad_form.unique_id in log)
-            self.assertTrue(good_xform._id not in log)
-            for xform in bad_xforms:
-                self.assertTrue(xform._id in log)
-        self.assertNoMissingXmlnss()
+            call_command('fix_forms_with_missing_xmlns', '/dev/null', log_file)
+
+            with open(log_file) as log_file:
+                log = log_file.read()
+                self.assertTrue(good_form.unique_id not in log)
+                self.assertTrue(bad_form.unique_id in log)
+                self.assertTrue(good_xform._id not in log)
+                for xform in bad_xforms:
+                    self.assertTrue(xform._id in log)
+            self.assertNoMissingXmlnss()
 
     def test_app_with_recently_fixed_form(self):
         form, good_build, bad_build, good_xform, bad_xform = self.build_app_with_recently_fixed_form()
         self._refresh_pillow()
 
-        call_command('fix_forms_with_missing_xmlns', '/dev/null', 'log.txt')
+        with tempdir() as tmp:
+            log_file = os.path.join(tmp, 'log.txt')
 
-        with open("log.txt") as log_file:
-            log = log_file.read()
-            self.assertTrue(good_build._id not in log)
-            self.assertTrue(bad_build._id in log)
-            self.assertTrue(good_xform._id not in log)
-            self.assertTrue(bad_xform._id in log)
-        self.assertNoMissingXmlnss()
+            call_command('fix_forms_with_missing_xmlns', '/dev/null', log_file)
+
+            with open(log_file) as log_file:
+                log = log_file.read()
+                self.assertTrue(good_build._id not in log)
+                self.assertTrue(bad_build._id in log)
+                self.assertTrue(good_xform._id not in log)
+                self.assertTrue(bad_xform._id in log)
+            self.assertNoMissingXmlnss()
 
     def test_app_with_good_form_json_and_bad_source(self):
         form, app = self.build_app_with_bad_source_and_good_json()
@@ -194,7 +204,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         )
         self.assertNoMissingXmlnss()
 
-    def assertNoMissingXmlnss(self):
+    def assertNoMissingXmlnss(self, delete_apps=True):
         submissions = XFormInstance.get_db().view(
             'couchforms/by_xmlns',
             key="undefined",
@@ -208,7 +218,12 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
             include_docs=True,
         )
         apps = [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
-        for app in apps:
-            for form in app.get_forms():
-                self.assertEqual(form.source.count('xmlns="undefined"'), 0)
-                self.assertNotEqual(form.xmlns, 'undefined')
+        try:
+            for app in apps:
+                for form in app.get_forms():
+                    self.assertEqual(form.source.count('xmlns="undefined"'), 0)
+                    self.assertNotEqual(form.xmlns, 'undefined')
+        finally:
+            if delete_apps:
+                for app in apps:
+                    app.delete()

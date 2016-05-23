@@ -19,6 +19,7 @@ from couchforms.models import XFormInstance
 from custom.opm.utils import numeric_fn
 from custom.utils.utils import clean_IN_filter_value
 
+from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import SimpleColumn
@@ -35,7 +36,7 @@ from corehq.apps.reports.util import (
     get_INFilter_bindparams,
     make_form_couch_key,
 )
-from corehq.apps.users.models import CommCareCase, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 
