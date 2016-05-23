@@ -72,7 +72,7 @@ class Annual(ICDSMixin, ASRData):
                 headers=self.row_config[0]['headers'],
                 slug=self.row_config[0]['slug'],
                 rows=rows,
-                posttitle='(this table above shows the format, the letters ' \
+                posttitle='(this table above shows the format, the letters '
                           'a-o represent the data, which appears in the table below)'
             ))
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])

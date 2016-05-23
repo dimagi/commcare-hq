@@ -506,7 +506,8 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
         return [
             {
                 'title': "Supplementary Nutrition beneficiaries (number of those among "
-                         "residents who were given supplementary nutrition for 21+ days during the reporting month)",
+                         "residents who were given supplementary nutrition for 21+ days "
+                         "during the reporting month)",
                 'slug': 'programme_coverage_1',
                 'rows_config': (
                     (
@@ -1203,11 +1204,19 @@ class MPRGrowthMonitoring(ICDSMixin, MPRData):
                 'F_resident_weighed_count_2',
                 'M_resident_weighed_count_2',
                 {
-                    'columns': ('F_resident_weighed_count', 'F_resident_weighed_count_1', 'F_resident_weighed_count_2'),
+                    'columns': (
+                        'F_resident_weighed_count',
+                        'F_resident_weighed_count_1',
+                        'F_resident_weighed_count_2'
+                    ),
                     'alias': 'resident_female_weight'
                 },
                 {
-                    'columns': ('M_resident_weighed_count', 'M_resident_weighed_count_1', 'M_resident_weighed_count_2'),
+                    'columns': (
+                        'M_resident_weighed_count',
+                        'M_resident_weighed_count_1',
+                        'M_resident_weighed_count_2'
+                    ),
                     'alias': 'resident_male_weight'
                 },
                 {
