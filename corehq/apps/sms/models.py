@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 import json_field
-import logging
 import uuid
-import uuidfield
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
@@ -19,7 +17,7 @@ from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
+    InvalidFormatException, VerifiedNumber,
     apply_leniency, BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
@@ -27,10 +25,8 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     get_message)
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.load_balance import load_balance
-from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 
@@ -1628,7 +1624,6 @@ class SelfRegistrationInvitation(models.Model):
 
     def send_step2_android_sms(self):
         from corehq.apps.sms.api import send_sms
-        from corehq.apps.sms.views import InvitationAppInfoView
         from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
 
         registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,

@@ -83,11 +83,6 @@ SKIP_TOUCHFORMS_TESTS = True
 
 UNIT_TESTING = True
 
-LOCAL_APPS = (
-    'testapps.test_elasticsearch',
-    'testapps.test_pillowtop',
-)
-
 PILLOWTOP_MACHINE_ID = 'testhq'
 
 ELASTICSEARCH_VERSION = 1.7

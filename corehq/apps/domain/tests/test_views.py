@@ -13,6 +13,7 @@ from corehq.apps.repeaters.models import AppStructureRepeater
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import Application, APP_V1
 from corehq.apps.domain.views import CreateNewExchangeSnapshotView
+from corehq.util.test_utils import teardown
 
 
 class TestDomainViews(TestCase):
@@ -78,6 +79,11 @@ class TestDomainViews(TestCase):
         for app_structure_repeater in app_structure_repeaters:
             app_structure_repeater.delete()
 
+    def delete_domain_snapshots(self):
+        for snap in self.domain.snapshots():
+            snap.delete()
+
+    @teardown(delete_domain_snapshots)
     def test_exchange_snapshot_view(self):
         """
         Tests creating a new exchange snapshot and then creating another snapshot

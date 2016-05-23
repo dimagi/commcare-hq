@@ -13,6 +13,7 @@
     });
     $(function () {
         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+        var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
         // init releases
         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
         var urls = {
@@ -47,6 +48,14 @@
         var releasesMain = new ReleasesMain(o);
         _.defer(function(){ releasesMain.getMoreSavedApps(false); });
         el.koApplyBindings(releasesMain);
+
+        var app_langs = {{ app.langs|JSON }};
+        var app_profiles = {{ app.build_profiles|JSON }}
+
+        {% if build_profile_access %}
+        var profileManager = new ProfileManager(app_profiles, app_langs);
+        $('#profiles-tab').koApplyBindings(profileManager);
+        {% endif %}
     });
 
     analytics.workflow('Visited the Release Manager');
@@ -60,31 +69,41 @@
     });
 </script>
 
-<div id="releases-table" class="hide" data-bind="css: {hide: false}">
-    <div class="alert alert-danger hide" data-bind="visible: brokenBuilds, css: {hide: false}">
-        <p>
-            <i class="fa fa-exclamation-circle"></i>
-            {% blocktrans %}
-                One or more of your versions is broken, please make sure it is
-                not marked as released. Make a new version if needed, and update
-                any live deployments as soon as possible. 
-            {% endblocktrans %}
-        </p>
-        <p><small>
-            {% blocktrans %}
-                All new versions should work, so if problems persist, please
-                report the issue.
-            {% endblocktrans %}
-        </small></p>
-    </div>
-    <button class="btn btn-primary" data-bind="
-        click: function() {
-            analytics.workflow('Clicked Make New Version');
-            return makeNewBuild();
-        },
-        attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
-        css: {disabled: !buildButtonEnabled()}
-    ">{% trans 'Make New Version' %}</button>
+{% if build_profile_access %}
+<div class="tabbable">
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
+        <li><a href="#profiles-tab" data-toggle="tab">{% trans "Build Profiles" %}</a></li>
+    </ul>
+    <div class="spacer"></div>
+    <div class="tab-content">
+        <div id="versions-tab" class="tab-pane active">
+{% endif %}
+            <div id="releases-table" class="hide" data-bind="css: {hide: false}">
+                <div class="alert alert-danger hide" data-bind="visible: brokenBuilds, css: {hide: false}">
+                    <p>
+                        <i class="fa fa-exclamation-circle"></i>
+                        {% blocktrans %}
+                            One or more of your versions is broken, please make sure it is
+                            not marked as released. Make a new version if needed, and update
+                            any live deployments as soon as possible.
+                        {% endblocktrans %}
+                    </p>
+                    <p><small>
+                        {% blocktrans %}
+                            All new versions should work, so if problems persist, please
+                            report the issue.
+                        {% endblocktrans %}
+                    </small></p>
+                </div>
+                <button class="btn btn-primary" data-bind="
+                    click: function() {
+                        analytics.workflow('Clicked Make New Version');
+                        return makeNewBuild();
+                    },
+                    attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
+                    css: {disabled: !buildButtonEnabled()}
+                ">{% trans 'Make New Version' %}</button>
 
     <div id="build-errors-wrapper"></div>
     <table class="table">
@@ -304,7 +323,15 @@
     <script type="text/html" id="deploy-build-modal-template">
         {% include 'app_manager/partials/releases_deploy_modal.html' %}
     </script>
+            </div>
+{% if build_profile_access %}
+        </div>
+        <div id="profiles-tab" class="tab-pane">
+            {% include 'app_manager/partials/build_profiles.html' %}
+        </div>
+     </div>
 </div>
+{% endif %}
 
 <!-- Async Download Modals -->
 {% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' %}

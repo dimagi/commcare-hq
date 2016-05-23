@@ -108,7 +108,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
 @task
 def build_application_zip(include_multimedia_files, include_index_files, app,
-                          download_id, compress_zip=False, filename="commcare.zip"):
+                          download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip"):
     from corehq.apps.hqmedia.views import iter_app_files
 
     DownloadBase.set_progress(build_application_zip, 0, 100)
@@ -118,17 +118,18 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     if use_transfer:
-        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "{}{}{}{}".format(
+        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "{}{}{}{}{}".format(
             app._id,
             'mm' if include_multimedia_files else '',
             'ccz' if include_index_files else '',
             app.version,
+            build_profile_id
         ))
     else:
         _, fpath = tempfile.mkstemp()
 
     if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
-        files, errors = iter_app_files(app, include_multimedia_files, include_index_files)
+        files, errors = iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id)
         with open(fpath, 'wb') as tmp:
             with zipfile.ZipFile(tmp, "w") as z:
                 for path, data in files:

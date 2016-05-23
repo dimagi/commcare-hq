@@ -45,8 +45,9 @@ class StockPayloadGenerator(object):
                     **{'entity-id': case_id, 'date': as_of, 'section-id': section_id}
                 )
 
-            for section in self._consumption_sections(case_stub, case_ledgers, section_timestamp_map):
-                yield section
+            if self.stock_settings.sync_consumption_ledger:
+                for section in self._consumption_sections(case_stub, case_ledgers, section_timestamp_map):
+                    yield section
 
     def _consumption_sections(self, case_stub, case_ledgers, section_timestamp_map):
         case_id = case_stub.case_id
