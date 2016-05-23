@@ -71,7 +71,9 @@ class Annual(ICDSMixin, ASRData):
                 title=self.row_config[0]['title'],
                 headers=self.row_config[0]['headers'],
                 slug=self.row_config[0]['slug'],
-                rows=rows
+                rows=rows,
+                posttitle='(this table above shows the format, the letters ' \
+                          'a-o represent the data, which appears in the table below)'
             ))
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             rr = []
@@ -82,7 +84,7 @@ class Annual(ICDSMixin, ASRData):
                         row_data.append(cell)
                     else:
                         num = 0
-                        for c in cell['columns']:
+                        for c in cell:
                             num += data.get(c, 0)
                         row_data.append(num)
                 rr.append(row_data)
@@ -90,7 +92,8 @@ class Annual(ICDSMixin, ASRData):
                 title=self.row_config[1]['title'],
                 headers=self.row_config[1]['headers'],
                 slug=self.row_config[1]['slug'],
-                rows=rr
+                rows=rr,
+                posttitle=None
             ))
             return sections
 
@@ -105,32 +108,34 @@ class Annual(ICDSMixin, ASRData):
                     DataTablesColumn('PW'),
                     DataTablesColumn('LM'),
                     DataTablesColumnGroup(
-                        'Children',
-                        DataTablesColumnGroup(
-                            '0-5 months',
-                            DataTablesColumn('B'),
-                            DataTablesColumn('G')
-                        ),
-                        DataTablesColumnGroup(
-                            '6-11 months',
-                            DataTablesColumn('B'),
-                            DataTablesColumn('G')
-                        ),
-                        DataTablesColumnGroup(
-                            '12-35 months',
-                            DataTablesColumn('B'),
-                            DataTablesColumn('G')
-                        ),
-                        DataTablesColumnGroup(
-                            '60-71 months',
-                            DataTablesColumn('B'),
-                            DataTablesColumn('G')
-                        ),
-                        DataTablesColumnGroup(
-                            'All 0-71 months',
-                            DataTablesColumn('B'),
-                            DataTablesColumn('G')
-                        ),
+                        'Children 0-5 months',
+                        DataTablesColumn('B'),
+                        DataTablesColumn('G')
+                    ),
+                    DataTablesColumnGroup(
+                        'Children 6-11 months',
+                        DataTablesColumn('B'),
+                        DataTablesColumn('G')
+                    ),
+                    DataTablesColumnGroup(
+                        'Children 12-35 months',
+                        DataTablesColumn('B'),
+                        DataTablesColumn('G')
+                    ),
+                    DataTablesColumnGroup(
+                        'Children 36-59 months',
+                        DataTablesColumn('B'),
+                        DataTablesColumn('G')
+                    ),
+                    DataTablesColumnGroup(
+                        'Children 60-71 months',
+                        DataTablesColumn('B'),
+                        DataTablesColumn('G')
+                    ),
+                    DataTablesColumnGroup(
+                        'All Children 0-71 months',
+                        DataTablesColumn('B'),
+                        DataTablesColumn('G')
                     ),
                     DataTablesColumn('AG')
                 )
@@ -148,19 +153,19 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'a',
                         'PW ST',
-                        '2',
+                        '#2',
                         ('pregnant_st_count',)
                     ),
                     (
                         'b',
                         'PW SC',
-                        '2',
+                        '#2',
                         ('pregnant_sc_count',)
                     ),
                     (
                         'c',
                         'PW Other',
-                        '2',
+                        '#2',
                         ('pregnant_other_count',)
                     ),
                     (
@@ -172,25 +177,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'e',
                         'PW Minority',
-                        '2',
+                        '#2',
                         ("delivered_minority_count",)
                     ),
                     (
                         'f',
                         'LM ST',
-                        '3',
+                        '#3',
                         ("delivered_st_count",)
                     ),
                     (
                         'g',
                         'LM SC',
-                        '3',
+                        '#3',
                         ("delivered_sc_count",)
                     ),
                     (
                         'h',
                         'LM Others',
-                        '3',
+                        '#3',
                         ("delivered_other_count",)
                     ),
                     (
@@ -202,25 +207,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'j',
                         'LM Minority',
-                        '3',
+                        '#3',
                         ("delivered_minority_count",)
                     ),
                     (
                         'k',
                         '0-5 months B ST',
-                        '4',
+                        '#4',
                         ("M_st_count",)
                     ),
                     (
                         'l',
                         '0-5 months B SC',
-                        '4',
+                        '#4',
                         ("M_sc_count",)
                     ),
                     (
                         'm',
                         '0-5 months B Others',
-                        '4',
+                        '#4',
                         ("M_other_count",)
                     ),
                     (
@@ -232,25 +237,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'o',
                         '0-5 months B Minority',
-                        '4',
+                        '#4',
                         ("M_minority_count",)
                     ),
                     (
                         'p',
                         '0-5 months G ST',
-                        '4',
+                        '#4',
                         ("F_st_count",)
                     ),
                     (
                         'q',
                         '0-5 months G SC',
-                        '4',
+                        '#4',
                         ("F_sc_count",)
                     ),
                     (
                         'r',
                         '0-5 months G Others',
-                        '4',
+                        '#4',
                         ("F_other_count",)
                     ),
                     (
@@ -262,25 +267,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         't',
                         '0-5 months G Minority',
-                        '4',
+                        '#4',
                         ("F_minority_count",)
                     ),
                     (
                         'u',
                         '6-11 months B ST',
-                        '5',
+                        '#5',
                         ("M_st_count_1",)
                     ),
                     (
                         'v',
                         '6-11 months B SC',
-                        '5',
+                        '#5',
                         ("M_sc_count_1",)
                     ),
                     (
                         'w',
                         '6-11 months B Others',
-                        '5',
+                        '#5',
                         ("M_other_count_1",)
                     ),
                     (
@@ -292,25 +297,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'y',
                         '6-11 months B Minority',
-                        '5',
+                        '#5',
                         ("M_minority_count_1",)
                     ),
                     (
                         'z',
                         '6-11 months G ST',
-                        '5',
+                        '#5',
                         ("F_st_count_1",)
                     ),
                     (
                         'aa',
                         '6-11 months G SC',
-                        '5',
+                        '#5',
                         ("F_sc_count_1",)
                     ),
                     (
                         'ab',
                         '6-11 months G Others',
-                        '5',
+                        '#5',
                         ("F_other_count_1",)
                     ),
                     (
@@ -322,25 +327,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'ad',
                         '6-11 months G Minority',
-                        '5',
+                        '#5',
                         ("F_minority_count_1",)
                     ),
                     (
                         'ae',
                         '12-35 months B ST',
-                        '6',
+                        '#6',
                         ("M_st_count_2",)
                     ),
                     (
                         'af',
                         '12-35 months B SC',
-                        '6',
+                        '#6',
                         ("M_sc_count_2",)
                     ),
                     (
                         'ag',
                         '12-35 months B Others',
-                        '6',
+                        '#6',
                         ("M_other_count_2",)
                     ),
                     (
@@ -352,25 +357,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'ai',
                         '12-35 months B Minority',
-                        '6',
+                        '#6',
                         ("M_minority_count_2",)
                     ),
                     (
                         'aj',
                         '12-35 months G ST',
-                        '6',
+                        '#6',
                         ("F_st_count_2",)
                     ),
                     (
                         'ak',
                         '12-35 months G SC',
-                        '6',
+                        '#6',
                         ("F_sc_count_2",)
                     ),
                     (
                         'al',
                         '12-35 months G Others',
-                        '6',
+                        '#6',
                         ("F_other_count_2",)
                     ),
                     (
@@ -382,25 +387,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'an',
                         '12-35 months G Minority',
-                        '6',
+                        '#6',
                         ("F_minority_count_2",)
                     ),
                     (
                         'ao',
                         '36-59 months B ST',
-                        '7',
+                        '#7',
                         ("M_st_count_3",)
                     ),
                     (
                         'ap',
                         '36-59 months B SC',
-                        '7',
+                        '#7',
                         ("M_sc_count_3",)
                     ),
                     (
                         'aq',
                         '36-59 months B Others',
-                        '7',
+                        '#7',
                         ("M_other_count_3",)
                     ),
                     (
@@ -412,25 +417,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'as',
                         '36-59 months B Minority',
-                        '7',
+                        '#7',
                         ("M_minority_count_3",)
                     ),
                     (
                         'at',
                         '36-59 months G ST',
-                        '7',
+                        '#7',
                         ("F_st_count_3",)
                     ),
                     (
                         'au',
                         '36-59 months G SC',
-                        '7',
+                        '#7',
                         ("F_sc_count_3",)
                     ),
                     (
                         'av',
                         '36-59 months G Others',
-                        '7',
+                        '#7',
                         ("F_other_count_3",)
                     ),
                     (
@@ -442,25 +447,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'ax',
                         '36-59 months G Minority',
-                        '7',
+                        '#7',
                         ("F_minority_count_3",)
                     ),
                     (
                         'ay',
                         '60-71 months B ST',
-                        '8',
+                        '#8',
                         ("M_st_count_4",)
                     ),
                     (
                         'az',
                         '60-71 months B SC',
-                        '8',
+                        '#8',
                         ("M_sc_count_4",)
                     ),
                     (
                         'ba',
                         '60-71 months B Others',
-                        '8',
+                        '#8',
                         ("M_other_count_4",)
                     ),
                     (
@@ -472,25 +477,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'bc',
                         '60-71 months B Minority',
-                        '8',
+                        '#8',
                         ("M_minority_count_4",)
                     ),
                     (
                         'bd',
                         '60-71 months G ST',
-                        '8',
+                        '#8',
                         ("F_st_count_4",)
                     ),
                     (
                         'be',
                         '60-71 months G SC',
-                        '8',
+                        '#8',
                         ("F_sc_count_4",)
                     ),
                     (
                         'bf',
                         '60-71 months G Others',
-                        '8',
+                        '#8',
                         ("F_other_count_4",)
                     ),
                     (
@@ -502,25 +507,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'bh',
                         '60-71 months G Minority',
-                        '8',
+                        '#8',
                         ("F_minority_count_4",)
                     ),
                     (
                         'bi',
                         '0-71 months B ST',
-                        '9',
+                        '#9',
                         ("M_st_count_all",)
                     ),
                     (
                         'bj',
                         '0-71 months B SC',
-                        '9',
+                        '#9',
                         ("M_sc_count_all",)
                     ),
                     (
                         'bk',
                         '0-71 months B Others',
-                        '9',
+                        '#9',
                         ("M_other_count_all",)
                     ),
                     (
@@ -532,25 +537,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'bm',
                         '0-71 months B Minority',
-                        '9',
+                        '#9',
                         ("M_minority_count_all",)
                     ),
                     (
                         'bn',
                         '0-71 months G ST',
-                        '9',
+                        '#9',
                         ("F_st_count_all",)
                     ),
                     (
                         'bo',
                         '0-71 months G SC',
-                        '9',
+                        '#9',
                         ("F_sc_count_all",)
                     ),
                     (
                         'bp',
                         '0-71 months G Others',
-                        '9',
+                        '#9',
                         ("F_other_count_all",)
                     ),
                     (
@@ -562,25 +567,25 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'br',
                         '0-71 months G Minority',
-                        '9',
+                        '#9',
                         ("F_minority_count_all",)
                     ),
                     (
                         'bs',
                         'AG ST',
-                        '10',
+                        '#10',
                         ("M_st_count_ag",)
                     ),
                     (
                         'bt',
                         'AG SC',
-                        '10',
+                        '#10',
                         ("M_sc_count_ag",)
                     ),
                     (
                         'bu',
                         'AG Other',
-                        '10',
+                        '#10',
                         ("M_other_count_ag",)
                     ),
                     (
@@ -592,7 +597,7 @@ class Annual(ICDSMixin, ASRData):
                     (
                         'bw',
                         'AG minority',
-                        '10',
+                        '#10',
                         ("M_minority_count_ag",)
                     )
                 )
@@ -627,7 +632,7 @@ class DisabledChildren(ICDSMixin, ASRData):
                         row_data.append(cell)
                     else:
                         num = 0
-                        for c in cell['columns']:
+                        for c in cell:
                             num += data.get(c, 0)
                         row_data.append(num)
                 rows.append(row_data)
@@ -795,6 +800,29 @@ class Infrastructure(ICDSMixin, ASRData):
     has_sections = True
 
     @property
+    def rows(self):
+        if self.config['location_id']:
+            data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
+            sections = []
+            for section in self.row_config:
+                rows = []
+                for row in section['rows_config']:
+                    row_data = []
+                    for idx, cell in enumerate(row):
+                        if idx < section['static_cell']:
+                            row_data.append(cell)
+                        else:
+                            row_data.append(data.get(cell, 0))
+                    rows.append(row_data)
+                sections.append(dict(
+                    title=section['title'],
+                    headers=section['headers'],
+                    slug=section['slug'],
+                    rows=rows
+                ))
+            return sections
+
+    @property
     def row_config(self):
         return [
             {
@@ -813,7 +841,7 @@ class Infrastructure(ICDSMixin, ASRData):
                         'where_housed_1',
                         'where_housed_2',
                         'where_housed_3',
-                    )
+                    ),
                 )
             },
             {
@@ -893,7 +921,7 @@ class Infrastructure(ICDSMixin, ASRData):
                         'type_toilet_3',
                         'type_toilet_4',
                         'toilet_facility'
-                    )
+                    ),
                 )
             },
             {
@@ -914,7 +942,7 @@ class Infrastructure(ICDSMixin, ASRData):
                         'source_drinking_water_2',
                         'source_drinking_water_3',
                         'source_drinking_water_4'
-                    )
+                    ),
                 )
             },
             {
@@ -975,7 +1003,18 @@ class Equipment(ICDSMixin, ASRData):
 
     @property
     def rows(self):
-        return []
+        if self.config['location_id']:
+            data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
+            rows = []
+            for row in self.row_config:
+                row_data = []
+                for idx, cell in enumerate(row):
+                    if idx < 2:
+                        row_data.append(cell)
+                    else:
+                        row_data.append(sum([data.get(c, 0) for c in cell]))
+                rows.append(row_data)
+            return rows
 
     @property
     def row_config(self):

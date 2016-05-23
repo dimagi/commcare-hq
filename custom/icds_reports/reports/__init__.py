@@ -1,5 +1,3 @@
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, \
     MonthYearMixin
@@ -13,8 +11,6 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     report_template_path = "icds_reports/multi_report.html"
     flush_layout = True
     exportable = True
-
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter]
 
     @property
     @memoized
@@ -44,7 +40,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     def report_context(self):
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
-            'title': self.title
+            'title': self.title,
         }
 
         return context
@@ -52,6 +48,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     def get_report_context(self, data_provider):
         context = dict(
             has_sections=data_provider.has_sections,
+            posttitle=data_provider.posttitle,
             report_table=dict(
                 title=data_provider.title,
                 slug=data_provider.slug,
@@ -59,7 +56,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
                 rows=data_provider.rows,
                 subtitle=data_provider.subtitle,
                 default_rows=self.default_rows,
-                start_at_row=0
+                start_at_row=0,
             )
         )
         return context

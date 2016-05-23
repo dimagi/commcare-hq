@@ -1,4 +1,8 @@
-from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationalization, ASRPopulation
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
+from corehq.apps.reports.filters.select import MonthFilter
+from corehq.apps.reports.filters.select import YearFilter
+from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationalization, ASRPopulation, Annual, \
+    DisabledChildren, Infrastructure, Equipment
 from custom.icds_reports.mpr_sqldata import MPRIdentification, MPRSectors, MPRPopulation, MPRBirthsAndDeaths, \
     MPRAWCDetails, MPRSupplementaryNutrition, MPRUsingSalt, MPRProgrammeCoverage, MPRPreschoolEducation, \
     MPRGrowthMonitoring, MPRImmunizationCoverage, MPRVhnd, MPRReferralServices, MPRMonitoring
@@ -12,6 +16,8 @@ class MPRReport(IcdsBaseReport):
     title = 'Block MPR'
     slug = 'mpr_report'
     name = 'Block MPR'
+
+    fields = [AsyncLocationFilter, MonthFilter, YearFilter]
 
     @property
     @memoized
@@ -42,6 +48,8 @@ class ASRReport(IcdsBaseReport):
     slug = 'asr_report'
     name = 'Block ASR'
 
+    fields = [AsyncLocationFilter]
+
     @property
     @memoized
     def data_providers(self):
@@ -50,5 +58,8 @@ class ASRReport(IcdsBaseReport):
             ASRIdentification(config=config),
             ASROperationalization(config=config),
             ASRPopulation(config=config),
-
+            Annual(config=config),
+            DisabledChildren(config=config),
+            Infrastructure(config=config),
+            Equipment(config=config)
         ]

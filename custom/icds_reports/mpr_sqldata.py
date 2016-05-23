@@ -37,6 +37,7 @@ class MPRSectors(object):
     slug = 'sectors'
     has_sections = False
     subtitle = []
+    posttitle = None
 
     def __init__(self, config):
         self.config = config

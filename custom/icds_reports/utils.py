@@ -1,11 +1,14 @@
 import json
 import os
 
+from datetime import datetime, timedelta
+
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_not_found
+from dimagi.utils.dates import DateSpan
 
 
 class MPRData(object):
@@ -35,6 +38,7 @@ class ICDSData(object):
 
 class ICDSMixin(object):
     has_sections = False
+    posttitle = None
 
     def __init__(self, config):
         self.config = config
@@ -94,12 +98,19 @@ class ICDSMixin(object):
                 filters.update({config['date_filter_field']: self.config['date_span']})
             if 'filter' in config:
                 for fil in config['filter']:
-                    filters.update({
-                        fil['column']: {
-                            'operator': fil['operator'],
-                            'operand': fil['value']
-                        }
-                    })
+                    if 'type' in fil:
+                        now = datetime.now()
+                        start_date = now if 'start' not in fil else now + timedelta(days=fil['start'])
+                        end_date = now if 'end' not in fil else now + timedelta(days=fil['end'])
+                        datespan = DateSpan(start_date, end_date)
+                        filters.update({fil['column']: datespan})
+                    else:
+                        filters.update({
+                            fil['column']: {
+                                'operator': fil['operator'],
+                                'operand': fil['value']
+                            }
+                        })
 
             report_data = ICDSData(domain, filters, config['id']).data()
             for column in config['columns']:

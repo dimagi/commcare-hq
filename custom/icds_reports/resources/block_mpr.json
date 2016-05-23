@@ -188,8 +188,8 @@
   "awc_details": {
     "data_source": [
       {
-        "id": "a347fa3a66a68a53bad7a11284a85573",
-        "date_filter_field": "submitted_on",
+        "id": "05e9c905d1cf4b11d0cfc92b55d9954d",
+        "date_filter_field": "opened_on",
         "columns": [
           {
             "column_name": "pregnant_resident_count",
@@ -202,8 +202,8 @@
         ]
       },
       {
-        "id": "05e9c905d1cf4b11d0cfc92b55d9954d",
-        "date_filter_field": "opened_on",
+        "id": "a347fa3a66a68a53bad7a11284a85573",
+        "date_filter_field": "submitted_on",
         "columns": [
           {
             "column_name": "live_F_resident_birth_count",
