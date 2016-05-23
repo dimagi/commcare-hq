@@ -319,7 +319,7 @@ class SQLPhoneNumberTestCase(TestCase):
         self.assertEqual(PhoneNumber.by_phone('999124'), number)
 
         # test pending
-        number.verified=False
+        number.verified = False
         number.save()
         self.assertIsNone(PhoneNumber.by_phone('999124'))
         self.assertEqual(PhoneNumber.by_phone('999124', include_pending=True), number)
@@ -356,9 +356,9 @@ class SQLPhoneNumberTestCase(TestCase):
         self.assertEqual(PhoneNumber.by_suffix('224'), number2)
 
         # test pending
-        number1.verified=False
+        number1.verified = False
         number1.save()
-        number2.verified=False
+        number2.verified = False
         number2.save()
         self.assertIsNone(PhoneNumber.by_suffix('124'))
         self.assertIsNone(PhoneNumber.by_suffix('224'))
