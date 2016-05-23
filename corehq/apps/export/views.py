@@ -790,7 +790,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """Checks to see if this form export has multimedia available to export
         """
         try:
-            export_object = self.get_export_schema(self.domain, self.export_id)
+            export_object = self._get_export(self.domain, self.export_id)
             has_multimedia = FormAccessors(self.domain).forms_have_multimedia(
                 export_object.app_id,
                 getattr(export_object, 'xmlns', '')
