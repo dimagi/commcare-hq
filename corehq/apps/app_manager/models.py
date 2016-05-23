@@ -4122,7 +4122,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if 'build_langs' in data:
             if data['build_langs'] != data['langs'] and 'build_profiles' not in data:
                 data['build_profiles'] = {
-                    uuid.uuid4().hex: BuildProfile(
+                    uuid.uuid4().hex: dict(
                         name=', '.join(data['build_langs']),
                         langs=data['build_langs']
                     )
