@@ -24,11 +24,12 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 };
                 if (menuResponse.type === "commands") {
                     menuListView = new MenuList.MenuListView(menuData);
+                    FormplayerFrontend.regions.main.show(menuListView.render());
                 }
                 else if (menuResponse.type === "entities") {
                     menuListView = new MenuList.CaseListView(menuData);
+                    FormplayerFrontend.regions.main.show(menuListView.render());
                 }
-                FormplayerFrontend.regions.main.show(menuListView.render());
             });
         },
 
@@ -44,23 +45,16 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 obj.id = i;
                 detailModel.push(obj);
             }
-            var lst = _.map(detailModel, function (val) {
-                return {id: val.id, data: val.data, header: val.header};
-            });
-
             var detailCollection = new Backbone.Collection();
-            detailCollection.reset(lst);
+            detailCollection.reset(detailModel);
             var menuListView = new MenuList.DetailListView({
                 collection: detailCollection,
             });
 
-            var selectCase = function () {
-                FormplayerFrontend.trigger("menu:select", model._index, model.options.model.collection.appId);
-            };
-
             $('#select-case').click(function () {
-                selectCase();
+                FormplayerFrontend.trigger("menu:select", model._index, model.options.model.collection.appId);
             });
+
             $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
             $('#case-detail-modal').modal('toggle');
         },
