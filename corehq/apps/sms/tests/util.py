@@ -301,6 +301,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
     def setUpClass(cls):
         if getattr(settings, "SKIP_TOUCHFORMS_TESTS", False):
             raise SkipTest("because settings.SKIP_TOUCHFORMS_TESTS")
+        super(TouchformsTestCase, cls).setUpClass()
 
     def setUp(self):
         self.users = []
