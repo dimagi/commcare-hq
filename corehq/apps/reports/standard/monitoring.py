@@ -907,7 +907,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
             for form in self.all_relevant_forms.values():
                 xmlnss.append(form['xmlns'])
-                app_ids.append(form['app_id'])
+                if form['app_id']:
+                    app_ids.append(form['app_id'])
                 form_map[form['xmlns']] = form['name']
 
             paged_result = get_forms(
