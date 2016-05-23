@@ -196,7 +196,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         landmarks_param = landmarks_param if isinstance(landmarks_param, list) else []
         landmarks_param = [param for param in landmarks_param if isinstance(param, int)]
         landmarks = landmarks_param if landmarks_param else self._default_landmarks
-        return [datetime.timedelta(days=l) for l in landmarks]
+        return [('landmark_' + str(idx), datetime.timedelta(days=l)) for idx, l in enumerate(landmarks)]
 
     _default_milestone = 120
 
@@ -232,7 +232,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         columns = [DataTablesColumn(_("Users"))]
 
-        for landmark in self.landmarks:
+        for __, landmark in self.landmarks:
             columns.append(DataTablesColumnGroup(
                 _("Cases in Last {} Days").format(landmark.days) if landmark else _("Ever"),
                 *[make_column(title, help_text, landmark.days)
@@ -287,9 +287,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                         value = text
                 cells.append(util.format_datatables_data(text=text, sort_key=value))
 
-            for landmark in self.landmarks:
-                landmark_key = unicode(landmark.days)
-
+            for landmark_key, landmark in self.landmarks:
                 modified = row.modified_count(landmark_key)
                 active = row.active_count(landmark_key)
                 closed = row.closed_count(landmark_key)
@@ -343,15 +341,14 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 filters.term('closed', False))
         )
 
-        landmarks_aggregation = self._landmarks_aggregation(end_date)
-
         top_level_aggregation = (
             TermsAggregation('users', 'user_id')
-            .aggregation(landmarks_aggregation)
             .aggregation(touched_total_aggregation)
             .aggregation(active_total_aggregation)
             .aggregation(inactive_total_aggregation)
         )
+
+        top_level_aggregation = self.add_landmark_aggregations(top_level_aggregation, end_date)
 
         query = (
             case_es.CaseES()
@@ -367,32 +364,42 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         query = query.aggregation(top_level_aggregation)
 
         if self.missing_users:
-            query = query.aggregation(
+            missing_aggregation = (
                 MissingAggregation('missing_users', 'user_id')
-                .aggregation(landmarks_aggregation)
                 .aggregation(touched_total_aggregation)
                 .aggregation(active_total_aggregation)
                 .aggregation(inactive_total_aggregation)
             )
+            missing_aggregation = self.add_landmark_aggregations(missing_aggregation, end_date)
+            query = query.aggregation(missing_aggregation)
 
         query = (
             query
             .aggregation(touched_total_aggregation)
             .aggregation(active_total_aggregation)
             .aggregation(inactive_total_aggregation)
-            .aggregation(landmarks_aggregation)
         )
+
+        query = self.add_landmark_aggregations(query, end_date)
 
         return query.run()
 
-    def _landmarks_aggregation(self, end_date):
-        landmarks_aggregation = RangeAggregation('landmarks', 'modified_on')
-        for landmark in self.landmarks:
-            start_date = ServerTime(self.utc_now - landmark).phone_time(self.timezone).done()
-            landmarks_aggregation.add_range(AggregationRange(start_date, end_date, key=landmark.days))
-        landmarks_aggregation.aggregation(FilterAggregation('active', filters.term('closed', False)))
-        landmarks_aggregation.aggregation(FilterAggregation('closed', filters.term('closed', True)))
-        return landmarks_aggregation
+    def add_landmark_aggregations(self, aggregation, end_date):
+        for key, landmark in self.landmarks:
+            aggregation = aggregation.aggregation(self.landmark_aggregation(key, landmark, end_date))
+        return aggregation
+
+    def landmark_aggregation(self, key, landmark, end_date):
+        start_date = ServerTime(self.utc_now - landmark).phone_time(self.timezone).done()
+        return (
+            FilterAggregation(key,
+                filters.AND(
+                    filters.date_range('modified_on', gte=start_date, lt=end_date),
+                )
+            )
+            .aggregation(FilterAggregation('active', filters.term('closed', False)))
+            .aggregation(FilterAggregation('closed', filters.term('closed', True)))
+        )
 
     class Row(object):
 
@@ -400,17 +407,15 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             self.report = report
             self.user = user
             self.bucket = bucket
-            if bucket:
-                self.landmarks = bucket.landmarks.buckets_dict
 
         def active_count(self, landmark_key):
-            return 0 if not self.bucket else self.landmarks[landmark_key].active.doc_count
+            return 0 if not self.bucket else getattr(self.bucket, landmark_key).result['active']['doc_count']
 
         def modified_count(self, landmark_key):
-            return 0 if not self.bucket else self.landmarks[landmark_key].doc_count
+            return 0 if not self.bucket else getattr(self.bucket, landmark_key).doc_count
 
         def closed_count(self, landmark_key):
-            return 0 if not self.bucket else self.landmarks[landmark_key].closed.doc_count
+            return 0 if not self.bucket else getattr(self.bucket, landmark_key).result['closed']['doc_count']
 
         def total_touched_count(self):
             return 0 if not self.bucket else self.bucket.touched_total.doc_count
@@ -431,7 +436,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             self.total_touched_bucket = es_results.aggregations.touched_total
             self.total_active_bucket = es_results.aggregations.active_total
             self.total_inactive_bucket = es_results.aggregations.inactive_total
-            self.landmark_buckets = es_results.aggregations.landmarks.buckets_dict
+            self.aggregations = es_results.aggregations
 
         def total_touched_count(self):
             return self.total_touched_bucket.doc_count
@@ -443,13 +448,13 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return self.total_active_bucket.doc_count
 
         def active_count(self, landmark_key):
-            return self.landmark_buckets[landmark_key].active.doc_count
+            return getattr(self.aggregations, landmark_key).result['active']['doc_count']
 
         def modified_count(self, landmark_key):
-            return self.landmark_buckets[landmark_key].doc_count
+            return getattr(self.aggregations, landmark_key).doc_count
 
         def closed_count(self, landmark_key):
-            return self.landmark_buckets[landmark_key].closed.doc_count
+            return getattr(self.aggregations, landmark_key).result['closed']['doc_count']
 
         def header(self):
             return self._header
