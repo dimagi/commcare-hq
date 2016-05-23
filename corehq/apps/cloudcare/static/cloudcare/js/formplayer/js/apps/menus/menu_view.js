@@ -58,7 +58,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         templateHelpers: function () {
-            debugger;
             return {
                 data: this.options.model.get('data'),
             };

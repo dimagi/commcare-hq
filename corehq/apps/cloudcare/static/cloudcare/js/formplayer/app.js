@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession, translatedStrings */
+/*global Marionette, Backbone, WebFormSession */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
