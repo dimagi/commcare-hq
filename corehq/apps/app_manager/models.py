@@ -4595,7 +4595,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             for form in self.get_forms(bare=False):
                 xml = XForm(form['form'].source)
                 for lang in self.langs:
-                    self.media_language_map[lang].media_refs.extend(xml.all_references(lang))
+                    media = [path for path in xml.all_references(lang) if path is not None]
+                    self.media_language_map[lang].media_refs.extend(media)
         else:
             self.media_language_map = {}
 
