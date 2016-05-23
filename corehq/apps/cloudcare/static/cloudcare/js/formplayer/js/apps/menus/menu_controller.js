@@ -24,18 +24,17 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 };
                 if (menuResponse.type === "commands") {
                     menuListView = new MenuList.MenuListView(menuData);
-                    FormplayerFrontend.regions.main.show(menuListView.render());
                 }
                 else if (menuResponse.type === "entities") {
                     menuListView = new MenuList.CaseListView(menuData);
-                    FormplayerFrontend.regions.main.show(menuListView.render());
                 }
+                FormplayerFrontend.regions.main.show(menuListView.render());
             });
         },
 
         showDetail: function (model) {
-            var headers = model.options.model.attributes.detail.headers;
-            var details = model.options.model.attributes.detail.details;
+            var headers = model.options.model.get('detail').headers;
+            var details = model.options.model.get('detail').details;
             var detailModel = [];
             // we need to map the details and headers JSON to a list for a Backbone Collection
             for (var i = 0; i < headers.length; i++) {

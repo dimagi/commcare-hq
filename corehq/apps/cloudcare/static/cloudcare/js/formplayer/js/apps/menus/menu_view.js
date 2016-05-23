@@ -22,8 +22,8 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             FormplayerFrontend.trigger("menu:select", model.get('index'), model.collection.appId);
         },
         templateHelpers: function () {
-            var imageUri = this.options.model.attributes.imageUri;
-            var audioUri = this.options.model.attributes.audioUri;
+            var imageUri = this.options.model.get('imageUri');
+            var audioUri = this.options.model.get('audioUri');
             var appId = this.model.collection.appId;
             return {
                 imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
