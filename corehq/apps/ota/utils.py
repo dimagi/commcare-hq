@@ -9,7 +9,6 @@ def turn_off_demo_mode(commcare_user):
     """
     Turns demo mode OFF for commcare_user and deletes existing demo restore
     """
-    commcare_user.is_demo_user = False
 
     # delete old restore
     old_restore_id = commcare_user.demo_restore_id
@@ -18,6 +17,7 @@ def turn_off_demo_mode(commcare_user):
         old_restore.delete()
 
     commcare_user.demo_restore_id = None
+    commcare_user.is_demo_user = False
     commcare_user.save()
 
 
@@ -42,7 +42,7 @@ def reset_demo_user_restore(commcare_user, domain):
         project=Domain.get_by_name(domain),
         user=commcare_user.to_casexml_user(),
         params=RestoreParams(version=V2),
-    ).get_payload().as_string()
+    ).get_payload().as_file()
     demo_restore = DemoUserRestore.create(commcare_user._id, restore)
 
     # set reference to new restore
@@ -52,7 +52,7 @@ def reset_demo_user_restore(commcare_user, domain):
 def demo_user_restore_response(commcare_user):
     # Todo handle case where user is in demo-mode, but demo restore is not set due to task fail
     assert commcare_user.is_commcare_user()
-    assert commcare_user.demo_restore_id is not None
+    assert bool(commcare_user.demo_restore_id)
 
     restore = DemoUserRestore.objects.get(uuid=commcare_user.demo_restore_id)
     return restore.get_restore_http_response()
