@@ -328,11 +328,13 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         landmarks_aggregation = self._landmarks_aggregation(end_date)
 
-        top_level_aggregation = TermsAggregation('users', 'user_id')\
-            .aggregation(landmarks_aggregation)\
-            .aggregation(touched_total_aggregation)\
-            .aggregation(active_total_aggregation)\
+        top_level_aggregation = (
+            TermsAggregation('users', 'user_id')
+            .aggregation(landmarks_aggregation)
+            .aggregation(touched_total_aggregation)
+            .aggregation(active_total_aggregation)
             .aggregation(inactive_total_aggregation)
+        )
 
         query = (
             case_es.CaseES()
