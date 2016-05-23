@@ -18,6 +18,7 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.es import FormES
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
@@ -337,11 +338,33 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
         return form_info
 
-    key = [domain, app_id, xmlns]
-    form_ids = {f['id'] for f in XFormInstance.get_db().view("attachments/attachments",
-                                                             start_key=key + [startdate],
-                                                             end_key=key + [enddate, {}],
-                                                             reduce=False)}
+    if not export_is_legacy:
+        query = (FormES()
+                 .domain(domain)
+                 .app(app_id)
+                 .xmlns(xmlns)
+                 .submitted(gte=parse(startdate), lte=parse(enddate))
+                 .remove_default_filter("has_user"))
+        form_ids = set()
+        for form in query.scroll():
+            try:
+                for attachment in form['_attachments'].values():
+                    if attachment['content_type'] != "text/xml":
+                        form_ids.add(form['_id'])
+                        continue
+            except AttributeError:
+                pass
+    else:
+        key = [domain, app_id, xmlns]
+        form_ids = {
+            f['id'] for f in
+            XFormInstance.get_db().view(
+                "attachments/attachments",
+                start_key=key + [startdate],
+                end_key=key + [enddate, {}],
+                reduce=False
+            )
+        }
 
     properties = set()
     if export_id:
