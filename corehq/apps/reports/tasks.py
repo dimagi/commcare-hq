@@ -379,9 +379,11 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
             from corehq.apps.export.models import FormExportInstance
             export = FormExportInstance.get(export_id)
             for table in export.tables:
-                # - in question id is replaced by . in excel exports
-                properties |= {c.label.replace('.', '-') for c in table.columns}
-
+                for column in table.columns:
+                    if column.item:
+                        path_parts = [n.name for n in column.item.path]
+                        path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
+                        properties.add("-".join(path_parts))
 
     if not app_id:
         zip_name = 'Unrelated Form'
