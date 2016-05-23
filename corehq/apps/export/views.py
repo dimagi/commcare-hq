@@ -809,7 +809,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """
         try:
             filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-            filter_form = FilterFormCouchExportDownloadForm(
+            filter_form = self.filter_form_class(
                 self.domain_object, self.timezone, filter_form_data
             )
             if not filter_form.is_valid():
@@ -817,7 +817,7 @@ class DownloadFormExportView(BaseDownloadExportView):
                     _("Please check that you've submitted all required filters.")
                 )
             download = DownloadBase()
-            export_object = self.get_export_schema(self.domain, export_specs[0]['export_id'])
+            export_object = self._get_export(self.domain, export_specs[0]['export_id'])
             task_kwargs = filter_form.get_multimedia_task_kwargs(
                 export_object, download.download_id
             )
