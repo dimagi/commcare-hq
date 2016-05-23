@@ -4092,6 +4092,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
+    vellum_case_management = BooleanProperty(default=False)
 
     build_profiles = SchemaDictProperty(BuildProfile)
 
