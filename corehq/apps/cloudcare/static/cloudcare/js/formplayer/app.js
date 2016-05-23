@@ -67,54 +67,50 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
 });
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
-    var loadSession = function () {
+    FormplayerFrontend.request("clearMenu");
 
-        FormplayerFrontend.request("clearMenu");
-
-        data.onLoading = tfLoading;
-        data.onLoadingComplete = tfLoadingComplete;
-        data.xform_url = "/webforms/player_proxy";
-        //TODO yeah
-        data.domain = "test";
-        data.onerror = function (resp) {
-            showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
-        };
-        data.onsubmit = function (resp) {
-            //TODO: Old Touchforms gets the "submit-all" action then returns the XML to the frontend
-            // to be submitted (here). Is there any reason FormPlayer shouldn't do the submitting itself?
-            var xml = resp.output;
-            var postUrl = resp.postUrl;
-            $.ajax({
-                type: 'POST',
-                url: postUrl,
-                data: xml,
-                success: function () {
-                    FormplayerFrontend.request("clearForm");
-                    // TODO form linking
-                    FormplayerFrontend.trigger("apps:list");
-                    showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
-                },
-                error: function (resp, status, message) {
-                    if (message) {
-                        message = gettext("Error saving!") + message;
-                    } else {
-                        message = gettext("Unknown error: ") + status + " " + resp.status;
-                        if (resp.status === 0) {
-                            message = (message + ". "
-                            + gettext("This can happen if you loaded CloudCare from a different address than the server address") + " (" + postUrl + ")");
-                        }
-                    }
-                    data.onerror({message: message});
-                    // TODO change submit button text to something other than
-                    // "Submitting..." and prevent "All changes saved!" message
-                    // banner at top of the form.
-                },
-            });
-        };
-        var sess = new WebFormSession(data);
-        sess.renderFormXml(data, $('#webforms'));
+    data.onLoading = tfLoading;
+    data.onLoadingComplete = tfLoadingComplete;
+    data.xform_url = "/webforms/player_proxy";
+    //TODO yeah
+    data.domain = "test";
+    data.onerror = function (resp) {
+        showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
-    loadSession();
+    data.onsubmit = function (resp) {
+        //TODO: Old Touchforms gets the "submit-all" action then returns the XML to the frontend
+        // to be submitted (here). Is there any reason FormPlayer shouldn't do the submitting itself?
+        var xml = resp.output;
+        var postUrl = resp.postUrl;
+        $.ajax({
+            type: 'POST',
+            url: postUrl,
+            data: xml,
+            success: function () {
+                FormplayerFrontend.request("clearForm");
+                // TODO form linking
+                FormplayerFrontend.trigger("apps:list");
+                showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
+            },
+            error: function (resp, status, message) {
+                if (message) {
+                    message = gettext("Error saving!") + message;
+                } else {
+                    message = gettext("Unknown error: ") + status + " " + resp.status;
+                    if (resp.status === 0) {
+                        message = (message + ". "
+                        + gettext("This can happen if you loaded CloudCare from a different address than the server address") + " (" + postUrl + ")");
+                    }
+                }
+                data.onerror({message: message});
+                // TODO change submit button text to something other than
+                // "Submitting..." and prevent "All changes saved!" message
+                // banner at top of the form.
+            },
+        });
+    };
+    var sess = new WebFormSession(data);
+    sess.renderFormXml(data, $('#webforms'));
 });
 
 FormplayerFrontend.on("start", function (options) {
