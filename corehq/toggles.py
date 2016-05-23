@@ -661,6 +661,13 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+USE_FORMPLAYER_FRONTEND = StaticToggle(
+    'use_formplayer_frontend',
+    'Use the new formplayer frontend',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 USE_FORMPLAYER = StaticToggle(
     'use_formplayer',
     'Use the new formplayer server',
