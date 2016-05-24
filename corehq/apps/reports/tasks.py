@@ -337,8 +337,12 @@ def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
     return form_ids
 
 
-@task
-def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id, export_is_legacy):
+def _extract_form_attachment_info(form, properties, case_ids):
+    """
+    This is a helper function for build_form_multimedia_zip.
+    Return a dict containing information about the given form and its relevant
+    attachments
+    """
 
     def find_question_id(form, value):
         for k, v in form.iteritems():
@@ -352,44 +356,50 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
         return None
 
+
+    unknown_number = 0
+    # get case ids
+    case_blocks = extract_case_blocks(form.form_data)
+    cases = {c['@case_id'] for c in case_blocks}
+    case_ids |= cases
+
+    form_info = {
+        'form': form,
+        'attachments': list(),
+        'name': form.name or "unknown form",
+        'user': form.user_id or "unknown_user",
+        'cases': cases,
+        'id': form.form_id,
+    }
+    for attachment_name, attachment in form.attachments.iteritems():
+        content_type = getattr(attachment, 'content_type',
+                               attachment['content_type'])
+        if content_type == 'text/xml':
+            continue
+        try:
+            question_id = unicode(
+                u'-'.join(find_question_id(form.form_data, attachment_name)))
+        except TypeError:
+            question_id = unicode(u'unknown' + unicode(unknown_number))
+            unknown_number += 1
+
+        if not properties or question_id in properties:
+            extension = unicode(os.path.splitext(attachment_name)[1])
+            form_info['attachments'].append({
+                'size': getattr(attachment, 'length', attachment['length']),
+                'name': attachment_name,
+                'question_id': question_id,
+                'extension': extension,
+                'timestamp': form.received_on.timetuple(),
+            })
+
+    return form_info
+
+
+@task
+def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id, export_is_legacy):
+
     case_ids = set()
-
-    def extract_form_info(form, properties=None, case_ids=case_ids):
-        unknown_number = 0
-        # get case ids
-        case_blocks = extract_case_blocks(form.form_data)
-        cases = {c['@case_id'] for c in case_blocks}
-        case_ids |= cases
-
-        form_info = {
-            'form': form,
-            'attachments': list(),
-            'name': form.name or "unknown form",
-            'user': form.user_id or "unknown_user",
-            'cases': cases,
-            'id': form.form_id,
-        }
-        for attachment_name, attachment in form.attachments.iteritems():
-            content_type = getattr(attachment, 'content_type', attachment['content_type'])
-            if content_type == 'text/xml':
-                continue
-            try:
-                question_id = unicode(u'-'.join(find_question_id(form.form_data, attachment_name)))
-            except TypeError:
-                question_id = unicode(u'unknown' + unicode(unknown_number))
-                unknown_number += 1
-
-            if not properties or question_id in properties:
-                extension = unicode(os.path.splitext(attachment_name)[1])
-                form_info['attachments'].append({
-                    'size': getattr(attachment, 'length', attachment['length']),
-                    'name': attachment_name,
-                    'question_id': question_id,
-                    'extension': extension,
-                    'timestamp': form.received_on.timetuple(),
-                })
-
-        return form_info
 
     form_ids = _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
     properties = _get_export_properties(export_id, export_is_legacy)
@@ -400,7 +410,7 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
     for form in FormAccessors(domain).iter_forms(form_ids):
         if not zip_name:
             zip_name = unidecode(form.name or 'unknown form')
-        forms_info.append(extract_form_info(form, properties))
+        forms_info.append(_extract_form_attachment_info(form, properties, case_ids))
 
     num_forms = len(forms_info)
     DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
