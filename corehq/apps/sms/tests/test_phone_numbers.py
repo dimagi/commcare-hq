@@ -1,4 +1,3 @@
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices

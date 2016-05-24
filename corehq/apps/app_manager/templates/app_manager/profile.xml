@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <profile version="{{ app.version }}"
-         update="{{ profile_url }}"
+         update="{{ profile_url }}&amp;profile={{ build_profile_id }}"
          requiredMajor="{{ app.build_spec.major_release }}"
          requiredMinor="{{ app.build_spec.minor_release.1 }}"
          uniqueid="{{ uniqueid }}"
@@ -14,7 +14,7 @@
     <property key="PostURL" value="{{ app.post_url }}" force="true"/>
     <property key="PostTestURL" value="{{ app.post_url }}" force="true"/>
     <property key="key_server" value="{{ app.key_server_url }}"/>
-    <property key="cur_locale" value="{{ app.build_langs.0 }}"/>
+    <property key="cur_locale" value="{{ locale }}"/>
     <property key="cc_user_domain" value="{{ cc_user_domain }}"/>
     <property key="jr_openrosa_api" value="1.0"/>
 
@@ -48,16 +48,16 @@
 
     <suite><resource id="suite" version="{{ app.version }}">
         {% if app.enable_relative_suite_path or not is_odk %}
-            <location authority="local">{{ app.suite_loc }}</location>
+            <location authority="local">{{ app.suite_loc }}{% if build_profile_id %}?profile={{ build_profile_id }}{% endif %}</location>
         {% endif %}
-        <location authority="remote">{{ app.suite_url }}</location>
+        <location authority="remote">{{ app.suite_url }}{% if build_profile_id %}?profile={{ build_profile_id }}{% endif %}</location>
     </resource></suite>
     {% if include_media_suite %}
     <suite><resource id="media-suite" version="{{ app.version }}">
         {% if app.enable_relative_suite_path or not is_odk %}
-            <location authority="local">{{ app.media_suite_loc }}</location>
+            <location authority="local">{{ app.media_suite_loc }}{% if build_profile_id %}?profile={{ build_profile_id }}{% endif %}</location>
         {% endif %}
-        <location authority="remote">{{ app.media_suite_url }}</location>
+        <location authority="remote">{{ app.media_suite_url }}{% if build_profile_id %}?profile={{ build_profile_id }}{% endif %}</location>
     </resource></suite>
     {% endif %}
 </profile>

@@ -3,7 +3,6 @@ from datetime import timedelta, datetime, date, time
 import re
 from collections import namedtuple
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from dimagi.ext.couchdbkit import *
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
