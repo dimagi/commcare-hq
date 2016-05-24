@@ -286,7 +286,7 @@ def send_subscription_reminder_emails(num_days):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
     ending_subscriptions = Subscription.objects.filter(
-        date_end=date_in_n_days, do_not_email=False, is_trial=False
+        date_end=date_in_n_days, do_not_email_reminder=False, is_trial=False
     )
     for subscription in ending_subscriptions:
         try:
@@ -303,7 +303,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
     ending_subscriptions = (Subscription.objects
                             .filter(is_active=True)
                             .filter(date_end=date_in_n_days)
-                            .filter(do_not_email=False)
+                            .filter(do_not_email_reminder=False)
                             .filter(account__dimagi_contact__isnull=False))
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed

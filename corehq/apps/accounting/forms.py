@@ -395,7 +395,8 @@ class SubscriptionForm(forms.Form):
     no_invoice_reason = forms.CharField(
         label=ugettext_lazy("Justify why \"Do Not Invoice\""), max_length=256, required=False
     )
-    do_not_email_invoice = forms.BooleanField(label="Do Not Email Invoice", required=False)
+    do_not_email_invoice = forms.BooleanField(label="Do Not Email Invoices", required=False)
+    do_not_email_reminder = forms.BooleanField(label="Do Not Email Subscription Reminders", required=False)
     auto_generate_credits = forms.BooleanField(
         label=ugettext_lazy("Auto-generate Plan Credits"), required=False
     )
@@ -503,6 +504,7 @@ class SubscriptionForm(forms.Form):
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
             self.fields['no_invoice_reason'].initial = subscription.no_invoice_reason
             self.fields['do_not_email_invoice'].initial = subscription.do_not_email_invoice
+            self.fields['do_not_email_reminder'].initial = subscription.do_not_email_reminder
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
@@ -582,7 +584,7 @@ class SubscriptionForm(forms.Form):
                     crispy.Field(
                         'no_invoice_reason', data_bind="attr: {required: noInvoice}"),
                     data_bind="visible: noInvoice"),
-                hqcrispy.B3MultiField("Email Options", 'do_not_email_invoice'),
+                hqcrispy.B3MultiField("Email Options", 'do_not_email_invoice', 'do_not_email_reminder'),
                 hqcrispy.B3MultiField("Credit Options", 'auto_generate_credits'),
                 'service_type',
                 'pro_bono_status',
