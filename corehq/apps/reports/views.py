@@ -1043,6 +1043,7 @@ class ReportNotificationUnsubscribeView(LoginAndDomainMixin, TemplateView):
     urlname = 'notification_unsubscribe'
     report = None
 
+    @use_bootstrap3
     def get(self, request, *args, **kwargs):
         self.domain = request.domain
         try:
