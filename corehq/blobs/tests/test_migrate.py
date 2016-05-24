@@ -31,12 +31,15 @@ class BaseMigrationTest(TestCase):
     def setUp(self):
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
         self._old_flags = {}
+        self.docs_to_delete = []
         for model in mod.MIGRATIONS[self.slug].doc_type_map.values():
             self._old_flags[model] = model.migrating_blobs_from_couch
             model.migrating_blobs_from_couch = True
 
     def tearDown(self):
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
+        for doc in self.docs_to_delete:
+            doc.get_db().delete_doc(doc._id)
         for model, flag in self._old_flags.items():
             if flag is NOT_SET:
                 del model.migrating_blobs_from_couch
@@ -51,6 +54,7 @@ class BaseMigrationTest(TestCase):
         return set(mod.MIGRATIONS[self.slug].doc_type_map)
 
     def do_migration(self, docs, num_attachments=1):
+        self.docs_to_delete.extend(docs)
         test_types = {d.doc_type for d in docs}
         if test_types != self.doc_types:
             raise Exception("bad test: must have at least one document per doc "
@@ -91,6 +95,7 @@ class BaseMigrationTest(TestCase):
             self.assertEqual(len(exp.external_blobs), num_attachments)
 
     def do_failed_migration(self, docs, modify_docs):
+        self.docs_to_delete.extend(docs)
         test_types = {d.doc_type for d in docs}
         if test_types != self.doc_types:
             raise Exception("bad test: must have at least one document per doc "
@@ -138,7 +143,7 @@ class TestSavedExportsMigrations(BaseMigrationTest):
 
     slug = "saved_exports"
 
-    def test_migrate_saved_exports(self):
+    def test_migrate_happy_path(self):
         saved = SavedBasicExport(configuration=_mk_config())
         saved.save()
         payload = b'binary data not valid utf-8 \xe4\x94'
@@ -184,7 +189,7 @@ class TestApplicationMigrations(BaseMigrationTest):
         "RemoteApp-Deleted": RemoteApp,
     }
 
-    def test_migrate_saved_exports(self):
+    def test_migrate_happy_path(self):
         apps = {}
         form = u'<fake xform source>\u2713</fake>'
         for doc_type, model_class in self.doc_type_map.items():
@@ -249,6 +254,9 @@ class TestMultimediaMigrations(BaseMigrationTest):
     @staticmethod
     def make_unmigrated(media_class, filename, data):
         media = media_class.get_by_data(data)
+        if media._id:
+            media.delete()
+        media = media_class.get_by_data(data)
         assert not media._id, media.aux_media
 
         class OldAttachmentMedia(media_class):
@@ -259,7 +267,7 @@ class TestMultimediaMigrations(BaseMigrationTest):
             media.attach_data(data, filename)
         return media
 
-    def test_migrate_saved_exports(self):
+    def test_migrate_happy_path(self):
         data = b'binary data not valid utf-8 \xe4\x94'
         media = {}
         for media_class, name in self.test_items:
@@ -323,6 +331,8 @@ class TestMigrateBackend(TestCase):
     def tearDown(self):
         self.db.close()
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
+        for doc in self.migrate_docs:
+            doc.get_db().delete_doc(doc._id)
 
     def test_migrate_backend(self):
         # verify: attachment is in couch and migration not complete
