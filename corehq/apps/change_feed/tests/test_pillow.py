@@ -33,7 +33,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
             'type': 'mother',
             'domain': 'kafka-test-domain',
         }
-        self.pillow.processor(Change(id='test-id', sequence_id='3', document=document))
+        self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
         message = self.consumer.next()
 
         change_meta = change_meta_from_kafka_message(message.value)
@@ -54,7 +54,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
             'type': 'mother',
             'domain': u'हिंदी',
         }
-        self.pillow.processor(Change(id='test-id', sequence_id='3', document=document))
+        self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
         message = self.consumer.next()
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(document['domain'], change_meta.domain)
@@ -65,7 +65,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
             'type': 'mother',
             'domain': None,
         }
-        self.pillow.processor(Change(id='test-id', sequence_id='3', document=document))
+        self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
         message = self.consumer.next()
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(document['domain'], change_meta.domain)

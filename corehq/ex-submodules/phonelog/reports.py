@@ -2,6 +2,10 @@ import json
 import logging
 from django.db.models import Count, Q
 from django.utils import html
+from corehq.apps.receiverwrapper.util import (
+    get_version_from_appversion_text,
+    get_commcare_version_from_appversion_text,
+)
 from corehq.apps.reports.datatables.DTSortType import DATE
 from corehq.apps.reports.filters.devicelog import (
     DeviceLogDevicesFilter,
@@ -69,7 +73,10 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Date", span=1, sort_type=DATE, prop_name='date',
+            DataTablesColumn("Log Date", span=1, sort_type=DATE, prop_name='date',
+                             sort_direction=[DTSortDirection.DSC,
+                                             DTSortDirection.ASC]),
+            DataTablesColumn("Server Date", span=1, sort_type=DATE, prop_name='server_date',
                              sort_direction=[DTSortDirection.DSC,
                                              DTSortDirection.ASC]),
             DataTablesColumn("Log Type", span=1, prop_name='type'),
@@ -79,6 +86,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
             DataTablesColumn("Device ID", span=2, prop_name='device_id'),
             DataTablesColumn("Message", span=5, prop_name='msg'),
             DataTablesColumn("App Version", span=1, prop_name='app_version'),
+            DataTablesColumn("CommCare Version", span=1, prop_name='commcare_version'),
         )
 
     @property
@@ -195,8 +203,11 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
                     'data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>')
 
     def _create_row(self, log, matching_id, _device_users_by_xform, user_query, device_query):
-            ui_date = (ServerTime(log.date)
-                       .user_time(self.timezone).ui_string())
+            log_date = (ServerTime(log.date)
+                        .user_time(self.timezone).ui_string())
+
+            server_date = (ServerTime(log.server_date)
+                           .user_time(self.timezone).ui_string())
 
             username = log.username
             username_fmt = self._username_fmt % {
@@ -251,15 +262,10 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
                 "device": device
             }
 
-            version = log.app_version or "unknown"
-            ver_format = (
-                '%s <a href="#" data-datatable-tooltip="left" '
-                'data-datatable-tooltip-text="%s">'
-                '<i class="icon icon-info-sign"></i></a>'
-            ) % (version.split(' ')[0], html.escape(version))
-
-            return [ui_date, log_tag_format, username_fmt,
-                    device_users_fmt, device_fmt, log.msg, ver_format]
+            app_version = get_version_from_appversion_text(log.app_version) or "unknown"
+            commcare_version = get_commcare_version_from_appversion_text(log.app_version) or "unknown"
+            return [log_date, server_date, log_tag_format, username_fmt,
+                    device_users_fmt, device_fmt, log.msg, app_version, commcare_version]
 
     def _create_rows(self, logs, matching_id=None, range=None):
         _device_users_by_xform = memoized(device_users_by_xform)

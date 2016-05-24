@@ -77,7 +77,6 @@ class PillowError(models.Model):
     @classmethod
     def get_or_create(cls, change, pillow, change_meta=None):
         change = force_to_change(change)
-        change.document
         doc_id = change.id
         try:
             error = cls.objects.get(doc_id=doc_id, pillow=pillow.pillow_id)

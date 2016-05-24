@@ -68,10 +68,10 @@ class TestPartitionConfig(SimpleTestCase):
         config = PartitionConfig()
         shards = config.get_shards()
         self.assertEquals(shards, [
-            ShardMeta(id=0, dbname='test_db1', host='hqdb1', port=5432),
-            ShardMeta(id=1, dbname='test_db1', host='hqdb1', port=5432),
-            ShardMeta(id=2, dbname='test_db2', host='hqdb2', port=5432),
-            ShardMeta(id=3, dbname='test_db2', host='hqdb2', port=5432),
+            ShardMeta(id=0, dbname='db1', host='hqdb1', port=5432),
+            ShardMeta(id=1, dbname='db1', host='hqdb1', port=5432),
+            ShardMeta(id=2, dbname='db2', host='hqdb2', port=5432),
+            ShardMeta(id=3, dbname='db2', host='hqdb2', port=5432),
         ])
 
     @override_settings(PARTITION_DATABASE_CONFIG=TEST_PARTITION_CONFIG_HOST_MAP)
@@ -79,8 +79,8 @@ class TestPartitionConfig(SimpleTestCase):
         config = PartitionConfig()
         shards = config.get_shards()
         self.assertEquals(shards, [
-            ShardMeta(id=0, dbname='test_db1', host='localhost', port=5432),
-            ShardMeta(id=1, dbname='test_db2', host='hqdb2', port=5432),
+            ShardMeta(id=0, dbname='db1', host='localhost', port=5432),
+            ShardMeta(id=1, dbname='db2', host='hqdb2', port=5432),
         ])
 
     @override_settings(PARTITION_DATABASE_CONFIG=INVALID_SHARD_RANGE_START)
@@ -105,8 +105,8 @@ class PlProxyTests(SimpleTestCase):
 
     def test_get_server_option_string(self):
         self.assertEqual(
-            "p0 'dbname=test_db1 host=hqdb0 port=5432'",
-            ShardMeta(id=0, dbname='test_db1', host='hqdb0', port=5432).get_server_option_string()
+            "p0 'dbname=db1 host=hqdb0 port=5432'",
+            ShardMeta(id=0, dbname='db1', host='hqdb0', port=5432).get_server_option_string()
         )
 
     def test_parse_existing_shard(self):

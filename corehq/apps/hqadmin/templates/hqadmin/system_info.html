@@ -394,21 +394,21 @@
                     </td>
                     <td><strong>{{ current_system }}</strong></td>
                     <td>
-                        {{ redis_status }}
+                        {{ redis.success|yesno:"Online,Offline" }}
                         <br>
-                        {{ redis_results }}
+                        {{ redis.msg }}
                     </td>
                     <td>
-                        {{ rabbitmq_status }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
+                        {{ rabbitmq.msg }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
                         <hr>
                         {% trans "Celery Heartbeat " %}
-                        {% if heartbeat %}
+                        {% if heartbeat.success %}
                             <span class="label label-success">OK</span>
                         {% else %}
                             <span class="label label-danger">DOWN</span>
                         {% endif %}
                         <hr>
-                        {{ worker_status }}<br>
+                        {{ celery_stats|safe }}<br>
                     </td>
                     <td>
                         <dl class="dl-horizontal">

@@ -16,6 +16,7 @@ from .test_pillow import *
 from .test_report_builder import *
 from .test_report_charts import *
 from .test_report_config import *
+from .test_report_data import *
 from .test_report_filters import *
 from .test_save_errors import *
 from .test_transforms import *
@@ -25,6 +26,7 @@ from .test_dbaccessors import *
 from .test_report_aggregation import *
 from .test_choice_provider import *
 from .test_list_expressions import *
+from .test_get_report_configs import *
 
 from corehq.apps.userreports.expressions.getters import recursive_lookup
 

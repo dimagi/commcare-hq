@@ -1,7 +1,10 @@
+from django.db.models.signals import post_save
+
 from casexml.apps.stock import const
 from casexml.apps.stock.models import DocDomainMapping, StockTransaction
-from casexml.apps.stock.signals import update_stock_state_for_transaction
+from casexml.apps.stock.signals import get_stock_state_for_transaction
 from corehq.apps.products.models import Product
+from corehq.util.context_managers import drop_connected_signals
 from corehq.util.quickcache import quickcache
 
 
@@ -17,11 +20,44 @@ def recalculate_domain_consumption(domain):
     products = Product.by_domain(domain)
     for supply_point_id in found_doc_ids:
         for product in products:
-            filtered_transactions = StockTransaction.get_ordered_transactions_for_stock(
-                supply_point_id, const.SECTION_TYPE_STOCK, product._id
-            )
-            if filtered_transactions:
-                update_stock_state_for_transaction(filtered_transactions[0])
+            try:
+                latest_transaction = StockTransaction.get_ordered_transactions_for_stock(
+                    supply_point_id, const.SECTION_TYPE_STOCK, product._id
+                )[0]
+            except IndexError:
+                pass
+            else:
+                state = get_stock_state_for_transaction(latest_transaction)
+                daily_consumption = get_consumption_for_ledger(state)
+                state.daily_consumption = daily_consumption
+                with drop_connected_signals(post_save):
+                    state.save()
+
+
+def get_consumption_for_ledger(ledger):
+    return get_consumption_for_ledger_json(ledger.to_json())
+
+
+def get_consumption_for_ledger_json(ledger_json):
+    from corehq.apps.domain.models import Domain
+    from casexml.apps.stock.consumption import compute_daily_consumption
+    from dimagi.utils.parsing import string_to_utc_datetime
+
+    domain_name = ledger_json['domain']
+    domain = Domain.get_by_name(domain_name)
+    if domain and domain.commtrack_settings:
+        consumption_calc = domain.commtrack_settings.get_consumption_config()
+    else:
+        consumption_calc = None
+    daily_consumption = compute_daily_consumption(
+        domain_name,
+        ledger_json['case_id'],
+        ledger_json['entry_id'],
+        string_to_utc_datetime(ledger_json['last_modified']),
+        'stock',
+        consumption_calc
+    )
+    return daily_consumption
 
 
 @quickcache(['domain'], timeout=30 * 60)

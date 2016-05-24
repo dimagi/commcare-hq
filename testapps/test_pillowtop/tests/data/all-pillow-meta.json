@@ -48,6 +48,13 @@
         "name": "AppPillow",
         "unique_id": "test_hqapps_2016-03-01_2128"
     },
+    "ApplicationBlobDeletionPillow": {
+        "advertised_name": "ApplicationBlobDeletionPillow",
+        "change_feed_type": "CouchChangeFeed",
+        "checkpoint_id": "ApplicationBlobDeletionPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "ApplicationBlobDeletionPillow"
+    },
     "BlobDeletionPillow": {
         "advertised_name": "BlobDeletionPillow",
         "change_feed_type": "KafkaChangeFeed",
@@ -264,6 +271,13 @@
         "full_class_name": "custom.m4change.models.LdHmisCaseFluffPillow",
         "include_docs": false,
         "name": "LdHmisCaseFluffPillow"
+    },
+    "LedgerToElasticsearchPillow": {
+        "advertised_name": "LedgerToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "ledger-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "LedgerToElasticsearchPillow"
     },
     "LivraisonFluffPillow": {
         "advertised_name": "fluff.LivraisonFluffPillow.testhq",

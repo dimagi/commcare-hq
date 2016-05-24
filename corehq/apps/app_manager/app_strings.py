@@ -92,7 +92,7 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 yield id_strings.report_command(config.uuid), trans(config.header)
                 yield id_strings.report_name(config.uuid), trans(config.header)
                 yield id_strings.report_description(config.uuid), trans(config.localized_description)
-                for column in config.report.report_columns:
+                for column in config.report(app.domain).report_columns:
                     yield (
                         id_strings.report_column_header(config.uuid, column.column_id),
                         column.get_header(lang)
@@ -165,10 +165,11 @@ class AppStringsBase(object):
     def app_strings_parts(self, app, lang, for_default=False):
         raise NotImplementedError()
 
-    def create_default_app_strings(self, app):
+    def create_default_app_strings(self, app, build_profile_id=None):
         messages = {}
 
-        for lc in reversed(app.langs):
+        langs = app.get_build_langs(build_profile_id)
+        for lc in reversed(langs):
             if lc == "default":
                 continue
             new_messages = commcare_translations.loads(

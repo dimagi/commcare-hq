@@ -7,8 +7,8 @@ class DeviceReportEntry(models.Model):
     xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True)
     i = models.IntegerField()
     msg = models.TextField()
-    type = models.CharField(max_length=32, db_index=True)
-    date = models.DateTimeField(db_index=True)
+    type = models.CharField(max_length=32)
+    date = models.DateTimeField()
     server_date = models.DateTimeField(null=True, db_index=True)
     domain = models.CharField(max_length=100)
     device_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
@@ -23,6 +23,7 @@ class DeviceReportEntry(models.Model):
             ("domain", "date"),
             ("domain", "device_id"),
             ("domain", "username"),
+            ("domain", "type"),
         ]
 
     def __repr__(self):

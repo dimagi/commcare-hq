@@ -274,7 +274,7 @@ class TestXFormInstanceResource(APIResourceTest):
     def test_fetching_xform_cases(self):
         # Create an xform that touches a case
         case_id = uuid.uuid4().hex
-        form_id = submit_case_blocks(
+        form = submit_case_blocks(
             CaseBlock(
                 case_id=case_id,
                 create=True,
@@ -284,7 +284,7 @@ class TestXFormInstanceResource(APIResourceTest):
 
         # Fetch the xform through the API
         self.client.login(username=self.username, password=self.password)
-        response = self.client.get(self.single_endpoint(form_id) + "?cases__full=true")
+        response = self.client.get(self.single_endpoint(form.form_id) + "?cases__full=true")
         self.assertEqual(response.status_code, 200)
         cases = json.loads(response.content)['cases']
 

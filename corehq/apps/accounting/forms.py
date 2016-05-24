@@ -171,6 +171,33 @@ class BillingAccountBasicForm(forms.Form):
                 'Basic Information',
                 'name',
                 crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Div(
+                    crispy.Div(
+                        css_class='col-sm-3 col-md-2'
+                    ),
+                    crispy.Div(
+                        crispy.HTML(self.initial['email_list']),
+                        css_class='col-sm-9 col-md-8 col-lg-6'
+                    ),
+                    css_id='emails-text',
+                    css_class='collapse form-group'
+                ) if self.initial.get('email_list') else crispy.Div(),
+                crispy.Div(
+                    crispy.Div(
+                        css_class='col-sm-3 col-md-2'
+                    ),
+                    crispy.Div(
+                        StrictButton(
+                            "Show contact emails as text",
+                            type="button",
+                            css_class='btn btn-default',
+                            css_id='show_emails'
+                        ),
+                        crispy.HTML('<p class="help-block">Useful when you want to copy contact emails</p>'),
+                        css_class='col-sm-9 col-md-8 col-lg-6'
+                    ),
+                    css_class='form-group'
+                ) if self.initial.get('email_list') else crispy.Div(),
                 'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
@@ -1686,7 +1713,9 @@ class TriggerInvoiceForm(forms.Form):
         invoice_start, invoice_end = get_first_last_days(year, month)
         domain = Domain.get_by_name(self.cleaned_data['domain'])
         self.clean_previous_invoices(invoice_start, invoice_end, domain.name)
-        invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain)
+        invoice_factory = DomainInvoiceFactory(
+            invoice_start, invoice_end, domain, recipients=[settings.ACCOUNTS_EMAIL]
+        )
         invoice_factory.create_invoices()
 
     @staticmethod

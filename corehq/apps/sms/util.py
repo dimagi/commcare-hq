@@ -1,10 +1,8 @@
-import logging
 import re
-import urllib
 import uuid
 import datetime
 from couchdbkit.resource import ResourceNotFound
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CouchUser
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.util.quickcache import quickcache
@@ -171,20 +169,21 @@ def clean_text(text):
     return text
 
 
-def get_contact(contact_id):
-    from casexml.apps.case.models import CommCareCase
+def get_contact(domain, contact_id):
+    from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+    from corehq.form_processor.exceptions import CaseNotFound
     contact = None
     try:
-        contact = CommCareCase.get(contact_id)
-    except ResourceNotFound:
+        contact = CaseAccessors(domain).get_case(contact_id)
+    except (ResourceNotFound, CaseNotFound):
         pass
 
-    if contact and contact.doc_type == 'CommCareCase':
+    if contact and contact.doc_type == 'CommCareCase' and contact.domain == domain:
         return contact
 
     contact = None
     try:
-        contact = CouchUser.get_by_user_id(contact_id)
+        contact = CouchUser.get_by_user_id(contact_id, domain=domain)
     except CouchUser.AccountTypeError:
         pass
 

@@ -93,7 +93,7 @@ def flatten_result(result):
     i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
     {'name': 'blah', 'foo':'bar'}
     """
-    case_properties = result.pop('case_properties', None)
+    case_properties = result.pop('case_properties', [])
     for case_property in case_properties:
         key = case_property.get('key')
         value = case_property.get('value')

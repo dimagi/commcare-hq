@@ -1,6 +1,6 @@
 from datetime import datetime
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchdbkit import MultipleResultsFound
-from couchforms.models import XFormInstance
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_noop
@@ -65,7 +65,7 @@ class SQLXFormsSession(models.Model):
     def status(self):
         xform_instance = None
         if self.submission_id:
-            xform_instance = XFormInstance.get(self.submission_id)
+            xform_instance = FormAccessors(self.domain).get_form(self.submission_id)
 
         if xform_instance:
             if xform_instance.partial_submission:

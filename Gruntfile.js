@@ -20,6 +20,7 @@ module.exports = function(grunt) {
         'notifications',
         'reports_core#choiceListUtils',
         'locations',
+        'userreports',
     ];
 
     var mochaConfig = {},

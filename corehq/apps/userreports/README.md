@@ -1069,7 +1069,7 @@ Field columns have a type of `"field"`. Here's an example field column that show
     "type": "field",
     "field": "owner_id",
     "column_id": "owner_id",
-    "display": "Owner Name"
+    "display": "Owner Name",
     "format": "default",
     "transform": {
         "type": "custom",

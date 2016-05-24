@@ -183,6 +183,9 @@ class CommTrackTest(TestCase):
         SQLLocation.objects.all().delete()
         self.backend_mapping.delete()
         self.backend.delete()
+        delete_all_xforms()
+        delete_all_cases()
+        delete_all_sync_logs()
         for u in self.users:
             u.delete()
         self.domain.delete()  # domain delete cascades to everything else

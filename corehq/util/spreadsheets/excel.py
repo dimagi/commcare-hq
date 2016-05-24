@@ -184,7 +184,7 @@ class WorkbookJSONReader(object):
         else:
             filename = f
 
-        self.wb = openpyxl.load_workbook(filename, use_iterators=True)
+        self.wb = openpyxl.load_workbook(filename, use_iterators=True, data_only=True)
         self.worksheets_by_title = {}
         self.worksheets = []
 
