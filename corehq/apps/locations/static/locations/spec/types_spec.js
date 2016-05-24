@@ -1,5 +1,5 @@
 /*eslint-env mocha */
-/*global LocationSettingsViewModel, LocationTypeModel, _ */
+/*global _ */
 
 describe('Location Types', function() {
 
@@ -7,7 +7,10 @@ describe('Location Types', function() {
         return loc_type.name();
     };
 
-    var data = hqImport('locations/spec/data/locations_data.js');
+    var data = hqImport('locations/spec/data/locations_data.js'),
+        LocationSettingsViewModel = hqImport('locations/ko/location_types.js').LocationSettingsViewModel,
+        LocationTypeModel = hqImport('locations/ko/location_types.js').LocationTypeModel;
+
 
     beforeEach(function(){
         this.location_types = _.map(data, function(data){

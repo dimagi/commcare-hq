@@ -13,7 +13,9 @@
             var loc_types = {{ location_types|JSON }};
             var commtrack_enabled = {{ commtrack_enabled|JSON }};
 
-            var model = new LocationSettingsViewModel(loc_types, commtrack_enabled);
+            var locationSettingsModel = hqImport('locations/ko/location_types.js').LocationSettingsViewModel
+            var model = new locationSettingsModel(loc_types, commtrack_enabled);
+
             var $settings = $('#settings');
 
             var warnBeforeUnload = function() {
