@@ -336,7 +336,8 @@ REPORT_BUILDER_MAP_REPORTS = StaticToggle(
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
-    TAG_PRODUCT_PATH
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(
