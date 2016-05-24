@@ -8,6 +8,7 @@ from django.views.generic.base import TemplateView
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.views import BaseDomainView, LoginAndDomainMixin
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
     REPORT_BUILDER_ACCESS
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
@@ -42,7 +43,7 @@ from django.http.response import (
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy, get_language
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import (
     require_GET,
@@ -1267,6 +1268,12 @@ def case_forms(request, domain, case_id):
         return HttpResponseBadRequest()
 
     def form_to_json(form):
+        form_name = xmlns_to_name(
+            domain,
+            form.xmlns,
+            app_id=form.app_id,
+            lang=get_language(),
+        )
         return {
             'id': form.form_id,
             'received_on': json_format_datetime(form.received_on),
@@ -1274,7 +1281,7 @@ def case_forms(request, domain, case_id):
                 "id": form.user_id or '',
                 "username": form.metadata.username if form.metadata else '',
             },
-            'readable_name': form.form_data.get('@name') or _('unknown'),
+            'readable_name': form_name,
         }
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
