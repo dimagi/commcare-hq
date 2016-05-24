@@ -711,6 +711,13 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+MESSAGE_LOG_METADATA = StaticToggle(
+    'message_log_metadata',
+    'Include message id in Message Log export.',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
+)
+
 ABT_REMINDER_RECIPIENT = StaticToggle(
     'abt_reminder_recipient',
     "Ability to send a reminder to the case owner's location's parent location",
