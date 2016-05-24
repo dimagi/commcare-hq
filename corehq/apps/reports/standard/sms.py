@@ -317,6 +317,11 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @property
     @memoized
+    def include_metadata(self):
+        return toggles.MESSAGE_LOG_METADATA.enabled(self.request.couch_user.username)
+
+    @property
+    @memoized
     def uses_locations(self):
         return (toggles.LOCATIONS_IN_REPORTS.enabled(self.domain)
                 and Domain.get_by_name(self.domain).uses_locations)
@@ -426,7 +431,7 @@ class MessageLogReport(BaseCommConnectLogReport):
                 message.text,
                 ', '.join(self._get_message_types(message)),
             ]
-            if include_log_id:
+            if include_log_id and self.include_metadata:
                 row.append(message.couch_id)
             yield row
 
@@ -457,8 +462,9 @@ class MessageLogReport(BaseCommConnectLogReport):
     @property
     def export_table(self):
         result = super(MessageLogReport, self).export_table
-        table = result[0][1]
-        table[0].append(_("Message Log ID"))
+        if self.include_metadata:
+            table = result[0][1]
+            table[0].append(_("Message Log ID"))
         return result
 
 
