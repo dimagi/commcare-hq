@@ -79,7 +79,7 @@
                     <p ng-show="inboundWaitTimedOut && !inboundSMSReceived && !pollingErrorOccurred">
                         {% blocktrans %}
                         Message not received.
-                        <button class="btn btn-default" ng-click="showInboundTroubleshoot = true;">Troubleshoot</button>
+                        <button class="btn btn-danger" ng-click="showInboundTroubleshoot = true;">Troubleshoot</button>
                         {% endblocktrans %}
                     </p>
                     <p ng-show="pollingErrorOccurred">
