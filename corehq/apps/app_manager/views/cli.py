@@ -1,5 +1,6 @@
 from django.utils.text import slugify
 
+from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.web import json_response
@@ -84,7 +85,7 @@ def direct_ccz(request, domain):
         if not app:
             raise ResourceNotFound()
         app = app if isinstance(app, Document) else wrap_app(app)
-    except ResourceNotFound as e:  # TODO
+    except (ResourceNotFound, DocTypeError):
         return error("Application not found", code=404)
 
     app.set_media_versions(None)

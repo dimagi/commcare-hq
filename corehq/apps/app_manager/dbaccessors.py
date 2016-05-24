@@ -83,8 +83,8 @@ def wrap_app(app_doc, wrap_cls=None):
 def get_current_app(domain, app_id):
     from .models import Application
     app = Application.get_db().get(app_id)
-    if app['domain'] != domain:
-        raise ResourceNotFound
+    if app.get('domain', None) != domain:
+        raise ResourceNotFound()
     return wrap_app(app)
 
 
