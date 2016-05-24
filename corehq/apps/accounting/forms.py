@@ -636,6 +636,7 @@ class SubscriptionForm(forms.Form):
             do_not_invoice=self.cleaned_data['do_not_invoice'],
             no_invoice_reason=self.cleaned_data['no_invoice_reason'],
             do_not_email_invoice=self.cleaned_data['do_not_email_invoice'],
+            do_not_email_reminder=self.cleaned_data['do_not_email_reminder'],
             auto_generate_credits=self.cleaned_data['auto_generate_credits'],
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
             service_type=self.cleaned_data['service_type'],
