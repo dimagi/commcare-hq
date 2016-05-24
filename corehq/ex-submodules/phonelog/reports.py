@@ -225,11 +225,11 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
                 self._device_users_fmt % {
                     "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                             DeviceLogUsersFilter.slug,
-                                            username,
+                                            device_username,
                                             user_query),
-                    "username": username,
+                    "username": device_username,
                 }
-                for username in device_users
+                for device_username in device_users
             ])
 
             log_tag = log.type or 'unknown'
