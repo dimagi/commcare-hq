@@ -1043,7 +1043,9 @@ class ReportNotificationUnsubscribeView(LoginAndDomainMixin, TemplateView):
     urlname = 'notification_unsubscribe'
     report = None
 
+    @use_bootstrap3
     def get(self, request, *args, **kwargs):
+        self.domain = request.domain
         try:
             self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
             user_email = request.couch_user.get_email()
@@ -1057,10 +1059,10 @@ class ReportNotificationUnsubscribeView(LoginAndDomainMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(ReportNotificationUnsubscribeView, self).get_context_data(**kwargs)
-        context.update({'report': self.report})
+        context.update({'domain': self.domain, 'report': self.report})
         return context
 
-    def post(self, request, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
             report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
             report.remove_recipient(request.couch_user.get_email())
