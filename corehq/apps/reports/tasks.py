@@ -468,11 +468,10 @@ def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
 def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name):
 
     def filename(form_info, question_id, extension):
-        fname = u"%s-%s-%s-%s%s"
+        fname = u"%s-%s-%s%s"
         if form_info['cases']:
             fname = u'-'.join(form_info['cases']) + u'-' + fname
-        return fname % (form_info['name'],
-                        unidecode(question_id),
+        return fname % (unidecode(question_id),
                         form_info['user'],
                         form_info['id'], extension)
 
