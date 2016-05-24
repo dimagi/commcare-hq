@@ -10,7 +10,6 @@ from corehq.apps.importer import util as importer_util
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from soil import DownloadBase
-from casexml.apps.case.xml import V2
 from dimagi.utils.prime_views import prime_views
 from couchdbkit.exceptions import ResourceNotFound
 import uuid
@@ -67,12 +66,17 @@ def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLO
         err = False
         if caseblocks:
             try:
-                submit_case_blocks(
+                form = submit_case_blocks(
                     [ElementTree.tostring(cb.as_xml()) for cb in caseblocks],
                     domain,
                     username,
                     user_id,
                 )
+                if form.is_error:
+                    errors.add(
+                        error=ImportErrors.ImportErrorMessage,
+                        row_number=form.problem
+                    )
             except Exception:
                 err = True
                 errors.add(
