@@ -30,7 +30,6 @@ from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import \
     bootstrap_usage_fees
 from corehq.apps.smsbillables.management.commands.bootstrap_yo_gateway import \
     bootstrap_yo_gateway
-from corehq.preindex import get_preindex_plugin
 from corehq.sql_db.operations import HqRunPython
 
 
