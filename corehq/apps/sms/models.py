@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 import json_field
-import logging
 import uuid
-import uuidfield
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
@@ -19,7 +17,7 @@ from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
+    InvalidFormatException, VerifiedNumber,
     apply_leniency, BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
@@ -27,10 +25,8 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     get_message)
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.load_balance import load_balance
-from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 
@@ -836,6 +832,170 @@ class PhoneNumber(SyncSQLToCouchMixin, models.Model):
     verified = models.NullBooleanField(default=False)
     contact_last_modified = models.DateTimeField(null=True)
 
+    def __init__(self, *args, **kwargs):
+        super(PhoneNumber, self).__init__(*args, **kwargs)
+        self._old_phone_number = self.phone_number
+        self._old_owner_id = self.owner_id
+
+    def __repr__(self):
+        return '{phone} in {domain} (owned by {owner})'.format(
+            phone=self.phone_number, domain=self.domain,
+            owner=self.owner_id
+        )
+
+    @property
+    def backend(self):
+        from corehq.apps.sms.util import clean_phone_number
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, basestring) else None
+        if backend_id:
+            return SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                self.domain,
+                backend_id
+            )
+        else:
+            return SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                clean_phone_number(self.phone_number),
+                domain=self.domain
+            )
+
+    @property
+    def owner(self):
+        if self.owner_doc_type == 'CommCareCase':
+            from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+            return CaseAccessors(self.domain).get_case(self.owner_id)
+        elif self.owner_doc_type == 'CommCareUser':
+            from corehq.apps.users.models import CommCareUser
+            return CommCareUser.get(self.owner_id)
+        elif self.owner_doc_type == 'WebUser':
+            from corehq.apps.users.models import WebUser
+            return WebUser.get(self.owner_id)
+        else:
+            return None
+
+    def retire(self):
+        self.delete()
+
+    @classmethod
+    def by_extensive_search(cls, phone_number):
+        # Try to look up the verified number entry directly
+        v = cls.by_phone(phone_number)
+
+        # If not found, try to see if any number in the database is a substring
+        # of the number given to us. This can happen if the telco prepends some
+        # international digits, such as 011...
+        if v is None:
+            v = cls.by_phone(phone_number[1:])
+        if v is None:
+            v = cls.by_phone(phone_number[2:])
+        if v is None:
+            v = cls.by_phone(phone_number[3:])
+
+        # If still not found, try to match only the last digits of numbers in
+        # the database. This can happen if the telco removes the country code
+        # in the caller id.
+        if v is None:
+            v = cls.by_suffix(phone_number)
+
+        return v
+
+    @classmethod
+    def by_phone(cls, phone_number, include_pending=False):
+        result = cls._by_phone(apply_leniency(phone_number))
+        return cls._filter_pending(result, include_pending)
+
+    @classmethod
+    def by_suffix(cls, phone_number, include_pending=False):
+        """
+        Used to lookup a VerifiedNumber, trying to exclude country code digits.
+        """
+        result = cls._by_suffix(apply_leniency(phone_number))
+        return cls._filter_pending(result, include_pending)
+
+    @classmethod
+    @quickcache(['phone_number'], timeout=60 * 60)
+    def _by_phone(cls, phone_number):
+        try:
+            return cls.objects.get(phone_number=phone_number)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def _by_suffix(cls, phone_number):
+        # Decided not to cache this method since in order to clear the cache
+        # we'd have to clear using all suffixes of a number (which would involve
+        # up to ~10 cache clear calls on each save). Since this method is used so
+        # infrequently, it's better to not cache vs. clear so many keys on each
+        # save. Once all of our IVR gateways provide reliable caller id info,
+        # we can also remove this method.
+        try:
+            return cls.objects.get(phone_number__endswith=phone_number)
+        except cls.DoesNotExist:
+            return None
+        except cls.MultipleObjectsReturned:
+            return None
+
+    @classmethod
+    def _filter_pending(cls, v, include_pending):
+        if v:
+            if include_pending:
+                return v
+            elif v.verified:
+                return v
+
+        return None
+
+    @classmethod
+    def by_domain(cls, domain, ids_only=False):
+        qs = cls.objects.filter(domain=domain)
+        if ids_only:
+            return qs.values_list('couch_id', flat=True)
+        else:
+            return qs
+
+    @classmethod
+    def count_by_domain(cls, domain):
+        return cls.by_domain(domain).count()
+
+    @classmethod
+    @quickcache(['owner_id'], timeout=60 * 60)
+    def by_owner_id(cls, owner_id):
+        """
+        Returns all phone numbers belonging to the given contact.
+        """
+        return cls.objects.filter(owner_id=owner_id)
+
+    @classmethod
+    def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
+        cls.by_owner_id.clear(cls, owner_id)
+
+        if old_owner_id and old_owner_id != owner_id:
+            cls.by_owner_id.clear(cls, old_owner_id)
+
+        cls._by_phone.clear(cls, phone_number)
+
+        if old_phone_number and old_phone_number != phone_number:
+            cls._by_phone.clear(cls, old_phone_number)
+
+    def _clear_caches(self):
+        self._clear_quickcaches(
+            self.owner_id,
+            self.phone_number,
+            old_owner_id=self._old_owner_id,
+            old_phone_number=self._old_phone_number
+        )
+
+    def save(self, *args, **kwargs):
+        self._clear_caches()
+        self._old_phone_number = self.phone_number
+        self._old_owner_id = self.owner_id
+        return super(PhoneNumber, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self._clear_caches()
+        return super(PhoneNumber, self).delete(*args, **kwargs)
+
     @classmethod
     def _migration_get_fields(cls):
         return [
@@ -1464,7 +1624,6 @@ class SelfRegistrationInvitation(models.Model):
 
     def send_step2_android_sms(self):
         from corehq.apps.sms.api import send_sms
-        from corehq.apps.sms.views import InvitationAppInfoView
         from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
 
         registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
