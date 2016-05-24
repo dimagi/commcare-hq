@@ -1,4 +1,3 @@
-import functools
 import json
 import os
 from django.test import SimpleTestCase

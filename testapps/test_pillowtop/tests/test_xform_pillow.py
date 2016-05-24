@@ -33,7 +33,7 @@ class XFormPillowTest(TestCase):
         self.pillow.process_changes(since=0, forever=False)
         self.elasticsearch.indices.refresh(self.pillow.es_index)
         results = FormES().run()
-        self.assertEqual(1, results.total)
+        self.assertEqual(1, results.total, results.hits)
         form_doc = results.hits[0]
         self.assertEqual(self.domain, form_doc['domain'])
         self.assertEqual(metadata.xmlns, form_doc['xmlns'])

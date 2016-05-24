@@ -26,10 +26,10 @@ CASE_TYPE = 'case'
 OWNER_ID = 'nerc'
 TIMESTAMP = '2016-04-17T10:13:06.588694Z'
 PATTERN = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z'
-# because http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
+# cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
 
 
-class ClaimCaseTests(TestCase):
+class CaseClaimEndpointTests(TestCase):
 
     def setUp(self):
         self.domain = create_domain(DOMAIN)
@@ -42,12 +42,16 @@ class ClaimCaseTests(TestCase):
             case_id=self.case_id,
             case_type=CASE_TYPE,
             case_name=CASE_NAME,
+            external_id=CASE_NAME,
+            user_id=OWNER_ID,
             owner_id=OWNER_ID,
+            update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
         get_case_search_reindexer(DOMAIN).reindex()
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
+        self.user.delete()
         self.domain.delete()
 
     @run_with_all_backends
@@ -69,7 +73,7 @@ class ClaimCaseTests(TestCase):
         self.assertEqual(claim.name, CASE_NAME)
 
     @run_with_all_backends
-    def test_duplicate_claim(self):
+    def test_duplicate_client_claim(self):
         """
         Server should not allow the same client to claim the same case more than once
         """
@@ -85,9 +89,27 @@ class ClaimCaseTests(TestCase):
         self.assertEqual(response.content, 'You have already claimed that case')
 
     @run_with_all_backends
+    def test_duplicate_user_claim(self):
+        """
+        Server should not allow the same user to claim the same case more than once
+        """
+        client1 = Client()
+        client1.login(username=USERNAME, password=PASSWORD)
+        url = reverse('claim_case', kwargs={'domain': DOMAIN})
+        # First claim
+        response = client1.post(url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 200)
+        # Dup claim
+        client2 = Client()
+        client2.login(username=USERNAME, password=PASSWORD)
+        response = client2.post(url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, 'You have already claimed that case')
+
+    @run_with_all_backends
     def test_search_endpoint(self):
         known_result = (
-            '<fixture id="case">'  # (this is not the case type)
+            '<results id="case">'  # ("case" is not the case type)
                 '<case case_id="{case_id}" '
                       'case_type="{case_type}" '
                       'owner_id="{owner_id}" '
@@ -95,10 +117,11 @@ class ClaimCaseTests(TestCase):
                     '<case_name>{case_name}</case_name>'
                     '<date_opened>2016-04-17T10:13:06.588694Z</date_opened>'
                     '<last_modified>2016-04-17T10:13:06.588694Z</last_modified>'
+                    '<external_id>Jamie Hand</external_id>'
                     '<location_id>None</location_id>'
                     '<referrals>None</referrals>'
                 '</case>'
-            '</fixture>'.format(
+            '</results>'.format(
                 case_id=self.case_id,
                 case_name=CASE_NAME,
                 case_type=CASE_TYPE,

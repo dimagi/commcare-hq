@@ -1,9 +1,9 @@
 import uuid
 
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from corehq.form_processor.exceptions import LedgerSaveError
-from crispy_forms.tests.utils import override_settings
 
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -44,7 +44,7 @@ class LedgerDBAccessorTest(TestCase):
         FormProcessorTestUtils.delete_all_ledgers(DOMAIN)
 
     def _submit_ledgers(self, ledger_blocks):
-        return submit_case_blocks(ledger_blocks, DOMAIN)
+        return submit_case_blocks(ledger_blocks, DOMAIN).form_id
 
     def _set_balance(self, balance, case_id, product_id):
         from corehq.apps.commtrack.tests import get_single_balance_block

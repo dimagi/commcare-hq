@@ -48,7 +48,7 @@ def fast_distinct_in_domain(model_cls, column, domain):
     )
     SELECT col FROM t WHERE col IS NOT NULL
     UNION ALL
-    SELECT NULL WHERE EXISTS(SELECT * FROM {table} WHERE {column} IS NULL AND {filter_column} = %(filter_value)s;
+    SELECT NULL WHERE EXISTS(SELECT * FROM {table} WHERE {column} IS NULL AND {filter_column} = %(filter_value)s);
     """.format(
         column=_assert_super_safe(column),
         table=_assert_super_safe(table),

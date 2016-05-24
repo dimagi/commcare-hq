@@ -2,24 +2,19 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from StringIO import StringIO
 import base64
-import logging
 from datetime import datetime, timedelta, time
 import re
 import json
 from couchdbkit import ResourceNotFound
-import pytz
-from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from casexml.apps.case.models import CommCareCase
 from corehq import privileges, toggles
 from corehq.apps.hqadmin.views import BaseAdminSectionView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
-from corehq.apps.reminders.util import can_use_survey_reminders
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_SMS, ApiUser
 from corehq.apps.commtrack.models import AlertConfig
@@ -40,7 +35,6 @@ from corehq.apps.style.decorators import (
     use_typeahead,
     use_select2,
     use_jquery_ui,
-    upgrade_knockout_js,
     use_datatables,
 )
 from corehq.apps.users.decorators import require_permission
@@ -60,7 +54,7 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    DEFAULT, CUSTOM, SendRegistrationInviationsForm,
                                    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
                                    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
-from corehq.apps.sms.util import get_contact, get_sms_backend_classes
+from corehq.apps.sms.util import get_contact, get_sms_backend_classes, ContactNotFoundException
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
 from corehq.apps.groups.models import Group
@@ -70,6 +64,8 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     require_superuser,
 )
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
@@ -438,7 +434,7 @@ def api_send_sms(request, domain):
             contact = vn.owner
         elif contact_id is not None:
             try:
-                contact = get_contact(contact_id)
+                contact = get_contact(domain, contact_id)
                 assert contact is not None
                 assert contact.domain == domain
             except Exception:
@@ -456,7 +452,7 @@ def api_send_sms(request, domain):
             chat_workflow = False
 
         if chat_workflow:
-            chat_user_id = request.couch_user._id
+            chat_user_id = request.couch_user.get_id
         else:
             chat_user_id = None
 
@@ -705,12 +701,12 @@ class ChatOverSMSView(BaseMessagingSectionView):
 
 def get_case_contact_info(domain_obj, case_ids):
     data = {}
-    for doc in iter_docs(CommCareCase.get_db(), case_ids):
+    for case in CaseAccessors(domain_obj.name).iter_cases(case_ids):
         if domain_obj.custom_case_username:
-            name = doc.get(domain_obj.custom_case_username)
+            name = case.get_case_property(domain_obj.custom_case_username)
         else:
-            name = doc.get('name')
-        data[doc['_id']] = [name or _('(unknown)')]
+            name = case.name
+        data[case.case_id] = [name or _('(unknown)')]
     return data
 
 
@@ -819,6 +815,20 @@ def chat_contact_list(request, domain):
     return HttpResponse(json.dumps(result))
 
 
+def get_contact_name_for_chat(contact, domain_obj):
+    if is_commcarecase(contact):
+        if domain_obj.custom_case_username:
+            contact_name = contact.get_case_property(domain_obj.custom_case_username)
+        else:
+            contact_name = contact.name
+    else:
+        if contact.first_name:
+            contact_name = contact.first_name
+        else:
+            contact_name = contact.raw_username
+    return contact_name
+
+
 @require_permission(Permissions.edit_data)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id, vn_id=None):
@@ -843,13 +853,15 @@ def chat(request, domain, contact_id, vn_id=None):
         (_("All Time"), json_format_datetime(datetime(1970, 1, 1)))
     )
 
+    contact = get_contact(domain, contact_id)
+
     context = {
         "domain": domain,
         "contact_id": contact_id,
-        "contact": get_contact(contact_id),
+        "contact": contact,
+        "contact_name": get_contact_name_for_chat(contact, domain_obj),
         "use_message_counter": domain_obj.chat_message_count_threshold is not None,
         "message_count_threshold": domain_obj.chat_message_count_threshold or 0,
-        "custom_case_username": domain_obj.custom_case_username,
         "history_choices": history_choices,
         "vn_id": vn_id,
     }
@@ -876,22 +888,15 @@ class ChatMessageHistory(View, DomainViewMixin):
         if not self.contact_id:
             return None
 
-        contact = get_contact(self.contact_id)
-        if not contact or contact.domain != self.domain:
+        try:
+            return get_contact(self.domain, self.contact_id)
+        except ContactNotFoundException:
             return None
-
-        return contact
 
     @property
     @memoized
     def contact_name(self):
-        if self.contact.doc_type == 'CommCareCase':
-            if self.domain_object.custom_case_username:
-                return self.contact.get_case_property(self.domain_object.custom_case_username)
-            else:
-                return self.contact.name
-        else:
-            return self.contact.first_name or self.contact.raw_username
+        return get_contact_name_for_chat(self.contact, self.domain_object)
 
     @quickcache(['user_id'], timeout=60 * 60, memoize_timeout=5 * 60)
     def get_chat_user_name(self, user_id):

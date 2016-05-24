@@ -107,11 +107,9 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     urlname = 'location_fields_view'
     field_type = 'LocationFields'
     entity_string = ugettext_lazy("Location")
-    template_name = "custom_data_fields/bootstrap3/custom_data_fields.html"
+    template_name = "custom_data_fields/custom_data_fields.html"
 
     @method_decorator(is_locations_admin)
-    @use_bootstrap3
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 

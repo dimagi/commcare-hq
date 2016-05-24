@@ -1,5 +1,4 @@
 from itertools import imap
-from django.conf import settings
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete

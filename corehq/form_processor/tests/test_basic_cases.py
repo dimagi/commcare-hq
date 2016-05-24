@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime
 import uuid
 from django.conf import settings
@@ -17,6 +18,8 @@ class FundamentalCaseTests(TestCase):
     def setUpClass(cls):
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+
+    tearDownClass = setUpClass
 
     def setUp(self):
         self.interface = FormProcessorInterface()
@@ -53,6 +56,26 @@ class FundamentalCaseTests(TestCase):
             self.assertEqual(case.closed_by, '')
 
         self.assertEqual(case.dynamic_case_properties()['dynamic'], '123')
+
+    @run_with_all_backends
+    def test_create_case_unicode_name(self):
+        """
+        Submit case blocks with unicode names
+        """
+        # This was failing hard:
+        # http://manage.dimagi.com/default.asp?226582#1145687
+
+        case_id = uuid.uuid4().hex
+        modified_on = datetime.utcnow()
+        case_name = u'प्रसव'
+        _submit_case_block(
+            True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
+            case_name=case_name, date_modified=modified_on, update={
+                'dynamic': '123'
+            }
+        )
+        case = self.casedb.get_case(case_id)
+        self.assertEqual(case.name, case_name)
 
     @run_with_all_backends
     def test_update_case(self):

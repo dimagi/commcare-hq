@@ -2,7 +2,7 @@ import os
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from corehq.util.test_utils import TestFileMixin
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, StaticReportConfiguration
+from corehq.apps.userreports.models import StaticReportConfiguration
 
 
 class TestStaticReportConfig(SimpleTestCase, TestFileMixin):

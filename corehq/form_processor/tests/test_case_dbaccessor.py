@@ -4,6 +4,7 @@ from collections import namedtuple
 import time
 
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -15,7 +16,6 @@ from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
 from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
-from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'test-case-accessor'
 CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')

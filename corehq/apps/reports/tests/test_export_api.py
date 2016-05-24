@@ -1,19 +1,32 @@
-from django.test.client import Client
-from couchforms.util import spoof_submission
-import uuid
-from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.receiverwrapper.util import get_submit_url
-from corehq.apps.domain.shortcuts import create_domain
-from django.core.urlresolvers import reverse
-from corehq.apps.users.models import WebUser
-from couchforms.models import XFormInstance
-from couchexport.export import ExportConfiguration
+from datetime import datetime
 import time
-from couchexport.models import ExportSchema
+import uuid
 
-from corehq.apps.accounting.tests import BaseAccountingTest
+from django.core.urlresolvers import reverse
+from django.test.client import Client
+
+from elasticsearch.exceptions import ConnectionError
+
+from couchexport.export import ExportConfiguration
+from couchexport.models import ExportSchema
+from couchforms.models import XFormInstance
+from couchforms.util import spoof_submission
+
 from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests import BaseAccountingTest
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.receiverwrapper.util import get_submit_url
+from corehq.apps.users.models import WebUser
+
+from corehq.elastic import get_es_new
+from corehq.form_processor.utils import TestFormMetadata
+from corehq.pillows.xform import XFormPillow
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
+
 
 FORM_TEMPLATE = """<?xml version='1.0' ?>
 <foo xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://www.commcarehq.org/export/test">
@@ -28,13 +41,6 @@ DOMAIN = "test"
 
 def get_form():
     return FORM_TEMPLATE % {"uid": uuid.uuid4().hex}
-
-
-def _submit_form(f=None, domain=DOMAIN):
-    if f is None:
-        f = get_form()
-    url = get_submit_url(domain)
-    return spoof_submission(url, f)
 
 
 def get_export_response(client, previous="", include_errors=False, domain=DOMAIN):
@@ -56,6 +62,8 @@ def _content(streaming_response):
 
 
 class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
+    pillow_class = XFormPillow
+    es_index = XFORM_INDEX
 
     def _clear_docs(self):
         config = ExportConfiguration(XFormInstance.get_db(),
@@ -72,7 +80,12 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         self.couch_user.add_domain_membership(DOMAIN, is_admin=True)
         self.couch_user.save()
 
+        with trap_extra_setup(ConnectionError):
+            ensure_index_deleted(self.es_index)
+            self.pillow = self.get_pillow()
+
     def tearDown(self):
+        ensure_index_deleted(self.es_index)
         self.couch_user.delete()
         self._clear_docs()
 
@@ -80,11 +93,42 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
 
         super(ExportTest, self).tearDown()
 
+    def get_pillow(self):
+        return self.pillow_class()
+
+    def _submit_form(self, f=None, domain=DOMAIN):
+        if f is None:
+            f = get_form()
+        url = get_submit_url(domain)
+        self._send_form_to_es(
+            domain=domain,
+            xmlns="http://www.commcarehq.org/export/test",
+        )
+        return spoof_submission(url, f)
+
+    def _pillow_process_form(self, form_pair):
+        self.pillow.change_transport(form_pair.json_form)
+
+    def _send_form_to_es(self, domain, **metadata_kwargs):
+        metadata = TestFormMetadata(
+            domain=domain,
+            time_end=datetime.utcnow(),
+            received_on=datetime.utcnow(),
+        )
+        for attr, value in metadata_kwargs.items():
+            setattr(metadata, attr, value)
+
+        form_pair = make_es_ready_form(metadata)
+        self._pillow_process_form(form_pair)
+        es = get_es_new()
+        es.indices.refresh(self.es_index)
+        return form_pair
+
     def testExportTokenMigration(self):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
 
-        _submit_form()
+        self._submit_form()
         time.sleep(1)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
@@ -105,7 +149,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         self.assertEqual(404, resp.status_code)
 
         # data = data
-        _submit_form()
+        self._submit_form()
 
         # now that this is time based we have to sleep first. this is annoying
         time.sleep(1)
@@ -119,7 +163,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         resp = get_export_response(c, prev_token)
         self.assertEqual(404, resp.status_code)
 
-        _submit_form()
+        self._submit_form()
         time.sleep(1)
         resp = get_export_response(c, prev_token)
         self.assertEqual(200, resp.status_code)
@@ -135,13 +179,13 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
 
         # submit, assert something
         f = get_form()
-        _submit_form(f)
+        self._submit_form(f)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
         initial_content = _content(resp)
         
         # resubmit, assert same since it's a dupe
-        _submit_form(f)
+        self._submit_form(f)
         resp = get_export_response(c)
         self.assertEqual(200, resp.status_code)
         # hack: check for the number of rows to ensure the new one 
@@ -167,7 +211,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         c = Client()
         c.login(**{'username': 'test2', 'password': 'testpass'})
         f = get_form()
-        _submit_form(f, community_domain.name)
+        self._submit_form(f, community_domain.name)
         resp = get_export_response(c, domain=community_domain.name)
         self.assertEqual(401, resp.status_code)
 

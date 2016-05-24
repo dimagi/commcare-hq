@@ -6,7 +6,6 @@ from django.utils.decorators import method_decorator
 import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
-from django.shortcuts import render
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.style.decorators import use_bootstrap3, use_datatables, use_jquery_ui, \
     use_timepicker, use_select2
@@ -36,43 +35,26 @@ from corehq.apps.reminders.forms import (
 from corehq.apps.reminders.models import (
     CaseReminderHandler,
     CaseReminderEvent,
-    CaseReminder,
-    REPEAT_SCHEDULE_INDEFINITELY,
     EVENT_AS_OFFSET,
-    EVENT_AS_SCHEDULE,
     SurveyKeyword,
     SurveyKeywordAction,
-    SURVEY_METHOD_LIST,
     ON_DATETIME,
-    RECIPIENT_SURVEY_SAMPLE,
-    QUESTION_RETRY_CHOICES,
     REMINDER_TYPE_ONE_TIME,
     REMINDER_TYPE_DEFAULT,
-    REMINDER_TYPE_SURVEY_MANAGEMENT,
-    SEND_NOW, SEND_LATER,
-    METHOD_SMS,
+    SEND_LATER,
     METHOD_SMS_SURVEY,
     METHOD_STRUCTURED_SMS,
-    METHOD_EMAIL,
-    RECIPIENT_USER_GROUP,
     RECIPIENT_SENDER,
     METHOD_IVR_SURVEY,
-    get_events_scheduling_info,
 )
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, Permissions
+from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
-from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name, can_use_survey_reminders
-from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.util import register_sms_contact, update_contact
+from .util import can_use_survey_reminders, get_form_list, get_form_name, get_recipient_name
 from corehq.apps.domain.models import Domain
-from corehq.apps.groups.models import Group
-from casexml.apps.case.models import CommCareCase
-from dateutil.parser import parse
 from corehq.util.timezones.utils import get_timezone_for_user
-from dimagi.utils.couch.database import is_bigcouch, bigcouch_quorum_count, iter_docs
 from custom.ewsghana.forms import EWSBroadcastForm
 
 ACTION_ACTIVATE = 'activate'
@@ -149,7 +131,7 @@ class ScheduledRemindersCalendarView(BaseMessagingSectionView):
                 "next_fire": adjust_next_fire_to_timezone(reminder),
                 "recipient_desc": recipient_desc,
                 "recipient_type": handler.recipient,
-                "case_id": case.get_id if case is not None else None,
+                "case_id": case.case_id if case is not None else None,
                 "case_name": case.name if case is not None else None,
             })
 

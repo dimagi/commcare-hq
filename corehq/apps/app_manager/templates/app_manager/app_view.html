@@ -14,6 +14,7 @@
     <script src="{% new_static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
     <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/language-profiles.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
@@ -161,13 +162,11 @@
     <script>
         $(function () {
             var langs = {{ app.langs|JSON }};
-            var buildLangs = {{ app.build_langs|JSON }};
             var saveURL = "{% url "edit_app_langs" domain app.id %}";
             var validate = !{{ app.is_remote_app|BOOL }};
             var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
             $("#supported-languages").koApplyBindings(new SupportedLanguages({
                 langs: langs,
-                buildLangs: buildLangs,
                 saveURL: saveURL,
                 validate: validate
             }));
@@ -273,7 +272,7 @@
 
 {% block modals %}{{ block.super }}
 {% for uploader in uploaders %}
-{% include 'hqmedia/bootstrap3/partials/multimedia_uploader.html' %}
+{% include 'hqmedia/partials/multimedia_uploader.html' %}
 {% endfor %}
 {% include 'app_manager/partials/password_setter_modal.html' %}
 {% endblock %}

@@ -1,7 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<script src="{% static "case/js/lib/jquery-treetable/jquery.treetable.js" %}"></script>
 <link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.css" %}">
 <link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.theme.default.css" %}">
 
@@ -37,7 +36,9 @@
 </style>
 
 <script>
-    $(function () {
+    $.when(
+        $.getScript('{% static "case/js/lib/jquery-treetable/jquery.treetable.js" %}')
+    ).done(function () {
         var tree = $("#related_cases").treetable({
             expandable: true,
             initialState: "expanded"

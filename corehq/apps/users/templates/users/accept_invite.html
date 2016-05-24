@@ -75,6 +75,9 @@
                         {% include "users/partial/field.html" with field=form.full_name %}
                         {% include "users/partial/field.html" with field=form.email %}
                         {% include "users/partial/field.html" with field=form.password %}
+                        {% if form.captcha %}
+                            {% include "users/partial/field.html" with field=form.captcha %}
+                        {% endif %}
                         {% include "users/partial/field.html" with field=form.eula_confirmed %}
                         {% if create_domain %}
                             <legend>{% trans "Create your first project" %}</legend>

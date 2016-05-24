@@ -8,7 +8,6 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (
     CALLBACK_MISSED,
@@ -25,8 +24,6 @@ from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from django.conf import settings
 from corehq.apps.reminders.util import get_form_name
-import pytz
-from math import ceil
 
 
 class CallReport(BaseCommConnectLogReport):

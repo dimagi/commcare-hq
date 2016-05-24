@@ -118,11 +118,12 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
         """
         Add properties to the request for any tour that might be active
         """
-        tours = (REPORT_BUILDER_ACCESS, REPORT_BUILDER_NO_ACCESS)
-        for tour in tours:
-            if tour.should_show(self.request, 0, False):
-                self.request.guided_tour = tour.get_tour_data(self.request, 0)
-                break  # Only one of these tours may be active.
+        if self.request.user.is_authenticated():
+            tours = (REPORT_BUILDER_ACCESS, REPORT_BUILDER_NO_ACCESS)
+            for tour in tours:
+                if tour.should_show(self.request, 0, False):
+                    self.request.guided_tour = tour.get_tour_data(self.request, 0)
+                    break  # Only one of these tours may be active.
 
     @property
     def tile_configs(self):

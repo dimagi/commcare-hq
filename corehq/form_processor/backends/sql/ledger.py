@@ -3,6 +3,7 @@ from operator import attrgetter
 
 from corehq.apps.commtrack.processing import compute_ledger_values
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+from corehq.form_processor.change_publishers import publish_ledger_v2_saved
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
     LedgerDBInterface
@@ -65,6 +66,8 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         ledger_value = ledger_db.get_ledger(stock_trans.ledger_reference)
         if not ledger_value:
             ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
+            ledger_value.location_id = stock_trans.location_id
+            ledger_value.domain = stock_report_helper.domain
             ledger_db.set_ledger(ledger_value)
         transaction = _get_ledger_transaction(
             _lazy_original_balance,
@@ -75,7 +78,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         ledger_value.track_create(transaction)
         # only do this after we've created the transaction otherwise we'll get the wrong delta
         ledger_value.balance = new_ledger_values.balance
-        ledger_value.last_modified = stock_trans.timestamp
+        ledger_value.last_modified = stock_report_helper.server_date  # form.received_on
         ledger_value.last_modified_form_id = stock_report_helper.form_id
         return ledger_value
 
@@ -111,6 +114,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         ledger_value = LedgerAccessorSQL.get_ledger_value(case_id, section_id, entry_id)
         ledger_value = LedgerProcessorSQL._rebuild_ledger_value_from_transactions(ledger_value, transactions)
         LedgerAccessorSQL.save_ledger_values([ledger_value])
+        publish_ledger_v2_saved(ledger_value)
 
     @staticmethod
     def _rebuild_ledger_value_from_transactions(ledger_value, transactions):
@@ -144,6 +148,8 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         result = process_stock([form])
         result.populate_models()
         LedgerAccessorSQL.save_ledger_values(result.models_to_save)
+        for ledger_value in result.models_to_save:
+            publish_ledger_v2_saved(ledger_value)
 
         refs_to_rebuild = {
             ledger_value.ledger_reference for ledger_value in result.models_to_save

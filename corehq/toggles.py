@@ -336,7 +336,8 @@ REPORT_BUILDER_MAP_REPORTS = StaticToggle(
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
-    TAG_PRODUCT_PATH
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(
@@ -366,14 +367,6 @@ NO_VELLUM = StaticToggle(
     '(for custom forms that Vellum breaks)',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-VELLUM_BETA = PredictablyRandomToggle(
-    'vellum_beta',
-    'Use Vellum beta version',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    randomness=0.1
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
@@ -606,6 +599,13 @@ CLOUDCARE_CACHE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+APPLICATION_ERROR_REPORT = StaticToggle(
+    'application_error_report',
+    'Show Application Error Report',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
@@ -710,6 +710,13 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+)
+
+MESSAGE_LOG_METADATA = StaticToggle(
+    'message_log_metadata',
+    'Include message id in Message Log export.',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
 )
 
 ABT_REMINDER_RECIPIENT = StaticToggle(
