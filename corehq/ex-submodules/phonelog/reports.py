@@ -1,6 +1,6 @@
 import json
 import logging
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.utils import html
 from corehq.apps.receiverwrapper.util import (
     get_version_from_appversion_text,
@@ -19,10 +19,7 @@ from corehq.apps.reports.datatables import (
     DataTablesColumn,
     DataTablesHeader,
     DTSortDirection,
-    DTSortType,
 )
-from corehq.apps.reports.util import _report_user_dict, SimplifiedUserInfo
-from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.safestring import mark_safe
