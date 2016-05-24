@@ -5,7 +5,7 @@ from couchdbkit import ResourceNotFound, ResourceConflict
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from http_parser.http import ParserError
-from restkit import RequestError
+from restkit import RequestError, Unauthorized
 from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
 from corehq.util.couchdb_management import CouchConfig
@@ -186,8 +186,13 @@ class Command(BaseCommand):
                   doc_type=None, since=None, exclude_types=None, postgres_db=None, exclude_attachments=False):
 
         if not doc_ids:
-            doc_ids = [result["id"] for result in sourcedb.view("by_domain_doc_type_date/view", startkey=startkey,
-                                                                endkey=endkey, reduce=False)]
+            try:
+                doc_ids = [result["id"]
+                           for result in sourcedb.view("by_domain_doc_type_date/view",
+                                                       startkey=startkey, endkey=endkey, reduce=False)]
+            except Unauthorized:
+                print 'You do not have permission to read the "{}" database'.format(sourcedb.dbname)
+                raise
         total = len(doc_ids)
         count = 0
         msg = "Found %s matching documents in domain: %s" % (total, domain)
