@@ -27,18 +27,23 @@ testapps.test_pillowtop:
   - django_digest
   - django_prbac
   - casexml.apps.case
+  - casexml.apps.stock
   - corehq.apps.accounting
+  - corehq.apps.commtrack
   - corehq.apps.domain
   - corehq.apps.groups
   - corehq.apps.hqadmin
   - corehq.apps.hqcase
   - corehq.apps.sms
   - corehq.apps.smsforms
+  - corehq.apps.locations
+  - corehq.apps.products
   - corehq.couchapps
   - corehq.form_processor
   - corehq.sql_accessors
   - corehq.sql_proxy_accessors
   - pillowtop
+  - pillow_retry
   - corehq.apps.case_search
 casexml.apps.phone:
   - auditcare
@@ -158,6 +163,7 @@ corehq.apps.commtrack:
   - corehq.apps.hqcase
   - corehq.apps.fixtures
   - corehq.apps.groups
+  - corehq.apps.notifications
   - corehq.apps.locations
   - corehq.apps.products
   - corehq.apps.reminders
@@ -246,6 +252,7 @@ corehq.apps.receiverwrapper:
   - corehq.apps.domain
   - corehq.apps.dropbox
   - corehq.apps.locations
+  - corehq.apps.notifications
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms
@@ -327,6 +334,7 @@ corehq.apps.export:
   - corehq.apps.export
   - corehq.apps.domain
   - corehq.apps.app_manager
+  - corehq.couchapps
   - couchexport
 corehq.apps.callcenter:
   - auditcare
@@ -471,3 +479,32 @@ corehq.apps.notifications:
 corehq.blobs:
   - corehq.couchapps
   - couchexport
+corehq.apps.ota:
+  - auditcare
+  - casexml.apps.case
+  - casexml.apps.phone
+  - corehq.apps.accounting
+  - corehq.apps.app_manager
+  - corehq.apps.case_search
+  - corehq.apps.domain
+  - corehq.apps.dropbox
+  - corehq.apps.locations
+  - corehq.apps.notifications
+  - corehq.apps.products
+  - corehq.apps.reminders
+  - corehq.apps.sms
+  - corehq.apps.smsforms
+  - corehq.couchapps
+  - corehq.form_processor
+  - corehq.sql_accessors
+  - corehq.sql_proxy_accessors
+  - django.contrib.admin
+  - django_digest
+  - django_prbac
+  - phonelog
+  - tastypie
+  - corehq.apps.userhack
+  # required by user.delete()
+  - touchforms.formplayer
+  - corehq.apps.tour
+  - pillowtop

@@ -33,7 +33,8 @@ class DomainRegistrationForm(forms.Form):
 
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length,
-                                      widget=forms.TextInput(attrs={'class': 'form-control'}))
+                                      widget=forms.TextInput(attrs={'class': 'form-control',
+                                        'placeholder': _('My CommCare Project')}))
 
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
@@ -176,14 +177,6 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             choices.insert(0, ('', ''))
             self.fields['program'].choices = choices
         self.excluded_emails = excluded_emails or []
-
-        self.helper = FormHelper()
-
-        self.helper.form_method = 'POST'
-        self.helper.form_class = 'form-horizontal'
-
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()

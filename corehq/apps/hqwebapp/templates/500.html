@@ -24,22 +24,24 @@
         </h1>
     </div>
     <div class="row">
-        <div class="span4">
+        <div class="col-sm-4">
             <p><img id="sad-danny" src="{% static 'hqwebapp/img/sad_danny.jpg' %}" alt="{% trans "Sad Danny is Sad" %}" /></p>
         </div>
-        <div class="span8">
+        <div class="col-sm-8">
             <div class="well">
                 <form>
                     <fieldset>
                         <legend>
-                            First time here?
+                            {% trans "First time here?" %}
                         </legend>
+                        {% blocktrans %}
                         Try refreshing. Often the problem is temporary and the page will succeed if you try again.<br><br>
+                        {% endblocktrans %}
                         <button id="refresh" class="btn btn-primary">{% trans "Refresh Page" %}</button>
                     </fieldset>
                 </form>
             </div>
-            <form class="well form form-horizontal" style="padding-bottom: 0;" action="{% url "bug_report" %}" method="post">
+            <form class="form form-horizontal" action="{% url "bug_report" %}" method="post">
                 {% csrf_token %}
                 <input type="hidden" id="bug-report-500-url" name="url" value="{{ request.build_absolute_uri }}"/>
                 <input type="hidden" id="bug-report-500-username" name="username" value="{{ user.username }}"/>
@@ -58,24 +60,27 @@
                         {% endblocktrans %}
                     </legend>
                     {% trans "We would appreciate it a lot if you could provide us with any additional info about what happened before you encountered this problem." %}<br><br>
-                    <div class="control-group">
-                        <label class="control-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
-                        <div class="controls">
-                            <input type="text" class="input-xlarge" name="subject" id="bug-report-500-subject">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" name="subject" id="bug-report-500-subject">
                         </div>
                     </div>
-                    <div class="control-group">
-                        <label class="control-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
-                        <div class="controls">
-                            <textarea class="input-xlarge" name="message" id="bug-report-500-message" rows="5"></textarea>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
+                        <div class="col-sm-9">
+                            <textarea class="form-control" name="message" id="bug-report-500-message" rows="5"></textarea>
                         </div>
                     </div>
                 </fieldset>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">{% trans "Submit Report" %}</button>
+                    <div class="col-sm-offset-3">
+                        <button type="submit" class="btn btn-primary">{% trans "Submit Report" %}</button>
+                    </div>
                 </div>
             </form>
+            <br />
         </div>
     </div>
 {% endblock %}

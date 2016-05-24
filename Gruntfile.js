@@ -18,7 +18,8 @@ module.exports = function(grunt) {
         'export',
         'export#ko',
         'notifications',
-        'reports_core#choiceListUtils'
+        'reports_core#choiceListUtils',
+        'userreports',
     ];
 
     var mochaConfig = {},

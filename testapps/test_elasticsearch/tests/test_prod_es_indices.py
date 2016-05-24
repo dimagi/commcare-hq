@@ -59,6 +59,11 @@ EXPECTED_PROD_INDICES = [
         "type": "user"
     },
     {
+        "alias": "ledgers",
+        "index": "test_ledgers_2016-03-15",
+        "type": "ledger"
+    },
+    {
         "alias": "report_cases",
         "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
         "type": "report_case"

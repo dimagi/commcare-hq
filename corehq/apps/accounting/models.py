@@ -65,6 +65,7 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -137,13 +138,11 @@ class SoftwarePlanEdition(object):
         (RESELLER, RESELLER),
         (MANAGED_HOSTING, MANAGED_HOSTING),
     )
-    ORDER = [
+    SELF_SERVICE_ORDER = [
         COMMUNITY,
         STANDARD,
         PRO,
         ADVANCED,
-        RESELLER,
-        MANAGED_HOSTING,
     ]
 
 
@@ -762,11 +761,11 @@ class DefaultProductPlan(models.Model):
     @classmethod
     def get_lowest_edition_by_domain(cls, domain, requested_privileges,
                                      return_plan=False):
-        for edition in SoftwarePlanEdition.ORDER:
+        for edition in SoftwarePlanEdition.SELF_SERVICE_ORDER:
             plan_version = cls.get_default_plan_by_domain(
                 domain, edition=edition
             )
-            privileges = get_privileges(plan_version)
+            privileges = get_privileges(plan_version) - REPORT_BUILDER_ADD_ON_PRIVS
             if privileges.issuperset(requested_privileges):
                 return (plan_version if return_plan
                         else plan_version.plan.edition)
@@ -1039,6 +1038,7 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
 
     objects = SubscriptionManager()
+    api_objects = Manager()
 
     class Meta:
         app_label = 'accounting'
@@ -1477,7 +1477,7 @@ class Subscription(models.Model):
 
             billing_contact_emails = self.account.billingcontactinfo.email_list
             if not billing_contact_emails:
-                raise SubscriptionReminderError(
+                log_accounting_error(
                     "Billing account %d doesn't have any contact emails" % self.account.id
                 )
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}

@@ -4,6 +4,7 @@ from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
 from casexml.apps.phone.xml import get_case_element
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.toggles import ENABLE_LOADTEST_USERS
+from casexml.apps.phone.xml import tostring
 
 
 def get_loadtest_factor(domain, user):
@@ -42,7 +43,7 @@ def get_elements_for_response(update, restore_state):
     elements = []
     while current_count < restore_state.loadtest_factor:
         element = get_case_element(update.case, update.required_updates, restore_state.version)
-        elements.append(element)
+        elements.append(tostring(element))
         current_count += 1
         if current_count < restore_state.loadtest_factor:
             update = transform_loadtest_update(original_update, current_count)

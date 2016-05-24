@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
     XFormInstanceSQL, XFormOperationSQL,
@@ -120,3 +122,23 @@ class LedgerValueSerializer(serializers.ModelSerializer):
     class Meta:
         model = LedgerValue
         exclude = ('id',)
+
+
+class StockStateSerializer(serializers.ModelSerializer):
+    _id = serializers.IntegerField(source='id')
+    entry_id = serializers.CharField(source='product_id')
+    location_id = serializers.CharField(source='sql_location.location_id')
+    balance = serializers.IntegerField(source='stock_on_hand')
+    last_modified = serializers.DateTimeField(source='last_modified_date')
+    domain = serializers.CharField()
+
+    class Meta:
+        model = StockState
+        exclude = (
+            'id',
+            'product_id',
+            'stock_on_hand',
+            'last_modified_date',
+            'sql_product',
+            'sql_location',
+        )

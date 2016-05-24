@@ -1,5 +1,4 @@
 import json
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.models import ApiUser, PERMISSION_POST_SMS
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case

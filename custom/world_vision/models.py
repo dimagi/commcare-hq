@@ -4,9 +4,10 @@ from dimagi.utils.dates import force_to_datetime
 import fluff
 from corehq.fluff.calculators.case import CasePropertyFilter
 from custom.world_vision import WORLD_VISION_DOMAINS
-from corehq.apps.users.models import CommCareUser, CommCareCase
+from corehq.apps.users.models import CommCareUser
 from custom.utils.utils import flat_field
 from custom.world_vision import user_calcs
+from casexml.apps.case.models import CommCareCase
 
 from django.utils.dateformat import format
 

@@ -114,33 +114,6 @@ def app_has_been_submitted_to_in_last_30_days(domain, app_id):
     return True if row else False
 
 
-def get_username_in_last_form_user_id_submitted(domain, user_id):
-    assert domain
-    user_info = XFormInstance.get_db().view(
-        'all_forms/view',
-        startkey=["submission user", domain, user_id],
-        limit=1,
-        descending=True,
-        reduce=False
-    ).one()
-    try:
-        return user_info['value']['username']
-    except KeyError:
-        return None
-
-
-def get_all_user_ids_submitted(domain):
-    key = ["submission user", domain]
-    submitted = XFormInstance.get_db().view(
-        'all_forms/view',
-        startkey=key,
-        endkey=key + [{}],
-        group=True,
-        group_level=3
-    ).all()
-    return {user['key'][2] for user in submitted}
-
-
 def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
     key = ["submission xmlns app", domain]
     results = XFormInstance.get_db().view(
