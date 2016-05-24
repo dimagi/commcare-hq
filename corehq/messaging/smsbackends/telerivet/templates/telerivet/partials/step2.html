@@ -12,9 +12,8 @@
                     <p>
                         {% blocktrans %}
                         Go to the Telerivet website and generate an API key if you have not already done so.
-                        <a href="#/step2" ng-hide="showApiKeyGeneration" ng-click="toggleApiKeyGeneration();">Show</a>
-                        <a href="#/step2" ng-show="showApiKeyGeneration" ng-click="toggleApiKeyGeneration();">Hide</a>
-                        how to do this.
+                        <a href="#/step2" ng-hide="showApiKeyGeneration" ng-click="toggleApiKeyGeneration();">Show Me How</a>
+                        <a href="#/step2" ng-show="showApiKeyGeneration" ng-click="toggleApiKeyGeneration();">Hide Instructions</a>
                         {% endblocktrans %}
                     </p>
                     <p ng-show="showApiKeyGeneration">
@@ -27,9 +26,8 @@
                     <p>
                         {% blocktrans %}
                         On that same page in the Telerivet website, make note of your API Key, Project ID, and Phone ID, and enter them below.
-                        <a href="#/step2" ng-hide="showApiInfoLocation" ng-click="toggleApiInfoLocation();">Show</a>
-                        <a href="#/step2" ng-show="showApiInfoLocation" ng-click="toggleApiInfoLocation();">Hide</a>
-                        where to find this.
+                        <a href="#/step2" ng-hide="showApiInfoLocation" ng-click="toggleApiInfoLocation();">Show Me How</a>
+                        <a href="#/step2" ng-show="showApiInfoLocation" ng-click="toggleApiInfoLocation();">Hide Instructions</a>
                         {% endblocktrans %}
                     </p>
                     <p class="help-block" ng-show="showApiInfoLocation">
