@@ -339,6 +339,8 @@ class CallCenterDomainTest(SimpleTestCase):
         self.elasticsearch = get_es_new()
         ensure_index_deleted(self.index_info.index)
         initialize_index(self.elasticsearch, self.index_info)
+        import time
+        time.sleep(1)  # without this we get a 503 response about 30% of the time
 
     def tearDown(self):
         ensure_index_deleted(self.index_info.index)
