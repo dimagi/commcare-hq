@@ -237,7 +237,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
         if ajax:
             return HttpResponseBadRequest(unicode(e))
         else:
-            messages.error(request, "There was an error saving, please try again!")
+            messages.error(request, _("There was an error saving, please try again!"))
             return back_to_main(request, domain, app_id=app_id)
     lang = request.COOKIES.get('lang', app.langs[0])
 
