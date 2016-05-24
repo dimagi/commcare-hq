@@ -1,9 +1,9 @@
 import uuid
 
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from corehq.form_processor.exceptions import LedgerSaveError
-from crispy_forms.tests.utils import override_settings
 
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
