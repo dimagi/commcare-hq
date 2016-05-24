@@ -277,6 +277,68 @@ def _store_excel_in_redis(file):
     return hash_id
 
 
+def _get_export_properties(export_id, export_is_legacy):
+    """
+    Return a list of strings corresponding to form questions that are
+    included in the export.
+    """
+    properties = set()
+    if export_id:
+        if export_is_legacy:
+            schema = FormExportSchema.get(export_id)
+            for table in schema.tables:
+                # - in question id is replaced by . in excel exports
+                properties |= {c.display.replace('.', '-') for c in
+                               table.columns}
+        else:
+            from corehq.apps.export.models import FormExportInstance
+            export = FormExportInstance.get(export_id)
+            for table in export.tables:
+                for column in table.columns:
+                    if column.item:
+                        # TODO: Test this for sure with groups/repeats
+                        path_parts = [n.name for n in column.item.path]
+                        path_parts = path_parts[1:] if path_parts[
+                                                           0] == "form" else path_parts
+                        properties.add("-".join(path_parts))
+    return properties
+
+
+def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
+    """
+    Return a list of form ids.
+    Each form has a multimedia attachment and meets the given filters.
+    """
+    if not export_is_legacy:
+        query = (FormES()
+                 .domain(domain)
+                 .app(app_id)
+                 .xmlns(xmlns)
+                 .submitted(gte=parse(startdate), lte=parse(enddate))
+                 .remove_default_filter("has_user"))
+        form_ids = set()
+        for form in query.scroll():
+            try:
+                for attachment in form['_attachments'].values():
+                    if attachment['content_type'] != "text/xml":
+                        form_ids.add(form['_id'])
+                        continue
+            except AttributeError:
+                pass
+    else:
+        key = [domain, app_id, xmlns]
+        form_ids = {
+            f['id'] for f in
+            XFormInstance.get_db().view(
+                "attachments/attachments",
+                start_key=key + [startdate],
+                end_key=key + [enddate, {}],
+                reduce=False
+            )
+            }
+    return form_ids
+
+
 @task
 def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id, export_is_legacy):
 
@@ -291,15 +353,6 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
                     return [k]
 
         return None
-
-    def filename(form_info, question_id, extension):
-        fname = u"%s-%s-%s-%s%s"
-        if form_info['cases']:
-            fname = u'-'.join(form_info['cases']) + u'-' + fname
-        return fname % (form_info['name'],
-                        unidecode(question_id),
-                        form_info['user'],
-                        form_info['id'], extension)
 
     case_ids = set()
 
@@ -340,50 +393,8 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
 
         return form_info
 
-    if not export_is_legacy:
-        query = (FormES()
-                 .domain(domain)
-                 .app(app_id)
-                 .xmlns(xmlns)
-                 .submitted(gte=parse(startdate), lte=parse(enddate))
-                 .remove_default_filter("has_user"))
-        form_ids = set()
-        for form in query.scroll():
-            try:
-                for attachment in form['_attachments'].values():
-                    if attachment['content_type'] != "text/xml":
-                        form_ids.add(form['_id'])
-                        continue
-            except AttributeError:
-                pass
-    else:
-        key = [domain, app_id, xmlns]
-        form_ids = {
-            f['id'] for f in
-            XFormInstance.get_db().view(
-                "attachments/attachments",
-                start_key=key + [startdate],
-                end_key=key + [enddate, {}],
-                reduce=False
-            )
-        }
-
-    properties = set()
-    if export_id:
-        if export_is_legacy:
-            schema = FormExportSchema.get(export_id)
-            for table in schema.tables:
-                # - in question id is replaced by . in excel exports
-                properties |= {c.display.replace('.', '-') for c in table.columns}
-        else:
-            from corehq.apps.export.models import FormExportInstance
-            export = FormExportInstance.get(export_id)
-            for table in export.tables:
-                for column in table.columns:
-                    if column.item:
-                        path_parts = [n.name for n in column.item.path]
-                        path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
-                        properties.add("-".join(path_parts))
+    form_ids = _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
+    properties = _get_export_properties(export_id, export_is_legacy)
 
     if not app_id:
         zip_name = 'Unrelated Form'
@@ -396,33 +407,33 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
     num_forms = len(forms_info)
     DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
 
-    # get case names
+    case_id_to_name = _get_case_names(domain, case_ids)
+
+    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
+    if use_transfer:
+        fpath = _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms)
+    else:
+        _, fpath = tempfile.mkstemp()
+
+    _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name)
+    _expose_download(fpath, use_transfer, zip_name, download_id, num_forms)
+
+
+def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms):
+    params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
+    fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
+    fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
+    return fpath
+
+
+def _get_case_names(domain, case_ids):
     case_id_to_name = {c: c for c in case_ids}
     for case in CaseAccessors(domain).iter_cases(case_ids):
         if case.name:
             case_id_to_name[case.case_id] = case.name
 
-    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    if use_transfer:
-        params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
-        fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
-        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
-    else:
-        _, fpath = tempfile.mkstemp()
 
-    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
-        with open(fpath, 'wb') as zfile:
-            with zipfile.ZipFile(zfile, 'w') as z:
-                for form_number, form_info in enumerate(forms_info):
-                    f = form_info['form']
-                    form_info['cases'] = {case_id_to_name[case_id] for case_id in form_info['cases']}
-                    for a in form_info['attachments']:
-                        fname = filename(form_info, a['question_id'], a['extension'])
-                        zi = zipfile.ZipInfo(fname, a['timestamp'])
-                        # TODO: The attachment was previously streamed.
-                        z.writestr(zi, f.get_attachment(a['name']), zipfile.ZIP_STORED)
-                    DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
-
+def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
     common_kwargs = dict(
         mimetype='application/zip',
         content_disposition='attachment; filename="{fname}.zip"'.format(fname=zip_name),
@@ -444,3 +455,27 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
         )
 
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
+
+
+def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name):
+
+    def filename(form_info, question_id, extension):
+        fname = u"%s-%s-%s-%s%s"
+        if form_info['cases']:
+            fname = u'-'.join(form_info['cases']) + u'-' + fname
+        return fname % (form_info['name'],
+                        unidecode(question_id),
+                        form_info['user'],
+                        form_info['id'], extension)
+
+    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
+        with open(fpath, 'wb') as zfile:
+            with zipfile.ZipFile(zfile, 'w') as z:
+                for form_number, form_info in enumerate(forms_info):
+                    f = form_info['form']
+                    form_info['cases'] = {case_id_to_name[case_id] for case_id in form_info['cases']}
+                    for a in form_info['attachments']:
+                        fname = filename(form_info, a['question_id'], a['extension'])
+                        zi = zipfile.ZipInfo(fname, a['timestamp'])
+                        z.writestr(zi, f.get_attachment(a['name']), zipfile.ZIP_STORED)
+                    DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
