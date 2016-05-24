@@ -90,4 +90,4 @@ simpleeval==0.8.7
 laboratory==0.2.0
 ConcurrentLogHandler==0.9.1
 github3.py==1.0.0a4
-django-crispy-forms==1.5.0
+django-crispy-forms==1.5.2
