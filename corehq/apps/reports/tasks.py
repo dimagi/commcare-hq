@@ -275,7 +275,8 @@ def _store_excel_in_redis(file):
 
 
 @task
-def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id, export_is_legacy):
+def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
+                              export_id, zip_name, download_id, export_is_legacy):
 
     form_ids = _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
     properties = _get_export_properties(export_id, export_is_legacy)
@@ -410,7 +411,7 @@ def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
                 end_key=key + [enddate, {}],
                 reduce=False
             )
-            }
+        }
     return form_ids
 
 
@@ -471,4 +472,3 @@ def _extract_form_attachment_info(form, properties):
             })
 
     return form_info
-
