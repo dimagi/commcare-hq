@@ -296,10 +296,8 @@ def _get_export_properties(export_id, export_is_legacy):
             for table in export.tables:
                 for column in table.columns:
                     if column.item:
-                        # TODO: Test this for sure with groups/repeats
                         path_parts = [n.name for n in column.item.path]
-                        path_parts = path_parts[1:] if path_parts[
-                                                           0] == "form" else path_parts
+                        path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
                         properties.add("-".join(path_parts))
     return properties
 
