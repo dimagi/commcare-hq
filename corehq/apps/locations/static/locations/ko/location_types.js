@@ -99,7 +99,6 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
     this.validate = function() {
         this.loc_types_error(false);
 
-        var that = this;
         var valid = true;
 
         $.each(this.loc_types(), function(i, e) {
@@ -156,14 +155,14 @@ function LocationSettingsViewModel(loc_types, commtrack_enabled) {
             return false;
         }
 
-        payload = this.to_json();
+        var payload = this.to_json();
         this.json_payload(JSON.stringify(payload));
         return true;
     };
 
     this.to_json = function() {
         return {
-            loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); })
+            loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); }),
         };
     };
 }
@@ -179,7 +178,6 @@ var get_fake_pk = function () {
 
 function LocationTypeModel(loc_type, commtrack_enabled) {
     var name = loc_type.name || '';
-    var self = this;
     this.pk = loc_type.pk || get_fake_pk();
     this.name = ko.observable(name);
 
@@ -223,12 +221,12 @@ ko.bindingHandlers.bind_element = {
     init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         var field = valueAccessor() || '$e';
         if (viewModel[field]) {
-            console.log('warning: element already bound');
+            console.warning('warning: element already bound');
             return;
         }
         viewModel[field] = element;
         if (viewModel.onBind) {
             viewModel.onBind(bindingContext);
         }
-    }
+    },
 };
