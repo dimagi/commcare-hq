@@ -185,7 +185,7 @@
                         data-index="{{ module.id }}">
                         <a href="{% url "view_module" domain app.id module.id %}">
                             <i class="drag_handle"></i>
-                            {% if module.module_type == 'advanced' %}<i class="fa fa-exclamation-triangle"></i>
+                            {% if module.module_type == 'advanced' %}<i class="fa fa-gears"></i>
                             {% elif module.module_type == 'report' %}<i class="fa fa-bar-chart"></i>
                             {% else %}<i class="fa fa-folder-open"></i>{% endif %}
                             <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
