@@ -60,7 +60,7 @@ class RebuildStockStateTest(TestCase):
 
     def _submit_ledgers(self, ledger_blocks):
         return submit_case_blocks(
-            ledger_blocks.format(**self._stock_state_key), self.domain)
+            ledger_blocks.format(**self._stock_state_key), self.domain).form_id
 
     @run_with_all_backends
     def test_simple(self):
