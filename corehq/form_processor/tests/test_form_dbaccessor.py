@@ -4,6 +4,7 @@ from datetime import datetime
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -18,7 +19,6 @@ from corehq.form_processor.tests.utils import (create_form_for_test,
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
-from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'test-form-accessor'
 
