@@ -22,9 +22,12 @@ class ASRIdentification(BaseIdentification):
                     rows.append([loc_type, loc[0].name, loc[0].site_code])
                 else:
                     rows.append([loc_type, '', ''])
+            descendant_locations = SQLLocation.objects.get(
+                location_id=self.config['location_id']
+            ).get_descendants(include_self=True)
             supervisor = [
-                s for s in chosen_location.filter(location_type__name='supervisor')
-                if 'test' not in loc.metadata and loc.metadata.get('test', '').lower() != 'yes'
+                s for s in descendant_locations.filter(location_type__name='supervisor')
+                if 'test' not in s.metadata and s.metadata.get('test', '').lower() != 'yes'
             ]
             rows.append([
                 'Number of Sectors', len(supervisor), ''
