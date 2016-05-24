@@ -173,6 +173,7 @@ class LocationTypesView(BaseLocationView):
             loc_type.view_descendants = view_descendants
             loc_type.code = unicode_slug(code)
             sql_loc_types[pk] = loc_type
+            loc_type.save()
 
         loc_types = payload['loc_types']
         pks = []
@@ -197,10 +198,6 @@ class LocationTypesView(BaseLocationView):
             # apply sync boundaries (expand_from and expand_to) after the
             # locations are all created since there are dependencies between them
             self._apply_boundaries(loc_type, sql_loc_types)
-
-        for pk, loc_type in sql_loc_types.iteritems():
-            # save all touched locations
-            loc_type.save()
 
         return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
