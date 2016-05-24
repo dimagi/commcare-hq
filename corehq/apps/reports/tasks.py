@@ -16,12 +16,9 @@ from celery.task import periodic_task
 from celery.task import task
 from celery.utils.log import get_task_logger
 
-from casexml.apps.case.xform import extract_case_blocks
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.es import FormES
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, \
-    CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
@@ -337,7 +334,7 @@ def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
     return form_ids
 
 
-def _extract_form_attachment_info(form, properties, case_ids):
+def _extract_form_attachment_info(form, properties):
     """
     This is a helper function for build_form_multimedia_zip.
     Return a dict containing information about the given form and its relevant
@@ -356,19 +353,13 @@ def _extract_form_attachment_info(form, properties, case_ids):
 
         return None
 
-
     unknown_number = 0
-    # get case ids
-    case_blocks = extract_case_blocks(form.form_data)
-    cases = {c['@case_id'] for c in case_blocks}
-    case_ids |= cases
 
     form_info = {
         'form': form,
         'attachments': list(),
         'name': form.name or "unknown form",
         'user': form.user_id or "unknown_user",
-        'cases': cases,
         'id': form.form_id,
     }
     for attachment_name, attachment in form.attachments.iteritems():
@@ -399,8 +390,6 @@ def _extract_form_attachment_info(form, properties, case_ids):
 @task
 def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id, export_is_legacy):
 
-    case_ids = set()
-
     form_ids = _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
     properties = _get_export_properties(export_id, export_is_legacy)
 
@@ -410,12 +399,10 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
     for form in FormAccessors(domain).iter_forms(form_ids):
         if not zip_name:
             zip_name = unidecode(form.name or 'unknown form')
-        forms_info.append(_extract_form_attachment_info(form, properties, case_ids))
+        forms_info.append(_extract_form_attachment_info(form, properties))
 
     num_forms = len(forms_info)
     DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
-
-    case_id_to_name = _get_case_names(domain, case_ids)
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     if use_transfer:
@@ -423,7 +410,7 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
     else:
         _, fpath = tempfile.mkstemp()
 
-    _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name)
+    _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info)
     _expose_download(fpath, use_transfer, zip_name, download_id, num_forms)
 
 
@@ -432,13 +419,6 @@ def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_fo
     fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
     fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
     return fpath
-
-
-def _get_case_names(domain, case_ids):
-    case_id_to_name = {c: c for c in case_ids}
-    for case in CaseAccessors(domain).iter_cases(case_ids):
-        if case.name:
-            case_id_to_name[case.case_id] = case.name
 
 
 def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
@@ -465,12 +445,10 @@ def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 
 
-def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name):
+def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info):
 
     def filename(form_info, question_id, extension):
         fname = u"%s-%s-%s%s"
-        if form_info['cases']:
-            fname = u'-'.join(form_info['cases']) + u'-' + fname
         return fname % (unidecode(question_id),
                         form_info['user'],
                         form_info['id'], extension)
@@ -480,7 +458,6 @@ def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_
             with zipfile.ZipFile(zfile, 'w') as z:
                 for form_number, form_info in enumerate(forms_info):
                     f = form_info['form']
-                    form_info['cases'] = {case_id_to_name[case_id] for case_id in form_info['cases']}
                     for a in form_info['attachments']:
                         fname = filename(form_info, a['question_id'], a['extension'])
                         zi = zipfile.ZipInfo(fname, a['timestamp'])
