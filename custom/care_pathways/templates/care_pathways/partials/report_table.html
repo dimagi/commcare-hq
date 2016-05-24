@@ -61,15 +61,6 @@
 </table>
 
 <script type="text/javascript">
-   $(function () {
-       $(".header-popover").popover({ trigger: "hover",
-           placement: function (context, source) {
-               var position = $(source).offset();
-               return (position.left > $(window).width() * 0.5) ? "left" : "right";
-           }
-       });
-   });
-
    {% if report_table and report_table.datatables %}
        var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
@@ -87,19 +78,21 @@
         }
         reportTables.render();
     {% endif %}
+   $(function () {
+       $(".header-popover").popover({
+           trigger: "hover",
+           placement: function (context, source) {
+               var position = $(source).offset();
+               return (position.left > $(window).width() * 0.5) ? "left" : "right";
+           },
+           container: 'body'
+       });
+   });
 </script>
 
 <style>
     #report_table_individual_wrapper tbody tr td {
         padding: 1px !important;
-    }
-    .popover {
-        top: -70px !important;
-        height: 100px;
-        position: absolute;
-    }
-    .popover-content {
-        vertical-align: middle;
     }
     .arrow {
         top: 85% !important;
