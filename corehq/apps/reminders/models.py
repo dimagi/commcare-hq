@@ -3,15 +3,16 @@ from datetime import timedelta, datetime, date, time
 import re
 from collections import namedtuple
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from dimagi.ext.couchdbkit import *
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.sms.models import (CommConnectCase, MessagingEvent)
+from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils import is_commcarecase
 from dimagi.utils.parsing import string_to_datetime, json_format_datetime
 from dateutil.parser import parse
 from corehq.apps.reminders.util import enqueue_reminder_directly, get_verified_number_for_recipient
@@ -22,7 +23,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.multithreading import process_fast
 from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
@@ -32,6 +32,11 @@ from django.db import models
 
 class IllegalModelStateException(Exception):
     pass
+
+
+class UnexpectedConfigurationException(Exception):
+    pass
+
 
 METHOD_SMS = "sms"
 METHOD_SMS_CALLBACK = "callback"
@@ -139,8 +144,10 @@ SEND_LATER = "LATER"
 # TODO: Decide whether to keep this or retire the reminder
 DEFAULT_REMINDER_TIME = time(12, 0)
 
+
 def is_true_value(val):
     return val == 'ok' or val == 'OK'
+
 
 def looks_like_timestamp(value):
     try:
@@ -149,29 +156,21 @@ def looks_like_timestamp(value):
     except Exception:
         return False
 
+
 def property_references_parent(case_property):
     return isinstance(case_property, basestring) and case_property.startswith("parent/")
 
-def get_case_property(case, case_property):
-    """
-    case                the case
-    case_property       the name of the case property (can be 'parent/property' to lookup
-                        on the parent, or 'property' to lookup on the case)
-    """
-    if case_property is None or case is None:
-        return None
-    elif property_references_parent(case_property):
-        parent_case = case.parent
-        if parent_case is None:
-            return None
-        else:
-            return parent_case.get_case_property(case_property[7:])
-    else:
-        return case.get_case_property(case_property)
 
 def case_matches_criteria(case, match_type, case_property, value_to_match):
+    if not case_property:
+        return False
+    result = case.resolve_case_property(case_property)
+    values = [element.value for element in result]
+    return any([value_matches_criteria(match_type, value, value_to_match) for value in values])
+
+
+def value_matches_criteria(match_type, case_property_value, value_to_match):
     result = False
-    case_property_value = get_case_property(case, case_property)
     if match_type == MATCH_EXACT:
         result = (case_property_value == value_to_match) and (value_to_match is not None)
     elif match_type == MATCH_ANY_VALUE:
@@ -205,6 +204,7 @@ def get_events_scheduling_info(events):
 
 
 class MessageVariable(object):
+
     def __init__(self, variable):
         self.variable = variable
 
@@ -235,12 +235,15 @@ class MessageVariable(object):
             pass
         return "(?)"
 
+
 class Message(object):
+
     def __init__(self, template, **params):
         self.template = template
         self.params = {}
         for key, value in params.items():
             self.params[key] = MessageVariable(value)
+
     def __unicode__(self):
         return self.template.format(**self.params)
 
@@ -249,6 +252,7 @@ class Message(object):
         if isinstance(template, str):
             template = unicode(template, encoding='utf-8')
         return unicode(cls(template, **params))
+
 
 class CaseReminderEvent(DocumentSchema):
     """
@@ -293,42 +297,6 @@ class CaseReminderEvent(DocumentSchema):
     message = DictProperty()
     callback_timeout_intervals = ListProperty(IntegerProperty)
     form_unique_id = StringProperty()
-
-
-def run_rule(case_id, handler, schedule_changed, prev_definition):
-    case = CommCareCase.get(case_id)
-    try:
-        handler.case_changed(case, schedule_changed=schedule_changed,
-            prev_definition=prev_definition)
-    except ResourceConflict:
-        # Sometimes the reminder fires in the middle of reprocessing
-        # the scheduling.
-        handler.case_changed(case, schedule_changed=schedule_changed,
-            prev_definition=prev_definition)
-    try:
-        client = get_redis_client()
-        client.incr("reminder-rule-processing-current-%s" % handler._id)
-    except:
-        pass
-
-
-def retire_reminder(reminder_id):
-    r = CaseReminder.get(reminder_id)
-    r.retire()
-
-
-def get_case_ids(domain):
-    """
-    Had to add this because this query kept intermittently raising
-    "NoMoreData: Can't parse headers" exceptions.
-    """
-    max_tries = 5
-    for i in range(max_tries):
-        try:
-            return get_case_ids_in_domain(domain)
-        except Exception:
-            if i == (max_tries - 1):
-                raise
 
 
 class CaseReminderHandler(Document):
@@ -545,6 +513,217 @@ class CaseReminderHandler(Document):
     # If False, we don't schedule any reminder at all.
     use_today_if_start_date_is_blank = BooleanProperty(default=True)
 
+    @classmethod
+    def create(cls, domain, name, ui_type=UI_COMPLEX):
+        return cls(domain=domain, nickname=name, ui_type=ui_type)
+
+    def set_datetime_start_condition(self, start_datetime, start_offset=0):
+        self.reminder_type = REMINDER_TYPE_ONE_TIME
+        self.start_condition_type = ON_DATETIME
+        self.start_datetime = start_datetime
+        self.start_offset = start_offset
+        return self
+
+    def set_case_criteria_start_condition(self, case_type, start_property, start_match_type, start_value=None):
+        self.reminder_type = REMINDER_TYPE_DEFAULT
+        self.start_condition_type = CASE_CRITERIA
+        self.case_type = case_type
+        self.start_property = start_property
+        self.start_match_type = start_match_type
+        if start_match_type == MATCH_ANY_VALUE:
+            self.start_value = None
+        else:
+            if not start_value:
+                raise UnexpectedConfigurationException("Expected a value for start_value")
+            self.start_value = start_value
+        return self
+
+    def set_case_criteria_start_date(self, start_date=None, start_offset=0, start_day_of_week=DAY_ANY):
+        """
+        start_date None means the start date will be the day the reminder spawns
+        """
+        self.start_date = start_date
+        self.start_offset = start_offset
+        self.start_day_of_week = start_day_of_week
+        return self
+
+    def set_case_recipient(self, case_id=None):
+        if self.start_condition_type == ON_DATETIME:
+            if not case_id:
+                raise UnexpectedConfigurationException("Expected a value for case_id")
+            self.case_id = case_id
+
+        self.recipient = RECIPIENT_CASE
+        return self
+
+    def set_parent_case_recipient(self):
+        self.recipient = RECIPIENT_PARENT_CASE
+        return self
+
+    def set_subcase_recipient(self, match_property, match_type, match_value):
+        self.recipient = RECIPIENT_SUBCASE
+        self.recipient_case_match_property = match_property
+        self.recipient_case_match_type = match_type
+        self.recipient_case_match_value = match_value
+        return self
+
+    def set_last_submitting_user_recipient(self):
+        if self.start_condition_type != CASE_CRITERIA:
+            raise UnexpectedConfigurationException(
+                "Last submitting user is only valid for case criteria reminders"
+            )
+
+        self.recipient = RECIPIENT_USER
+        return self
+
+    def set_user_recipient(self, user_id):
+        if self.start_condition_type != ON_DATETIME:
+            raise UnexpectedConfigurationException("User recipient is only valid for datetime reminders")
+
+        self.recipient = RECIPIENT_USER
+        self.user_id = user_id
+        return self
+
+    def set_user_group_recipient(self, group_id):
+        self.recipient = RECIPIENT_USER_GROUP
+        self.user_group_id = group_id
+        return self
+
+    def set_case_group_recipient(self, case_group_id):
+        self.recipient = RECIPIENT_SURVEY_SAMPLE
+        self.sample_id = case_group_id
+        return self
+
+    def set_case_owner_recipient(self):
+        if self.start_condition_type != CASE_CRITERIA:
+            raise UnexpectedConfigurationException(
+                "Case owner recipient is only valid for case criteria reminders"
+            )
+
+        self.recipient = RECIPIENT_OWNER
+        return self
+
+    def set_location_recipient(self, location_ids, include_child_locations=False):
+        if not isinstance(location_ids, list):
+            location_ids = [location_ids]
+
+        self.recipient = RECIPIENT_LOCATION
+        self.location_ids = location_ids
+        self.include_child_locations = include_child_locations
+        return self
+
+    def set_sms_content_type(self, default_lang):
+        self.method = METHOD_SMS
+        self.default_lang = default_lang
+        return self
+
+    def set_sms_callback_content_type(self, default_lang):
+        self.method = METHOD_SMS_CALLBACK
+        self.default_lang = default_lang
+        return self
+
+    def set_sms_survey_content_type(self):
+        self.method = METHOD_SMS_SURVEY
+        return self
+
+    def set_ivr_survey_content_type(self):
+        self.method = METHOD_IVR_SURVEY
+        return self
+
+    def set_email_content_type(self):
+        self.method = METHOD_EMAIL
+        return self
+
+    def set_schedule_manually(self, event_interpretation, schedule_length, events):
+        self.event_interpretation = event_interpretation
+        self.schedule_length = schedule_length
+        self.events = events
+        return self
+
+    def create_event(self, fire_time=None, day_num=0, fire_time_type=FIRE_TIME_DEFAULT, message=None,
+            form_unique_id=None, subject=None, timeouts=None, time_window_length=None):
+
+        if not self.method:
+            raise UnexpectedConfigurationException("Please set method first")
+
+        event = CaseReminderEvent(
+            day_num=day_num,
+            callback_timeout_intervals=(timeouts or []),
+        )
+
+        event.fire_time_type = fire_time_type
+        if fire_time_type in (FIRE_TIME_DEFAULT, FIRE_TIME_RANDOM):
+            if not isinstance(fire_time, time):
+                raise UnexpectedConfigurationException("Expected fire_time to be an instance of time")
+
+            event.fire_time = fire_time
+        elif fire_time_type == FIRE_TIME_CASE_PROPERTY:
+            if not isinstance(fire_time, basestring):
+                raise UnexpectedConfigurationException("Expected fire_time to be a case property name")
+
+            event.fire_time_aux = fire_time
+
+        if fire_time_type == FIRE_TIME_RANDOM:
+            if not isinstance(time_window_length, int):
+                raise UnexpectedConfigurationException("Expected an int for time_window_length")
+
+            event.time_window_length = time_window_length
+
+        if self.method in (METHOD_SMS, METHOD_SMS_CALLBACK, METHOD_EMAIL):
+            if not isinstance(message, dict):
+                raise UnexpectedConfigurationException("Expected a dictionary for message")
+
+            event.message = message
+
+        if self.method == METHOD_EMAIL:
+            if not isinstance(subject, dict):
+                raise UnexpectedConfigurationException("Expected a dictionary for subject")
+
+            event.subject = subject
+
+        if self.method in (METHOD_SMS_SURVEY, METHOD_IVR_SURVEY):
+            if not form_unique_id:
+                raise UnexpectedConfigurationException("Expected a value for form_unique_id")
+
+            event.form_unique_id = form_unique_id
+
+        return event
+
+    def set_one_event_schedule(self, event, frequency, event_interpretation=EVENT_AS_SCHEDULE):
+        if event.day_num != 0:
+            raise UnexpectedConfigurationException("Expected day_num to be 0")
+
+        self.event_interpretation = event_interpretation
+        self.schedule_length = frequency
+        self.events = [event]
+        return self
+
+    def set_daily_schedule(self, **event_kwargs):
+        return self.set_one_event_schedule(self.create_event(**event_kwargs), 1)
+
+    def set_weekly_schedule(self, **event_kwargs):
+        return self.set_one_event_schedule(self.create_event(**event_kwargs), 7)
+
+    def set_stop_condition(self, max_iteration_count=REPEAT_SCHEDULE_INDEFINITELY, stop_case_property=None):
+        if stop_case_property and self.start_condition_type != CASE_CRITERIA:
+            raise UnexpectedConfigurationException("Can only set a stop case property on a case criteria reminder")
+
+        self.max_iteration_count = max_iteration_count
+        self.until = stop_case_property
+        return self
+
+    def set_advanced_options(self, submit_partial_forms=False, include_case_side_effects=False,
+            force_surveys_to_use_triggered_case=False, max_question_retries=QUESTION_RETRY_CHOICES[-1],
+            use_today_if_start_date_is_blank=False, custom_content_handler=None, user_data_filter=None):
+        self.submit_partial_forms = submit_partial_forms
+        self.include_case_side_effects = include_case_side_effects
+        self.force_surveys_to_use_triggered_case = force_surveys_to_use_triggered_case
+        self.max_question_retries = max_question_retries
+        self.use_today_if_start_date_is_blank = use_today_if_start_date_is_blank
+        self.custom_content_handler = custom_content_handler
+        self.user_data_filter = user_data_filter or {}
+        return self
+
     @property
     def uses_parent_case_property(self):
         events_use_parent_case_property = False
@@ -592,8 +771,8 @@ class CaseReminderHandler(Document):
 
     def get_reminder(self, case):
         domain = self.domain
-        handler_id = self._id
-        case_id = case._id
+        handler_id = self.get_id
+        case_id = case.case_id
         
         return CaseReminder.view('reminders/by_domain_handler_case',
             key=[domain, handler_id, case_id],
@@ -628,11 +807,24 @@ class CaseReminderHandler(Document):
         if event.fire_time_type == FIRE_TIME_DEFAULT:
             fire_time = event.fire_time
         elif event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
-            fire_time = get_case_property(case, event.fire_time_aux)
-            try:
-                fire_time = parse(fire_time).time()
-            except Exception:
-                fire_time = DEFAULT_REMINDER_TIME
+            fire_time = DEFAULT_REMINDER_TIME
+            if event.fire_time_aux:
+                values = case.resolve_case_property(event.fire_time_aux)
+                values = [element.value for element in values]
+                for value in values:
+                    if value:
+                        if isinstance(value, time):
+                            fire_time = value
+                            break
+                        elif isinstance(value, datetime):
+                            fire_time = value.time()
+                            break
+                        else:
+                            try:
+                                fire_time = parse(value).time()
+                                break
+                            except:
+                                pass
         elif event.fire_time_type == FIRE_TIME_RANDOM:
             additional_minute_offset = randint(0, event.time_window_length - 1) + (event.fire_time.hour * 60) + event.fire_time.minute
             fire_time = time(0, 0)
@@ -662,22 +854,22 @@ class CaseReminderHandler(Document):
         """
         if recipient is None:
             if self.recipient == RECIPIENT_USER:
-                recipient = CouchUser.get_by_user_id(case.user_id)
+                recipient = CouchUser.get_by_user_id(case.modified_by)
             elif self.recipient == RECIPIENT_CASE:
-                recipient = CommConnectCase.get(case._id)
+                recipient = case
             elif self.recipient == RECIPIENT_PARENT_CASE:
                 if case is not None and case.parent is not None:
-                    recipient = CommConnectCase.wrap_as_commconnect_case(case.parent)
+                    recipient = case.parent
         local_now = CaseReminderHandler.utc_to_local(recipient, now)
         
-        case_id = case._id if case is not None else None
-        user_id = recipient._id if self.recipient == RECIPIENT_USER and recipient is not None else None
-        sample_id = recipient._id if self.recipient == RECIPIENT_SURVEY_SAMPLE else None
+        case_id = case.case_id if case is not None else None
+        user_id = recipient.get_id if self.recipient == RECIPIENT_USER and recipient is not None else None
+        sample_id = recipient.get_id if self.recipient == RECIPIENT_SURVEY_SAMPLE else None
         
         reminder = CaseReminder(
             domain=self.domain,
             case_id=case_id,
-            handler_id=self._id,
+            handler_id=self.get_id,
             user_id=user_id,
             method=self.method,
             active=True,
@@ -772,7 +964,7 @@ class CaseReminderHandler(Document):
         return      void
         """
         case = reminder.case
-        if case and case.doc_type.endswith("-Deleted"):
+        if case and case.is_deleted:
             reminder.retire()
             return
 
@@ -934,12 +1126,12 @@ class CaseReminderHandler(Document):
             recipients = list(recipients)
         elif isinstance(recipient, list) and len(recipient) > 0:
             recipients = recipient
-        elif isinstance(recipient, CouchUser) or isinstance(recipient, CommCareCase):
+        elif isinstance(recipient, CouchUser) or is_commcarecase(recipient):
             recipients = [recipient]
         elif isinstance(recipient, Group):
             recipients = recipient.get_users(is_active=True, only_commcare=False)
         elif isinstance(recipient, CommCareCaseGroup):
-            recipients = [CommConnectCase.get(case_id) for case_id in recipient.cases]
+            recipients = list(recipient.get_cases())
         else:
             recipients = []
             recipient = None
@@ -989,29 +1181,34 @@ class CaseReminderHandler(Document):
         
         return      True if the condition is reached, False if not.
         """
-        condition = get_case_property(case, case_property)
-        
-        if isinstance(condition, datetime):
-            pass
-        elif isinstance(condition, date):
-            condition = datetime.combine(condition, time(0,0))
-        elif looks_like_timestamp(condition):
-            try:
-                condition = parse(condition)
-            except Exception:
-                pass
-        
-        if isinstance(condition, datetime) and getattr(condition, "tzinfo") is not None:
-            condition = condition.astimezone(pytz.utc)
-            condition = condition.replace(tzinfo=None)
-        
-        if (isinstance(condition, datetime) and now > condition) or is_true_value(condition):
-            return True
-        else:
+        if not case or not case_property:
             return False
 
+        values = case.resolve_case_property(case_property)
+        values = [element.value for element in values]
+
+        for condition in values:
+            if isinstance(condition, datetime):
+                pass
+            elif isinstance(condition, date):
+                condition = datetime.combine(condition, time(0, 0))
+            elif looks_like_timestamp(condition):
+                try:
+                    condition = parse(condition)
+                except Exception:
+                    pass
+
+            if isinstance(condition, datetime) and getattr(condition, "tzinfo") is not None:
+                condition = condition.astimezone(pytz.utc)
+                condition = condition.replace(tzinfo=None)
+
+            if (isinstance(condition, datetime) and now > condition) or is_true_value(condition):
+                return True
+
+        return False
+
     def case_changed(self, case, now=None, schedule_changed=False, prev_definition=None):
-        key = "rule-update-definition-%s-case-%s" % (self._id, case._id)
+        key = "rule-update-definition-%s-case-%s" % (self.get_id, case.case_id)
         with CriticalSection([key]):
             self._case_changed(case, now, schedule_changed, prev_definition)
 
@@ -1028,19 +1225,21 @@ class CaseReminderHandler(Document):
         if not self.start_date:
             return StartDateInfo(now, True, True)
 
-        start_date = get_case_property(case, self.start_date)
+        values = case.resolve_case_property(self.start_date)
+        values = [element.value for element in values]
 
-        if isinstance(start_date, datetime):
-            return StartDateInfo(start_date, True, False)
+        for start_date in values:
+            if isinstance(start_date, datetime):
+                return StartDateInfo(start_date, True, False)
 
-        if isinstance(start_date, date):
-            return StartDateInfo(datetime.combine(start_date, time(0, 0)), True, False)
+            if isinstance(start_date, date):
+                return StartDateInfo(datetime.combine(start_date, time(0, 0)), True, False)
 
-        if looks_like_timestamp(start_date):
-            try:
-                return StartDateInfo(parse(start_date), True, False)
-            except Exception:
-                pass
+            if looks_like_timestamp(start_date):
+                try:
+                    return StartDateInfo(parse(start_date).replace(tzinfo=None), True, False)
+                except Exception:
+                    pass
 
         if self.use_today_if_start_date_is_blank:
             return StartDateInfo(now, True, True)
@@ -1064,16 +1263,16 @@ class CaseReminderHandler(Document):
         now = now or self.get_now()
         reminder = self.get_reminder(case)
 
-        if case and case.user_id and (case.user_id != case._id):
+        if case and case.modified_by and (case.modified_by != case.case_id):
             try:
-                user = CouchUser.get_by_user_id(case.user_id)
+                user = CouchUser.get_by_user_id(case.modified_by)
             except KeyError:
                 user = None
         else:
             user = None
 
         if (case.closed or case.type != self.case_type or
-            case.doc_type.endswith("-Deleted") or self.deleted() or
+            case.is_deleted or self.deleted() or
             (self.recipient == RECIPIENT_USER and not user)):
             if reminder:
                 reminder.retire()
@@ -1141,7 +1340,7 @@ class CaseReminderHandler(Document):
         elif self.recipient == RECIPIENT_USER:
             recipient = CouchUser.get_by_user_id(self.user_id)
         elif self.recipient == RECIPIENT_CASE:
-            recipient = CommCareCase.get(self.case_id)
+            recipient = CaseAccessors(self.domain).get_case(self.case_id)
         elif self.recipient == RECIPIENT_LOCATION:
             recipient = self.locations
         else:
@@ -1155,7 +1354,7 @@ class CaseReminderHandler(Document):
             if self.recipient == RECIPIENT_CASE:
                 case = recipient
             elif self.case_id is not None:
-                case = CommCareCase.get(self.case_id)
+                case = CaseAccessors(self.domain).get_case(self.case_id)
             else:
                 case = None
             reminder = self.spawn_reminder(case, self.start_datetime, recipient)
@@ -1176,7 +1375,7 @@ class CaseReminderHandler(Document):
                         # and try again.
                         notify_exception(None,
                             message="Error sending immediately for handler %s" %
-                            self._id)
+                            self.get_id)
                 if sent or not send_immediately:
                     self.set_next_fire(reminder, now)
                 reminder.save()
@@ -1322,28 +1521,44 @@ class CaseReminderHandler(Document):
                 process_reminder_rule(self, schedule_changed,
                     prev_definition, send_immediately)
 
+    def reset_rule_progress(self, total):
+        try:
+            client = get_redis_client()
+            client.set('reminder-rule-processing-current-%s' % self.get_id, 0)
+            client.set('reminder-rule-processing-total-%s' % self.get_id, total)
+        except:
+            pass
+
+    def update_rule_progress(self):
+        try:
+            client = get_redis_client()
+            client.incr('reminder-rule-processing-current-%s' % self.get_id)
+        except:
+            pass
+
     def process_rule(self, schedule_changed, prev_definition, send_immediately):
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
-                case_ids = get_case_ids(self.domain)
-                try:
-                    client = get_redis_client()
-                    client.set("reminder-rule-processing-current-%s" % self._id,
-                        0)
-                    client.set("reminder-rule-processing-total-%s" % self._id,
-                        len(case_ids))
-                except:
-                    pass
-                process_fast(case_ids, run_rule, item_goal=100, max_threads=5,
-                    args=(self, schedule_changed, prev_definition),
-                    use_critical_section=False, print_stack_interval=60)
+                accessor = CaseAccessors(self.domain)
+                case_ids = accessor.get_case_ids_in_domain()
+                self.reset_rule_progress(len(case_ids))
+
+                for case in accessor.iter_cases(case_ids):
+                    self.case_changed(
+                        case,
+                        schedule_changed=schedule_changed,
+                        prev_definition=prev_definition
+                    )
+                    self.update_rule_progress()
+
             elif self.start_condition_type == ON_DATETIME:
                 self.datetime_definition_changed(send_immediately=send_immediately)
         else:
             reminder_ids = self.get_reminders(ids_only=True)
-            process_fast(reminder_ids, retire_reminder, item_goal=100,
-                max_threads=5, use_critical_section=False,
-                print_stack_interval=60)
+            for doc in iter_docs(CaseReminder.get_db(), reminder_ids):
+                reminder_instance = CaseReminder.wrap(doc)
+                if reminder_instance.doc_type == 'CaseReminder' and reminder_instance.domain == self.domain:
+                    reminder_instance.retire()
 
     @classmethod
     def get_handlers(cls, domain, reminder_type_filter=None):
@@ -1469,6 +1684,7 @@ class CaseReminderHandler(Document):
     def deleted(self):
         return self.doc_type != 'CaseReminderHandler'
 
+
 class CaseReminder(SafeSaveDocument, LockableMixIn):
     """
     Where the CaseReminderHandler is the rule and schedule for sending out reminders,
@@ -1515,7 +1731,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
     @property
     def case(self):
         if self.case_id is not None:
-            return CommCareCase.get(self.case_id)
+            return CaseAccessors(self.domain).get_case(self.case_id)
         else:
             return None
 
@@ -1549,7 +1765,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         if handler.recipient == RECIPIENT_USER:
             return self.user
         elif handler.recipient == RECIPIENT_CASE:
-            return CommConnectCase.get(self.case_id)
+            return CaseAccessors(self.domain).get_case(self.case_id)
         elif handler.recipient == RECIPIENT_SURVEY_SAMPLE:
             return CommCareCaseGroup.get(handler.sample_id)
         elif handler.recipient == RECIPIENT_OWNER:
@@ -1559,18 +1775,16 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
             case = self.case
             if case is not None:
                 parent_case = case.parent
-            if parent_case is not None:
-                parent_case = CommConnectCase.wrap_as_commconnect_case(parent_case)
             return parent_case
         elif handler.recipient == RECIPIENT_SUBCASE:
-            indices = self.case.reverse_indices
-            recipients = []
-            for index in indices:
-                if index.identifier == "parent":
-                    subcase = CommConnectCase.get(index.referenced_id)
-                    if case_matches_criteria(subcase, handler.recipient_case_match_type, handler.recipient_case_match_property, handler.recipient_case_match_value):
-                        recipients.append(subcase)
-            return recipients
+            return [subcase for subcase
+                    in self.case.get_subcases(index_identifier=DEFAULT_PARENT_IDENTIFIER)
+                    if case_matches_criteria(
+                        subcase,
+                        handler.recipient_case_match_type,
+                        handler.recipient_case_match_property,
+                        handler.recipient_case_match_value
+                    )]
         elif handler.recipient == RECIPIENT_USER_GROUP:
             return Group.get(handler.user_group_id)
         elif handler.recipient == RECIPIENT_LOCATION:
@@ -1619,6 +1833,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
         self.doc_type += "-Deleted"
         self.save()
 
+
 class SurveyKeywordAction(DocumentSchema):
     recipient = StringProperty(choices=KEYWORD_RECIPIENT_CHOICES)
     recipient_id = StringProperty()
@@ -1634,6 +1849,7 @@ class SurveyKeywordAction(DocumentSchema):
     use_named_args = BooleanProperty()
     named_args = DictProperty() # Dictionary of {argument name in the sms (caps) : form question xpath}
     named_args_separator = StringProperty() # Can be None in which case there is no separator (i.e., a100 b200)
+
 
 class SurveyKeyword(Document):
     domain = StringProperty()

@@ -32,6 +32,7 @@ def get_recent_changes(db, limit):
             'date': _guess_date(row['doc']),
         }
 
+
 def _guess_date(doc):
     # note: very quick and dirty approach to this
     properties_to_check = (

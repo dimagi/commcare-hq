@@ -144,6 +144,7 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
 
 
 class BulkMultimediaStatusCacheNfs(BulkMultimediaStatusCache):
+
     def __init__(self, processing_id, file_path):
         super(BulkMultimediaStatusCacheNfs, self).__init__(processing_id)
         self.file_path = file_path

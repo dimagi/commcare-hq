@@ -18,7 +18,8 @@ from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
-from corehq.form_processor.abstract_models import AbstractCommCareCase
+from corehq.apps.sms.mixin import MessagingCaseContactMixin
+from corehq.form_processor.abstract_models import AbstractCommCareCase, DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.django.cached_object import (
     CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
@@ -44,7 +45,6 @@ CASE_STATUS_OPEN = 'open'
 CASE_STATUS_CLOSED = 'closed'
 CASE_STATUS_ALL = 'all'
 
-INDEX_ID_PARENT = 'parent'
 INDEX_RELATIONSHIP_CHILD = 'child'
 
 
@@ -150,7 +150,7 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
 
 class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
-                   CouchDocLockableMixIn, AbstractCommCareCase):
+                   CouchDocLockableMixIn, AbstractCommCareCase, MessagingCaseContactMixin):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
@@ -231,7 +231,7 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         please write/use a different property.
         """
         result = self.get_parent(
-            identifier=INDEX_ID_PARENT,
+            identifier=DEFAULT_PARENT_IDENTIFIER,
             relationship=INDEX_RELATIONSHIP_CHILD
         )
         return result[0] if result else None
@@ -250,8 +250,11 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return get_reverse_indices(self)
 
     @memoized
-    def get_subcases(self):
-        subcase_ids = [ix.referenced_id for ix in self.reverse_indices]
+    def get_subcases(self, index_identifier=None):
+        subcase_ids = [
+            ix.referenced_id for ix in self.reverse_indices
+            if (index_identifier is None or ix.identifier == index_identifier)
+        ]
         return CommCareCase.view('_all_docs', keys=subcase_ids, include_docs=True)
 
     @property
@@ -352,22 +355,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             return getattr(self, property)
         except Exception:
             return None
-
-    def resolve_case_property(self, property_name):
-        """
-        Handles case property parent references. Examples for property_name can be:
-        name
-        parent/name
-        parent/parent/name
-        ...
-        """
-        if property_name.lower().startswith('parent/'):
-            parent = self.parent
-            if not parent:
-                return None
-            return parent.resolve_case_property(property_name[7:])
-
-        return self.to_json().get(property_name)
 
     def case_properties(self):
         return self.to_json()

@@ -6,6 +6,7 @@ from couchdbkit import ResourceNotFound
 
 
 class ProgramsTest(CommTrackTest):
+
     def setUp(self):
         super(ProgramsTest, self).setUp()
         self.default_program = Program.by_domain(self.domain.name, wrap=True).one()

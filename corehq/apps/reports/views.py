@@ -2,8 +2,14 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
-from corehq.apps.domain.views import BaseDomainView
+
+from django.views.generic.base import TemplateView
+
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.domain.views import BaseDomainView, LoginAndDomainMixin
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
+    REPORT_BUILDER_ACCESS
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.tabs.tabclasses import ProjectReportsTab
@@ -71,7 +77,7 @@ from couchexport.shortcuts import (export_data_shared, export_raw_data,
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
-from couchforms.models import XFormInstance, doc_types, XFormDeprecated
+from couchforms.models import XFormDeprecated, XFormInstance
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -90,7 +96,6 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
@@ -104,7 +109,6 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.products.models import SQLProduct
@@ -139,7 +143,7 @@ from .models import (
     HQGroupExportConfiguration
 )
 
-from .standard import inspect, export, ProjectReport
+from .standard import inspect, ProjectReport
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
@@ -174,6 +178,8 @@ datespan_default = datespan_in_request(
 
 require_form_export_permission = require_permission(
     Permissions.view_report, FORM_EXPORT_PERMISSION, login_decorator=None)
+require_form_deid_export_permission = require_permission(
+    Permissions.view_report, DEID_EXPORT_PERMISSION, login_decorator=None)
 require_case_export_permission = require_permission(
     Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
@@ -232,7 +238,19 @@ class MySavedReportsView(BaseProjectReportSectionView):
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
+        self._init_tours()
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
+
+    def _init_tours(self):
+        """
+        Add properties to the request for any tour that might be active
+        """
+        if self.request.user.is_authenticated():
+            tours = ((REPORT_BUILDER_ACCESS, 1), (REPORT_BUILDER_NO_ACCESS, 2))
+            for tour, step in tours:
+                if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
+                    self.request.guided_tour = tour.get_tour_data(self.request, step)
+                    break  # Only one of these tours may be active.
 
     @property
     def language(self):
@@ -517,31 +535,46 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
-    export = SavedBasicExport.get(export_id)
+    saved_export = SavedBasicExport.get(export_id)
+    return _download_saved_export(req, domain, saved_export)
+
+
+@csrf_exempt
+@login_or_digest_or_basic_or_apikey(default='digest')
+@require_form_deid_export_permission
+@require_GET
+def hq_deid_download_saved_export(req, domain, export_id):
+    saved_export = SavedBasicExport.get(export_id)
+    if not saved_export.is_safe:
+        raise Http404()
+    return _download_saved_export(req, domain, saved_export)
+
+
+def _download_saved_export(req, domain, saved_export):
     # quasi-security hack: the first key of the index is always assumed
     # to be the domain
-    assert domain == export.configuration.index[0]
-    if should_update_export(export.last_accessed):
+    assert domain == saved_export.configuration.index[0]
+    if should_update_export(saved_export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
             try:
                 group_config = HQGroupExportConfiguration.get(group_id)
                 assert domain == group_config.domain
                 all_config_indices = [schema.index for schema in group_config.all_configs]
-                list_index = all_config_indices.index(export.configuration.index)
+                list_index = all_config_indices.index(saved_export.configuration.index)
                 schema = next(itertools.islice(group_config.all_export_schemas,
                                                list_index,
                                                list_index+1))
-                rebuild_export_async.delay(export.configuration, schema)
+                rebuild_export_async.delay(saved_export.configuration, schema)
             except Exception:
                 notify_exception(req, 'Failed to rebuild export during download')
 
-    export.last_accessed = datetime.utcnow()
-    export.save()
+    saved_export.last_accessed = datetime.utcnow()
+    saved_export.save()
 
-    payload = export.get_payload(stream=True)
+    payload = saved_export.get_payload(stream=True)
     return build_download_saved_export_response(
-        payload, export.configuration.format, export.configuration.filename
+        payload, saved_export.configuration.format, saved_export.configuration.filename
     )
 
 
@@ -591,6 +624,7 @@ def export_all_form_metadata(req, domain):
     tmp_path = save_metadata_export_to_tempfile(domain, format=format)
 
     return export_response(open(tmp_path), format, "%s_forms" % domain)
+
 
 @login_or_digest
 @require_form_export_permission
@@ -758,24 +792,31 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     config.filters = filters
 
+    report_id = None
+    if config.report:
+        report_id = config.report._id
+
     body = _render_report_configs(request, [config],
                                   domain,
                                   user_id, request.couch_user,
                                   True,
                                   lang=request.couch_user.language,
                                   notes=form.cleaned_data['notes'],
-                                  once=once)[0].content
+                                  once=once,
+                                  report_id=report_id)[0].content
 
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     if form.cleaned_data['send_to_owner']:
         send_html_email_async.delay(subject, request.couch_user.get_email(), body,
-                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
+                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+                                    ga_tracking_info={'project_space_id': request.domain})
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
             send_html_email_async.delay(subject, recipient, body,
-                                        email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
+                                        email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+                                        ga_tracking_info={'project_space_id': request.domain})
 
     return HttpResponse()
 
@@ -995,7 +1036,40 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)))
 
         return self.get(request, *args, **kwargs)
-    
+
+
+class ReportNotificationUnsubscribeView(LoginAndDomainMixin, TemplateView):
+    template_name = 'reports/notification_unsubscribe.html'
+    urlname = 'notification_unsubscribe'
+    report = None
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
+            user_email = request.couch_user.get_email()
+            if user_email not in self.report.all_recipient_emails:
+                messages.error(request, _('You are already unsubscribed from this report.'))
+            else:
+                return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
+        except ResourceNotFound:
+            pass
+        return HttpResponseRedirect(reverse('homepage'))
+
+    def get_context_data(self, **kwargs):
+        context = super(ReportNotificationUnsubscribeView, self).get_context_data(**kwargs)
+        context.update({'report': self.report})
+        return context
+
+    def post(self, request, **kwargs):
+        try:
+            report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
+            report.remove_recipient(request.couch_user.get_email())
+            report.save()
+            messages.info(request, _('Successfully unsubscribed from report notification.'))
+        except ResourceNotFound:
+            messages.error(request, _('Could not unsubscribe from report notification.'))
+        return HttpResponseRedirect(reverse('homepage'))
+
 
 @login_and_domain_required
 @require_POST
@@ -1059,12 +1133,13 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
         couch_user,
         email,
         attach_excel=attach_excel,
-        lang=notification.language
+        lang=notification.language,
+        report_id=scheduled_report_id
     )
 
 
 def _render_report_configs(request, configs, domain, owner_id, couch_user, email,
-                           notes=None, attach_excel=False, once=False, lang=None):
+                           notes=None, attach_excel=False, once=False, lang=None, report_id=None):
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
@@ -1096,8 +1171,11 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
+        "unsub_link": get_url_base() + reverse('notification_unsubscribe', kwargs={
+            'scheduled_report_id': report_id, 'domain': domain}) if report_id else None,
         "report_type": _("once off report") if once else _("scheduled report"),
     }), excel_attachments
+
 
 @login_and_domain_required
 @permission_required("is_superuser")
@@ -1198,7 +1276,7 @@ def case_forms(request, domain, case_id):
         }
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
-    forms = FormAccessors(domain).get_forms(slice)
+    forms = FormAccessors(domain).get_forms(slice, ordered=True)
     return json_response([
         form_to_json(form) for form in forms
     ])
@@ -1361,6 +1439,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         case_ids = get_open_case_ids_in_domain(domain)
 
     class stream_cases(object):
+
         def __init__(self, all_case_ids):
             self.all_case_ids = all_case_ids
 
@@ -1580,7 +1659,6 @@ def download_form(request, domain, instance_id):
     instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
-    instance = XFormInstance.get(instance_id)
     response = HttpResponse(content_type='application/xml')
     response.write(instance.get_xml())
     return response
@@ -1612,13 +1690,8 @@ class EditFormInstance(View):
         return reverse(
             'cloudcare_form_context',
             args=[domain, instance.build_id, form.get_module().id, form.id],
-            params={'instance_id': instance._id}
+            params={'instance_id': instance.form_id}
         )
-
-    @staticmethod
-    def _form_uses_usercase(form):
-        actions = form.active_actions()
-        return form.form_type == 'module_form' and actions_use_usercase(actions)
 
     def get(self, request, *args, **kwargs):
         domain = request.domain
@@ -1641,23 +1714,31 @@ class EditFormInstance(View):
         edit_session_data = get_user_contributions_to_touchforms_session(user)
 
         # add usercase to session
-        if self._form_uses_usercase(self._get_form_from_instance(instance)):
+        form = self._get_form_from_instance(instance)
+        if form.uses_usercase():
             usercase_id = user.get_usercase_id()
             if not usercase_id:
                 return _error(_('Could not find the user-case for this form'))
             edit_session_data[USERCASE_ID] = usercase_id
 
         case_blocks = extract_case_blocks(instance, include_path=True)
-        # a bit hacky - the app manager puts the main case directly in the form, so it won't have
-        # any other path associated with it. This allows us to differentiat from parent cases.
-        # One thing this definitely does not do is support advanced modules or forms with case-management
-        # done by hand.
-        # You might think that you need to populate other session variables like parent_id, but those
-        # are never actually used in the form.
-        non_parents = filter(lambda cb: cb.path == [], case_blocks)
-        if len(non_parents) == 1:
-            edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
+        if form.form_type == 'advanced_form':
+            datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
+            for case_block in case_blocks:
+                path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
+                matching_datums = [datum for datum in datums if datum.action.form_element_name == path]
+                if len(matching_datums) == 1:
+                    edit_session_data[matching_datums[0].datum.id] = case_block.caseblock.get(const.CASE_ATTR_ID)
+        else:
+            # a bit hacky - the app manager puts the main case directly in the form, so it won't have
+            # any other path associated with it. This allows us to differentiate from parent cases.
+            # You might think that you need to populate other session variables like parent_id, but those
+            # are never actually used in the form.
+            non_parents = filter(lambda cb: cb.path == [], case_blocks)
+            if len(non_parents) == 1:
+                edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
 
+        edit_session_data['is_editing'] = True
         edit_session_data['function_context'] = {
             'static-date': [
                 {'name': 'now', 'value': instance.metadata.timeEnd},

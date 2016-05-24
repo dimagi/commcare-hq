@@ -164,6 +164,7 @@ def is_valid_case_type(case_type, module):
 
 
 class ParentCasePropertyBuilder(object):
+
     def __init__(self, app, defaults=(), per_type_defaults=None):
         self.app = app
         self.defaults = defaults
@@ -591,6 +592,16 @@ def prefix_usercase_properties(properties):
     return {'{}{}'.format(USERCASE_PREFIX, prop) for prop in properties}
 
 
+def module_offers_search(module):
+    from corehq.apps.app_manager.models import AdvancedModule, Module
+
+    return (
+        isinstance(module, (Module, AdvancedModule)) and
+        module.search_config and
+        module.search_config.properties
+    )
+
+
 def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
@@ -640,11 +651,6 @@ def update_unique_ids(app_source):
         for reference in reference_path.find(app_source):
             if reference.value in id_changes:
                 jsonpath_update(reference, id_changes[reference.value])
-
-    for module in app_source['modules']:
-        if module['module_type'] == 'report':
-            for report_config in module['report_configs']:
-                report_config['uuid'] = random_hex()
 
     return app_source
 

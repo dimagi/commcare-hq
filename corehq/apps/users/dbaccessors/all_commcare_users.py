@@ -1,5 +1,4 @@
 from itertools import imap
-from django.conf import settings
 from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
@@ -46,6 +45,7 @@ def get_all_user_ids():
 def delete_all_users():
     from corehq.apps.users.models import CouchUser
     from django.contrib.auth.models import User
+
     def _clear_cache(doc):
         user = CouchUser.wrap_correctly(doc, allow_deleted_doc_types=True)
         user.clear_quickcache_for_user()

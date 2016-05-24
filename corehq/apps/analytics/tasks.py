@@ -114,7 +114,6 @@ def _hubspot_post(url, data):
         response.raise_for_status()
 
 
-
 def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key:
@@ -256,9 +255,16 @@ def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
 
 @analytics_task()
 def track_clicked_signup_on_hubspot(email, cookies, meta):
-    lifecycle = {'lifecyclestage': 'subscriber'}
+    data = {'lifecyclestage': 'subscriber'}
+    number = deterministic_random(email + 'a_b_test_variable_newsletter')
+    if number < 0.33:
+        data['a_b_test_variable_newsletter'] = 'A'
+    elif number < 0.67:
+        data['a_b_test_variable_newsletter'] = 'B'
+    else:
+        data['a_b_test_variable_newsletter'] = 'C'
     if email:
-        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, extra_fields=lifecycle, email=email)
+        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, extra_fields=data, email=email)
 
 
 def track_workflow(email, event, properties=None):
@@ -442,5 +448,8 @@ def _log_response(target, data, response):
 
 def get_ab_test_properties(user):
     return {
-        'a_b_test_variable_1': 'A' if deterministic_random(user.username + 'a_b_test_variable_1') > 0.5 else 'B',
+        'a_b_test_variable_1':
+            'A' if deterministic_random(user.username + 'a_b_test_variable_1') > 0.5 else 'B',
+        'a_b_test_variable_first_submission':
+            'A' if deterministic_random(user.username + 'a_b_test_variable_first_submission') > 0.5 else 'B',
     }

@@ -16,6 +16,7 @@ ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, T
 
 
 class StaticToggle(object):
+
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None):
         self.slug = slug
@@ -192,11 +193,12 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
-APP_AWARE_SYNC = StaticToggle(
+APP_AWARE_SYNC = PredictablyRandomToggle(
     'app_aware_sync',
     'App-aware Sync',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    randomness=0.3
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -348,6 +350,13 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
     'Enable extension syncing',
     TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
+SYNC_SEARCH_CASE_CLAIM = StaticToggle(
+    'search_claim',
+    'Enable synchronous mobile searching and case claiming',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -589,6 +598,13 @@ CLOUDCARE_CACHE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+APPLICATION_ERROR_REPORT = StaticToggle(
+    'application_error_report',
+    'Show Application Error Report',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
@@ -693,6 +709,13 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+)
+
+MESSAGE_LOG_METADATA = StaticToggle(
+    'message_log_metadata',
+    'Include message id in Message Log export.',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
 )
 
 ABT_REMINDER_RECIPIENT = StaticToggle(

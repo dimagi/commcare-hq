@@ -9,6 +9,7 @@ from .case_reports import Report, OPMCase, MockCaseRow
 
 
 class ChildConditionMixin(object):
+
     def setUp(self):
         self.xmlns = CFU2_XMLNS
         self.child_node = 'child_1'
@@ -67,8 +68,8 @@ class ChildConditionMixin(object):
         self.test_condition_met()
 
 
-
 class TestChildGrowthMonitored(ChildConditionMixin, TestCase):
+
     def setUp(self):
         self.xmlns = CFU2_XMLNS
         self.child_node = 'child_1'
@@ -99,6 +100,7 @@ class TestChildGrowthMonitored(ChildConditionMixin, TestCase):
 
 
 class TestChildExclusivelyBreastfed(ChildConditionMixin, TestCase):
+
     def setUp(self):
         self.xmlns = CFU1_XMLNS
         self.child_node = 'child_1'
@@ -135,7 +137,9 @@ class TestChildExclusivelyBreastfed(ChildConditionMixin, TestCase):
             child_age=6,
         )
 
+
 class TestChildReceivedORS(ChildConditionMixin, TestCase):
+
     def setUp(self):
         self.xmlns = CFU2_XMLNS
         self.child_node = 'child_1'

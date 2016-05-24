@@ -10,7 +10,7 @@ from django.forms.util import flatatt
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -50,7 +50,6 @@ from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.toggles import UNLIMITED_REPORT_BUILDER_REPORTS
 
 
 class FilterField(JsonField):
@@ -58,6 +57,7 @@ class FilterField(JsonField):
     A form field with a little bit of validation for report builder report
     filter configuration.
     """
+
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
@@ -127,7 +127,9 @@ class QuestionSelect(Widget):
         )
 
 
-class DataSourceProperty(namedtuple("DataSourceProperty", ["type", "id", "text", "column_id", "source"])):
+class DataSourceProperty(namedtuple(
+    "DataSourceProperty", ["type", "id", "text", "column_id", "source", "is_non_numeric"]
+)):
     """
     A container class for information about data source properties
 
@@ -144,6 +146,12 @@ class DataSourceProperty(namedtuple("DataSourceProperty", ["type", "id", "text",
         the name of the property.
     column_id -- A string to be used as the column_id for data source indicators
         based on this property.
+    is_non_numeric -- True if we know that the property associated with this property
+        is never numeric. This would be True for form meta properties, static case
+        properties like closed and owner, and non-numeric form questions.
+        Note that a value of False does not imply that the property contains
+        numeric data, just that we don't know for sure that it doesn't (e.g.
+        case properties).
     """
 
 
@@ -250,14 +258,16 @@ class DataSourceBuilder(object):
                     'label': 'question1',
                     'tag': 'input',
                     'type': 'Text'
-                }
+                },
+                is_non_numeric=True
             ),
             "meta/deviceID": DataSourceProperty(
                 type="meta",
                 id="meta/deviceID",
                 text="deviceID",
                 column_id="meta--deviceID",
-                source=("deviceID", "string")
+                source=("deviceID", "string"),
+                is_non_numeric=True
             )
         }
         """
@@ -276,6 +286,15 @@ class DataSourceBuilder(object):
             'owner_name': _('Case Owner'),
             'mobile worker': _('Mobile Worker Last Updating Case'),
         }
+        static_case_props = [
+            "closed",
+            "modified_on",
+            "name",
+            "opened_on",
+            "owner_id",
+            "user_id",
+        ]
+
         properties = OrderedDict()
         for property in case_properties:
             properties[property] = DataSourceProperty(
@@ -283,7 +302,8 @@ class DataSourceBuilder(object):
                 id=property,
                 column_id=get_column_name(property),
                 text=property_map.get(property, property.replace('_', ' ')),
-                source=property
+                source=property,
+                is_non_numeric=property in static_case_props,
             )
         properties['computed/owner_name'] = cls._get_owner_name_pseudo_property()
         properties['computed/user_name'] = cls._get_user_name_pseudo_property()
@@ -299,7 +319,8 @@ class DataSourceBuilder(object):
             id='computed/owner_name',
             column_id=get_column_name('computed/owner_name'),
             text=_('Case Owner'),
-            source='computed/owner_name'
+            source='computed/owner_name',
+            is_non_numeric=True,
         )
 
     @staticmethod
@@ -313,6 +334,7 @@ class DataSourceBuilder(object):
             column_id=get_column_name('computed/user_name'),
             text=_('Mobile Worker Last Updating Case'),
             source='computed/user_name',
+            is_non_numeric=True,
         )
 
     @staticmethod
@@ -332,6 +354,7 @@ class DataSourceBuilder(object):
                 column_id=get_column_name(prop[0].strip("/")),
                 text=property_map.get(prop[0], prop[0]),
                 source=prop,
+                is_non_numeric=True,
             )
         for question in questions:
             properties[question['value']] = DataSourceProperty(
@@ -340,6 +363,7 @@ class DataSourceBuilder(object):
                 column_id=get_column_name(question['value'].strip("/")),
                 text=question['label'],
                 source=question,
+                is_non_numeric=question['type'] not in ("DataBindOnly", "Int", "Double", "Long"),
             )
         if form.get_app().auto_gps_capture:
             properties['location'] = DataSourceProperty(
@@ -348,6 +372,7 @@ class DataSourceBuilder(object):
                 column_id=get_column_name('location'),
                 text='location',
                 source=(['location', '#text'], 'Text'),
+                is_non_numeric=True,
             )
         return properties
 
@@ -393,10 +418,11 @@ class DataSourceForm(forms.Form):
         ],
     )
 
-    def __init__(self, domain, report_type, *args, **kwargs):
+    def __init__(self, domain, report_type, max_allowed_reports, *args, **kwargs):
         super(DataSourceForm, self).__init__(*args, **kwargs)
         self.domain = domain
         self.report_type = report_type
+        self.max_allowed_reports = max_allowed_reports
 
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.source_type_field.label = _('Forms or Cases')
@@ -472,14 +498,14 @@ class DataSourceForm(forms.Form):
 
         existing_reports = ReportConfiguration.by_domain(self.domain)
         builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
-        if len(builder_reports) >= 5 and not UNLIMITED_REPORT_BUILDER_REPORTS.enabled(self.domain):
+        if len(builder_reports) >= self.max_allowed_reports:
             raise forms.ValidationError(_(
                 "Too many reports!\n"
                 "Creating this report would cause you to go over the maximum "
-                "number of report builder reports allowed in this domain. The current "
-                "limit is 5. "
+                "number of report builder reports allowed in this domain. Your"
+                "limit is {number}. "
                 "To continue, delete another report and try again. "
-            ))
+            ).format(number=self.max_allowed_reports))
 
         return cleaned_data
 
@@ -520,7 +546,7 @@ class ConfigureNewReportBase(forms.Form):
         }
 
         # NOTE: The corresponding knockout view model is defined in:
-        #       templates/userreports/partials/report_builder_configure_report.html
+        #       templates/userreports/reportbuilder/configure_report.html
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
         self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
@@ -554,7 +580,7 @@ class ConfigureNewReportBase(forms.Form):
             buttons.insert(
                 0,
                 crispy.HTML(
-                    '<a class="btn btn-danger pull-right" href="{}">{}</a>'.format(
+                    '<a id="delete-report-button" class="btn btn-danger pull-right" href="{}">{}</a>'.format(
                         reverse(
                             'delete_configurable_report',
                             args=(self.domain, self.existing_report._id),
@@ -592,7 +618,7 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def column_config_template(self):
-        return render_to_string('userreports/partials/report_filter_configuration.html')
+        return render_to_string('userreports/partials/property_list_configuration.html')
 
     @property
     def container_fieldset(self):
@@ -642,8 +668,6 @@ class ConfigureNewReportBase(forms.Form):
         return data_source_config._id
 
     def update_report(self):
-        from corehq.apps.userreports.views import delete_data_source_shared
-
         matching_data_source = self.ds_builder.get_existing_match()
         if matching_data_source:
             reactivated = False
@@ -994,7 +1018,13 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
 class ConfigureListReportForm(ConfigureNewReportBase):
     report_type = 'list'
-    columns = JsonField(required=True)
+    columns = JsonField(
+        expected_type=list,
+        null_values=([],),
+        required=True,
+        widget=forms.HiddenInput,
+        error_messages={"required": ugettext_lazy("At least one column is required")},
+    )
     column_legend_fine_print = ugettext_noop("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
     @property
@@ -1025,7 +1055,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             crispy.Div(
                 crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
             ),
-            crispy.Hidden('columns', None, data_bind="value: columnsList.serializedProperties")
+            hqcrispy.HiddenFieldWithErrors('columns', None, data_bind="value: columnsList.serializedProperties"),
         )
 
     @property

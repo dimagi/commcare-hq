@@ -118,7 +118,6 @@
 
             var putInRoot = {{ module.put_in_root|BOOL }};
             var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
-            var isModuleFilterEnabled = {{ is_module_filter_enabled|BOOL }};
             var formFilter = ko.observable({{ form.form_filter|JSON }});
             var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
 
@@ -251,9 +250,20 @@
 
 {% block form-view %}
     <div id="build_errors"></div>
-    {% if form.short_comment %}
-        <div id="form_short_comment" class="app-comment well">{{ form.short_comment }}</div>
-    {% endif %}
+    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+    <br />
+    <inline-edit params="
+        name: 'comment',
+        id:'comment-id',
+        readOnlyClass: 'app-comment',
+        value: '{{ form.comment|escapejs }}',
+        placeholder: '{% trans "Enter form description here"|escapejs %}',
+        url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
+        saveValueName: 'comment',
+        cols: 50,
+    "></inline-edit>
+    <br />
+    <br />
     <div class="pull-right">
         <form action="{% url "delete_form" domain app.id module.unique_id form.unique_id %}" method="post">
             {% csrf_token %}
@@ -330,8 +340,10 @@
                     </p>
                 {% elif form.source %}
                     <div class="help-block">
-                        Cases give you a way to track patients, farms, etc. over time. You can choose to save 
-                        data from a form to the case, which will store the data locally on the phone to use later.
+                        {% blocktrans %}
+                            Cases give you a way to track patients, farms, etc. over time. You can choose to save
+                            data from a form to the case, which will store the data locally on the phone to use later.
+                        {% endblocktrans %}
                     </div>
                     <div class="casexml" id="casexml_home">
                     {% if app.application_version != '1.0' %}

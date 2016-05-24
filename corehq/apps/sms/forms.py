@@ -1,6 +1,6 @@
 import re
 import json
-from crispy_forms.bootstrap import StrictButton, InlineField, FormActions
+from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div
 from django import forms
@@ -10,14 +10,14 @@ from django.forms.fields import *
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from django.utils.safestring import mark_safe
-from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, HiddenFieldWithErrors, FieldsetAccordionGroup)
+from corehq.apps.hqwebapp.crispy import HiddenFieldWithErrors
 from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD, SQLMobileBackend
 from django.core.exceptions import ValidationError
-from corehq.apps.reminders.forms import RecordListField, validate_time
+from corehq.apps.reminders.forms import validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.sms.util import (validate_phone_number, strip_plus,
     get_sms_backend_classes)
@@ -89,6 +89,33 @@ class ForwardingRuleForm(Form):
     forward_type = ChoiceField(choices=FORWARDING_CHOICES)
     keyword = CharField(required=False)
     backend_id = CharField()
+
+    def __init__(self, *args, **kwargs):
+        super(ForwardingRuleForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Forwarding Rule Options'),
+                'forward_type',
+                crispy.Div(
+                    'keyword',
+                    css_id="keyword_row",
+                    css_class='hide',
+                ),
+                'backend_id',
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        _("Submit"),
+                        type="submit",
+                        css_class="btn btn-primary",
+                    ),
+                ),
+            )
+        )
     
     def clean_keyword(self):
         forward_type = self.cleaned_data.get("forward_type")
@@ -722,6 +749,7 @@ class SettingsForm(Form):
         # Just cast to int, the ChoiceField will validate that it is an integer
         return int(self.cleaned_data.get("sms_conversation_length"))
 
+
 class BackendForm(Form):
     _cchq_domain = None
     _cchq_backend_id = None
@@ -1004,26 +1032,33 @@ class SendRegistrationInviationsForm(Form):
         self.set_app_id_choices()
 
         self.helper = FormHelper()
-        self.helper.form_class = "form form-horizontal"
+        self.helper.form_class = "form-horizontal"
+        self.helper.label_class = 'col-sm-3'
+        self.helper.field_class = 'col-sm-9'
         self.helper.layout = crispy.Layout(
-            FieldsetAccordionGroup(
-                _("Send Registration Invitation"),
-                crispy.Field('app_id'),
+            crispy.Div(
+                'app_id',
                 crispy.Field(
                     'phone_numbers',
                     placeholder=_("Enter phone number(s) in international "
                         "format. Example: +27..., +91...,"),
                 ),
                 InlineField('action'),
-                FormActions(
-                    StrictButton(
-                        _("Send Invitation"),
-                        type="submit",
-                        css_class="btn-primary",
-                    ),
+                css_class='modal-body',
+            ),
+            crispy.Div(
+                twbscrispy.StrictButton(
+                    _("Cancel"),
+                    data_dismiss='modal',
+                    css_class="btn btn-default",
                 ),
-                active=len(args) > 0,
-            )
+                twbscrispy.StrictButton(
+                    _("Send Invitation"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+                css_class='modal-footer',
+            ),
         )
 
     def clean_phone_numbers(self):

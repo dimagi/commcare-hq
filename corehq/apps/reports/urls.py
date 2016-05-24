@@ -20,7 +20,9 @@ from corehq.apps.userreports.views import (
     EditReportInBuilder,
     ReportBuilderDataSourceSelect,
     ReportBuilderTypeSelect,
-)
+    ReportBuilderPaywall, ReportBuilderPaywallPricing,
+    ReportBuilderPaywallActivatingTrial,
+    ReportBuilderPaywallActivatingSubscription)
 from .filters import urls as filter_urls
 from .views import (
     EditFormInstance,
@@ -30,7 +32,7 @@ from .views import (
     CaseAttachmentsView,
     MySavedReportsView,
     ScheduledReportsView,
-)
+    ReportNotificationUnsubscribeView)
 
 
 custom_report_urls = patterns('',
@@ -40,6 +42,14 @@ custom_report_urls = patterns('',
 urlpatterns = patterns('corehq.apps.reports.views',
     ConfigurableReport.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
+
+    url(r'builder/subscribe/$', ReportBuilderPaywall.as_view(), name=ReportBuilderPaywall.urlname),
+    url(r'builder/subscribe/pricing/$', ReportBuilderPaywallPricing.as_view(),
+        name=ReportBuilderPaywallPricing.urlname),
+    url(r'builder/subscribe/activating_trial/$', ReportBuilderPaywallActivatingTrial.as_view(),
+        name=ReportBuilderPaywallActivatingTrial.urlname),
+    url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
+        name=ReportBuilderPaywallActivatingSubscription.urlname),
 
     url(r'^builder/select_type/$', ReportBuilderTypeSelect.as_view(), name=ReportBuilderTypeSelect.urlname),
     url(r'^builder/(?P<report_type>list|chart|table|worker|map)/select_source/$', ReportBuilderDataSourceSelect.as_view(), name='report_builder_select_source'),
@@ -97,6 +107,7 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r"^export/bulk/download/$", "export_default_or_custom_data", name="export_bulk_download", kwargs=dict(bulk_export=True)),
     # saved
     url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", "hq_download_saved_export", name="hq_download_saved_export"),
+    url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", "hq_deid_download_saved_export", name="hq_deid_download_saved_export"),
     url(r"^export/saved/update/$", "hq_update_saved_export", name="hq_update_saved_export"),
 
     # Full Excel export
@@ -117,6 +128,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
         ScheduledReportsView.as_view(), name=ScheduledReportsView.urlname),
     url(r'^scheduled_report/(?P<scheduled_report_id>[\w-]+)/delete$',
         'delete_scheduled_report', name='delete_scheduled_report'),
+    url(r'^scheduled_report/(?P<scheduled_report_id>[\w-]+)/unsubscribe',
+        ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^send_test_scheduled_report/(?P<scheduled_report_id>[\w-]+)/$',
          'send_test_scheduled_report', name='send_test_scheduled_report'),
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',

@@ -3,6 +3,7 @@ from corehq.apps.products.models import Product, SQLProduct
 
 
 class ProductsTest(CommTrackTest):
+
     def test_archive(self):
         original_list = Product.by_domain(self.domain.name, wrap=False)
 

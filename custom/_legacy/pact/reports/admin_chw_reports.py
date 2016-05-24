@@ -18,8 +18,6 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
     exportable = True
     report_template_path = "pact/admin/pact_chw_schedule_admin.html"
 
-    is_bootstrap3 = True
-
     @property
     def headers(self):
         headers = DataTablesHeader(
@@ -91,8 +89,6 @@ class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):
             #     no patients scheduled, skipping day altogether - matches chw schedule view
                 # nopatient_row = [json_format_date(visit_date), username, 'nopatient']
                 # yield finish_row_blanks(nopatient_row)
-
-
 
     @property
     def rows(self):

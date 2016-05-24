@@ -10,6 +10,13 @@ DATA_SOURCES_PATH = os.path.join(MODULE_PATH, 'data_sources')
 FORM_DATA_SOURCE_PATH = os.path.join(DATA_SOURCES_PATH, 'call_center_forms.json')
 CASE_DATA_SOURCE_PATH = os.path.join(DATA_SOURCES_PATH, 'call_center_cases.json')
 CASE_ACTION_DATA_SOURCE_PATH = os.path.join(DATA_SOURCES_PATH, 'call_center_case_actions.json')
+TABLE_IDS = {
+    'forms': 'cc_forms',
+    'cases': 'cc_cases',
+    'case_actions': 'cc_case_actions'
+}
+
+CallCenterReportDataSources = namedtuple('CallCenterReportDataSources', 'forms, cases, case_actions')
 
 CallCenterReportDataSources = namedtuple('CallCenterReportDataSources', 'forms, cases, case_actions')
 

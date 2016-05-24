@@ -113,6 +113,7 @@ def expected_standard_indicators(no_data=False, include_legacy=True, include_tot
 
 
 class BaseCCTests(TestCase):
+
     def setUp(self):
         locmem_cache.clear()
 
@@ -137,6 +138,7 @@ class BaseCCTests(TestCase):
 
 
 class CallCenterTests(BaseCCTests):
+
     @classmethod
     def setUpClass(cls):
         cls.cc_domain, cls.cc_user = create_domain_and_user('callcentertest', 'user1')
@@ -366,6 +368,7 @@ class CallCenterTests(BaseCCTests):
 
 
 class CallCenterSupervisorGroupTest(BaseCCTests):
+
     @classmethod
     def setUpClass(cls):
         domain_name = 'cc_supervisor'
@@ -417,6 +420,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
 
 
 class CallCenterCaseSharingTest(BaseCCTests):
+
     @classmethod
     def setUpClass(cls):
         domain_name = 'cc_sharing'
@@ -475,6 +479,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
 
 
 class CallCenterTestOpenedClosed(BaseCCTests):
+
     @classmethod
     def setUpClass(cls):
         domain_name = 'cc_opened_closed'

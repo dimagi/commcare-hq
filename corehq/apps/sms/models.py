@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 import json_field
-import logging
 import uuid
-import uuidfield
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
@@ -11,6 +9,7 @@ from django.db import models, transaction
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
@@ -18,7 +17,7 @@ from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
+    InvalidFormatException, VerifiedNumber,
     apply_leniency, BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
@@ -26,10 +25,8 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     get_message)
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.load_balance import load_balance
-from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 
@@ -95,7 +92,6 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     ignore_opt_out = BooleanProperty(default=False)
     location_id = StringProperty()
 
-
     def __unicode__(self):
         to_from = (self.direction == INCOMING) and "from" or "to"
         return "Message %s %s" % (to_from, self.phone_number)
@@ -122,7 +118,7 @@ class MessageLog(SafeSaveDocument, UnicodeMixIn):
     @property
     def recipient(self):
         if self.couch_recipient_doc_type == "CommCareCase":
-            return CommConnectCase.get(self.couch_recipient)
+            return CommCareCase.get(self.couch_recipient)
         else:
             return CouchUser.get_by_user_id(self.couch_recipient)
     
@@ -262,6 +258,7 @@ class SMSLog(MessageLog):
 
 
 class Log(models.Model):
+
     class Meta:
         abstract = True
         app_label = "sms"
@@ -344,7 +341,7 @@ class Log(models.Model):
     @property
     def recipient(self):
         if self.couch_recipient_doc_type == 'CommCareCase':
-            return CommConnectCase.get(self.couch_recipient)
+            return CaseAccessors(self.domain).get_case(self.couch_recipient)
         else:
             return CouchUser.get_by_user_id(self.couch_recipient)
 
@@ -447,6 +444,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
 
 
 class SMS(SMSBase):
+
     def to_json(self):
         from corehq.apps.sms.serializers import SMSSerializer
         data = SMSSerializer(self).data
@@ -458,6 +456,7 @@ class SMS(SMSBase):
 
 
 class QueuedSMS(SMSBase):
+
     class Meta:
         db_table = 'sms_queued'
 
@@ -514,6 +513,7 @@ class LastReadMessage(Document, CouchDocLockableMixIn):
 
 
 class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
+
     class Meta:
         db_table = 'sms_lastreadmessage'
         app_label = 'sms'
@@ -661,6 +661,7 @@ class ExpectedCallbackEventLog(EventLog):
 
 
 class ExpectedCallback(UUIDGeneratorMixin, models.Model):
+
     class Meta:
         app_label = 'sms'
         index_together = [
@@ -717,70 +718,16 @@ class ForwardingRule(Document):
         self.save()
 
 
-class CommConnectCase(CommCareCase, CommCareMobileContactMixin):
-
-    def get_phone_info(self):
-        PhoneInfo = namedtuple(
-            'PhoneInfo',
-            [
-                'requires_entry',
-                'phone_number',
-                'sms_backend_id',
-                'ivr_backend_id',
-            ]
-        )
-        contact_phone_number = self.get_case_property('contact_phone_number')
-        contact_phone_number = apply_leniency(contact_phone_number)
-        contact_phone_number_is_verified = self.get_case_property('contact_phone_number_is_verified')
-        contact_backend_id = self.get_case_property('contact_backend_id')
-        contact_ivr_backend_id = self.get_case_property('contact_ivr_backend_id')
-
-        requires_entry = (
-            contact_phone_number and
-            contact_phone_number != '0' and
-            not self.closed and
-            not self.doc_type.endswith(DELETED_SUFFIX) and
-            # For legacy reasons, any truthy value here suffices
-            contact_phone_number_is_verified
-        )
-        return PhoneInfo(
-            requires_entry,
-            contact_phone_number,
-            contact_backend_id,
-            contact_ivr_backend_id
-        )
-
-    def get_time_zone(self):
-        return self.get_case_property("time_zone")
-
-    def get_language_code(self):
-        return self.get_case_property("language_code")
-
-    def get_email(self):
-        return self.get_case_property('commcare_email_address')
-
-    @property
-    def raw_username(self):
-        return self.get_case_property("name")
-
-    @classmethod
-    def wrap_as_commconnect_case(cls, case):
-        """
-        Takes a CommCareCase and wraps it as a CommConnectCase.
-        """
-        return CommConnectCase.wrap(case.to_json())
-
-    class Meta:
-        # This is necessary otherwise couchdbkit will confuse the sms app with casexml
-        app_label = "sms"
-
-
 class PhoneBlacklist(models.Model):
     """
     Each entry represents a single phone number and whether we can send SMS
     to that number or make calls to that number.
     """
 
+    # This is the domain that the phone number belonged to the last time an opt in
+    # or opt out operation happened. Can be null if the phone number didn't belong
+    # to any domain.
+    domain = models.CharField(max_length=126, null=True, db_index=True)
     phone_number = models.CharField(max_length=30, unique=True, null=False, db_index=True)
 
     # True if it's ok to send SMS to this phone number, False if not
@@ -792,6 +739,9 @@ class PhoneBlacklist(models.Model):
 
     # True to allow this phone number to opt back in, False if not
     can_opt_in = models.BooleanField(null=False, default=True)
+
+    last_sms_opt_in_timestamp = models.DateTimeField(null=True)
+    last_sms_opt_out_timestamp = models.DateTimeField(null=True)
 
     class Meta:
         app_label = 'sms'
@@ -828,7 +778,7 @@ class PhoneBlacklist(models.Model):
             return True
 
     @classmethod
-    def opt_in_sms(cls, phone_number):
+    def opt_in_sms(cls, phone_number, domain=None):
         """
         Opts a phone number in to receive SMS.
         Returns True if the number was actually opted-in, False if not.
@@ -836,7 +786,9 @@ class PhoneBlacklist(models.Model):
         try:
             phone_obj = cls.get_by_phone_number(phone_number)
             if phone_obj.can_opt_in:
+                phone_obj.domain = domain
                 phone_obj.send_sms = True
+                phone_obj.last_sms_opt_in_timestamp = datetime.utcnow()
                 phone_obj.save()
                 return True
         except cls.DoesNotExist:
@@ -844,14 +796,16 @@ class PhoneBlacklist(models.Model):
         return False
 
     @classmethod
-    def opt_out_sms(cls, phone_number):
+    def opt_out_sms(cls, phone_number, domain=None):
         """
         Opts a phone number out from receiving SMS.
         Returns True if the number was actually opted-out, False if not.
         """
         phone_obj = cls.get_or_create(phone_number)[0]
         if phone_obj:
+            phone_obj.domain = domain
             phone_obj.send_sms = False
+            phone_obj.last_sms_opt_out_timestamp = datetime.utcnow()
             phone_obj.save()
             return True
         return False
@@ -877,6 +831,170 @@ class PhoneNumber(SyncSQLToCouchMixin, models.Model):
     ivr_backend_id = models.CharField(max_length=126, null=True)
     verified = models.NullBooleanField(default=False)
     contact_last_modified = models.DateTimeField(null=True)
+
+    def __init__(self, *args, **kwargs):
+        super(PhoneNumber, self).__init__(*args, **kwargs)
+        self._old_phone_number = self.phone_number
+        self._old_owner_id = self.owner_id
+
+    def __repr__(self):
+        return '{phone} in {domain} (owned by {owner})'.format(
+            phone=self.phone_number, domain=self.domain,
+            owner=self.owner_id
+        )
+
+    @property
+    def backend(self):
+        from corehq.apps.sms.util import clean_phone_number
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, basestring) else None
+        if backend_id:
+            return SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                self.domain,
+                backend_id
+            )
+        else:
+            return SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                clean_phone_number(self.phone_number),
+                domain=self.domain
+            )
+
+    @property
+    def owner(self):
+        if self.owner_doc_type == 'CommCareCase':
+            from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+            return CaseAccessors(self.domain).get_case(self.owner_id)
+        elif self.owner_doc_type == 'CommCareUser':
+            from corehq.apps.users.models import CommCareUser
+            return CommCareUser.get(self.owner_id)
+        elif self.owner_doc_type == 'WebUser':
+            from corehq.apps.users.models import WebUser
+            return WebUser.get(self.owner_id)
+        else:
+            return None
+
+    def retire(self):
+        self.delete()
+
+    @classmethod
+    def by_extensive_search(cls, phone_number):
+        # Try to look up the verified number entry directly
+        v = cls.by_phone(phone_number)
+
+        # If not found, try to see if any number in the database is a substring
+        # of the number given to us. This can happen if the telco prepends some
+        # international digits, such as 011...
+        if v is None:
+            v = cls.by_phone(phone_number[1:])
+        if v is None:
+            v = cls.by_phone(phone_number[2:])
+        if v is None:
+            v = cls.by_phone(phone_number[3:])
+
+        # If still not found, try to match only the last digits of numbers in
+        # the database. This can happen if the telco removes the country code
+        # in the caller id.
+        if v is None:
+            v = cls.by_suffix(phone_number)
+
+        return v
+
+    @classmethod
+    def by_phone(cls, phone_number, include_pending=False):
+        result = cls._by_phone(apply_leniency(phone_number))
+        return cls._filter_pending(result, include_pending)
+
+    @classmethod
+    def by_suffix(cls, phone_number, include_pending=False):
+        """
+        Used to lookup a VerifiedNumber, trying to exclude country code digits.
+        """
+        result = cls._by_suffix(apply_leniency(phone_number))
+        return cls._filter_pending(result, include_pending)
+
+    @classmethod
+    @quickcache(['phone_number'], timeout=60 * 60)
+    def _by_phone(cls, phone_number):
+        try:
+            return cls.objects.get(phone_number=phone_number)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def _by_suffix(cls, phone_number):
+        # Decided not to cache this method since in order to clear the cache
+        # we'd have to clear using all suffixes of a number (which would involve
+        # up to ~10 cache clear calls on each save). Since this method is used so
+        # infrequently, it's better to not cache vs. clear so many keys on each
+        # save. Once all of our IVR gateways provide reliable caller id info,
+        # we can also remove this method.
+        try:
+            return cls.objects.get(phone_number__endswith=phone_number)
+        except cls.DoesNotExist:
+            return None
+        except cls.MultipleObjectsReturned:
+            return None
+
+    @classmethod
+    def _filter_pending(cls, v, include_pending):
+        if v:
+            if include_pending:
+                return v
+            elif v.verified:
+                return v
+
+        return None
+
+    @classmethod
+    def by_domain(cls, domain, ids_only=False):
+        qs = cls.objects.filter(domain=domain)
+        if ids_only:
+            return qs.values_list('couch_id', flat=True)
+        else:
+            return qs
+
+    @classmethod
+    def count_by_domain(cls, domain):
+        return cls.by_domain(domain).count()
+
+    @classmethod
+    @quickcache(['owner_id'], timeout=60 * 60)
+    def by_owner_id(cls, owner_id):
+        """
+        Returns all phone numbers belonging to the given contact.
+        """
+        return cls.objects.filter(owner_id=owner_id)
+
+    @classmethod
+    def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
+        cls.by_owner_id.clear(cls, owner_id)
+
+        if old_owner_id and old_owner_id != owner_id:
+            cls.by_owner_id.clear(cls, old_owner_id)
+
+        cls._by_phone.clear(cls, phone_number)
+
+        if old_phone_number and old_phone_number != phone_number:
+            cls._by_phone.clear(cls, old_phone_number)
+
+    def _clear_caches(self):
+        self._clear_quickcaches(
+            self.owner_id,
+            self.phone_number,
+            old_owner_id=self._old_owner_id,
+            old_phone_number=self._old_phone_number
+        )
+
+    def save(self, *args, **kwargs):
+        self._clear_caches()
+        self._old_phone_number = self.phone_number
+        self._old_owner_id = self.owner_id
+        return super(PhoneNumber, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self._clear_caches()
+        return super(PhoneNumber, self).delete(*args, **kwargs)
 
     @classmethod
     def _migration_get_fields(cls):
@@ -1202,7 +1320,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_type=MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type),
             recipient_id=recipient_id,
             content_type=MessagingEvent.CONTENT_SMS,
-            case_id=case.get_id if case else None,
+            case_id=case.case_id if case else None,
             status=(MessagingEvent.STATUS_COMPLETED
                     if completed
                     else MessagingEvent.STATUS_IN_PROGRESS),
@@ -1506,7 +1624,6 @@ class SelfRegistrationInvitation(models.Model):
 
     def send_step2_android_sms(self):
         from corehq.apps.sms.api import send_sms
-        from corehq.apps.sms.views import InvitationAppInfoView
         from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
 
         registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
@@ -1656,6 +1773,7 @@ class SelfRegistrationInvitation(models.Model):
 
 
 class ActiveMobileBackendManager(models.Manager):
+
     def get_queryset(self):
         return super(ActiveMobileBackendManager, self).get_queryset().filter(deleted=False)
 
@@ -2152,6 +2270,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
 
 
 class SQLSMSBackend(SQLMobileBackend):
+
     class Meta:
         proxy = True
         app_label = 'sms'
@@ -2226,6 +2345,7 @@ class PhoneLoadBalancingMixin(object):
 
 
 class BackendMap(object):
+
     def __init__(self, catchall_backend_id, backend_map):
         """
         catchall_backend_id - the pk of the backend that is the default if
@@ -2350,6 +2470,7 @@ class SQLMobileBackendMapping(models.Model):
 
 
 class MobileBackendInvitation(models.Model):
+
     class Meta:
         db_table = 'messaging_mobilebackendinvitation'
         app_label = 'sms'
@@ -2373,6 +2494,7 @@ class MigrationStatus(models.Model):
     MIGRATION_BACKEND_MAP = 'backend_map'
     MIGRATION_DOMAIN_DEFAULT_BACKEND = 'domain_default_backend'
     MIGRATION_LOGS = 'logs'
+    MIGRATION_PHONE_NUMBERS = 'phone_numbers'
 
     class Meta:
         db_table = 'messaging_migrationstatus'

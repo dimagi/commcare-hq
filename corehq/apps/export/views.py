@@ -76,6 +76,7 @@ from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_select2,
     use_daterangepicker,
+    use_jquery_ui,
     use_angular_js)
 from corehq.apps.style.forms.widgets import DateRangePickerWidget
 from corehq.apps.style.utils import format_angular_error, format_angular_success
@@ -147,9 +148,14 @@ class ExportsPermissionsMixin(object):
 
 
 class BaseExportView(BaseProjectDataView):
-    template_name = 'export/customize_export.html'
+    template_name = 'export/customize_export_old.html'
     export_type = None
     is_async = True
+
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, *args, **kwargs):
+        return super(BaseExportView, self).dispatch(*args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -472,7 +478,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     @property
     @memoized
     def default_datespan(self):
-        return datespan_from_beginning(self.domain, self.timezone)
+        return datespan_from_beginning(self.domain_object, self.timezone)
 
     @property
     def page_context(self):
@@ -913,9 +919,9 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         return {
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
-            'legacy_bulk_download_url': self.legacy_bulk_download_url if not self.is_deid else None,
-            'bulk_download_url': self.bulk_download_url if not self.is_deid else None,
-            'allow_bulk_export': self.allow_bulk_export if not self.is_deid else False,
+            'legacy_bulk_download_url': self.legacy_bulk_download_url,
+            'bulk_download_url': self.bulk_download_url,
+            'allow_bulk_export': self.allow_bulk_export,
             'has_edit_permissions': self.has_edit_permissions,
             'is_deid': self.is_deid,
         }
@@ -988,13 +994,18 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         }
 
     def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
-                                has_file=False, saved_basic_export=None):
+                                has_file=False, saved_basic_export=None, is_safe=False):
         """
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to an Angular controller.
         """
         file_data = {}
         if has_file:
+            if is_safe:
+                saved_download_url = 'hq_deid_download_saved_export'
+            else:
+                saved_download_url = 'hq_download_saved_export'
+
             file_data = self._fmt_emailed_export_fileData(
                 has_file,
                 saved_basic_export.get_id,
@@ -1002,7 +1013,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
                 saved_basic_export.last_updated,
                 saved_basic_export.last_accessed,
                 '{}?group_export_id={}'.format(
-                    reverse('hq_download_saved_export', args=[
+                    reverse(saved_download_url, args=[
                         self.domain, saved_basic_export.get_id
                     ]),
                     group_id
@@ -1052,7 +1063,8 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             group_id=emailed_export.group_id,
             index=emailed_export.config.index,
             has_file=emailed_export.saved_version is not None and emailed_export.saved_version.has_file(),
-            saved_basic_export=emailed_export.saved_version
+            saved_basic_export=emailed_export.saved_version,
+            is_safe=export.is_safe,
         )
 
     def _get_daily_saved_export_metadata(self, export):
@@ -1253,7 +1265,6 @@ class FormExportListView(BaseExportListView):
             view_cls = DownloadNewFormExportView
         return reverse(view_cls.urlname, args=(self.domain, export_id))
 
-
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
         if self.is_deid:
@@ -1401,7 +1412,12 @@ class CaseExportListView(BaseExportListView):
 
 
 class BaseNewExportView(BaseExportView):
-    template_name = 'export/new_customize_export.html'
+    template_name = 'export/customize_export_new.html'
+
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
 
     @property
     def export_instance_cls(self):

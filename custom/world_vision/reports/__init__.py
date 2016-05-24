@@ -1,5 +1,12 @@
 import datetime
-from corehq.apps.reports.graph_models import MultiBarChart, Axis, PieChart
+from collections import OrderedDict
+
+from django.http import HttpResponse
+
+from corehq.apps.reports.cache import request_cache
+from corehq.apps.reports.graph_models import MultiBarChart, Axis
+from corehq.apps.style.decorators import use_nvd3
+from custom.world_vision.charts import WVPieChart as PieChart
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport
 from custom.world_vision.sqldata import LOCATION_HIERARCHY
@@ -19,6 +26,10 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
     export_format_override = 'csv'
     printable = True
 
+    @use_nvd3
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        super(TTCReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+
     @property
     @memoized
     def rendered_report_title(self):
@@ -31,8 +42,11 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
 
     @property
     def report_context(self):
+        reports = OrderedDict()
+        for dp in self.data_providers:
+            reports[dp.slug] = self.get_report_context(dp)
         context = {
-            'reports': [self.get_report_context(dp) for dp in self.data_providers],
+            'reports': reports,
             'title': "%s (%s-%s)" % (self.title, self.report_config.get('strsd', '-'),
                                      self.report_config.get('stred', '-'))
         }
@@ -244,3 +258,32 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
     @property
     def email_response(self):
         return super(TTCReport, self).email_response
+
+    @property
+    @request_cache()
+    def print_response(self):
+        """
+        Returns the report for printing.
+        """
+        self.is_rendered_as_email = True
+        self.use_datatables = False
+        self.override_template = "world_vision/print_report.html"
+        return HttpResponse(self._async_context()['report'])
+
+
+class AccordionTTCReport(TTCReport):
+    report_template_path = 'world_vision/accordion_report.html'
+
+    @property
+    def report_context(self):
+        reports = []
+        for dp_list in self.data_providers:
+            helper_list = []
+            for dp in dp_list:
+                helper_list.append(self.get_report_context(dp))
+            reports.append(helper_list)
+        return {
+            'reports': reports,
+            'title': "%s (%s-%s)" % (self.title, self.report_config.get('strsd', '-'),
+                                     self.report_config.get('stred', '-'))
+        }

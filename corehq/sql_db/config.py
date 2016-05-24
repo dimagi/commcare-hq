@@ -14,6 +14,7 @@ SHARD_OPTION_TEMPLATE = "p{id} 'dbname={dbname} host={host} port={port}'"
 
 
 class LooslyEqualJsonObject(object):
+
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self._obj == other._obj
@@ -36,19 +37,13 @@ class ShardMeta(JsonObject, LooslyEqualJsonObject):
 
 
 class DbShard(object):
+
     def __init__(self, shard_id, django_dbname):
         self.shard_id = shard_id
         self.django_dbname = django_dbname
 
-    def get_db_config(self):
-        from django.db.backends.creation import TEST_DATABASE_PREFIX
-        db_config = settings.DATABASES[self.django_dbname].copy()
-        if settings.UNIT_TESTING:
-            db_config['NAME'] = TEST_DATABASE_PREFIX + db_config['NAME']
-        return db_config
-
     def to_shard_meta(self, host_map):
-        config = self.get_db_config()
+        config = settings.DATABASES[self.django_dbname]
         host = host_map.get(config['HOST'], config['HOST'])
         return ShardMeta(
             id=self.shard_id,

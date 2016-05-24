@@ -1,7 +1,7 @@
 """
 This file is meant to be used in the following manner:
 
-$ python make_rebuild_staging.py < staging.yaml [-v] [--no-push] [fetch] [sync] [rebuild]
+$ python rebuildstaging.py < staging.yaml [-v] [--no-push] [fetch] [sync] [rebuild]
 
 Where staging.yaml looks as follows:
 
@@ -34,11 +34,12 @@ import sys
 import contextlib
 import gevent
 
+from fabric.colors import red
 from sh_verbose import ShVerbose
 from gitutils import (
     OriginalBranch,
     get_git,
-    git_check_merge,
+    has_merge_conflict,
     print_merge_details,
 )
 
@@ -235,11 +236,26 @@ def rebuild_staging(config, print_details=True, push=True):
             )
             git = get_git(cwd)
             if print_details:
-                print_merge_details(branch, config.name, git,
-                                    known_branches=config.branches)
+                print_conflicts(branch, config, git)
 
     if merge_conflicts or not_found:
         exit(1)
+
+
+def print_conflicts(branch, config, git):
+    if has_merge_conflict(branch, config.trunk, git):
+        print red("{} conflicts with {}".format(branch, config.trunk))
+        return
+
+    conflict_found = False
+    for other_branch in config.branches:
+        if has_merge_conflict(branch, other_branch, git):
+            print red("{} conflicts with {}".format(branch, other_branch))
+            conflict_found = True
+
+    if not conflict_found:
+        print_merge_details(branch, config.name, git,
+                            known_branches=config.branches)
 
 
 def force_push(git, branch):

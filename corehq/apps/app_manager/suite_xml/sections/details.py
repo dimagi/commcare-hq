@@ -33,7 +33,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Xpath,
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
-from corehq.apps.app_manager.util import create_temp_sort_column
+from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import session_var, XPath
@@ -42,6 +42,10 @@ from dimagi.utils.decorators.memoized import memoized
 
 class DetailContributor(SectionContributor):
     section_name = 'details'
+
+    def __init__(self, suite, app, modules, build_profile_id=None):
+        super(DetailContributor, self).__init__(suite, app, modules)
+        self.build_profile_id = build_profile_id
 
     def get_section_elements(self):
         r = []
@@ -62,7 +66,8 @@ class DetailContributor(SectionContributor):
                             )
                             if detail_column_infos:
                                 if detail.use_case_tiles:
-                                    helper = CaseTileHelper(self.app, module, detail, detail_type)
+                                    helper = CaseTileHelper(self.app, module, detail,
+                                                            detail_type, self.build_profile_id)
                                     r.append(helper.build_case_tile_detail())
                                 else:
                                     d = self.build_detail(
@@ -147,7 +152,9 @@ class DetailContributor(SectionContributor):
                     and not module.put_in_root:
                 target_form = self.app.get_form(module.case_list_form.form_id)
                 if target_form.is_registration_form(module.case_type):
-                    self._add_action_to_detail(d, module)
+                    self._add_reg_form_action_to_detail(d, module)
+            if module_offers_search(module) and detail_type.endswith('short') and not module.put_in_root:
+                self._add_case_search_action_to_detail(d, module)
 
             try:
                 if not self.app.enable_multi_sort:
@@ -167,8 +174,8 @@ class DetailContributor(SectionContributor):
             responses=[Response(**r) for r in detail.lookup_responses],
         )
 
-    def _add_action_to_detail(self, detail, module):
-        # add form action to detail
+    def _add_reg_form_action_to_detail(self, detail, module):
+        # add registration form action to detail
         form = self.app.get_form(module.case_list_form.form_id)
 
         if self.app.enable_localized_menu_media:
@@ -228,6 +235,18 @@ class DetailContributor(SectionContributor):
         detail.action.stack.add_frame(frame)
 
     @staticmethod
+    def _add_case_search_action_to_detail(detail, module):
+        detail.action = Action(
+            display=Display(
+                text=Text(locale_id=id_strings.case_search_locale(module))
+            ),
+            stack=Stack()
+        )
+        frame = PushFrame()
+        frame.add_command(XPath.string(id_strings.search_command(module)))
+        detail.action.stack.add_frame(frame)
+
+    @staticmethod
     def _get_persistent_case_context_detail(module):
         return Detail(
             id=id_strings.persistent_case_context_detail(module),
@@ -266,6 +285,7 @@ class DetailContributor(SectionContributor):
 
 
 class DetailsHelper(object):
+
     def __init__(self, app, modules=None):
         self.app = app
         self._modules = modules
@@ -382,12 +402,13 @@ def get_instances_for_module(app, module, additional_xpaths=None):
 class CaseTileHelper(object):
     tile_fields = ["header", "top_left", "sex", "bottom_left", "date"]
 
-    def __init__(self, app, module, detail, detail_type):
+    def __init__(self, app, module, detail, detail_type, build_profile_id):
         self.app = app
         self.module = module
         self.detail = detail
         self.detail_type = detail_type
         self.cols_by_tile_field = {col.case_tile_field: col for col in self.detail.columns}
+        self.build_profile_id = build_profile_id
 
     def build_case_tile_detail(self):
         """
@@ -434,6 +455,8 @@ class CaseTileHelper(object):
 
     def _get_column_context(self, column):
         from corehq.apps.app_manager.detail_screen import get_column_generator
+        default_lang = self.app.default_language if not self.build_profile_id \
+            else self.app.build_profiles[self.build_profile_id].langs[0]
         context = {
             "xpath_function": escape(get_column_generator(
                 self.app, self.module, self.detail, column).xpath_function,
@@ -444,7 +467,7 @@ class CaseTileHelper(object):
             # Just using default language for now
             # The right thing to do would be to reference the app_strings.txt I think
             "prefix": escape(
-                column.header.get(self.app.default_language, "")
+                column.header.get(default_lang, "")
             )
         }
         if column.format == "enum":

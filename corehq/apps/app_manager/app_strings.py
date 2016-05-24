@@ -1,7 +1,7 @@
 import functools
 from corehq.apps.app_manager import id_strings
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.app_manager.util import is_sort_only_column
+from corehq.apps.app_manager.util import is_sort_only_column, module_offers_search
 import langcodes
 import commcare_translations
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
@@ -92,7 +92,7 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 yield id_strings.report_command(config.uuid), trans(config.header)
                 yield id_strings.report_name(config.uuid), trans(config.header)
                 yield id_strings.report_description(config.uuid), trans(config.localized_description)
-                for column in config.report.report_columns:
+                for column in config.report(app.domain).report_columns:
                     yield (
                         id_strings.report_column_header(config.uuid, column.column_id),
                         column.get_header(lang)
@@ -107,6 +107,12 @@ def _create_custom_app_strings(app, lang, for_default=False):
                     yield id_strings.case_list_icon_locale(module), icon
                 if audio:
                     yield id_strings.case_list_audio_locale(module), audio
+
+        if module_offers_search(module):
+            yield id_strings.case_search_locale(module), trans(module.search_config.command_label)
+            # icon and audio not yet available
+            for prop in module.search_config.properties:
+                yield id_strings.search_property_locale(module, prop.name), trans(prop.label)
 
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:
@@ -159,10 +165,11 @@ class AppStringsBase(object):
     def app_strings_parts(self, app, lang, for_default=False):
         raise NotImplementedError()
 
-    def create_default_app_strings(self, app):
+    def create_default_app_strings(self, app, build_profile_id=None):
         messages = {}
 
-        for lc in reversed(app.langs):
+        langs = app.get_build_langs(build_profile_id)
+        for lc in reversed(langs):
             if lc == "default":
                 continue
             new_messages = commcare_translations.loads(

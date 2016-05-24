@@ -15,11 +15,14 @@ from corehq.apps.sms.views import (
     SMSLanguagesView,
     ChatMessageHistory,
     ChatLastReadMessage,
-    ChatOverSMSView
+    ChatOverSMSView,
+    ListForwardingRulesView,
+    AddForwardingRuleView,
+    EditForwardingRuleView,
+    TestSMSMessageView,
 )
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.messaging.smsbackends.telerivet.urls import domain_specific as telerivet_urls
-
 
 
 urlpatterns = patterns('corehq.apps.sms.views',
@@ -27,11 +30,15 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^post/?$', 'post', name='sms_post'),
     url(r'^send_to_recipients/$', 'send_to_recipients', name='send_to_recipients'),
     url(r'^compose/$', ComposeMessageView.as_view(), name=ComposeMessageView.urlname),
-    url(r'^message_test/(?P<phone_number>\d+)/$', 'message_test', name='message_test'),
+    url(r'^message_test/(?P<phone_number>\d+)/$',
+        TestSMSMessageView.as_view(), name=TestSMSMessageView.urlname),
     url(r'^api/send_sms/$', 'api_send_sms', name='api_send_sms'),
-    url(r'^forwarding_rules/$', 'list_forwarding_rules', name='list_forwarding_rules'),
-    url(r'^add_forwarding_rule/$', 'add_forwarding_rule', name='add_forwarding_rule'),
-    url(r'^edit_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'add_forwarding_rule', name='edit_forwarding_rule'),
+    url(r'^forwarding_rules/$', ListForwardingRulesView.as_view(),
+        name=ListForwardingRulesView.urlname),
+    url(r'^add_forwarding_rule/$', AddForwardingRuleView.as_view(),
+        name=AddForwardingRuleView.urlname),
+    url(r'^edit_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$',
+        EditForwardingRuleView.as_view(), name=EditForwardingRuleView.urlname),
     url(r'^delete_forwarding_rule/(?P<forwarding_rule_id>[\w-]+)/$', 'delete_forwarding_rule', name='delete_forwarding_rule'),
     url(r'^add_gateway/(?P<hq_api_id>[\w-]+)/$',
         AddDomainGatewayView.as_view(), name=AddDomainGatewayView.urlname

@@ -14,32 +14,16 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicChe
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.pillows.case import CASE_ES_TYPE, CasePillow
-from corehq.pillows.const import CASE_SEARCH_ALIAS
+from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
-    CASE_SEARCH_MAPPING
+    CASE_SEARCH_MAPPING, CASE_SEARCH_INDEX_INFO
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.es_utils import ElasticsearchIndexInfo
+from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
 from pillowtop.reindexer.reindexer import PillowReindexer
-
-
-class CaseSearchPillow(CasePillow):
-    # TODO: Remove this once elasticsearch gets bootstrapped with new pillows
-    # (Used in order to set up index)
-    """
-    Nested case properties indexer.
-    """
-    es_alias = CASE_SEARCH_ALIAS
-
-    es_index = CASE_SEARCH_INDEX
-    default_mapping = CASE_SEARCH_MAPPING
-
-    def run(self, changes_dict):
-        return
 
 
 def transform_case_for_elasticsearch(doc_dict):
@@ -72,7 +56,8 @@ def _get_case_properties(doc_dict):
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
+
+    def process_change(self, pillow_instance, change):
         assert isinstance(change, Change)
         if change.metadata is not None:
             # Comes from KafkaChangeFeed (i.e. running pillowtop)
@@ -81,9 +66,7 @@ class CaseSearchPillowProcessor(ElasticProcessor):
             # comes from ChangeProvider (i.e reindexing)
             domain = change.get_document()['domain']
         if domain and case_search_enabled_for_domain(domain):
-            super(CaseSearchPillowProcessor, self).process_change(
-                pillow_instance, change, do_set_checkpoint
-            )
+            super(CaseSearchPillowProcessor, self).process_change(pillow_instance, change)
 
 
 def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow'):
@@ -92,7 +75,7 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
     )
     case_processor = CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
-        index_info=ElasticsearchIndexInfo(index=CASE_SEARCH_INDEX, type=CASE_ES_TYPE),
+        index_info=CASE_SEARCH_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
     change_feed = KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='cases-to-es')
@@ -117,6 +100,7 @@ def _fail_gracefully_and_tell_admins():
     class FakeReindexer(object):
         """Used so that the ptop_preindex command completes successfully
         """
+
         def reindex(self):
             pass
 
@@ -127,7 +111,7 @@ def get_case_search_reindexer(domain=None):
     """Returns a reindexer that will return either all domains with case search
     enabled, or a single domain if passed in
     """
-    CaseSearchPillow()          # TODO: remove this
+    initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
     try:
         if domain is not None:
             if not case_search_enabled_for_domain(domain):

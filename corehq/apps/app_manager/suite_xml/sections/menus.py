@@ -12,6 +12,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class MenuContributor(SuiteContributorByModule):
+
     def get_module_contributions(self, module):
         def get_commands():
             @memoized

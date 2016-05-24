@@ -21,6 +21,7 @@ def get_seconds(d):
 
 
 class CHWPatientSchedule(object):
+
     def __init__(self, username, intervaltrees, raw_schedule):
         self.username = username
         self.intervals = intervaltrees
@@ -42,7 +43,6 @@ class CHWPatientSchedule(object):
         day_tree.intersect(get_seconds(date_val) - .1, get_seconds(date_val),
                            lambda x: results.append(x.other))
         return results
-
 
     @classmethod
     def get_schedule(cls, chw_username, override_date=None):
@@ -92,7 +92,6 @@ class CHWPatientSchedule(object):
             daytree.insert(get_seconds(startdate), get_seconds(enddate), other=case_id)
             day_intervaltree[day_of_week] = daytree
         return cls(chw_username, day_intervaltree, cached_arr)
-
 
 
 def dots_submissions_by_case(case_id, query_date, username=None):
@@ -146,7 +145,6 @@ def get_schedule_tally(username, total_interval, override_date=None):
     else:
         nowdate = override_date
         chw_schedule = CHWPatientSchedule.get_schedule(username, override_date=nowdate)
-
 
     patient_case_ids = set([x['case_id'] for x in chw_schedule.raw_schedule])
     patient_cache = get_patient_display_cache(list(patient_case_ids))

@@ -7,6 +7,7 @@ from corehq.apps.tzmigration.models import MigrationStatus
 
 
 class TimezoneMigrationProgressTest(TestCase):
+
     def test_not_started(self):
         self.assertFalse(get_migration_complete('red'))
         self.assertEqual(get_migration_status('red'),

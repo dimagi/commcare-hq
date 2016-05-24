@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.messaging.smsbackends.sislog.util import convert_raw_string
 
+
 def sms_in(request):
     """
     sender - the number of the person sending the sms

@@ -45,26 +45,22 @@
 trunk: master
 name: autostaging
 branches:
-  - calculatedIcons # Sravan 3/2
   - vellum-staging # J$ 11/13
-  - show-form-case-refs-in-summary # j$ 1/29
-#  - revamp-multimedia # Jenny 2/16
-  - j2me # j$ 2/23
-  # B3 Report Migration branches
-  - b3-data-import-cases  # BB 2/23
-  - certificate-validation # Cal 3/10
-  - knockout-3-3 # Jenny 3/30
-  - inline-editing # Jenny 4/9
-  - edit-form-fix # wsp 4/7
-  - uatbc/case-search-es         # FR 4/12
-  - app-multimedia-blobs # daniel 4/20
-  - captain  # Ben 4/20
+  #- lang-profiles+revamp-multimedia # Jenny 5/13
+  #- revamp-multimedia # Jenny 2/16
+  - app-blobs-testing+lang-profiles # Cal 5/4
+  - app-blobs-testing # daniel 4/20
+  - lang-profiles  # Cal 5/4
+  - b3-groups  # Biyeun 4/26
+  - notifications-perms-change # j$ 5/11
+  - calculatedIcons # Sravan 3/2
+  - check-services  # Ethan 5/19
+  - xform-blobs  # daniel 5/23
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - edit-form-fix # wsp 4/7
+    branches: []
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master

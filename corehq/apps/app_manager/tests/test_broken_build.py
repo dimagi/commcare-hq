@@ -7,6 +7,7 @@ from corehq.apps.app_manager.tests.util import add_build
 
 
 class BrokenBuildTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         domain = 'apptest'
@@ -37,9 +38,9 @@ class BrokenBuildTest(TestCase):
         self.assertEqual(self.build.build_broken, False)
 
         # delete the file and do it again, and assert the build is broken
-        self.assertIn('files/suite.xml', self.build._attachments)
+        self.assertIn('files/suite.xml', self.build.blobs)
         self.build.delete_attachment('files/suite.xml')
-        self.assertNotIn('files/suite.xml', self.build._attachments)
+        self.assertNotIn('files/suite.xml', self.build.blobs)
 
         self.build = Application.get(self.build.get_id)
         response = client.get(url)

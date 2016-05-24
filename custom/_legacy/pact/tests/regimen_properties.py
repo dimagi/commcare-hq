@@ -4,7 +4,9 @@ from pact.regimen import regimen_dict_from_choice, regimen_string_from_doc
 
 art_nonart = [DOT_ART, DOT_NONART]
 
+
 class RegimenPropertiesTests(TestCase):
+
     def testStringToDictRegimensNum(self):
         #assure that all frequencies line up ok
         for freq in range(1,5):
@@ -44,7 +46,6 @@ class RegimenPropertiesTests(TestCase):
 
         qd_ret = regimen_dict_from_choice(DOT_ART, qd_eve)
         self.assertEquals(qd_ret, {'dot_a_one': '2', 'dot_a_four': '', 'dot_a_two': '', 'artregimen': '1', 'dot_a_three': ''})
-
 
     def testStringFromRegimenProps(self):
         """

@@ -1,8 +1,8 @@
-{% extends 'reports/async/bootstrap2/basic.html' %}
+{% extends 'reports/async/basic.html' %}
 {% load report_tags %}
 {% load i18n %}
 
-{% block main_column %}
+{% block page_content %}
     {% include 'importer/partials/help_message.html' %}
 
     <form class="form-horizontal form-report"
@@ -15,17 +15,20 @@
                 {% trans "Upload an Excel File From Your Computer to Import From" %}
             </legend>
 
-            <div class="control-group">
-                <label class="control-label" for="file">
+            <div class="form-group">
+                <label class="control-label col-sm-3" for="file">
                     {% trans "Select a file to upload" %}
                 </label>
-                <div class="controls">
-                    <input class="input-small" name="file" id="file" type="file" />
+                <div class="col-sm-6">
+                    <input class="form-control" name="file" id="file" type="file" />
                 </div>
             </div>
 
-            <div class="control-group">
-                <div class="controls">
+            <div class="form-group">
+                <label class="control-label col-sm-3">
+                    {% trans "File to Upload" %}
+                </label>
+                <div class="col-sm-6">
                     <label class="checkbox" for="named_columns">
                         <input type="checkbox"
                                id="named_columns"
@@ -38,9 +41,11 @@
         </fieldset>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                <i class="icon-forward icon-white"></i> {% trans "Next step" %}
-            </button>
+            <div class="col-sm-offset-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-forward"></i> {% trans "Next step" %}
+                </button>
+            </div>
         </div>
     </form>
 {% endblock %}

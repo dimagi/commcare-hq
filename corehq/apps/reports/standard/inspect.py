@@ -30,7 +30,6 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     ajax_pagination = True
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
-    is_bootstrap3 = True
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
@@ -72,7 +71,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
     @property
     def default_datespan(self):
-        return datespan_from_beginning(self.domain, self.timezone)
+        return datespan_from_beginning(self.domain_object, self.timezone)
 
     def _es_extra_filters(self):
         if FormsByApplicationFilter.has_selections(self.request):
@@ -173,7 +172,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
 
 class SubmitHistory(SubmitHistoryMixin, ProjectReport):
-    is_bootstrap3 = True
 
     @property
     def show_extra_columns(self):

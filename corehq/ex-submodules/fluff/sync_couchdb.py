@@ -11,6 +11,7 @@ from pillowtop.utils import get_all_pillow_classes
 
 
 class FluffPreindexPlugin(PreindexPlugin):
+
     def __init__(self, app_label, file):
         self.app_label = app_label
         self.dir = os.path.abspath(os.path.dirname(file))

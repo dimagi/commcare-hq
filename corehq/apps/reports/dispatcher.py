@@ -11,7 +11,7 @@ from django_prbac.utils import has_privilege
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.exceptions import BadRequestError
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 
@@ -22,6 +22,7 @@ datespan_default = datespan_in_request(
 )
 
 _ = lambda message: ugettext(message) if message is not None else None
+
 
 class ReportDispatcher(View):
     """
@@ -138,10 +139,9 @@ class ReportDispatcher(View):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:
-                if report.is_bootstrap3:
-                    report.bootstrap3_dispatcher(
-                        request, domain=domain, report_slug=report_slug, *args, **kwargs
-                    )
+                report.bootstrap3_dispatcher(
+                    request, domain=domain, report_slug=report_slug, *args, **kwargs
+                )
                 return getattr(report, '%s_response' % render_as)
             except BadRequestError, e:
                 return HttpResponseBadRequest(e)

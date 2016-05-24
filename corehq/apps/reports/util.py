@@ -11,11 +11,7 @@ from django.utils import html, safestring
 from corehq.apps.users.permissions import get_extra_permissions
 
 from couchexport.util import SerializableFunction
-from couchforms.analytics import (
-    get_all_user_ids_submitted,
-    get_first_form_submission_received,
-    get_username_in_last_form_user_id_submitted,
-)
+from couchforms.analytics import get_first_form_submission_received
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
@@ -28,6 +24,10 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 
 from .models import HQUserType, TempCommCareUser
+from .analytics.esaccessors import (
+    get_all_user_ids_submitted,
+    get_username_in_last_form_user_id_submitted,
+)
 
 DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
 DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
@@ -190,6 +190,11 @@ class SimplifiedUserInfo(
     def group_ids(self):
         return Group.by_user(self.user_id, False)
 
+    @property
+    @memoized
+    def location_id(self):
+        return CommCareUser.get_by_user_id(self.user_id).location_id
+
 
 def _report_user_dict(user):
     """
@@ -210,6 +215,7 @@ def _report_user_dict(user):
         first = user.get('first_name', '')
         last = user.get('last_name', '')
         full_name = (u"%s %s" % (first, last)).strip()
+
         def parts():
             yield u'%s' % html.escape(raw_username)
             if full_name:
@@ -230,6 +236,7 @@ def format_datatables_data(text, sort_key, raw=None):
     if raw is not None:
         data['raw'] = raw
     return data
+
 
 def app_export_filter(doc, app_id):
     if app_id:
@@ -393,10 +400,12 @@ def batch_qs(qs, batch_size=1000):
         end = min(start + batch_size, total)
         yield (start, end, total, qs[start:end])
 
+
 def stream_qs(qs, batch_size=1000):
     for _, _, _, qs in batch_qs(qs, batch_size):
         for item in qs:
             yield item
+
 
 def numcell(text, value=None, convert='int', raw=None):
     if value is None:
@@ -411,9 +420,13 @@ def numcell(text, value=None, convert='int', raw=None):
     return format_datatables_data(text=text, sort_key=value, raw=raw)
 
 
-def datespan_from_beginning(domain, timezone):
+def datespan_from_beginning(domain_object, timezone):
+    from corehq import toggles
+    if toggles.NEW_EXPORTS.enabled(domain_object.name):
+        startdate = domain_object.date_created
+    else:
+        startdate = get_first_form_submission_received(domain_object.name)
     now = datetime.utcnow()
-    startdate = get_first_form_submission_received(domain)
     datespan = DateSpan(startdate, now, timezone=timezone)
     datespan.is_default = True
     return datespan

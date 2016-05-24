@@ -1,10 +1,8 @@
-{% extends 'settings/bootstrap2/base_template.html' %}
+{% extends 'settings/bootstrap3/base_template.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-<script src="{% static 'jquery-ui-1.8.23-legacy/jquery-ui.min.js' %}"></script>
-<script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
 <script src="{% static 'logistics/logistics.js' %}"></script>
 {% endblock %}
 
@@ -39,62 +37,72 @@
 </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
 
     {% if request.couch_user.is_previewer or is_developer %}
-    <form id="settings" class="form form-horizontal" method="post">
+    <form id="settings" class="form-horizontal" method="post">
         <h3>{{ current_page.page_name }} {% trans "Integration" %}</h3>
 
         <fieldset>
-            <div class="control-group" >
-                <label class="control-label" for="source_enabled">
+            <div class="form-group">
+                <label class="control-label col-sm-3 col-md-2" for="source_enabled">
                     {% trans "Enable" %} {{ current_page.page_name }} {% trans "Integration?" %}
                 </label>
-                <div class="controls">
+                <div class="col-sm-8 col-md-9">
                   <input id="source_enabled" type="checkbox" data-bind="checked: source_config().enabled">
                 </div>
             </div>
         </fieldset>
 
         <fieldset data-bind="with: source_config(), visible: source_config().enabled">
-            <div class="control-group" >
-                <label class="control-label" for="steady_sync">
+            <div class="form-group" >
+                <label class="control-label col-sm-3 col-md-2" for="steady_sync">
                     {% trans "Steady sync?" %}
                 </label>
-                <div class="controls">
-                  <input id="steady_sync" type="checkbox" data-bind="checked: steady_sync">
+                <div class="col-sm-8 col-md-9">
+                    <div class="checkbox">
+                        <label>
+                            <input id="steady_sync" type="checkbox" data-bind="checked: steady_sync">
+                            {% trans "Use steady sync" %}
+                        </label>
+                    </div>
                 </div>
             </div>
-            <div class="control-group" >
-                <label class="control-label" for="all_stock_data">
-                    {% trans "All stock data migration" %}
+            <div class="form-group" >
+                <label class="control-label col-sm-3 col-md-2" for="all_stock_data">
+                    {% trans "Migrations" %}
                 </label>
-                <div class="controls">
-                  <input id="all_stock_data" type="checkbox" data-bind="checked: all_stock_data">
+                <div class="col-sm-8 col-md-9">
+                    <div class="checkbox">
+                        <label>
+                            <input id="all_stock_data" type="checkbox" data-bind="checked: all_stock_data">
+                            {% trans "All stock data migration" %}
+                        </label>
+                    </div>
                 </div>
             </div>
-            <div class="control-group" >
-                <label class="control-label" for="source_url">
+            <div class="form-group" >
+                <label class="control-label col-sm-3 col-md-2" for="source_url">
                     {% trans "API URL" %}
                 </label>
-                <div class="controls">
-                  <input id="source_url" type="text" data-bind="value: url">
+                <div class="col-sm-8 col-md-9">
+                  <input id="source_url" type="text" class="form-control" data-bind="value: url">
                 </div>
             </div>
-            <div class="control-group" >
-                <label class="control-label" for="source_username">
+            <div class="form-group" >
+                <label class="control-label col-sm-3 col-md-2" for="source_username">
                     {% trans "Username" %}
                 </label>
-                <div class="controls">
-                  <input id="source_username" type="text" data-bind="value: username">
+                <div class="col-sm-8 col-md-9">
+                  <input id="source_username" type="text" class="form-control" data-bind="value: username">
                 </div>
             </div>
-            <div class="control-group" >
-                <label class="control-label" for="source_password">
+            <div class="form-group" >
+                <label class="control-label col-sm-3 col-md-2" for="source_password">
                     {% trans "Password" %}
                 </label>
-                <div class="controls">
-                  <input id="source_password" type="password" data-bind="value: password">
+                <div class="col-sm-8 col-md-9">
+                  <input id="source_password" type="password" class="form-control" data-bind="value: password">
                 </div>
             </div>
         </fieldset>
@@ -110,16 +118,16 @@
     {% block enabled_section %}
         {% if settings.source_config.enabled %}
         <header>
-            <div class="row-fluid">
-                <div class="span8">
+            <div class="row">
+                <div class="col-sm-8">
                     <h2>{% trans "Sync with" %} {{ current_page.page_name }}</h2>
                 </div>
             </div>
         </header>
-        <div class="row-fluid">
-            <div class="span12">
+        <div class="row">
+            <div class="col-sm-12">
                 <div class="btn-toolbar">
-                    <button class="btn" id="sync">
+                    <button class="btn btn-default" id="sync">
                         {% trans "Sync Now" %}
                     </button>
                 </div>

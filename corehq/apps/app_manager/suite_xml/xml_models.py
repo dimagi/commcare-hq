@@ -408,6 +408,64 @@ class Entry(OrderedXmlObject, XmlObject):
             self.instances = sorted_instances
 
 
+class QueryData(XmlObject):
+    ROOT_NAME = 'data'
+
+    key = StringField('@key')
+    ref = XPathField('@ref')
+
+
+class QueryPrompt(DisplayNode):
+    ROOT_NAME = 'prompt'
+
+    key = StringField('@key')
+
+
+class SyncRequestPost(XmlObject):
+    ROOT_NAME = 'post'
+
+    url = StringField('@url')
+    data = NodeListField('data', QueryData)
+
+
+class SyncRequestQuery(OrderedXmlObject, XmlObject):
+    ROOT_NAME = 'query'
+    ORDER = ('data', 'prompts')
+
+    url = StringField('@url')
+    storage_instance = StringField('@storage-instance')
+    data = NodeListField('data', QueryData)
+    prompts = NodeListField('prompt', QueryPrompt)
+
+
+class SyncRequestSession(OrderedXmlObject, XmlObject):
+    ROOT_NAME = 'session'
+    ORDER = ('queries', 'data')
+
+    queries = NodeListField('query', SyncRequestQuery)
+    data = NodeListField('datum', SessionDatum)
+
+
+class SyncRequest(OrderedXmlObject, XmlObject):
+    """
+    Used to set the URL and query details for synchronous search.
+
+    See "sync-request" in the `CommCare 2.0 Suite Definition`_ for details.
+
+
+    .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#sync-request
+
+    """
+    ROOT_NAME = 'sync-request'
+    ORDER = ('post', 'command', 'instances', 'session', 'stack')
+
+    post = NodeField('post', SyncRequestPost)
+    instances = NodeListField('instance', Instance)
+    command = NodeField('command', Command)
+    session = NodeField('session', SyncRequestSession)
+    stack = NodeField('stack', Stack)
+
+
 class MenuMixin(XmlObject):
     ROOT_NAME = 'menu'
 
@@ -677,5 +735,6 @@ class Suite(OrderedXmlObject):
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
     menus = NodeListField('menu', Menu)
+    sync_requests = NodeListField('sync-request', SyncRequest)
 
     fixtures = NodeListField('fixture', Fixture)

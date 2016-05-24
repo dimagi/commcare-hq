@@ -52,6 +52,7 @@ class Newborn(CaseCalculator):
 
 
 class NewbornDoneDue(Newborn, DoneDueCalculator):
+
     @fluff.date_emitter
     def total(self, case):
         yield get_add(case)
@@ -76,6 +77,7 @@ class LessThan2Kilos(NewbornDoneDue):
 
 
 class WeakNewborn(Newborn):
+
     @fluff.filter_by
     def weak_baby(self, case):
         return is_weak_baby(case)

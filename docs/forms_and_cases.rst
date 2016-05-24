@@ -150,7 +150,7 @@ In most cases tests that use form / cases/ ledgers should be run on both backend
 
 If you really need to run a test on only one of the backends you can do the following::
 
-    @override_settings(TEST_SHOULD_USE_SQL_BACKEND=True)
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_my_test(self):
         ...
 

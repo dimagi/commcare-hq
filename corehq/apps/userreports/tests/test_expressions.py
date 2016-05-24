@@ -110,7 +110,10 @@ class PropertyExpressionTest(SimpleTestCase):
             (None, "datetime", "2015-09-30 19:04:27Z"),
             (date(2015, 9, 30), "date", "2015-09-30T19:04:27Z"),
             (date(2015, 9, 30), "date", datetime(2015, 9, 30)),
-            (None, "datetime", "2015-09-30"),
+            (datetime(2015, 9, 30, 0, 0, 0), "datetime", "2015-09-30"),
+            ([None], "array", None),
+            ([3], "array", 3),
+            ([3, 4, 9], "array", [3, 4, 9]),
         ]:
             getter = ExpressionFactory.from_spec({
                 'type': 'property_name',
@@ -909,6 +912,19 @@ class TestFormsExpressionSpec(TestCase):
         context = EvaluationContext({"domain": "wrong-domain"}, 0)
         forms = self.expression(self.case.to_json(), context)
         self.assertEqual(forms, [])
+
+
+class TestIterationNumberExpression(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.spec = ExpressionFactory.from_spec({'type': 'base_iteration_number'})
+
+    def test_default(self):
+        self.assertEqual(0, self.spec({}, EvaluationContext({})))
+
+    def test_value_set(self):
+        self.assertEqual(7, self.spec({}, EvaluationContext({}, iteration=7)))
 
 
 class TestEvaluationContext(SimpleTestCase):

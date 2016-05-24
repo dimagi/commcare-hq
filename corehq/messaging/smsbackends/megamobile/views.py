@@ -3,6 +3,7 @@ from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 
+
 @csrf_exempt
 def sms_in(request):
     pid = request.GET.get("pid", None)

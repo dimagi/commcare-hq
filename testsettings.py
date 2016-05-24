@@ -1,20 +1,35 @@
 from settings import *
 
-INSTALLED_APPS += (
+# note: the only reason these are prepended to INSTALLED_APPS is because of
+# a weird travis issue with kafka. if for any reason this order causes problems
+# it can be reverted whenever that's figured out.
+# https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
+INSTALLED_APPS = (
     'django_nose',
-)
+    'testapps.test_elasticsearch',
+    'testapps.test_pillowtop',
+) + tuple(INSTALLED_APPS)
+assert not TEST_APPS, "TEST_APPS is deprecated; use LOCAL_APPS instead"
 
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
-    #'--with-migrations' # adds ~30s to test run; TODO travis should use it
-    #'--with-doctest', # adds 5s to discovery (before tests start); TODO travis should use it
-    '--with-fixture-bundling',
-    '--logging-clear-handlers',
+    #'--no-migrations' # trim ~120s from test run with db tests
+    #'--with-fixture-bundling',
 ]
 NOSE_PLUGINS = [
-    # Disable migrations by default. Use --with-migrations to enable them.
-    'corehq.tests.nose.DjangoMigrationsPlugin',
+    'corehq.tests.nose.AppLabelsPlugin',
+    'corehq.tests.nose.HqTestFinderPlugin',
     'corehq.tests.nose.OmitDjangoInitModuleTestsPlugin',
+    'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
+    'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
+
+    # The following are not enabled by default
+    'corehq.tests.noseplugins.timing.TimingPlugin',
+    'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
+
+    # Uncomment to debug tests. Plugins have nice hooks for inspecting state
+    # before/after each test or context setup/teardown, etc.
+    #'corehq.tests.noseplugins.debug.DebugPlugin',
 ]
 
 # these settings can be overridden with environment variables
@@ -22,28 +37,23 @@ for key, value in {
     'NOSE_DB_TEST_CONTEXT': 'corehq.tests.nose.HqdbContext',
     'NOSE_NON_DB_TEST_CONTEXT': 'corehq.tests.nose.ErrorOnDbAccessContext',
 
-    # ignore record_deploy_success.py because datadog may not be installed
-    # (only matters when running --with-doctests)
-    'NOSE_IGNORE_FILES': '^(localsettings|record_deploy_success\.py)',
+    'NOSE_IGNORE_FILES': '^localsettings',
 
     'NOSE_EXCLUDE_DIRS': ';'.join([
+        'corehq/apps/cloudcare/tests/selenium',
+        'corehq/apps/reports/tests/selenium',
         'scripts',
-        'testapps',
 
-        # excludes for --with-doctest
-        # these cause gevent.threading to be imported, which causes this error:
-        # DatabaseError: DatabaseWrapper objects created in a thread can only
-        # be used in that same thread. ...
-        'corehq/apps/hqcase/management/commands',
-        'corehq/preindex/management/commands',
-        'deployment/gunicorn',
+        # strange error:
+        # TypeError: Attribute setup of <module 'touchforms.backend' ...> is not a python function.
+        'submodules/touchforms-src/touchforms/backend',
+
+        # FIXME failing, excluded for now because they were not run by django test runner
+        'submodules/bootstrap3_crispy',
     ]),
 }.items():
     os.environ.setdefault(key, value)
 del key, value
-
-# HqTestSuiteRunner settings
-INSTALLED_APPS = INSTALLED_APPS + list(TEST_APPS)
 
 if "SKIP_TESTS_REQUIRING_EXTRA_SETUP" not in globals():
     SKIP_TESTS_REQUIRING_EXTRA_SETUP = False
@@ -62,16 +72,23 @@ PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
 ENABLE_PRELOGIN_SITE = True
 
+# override dev_settings
+CACHE_REPORTS = True
 
-def _clean_up_logging_output():
+def _set_logging_levels(levels):
     import logging
-    logging.getLogger('raven').setLevel('WARNING')
+    for path, level in levels.items():
+        logging.getLogger(path).setLevel(level)
+_set_logging_levels({
+    # Quiet down a few really noisy ones.
+    # (removing these can be handy to debug couchdb access for failing tests)
+    'couchdbkit.request': 'INFO',
+    'restkit.client': 'INFO',
+})
 
-    # make all loggers propagate to prevent
-    # "No handlers could be found for logger ..."
-    # (a side effect of --logging-clear-handlers)
-    for item in LOGGING["loggers"].values():
-        if not item.get("propagate", True):
-            item["propagate"] = True
-
-_clean_up_logging_output()
+# use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery
+# TODO empty logging config (and fix revealed deprecation warnings)
+LOGGING = {
+    'version': 1,
+    'loggers': {},
+}

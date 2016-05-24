@@ -6,6 +6,7 @@ from corehq.apps.hqpillow_retry.management.commands.run_pillow_retry_queue impor
 
 
 class PillowRetryEnqueuingOperationTest(TestCase):
+
     def test_get_items_to_be_processed(self):
         p = PillowError(
             queued=False,

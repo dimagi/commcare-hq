@@ -18,6 +18,22 @@ class DashboardReport(MultiReport):
     slug = 'ils_dashboard_report'
     name = "Dashboard report"
 
+    @use_bootstrap3
+    @use_datatables
+    @use_daterangepicker
+    @use_jquery_ui
+    @use_select2
+    @use_nvd3
+    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+        pass
+
+    @property
+    def fields(self):
+        fields = [B3ILSAsyncLocationFilter, B3ILSDateFilter, ProgramFilter]
+        if self.location and self.location.location_type.name.upper() == 'FACILITY':
+            fields = []
+        return fields
+
     @property
     def title(self):
         title = _("Dashboard report {0}".format(self.title_month))
@@ -26,13 +42,6 @@ class DashboardReport(MultiReport):
                                                 self.location.site_code,
                                                 self.location.metadata.get('group', '---'))
         return title
-
-    @property
-    def fields(self):
-        fields = [ILSAsyncLocationFilter, ILSDateFilter, ProgramFilter]
-        if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            fields = []
-        return fields
 
     @property
     def report_context(self):
@@ -77,33 +86,6 @@ class DashboardReport(MultiReport):
             '?location_id=%s&filter_by_program=%s&datespan_type=%s&datespan_first=%s&datespan_second=%s',
             (config['location_id'], config['program'], self.type, self.first, self.second)
         )
-
-
-class B3Dashboardreport(DashboardReport):
-    slug = 'b3_ils_dashboard_report'
-    report_template_path = "ilsgateway/bootstrap3/dashboard_report.html"
-    base_template = 'ilsgateway/bootstrap3/new_base_template.html'
-    is_bootstrap3 = True
-
-    @use_bootstrap3
-    @use_datatables
-    @use_daterangepicker
-    @use_jquery_ui
-    @use_select2
-    @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        pass
-
-    @property
-    def fields(self):
-        fields = [B3ILSAsyncLocationFilter, B3ILSDateFilter, ProgramFilter]
-        if self.location and self.location.location_type.name.upper() == 'FACILITY':
-            fields = []
-        return fields
-
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return False
 
 
 class NewDashboardReport(DashboardReport):

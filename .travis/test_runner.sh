@@ -10,13 +10,16 @@
 
 set -e
 
-TESTS="$1"
-COMMAND="coverage run manage.py test --noinput --failfast --traceback --verbosity=2"
+# --divide-depth=1 to descend into django-nose database contexts
+# --divide-depth is ignored if --divided-we-run is not specified
+COMMAND="coverage run manage.py test --noinput --stop --verbosity=2 --no-migration-optimizer --divide-depth=1"
 
 /moto-s3/env/bin/moto_server s3 &
 
 if [ -z ${COMMAND_OVERRIDE} ]; then
-    $COMMAND $TESTS
+    echo "Running tests: $COMMAND $@"
+    $COMMAND "$@"
 else
+    echo "Running command: $COMMAND_OVERRIDE"
     $COMMAND_OVERRIDE
 fi

@@ -43,6 +43,7 @@ def patch_error_send():
 @patch('corehq.apps.sms.tasks.process_sms.delay', autospec=True)
 @override_settings(SMS_QUEUE_ENABLED=True)
 class QueueingTestCase(BaseSMSTest):
+
     def setUp(self):
         super(QueueingTestCase, self).setUp()
         self.domain = 'test-sms-queueing'

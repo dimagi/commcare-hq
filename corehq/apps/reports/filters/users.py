@@ -33,7 +33,7 @@ class UserTypeFilter(BaseReportFilter):
     # note, don't use this as a guideline for anything.
     slug = "ufilter"
     label = ugettext_lazy("User Type")
-    template = "reports/filters/bootstrap2/filter_users.html"
+    template = "reports/filters/filter_users.html"
 
     @property
     def filter_context(self):
@@ -115,6 +115,7 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 
 
 class EmwfUtils(object):
+
     def __init__(self, domain):
         self.domain = domain
 
@@ -352,7 +353,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         return [('t__0', _("[All mobile workers]"))]
-
 
     @classmethod
     def for_user(cls, user_id):

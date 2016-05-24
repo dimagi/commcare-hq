@@ -23,6 +23,9 @@ var HQReport = function (options) {
     self.slug = options.slug;
     self.subReportSlug = options.subReportSlug;
     self.type = options.type;
+    self.getReportRenderUrl = options.getReportRenderUrl || getReportRenderUrl;
+    self.getReportBaseUrl = options.getReportBaseUrl || getReportBaseUrl;
+    self.getReportParams = options.getReportParams || getReportParams;
 
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
 
@@ -56,7 +59,7 @@ var HQReport = function (options) {
                                 }
                             })
                         } else {
-                            window.location.href = getReportRenderUrl("export");
+                            window.location.href = self.getReportRenderUrl("export");
                         }
                     });
                 }
@@ -68,7 +71,7 @@ var HQReport = function (options) {
 
                 $(self.printReportButton).click(function (e) {
                     e.preventDefault();
-                    window.open(getReportRenderUrl("print"));
+                    window.open(self.getReportRenderUrl("print"));
                 });
             }
         });
@@ -204,7 +207,7 @@ var HQReport = function (options) {
              var $sendButton = $(hqReport.emailReportModal).find('.send-button');
              $sendButton.button('loading');
 
-            $.get(getReportRenderUrl("email_onceoff", $.param(self.unwrap())))
+            $.get(self.getReportRenderUrl("email_onceoff", $.param(self.unwrap())))
                 .done(function() {
                     $(hqReport.emailReportModal).modal('hide');
                     self.resetModal();

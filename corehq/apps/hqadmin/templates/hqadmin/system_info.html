@@ -1,10 +1,10 @@
-{% extends "hqadmin/bootstrap3/hqadmin_base_report.html" %}
+{% extends "hqadmin/hqadmin_base_report.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load humanize %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'style/js/bootstrap2/main.js' %}"></script>
+    <script src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
     <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
 {% endblock %}
 
@@ -354,6 +354,8 @@
             <div class="alert alert-info">
                 Last deployed on {{ last_deploy.date|date:"d M Y" }}
                 at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}
+                <br />
+                <a href="http://hqcaptain0.internal.commcarehq.org:9999/">Deploy with Captain</a>
             </div>
             {% endwith %}
         </div>
@@ -392,21 +394,21 @@
                     </td>
                     <td><strong>{{ current_system }}</strong></td>
                     <td>
-                        {{ redis_status }}
+                        {{ redis.success|yesno:"Online,Offline" }}
                         <br>
-                        {{ redis_results }}
+                        {{ redis.msg }}
                     </td>
                     <td>
-                        {{ rabbitmq_status }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
+                        {{ rabbitmq.msg }} {% if rabbitmq_url %}(<a href="{{ rabbitmq_url }}">Admin</a>){% endif %}
                         <hr>
                         {% trans "Celery Heartbeat " %}
-                        {% if heartbeat %}
+                        {% if heartbeat.success %}
                             <span class="label label-success">OK</span>
                         {% else %}
                             <span class="label label-danger">DOWN</span>
                         {% endif %}
                         <hr>
-                        {{ worker_status }}<br>
+                        {{ celery_stats|safe }}<br>
                     </td>
                     <td>
                         <dl class="dl-horizontal">
@@ -591,7 +593,7 @@
                     <th>Design Doc</th>
                     <th>Started</th>
                     <th>Updated</th>
-                    <th class="span2">Progress</th>
+                    <th class="col-sm-2">Progress</th>
                     <th></th>
                 </tr>
                 </thead>

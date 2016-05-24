@@ -95,6 +95,21 @@
         },
 
         /**
+         * Track a usage event when the given element is clicked.
+         * Uses a callback to ensure that the request to the analytics services
+         * completes before the default click action happens. This is useful if
+         * the link would otherwise navigate away from the page.
+         * @param {(Element|jQuery object|string)} element - The element (or a selector) whose clicks you want to track.
+         * @param {string} eventCategory - The event category
+         * @param {string} eventAction - The event action
+         * @param {string} eventLabel - The event label
+         * @param {string} eventValue - The event value
+         */
+        trackUsageLink: function(element, eventCategory, eventAction, eventLabel, eventValue) {
+            return gaTrackLink(element, eventCategory, eventAction, eventLabel, eventValue);
+        },
+
+        /**
          * Track a workflow event when the given element is clicked.
          * Uses a callback to ensure that the request to the analytics services
          * completes before the default click action happens. This is useful if

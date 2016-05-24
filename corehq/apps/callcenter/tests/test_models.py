@@ -46,6 +46,7 @@ def get_indicator_slugs_from_config(config, all_types=None):
 
 
 class ModelTests(SimpleTestCase):
+
     def test_types_by_date_range(self):
         by_type = ByTypeWithTotal(by_type=[
             TypedIndicator(enabled=True, date_ranges={WEEK0, WEEK1}, type='dog'),

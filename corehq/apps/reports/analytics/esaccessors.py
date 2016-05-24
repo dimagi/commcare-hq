@@ -1,7 +1,7 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
-from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters
+from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations
 from corehq.apps.es.aggregations import (
     TermsAggregation,
     ExtendedStatsAggregation,
@@ -20,30 +20,47 @@ from dimagi.utils.parsing import string_to_datetime
 PagedResult = namedtuple('PagedResult', 'total hits')
 
 
-def get_last_submission_time_for_user(domain, user_id, datespan):
-    form_query = FormES() \
-        .domain(domain) \
-        .user_id([user_id]) \
-        .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date()) \
-        .sort("form.meta.timeEnd", desc=True) \
-        .size(1)
-    results = form_query.run().hits
-
+def get_last_submission_time_for_users(domain, user_ids, datespan):
     def convert_to_date(date):
         return string_to_datetime(date).date() if date else None
 
-    return convert_to_date(results[0]['form']['meta']['timeEnd'] if results else None)
+    query = (
+        FormES()
+        .domain(domain)
+        .user_id(user_ids)
+        .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date())
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                TopHitsAggregation(
+                    'top_hits_last_form_submissions',
+                    'form.meta.timeEnd',
+                    is_ascending=False,
+                    include='form.meta.timeEnd',
+                )
+            )
+        )
+        .size(0)
+    )
+
+    aggregations = query.run().aggregations
+
+    buckets_dict = aggregations.user_id.buckets_dict
+    result = {}
+    for user_id, bucket in buckets_dict.iteritems():
+        result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['form']['meta']['timeEnd'])
+
+    return result
 
 
-def get_active_case_counts_by_owner(domain, datespan, case_types=None):
-    return _get_case_case_counts_by_owner(domain, datespan, case_types, False)
+def get_active_case_counts_by_owner(domain, datespan, case_types=None, owner_ids=None):
+    return _get_case_case_counts_by_owner(domain, datespan, case_types, False, owner_ids)
 
 
-def get_total_case_counts_by_owner(domain, datespan, case_types=None):
-    return _get_case_case_counts_by_owner(domain, datespan, case_types, True)
+def get_total_case_counts_by_owner(domain, datespan, case_types=None, owner_ids=None):
+    return _get_case_case_counts_by_owner(domain, datespan, case_types, True, owner_ids)
 
 
-def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False):
+def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False, owner_ids=None):
     case_query = (CaseES()
          .domain(domain)
          .opened_range(lte=datespan.enddate)
@@ -60,37 +77,21 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False)
             lte=datespan.enddate
         )
 
+    if owner_ids:
+        case_query = case_query.owner(owner_ids)
+
     return case_query.run().aggregations.owner_id.counts_by_bucket()
 
 
-def get_active_case_count(domain, datespan, case_types, is_total=False):
-    case_query = (CaseES()
-         .domain(domain)
-         .opened_range(lte=datespan.enddate)
-         .NOT(closed_range(lt=datespan.startdate))
-         .size(0))
-
-    if case_types:
-        case_query = case_query.filter({"terms": {"type.exact": case_types}})
-
-    if not is_total:
-        case_query = case_query.active_in_range(
-            gte=datespan.startdate,
-            lte=datespan.enddate
-        )
-
-    return case_query.run()
+def get_case_counts_closed_by_user(domain, datespan, case_types=None, owner_ids=None):
+    return _get_case_counts_by_user(domain, datespan, case_types, False, owner_ids)
 
 
-def get_case_counts_closed_by_user(domain, datespan, case_types=None):
-    return _get_case_counts_by_user(domain, datespan, case_types, False)
+def get_case_counts_opened_by_user(domain, datespan, case_types=None, owner_ids=None):
+    return _get_case_counts_by_user(domain, datespan, case_types, True, owner_ids)
 
 
-def get_case_counts_opened_by_user(domain, datespan, case_types=None):
-    return _get_case_counts_by_user(domain, datespan, case_types, True)
-
-
-def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True):
+def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, owner_ids=None):
     date_field = 'opened_on' if is_opened else 'closed_on'
     user_field = 'opened_by' if is_opened else 'closed_by'
 
@@ -107,7 +108,10 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True):
         .size(0))
 
     if case_types:
-        case_query = case_query.filter({"terms": {"type.exact": case_types}})
+        case_query = case_query.case_type(case_types)
+
+    if owner_ids:
+        case_query = case_query.filter(filters.term(user_field, owner_ids))
 
     return case_query.run().aggregations.by_user.counts_by_bucket()
 
@@ -195,15 +199,15 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None):
     return result
 
 
-def get_submission_counts_by_user(domain, datespan):
-    return _get_form_counts_by_user(domain, datespan, True)
+def get_submission_counts_by_user(domain, datespan, user_ids=None):
+    return _get_form_counts_by_user(domain, datespan, True, user_ids)
 
 
-def get_completed_counts_by_user(domain, datespan):
-    return _get_form_counts_by_user(domain, datespan, False)
+def get_completed_counts_by_user(domain, datespan, user_ids=None):
+    return _get_form_counts_by_user(domain, datespan, False, user_ids)
 
 
-def _get_form_counts_by_user(domain, datespan, is_submission_time):
+def _get_form_counts_by_user(domain, datespan, is_submission_time, user_ids=None):
     form_query = FormES().domain(domain)
 
     if is_submission_time:
@@ -214,6 +218,10 @@ def _get_form_counts_by_user(domain, datespan, is_submission_time):
         form_query = (form_query
             .completed(gte=datespan.startdate.date(),
                        lte=datespan.enddate.date()))
+
+    if user_ids:
+        form_query = form_query.user_id(user_ids)
+
     form_query = (form_query
         .user_aggregation()
         .size(0))
@@ -363,7 +371,6 @@ def get_form_duration_stats_by_user(
     query = (
         FormES()
         .domain(domain)
-        .app(app_id)
         .user_ids_handle_unknown(user_ids)
         .remove_default_filter('has_user')
         .xmlns(xmlns)
@@ -379,6 +386,9 @@ def get_form_duration_stats_by_user(
         )
         .size(0)
     )
+
+    if app_id:
+        query = query.app(app_id)
 
     if missing_users:
         query = query.aggregation(
@@ -417,7 +427,6 @@ def get_form_duration_stats_for_users(
     query = (
         FormES()
         .domain(domain)
-        .app(app_id)
         .user_ids_handle_unknown(user_ids)
         .remove_default_filter('has_user')
         .xmlns(xmlns)
@@ -431,4 +440,62 @@ def get_form_duration_stats_for_users(
         )
         .size(0)
     )
+
+    if app_id:
+        query = query.app(app_id)
+
     return query.run().aggregations.duration_stats.result
+
+
+def get_form_counts_for_domains(domains):
+    return FormES() \
+        .filter(filters.term('domain', domains)) \
+        .domain_aggregation() \
+        .size(0) \
+        .run() \
+        .aggregations.domain.counts_by_bucket()
+
+
+def get_case_and_action_counts_for_domains(domains):
+    actions_agg = aggregations.NestedAggregation('actions', 'actions')
+    aggregation = aggregations.TermsAggregation('domain', 'domain').aggregation(actions_agg)
+    results = CaseES() \
+        .filter(filters.term('domain', domains)) \
+        .aggregation(aggregation) \
+        .size(0) \
+        .run()
+
+    domains_to_cases = results.aggregations.domain.buckets_dict
+
+    def _domain_stats(domain_name):
+        cases = domains_to_cases.get(domain_name, None)
+        return {
+            'cases': cases.doc_count if cases else 0,
+            'case_actions': cases.actions.doc_count if cases else 0
+        }
+
+    return {
+        domain: _domain_stats(domain)
+        for domain in domains
+    }
+
+
+def get_all_user_ids_submitted(domain, app_ids=None):
+    query = (
+        FormES()
+        .domain(domain)
+        .aggregation(
+            TermsAggregation('user_id', 'form.meta.userID')
+        )
+        .size(0)
+    )
+
+    if app_ids:
+        query = query.app(app_ids)
+
+    return query.run().aggregations.user_id.buckets_dict.keys()
+
+
+def get_username_in_last_form_user_id_submitted(domain, user_id):
+    last_sub = get_last_form_submissions_by_user(domain, [user_id])[user_id][0]
+    return last_sub['form']['meta']['username']

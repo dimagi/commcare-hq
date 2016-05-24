@@ -5,24 +5,6 @@
     <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_form_attr" domain app.id form.get_unique_id 'all' %}">
         {% csrf_token %}
         <div class="save-button-holder clearfix"></div>
-        <div class="form-group">
-            <label class="col-sm-2 control-label">{% trans "Form Name" %}</label>
-            <div class="col-sm-4">
-                {% input_trans form.name langs cssClass='form-control' %}
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="control-label col-sm-2" for="comment-id">
-                {% trans "Comment" %}
-                <span class="hq-help-template"
-                      data-title="{% trans "Comment" %}"
-                      data-content="{% blocktrans %}Comments to document or explain this form for other app builders or maintainers.{% endblocktrans %}"
-                ></span>
-            </label>
-            <div id="form-comment" class="col-sm-4">
-                <textarea id="comment-id" name="comment" class="form-control">{{ form.comment }}</textarea>
-            </div>
-        </div>
 
         <legend>
         <a class="collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">

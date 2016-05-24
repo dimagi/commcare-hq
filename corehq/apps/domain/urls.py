@@ -25,7 +25,8 @@ from corehq.apps.domain.views import (
     ActivateTransferDomainView, DeactivateTransferDomainView,
     BulkStripePaymentView, InternalSubscriptionManagementView,
     WireInvoiceView, SubscriptionRenewalView, CreditsWireInvoiceView,
-    CardsView, CardView, PasswordResetView
+    CardsView, CardView, PasswordResetView,
+    CaseSearchConfigView,
 )
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -68,6 +69,7 @@ def exception_safe_password_reset(request, *args, **kwargs):
 
 def auth_pages_path(page):
     return {'template_name':'login_and_password/' + page}
+
 
 def extend(d1, d2):
     return dict(d1.items() + d2.items())
@@ -169,6 +171,7 @@ domain_settings = patterns(
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
+    url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings')),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),

@@ -5,6 +5,7 @@ from corehq.apps.app_manager.models import Application, Module
 
 
 class AnalyticsTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'app-manager-analytics-test'

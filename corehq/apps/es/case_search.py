@@ -12,7 +12,7 @@ from corehq.apps.es import case_search as case_search_es
 from . import filters, queries
 
 from corehq.apps.es.cases import CaseES
-from corehq.pillows.const import CASE_SEARCH_ALIAS
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 
 PATH = "case_properties"
@@ -84,3 +84,19 @@ def case_property_filter(key, value):
             filters.term("{}.value".format(PATH), value),
         )
     )
+
+
+def flatten_result(result):
+    """Flattens a result from CaseSearchES into the format that Case serializers
+    expect
+
+    i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
+    {'name': 'blah', 'foo':'bar'}
+    """
+    case_properties = result.pop('case_properties', [])
+    for case_property in case_properties:
+        key = case_property.get('key')
+        value = case_property.get('value')
+        if key and value:
+            result[key] = value
+    return result

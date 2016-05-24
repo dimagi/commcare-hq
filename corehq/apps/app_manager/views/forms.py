@@ -12,6 +12,7 @@ from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.core.urlresolvers import reverse
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
@@ -58,7 +59,7 @@ from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
-    login_or_digest,
+    login_or_digest, api_domain_view
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
@@ -69,11 +70,13 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActions,
+    FormDatum,
     FormLink,
     IncompatibleFormTypeException,
     ModuleNotFoundException,
+    PreloadAction,
     load_case_reserved_words,
-    FormDatum)
+)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.tour import tours
@@ -166,7 +169,11 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
 def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     form = app.get_module(module_id).get_form(form_id)
+    old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+    if old_load_from_form:
+        form.actions.load_from_form = old_load_from_form
+
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
         if isinstance(condition.answer, basestring):
             condition.answer = condition.answer.strip('"\'')
@@ -201,10 +208,20 @@ def edit_careplan_form_actions(request, domain, app_id, module_id, form_id):
     return json_response(response_json)
 
 
-@no_conflict_require_POST
+@csrf_exempt
+@api_domain_view
+def edit_form_attr_api(request, domain, app_id, unique_form_id, attr):
+    return _edit_form_attr(request, domain, app_id, unique_form_id, attr)
+
+
 @login_or_digest
-@require_permission(Permissions.edit_apps, login_decorator=None)
 def edit_form_attr(request, domain, app_id, unique_form_id, attr):
+    return _edit_form_attr(request, domain, app_id, unique_form_id, attr)
+
+
+@no_conflict_require_POST
+@require_permission(Permissions.edit_apps, login_decorator=None)
+def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
 
@@ -331,6 +348,7 @@ def new_form(request, domain, app_id, module_id):
 def patch_xform(request, domain, app_id, unique_form_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']
+    case_references = json.loads(request.POST.get('references', "{}"))
 
     app = get_app(domain, app_id)
     form = app.get_form(unique_form_id)
@@ -342,6 +360,9 @@ def patch_xform(request, domain, app_id, unique_form_id):
     dmp = diff_match_patch()
     xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
     save_xform(app, form, xform)
+
+    _update_case_refs_from_form_builder(form, case_references)
+
     response_json = {
         'status': 'ok',
         'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
@@ -449,6 +470,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         app.save()
 
     form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
+    module_filter_preview = feature_previews.MODULE_FILTER.enabled(request.domain)
     context = {
         'nav_form': form,
         'xform_languages': languages,
@@ -459,12 +481,14 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'xform_validation_errored': xform_validation_errored,
         'allow_cloudcare': app.application_version == APP_V2 and isinstance(form, Form),
         'allow_form_copy': isinstance(form, Form),
-        'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
+        'allow_form_filtering': (module_filter_preview or
+            (not isinstance(form, CareplanForm) and not form_has_schedule)),
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': (feature_previews.MODULE_FILTER.enabled(request.domain) and
                                      app.enable_module_filtering),
+        'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'case_xpath_pattern_matches': CASE_XPATH_PATTERN_MATCHES,
         'case_xpath_substring_matches': CASE_XPATH_SUBSTRING_MATCHES,
         'user_case_xpath_pattern_matches': USER_CASE_XPATH_PATTERN_MATCHES,
@@ -616,3 +640,8 @@ def form_casexml(request, domain, form_unique_id):
     if domain != app.domain:
         raise Http404()
     return HttpResponse(form.create_casexml())
+
+
+def _update_case_refs_from_form_builder(form, reference_json):
+    if form.form_type == 'module_form':
+        form.actions.load_from_form = PreloadAction.wrap(reference_json)

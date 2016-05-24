@@ -13,6 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 class MixedTTCReport(TTCReport):
+    report_template_path = 'world_vision/mixed_report.html'
     report_title = 'TTC Overview Report'
     name = 'TTC Overview Report'
     slug = 'mother_child_report'

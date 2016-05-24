@@ -428,6 +428,7 @@ class ShortFormRepeater(Repeater):
 
 @register_repeater_type
 class AppStructureRepeater(Repeater):
+
     def payload_doc(self, repeat_record):
         return None
 

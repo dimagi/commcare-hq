@@ -18,7 +18,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -27,7 +26,6 @@ from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
 
@@ -36,7 +34,6 @@ from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import skippable_quickcache, quickcache
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
@@ -59,7 +56,6 @@ from corehq.apps.sms.mixin import (
     PhoneNumberInUseException,
     VerifiedNumber,
 )
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
@@ -68,11 +64,11 @@ from dimagi.utils.django.database import get_unique_value
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
-from dimagi.utils.parsing import json_format_datetime
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 MAX_LOGIN_ATTEMPTS = 5
+
 
 def _add_to_list(list, obj, default):
     if obj in list:
@@ -84,6 +80,7 @@ def _add_to_list(list, obj, default):
     else:
         list.append(obj)
     return list
+
 
 def _get_default(list):
     return list[0] if list else None
@@ -245,6 +242,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
             if role.permissions == permissions:
                 return role
         # otherwise create it
+
         def get_name():
             if name:
                 return name
@@ -343,19 +341,25 @@ PERMISSIONS_PRESETS = {
     'no-permissions': {'name': 'Read Only', 'permissions': Permissions(view_reports=True)},
 }
 
+
 class AdminUserRole(UserRole):
+
     def __init__(self, domain):
         super(AdminUserRole, self).__init__(domain=domain, name='Admin', permissions=Permissions.max())
+
     def get_qualified_id(self):
         return 'admin'
 
+
 class DomainMembershipError(Exception):
     pass
+
 
 class Membership(DocumentSchema):
 #   If we find a need for making UserRoles more general and decoupling it from domain then most of the role stuff from
 #   Domain membership can be put in here
     is_admin = BooleanProperty(default=False)
+
 
 class DomainMembership(Membership):
     """
@@ -408,12 +412,15 @@ class DomainMembership(Membership):
     class Meta:
         app_label = 'users'
 
+
 class OrgMembership(Membership):
     organization = StringProperty()
     team_ids = StringListProperty(default=[]) # a set of ids corresponding to which teams the user is a member of
 
+
 class OrgMembershipError(Exception):
     pass
+
 
 class CustomDomainMembership(DomainMembership):
     custom_role = SchemaProperty(UserRole)
@@ -450,15 +457,16 @@ class IsMemberOfMixin(DocumentSchema):
             domain = domain_qs
         return self._is_member_of(domain)
 
-
     def is_global_admin(self):
         # subclasses to override if they want this functionality
         return False
+
 
 class _AuthorizableMixin(IsMemberOfMixin):
     """
         Use either SingleMembershipMixin or MultiMembershipMixin instead of this
     """
+
     def get_domain_membership(self, domain):
         domain_membership = None
         try:
@@ -627,6 +635,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         except Exception:
             return None
 
+
 class SingleMembershipMixin(_AuthorizableMixin):
     domain_membership = SchemaProperty(DomainMembership)
 
@@ -657,6 +666,7 @@ class LowercaseStringProperty(StringProperty):
     """
     Make sure that the string is always lowercase'd
     """
+
     def __init__(self, validators=None, *args, **kwargs):
         if validators is None:
             validators = ()
@@ -920,6 +930,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return [{'number': phone, 'status': 'unverified', 'contact': None} for phone in self.phone_numbers]
 
         verified = self.get_verified_numbers(True)
+
         def extend_phone(phone):
             extended_info = {}
             contact = verified.get(phone)
@@ -941,7 +952,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                             'CouchUser': 'user',
                             'CommCareUser': 'user',
                             'CommCareCase': 'case',
-                            'CommConnectCase': 'case',
                         }[duplicate.owner_doc_type]
                         from corehq.apps.users.views.mobile import EditCommCareUserView
                         url_ref, doc_id_param = {
@@ -959,7 +969,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             extended_info.update({'number': phone, 'status': status, 'contact': contact})
             return extended_info
         return [extend_phone(phone) for phone in self.phone_numbers]
-
 
     @property
     def couch_id(self):
@@ -1001,7 +1010,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             #stale=None if strict else settings.COUCH_STALE_QUERY,
             **extra_args
         ).all()
-
 
     @classmethod
     def ids_by_domain(cls, domain, is_active=True):
@@ -1607,7 +1615,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         Group.bulk_save(touched)
 
-
     def get_time_zone(self):
         try:
             time_zone = self.user_data["time_zone"]
@@ -2082,6 +2089,7 @@ class FakeUser(WebUser):
     """
     Prevent actually saving user types that don't exist in the database
     """
+
     def save(self, **kwargs):
         raise NotImplementedError("You aren't allowed to do that!")
 
@@ -2115,6 +2123,7 @@ class PublicUser(FakeUser):
 
     def get_domains(self):
         return []
+
 
 class InvalidUser(FakeUser):
     """
@@ -2251,6 +2260,7 @@ class DomainRemovalRecord(DeleteRecord):
 
 
 class UserCache(object):
+
     def __init__(self):
         self.cache = {}
 

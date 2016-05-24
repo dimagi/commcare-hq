@@ -12,7 +12,6 @@ from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_sett
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.listener import AliasedElasticPillow, PythonPillow
-from pillowtop.pillow.interface import PillowRuntimeContext
 
 CHUNK_SIZE = 10000
 POOL_SIZE = 15
@@ -23,6 +22,7 @@ RETRY_TIME_DELAY_FACTOR = 15
 
 
 class ReindexLogHandler(PaginateViewLogHandler):
+
     def __init__(self, reindexer):
         self.reindexer = reindexer
 
@@ -127,11 +127,7 @@ class PtopReindexer(NoArgsCommand):
         return paginate_view(*args, **kwargs)
 
     def full_couch_view_iter(self):
-        if hasattr(self.pillow, 'include_docs_when_preindexing'):
-            include_docs = self.pillow.include_docs_when_preindexing
-        else:
-            include_docs = self.pillow.include_docs
-        view_kwargs = {"include_docs": include_docs}
+        view_kwargs = {"include_docs": self.pillow.include_docs}
         if self.couch_key is not None:
             view_kwargs["key"] = self.couch_key
 
@@ -248,7 +244,7 @@ class PtopReindexer(NoArgsCommand):
                     if not isinstance(row, Change):
                         assert isinstance(row, dict)
                         row = change_from_couch_row(row)
-                    self.pillow.processor(row, PillowRuntimeContext(do_set_checkpoint=False))
+                    self.pillow.process_change(row)
                     break
                 except Exception, ex:
                     retries += 1

@@ -97,6 +97,7 @@ SESSION_USERCASE_ID = CaseIDXPath(session_var(USERCASE_ID))
 
 
 class WrappedAttribs(object):
+
     def __init__(self, attrib, namespaces=namespaces):
         self.attrib = attrib
         self.namespaces = namespaces
@@ -130,6 +131,7 @@ class WrappedAttribs(object):
 
 
 class WrappedNode(object):
+
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, basestring):
             self.xml = parse_xml(xml) if xml else None
@@ -201,6 +203,7 @@ class WrappedNode(object):
 
 
 class ItextNodeGroup(object):
+
     def __init__(self, nodes):
         self.id = nodes[0].id
         assert all(node.id == self.id for node in nodes)
@@ -228,6 +231,7 @@ class ItextNodeGroup(object):
 
 
 class ItextNode(object):
+
     def __init__(self, lang, itext_node):
         self.lang = lang
         self.id = itext_node.attrib['id']
@@ -244,6 +248,7 @@ class ItextNode(object):
 
 
 class ItextOutput(object):
+
     def __init__(self, ref):
         self.ref = ref
 
@@ -252,6 +257,7 @@ class ItextOutput(object):
 
 
 class ItextValue(unicode):
+
     def __new__(cls, parts):
         return super(ItextValue, cls).__new__(cls, cls._render(parts))
 
@@ -543,12 +549,17 @@ class XForm(WrappedNode):
     This is not a comprehensive API for xforms editing and parsing.
 
     """
+
     def __init__(self, *args, **kwargs):
         super(XForm, self).__init__(*args, **kwargs)
         if self.exists():
             xmlns = self.data_node.tag_xmlns
             self.namespaces.update(x="{%s}" % xmlns)
         self.has_casedb = False
+        # A dictionary mapping case types to sets of scheduler case properties
+        # updated by the form
+        self._scheduler_case_updates = defaultdict(set)
+        self._scheduler_case_updates_populated = False
 
     def __str__(self):
         return ET.tostring(self.xml) if self.xml is not None else ''
@@ -592,6 +603,11 @@ class XForm(WrappedNode):
         nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
         return list(set([n.text for n in nodes]))
 
+    @requires_itext(list)
+    def media_references_by_lang(self, lang, form):
+        nodes = self.itext_node.findall('{f}translation[@lang="%s"]/{f}text/{f}value[@form="%s"]' % (lang, form))
+        return list(set([n.text for n in nodes]))
+
     @property
     def odk_intents(self):
         nodes = self.findall('{h}head/{odk}intent')
@@ -612,7 +628,14 @@ class XForm(WrappedNode):
 
     @property
     def video_references(self):
-        return self.media_references(form="video")
+        return self.media_references(form="video") + self.media_references(form="video-inline")
+
+    def all_references(self, lang):
+        images = self.media_references_by_lang(lang=lang, form="image")
+        video = self.media_references_by_lang(lang=lang, form="video")
+        audio = self.media_references_by_lang(lang=lang, form="audio")
+        inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
+        return images + video + audio + inline_video
 
     def set_name(self, new_name):
         title = self.find('{h}head/{h}title')
@@ -1446,7 +1469,7 @@ class XForm(WrappedNode):
                              'that the xmlns="http://www.w3.org/2002/xforms" '
                              "attribute exists in your form."))
 
-    def _schedule_global_next_visit_date(self, case_tag, action, form, case):
+    def _schedule_global_next_visit_date(self, form, case):
         """
         Adds the necessary hidden properties, fixture references, and calculations to
         get the global next visit date for schedule modules
@@ -1490,12 +1513,11 @@ class XForm(WrappedNode):
         self.data_node.append(_make_elem(SCHEDULE_NEXT_DUE))
 
     def create_casexml_2_advanced(self, form):
+        self._scheduler_case_updates_populated = True
         from corehq.apps.app_manager.util import split_path
 
         if not form.actions.get_all_actions():
             return
-
-        case_tag = lambda a: "case_{0}".format(a.case_tag)
 
         def configure_visit_schedule_updates(update_block, action, session_case_id):
             case = session_case_id.case()
@@ -1507,7 +1529,7 @@ class XForm(WrappedNode):
             )
 
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(case_tag(action), SCHEDULE_PHASE),
+                nodeset=u'{}/case/update/{}'.format(action.form_element_name, SCHEDULE_PHASE),
                 type="xs:integer",
                 calculate=schedule_form_xpath.current_schedule_phase_calculation(
                     self.action_relevance(form.schedule.termination_condition),
@@ -1515,6 +1537,7 @@ class XForm(WrappedNode):
                 )
             )
             update_block.append(make_case_elem(SCHEDULE_PHASE))
+            self._add_scheduler_case_update(action.case_type, SCHEDULE_PHASE)
 
             self.add_bind(
                 nodeset=u'/data/{}'.format(SCHEDULE_CURRENT_VISIT_NUMBER),
@@ -1530,25 +1553,27 @@ class XForm(WrappedNode):
 
             last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(case_tag(action), last_visit_num),
+                nodeset=u'{}/case/update/{}'.format(action.form_element_name, last_visit_num),
                 relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
                 calculate=u"/data/{}".format(SCHEDULE_CURRENT_VISIT_NUMBER),
             )
             update_block.append(make_case_elem(last_visit_num))
+            self._add_scheduler_case_update(action.case_type, last_visit_num)
 
             last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(case_tag(action), last_visit_date),
+                nodeset=u'{}/case/update/{}'.format(action.form_element_name, last_visit_date),
                 type="xsd:dateTime",
                 calculate=self.resolve_path("meta/timeEnd"),
                 relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
             )
             update_block.append(make_case_elem(last_visit_date))
+            self._add_scheduler_case_update(action.case_type, last_visit_date)
 
-            self._schedule_global_next_visit_date(case_tag, action, form, case)
+            self._schedule_global_next_visit_date(form, case)
 
         def create_case_block(action, bind_case_id_xpath=None):
-            tag = case_tag(action)
+            tag = action.form_element_name
             path = tag + '/'
             base_node = _make_elem("{{x}}{0}".format(tag))
             self.data_node.append(base_node)
@@ -1644,7 +1669,7 @@ class XForm(WrappedNode):
                 nest = True
 
             if nest:
-                name = case_tag(action)
+                name = action.form_element_name
                 path = '%s%s/' % (base_path, name)
                 if create_subcase_node:
                     subcase_node = _make_elem('{x}%s' % name)
@@ -1728,6 +1753,7 @@ class XForm(WrappedNode):
                 case_block.add_update_block(basic_updates)
         if updates_by_case:
             self.add_casedb()
+
             def make_nested_subnode(base_node, path):
                 """
                 path='x/y/z' will append <x><y><z/></y></x> to base_node
@@ -1764,7 +1790,6 @@ class XForm(WrappedNode):
         actions = form.active_actions()
         # a list of functions to be applied to the file as a whole after it has been pieced together
         additional_transformations = []
-
 
         if form.requires == 'none' and 'open_case' not in actions and actions:
             raise CaseError("To perform case actions you must either open a case or require a case to begin with")
@@ -1827,6 +1852,7 @@ class XForm(WrappedNode):
                         "nodeset":"case/create/external_id",
                         "calculate": self.resolve_path("case/case_id"),
                         })
+
                 def require_case_name_source():
                     "make sure that the question that provides the case_name is required"
                     name_path = actions['open_case'].name_path
@@ -1958,6 +1984,7 @@ class XForm(WrappedNode):
                         "{jr}preloadParams": property
                     })
             casexml_text = casexml.render()
+
         def transformation():
             for trans in additional_transformations:
                 trans()
@@ -2106,6 +2133,17 @@ class XForm(WrappedNode):
                 case_block.add_close_block(relevance)
                 self.data_node.append(case_block.elem)
 
+    def get_scheduler_case_updates(self):
+        """
+        Return a dictionary where each key is a case type and each value is a
+        set of case properties that this form updates on account of the scheduler module.
+        """
+        if not self._scheduler_case_updates_populated:
+            raise Exception('Scheduler case updates have not yet been populated')
+        return self._scheduler_case_updates
+
+    def _add_scheduler_case_update(self, case_type, case_property):
+        self._scheduler_case_updates[case_type].add(case_property)
 
 VELLUM_TYPES = {
     "AndroidIntent": {

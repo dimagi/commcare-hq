@@ -5,8 +5,11 @@ from __future__ import absolute_import, print_function, unicode_literals
 from django.test import SimpleTestCase
 
 # CCHQ imports
-from fab.pillow_settings import apply_pillow_actions_to_pillows, \
-    get_pillows_for_env, get_single_pillow_action
+from corehq.apps.hqadmin.pillow_settings import (
+    apply_pillow_actions_to_pillows,
+    get_pillows_for_env,
+    get_single_pillow_action,
+)
 
 
 class TestPillowTopFiltering(SimpleTestCase):
@@ -52,22 +55,21 @@ class TestPillowTopFiltering(SimpleTestCase):
         self.assertEqual(expected_pillows, set([c.name for c in configs_back]))
 
     def test_loading_existing_conf_file(self):
+        config = {'include_groups': ['mvp_indicators']}
 
-        expected_action = {'include_groups': ['mvp_indicators']}
-
-        action = get_single_pillow_action('staging')
-        self.assertEqual(action.to_json(), expected_action)
-
-    def test_loading_no_existing_conf_file(self):
-        action = get_single_pillow_action('foo')
-        self.assertIsNone(action)
+        action = get_single_pillow_action(config)
+        self.assertEqual(action.to_json(), config)
 
     def test_india_server_exclusions(self):
         self.pillowtops['fluff'] = [
             'custom.bihar.models.CareBiharFluffPillow',
             'custom.opm.models.OpmUserFluffPillow',
         ]
+        configs = [
+            {'exclude_groups': ['mvp_indicators', 'fluff']},
+            {'include_pillows': ['custom.bihar.models.CareBiharFluffPillow']},
+        ]
 
-        pillows = [c.name for c in get_pillows_for_env('softlayer', self.pillowtops)]
+        pillows = [c.name for c in get_pillows_for_env(configs, self.pillowtops)]
         self.assertNotIn('OpmUserFluffPillow', pillows)
         self.assertIn('CareBiharFluffPillow', pillows)

@@ -34,6 +34,7 @@ class UserES(HQESQuery):
         'not_deleted': {"term": {"base_doc": "couchuser"}},
         'active': {"term": {"is_active": True}},
     }
+
     @property
     def builtin_filters(self):
         return [
