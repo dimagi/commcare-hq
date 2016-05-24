@@ -70,20 +70,20 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Log Date", span=1, sort_type=DATE, prop_name='date',
+            DataTablesColumn(ugettext_lazy("Log Date"), span=1, sort_type=DATE, prop_name='date',
                              sort_direction=[DTSortDirection.DSC,
                                              DTSortDirection.ASC]),
-            DataTablesColumn("Server Date", span=1, sort_type=DATE, prop_name='server_date',
+            DataTablesColumn(ugettext_lazy("Log Submission Date"), span=1, sort_type=DATE, prop_name='server_date',
                              sort_direction=[DTSortDirection.DSC,
                                              DTSortDirection.ASC]),
-            DataTablesColumn("Log Type", span=1, prop_name='type'),
-            DataTablesColumn("Logged in Username", span=2,
+            DataTablesColumn(ugettext_lazy("Log Type"), span=1, prop_name='type'),
+            DataTablesColumn(ugettext_lazy("Logged in Username"), span=2,
                              prop_name='username'),
-            DataTablesColumn("Device Users", span=2),
-            DataTablesColumn("Device ID", span=2, prop_name='device_id'),
-            DataTablesColumn("Message", span=5, prop_name='msg'),
-            DataTablesColumn("App Version", span=1, prop_name='app_version'),
-            DataTablesColumn("CommCare Version", span=1, prop_name='commcare_version'),
+            DataTablesColumn(ugettext_lazy("Device Users"), span=2),
+            DataTablesColumn(ugettext_lazy("Device ID"), span=2, prop_name='device_id'),
+            DataTablesColumn(ugettext_lazy("Message"), span=5, prop_name='msg'),
+            DataTablesColumn(ugettext_lazy("App Version"), span=1, prop_name='app_version'),
+            DataTablesColumn(ugettext_lazy("CommCare Version"), span=1, prop_name='commcare_version'),
         )
 
     @property
