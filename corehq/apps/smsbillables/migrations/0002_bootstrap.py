@@ -49,7 +49,6 @@ def bootstrap_currency(apps, schema_editor):
 
 
 def bootstrap_sms(apps, schema_editor):
-    get_preindex_plugin('sms').sync_design_docs()
     bootstrap_grapevine_gateway(apps)
     bootstrap_mach_gateway(apps)
     bootstrap_tropo_gateway(apps)
