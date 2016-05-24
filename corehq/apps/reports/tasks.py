@@ -448,10 +448,12 @@ def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
 def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info):
 
     def filename(form_info, question_id, extension):
-        fname = u"%s-%s-%s%s"
-        return fname % (unidecode(question_id),
-                        form_info['user'],
-                        form_info['id'], extension)
+        return u"{}-{}-{}{}".format(
+            unidecode(question_id),
+            form_info['user'],
+            form_info['id'],
+            extension
+        )
 
     if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
         with open(fpath, 'wb') as zfile:
