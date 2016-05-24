@@ -85,13 +85,9 @@ from corehq.dbaccessors.couchapps.all_docs import (
 from couchdbkit import ResourceConflict
 
 # models to be migrated
+import couchforms.models as xform
+import corehq.apps.hqmedia.models as hqmedia
 from corehq.apps.app_manager.models import Application, RemoteApp
-from corehq.apps.hqmedia.models import (
-    CommCareAudio,
-    CommCareImage,
-    CommCareMultimedia,
-    CommCareVideo,
-)
 from couchexport.models import SavedBasicExport
 
 
@@ -224,10 +220,19 @@ MIGRATIONS = {m.slug: m for m in [
         ("RemoteApp-Deleted", RemoteApp),
     ], migrate_from_couch_to_blobdb),
     Migrator("multimedia", [
-        CommCareAudio,
-        CommCareImage,
-        CommCareVideo,
-        CommCareMultimedia,
+        hqmedia.CommCareAudio,
+        hqmedia.CommCareImage,
+        hqmedia.CommCareVideo,
+        hqmedia.CommCareMultimedia,
+    ], migrate_from_couch_to_blobdb),
+    Migrator("xforms", [
+        xform.XFormInstance,
+        ("XFormInstance-Deleted", xform.XFormInstance),
+        xform.XFormArchived,
+        xform.XFormDeprecated,
+        xform.XFormDuplicate,
+        xform.XFormError,
+        xform.SubmissionErrorLog,
     ], migrate_from_couch_to_blobdb),
 ]}
 
