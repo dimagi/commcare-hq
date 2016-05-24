@@ -229,109 +229,108 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
     ajax = json.loads(request.POST.get('ajax', 'true'))
     resp = {}
+
+    app = get_app(domain, app_id)
     try:
-        app = get_app(domain, app_id)
         form = app.get_form(unique_form_id)
-        lang = request.COOKIES.get('lang', app.langs[0])
-
-        def should_edit(attribute):
-            if attribute in request.POST:
-                return True
-            elif attribute in request.FILES:
-                return True
-            else:
-                return False
-
-        if should_edit("name"):
-            name = request.POST['name']
-            form.name[lang] = name
-            xform = form.wrapped_xform()
-            if xform.exists():
-                xform.set_name(name)
-                save_xform(app, form, xform.render())
-            resp['update'] = {'.variable-form_name': form.name[lang]}
-        if should_edit('comment'):
-            form.comment = request.POST['comment']
-        if should_edit("xform"):
-            try:
-                # support FILES for upload and POST for ajax post from Vellum
-                try:
-                    xform = request.FILES.get('xform').read()
-                except Exception:
-                    xform = request.POST.get('xform')
-                else:
-                    try:
-                        xform = unicode(xform, encoding="utf-8")
-                    except Exception:
-                        raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
-                if request.POST.get('cleanup', False):
-                    try:
-                        # First, we strip all newlines and reformat the DOM.
-                        px = parseString(xform.replace('\r\n', '')).toprettyxml()
-                        # Then we remove excess newlines from the DOM output.
-                        text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-                        prettyXml = text_re.sub('>\g<1></', px)
-                        xform = prettyXml
-                    except Exception:
-                        pass
-                if xform:
-                    save_xform(app, form, xform)
-                else:
-                    raise Exception("You didn't select a form to upload")
-            except Exception, e:
-                if ajax:
-                    return HttpResponseBadRequest(unicode(e))
-                else:
-                    messages.error(request, unicode(e))
-        if should_edit("show_count"):
-            show_count = request.POST['show_count']
-            form.show_count = True if show_count == "True" else False
-        if should_edit("put_in_root"):
-            put_in_root = request.POST['put_in_root']
-            form.put_in_root = True if put_in_root == "True" else False
-        if should_edit('form_filter'):
-            form.form_filter = request.POST['form_filter']
-        if should_edit('post_form_workflow'):
-            form.post_form_workflow = request.POST['post_form_workflow']
-        if should_edit('auto_gps_capture'):
-            form.auto_gps_capture = request.POST['auto_gps_capture'] == 'true'
-        if should_edit('no_vellum'):
-            form.no_vellum = request.POST['no_vellum'] == 'true'
-        if (should_edit("form_links_xpath_expressions") and
-                should_edit("form_links_form_ids") and
-                toggles.FORM_LINK_WORKFLOW.enabled(domain)):
-            form_links = zip(
-                request.POST.getlist('form_links_xpath_expressions'),
-                request.POST.getlist('form_links_form_ids'),
-                [
-                    json.loads(datum_json) if datum_json else []
-                    for datum_json in request.POST.getlist('datums_json')
-                ],
-            )
-            form.form_links = [FormLink(
-                xpath=link[0],
-                form_id=link[1],
-                datums=[
-                    FormDatum(name=datum['name'], xpath=datum['xpath'])
-                    for datum in link[2]
-                ]
-            ) for link in form_links]
-
-        handle_media_edits(request, form, should_edit, resp, lang)
-
-        app.save(resp)
-        if ajax:
-            return HttpResponse(json.dumps(resp))
-        else:
-            return back_to_main(request, domain, app_id=app_id, unique_form_id=unique_form_id)
     except FormNotFoundException as e:
-        messages.error(request, unicode(e))
         if ajax:
             return HttpResponseBadRequest(unicode(e))
         else:
+            messages.error(request, "There was an error saving, please try again!")
             return back_to_main(request, domain, app_id=app_id)
+    lang = request.COOKIES.get('lang', app.langs[0])
 
+    def should_edit(attribute):
+        if attribute in request.POST:
+            return True
+        elif attribute in request.FILES:
+            return True
+        else:
+            return False
 
+    if should_edit("name"):
+        name = request.POST['name']
+        form.name[lang] = name
+        xform = form.wrapped_xform()
+        if xform.exists():
+            xform.set_name(name)
+            save_xform(app, form, xform.render())
+        resp['update'] = {'.variable-form_name': form.name[lang]}
+    if should_edit('comment'):
+        form.comment = request.POST['comment']
+    if should_edit("xform"):
+        try:
+            # support FILES for upload and POST for ajax post from Vellum
+            try:
+                xform = request.FILES.get('xform').read()
+            except Exception:
+                xform = request.POST.get('xform')
+            else:
+                try:
+                    xform = unicode(xform, encoding="utf-8")
+                except Exception:
+                    raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
+            if request.POST.get('cleanup', False):
+                try:
+                    # First, we strip all newlines and reformat the DOM.
+                    px = parseString(xform.replace('\r\n', '')).toprettyxml()
+                    # Then we remove excess newlines from the DOM output.
+                    text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
+                    prettyXml = text_re.sub('>\g<1></', px)
+                    xform = prettyXml
+                except Exception:
+                    pass
+            if xform:
+                save_xform(app, form, xform)
+            else:
+                raise Exception("You didn't select a form to upload")
+        except Exception, e:
+            if ajax:
+                return HttpResponseBadRequest(unicode(e))
+            else:
+                messages.error(request, unicode(e))
+    if should_edit("show_count"):
+        show_count = request.POST['show_count']
+        form.show_count = True if show_count == "True" else False
+    if should_edit("put_in_root"):
+        put_in_root = request.POST['put_in_root']
+        form.put_in_root = True if put_in_root == "True" else False
+    if should_edit('form_filter'):
+        form.form_filter = request.POST['form_filter']
+    if should_edit('post_form_workflow'):
+        form.post_form_workflow = request.POST['post_form_workflow']
+    if should_edit('auto_gps_capture'):
+        form.auto_gps_capture = request.POST['auto_gps_capture'] == 'true'
+    if should_edit('no_vellum'):
+        form.no_vellum = request.POST['no_vellum'] == 'true'
+    if (should_edit("form_links_xpath_expressions") and
+            should_edit("form_links_form_ids") and
+            toggles.FORM_LINK_WORKFLOW.enabled(domain)):
+        form_links = zip(
+            request.POST.getlist('form_links_xpath_expressions'),
+            request.POST.getlist('form_links_form_ids'),
+            [
+                json.loads(datum_json) if datum_json else []
+                for datum_json in request.POST.getlist('datums_json')
+            ],
+        )
+        form.form_links = [FormLink(
+            xpath=link[0],
+            form_id=link[1],
+            datums=[
+                FormDatum(name=datum['name'], xpath=datum['xpath'])
+                for datum in link[2]
+            ]
+        ) for link in form_links]
+
+    handle_media_edits(request, form, should_edit, resp, lang)
+
+    app.save(resp)
+    if ajax:
+        return HttpResponse(json.dumps(resp))
+    else:
+        return back_to_main(request, domain, app_id=app_id, unique_form_id=unique_form_id)
 
 
 @no_conflict_require_POST
