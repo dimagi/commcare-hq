@@ -274,6 +274,86 @@ def _store_excel_in_redis(file):
     return hash_id
 
 
+@task
+def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id, export_is_legacy):
+
+    form_ids = _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
+    properties = _get_export_properties(export_id, export_is_legacy)
+
+    if not app_id:
+        zip_name = 'Unrelated Form'
+    forms_info = list()
+    for form in FormAccessors(domain).iter_forms(form_ids):
+        if not zip_name:
+            zip_name = unidecode(form.name or 'unknown form')
+        forms_info.append(_extract_form_attachment_info(form, properties))
+
+    num_forms = len(forms_info)
+    DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
+
+    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
+    if use_transfer:
+        fpath = _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms)
+    else:
+        _, fpath = tempfile.mkstemp()
+
+    _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info)
+    _expose_download(fpath, use_transfer, zip_name, download_id, num_forms)
+
+
+def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms):
+    params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
+    fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
+    fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
+    return fpath
+
+
+def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
+    common_kwargs = dict(
+        mimetype='application/zip',
+        content_disposition='attachment; filename="{fname}.zip"'.format(fname=zip_name),
+        download_id=download_id,
+    )
+
+    if use_transfer:
+        expose_file_download(
+            fpath,
+            use_transfer=use_transfer,
+            **common_kwargs
+        )
+    else:
+        expose_cached_download(
+            FileWrapper(open(fpath)),
+            expiry=(1 * 60 * 60),
+            file_extension=file_extention_from_filename(fpath),
+            **common_kwargs
+        )
+
+    DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
+
+
+def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info):
+
+    def filename(form_info, question_id, extension):
+        return u"{}-{}-{}{}".format(
+            unidecode(question_id),
+            form_info['user'],
+            form_info['id'],
+            extension
+        )
+
+    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
+        with open(fpath, 'wb') as zfile:
+            with zipfile.ZipFile(zfile, 'w') as z:
+                for form_number, form_info in enumerate(forms_info):
+                    f = form_info['form']
+                    for a in form_info['attachments']:
+                        fname = filename(form_info, a['question_id'], a['extension'])
+                        zi = zipfile.ZipInfo(fname, a['timestamp'])
+                        z.writestr(zi, f.get_attachment(a['name']), zipfile.ZIP_STORED)
+                    DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
+
+
 def _get_export_properties(export_id, export_is_legacy):
     """
     Return a list of strings corresponding to form questions that are
@@ -392,82 +472,3 @@ def _extract_form_attachment_info(form, properties):
 
     return form_info
 
-
-@task
-def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id, export_is_legacy):
-
-    form_ids = _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
-    properties = _get_export_properties(export_id, export_is_legacy)
-
-    if not app_id:
-        zip_name = 'Unrelated Form'
-    forms_info = list()
-    for form in FormAccessors(domain).iter_forms(form_ids):
-        if not zip_name:
-            zip_name = unidecode(form.name or 'unknown form')
-        forms_info.append(_extract_form_attachment_info(form, properties))
-
-    num_forms = len(forms_info)
-    DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
-
-    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    if use_transfer:
-        fpath = _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms)
-    else:
-        _, fpath = tempfile.mkstemp()
-
-    _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info)
-    _expose_download(fpath, use_transfer, zip_name, download_id, num_forms)
-
-
-def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms):
-    params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
-    fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
-    fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
-    return fpath
-
-
-def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
-    common_kwargs = dict(
-        mimetype='application/zip',
-        content_disposition='attachment; filename="{fname}.zip"'.format(fname=zip_name),
-        download_id=download_id,
-    )
-
-    if use_transfer:
-        expose_file_download(
-            fpath,
-            use_transfer=use_transfer,
-            **common_kwargs
-        )
-    else:
-        expose_cached_download(
-            FileWrapper(open(fpath)),
-            expiry=(1 * 60 * 60),
-            file_extension=file_extention_from_filename(fpath),
-            **common_kwargs
-        )
-
-    DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
-
-
-def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info):
-
-    def filename(form_info, question_id, extension):
-        return u"{}-{}-{}{}".format(
-            unidecode(question_id),
-            form_info['user'],
-            form_info['id'],
-            extension
-        )
-
-    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
-        with open(fpath, 'wb') as zfile:
-            with zipfile.ZipFile(zfile, 'w') as z:
-                for form_number, form_info in enumerate(forms_info):
-                    f = form_info['form']
-                    for a in form_info['attachments']:
-                        fname = filename(form_info, a['question_id'], a['extension'])
-                        zi = zipfile.ZipInfo(fname, a['timestamp'])
-                        z.writestr(zi, f.get_attachment(a['name']), zipfile.ZIP_STORED)
-                    DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
