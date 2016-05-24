@@ -340,7 +340,6 @@ def _extract_form_attachment_info(form, properties):
     Return a dict containing information about the given form and its relevant
     attachments
     """
-
     def find_question_id(form, value):
         for k, v in form.iteritems():
             if isinstance(v, dict):
@@ -362,9 +361,12 @@ def _extract_form_attachment_info(form, properties):
         'user': form.user_id or "unknown_user",
         'id': form.form_id,
     }
+
     for attachment_name, attachment in form.attachments.iteritems():
-        content_type = getattr(attachment, 'content_type',
-                               attachment['content_type'])
+        try:
+            content_type = attachment.content_type
+        except AttributeError:
+            content_type = attachment['content_type']
         if content_type == 'text/xml':
             continue
         try:
@@ -376,8 +378,12 @@ def _extract_form_attachment_info(form, properties):
 
         if not properties or question_id in properties:
             extension = unicode(os.path.splitext(attachment_name)[1])
+            try:
+                size = attachment.content_length
+            except AttributeError:
+                size = attachment['length']
             form_info['attachments'].append({
-                'size': getattr(attachment, 'length', attachment['length']),
+                'size': size,
                 'name': attachment_name,
                 'question_id': question_id,
                 'extension': extension,
