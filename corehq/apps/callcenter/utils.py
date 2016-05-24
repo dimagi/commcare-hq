@@ -13,7 +13,6 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from corehq.apps.locations.models import SQLLocation
-from corehq.feature_previews import CALLCENTER
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
@@ -270,5 +269,6 @@ def get_call_center_cases(domain_name, case_type, user=None):
 
 @quickcache(['domain'])
 def get_call_center_case_type_if_enabled(domain):
-    if CALLCENTER.enabled(domain):
-        return Domain.get_by_name(domain).call_center_config.case_type
+    domain_object = Domain.get_by_name(domain)
+    if domain_object.call_center_config.enabled:
+        return domain_object.call_center_config.case_type
