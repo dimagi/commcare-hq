@@ -1062,7 +1062,7 @@ class ReportNotificationUnsubscribeView(LoginAndDomainMixin, TemplateView):
         context.update({'domain': self.domain, 'report': self.report})
         return context
 
-    def post(self, request, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
             report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
             report.remove_recipient(request.couch_user.get_email())
