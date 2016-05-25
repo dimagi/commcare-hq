@@ -31,12 +31,15 @@ class BaseMigrationTest(TestCase):
     def setUp(self):
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
         self._old_flags = {}
+        self.docs_to_delete = []
         for model in mod.MIGRATIONS[self.slug].doc_type_map.values():
             self._old_flags[model] = model.migrating_blobs_from_couch
             model.migrating_blobs_from_couch = True
 
     def tearDown(self):
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
+        for doc in self.docs_to_delete:
+            doc.get_db().delete_doc(doc._id)
         for model, flag in self._old_flags.items():
             if flag is NOT_SET:
                 del model.migrating_blobs_from_couch
@@ -51,6 +54,7 @@ class BaseMigrationTest(TestCase):
         return set(mod.MIGRATIONS[self.slug].doc_type_map)
 
     def do_migration(self, docs, num_attachments=1):
+        self.docs_to_delete.extend(docs)
         test_types = {d.doc_type for d in docs}
         if test_types != self.doc_types:
             raise Exception("bad test: must have at least one document per doc "
@@ -91,6 +95,7 @@ class BaseMigrationTest(TestCase):
             self.assertEqual(len(exp.external_blobs), num_attachments)
 
     def do_failed_migration(self, docs, modify_docs):
+        self.docs_to_delete.extend(docs)
         test_types = {d.doc_type for d in docs}
         if test_types != self.doc_types:
             raise Exception("bad test: must have at least one document per doc "
@@ -138,7 +143,7 @@ class TestSavedExportsMigrations(BaseMigrationTest):
 
     slug = "saved_exports"
 
-    def test_migrate_saved_exports(self):
+    def test_migrate_happy_path(self):
         saved = SavedBasicExport(configuration=_mk_config())
         saved.save()
         payload = b'binary data not valid utf-8 \xe4\x94'
@@ -184,7 +189,7 @@ class TestApplicationMigrations(BaseMigrationTest):
         "RemoteApp-Deleted": RemoteApp,
     }
 
-    def test_migrate_saved_exports(self):
+    def test_migrate_happy_path(self):
         apps = {}
         form = u'<fake xform source>\u2713</fake>'
         for doc_type, model_class in self.doc_type_map.items():
@@ -259,7 +264,7 @@ class TestMultimediaMigrations(BaseMigrationTest):
             media.attach_data(data, filename)
         return media
 
-    def test_migrate_saved_exports(self):
+    def test_migrate_happy_path(self):
         data = b'binary data not valid utf-8 \xe4\x94'
         media = {}
         for media_class, name in self.test_items:
@@ -297,6 +302,68 @@ class TestMultimediaMigrations(BaseMigrationTest):
             self.assertEqual(exp.fetch_attachment("other"), new_data)
 
 
+class TestXFormInstanceMigrations(BaseMigrationTest):
+
+    slug = "xforms"
+    doc_type_map = {
+        "XFormInstance": mod.xform.XFormInstance,
+        "XFormInstance-Deleted": mod.xform.XFormInstance,
+        "XFormArchived": mod.xform.XFormArchived,
+        "XFormDeprecated": mod.xform.XFormDeprecated,
+        "XFormDuplicate": mod.xform.XFormDuplicate,
+        "XFormError": mod.xform.XFormError,
+        "SubmissionErrorLog": mod.xform.SubmissionErrorLog,
+    }
+
+    def test_migrate_happy_path(self):
+        items = {}
+        form_name = mod.xform.ATTACHMENT_NAME
+        form = u'<fake xform submission>\u2713</fake>'
+        data = b'binary data not valid utf-8 \xe4\x94'
+        for doc_type, model_class in self.doc_type_map.items():
+            item = model_class()
+            item.save()
+            super(BlobMixin, item).put_attachment(form, form_name)
+            super(BlobMixin, item).put_attachment(data, "data.bin")
+            item.doc_type = doc_type
+            item.save()
+            items[doc_type] = item
+
+        self.do_migration(items.values(), num_attachments=2)
+
+        for item in items.values():
+            exp = type(item).get(item._id)
+            self.assertEqual(exp.fetch_attachment(form_name), form)
+            self.assertEqual(exp.fetch_attachment("data.bin"), data)
+
+    def test_migrate_with_concurrent_modification(self):
+        items = {}
+        form_name = mod.xform.ATTACHMENT_NAME
+        new_form = 'something new'
+        old_form = 'something old'
+        for doc_type, model_class in self.doc_type_map.items():
+            item = model_class()
+            item.save()
+            super(BlobMixin, item).put_attachment(old_form, form_name)
+            super(BlobMixin, item).put_attachment(old_form, "other.xml")
+            item.doc_type = doc_type
+            item.save()
+            self.assertEqual(len(item._attachments), 2)
+            items[item] = (1, 1)
+
+        def modify():
+            # put_attachment() calls .save()
+            for item in items:
+                type(item).get(item._id).put_attachment(new_form, form_name)
+
+        self.do_failed_migration(items, modify)
+
+        for item in items:
+            exp = type(item).get(item._id)
+            self.assertEqual(exp.fetch_attachment(form_name), new_form)
+            self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
+
+
 class TestMigrateBackend(TestCase):
 
     slug = "migrate_backend"
@@ -323,6 +390,8 @@ class TestMigrateBackend(TestCase):
     def tearDown(self):
         self.db.close()
         mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
+        for doc in self.migrate_docs:
+            doc.get_db().delete_doc(doc._id)
 
     def test_migrate_backend(self):
         # verify: attachment is in couch and migration not complete

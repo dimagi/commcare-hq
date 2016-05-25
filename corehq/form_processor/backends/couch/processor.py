@@ -14,7 +14,6 @@ from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
     doc_types, XFormError, SubmissionErrorLog
 )
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from corehq.form_processor.utils import extract_meta_instance_id
 
 
@@ -22,15 +21,12 @@ class FormProcessorCouch(object):
 
     @classmethod
     def store_attachments(cls, xform, attachments):
-        builder = CouchAttachmentsBuilder()
         for attachment in attachments:
-            builder.add(
-                content=attachment.content,
-                name=attachment.name,
+            xform.deferred_put_attachment(
+                attachment.content,
+                attachment.name,
                 content_type=attachment.content_type,
             )
-
-        xform._attachments = builder.to_json()
 
     @classmethod
     def new_xform(cls, form_data):
