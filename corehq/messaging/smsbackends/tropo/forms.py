@@ -1,4 +1,3 @@
-from django.forms.fields import *
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.sms.forms import BackendForm
 from dimagi.utils.django.fields import TrimmedCharField

@@ -2,8 +2,7 @@ from corehq.apps.ivr.api import log_call
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.views import NewIncomingBackendView
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-from django.http import HttpResponse, HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
 
 
 EMPTY_RESPONSE = """<?xml version="1.0" encoding="UTF-8" ?>

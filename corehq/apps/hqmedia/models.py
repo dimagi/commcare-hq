@@ -1,21 +1,24 @@
-from StringIO import StringIO
+import hashlib
 import logging
 import mimetypes
-from PIL import Image
 from datetime import datetime
-import hashlib
+from StringIO import StringIO
+
+import magic
 from couchdbkit.exceptions import ResourceConflict
 from dimagi.ext.couchdbkit import *
-from corehq.apps.app_manager.exceptions import XFormException
+from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
+from dimagi.utils.decorators.memoized import memoized
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-import magic
-from corehq.apps.app_manager.xform import XFormValidationError
-from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
-from dimagi.utils.couch.database import get_db, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
+from PIL import Image
+
+from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.xform import XFormValidationError
+from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
+from corehq.blobs.mixin import BlobMixin
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -24,13 +27,13 @@ LOGO_ARCHIVE_KEY = 'logos'
 class AuxMedia(DocumentSchema):
     """
     Additional metadata companion for couch models
-    that you want to supply add arbitrary attachments to
+    that you want to add arbitrary attachments to
     """
     uploaded_date = DateTimeProperty()
     uploaded_by = StringProperty()
     uploaded_filename = StringProperty()  # the uploaded filename info
     checksum = StringProperty()
-    attachment_id = StringProperty()  # the actual attachment id in _attachments
+    attachment_id = StringProperty()  # the actual attachment id in blobs
     media_meta = DictProperty()
     notes = StringProperty()
 
@@ -57,7 +60,7 @@ class HQMediaLicense(DocumentSchema):
         return LICENSE_LINKS.get(self.type)
 
 
-class CommCareMultimedia(SafeSaveDocument):
+class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     """
     The base object of all CommCare Multimedia
     """
@@ -70,6 +73,8 @@ class CommCareMultimedia(SafeSaveDocument):
     licenses = SchemaListProperty(HQMediaLicense, default=[])
     shared_by = StringListProperty(default=[])  # list of domains that can share this file
     tags = DictProperty(default={})  # dict of string lists
+
+    migrating_blobs_from_couch = True
 
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
@@ -120,7 +125,7 @@ class CommCareMultimedia(SafeSaveDocument):
         if not attachment_id:
             attachment_id = self.file_hash
 
-        if not self._attachments or attachment_id not in self._attachments:
+        if not self.blobs or attachment_id not in self.blobs:
             if not getattr(self, '_id'):
                 # put attchment blows away existing data, so make sure an id has been
                 # assigned to this guy before we do it. this is the expected path
@@ -170,9 +175,9 @@ class CommCareMultimedia(SafeSaveDocument):
 
     def get_display_file(self, return_type=True):
         if self.attachment_id:
-            data = self.fetch_attachment(self.attachment_id, True).read()
+            data = self.fetch_attachment(self.attachment_id, stream=True).read()
             if return_type:
-                content_type = self._attachments[self.attachment_id]['content_type']
+                content_type = self.blobs[self.attachment_id].content_type
                 return data, content_type
             else:
                 return data
