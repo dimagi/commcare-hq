@@ -209,6 +209,16 @@
                         {% endif %}
                     </button>
                 </form>
+                {% if couch_user.is_demo_user %}
+                <form class="form form-horizontal"
+                      action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
+                      method="post">
+                      {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        {% trans 'Refresh Demo Mode data' %}
+                    </button>
+                </form>
+                {% endif %}
             </div>
             {% endif %}
         </div>

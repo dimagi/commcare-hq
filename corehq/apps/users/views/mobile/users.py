@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
@@ -66,13 +66,14 @@ from corehq.apps.users.forms import (
     SelfRegistrationForm
 )
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
-from corehq.apps.users.tasks import bulk_upload_async
+from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader
+from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -352,10 +353,6 @@ def toggle_demo_mode(request, domain, user_id):
     demo_mode = request.POST.get('demo_mode', 'no')
     demo_mode = True if demo_mode == 'yes' else False
 
-    from soil import DownloadBase
-    from corehq.apps.users.tasks import turn_on_demo_mode_task
-    from django.shortcuts import redirect
-
     # handle bad POST param
     if user.is_demo_user == demo_mode:
         warning = _("User is already in Demo mode!") if user.is_demo_user else _("User is not in Demo mode!")
@@ -368,11 +365,26 @@ def toggle_demo_mode(request, domain, user_id):
         download.set_task(res)
         turn_on_demo_mode(user, domain)
         return redirect('hq_soil_download', domain, download.download_id)
-        messages.success(request, _("Successfully turned on demo mode!"))
     else:
         turn_off_demo_mode(user)
         messages.success(request, _("Successfully turned off demo mode!"))
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
+
+
+@require_can_edit_commcare_users
+@require_POST
+def reset_demo_user_restore(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if not user.is_demo_user:
+        warning = _("The user is not a demo user.")
+        messages.warning(require_POST, warning)
+        return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
+
+    download = DownloadBase()
+    res = reset_demo_user_restore_task.delay(user, domain)
+    download.set_task(res)
+    turn_on_demo_mode(user, domain)
+    return redirect('hq_soil_download', domain, download.download_id)
 
 
 @require_can_edit_commcare_users
