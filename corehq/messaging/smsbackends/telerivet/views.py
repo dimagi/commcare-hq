@@ -92,6 +92,7 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
             id_only=True
         ) is not None
 
+        webhook_url = absolute_reverse('telerivet_in')
         return {
             'outgoing_sms_form': TelerivetOutgoingSMSForm(),
             'test_sms_form': TelerivetPhoneNumberForm(),
@@ -102,7 +103,8 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
                                        else FinalizeGatewaySetupForm.YES),
                 }
             ),
-            'webhook_url': absolute_reverse('telerivet_in'),
+            'webhook_url': webhook_url,
+            'include_https_notice': webhook_url.startswith('https'),
             'webhook_secret': webhook_secret,
             'request_token': request_token,
         }

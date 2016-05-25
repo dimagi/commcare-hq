@@ -49,6 +49,12 @@
                             <td>{{ webhook_secret}}</td>
                         </tr>
                     </table>
+                    {% if include_https_notice %}
+                    <p class="help-block">
+                        <i class="fa fa-info-circle" />
+                        {% trans "NOTE: Please make sure you enter https, not http, for the URL." %}
+                    </p>
+                    {% endif %}
                     <p ng-show="showWebhookDetails">
                         <img class="img-responsive img-thumbnail" src="{% new_static 'telerivet/img/webhook_detail_screen.png' %}" />
                     </p>
@@ -59,7 +65,12 @@
                     <p>
                         {% blocktrans %}
                         After creating the Webhook Service in the Telerivet website, send an SMS to the Telerivet Android phone from
-                        another phone. <button class="btn btn-success" ng-click="startInboundPolling();">Click Here</button> after you have sent the SMS.
+                        another phone.
+                        {% endblocktrans %}
+                    </p>
+                    <p>
+                        {% blocktrans %}
+                        <button class="btn btn-success" ng-click="startInboundPolling();">Click Here</button> after you have sent the SMS.
                         {% endblocktrans %}
                     </p>
                 </div>
