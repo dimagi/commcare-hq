@@ -283,13 +283,16 @@ var uiElement;
                         var $modal_fields = $('#'+this.modal_id+' form fieldset');
                         $modal_fields.text('');
                         this.$noedit_view.text('');
-                        this.$edit_view.text('');
+                        this.$edit_view.html(django.gettext('Click <strong>Edit</strong> below to add mappings'));
 
                         this.value = original_pairs;
                         if (translated_pairs !== undefined) {
                             this.translated_value = translated_pairs;
                         }
                         this.$formatted_view.val(JSON.stringify(this.value));
+                        if (!_.isEmpty(this.value)) {
+                            this.$edit_view.text('');
+                        }
                         for (var key in this.value) {
                             $modal_fields.append(uiElement.input_map(true).val(key, this.value[key], this.translated_value[key]).ui);
                             this.$edit_view.append(uiElement.input_map(true).val(key, this.value[key], this.translated_value[key]).setEdit(false).$noedit_view);
