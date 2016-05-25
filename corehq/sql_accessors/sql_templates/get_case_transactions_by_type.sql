@@ -6,7 +6,6 @@ BEGIN
     SELECT * FROM form_processor_casetransaction
     WHERE form_processor_casetransaction.case_id = p_case_id
     AND form_processor_casetransaction.revoked = FALSE
-    AND form_processor_casetransaction.form_id IS NOT NULL
     AND form_processor_casetransaction.type & p_transaction_type = p_transaction_type
     ORDER BY form_processor_casetransaction.server_date;
 END;
