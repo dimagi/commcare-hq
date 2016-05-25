@@ -145,7 +145,7 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
     owned_cases = footprint_info.base_ids
     cases_to_check = footprint_info.all_ids - owned_cases
     if cases_to_check:
-        closed_owned_case_ids = set(casedb.get_closed_case_ids(owner_id))
+        closed_owned_case_ids = set(casedb.get_closed_case_ids_for_owner(owner_id))
         cases_to_check = cases_to_check - closed_owned_case_ids - footprint_info.extension_ids
         # check extension cases that are unowned or owned by others
         extension_cases_to_check = footprint_info.extension_ids - closed_owned_case_ids - owned_cases
