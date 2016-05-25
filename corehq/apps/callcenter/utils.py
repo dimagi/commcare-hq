@@ -278,6 +278,9 @@ def get_call_center_cases(domain_name, case_type, user=None):
 @quickcache(['domain'])
 def get_call_center_case_type_if_enabled(domain):
     domain_object = Domain.get_by_name(domain)
+    if not domain_object:
+        return
+
     config = domain_object.call_center_config
     if config.enabled and config.config_is_valid():
         return config.case_type
