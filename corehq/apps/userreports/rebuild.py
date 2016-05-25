@@ -24,7 +24,6 @@ class DataSourceResumeHelper(object):
         self._client.rpush(self._key, *ids)
 
     def remove_id(self, doc_id):
-        # todo: is it still necessary to support sets?
         self._client.lrem(self._key, 1, doc_id)
 
     def add_id(self, doc_id):
