@@ -324,7 +324,9 @@ def domain_admin_required_ex(redirect_page_name=None):
             domain_name, domain = load_domain(request, domain)
             if not domain:
                 raise Http404()
-            dimagi_pages = [x for x in pages_not_restricted_for_dimagi if x % {'domain': domain_name} == request.path]
+            dimagi_pages = [
+                x for x in pages_not_restricted_for_dimagi if x % {'domain': domain_name} == request.path
+            ]
             if not dimagi_pages and not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
