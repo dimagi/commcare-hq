@@ -3,6 +3,7 @@ from functools import wraps
 import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
+from corehq import toggles
 from corehq.apps.app_manager.const import (
     APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
@@ -862,7 +863,7 @@ class XForm(WrappedNode):
         return self.translations().keys()
 
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False):
+                      include_groups=False, include_translations=False, form=None):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -879,8 +880,11 @@ class XForm(WrappedNode):
         excluded_paths = set()
 
         control_nodes = self.get_control_nodes()
+        use_hashtags = False
+        if form:
+            use_hashtags = form.get_app().vellum_case_management or toggles.VELLUM_RICH_TEXT.enabled(form.get_app().domain)
 
-        for node, path, hashtagPath, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
+        for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
             excluded_paths.add(path)
             if not is_leaf and not include_groups:
                 continue
@@ -895,7 +899,7 @@ class XForm(WrappedNode):
                 "label": self.get_label_text(node, langs),
                 "tag": node.tag_name,
                 "value": path,
-                "hashtagValue": self.hashtag_path(path),
+                "hashtagValue": self.hashtag_path(path) if use_hashtags else path,
                 "repeat": repeat,
                 "group": group,
                 "type": data_type,
@@ -935,11 +939,12 @@ class XForm(WrappedNode):
                     ][0]
                 except IndexError:
                     matching_repeat_context = None
+                hashtag_path = self.hashtag_path(path) if use_hashtags else path
                 question = {
-                    "label": self.hashtag_path(path),
+                    "label": hashtag_path,
                     "tag": "hidden",
                     "value": path,
-                    "hashtagValue": self.hashtag_path(path),
+                    "hashtagValue": hashtag_path,
                     "repeat": matching_repeat_context,
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
@@ -972,7 +977,6 @@ class XForm(WrappedNode):
                 tag = node.tag_name
                 if node.tag_xmlns == namespaces['f'][1:-1] and tag != 'label':
                     path = self.resolve_path(self.get_path(node), path_context)
-                    hashtagPath = self.hashtag_path(path)
                     bind = self.get_bind(path)
                     data_type = infer_vellum_type(node, bind)
                     relevant = bind.attrib.get('relevant') if bind else None
@@ -1009,7 +1013,7 @@ class XForm(WrappedNode):
                             items = node.findall('{f}item')
 
                     if not skip:
-                        control_nodes.append((node, path, hashtagPath, repeat_context,
+                        control_nodes.append((node, path, repeat_context,
                                               group_context, items, is_leaf,
                                               data_type, relevant, required))
                     if recursive_kwargs:
