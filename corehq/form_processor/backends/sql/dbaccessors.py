@@ -138,10 +138,10 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert limit is not None
         # apply limit in python as well since we may get more results than we expect
         # if we're in a sharded environment
-        forms = list(XFormInstanceSQL.objects.raw(
+        forms = XFormInstanceSQL.objects.raw(
             'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
             [domain, state, limit, recent_first]
-        ))
+        )
         forms = sorted(forms, key=lambda f: f.received_on, reverse=recent_first)
         return forms[:limit]
 
@@ -311,8 +311,10 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_forms_received_since(received_on_since=None, limit=500):
         received_on_since = received_on_since or datetime.min
-        results = list(XFormInstanceSQL.objects.raw('SELECT * FROM get_all_forms_received_since(%s, %s)',
-                                                    [received_on_since, limit]))
+        results = XFormInstanceSQL.objects.raw(
+            'SELECT * FROM get_all_forms_received_since(%s, %s)',
+            [received_on_since, limit]
+        )
         # sort and add additional limit in memory in case the sharded setup returns more than
         # the requested number of cases
         return sorted(results, key=lambda form: form.received_on)[:limit]
@@ -532,8 +534,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         if server_modified_on_since is None:
             server_modified_on_since = datetime.min
-        results = list(CommCareCaseSQL.objects.raw('SELECT * FROM get_all_cases_modified_since(%s, %s)',
-                                                [server_modified_on_since, limit]))
+        results = CommCareCaseSQL.objects.raw(
+            'SELECT * FROM get_all_cases_modified_since(%s, %s)',
+            [server_modified_on_since, limit]
+        )
         # sort and add additional limit in memory in case the sharded setup returns more than
         # the requested number of cases
         return sorted(results, key=lambda case: case.server_modified_on)[:limit]
