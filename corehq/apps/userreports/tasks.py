@@ -7,23 +7,19 @@ from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
-from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration, id_is_static
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
 
-def is_static(config_id):
-    return config_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
-
-
 def _get_config_by_id(indicator_config_id):
-    if is_static(indicator_config_id):
+    if id_is_static(indicator_config_id):
         return StaticDataSourceConfiguration.by_id(indicator_config_id)
     else:
         return DataSourceConfiguration.get(indicator_config_id)
 
 
 def _get_redis_key_for_config(config):
-    if is_static(config._id):
+    if id_is_static(config._id):
         rev = 'static'
     else:
         rev = config._rev
@@ -54,7 +50,7 @@ def rebuild_indicators(indicator_config_id):
     config = _get_config_by_id(indicator_config_id)
     adapter = IndicatorSqlAdapter(config)
 
-    if not is_static(indicator_config_id):
+    if not id_is_static(indicator_config_id):
         # Save the start time now in case anything goes wrong. This way we'll be
         # able to see if the rebuild started a long time ago without finishing.
         config.meta.build.initiated = datetime.datetime.utcnow()
@@ -102,7 +98,7 @@ def _iteratively_build_table(config, last_id=None):
         redis_client.rpush(redis_key, *relevant_ids)
         _build_indicators(config, document_store, relevant_ids)
 
-    if not is_static(indicator_config_id):
+    if not id_is_static(indicator_config_id):
         redis_client.delete(redis_key)
         config.meta.build.finished = True
         try:
