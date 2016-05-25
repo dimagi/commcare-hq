@@ -1,133 +1,101 @@
 /* globals _, ko, $ */
 
 hqDefine('locations/ko/location_types.js', function(){
+    'use strict';
     var ROOT_LOCATION_ID = -1;
 
     function LocationSettingsViewModel(loc_types, commtrack_enabled) {
-        this.loc_types = ko.observableArray();
-        this.loc_types($.map(loc_types, function(loc_type) {
-            return new LocationTypeModel(loc_type, commtrack_enabled);
+        var self = this;
+        self.loc_types = ko.observableArray();
+        self.loc_types($.map(loc_types, function(loc_type) {
+            return new LocationTypeModel(loc_type, commtrack_enabled, self);
         }));
 
-        var root_type = new LocationTypeModel({
-            name: "root",
-            pk: ROOT_LOCATION_ID,
-        });
+        self.json_payload = ko.observable();
 
-        this.json_payload = ko.observable();
+        self.loc_types_error = ko.observable(false);
+        self.advanced_mode = ko.observable(false);
 
-        this.loc_types_error = ko.observable(false);
-        this.advanced_mode = ko.observable(false);
-
-        this.loc_type_options = function(loc_type) {
-            return this.loc_types().filter(function(type) {
+        self.loc_type_options = function(loc_type) {
+            return self.loc_types().filter(function(type) {
                 return type.name !== loc_type.name;
             });
         };
 
-        this.loc_types_by_id = _.reduce(this.loc_types(), function(memo, loc_type){
+        self.loc_types_by_id = _.reduce(self.loc_types(), function(memo, loc_type){
             memo[loc_type.pk] = loc_type;
             return memo;
         }, {});
 
-        this.loc_types_by_parent = _.reduce(this.loc_types(), function(memo, loc_type){
-            memo[loc_type.parent_type()] = loc_type;
+        self.loc_types_by_parent = _.reduce(self.loc_types(), function(memo, loc_type){
+            var parent_type = loc_type.parent_type() || 0;
+            if (memo[parent_type]){
+                memo[parent_type].push(loc_type);
+            } else {
+                memo[parent_type] = [loc_type];
+            }
             return memo;
         }, {});
 
-        this.expand_from_options = function(loc_type) {
-            // traverse all locations upwards, include a root option
-            var parents = [],
-                to_check = [loc_type];
-            if (!this.has_cycles()) {
-                while (to_check.length > 0){
-                    var current_loc = to_check.pop(),
-                        parent_type = current_loc.parent_type();
-                    if (parent_type){
-                        var parent = this.loc_types_by_id[parent_type];
-                        parents.push(parent);
-                        if (parent.parent_type()){
-                            to_check.push(parent);
-                        }
-                    }
+        self.types_by_index = function(location_types){
+            return _.reduce(location_types, function(memo, loc_type){
+                var level = loc_type.level();
+                if (memo[level]){
+                    memo[level].push(loc_type);
+                } else {
+                    memo[level] = [loc_type];
                 }
-            }
-            parents.push(root_type);
-            return parents.reverse();
+                return memo;
+            }, {}, self);
         };
 
-        this.expand_to_options = function(loc_type) {
-            // from us, go down the tree, extract the last one so we can use it as the default
-            var children = [loc_type],
-                to_check = [loc_type];
-
-            if (!this.has_cycles()){
-                while (to_check.length > 0){
-                    var current_loc = to_check.pop(),
-                        child = this.loc_types_by_parent[current_loc.pk];
-                    if (child){
-                        children.push(child);
-                        if (this.loc_types_by_parent[child.pk]){
-                            to_check.push(child);
-                        }
-                    }
-                }
-            }
-            return {
-                children: children.slice(0, children.length - 1),
-                leaf: children[children.length - 1],
-            };
+        self.remove_loctype = function(loc_type) {
+            self.loc_types.remove(loc_type);
         };
 
-        var settings = this;
-
-        this.remove_loctype = function(loc_type) {
-            settings.loc_types.remove(loc_type);
-        };
-
-        this.new_loctype = function() {
-            var parent_pk = (_.last(settings.loc_types()) || {}).pk;
-            var new_loctype = new LocationTypeModel({parent_type: parent_pk}, commtrack_enabled);
+        self.new_loctype = function() {
+            var parent_pk = (_.last(self.loc_types()) || {}).pk;
+            var new_loctype = new LocationTypeModel({parent_type: parent_pk}, commtrack_enabled, self);
             new_loctype.onBind = function() {
-                var $inp = $(this.$e).find('.loctype_name');
+                var $inp = $(self.$e).find('.loctype_name');
                 $inp.focus();
                 setTimeout(function() { $inp.select(); }, 0);
             };
-            settings.loc_types.push(new_loctype);
+            self.loc_types.push(new_loctype);
             ga_track_event('Organization Levels', 'New Organization Level');
         };
 
-        this.validate = function() {
-            this.loc_types_error(false);
+        self.validate = function() {
+            self.loc_types_error(false);
 
             var valid = true;
 
-            $.each(this.loc_types(), function(i, e) {
+            $.each(self.loc_types(), function(i, e) {
                 if (!e.validate()) {
                     valid = false;
                 }
             });
 
             var top_level_loc = false;
-            $.each(this.loc_types(), function(i, e) {
+            $.each(self.loc_types(), function(i, e) {
                 if (!e.parent_type()) {
                     top_level_loc = true;
                 }
             });
-            if (this.loc_types().length && !top_level_loc) {
-                this.loc_types_error(true);
+            if (self.loc_types().length && !top_level_loc) {
+                self.loc_types_error(true);
                 valid = false;
             }
-            if (this.has_cycles()) {
-                this.loc_types_error(true);
+            if (self.has_cycles()) {
+                self.loc_types_error(true);
                 valid = false;
             }
             return valid;
         };
 
-        this.has_cycles = function() {
+        self.has_cycles = function() {
             var loc_type_parents = {};
-            $.each(this.loc_types(), function(i, loc_type) {
+            $.each(self.loc_types(), function(i, loc_type) {
                 loc_type_parents[loc_type.pk] = loc_type.parent_type();
             });
 
@@ -141,9 +109,9 @@ hqDefine('locations/ko/location_types.js', function(){
                     return already_visited(loc_type_parents[lt], visited);
                 }
             };
-            for (var i = 0; i < this.loc_types().length; i++) {
+            for (var i = 0; i < self.loc_types().length; i++) {
                 var visited = [],
-                    loc_type = this.loc_types()[i].pk;
+                    loc_type = self.loc_types()[i].pk;
                 if (already_visited(loc_type, visited)) {
                     return true;
                 }
@@ -151,19 +119,19 @@ hqDefine('locations/ko/location_types.js', function(){
             return false;
         };
 
-        this.presubmit = function() {
-            if (!this.validate()) {
+        self.presubmit = function() {
+            if (!self.validate()) {
                 return false;
             }
 
-            var payload = this.to_json();
-            this.json_payload(JSON.stringify(payload));
+            var payload = self.to_json();
+            self.json_payload(JSON.stringify(payload));
             return true;
         };
 
-        this.to_json = function() {
+        self.to_json = function() {
             return {
-                loc_types: $.map(this.loc_types(), function(e) { return e.to_json(); }),
+                loc_types: $.map(self.loc_types(), function(e) { return e.to_json(); }),
             };
         };
     }
@@ -177,42 +145,133 @@ hqDefine('locations/ko/location_types.js', function(){
         };
     }();
 
-    function LocationTypeModel(loc_type, commtrack_enabled) {
+    function LocationTypeModel(loc_type, commtrack_enabled, view_model) {
+        var self = this;
         var name = loc_type.name || '';
-        this.pk = loc_type.pk || get_fake_pk();
-        this.name = ko.observable(name);
+        self.pk = loc_type.pk || get_fake_pk();
+        self.name = ko.observable(name);
 
-        this.parent_type = ko.observable(loc_type.parent_type);
-        this.tracks_stock = ko.observable(!loc_type.administrative);
-        this.shares_cases = ko.observable(loc_type.shares_cases);
-        this.view_descendants = ko.observable(loc_type.view_descendants);
-        this.code = ko.observable(loc_type.code || '');
-        this.expand_from = ko.observable(loc_type.expand_from_root ? ROOT_LOCATION_ID : loc_type.expand_from);
-        this.expand_to = ko.observable(loc_type.expand_to);
+        self.parent_type = ko.observable(loc_type.parent_type);
+        self.tracks_stock = ko.observable(!loc_type.administrative);
+        self.shares_cases = ko.observable(loc_type.shares_cases);
+        self.view_descendants = ko.observable(loc_type.view_descendants);
+        self.code = ko.observable(loc_type.code || '');
+        self.expand_from = ko.observable(loc_type.expand_from_root ? ROOT_LOCATION_ID : loc_type.expand_from);
+        self.expand_to = ko.observable(loc_type.expand_to);
 
-        this.name_error = ko.observable(false);
+        self.view = view_model;
 
-        this.validate = function() {
-            this.name_error(false);
-            if (!this.name()) {
-                this.name_error(true);
+        self.name_error = ko.observable(false);
+
+        self.validate = function() {
+            self.name_error(false);
+            if (!self.name()) {
+                self.name_error(true);
                 return false;
             }
             return true;
         };
 
-        this.to_json = function() {
+        self.children = function(){
+            var all_children = [self],
+                to_check = [self];
+            if (!self.view.has_cycles()){
+                while (to_check.length > 0){
+                    var current_loc = to_check.pop(),
+                        children = self.view.loc_types_by_parent[current_loc.pk];
+                    if (children){
+                        children.forEach(function(child){
+                            all_children.push(child);
+                            if (self.view.loc_types_by_parent[child.pk]){
+                                to_check.push(child);
+                            }
+                        }, self);
+                    }
+                }
+            }
+            return all_children;
+        };
+
+        self.parents = function(){
+            var parents = [],
+                to_check = [self];
+            if (!self.view.has_cycles()) {
+                while (to_check.length > 0){
+                    var current_loc = to_check.pop(),
+                        parent_type = current_loc.parent_type();
+                    if (parent_type){
+                        var parent = self.view.loc_types_by_id[parent_type];
+                        parents.push(parent);
+                        if (parent.parent_type()){
+                            to_check.push(parent);
+                        }
+                    }
+                }
+            }
+            return parents;
+        };
+
+        self.level = function(){
+            // Count the number of parents
+            return self.parents().length;
+        };
+
+        self.compiled_name = function(){
+            // Shows all types that have the same level as this one "type1 | type2"
+            var compiled_name = "",
+                location_types_same_level = self.view.types_by_index(self.view.loc_types())[self.level()];
+
+            location_types_same_level.forEach(function(location_type, index){
+                compiled_name += location_type.name();
+                if (index !== location_types_same_level.length - 1){
+                    compiled_name += " | ";
+                }
+            });
+            return compiled_name;
+        };
+
+        self.expand_from_options = function() {
+            // traverse all locations upwards, include a root option
+            var root_type = new LocationTypeModel(
+                {name: "root", pk: ROOT_LOCATION_ID},
+                commtrack_enabled, this
+            ),
+                parents = self.parents();
+            parents.push(root_type);
+            return parents.reverse();
+        };
+
+        self.expand_to_options = function(){
+            // display all locations with the same index as being on the same level
+            var children = self.children(),
+                children_same_levels = self.view.types_by_index(children),
+                children_to_return = [];
+            for (var level in children_same_levels){
+                // Only display a single child at each level
+                var child_to_add = children_same_levels[level][0];
+                children_to_return.push(new LocationTypeModel({
+                    name: child_to_add.compiled_name(),
+                    pk: child_to_add.pk,
+                }, false, self.view));
+            }
             return {
-                pk: this.pk,
-                name: this.name(),
-                parent_type: this.parent_type() || null,
-                administrative: commtrack_enabled ? !this.tracks_stock() : true,
-                shares_cases: this.shares_cases() === true,
-                view_descendants: this.view_descendants() === true,
-                code: this.code().trim() || '',
-                expand_from: (this.expand_from() !== -1 ? this.expand_from() : null) || null,
-                expand_from_root: this.expand_from() === ROOT_LOCATION_ID,
-                expand_to: this.expand_to() || null,
+                children: children_to_return.slice(0, children_to_return.length - 1),
+                leaf: children_to_return[children_to_return.length - 1],
+            };
+        };
+
+        self.to_json = function() {
+            return {
+                pk: self.pk,
+                name: self.name(),
+                parent_type: self.parent_type() || null,
+                administrative: commtrack_enabled ? !self.tracks_stock() : true,
+                shares_cases: self.shares_cases() === true,
+                view_descendants: self.view_descendants() === true,
+                code: self.code().trim() || '',
+                expand_from: (self.expand_from() !== -1 ? self.expand_from() : null) || null,
+                expand_from_root: self.expand_from() === ROOT_LOCATION_ID,
+                expand_to: self.expand_to() || null,
             };
         };
     }

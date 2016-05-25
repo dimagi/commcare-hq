@@ -180,7 +180,7 @@
                             </td>
                             <td class="form-group">
                                 <select class="form-control"
-                                        data-bind="options: $root.expand_from_options($data),
+                                        data-bind="options: $data.expand_from_options(),
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
                                                    value: expand_from,
@@ -189,11 +189,11 @@
                             </td>
                             <td class="form-group">
                                 <select class="form-control"
-                                        data-bind="options: $root.expand_to_options($data).children,
+                                        data-bind="options: $data.expand_to_options().children,
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
                                                    value: expand_to,
-                                                   optionsCaption: '\u2013{%trans 'default'%} (' + $root.expand_to_options($data).leaf.name() + ')\u2013'">
+                                                   optionsCaption: '\u2013{%trans 'default'%} (' + $data.expand_to_options().leaf.name() + ')\u2013'">
                                 </select>
                             </td>
                             <!-- /ko -->
