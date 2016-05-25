@@ -19,6 +19,8 @@ import types
 from fnmatch import fnmatch
 from unittest.case import TestCase
 
+from django.apps import apps
+
 import couchlog.signals
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
@@ -238,9 +240,9 @@ class AppLabelsPlugin(Plugin):
 
         This should be called after `loadTestsFromNames` has been called.
         """
-        test_apps = set(app for app in settings.INSTALLED_APPS
-                        if app not in settings.APPS_TO_EXCLUDE_FROM_TESTS
-                        and not app.startswith('django.'))
+        test_apps = set(app.name for app in apps.get_app_configs()
+                        if app.name not in settings.APPS_TO_EXCLUDE_FROM_TESTS
+                        and not app.name.startswith('django.'))
         if not cls.user_specified_test_names:
             return [AppConfig.create(app).label for app in test_apps]
 

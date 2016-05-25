@@ -380,4 +380,4 @@ def cases_referenced_by_xform(xform):
     case_accessor = CaseAccessors(domain)
     if domain is None:
         assert case_accessor.db_accessor == CaseAccessorCouch
-    return case_accessor.get_cases(list(case_ids))
+    return list(case_accessor.get_cases(list(case_ids)))
