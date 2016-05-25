@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 import dimagi.utils.couch.migration
 import uuidfield.fields
-import json_field.fields
+import jsonfield.fields
 
 
 class Migration(migrations.Migration):
@@ -27,10 +27,10 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=126)),
                 ('display_name', models.CharField(max_length=126, null=True)),
                 ('description', models.TextField(null=True)),
-                ('supported_countries', json_field.fields.JSONField(default=[], help_text='Enter a valid JSON object')),
-                ('extra_fields', json_field.fields.JSONField(default={}, help_text='Enter a valid JSON object')),
+                ('supported_countries', jsonfield.fields.JSONField(default=[])),
+                ('extra_fields', jsonfield.fields.JSONField(default={})),
                 ('deleted', models.BooleanField(default=False)),
-                ('load_balancing_numbers', json_field.fields.JSONField(default=[], help_text='Enter a valid JSON object')),
+                ('load_balancing_numbers', jsonfield.fields.JSONField(default=[])),
                 ('reply_to_phone_number', models.CharField(max_length=126, null=True)),
             ],
             options={

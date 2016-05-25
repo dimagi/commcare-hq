@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
-import json_field
+import jsonfield
 import uuid
 from dimagi.ext.couchdbkit import *
 
@@ -1496,7 +1496,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # This information is displayed in the gateway list UI.
     # If this backend represents an international gateway,
     # set this to: ["*"]
-    supported_countries = json_field.JSONField(default=[])
+    supported_countries = jsonfield.JSONField(default=[])
 
     # To avoid having many tables with so few records in them, all
     # SMS backends are stored in this same table. This field is a
@@ -1504,7 +1504,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # backend subclasses need.
     # NOTE: Do not access this field directly, instead use get_extra_fields()
     # and set_extra_fields()
-    extra_fields = json_field.JSONField(default={})
+    extra_fields = jsonfield.JSONField(default={})
 
     # For a historical view of sms data, we can't delete backends.
     # Instead, set a deleted flag when a backend should no longer be used.
@@ -1512,7 +1512,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
 
     # If the backend uses load balancing, this is a JSON list of the
     # phone numbers to load balance over.
-    load_balancing_numbers = json_field.JSONField(default=[])
+    load_balancing_numbers = jsonfield.JSONField(default=[])
 
     # The phone number which you can text to or call in order to reply
     # to this backend
