@@ -1,7 +1,7 @@
 import uuid
 from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
@@ -108,6 +108,7 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
             'include_https_notice': webhook_url.startswith('https'),
             'webhook_secret': webhook_secret,
             'request_token': request_token,
+            'gateway_list_url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
         }
 
     @property

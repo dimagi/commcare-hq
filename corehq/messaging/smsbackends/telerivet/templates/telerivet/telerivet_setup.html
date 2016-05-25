@@ -127,12 +127,15 @@
             .success(function(data) {
                 if(data.success) {
                     $scope.setupComplete = true;
+                    setTimeout(function() {
+                        window.location.href = '{{ gateway_list_url }}';
+                    }, 2000);
                 } else {
                     $scope.nameError = data.unexpected_error || data.name_error;
                     if(data.name_error) {
                         $('#id_create_backend')
                         .prop('disabled', false)
-                        .text(gettext("Finish"));
+                        .text(gettext("Complete"));
                     }
                 }
             })
