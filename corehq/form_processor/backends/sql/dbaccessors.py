@@ -717,9 +717,9 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         """
         if modified_since is None:
             modified_since = datetime.min
-        results = RawQuerySetWrapper(LedgerValue.objects.raw(
+        results = LedgerValue.objects.raw(
             'SELECT * FROM get_all_ledger_values_modified_since(%s, %s)',
-            [modified_since, limit])
+            [modified_since, limit]
         )
         # sort and add additional limit in memory in case the sharded setup returns more than
         # the requested number of ledgers
@@ -768,7 +768,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def get_ledger_values_for_product_ids(product_ids):
-        return list(LedgerValue.objects.raw(
+        return RawQuerySetWrapper(LedgerValue.objects.raw(
             'SELECT * FROM get_ledger_values_for_product_ids(%s)',
             [product_ids]
         ))
