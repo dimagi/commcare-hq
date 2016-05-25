@@ -200,7 +200,8 @@ class FinalizeGatewaySetupForm(Form):
                     Div(
                         hqcrispy.MultiInlineField(
                             'set_as_default',
-                            ng_model='setAsDefault'
+                            ng_model='setAsDefault',
+                            style='margin-left: 0px;'
                         )
                     ),
                     get_rmi_error_placeholder('setAsDefaultError'),
