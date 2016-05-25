@@ -1,6 +1,6 @@
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 

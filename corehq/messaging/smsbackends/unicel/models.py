@@ -3,7 +3,6 @@ from corehq.apps.sms.api import incoming
 from corehq.apps.sms.models import SQLSMSBackend
 from urllib2 import urlopen
 from urllib import urlencode
-from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.unicel.forms import UnicelBackendForm
 from django.conf import settings
 
