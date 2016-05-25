@@ -1,4 +1,5 @@
 from corehq.apps.sms.forms import BackendForm
+from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.util import validate_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from crispy_forms import layout as crispy
@@ -150,6 +151,7 @@ class TelerivetPhoneNumberForm(Form):
 
     def clean_test_phone_number(self):
         value = self.cleaned_data.get('test_phone_number')
+        value = apply_leniency(value)
         validate_phone_number(value,
             error_message=_("Please enter digits only, in international format (country code and phone number)."))
         return value
