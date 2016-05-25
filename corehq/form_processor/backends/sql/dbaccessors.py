@@ -593,7 +593,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     attachment.delete_content()
 
     @staticmethod
-    def get_open_case_ids(domain, owner_id):
+    def get_open_case_ids_for_owner(domain, owner_id):
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',

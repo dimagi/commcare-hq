@@ -236,7 +236,7 @@ def get_case_footprint_info(domain, owner_id):
       2) doesn't return full blown case objects but just IDs
       3) differentiates between the base set and the complete list
     """
-    open_case_ids = set(CaseAccessors(domain).get_open_case_ids(owner_id))
+    open_case_ids = set(CaseAccessors(domain).get_open_case_ids_for_owner(owner_id))
     dependent_cases = get_dependent_case_info(domain, open_case_ids)
     return FootprintInfo(base_ids=set(open_case_ids),  # open cases with this owner
                          all_ids=dependent_cases.all_ids | open_case_ids,

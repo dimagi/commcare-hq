@@ -127,7 +127,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids, closed=closed)
 
     @staticmethod
-    def get_open_case_ids(domain, owner_id):
+    def get_open_case_ids_for_owner(domain, owner_id):
         return get_open_case_ids(domain, owner_id)
 
     @staticmethod

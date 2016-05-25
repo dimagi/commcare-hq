@@ -437,7 +437,7 @@ class CaseAccessorTestsSQL(TestCase):
         case2.closed = True
         CaseAccessorSQL.save_case(case2)
 
-        self.assertEqual(CaseAccessorSQL.get_open_case_ids(DOMAIN, "user1"), [case1.case_id])
+        self.assertEqual(CaseAccessorSQL.get_open_case_ids_for_owner(DOMAIN, "user1"), [case1.case_id])
 
     def test_get_closed_case_ids(self):
         case1 = _create_case(user_id="user1")
