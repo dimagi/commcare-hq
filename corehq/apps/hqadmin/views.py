@@ -2,10 +2,11 @@ import HTMLParser
 import json
 import socket
 from datetime import timedelta, date
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
+from django.forms import model_to_dict
 from django.utils.datastructures import SortedDict
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
@@ -36,6 +37,8 @@ from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_bootstrap3, use_nvd3_v3
 from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import (
@@ -590,6 +593,33 @@ class LoadtestReportView(BaseAdminSectionView):
         context['charts'] = [chart]
         return context
 
+
+class _Db(object):
+    """
+    Light wrapper for providing interface like Couchdbkit's Database objects.
+    """
+
+    def __init__(self, dbname, getter):
+        self.dbname = dbname
+        self._getter = getter
+
+    def get(self, record_id):
+        try:
+            return self._getter(record_id)
+        except (XFormNotFound, CaseNotFound):
+            raise ResourceNotFound("missing")
+
+
+_SQL_DBS = OrderedDict((db.dbname, db) for db in [
+    _Db(
+        XFormInstanceSQL._meta.db_table,
+        lambda id_: model_to_dict(XFormInstanceSQL.get_obj_by_id(id_))
+    ),
+    _Db(
+        CommCareCaseSQL._meta.db_table,
+        lambda id_: model_to_dict(CommCareCaseSQL.get_obj_by_id(id_))
+    ),
+])
 
 def _lookup_id_in_database(doc_id, db_name=None):
     db_result = namedtuple('db_result', 'dbname result status')
