@@ -1,6 +1,6 @@
 import collections
 import logging
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 import six as six
 from couchdbkit import ResourceNotFound
