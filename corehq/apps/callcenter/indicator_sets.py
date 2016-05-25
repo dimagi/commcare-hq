@@ -290,9 +290,9 @@ class CallCenterIndicators(object):
             self._add_data([], '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
 
     def add_case_data(self, query, slug, indicator_config, legacy_prefix=None):
-        include_types = indicator_config.all_types or indicator_config.by_type
+        include_types = indicator_config.all_types or indicator_config.enabled_types
         include_total = indicator_config.totals.enabled
-        limit_types = indicator_config.by_type
+        limit_types = indicator_config.enabled_types
 
         if include_total and include_types and not limit_types:
             logger.debug('Adding case_data %s: totals and all types: %s', slug, indicator_config.totals.date_ranges)
