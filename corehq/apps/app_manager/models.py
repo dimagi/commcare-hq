@@ -4397,6 +4397,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def hq_profile_url(self):
+        # RemoteApp already has a property called "profile_url",
+        # Application.profile_url just points here to stop the conflict
+        # http://manage.dimagi.com/default.asp?227088#1149422
         return "%s?latest=true" % (
             reverse('download_profile', args=[self.domain, self._id])
         )

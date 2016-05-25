@@ -26,7 +26,11 @@ from mock import patch, Mock
 from nose.plugins import Plugin
 from django.apps import AppConfig
 from django.conf import settings
-from django.db.backends.creation import TEST_DATABASE_PREFIX
+try:
+    from django.db.backends.base.creation import TEST_DATABASE_PREFIX
+except ImportError:
+    # TODO - remove when django >= 1.8
+    from django.db.backends.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
 from django_nose.plugin import DatabaseContext
 

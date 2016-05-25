@@ -393,14 +393,13 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 return DomainMetadataForm(
                     self.request.POST,
                     self.request.FILES,
-                    user=self.request.couch_user,
-                    domain=self.domain_object.name,
+                    domain=self.domain_object,
                     can_use_custom_logo=self.can_use_custom_logo,
                 )
             return DomainGlobalSettingsForm(
                 self.request.POST,
                 self.request.FILES,
-                domain=self.domain_object.name,
+                domain=self.domain_object,
                 can_use_custom_logo=self.can_use_custom_logo
             )
         if self.can_user_see_meta:
@@ -411,13 +410,12 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
             return DomainMetadataForm(
                 can_use_custom_logo=self.can_use_custom_logo,
-                user=self.request.couch_user,
-                domain=self.domain_object.name,
+                domain=self.domain_object,
                 initial=initial
             )
         return DomainGlobalSettingsForm(
             initial=initial,
-            domain=self.domain_object.name,
+            domain=self.domain_object,
             can_use_custom_logo=self.can_use_custom_logo
         )
 

@@ -3,10 +3,9 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
     MessageMetadata)
-from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms import messages
-from corehq.apps.sms.models import MessagingEvent, SQLMobileBackend
+from corehq.apps.sms.models import MessagingEvent, SQLMobileBackend, PhoneNumber
 
 
 VERIFICATION__ALREADY_IN_USE = 1
@@ -23,7 +22,7 @@ def initiate_sms_verification_workflow(contact, phone_number):
         contact.domain, contact.get_id, phone_number)
 
     with CriticalSection(['verifying-phone-number-%s' % phone_number]):
-        vn = VerifiedNumber.by_phone(phone_number, include_pending=True)
+        vn = PhoneNumber.by_phone(phone_number, include_pending=True)
         if vn:
             if vn.owner_id != contact.get_id:
                 return VERIFICATION__ALREADY_IN_USE
