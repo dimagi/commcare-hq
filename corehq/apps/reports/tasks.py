@@ -454,7 +454,7 @@ def _extract_form_attachment_info(form, properties):
             question_id = unicode(
                 u'-'.join(find_question_id(form.form_data, attachment_name)))
         except TypeError:
-            question_id = unicode(u'unknown' + unicode(unknown_number))
+            question_id = u'unknown' + unicode(unknown_number)
             unknown_number += 1
 
         if not properties or question_id in properties:
