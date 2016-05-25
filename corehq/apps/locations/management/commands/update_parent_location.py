@@ -33,7 +33,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if len(args) < 2:
-            raise CommandError("Usage: python manage.py update_location_parent "
+            raise CommandError("Usage: python manage.py update_parent_location "
                                "<location_id_to_update> <new_parent_location_id>")
 
         print 'Validating locations...'
