@@ -1,6 +1,8 @@
+from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.models import Domain
+from dimagi.utils.logging import notify_exception
 
 from .models import DemoUserRestore
 
@@ -25,10 +27,17 @@ def turn_on_demo_mode(commcare_user, domain):
     """
     Turns demo mode ON for commcare_user, and resets restore to latest
     """
-    # ToDo This should be in a task
-    reset_demo_user_restore(commcare_user, domain)
-    commcare_user.is_demo_user = True
-    commcare_user.save()
+    try:
+        reset_demo_user_restore(commcare_user, domain)
+    except Exception as e:
+        notify_exception(None, message=e.message)
+        return {'errors': [
+            _("Something went wrong in creating restore for the user. Please try again or report an issue")
+        ]}
+    else:
+        commcare_user.is_demo_user = True
+        commcare_user.save()
+        return {'errors': []}
 
 
 def reset_demo_user_restore(commcare_user, domain):
@@ -42,7 +51,7 @@ def reset_demo_user_restore(commcare_user, domain):
         project=Domain.get_by_name(domain),
         user=commcare_user.to_casexml_user(),
         params=RestoreParams(version=V2),
-    ).get_payload().as_file()
+    ).get_payload().as_string()
     demo_restore = DemoUserRestore.create(commcare_user._id, restore)
 
     # set reference to new restore

@@ -19,22 +19,25 @@ class TestDemoUser(TestCase):
         factory = CaseFactory()
         factory.create_case(owner_id=cls.user._id, update={'custom_prop': 'custom_value'})
 
-    def assert_restore(self, should_update=False):
+    def _assert_restore(self, should_change=True):
         first_response = get_restore_response(self.domain, self.user, version='2.0')
         second_response = get_restore_response(self.domain, self.user, version='2.0')
         first_response = list(first_response.streaming_content)[0]
         second_response = list(second_response.streaming_content)[0]
 
-        if should_update:
+        if should_change:
             self.assertNotEqual(first_response, second_response)
         else:
             self.assertEqual(first_response, second_response)
 
-    def test_demo_restore_ON(self):
-        self.assert_restore(should_update=True)
+    def test_demo_restore(self):
+        # restore should always update for normal users
+        self._assert_restore(should_change=True)
 
+        # restore should be frozen for demo user
         turn_on_demo_mode(self.user, self.domain)
-        self.assert_restore(should_update=False)
+        self._assert_restore(should_change=False)
 
+        # restore should update once demo mode is off
         turn_off_demo_mode(self.user)
-        self.assert_restore(should_update=True)
+        self._assert_restore(should_change=True)

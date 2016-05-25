@@ -140,3 +140,16 @@ def resend_pending_invitations():
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:
                 invitation.send_activation_email(days_to_expire - days)
+
+
+@task
+def turn_on_demo_mode_task(couch_user, domain):
+    from corehq.apps.ota.utils import turn_on_demo_mode
+
+    DownloadBase.set_progress(turn_on_demo_mode_task, 0, 100)
+    results = turn_on_demo_mode(couch_user, domain)
+    DownloadBase.set_progress(turn_on_demo_mode_task, 100, 100)
+
+    return {
+        'messages': results
+    }

@@ -352,6 +352,10 @@ def toggle_demo_mode(request, domain, user_id):
     demo_mode = request.POST.get('demo_mode', 'no')
     demo_mode = True if demo_mode == 'yes' else False
 
+    from soil import DownloadBase
+    from corehq.apps.users.tasks import turn_on_demo_mode_task
+    from django.shortcuts import redirect
+
     # handle bad POST param
     if user.is_demo_user == demo_mode:
         warning = _("User is already in Demo mode!") if user.is_demo_user else _("User is not in Demo mode!")
@@ -359,11 +363,15 @@ def toggle_demo_mode(request, domain, user_id):
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
     if demo_mode:
-        messages.success(request, _("Successfully turned on demo mode!"))
+        download = DownloadBase()
+        res = turn_on_demo_mode_task.delay(user, domain)
+        download.set_task(res)
         turn_on_demo_mode(user, domain)
+        return redirect('hq_soil_download', domain, download.download_id)
+        messages.success(request, _("Successfully turned on demo mode!"))
     else:
-        messages.success(request, _("Successfully turned off demo mode!"))
         turn_off_demo_mode(user)
+        messages.success(request, _("Successfully turned off demo mode!"))
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
 
