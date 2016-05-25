@@ -605,7 +605,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
             ix.referenced_id for ix in self.reverse_indices
             if (index_identifier is None or ix.identifier == index_identifier)
         ]
-        return CaseAccessorSQL.get_cases(subcase_ids)
+        return list(CaseAccessorSQL.get_cases(subcase_ids))
 
     def get_reverse_index_map(self):
         return self.get_index_map(True)

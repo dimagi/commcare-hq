@@ -47,7 +47,7 @@ class CaseAccessorTestsSQL(TestCase):
         case2 = _create_case()
 
         cases = CaseAccessorSQL.get_cases(['missing_case'])
-        self.assertEqual([], cases)
+        self.assertEqual(0, len(cases))
 
         cases = CaseAccessorSQL.get_cases([case1.case_id])
         self.assertEqual(1, len(cases))
