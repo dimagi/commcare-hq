@@ -1,7 +1,45 @@
-/* global django:false */
+/* global django:false _:false */
 
 hqDefine('style/js/components/multiselect_utils', function () {
     var multiselect_utils = {};
+
+    var _renderHeader = function (title, action, search) {
+        var header = _.template('<div class="ms-header"><%= headerTitle %><%= actionButton %></div><%= searchInput %>');
+        return header({
+            headerTitle: title,
+            actionButton: action || '',
+            searchInput: search || '',
+        });
+    };
+
+    var _renderAction = function (buttonId, buttonClass, buttonIcon, text) {
+        var action = _.template(
+            '<a href="#" class="btn <%=actionButtonClass %> btn-xs pull-right" id="<%= actionButtonId %>">' +
+                '<i class="<%= actionButtonIcon %>"></i> <%= actionButtonText %>' +
+            '</a>'
+        );
+        return action({
+            actionButtonId: buttonId,
+            actionButtonClass: buttonClass,
+            actionButtonIcon: buttonIcon,
+            actionButtonText: text,
+        });
+    };
+
+    var _renderSearch = function (inputId, placeholder) {
+        var input = _.template(
+            '<div class="input-group ms-input-group">' +
+                '<span class="input-group-addon">' +
+                    '<i class="fa fa-search"></i>' +
+                '</span>' +
+                '<input type="search" class="form-control search-input" id="<%= searchInputId %>" autocomplete="off" placeholder="<%= searchInputPlaceholder %>" />' +
+            '</div>'
+        );
+        return input({
+            searchInputId: inputId,
+            searchInputPlaceholder: placeholder,
+        });
+    };
 
     multiselect_utils.createFullMultiselectWidget = function (
         multiselectId,
@@ -13,23 +51,18 @@ hqDefine('style/js/components/multiselect_utils', function () {
             removeAllId = multiselectId + '-remove-all',
             searchSelectableId = multiselectId + '-search-selectable',
             searchSelectedId = multiselectId + '-search-selected';
+
         $('#' + multiselectId).multiSelect({
-            selectableHeader: '<div class="ms-header">' + selectableHeaderTitle +
-                                    '<a href="#" class="btn btn-info btn-xs pull-right" id="' + selectAllId + '">' +
-                                    '<i class="fa fa-plus"></i> ' + django.gettext("Add All") +
-                               '</a></div>' +
-                               '<div class="input-group ms-input-group">' +
-                                    '<span class="input-group-addon"><i class="fa fa-search"></i></span>' +
-                                    '<input type="search" class="form-control search-input" id="' + searchSelectableId + '" autocomplete="off" placeholder="' + searchItemTitle + '" />' +
-                               '</div>',
-            selectionHeader:   '<div class="ms-header">' + selectedHeaderTitle +
-                                    '<a href="#" class="btn btn-default btn-xs pull-right" id="' + removeAllId + '">' +
-                                    '<i class="fa fa-remove"></i> ' + django.gettext("Remove All") +
-                               '</a></div>' +
-                               '<div class="input-group ms-input-group">' +
-                                    '<span class="input-group-addon"><i class="fa fa-search"></i></span>' +
-                                    '<input type="search" class="form-control search-input" id="' + searchSelectedId + '" autocomplete="off" placeholder="' + searchItemTitle + '" />' +
-                               '</div>',
+            selectableHeader: _renderHeader(
+                selectableHeaderTitle,
+                _renderAction(selectAllId, 'btn-info', 'fa fa-plus', django.gettext("Add All")),
+                _renderSearch(searchSelectableId, searchItemTitle)
+            ),
+            selectionHeader: _renderHeader(
+                selectedHeaderTitle,
+                _renderAction(removeAllId, 'btn-default', 'fa fa-remove', django.gettext("Remove All")),
+                _renderSearch(searchSelectedId, searchItemTitle)
+            ),
             afterInit: function () {
                 var that = this,
                     $selectableSearch = $('#'+searchSelectableId),
