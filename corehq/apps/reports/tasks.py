@@ -391,7 +391,8 @@ def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
                  .app(app_id)
                  .xmlns(xmlns)
                  .submitted(gte=parse(startdate), lte=parse(enddate))
-                 .remove_default_filter("has_user"))
+                 .remove_default_filter("has_user")
+                 .source(['_attachments', '_id']))
         form_ids = set()
         for form in query.scroll():
             try:
