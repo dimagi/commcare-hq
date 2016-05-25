@@ -48,8 +48,8 @@
         $scope.projectId = globalProjectId;
         $scope.phoneId = globalPhoneId;
         $scope.testPhoneNumber = globalTestPhoneNumber;
-        $scope.name = '';
-        $scope.setAsDefault = '';
+        $scope.name = {{ finalize_gateway_form.name.value|JSON }};
+        $scope.setAsDefault = {{ finalize_gateway_form.set_as_default.value|JSON }};
 
         // error messages
         $scope.apiKeyError = null;

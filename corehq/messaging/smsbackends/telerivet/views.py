@@ -98,6 +98,7 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
             'test_sms_form': TelerivetPhoneNumberForm(),
             'finalize_gateway_form': FinalizeGatewaySetupForm(
                 initial={
+                    'name': 'TELERIVET',
                     'set_as_default': (FinalizeGatewaySetupForm.NO
                                        if domain_has_default_gateway
                                        else FinalizeGatewaySetupForm.YES),
