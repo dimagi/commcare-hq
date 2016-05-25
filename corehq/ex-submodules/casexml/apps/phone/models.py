@@ -82,7 +82,7 @@ class OTARestoreUser(object):
     def sql_location(self):
         raise NotImplementedError()
 
-    def get_fixture_dataitems(self):
+    def get_fixture_data_items(self):
         raise NotImplementedError()
 
     def get_groups(self):
@@ -120,7 +120,7 @@ class OTARestoreWebUser(OTARestoreUser):
     def locations(self):
         return []
 
-    def get_fixture_dataitems(self):
+    def get_fixture_data_items(self):
         return []
 
     def get_groups(self):
@@ -160,7 +160,7 @@ class OTARestoreCommCareUser(OTARestoreUser):
     def locations(self):
         return self._couch_user.locations
 
-    def get_fixture_dataitems(self):
+    def get_fixture_data_items(self):
         from corehq.apps.fixtures.models import FixtureDataItem
 
         return FixtureDataItem.by_user(self._couch_user)
