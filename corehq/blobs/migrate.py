@@ -76,7 +76,7 @@ from django.conf import settings
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.migratingdb import MigratingBlobDB
-from corehq.blobs.mixin import BlobMixin
+from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import (
     get_all_docs_with_doc_types,
@@ -127,7 +127,7 @@ message.
 """
 
 
-def migrate_from_couch_to_blobdb(filename, doc_type_map, total):
+def migrate_from_couch_to_blobdb(filename, couchdb, total):
     """Migrate attachments from couchdb to blob storage
     """
     skips = 0
@@ -138,10 +138,13 @@ def migrate_from_couch_to_blobdb(filename, doc_type_map, total):
                 print_status(n + 1, total, datetime.now() - start)
             doc = json.loads(line)
             attachments = doc.pop("_attachments")
-            obj = doc_type_map[doc["doc_type"]].wrap(doc)
+            external_blobs = doc.setdefault("external_blobs", {})
+            obj = BlobHelper(doc, couchdb)
             try:
                 with obj.atomic_blobs():
                     for name, data in list(attachments.iteritems()):
+                        if name in external_blobs:
+                            continue  # skip attachment already in blob db
                         data["content"] = b64decode(data["content"])
                         obj.put_attachment(name=name, **data)
             except ResourceConflict:
@@ -156,7 +159,7 @@ migrate_from_couch_to_blobdb.load_attachments = True
 migrate_from_couch_to_blobdb.blobs_key = "_attachments"
 
 
-def migrate_blob_db_backend(filename, doc_type_map, total):
+def migrate_blob_db_backend(filename, couchdb, total):
     """Copy blobs from old blob db to new blob db
 
     This is an idempotent operation. It is safe to interrupt and/or run
@@ -177,9 +180,9 @@ def migrate_blob_db_backend(filename, doc_type_map, total):
             if n % 100 == 0:
                 print_status(n + 1, total, datetime.now() - start)
             doc = json.loads(line)
-            obj = doc_type_map[doc["doc_type"]].wrap(doc)
+            obj = BlobHelper(doc, couchdb)
             bucket = obj._blobdb_bucket()
-            assert obj.external_blobs == obj.blobs, (obj.external_blobs, obj.blobs)
+            assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
             for name, meta in obj.blobs.iteritems():
                 try:
                     content = db.old_db.get(meta.id, bucket)
@@ -267,8 +270,8 @@ def migrate(slug, doc_type_map, migrate_func, filename=None):
         for doc in get_all_docs_with_doc_types(couchdb, list(doc_type_map)):
             if doc.get(migrate_func.blobs_key):
                 if load_attachments:
-                    obj = doc_type_map[doc["doc_type"]].wrap(doc)
-                    fetch_attachment = super(BlobMixin, obj).fetch_attachment
+                    obj = BlobHelper(doc, couchdb)
+                    fetch_attachment = obj.fetch_attachment
                     doc["_attachments"] = {
                         name: {
                             "content_type": meta["content_type"],
@@ -282,7 +285,7 @@ def migrate(slug, doc_type_map, migrate_func, filename=None):
                     print("Loaded {} documents in {}"
                           .format(total, datetime.now() - start))
 
-    migrated, skips = migrate_func(filename, doc_type_map, total)
+    migrated, skips = migrate_func(filename, couchdb, total)
 
     if dirpath is not None:
         os.remove(filename)
