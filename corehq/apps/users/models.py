@@ -1199,6 +1199,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             couch_user.created_on = force_to_datetime(date)
         else:
             couch_user.created_on = datetime.utcnow()
+
+        user_data = kwargs.get('user_data', {})
+        couch_user.user_data = user_data
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1396,12 +1399,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             commcare_user.add_phone_number(phone_number)
 
         device_id = kwargs.get('device_id', '')
-        user_data = kwargs.get('user_data', {})
         # populate the couch user
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
-        commcare_user.user_data = user_data
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 

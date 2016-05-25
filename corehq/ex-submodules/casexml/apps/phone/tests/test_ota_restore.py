@@ -66,6 +66,11 @@ class OtaRestoreTest(TestCase, TestFileMixin):
         delete_all_cases()
         delete_all_sync_logs()
         cls.project = Domain(name='ota-restore-tests')
+        cls.project.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
 
     def setUp(self):
         delete_all_users()
@@ -282,3 +287,11 @@ class OtaRestoreTest(TestCase, TestFileMixin):
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)
+
+
+class WebUserOtaRestoreTest(OtaRestoreTest):
+    """Tests for restore using a web user"""
+
+    def setUp(self):
+        delete_all_users()
+        self.restore_user = create_restore_user(self.project.name, is_mobile_user=False)
