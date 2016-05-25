@@ -1,3 +1,5 @@
+/* global django:false */
+
 hqDefine('style/js/components/multiselect_utils', function () {
     var multiselect_utils = {};
 
@@ -28,7 +30,7 @@ hqDefine('style/js/components/multiselect_utils', function () {
                                     '<span class="input-group-addon"><i class="fa fa-search"></i></span>' +
                                     '<input type="search" class="form-control search-input" id="' + searchSelectedId + '" autocomplete="off" placeholder="' + searchItemTitle + '" />' +
                                '</div>',
-            afterInit: function(ms){
+            afterInit: function () {
                 var that = this,
                     $selectableSearch = $('#'+searchSelectableId),
                     $selectionSearch = $('#'+searchSelectedId),
@@ -36,11 +38,11 @@ hqDefine('style/js/components/multiselect_utils', function () {
                     selectionSearchString = '#'+that.$container.attr('id')+' .ms-elem-selection.ms-selected';
 
                 that.qs1 = $selectableSearch.quicksearch(selectableSearchString)
-                .on('keydown', function(e){
-                  if (e.which === 40){
-                    that.$selectableUl.focus();
-                    return false;
-                  }
+                .on('keydown', function () {
+                    if (e.which === 40) {
+                        that.$selectableUl.focus();
+                        return false;
+                    }
                 })
                 .on('keyup change search input', function () {
                     // disable add all functionality so that user is not confused
@@ -52,11 +54,11 @@ hqDefine('style/js/components/multiselect_utils', function () {
                 });
 
                 that.qs2 = $selectionSearch.quicksearch(selectionSearchString)
-                .on('keydown', function(e){
-                  if (e.which == 40){
-                    that.$selectionUl.focus();
-                    return false;
-                  }
+                .on('keydown', function () {
+                    if (e.which === 40) {
+                        that.$selectionUl.focus();
+                        return false;
+                    }
                 })
                 .on('keyup change search input', function () {
                     // disable remove all functionality so that user is not confused
@@ -80,7 +82,7 @@ hqDefine('style/js/components/multiselect_utils', function () {
                 $('#' + selectAllId).removeClass('disabled').removeProp('disabled');
                 this.qs1.cache();
                 this.qs2.cache();
-            }
+            },
         });
 
         $('#' + selectAllId).click(function(e){

@@ -66,7 +66,6 @@ from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
     DomainRequestForm,
-    UpdateMyAccountInfoForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
     SetUserPasswordForm,
