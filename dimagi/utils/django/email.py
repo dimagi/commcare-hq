@@ -7,8 +7,10 @@ from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
 from django.utils.translation import ugettext as _
+from requests.exceptions import SSLError
 
 from dimagi.utils.logging import notify_error
+import logging
 
 
 NO_HTML_EMAIL_MESSAGE = """
@@ -92,4 +94,12 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
         error_msg.send()
 
     if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
-        requests.get(url+"&ea=send")
+        try:
+            try:
+                requests.get(url + "&ea=send")
+            except SSLError:
+                # if we get an ssl error try without verification
+                requests.get(url + "&ea=send", verify=False)
+        except Exception as e:
+            # never fail hard on analytics
+            logging.exception(u'Unable to send google analytics request for tracked email: {}'.format(e))
