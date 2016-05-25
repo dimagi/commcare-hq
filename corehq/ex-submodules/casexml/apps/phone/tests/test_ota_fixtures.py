@@ -2,6 +2,7 @@ from xml.etree import ElementTree
 from django.test import TestCase
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.phone.fixtures import generator
+from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
     FixtureDataType, FixtureTypeField,
@@ -16,6 +17,25 @@ from corehq.form_processor.tests import run_with_all_backends
 DOMAIN = 'fixture-test'
 SA_PROVINCES = 'sa_provinces'
 FR_PROVINCES = 'fr_provinces'
+
+
+class OtaWebUserFixtureTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
+        cls.restore_user = create_restore_user(domain=DOMAIN, is_mobile_user=False)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        delete_all_users()
+
+    @run_with_all_backends
+    def test_basic_fixture_generation(self):
+        fixture_xml = list(generator.get_fixtures(self.restore_user, version=V2))
+        self.assertEqual(len(fixture_xml), 1)
+        self.assertEqual(fixture_xml[0].findall('./groups/group'), [])
 
 
 class OtaFixtureTest(TestCase):
