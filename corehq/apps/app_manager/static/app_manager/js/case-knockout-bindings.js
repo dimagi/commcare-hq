@@ -7,7 +7,7 @@
             return '';
         },
         getDisplay: function (question, MAXLEN) {
-            return utils.getIcon(question) + utils.getLabel(question, MAXLEN) + " (" + question.value + ")";
+            return utils.getIcon(question) + utils.getLabel(question, MAXLEN) + " (" + question.hashtagValue + ")";
         },
         getLabel: function (question, MAXLEN) {
             return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);

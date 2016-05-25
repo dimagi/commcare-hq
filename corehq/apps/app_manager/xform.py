@@ -13,7 +13,9 @@ from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
+import collections
 import formtranslate.api
+import re
 
 
 def parse_xml(string):
@@ -40,6 +42,11 @@ namespaces = dict(
     v="{http://commcarehq.org/xforms/vellum}",
     odk="{http://opendatakit.org/xforms}",
 )
+
+HashtagReplacement = collections.namedtuple('HashtagReplacement', 'hashtag replaces')
+hashtag_replacements = [
+    HashtagReplacement(hashtag='#form/', replaces=r'^/data\/'),
+]
 
 
 def _make_elem(tag, attr=None):
@@ -842,6 +849,11 @@ class XForm(WrappedNode):
         else:
             return "%s/%s" % (path_context, path)
 
+    def hashtag_path(self, path):
+        for hashtag, replaces in hashtag_replacements:
+            path = re.sub(replaces, hashtag, path)
+        return path
+
     @requires_itext(list)
     def get_languages(self):
         if not self.exists():
@@ -868,7 +880,7 @@ class XForm(WrappedNode):
 
         control_nodes = self.get_control_nodes()
 
-        for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
+        for node, path, hashtagPath, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
             excluded_paths.add(path)
             if not is_leaf and not include_groups:
                 continue
@@ -883,6 +895,7 @@ class XForm(WrappedNode):
                 "label": self.get_label_text(node, langs),
                 "tag": node.tag_name,
                 "value": path,
+                "hashtagValue": self.hashtag_path(path),
                 "repeat": repeat,
                 "group": group,
                 "type": data_type,
@@ -923,9 +936,10 @@ class XForm(WrappedNode):
                 except IndexError:
                     matching_repeat_context = None
                 question = {
-                    "label": path,
+                    "label": self.hashtag_path(path),
                     "tag": "hidden",
                     "value": path,
+                    "hashtagValue": self.hashtag_path(path),
                     "repeat": matching_repeat_context,
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
@@ -958,6 +972,7 @@ class XForm(WrappedNode):
                 tag = node.tag_name
                 if node.tag_xmlns == namespaces['f'][1:-1] and tag != 'label':
                     path = self.resolve_path(self.get_path(node), path_context)
+                    hashtagPath = self.hashtag_path(path)
                     bind = self.get_bind(path)
                     data_type = infer_vellum_type(node, bind)
                     relevant = bind.attrib.get('relevant') if bind else None
@@ -994,7 +1009,7 @@ class XForm(WrappedNode):
                             items = node.findall('{f}item')
 
                     if not skip:
-                        control_nodes.append((node, path, repeat_context,
+                        control_nodes.append((node, path, hashtagPath, repeat_context,
                                               group_context, items, is_leaf,
                                               data_type, relevant, required))
                     if recursive_kwargs:
