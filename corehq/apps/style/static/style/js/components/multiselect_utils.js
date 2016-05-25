@@ -70,32 +70,32 @@ hqDefine('style/js/components/multiselect_utils', function () {
                     selectableSearchString = '#'+that.$container.attr('id')+' .ms-elem-selectable:not(.ms-selected)',
                     selectionSearchString = '#'+that.$container.attr('id')+' .ms-elem-selection.ms-selected';
 
-                that.qs1 = $selectableSearch.quicksearch(selectableSearchString)
+                that.search_left = $selectableSearch.quicksearch(selectableSearchString)
                 .on('keydown', function (e) {
-                    if (e.which === 40) {
+                    if (e.which === 40) {  // down arrow, was recommended by loudev docs
                         that.$selectableUl.focus();
                         return false;
                     }
                 })
                 .on('keyup change search input', function () {
                     // disable add all functionality so that user is not confused
-                    if (that.qs1.val().length > 0) {
+                    if (that.search_left.val().length > 0) {
                         $('#' + selectAllId).addClass('disabled').prop('disabled', true);
                     } else {
                         $('#' + selectAllId).removeClass('disabled').removeProp('disabled');
                     }
                 });
 
-                that.qs2 = $selectionSearch.quicksearch(selectionSearchString)
+                that.search_right = $selectionSearch.quicksearch(selectionSearchString)
                 .on('keydown', function (e) {
-                    if (e.which === 40) {
+                    if (e.which === 40) {  // down arrow, was recommended by loudev docs
                         that.$selectionUl.focus();
                         return false;
                     }
                 })
                 .on('keyup change search input', function () {
                     // disable remove all functionality so that user is not confused
-                    if (that.qs2.val().length > 0) {
+                    if (that.search_right.val().length > 0) {
                         $('#' + removeAllId).addClass('disabled').prop('disabled', true);
                     } else {
                         $('#' + removeAllId).removeClass('disabled').removeProp('disabled');
@@ -103,18 +103,18 @@ hqDefine('style/js/components/multiselect_utils', function () {
                 });
             },
             afterSelect: function(){
-                this.qs1.cache();
+                this.search_left.cache();
                 // remove search option so that user doesn't get confused
-                this.qs2.val('').search('');
+                this.search_right.val('').search('');
                 $('#' + removeAllId).removeClass('disabled').removeProp('disabled');
-                this.qs2.cache();
+                this.search_right.cache();
             },
             afterDeselect: function(){
                 // remove search option so that user doesn't get confused
-                this.qs1.val('').search('');
+                this.search_left.val('').search('');
                 $('#' + selectAllId).removeClass('disabled').removeProp('disabled');
-                this.qs1.cache();
-                this.qs2.cache();
+                this.search_left.cache();
+                this.search_right.cache();
             },
         });
 
