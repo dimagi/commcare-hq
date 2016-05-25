@@ -122,7 +122,7 @@ class FormAccessors(object):
                 yield form
 
     def form_exists(self, form_id):
-        return self.db_accessor.form_exists(form_id)
+        return self.db_accessor.form_exists(form_id, domain=self.domain)
 
     def get_all_form_ids_in_domain(self):
         return self.get_form_ids_in_domain_by_type('XFormInstance')
