@@ -551,12 +551,13 @@ class MultipleSelectionForm(forms.Form):
         </script>
     """
     selected_ids = forms.MultipleChoiceField(
-        label=ugettext_lazy("Users in Group"),
+        label=ugettext_lazy("Group Membership"),
         required=False,
     )
 
     def __init__(self, *args, **kwargs):
         submit_label = kwargs.pop('submit_label', "Update")
+        fieldset_title = kwargs.pop('fieldset_title', ugettext_lazy("Edit Group Membership"))
 
         super(MultipleSelectionForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -567,8 +568,8 @@ class MultipleSelectionForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                ugettext_lazy("Edit Group Membership"),
-                'selected_ids',
+                fieldset_title,
+                crispy.Field('selected_ids', css_class="hide"),
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
