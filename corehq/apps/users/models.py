@@ -1508,6 +1508,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return OTARestoreCommCareUser(
             self.domain,
             self,
+            loadtest_factor=self.loadtest_factor or 1,
         )
 
     def _get_form_ids(self):
