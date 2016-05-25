@@ -1,15 +1,11 @@
+import time
+from python_digest import build_authorization_request, calculate_nonce
 from django.test import TestCase
+from django.conf import settings
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
-from django_digest.test import Client
-
-
-def setupModule():
-    from unittest import SkipTest
-    raise SkipTest("this is broken, hasn't been run by django test runner. Error: "
-            "WWWAuthenticateError: Digest authentication unsupported for GET "
-            "to '/a/test/phone/restore/'.")
 
 
 class DigestOtaRestoreTest(TestCase):
@@ -25,7 +21,6 @@ class DigestOtaRestoreTest(TestCase):
     def setUp(self):
         create_domain(self.domain)
         self.couch_user = CommCareUser.create(self.domain, self.username, self.password)
-        userID = self.couch_user.user_id
         self.couch_user.first_name = self.first_name
         self.couch_user.last_name = self.last_name
         self.couch_user.save()
@@ -36,23 +31,19 @@ class DigestOtaRestoreTest(TestCase):
         domain.delete()
 
     def testOtaRestore(self, password=None):
-        client = Client()
+        uri = '/a/%s/phone/restore/' % self.domain
+        self.client.defaults['HTTP_AUTHORIZATION'] = build_authorization_request(
+            self.couch_user.username,
+            'GET',
+            uri,
+            3,
+            nonce=calculate_nonce(time.time(), settings.SECRET_KEY),
+            realm='DJANGO',
+            opaque='myopaque',
+            password=self.password,
+        )
 
-        client.set_authorization(self.couch_user.username, password if password else self.password, method='Digest')
-
-        resp = client.get('/a/%s/phone/restore' % self.domain, follow=True)
+        resp = self.client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 200)
-        self.assertTrue(resp.content.count("Successfully restored account %s!" % self.username) > 0)
-
-    def testOtaRestorePasswordChange(self):
-        self.testOtaRestore()
-        new_password = '4567'
-
-        # todo: this needs to likely call the coreqhq.apps.users..views.change_password view to keep it clean vs. this direct user manipulation
-        django_user = self.couch_user.get_django_user()
-        django_user.set_password(new_password)
-        django_user.save()
-        self.testOtaRestore(password=new_password)
-
-
-
+        content = list(resp.streaming_content)[0]
+        self.assertTrue("Successfully restored account {}!".format(self.username) in content)
