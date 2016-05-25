@@ -709,7 +709,7 @@ def doc_in_es(request):
 
 
 @require_superuser
-def raw_couch(request):
+def raw_doc(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
     if db_name and "__" in db_name:
