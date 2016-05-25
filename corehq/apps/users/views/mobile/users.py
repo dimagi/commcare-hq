@@ -54,8 +54,12 @@ from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
-    use_angular_js, use_jquery_ui, use_jquery_ui_multiselect
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_select2,
+    use_angular_js,
+    use_multiselect,
+)
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.decorators import require_can_edit_commcare_users
@@ -88,8 +92,7 @@ class EditCommCareUserView(BaseEditUserView):
     page_title = ugettext_noop("Edit Mobile Worker")
 
     @use_bootstrap3
-    @use_jquery_ui
-    @use_jquery_ui_multiselect
+    @use_multiselect
     @use_select2
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
