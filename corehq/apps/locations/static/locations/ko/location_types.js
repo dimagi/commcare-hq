@@ -199,7 +199,7 @@ hqDefine('locations/ko/location_types.js', function(){
                 while (to_check.length > 0){
                     var current_loc = to_check.pop(),
                         parent_type = current_loc.parent_type();
-                    if (parent_type){
+                    if (parent_type && self.view.loc_types_by_id[parent_type]){
                         var parent = self.view.loc_types_by_id[parent_type];
                         parents.push(parent);
                         if (parent.parent_type()){
