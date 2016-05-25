@@ -114,7 +114,8 @@ class TelerivetOutgoingSMSForm(Form):
 
 class TelerivetPhoneNumberForm(Form):
     test_phone_number = TrimmedCharField(
-        required=True
+        required=True,
+        label=ugettext_lazy("+ (Country Code) Phone Number")
     )
 
     def __init__(self, *args, **kwargs):
@@ -149,7 +150,8 @@ class TelerivetPhoneNumberForm(Form):
 
     def clean_test_phone_number(self):
         value = self.cleaned_data.get('test_phone_number')
-        validate_phone_number(value)
+        validate_phone_number(value,
+            error_message=_("Please enter digits only, in international format (country code and phone number)."))
         return value
 
 
