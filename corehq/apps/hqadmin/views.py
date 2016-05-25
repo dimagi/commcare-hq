@@ -6,6 +6,7 @@ from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
+from django.core.serializers.json import DjangoJSONEncoder
 from django.forms import model_to_dict
 from django.utils.datastructures import SortedDict
 from django.views.decorators.http import require_POST, require_GET
@@ -629,9 +630,15 @@ def _lookup_id_in_database(doc_id, db_name=None):
     })
 
     if db_name:
-        dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
+        db = _SQL_DBS.get(db_name, None)
+        if db:
+            dbs = [db]
+        else:
+            dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
     else:
-        dbs = couch_config.all_dbs_by_slug.values()
+        couch_dbs = couch_config.all_dbs_by_slug.values()
+        sql_dbs = _SQL_DBS.values()
+        dbs = couch_dbs + sql_dbs
 
     db_results = []
     response = {"doc_id": doc_id}
@@ -643,7 +650,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
         else:
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({
-                "doc": json.dumps(doc, indent=4, sort_keys=True),
+                "doc": json.dumps(doc, indent=4, sort_keys=True, cls=DjangoJSONEncoder),
                 "doc_type": doc.get('doc_type', 'Unknown'),
                 "dbname": db.dbname,
             })
@@ -708,8 +715,8 @@ def raw_couch(request):
     if db_name and "__" in db_name:
         db_name = db_name.split("__")[-1]
     context = _lookup_id_in_database(doc_id, db_name) if doc_id else {}
-    other_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
-    context['all_databases'] = ['commcarehq'] + other_dbs
+    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
+    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
     return render(request, "hqadmin/raw_couch.html", context)
 
 
