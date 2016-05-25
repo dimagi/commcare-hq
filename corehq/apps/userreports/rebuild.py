@@ -20,18 +20,20 @@ class DataSourceResumeHelper(object):
     def get_ids_to_resume_from(self):
         # maintaining support for existing sets in redis while the
         # transition to lists occur
+        # todo: is this still necessary?
         try:
             return self._client.lrange(self._key, 0, -1)
-        except:
+        except Exception:
             return tuple(self._client.smembers(self._key))
 
     def set_ids_to_resume_from(self, ids):
         self._client.rpush(self._key, *ids)
 
     def remove_id(self, doc_id):
+        # todo: is it still necessary to support sets?
         try:
             self._client.lrem(self._key, 1, doc_id)
-        except:
+        except Exception:
             self._client.srem(self._key, doc_id)
 
     def add_id(self, doc_id):
