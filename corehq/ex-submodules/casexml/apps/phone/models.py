@@ -103,6 +103,9 @@ class OTARestoreUser(object):
     def get_fixture_last_modified(self):
         raise NotImplementedError()
 
+    def get_ucr_filter_value(self, ucr_filter, ui_filter):
+        return ucr_filter.get_filter_value(self._couch_user, ui_filter)
+
 
 class OTARestoreWebUser(OTARestoreUser):
 

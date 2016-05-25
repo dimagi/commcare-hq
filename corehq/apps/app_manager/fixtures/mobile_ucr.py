@@ -65,7 +65,7 @@ class ReportFixturesProvider(object):
 
         # TODO: Convert to be compatiable with restore_user
         all_filter_values = {
-            filter_slug: filter.get_filter_value(restore_user, report.get_ui_filter(filter_slug))
+            filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
             for filter_slug, filter in report_config.filters.items()
         }
         filter_values = {
