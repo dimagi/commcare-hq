@@ -228,27 +228,6 @@ def clean_case_group_id(group_id, expected_domain):
     return group_id
 
 
-# Used for validating the phone number from a UI. Returns the phone number if valid, otherwise raises a ValidationError.
-def validate_phone_number(value):
-    error_msg = _("Phone numbers must consist only of digits and must be in international format.")
-    if not isinstance(value, basestring):
-        # Cast to an int, then a str. Needed for excel upload where the field comes back as a float.
-        try:
-            value = str(int(value))
-        except Exception:
-            raise ValidationError(error_msg)
-    
-    value = value.strip()
-    phone_regex = re.compile("^\d+$")
-    if phone_regex.match(value) is None:
-        raise ValidationError(error_msg)
-    
-    if isinstance(value, unicode):
-        value = str(value)
-    
-    return value
-
-
 MATCH_TYPE_CHOICES = (
     (MATCH_ANY_VALUE, ugettext_noop("exists.")),
     (MATCH_EXACT, ugettext_noop("equals")),
