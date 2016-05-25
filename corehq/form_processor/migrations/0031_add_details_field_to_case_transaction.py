@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='casetransaction',
             name='details',
-            field=jsonfield.fields.JSONField(default=dict, help_text='Enter a valid JSON object'),
+            field=jsonfield.fields.JSONField(default=dict),
             preserve_default=True,
         ),
         migrations.AlterField(

@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='commcarecasesql',
             name='case_json',
-            field=jsonfield.fields.JSONField(default=dict, help_text='Enter a valid JSON object'),
+            field=jsonfield.fields.JSONField(default=dict),
             preserve_default=True,
         ),
     ]

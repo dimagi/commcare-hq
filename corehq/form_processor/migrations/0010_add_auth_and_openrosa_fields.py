@@ -15,13 +15,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='xforminstancesql',
             name='auth_context',
-            field=jsonfield.fields.JSONField(default='null', help_text='Enter a valid JSON object'),
+            field=jsonfield.fields.JSONField(default='null'),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='xforminstancesql',
             name='openrosa_headers',
-            field=jsonfield.fields.JSONField(default='null', help_text='Enter a valid JSON object'),
+            field=jsonfield.fields.JSONField(default='null'),
             preserve_default=True,
         ),
     ]
