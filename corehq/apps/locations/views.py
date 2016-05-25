@@ -56,6 +56,7 @@ def default(request, domain):
 
 
 class BaseLocationView(BaseDomainView):
+    section_name = ugettext_lazy("Locations")
 
     @method_decorator(locations_access_required)
     def dispatch(self, request, *args, **kwargs):
