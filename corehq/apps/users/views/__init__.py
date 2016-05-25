@@ -9,7 +9,6 @@ import urllib
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -63,8 +62,14 @@ from corehq.apps.style.decorators import (
 )
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
-from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
-                                     UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
+from corehq.apps.users.forms import (
+    BaseUserInfoForm,
+    CommtrackUserForm,
+    DomainRequestForm,
+    UpdateUserPermissionForm,
+    UpdateUserRoleForm,
+    SetUserPasswordForm,
+)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
                                       DomainMembershipError)
@@ -142,6 +147,10 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 
 class BaseEditUserView(BaseUserSettingsView):
     user_update_form_class = None
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -758,6 +767,7 @@ def delete_request(request, domain):
 
 class BaseManageWebUserView(BaseUserSettingsView):
 
+    @use_bootstrap3
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseManageWebUserView, self).dispatch(request, *args, **kwargs)
@@ -774,6 +784,10 @@ class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
     page_title = ugettext_lazy("Add Web User to Project")
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(InviteWebUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -994,13 +1008,13 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
-        form = SetPasswordForm(user=django_user, data=request.POST)
+        form = SetUserPasswordForm(domain, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
-            form = SetPasswordForm(user=django_user)
+            form = SetUserPasswordForm(domain, login_id, user='')
     else:
-        form = SetPasswordForm(user=django_user)
+        form = SetUserPasswordForm(domain, login_id, user=django_user)
     context = _users_context(request, domain)
     context.update({
         'reset_password_form': form,

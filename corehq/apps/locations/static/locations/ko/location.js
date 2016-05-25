@@ -1,8 +1,4 @@
 // for product and user per location selection
-$(function () {
-    $("#id_users-selected_ids").width(800).height(400).multiselect();
-    $("#id_products-selected_ids").width(800).height(400).multiselect();
-});
 
 var insert_new_user = function(user) {
     $('#id_users-selected_ids').multiselect('addSelected', user.user_id, user.text);
