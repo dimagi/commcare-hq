@@ -527,26 +527,28 @@ class MultipleSelectionForm(forms.Form):
             form.fields['selected_ids'].choices = self.all_users
             return form
 
-        # template.html
-        <script src="{% static 'style/js/bootstrap3/ui-element.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
-
-        <script type="text/javascript">
-            $(function () {
-                $("#id_selected_ids").width(800).height(400).multiselect();
-            });
-        </script>
-
         <form class="form disable-on-submit" id="edit_users" action="" method='post'>
             <legend>{% trans 'Specify Users At This Location' %}</legend>
             {% crispy users_per_location_form %}
         </form>
 
-    To display multiple forms on the same page, you'll need to pass a prefix to
-    the MultipleSelectionForm constructor, like ``prefix="users"`` This will
-    change the css id to ``"#id_users-selected_ids"``, and the returned list of
-    ids to ``request.POST.getlist('users-selected_ids', [])``
+        @use_multiselect
+        def dispatch(self, request, *args, **kwargs):
+            return super(MyView, self).dispatch(request, *args, **kwargs)
+
+        # html
+        <script type="text/javascript">
+            // Multiselect widget
+            $(function () {
+                var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+                multiselect_utils.createFullMultiselectWidget(
+                    'id_of_multiselect_field',
+                    django.gettext("Available Things"),
+                    django.gettext("Things Selected"),
+                    django.gettext("Search Things...")
+                );
+            });
+        </script>
     """
     selected_ids = forms.MultipleChoiceField(
         label=ugettext_lazy("Users in Group"),
