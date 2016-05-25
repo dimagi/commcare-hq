@@ -51,7 +51,6 @@ branches:
   - lang-profiles  # Cal 5/4
   - notifications-perms-change # j$ 5/11
   - calculatedIcons # Sravan 3/2
-  - check-services  # Ethan 5/19
   - xform-blobs  # daniel 5/23
   - b3-groups-pt2  # biyeun 5/25
 submodules:
