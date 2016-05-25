@@ -85,8 +85,14 @@
         });
         {% endif %}
 
-        // groups form
-        $("#id_selected_ids").width(800).height(400).multiselect();
+        // Groups form
+        var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+            multiselect_utils.createFullMultiselectWidget(
+                'id_selected_ids',
+                django.gettext("Available Groups"),
+                django.gettext("Groups with this User"),
+                django.gettext("Search Group...")
+            );
 
         // "are you sure?" stuff
         var unsavedChanges = false;
