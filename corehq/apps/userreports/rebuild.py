@@ -41,3 +41,6 @@ class DataSourceResumeHelper(object):
 
     def clear_ids(self):
         self._client.delete(self._key)
+
+    def has_resume_info(self):
+        return self._client.exists(self._key)

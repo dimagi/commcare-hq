@@ -44,3 +44,10 @@ class DataSourceResumeBuildTest(SimpleTestCase):
         self._resume_helper.set_ids_to_resume_from(ids)
         self._resume_helper.clear_ids()
         self.assertEqual([], self._resume_helper.get_ids_to_resume_from())
+
+    def test_has_resume_info_false(self):
+        self.assertEqual(False, self._resume_helper.has_resume_info())
+
+    def test_has_resume_info_true(self):
+        self._resume_helper.set_ids_to_resume_from([uuid.uuid4().hex for i in range(5)])
+        self.assertEqual(True, self._resume_helper.has_resume_info())
