@@ -11,11 +11,7 @@ from django.utils import html, safestring
 from corehq.apps.users.permissions import get_extra_permissions
 
 from couchexport.util import SerializableFunction
-from couchforms.analytics import (
-    get_all_user_ids_submitted,
-    get_first_form_submission_received,
-    get_username_in_last_form_user_id_submitted,
-)
+from couchforms.analytics import get_first_form_submission_received
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
@@ -28,6 +24,10 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 
 from .models import HQUserType, TempCommCareUser
+from .analytics.esaccessors import (
+    get_all_user_ids_submitted,
+    get_username_in_last_form_user_id_submitted,
+)
 
 DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
 DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'

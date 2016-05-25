@@ -1,12 +1,7 @@
 <partial>
   <sync-request>
     <post url="https://www.example.com/a/test_domain/phone/claim-case/">
-      <data key="case_id"
-            ref="instance('results')/results/case[@case_type='case'][@status='open'][0]/@case_id"/>
-      <data key="case_type"
-            ref="instance('results')/results/case[@case_type='case'][@status='open'][0]/@case_type"/>
-      <data key="case_name"
-            ref="instance('results')/results/case[@case_type='case'][@status='open'][0]/name"/>
+      <data key="case_id" ref="instance('querysession')/session/data/case_id"/>
     </post>
     <command id="search_command.m0">
       <display>
@@ -15,14 +10,11 @@
         </text>
       </display>
     </command>
+    <instance id="querysession" src="jr://instance/session"/>
     <session>
-      <datum id="case_id"
-             nodeset="instance('results')/results/case[@case_type='case'][@status='open']"
-             value="./@case_id"
-             detail-confirm="m0_case_long"
-             detail-select="m0_case_short"/>
       <query url="https://www.example.com/a/test_domain/phone/search/"
              storage-instance="results">
+        <data key="case_type" ref="'case'"/>
         <prompt key="name">
           <display>
             <text>
@@ -37,12 +29,16 @@
             </text>
           </display>
         </prompt>
-        <data key="case_type" ref="'case'"/>
       </query>
+      <datum id="case_id"
+             nodeset="instance('results')/results/case[@case_type='case'][@status='open']"
+             value="./@case_id"
+             detail-confirm="m0_case_long"
+             detail-select="m0_case_short"/>
     </session>
     <stack>
       <push>
-        <command value="'m0-f0'"/>
+        <command value="'m0'"/>
         <datum id="calculated_data" value="'claimed'"/>
       </push>
     </stack>

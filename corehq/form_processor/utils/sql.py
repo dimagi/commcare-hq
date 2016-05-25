@@ -6,7 +6,7 @@ import json
 from collections import namedtuple
 
 from json_field.fields import JSONEncoder
-from psycopg2.extensions import adapt, AsIs
+from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (
     CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
@@ -35,152 +35,165 @@ def _namedtuple_from_cursor(cursor):
 
 def form_adapter(form):
     fields = [
-        adapt(form.id).getquoted(),
-        adapt(form.form_id).getquoted(),
-        adapt(form.domain).getquoted(),
-        adapt(form.app_id).getquoted(),
-        adapt(form.xmlns).getquoted(),
-        adapt(form.received_on).getquoted(),
-        adapt(form.partial_submission).getquoted(),
-        adapt(form.submit_ip).getquoted(),
-        adapt(form.last_sync_token).getquoted(),
-        adapt(form.date_header).getquoted(),
-        adapt(form.build_id).getquoted(),
-        adapt(form.state).getquoted(),
-        adapt(json.dumps(form.auth_context, cls=JSONEncoder)).getquoted(),
-        adapt(json.dumps(form.openrosa_headers, cls=JSONEncoder)).getquoted(),
-        adapt(form.deprecated_form_id).getquoted(),
-        adapt(form.edited_on).getquoted(),
-        adapt(form.orig_id).getquoted(),
-        adapt(form.problem).getquoted(),
-        adapt(form.user_id).getquoted(),
-        adapt(form.initial_processing_complete).getquoted(),
-        adapt(form.deleted_on).getquoted(),
-        adapt(form.deletion_id).getquoted(),
+        form.id,
+        form.form_id,
+        form.domain,
+        form.app_id,
+        form.xmlns,
+        form.received_on,
+        form.partial_submission,
+        form.submit_ip,
+        form.last_sync_token,
+        form.date_header,
+        form.build_id,
+        form.state,
+        json.dumps(form.auth_context, cls=JSONEncoder),
+        json.dumps(form.openrosa_headers, cls=JSONEncoder),
+        form.deprecated_form_id,
+        form.edited_on,
+        form.orig_id,
+        form.problem,
+        form.user_id,
+        form.initial_processing_complete,
+        form.deleted_on,
+        form.deletion_id,
     ]
-    return _adapt_fields(fields, XFormInstanceSQL_DB_TABLE)
+    return ObjectAdapter(fields, XFormInstanceSQL_DB_TABLE)
 
 
 def form_attachment_adapter(attachment):
     fields = [
-        adapt(attachment.id).getquoted(),
-        adapt(attachment.attachment_id).getquoted(),
-        adapt(attachment.name).getquoted(),
-        adapt(attachment.content_type).getquoted(),
-        adapt(attachment.md5).getquoted(),
-        adapt(attachment.form_id).getquoted(),
-        adapt(attachment.blob_id).getquoted(),
-        adapt(attachment.content_length).getquoted(),
-        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
+        attachment.id,
+        attachment.attachment_id,
+        attachment.name,
+        attachment.content_type,
+        attachment.md5,
+        attachment.form_id,
+        attachment.blob_id,
+        attachment.content_length,
+        json.dumps(attachment.properties, cls=JSONEncoder),
     ]
-    return _adapt_fields(fields, XFormAttachmentSQL_DB_TABLE)
+    return ObjectAdapter(fields, XFormAttachmentSQL_DB_TABLE)
 
 
 def case_adapter(case):
     fields = [
-        adapt(case.id).getquoted(),
-        adapt(case.case_id).getquoted(),
-        adapt(case.domain).getquoted(),
-        adapt(case.type).getquoted(),
-        adapt(case.owner_id).getquoted(),
-        adapt(case.opened_on).getquoted(),
-        adapt(case.opened_by).getquoted(),
-        adapt(case.modified_on).getquoted(),
-        adapt(case.server_modified_on).getquoted(),
-        adapt(case.modified_by).getquoted(),
-        adapt(case.closed).getquoted(),
-        adapt(case.closed_on).getquoted(),
-        adapt(case.closed_by).getquoted(),
-        adapt(case.deleted).getquoted(),
-        adapt(case.external_id).getquoted(),
-        adapt(json.dumps(case.case_json, cls=JSONEncoder)).getquoted(),
-        adapt(case.name).getquoted(),
-        adapt(case.location_id).getquoted(),
-        adapt(case.deleted_on).getquoted(),
-        adapt(case.deletion_id).getquoted(),
+        case.id,
+        case.case_id,
+        case.domain,
+        case.type,
+        case.owner_id,
+        case.opened_on,
+        case.opened_by,
+        case.modified_on,
+        case.server_modified_on,
+        case.modified_by,
+        case.closed,
+        case.closed_on,
+        case.closed_by,
+        case.deleted,
+        case.external_id,
+        json.dumps(case.case_json, cls=JSONEncoder),
+        case.name,
+        case.location_id,
+        case.deleted_on,
+        case.deletion_id,
     ]
-    return _adapt_fields(fields, CommCareCaseSQL_DB_TABLE)
+    return ObjectAdapter(fields, CommCareCaseSQL_DB_TABLE)
 
 
 def case_attachment_adapter(attachment):
     fields = [
-        adapt(attachment.id).getquoted(),
-        adapt(attachment.attachment_id).getquoted(),
-        adapt(attachment.name).getquoted(),
-        adapt(attachment.content_type).getquoted(),
-        adapt(attachment.md5).getquoted(),
-        adapt(attachment.case_id).getquoted(),
-        adapt(attachment.blob_id).getquoted(),
-        adapt(attachment.content_length).getquoted(),
-        adapt(attachment.attachment_from).getquoted(),
-        adapt(json.dumps(attachment.properties, cls=JSONEncoder)).getquoted(),
-        adapt(attachment.attachment_src).getquoted(),
-        adapt(attachment.identifier).getquoted(),
+        attachment.id,
+        attachment.attachment_id,
+        attachment.name,
+        attachment.content_type,
+        attachment.md5,
+        attachment.case_id,
+        attachment.blob_id,
+        attachment.content_length,
+        attachment.attachment_from,
+        json.dumps(attachment.properties, cls=JSONEncoder),
+        attachment.attachment_src,
+        attachment.identifier,
     ]
-    return _adapt_fields(fields, CaseAttachmentSQL_DB_TABLE)
+    return ObjectAdapter(fields, CaseAttachmentSQL_DB_TABLE)
 
 
 def case_index_adapter(index):
     fields = [
-        adapt(index.id).getquoted(),
-        adapt(index.domain).getquoted(),
-        adapt(index.identifier).getquoted(),
-        adapt(index.referenced_id).getquoted(),
-        adapt(index.referenced_type).getquoted(),
-        adapt(index.relationship_id).getquoted(),
-        adapt(index.case_id).getquoted(),
+        index.id,
+        index.domain,
+        index.identifier,
+        index.referenced_id,
+        index.referenced_type,
+        index.relationship_id,
+        index.case_id,
     ]
-    return _adapt_fields(fields, CommCareCaseIndexSQL_DB_TABLE)
+    return ObjectAdapter(fields, CommCareCaseIndexSQL_DB_TABLE)
 
 
 def case_transaction_adapter(transaction):
     fields = [
-        adapt(transaction.id).getquoted(),
-        adapt(transaction.form_id).getquoted(),
-        adapt(transaction.server_date).getquoted(),
-        adapt(transaction.type).getquoted(),
-        adapt(transaction.case_id).getquoted(),
-        adapt(transaction.revoked).getquoted(),
-        adapt(json.dumps(transaction.details, cls=JSONEncoder)).getquoted(),
-        adapt(transaction.sync_log_id).getquoted(),
+        transaction.id,
+        transaction.form_id,
+        transaction.server_date,
+        transaction.type,
+        transaction.case_id,
+        transaction.revoked,
+        json.dumps(transaction.details, cls=JSONEncoder),
+        transaction.sync_log_id,
     ]
-    return _adapt_fields(fields, CaseTransaction_DB_TABLE)
+    return ObjectAdapter(fields, CaseTransaction_DB_TABLE)
 
 
 def ledger_value_adapter(ledger_value):
     fields = [
-        adapt(ledger_value.id).getquoted(),
-        adapt(ledger_value.entry_id).getquoted(),
-        adapt(ledger_value.section_id).getquoted(),
-        adapt(ledger_value.balance).getquoted(),
-        adapt(ledger_value.last_modified).getquoted(),
-        adapt(ledger_value.case_id).getquoted(),
-        adapt(ledger_value.daily_consumption).getquoted(),
-        adapt(ledger_value.last_modified_form_id).getquoted(),
-        adapt(ledger_value.domain).getquoted(),
-        adapt(ledger_value.location_id).getquoted(),
+        ledger_value.id,
+        ledger_value.entry_id,
+        ledger_value.section_id,
+        ledger_value.balance,
+        ledger_value.last_modified,
+        ledger_value.case_id,
+        ledger_value.daily_consumption,
+        ledger_value.last_modified_form_id,
+        ledger_value.domain,
+        ledger_value.location_id,
     ]
-    return _adapt_fields(fields, LedgerValue_DB_TABLE)
+    return ObjectAdapter(fields, LedgerValue_DB_TABLE)
 
 
 def ledger_transaction_adapter(ledger_transaction):
     fields = [
-        adapt(ledger_transaction.id).getquoted(),
-        adapt(ledger_transaction.form_id).getquoted(),
-        adapt(ledger_transaction.server_date).getquoted(),
-        adapt(ledger_transaction.report_date).getquoted(),
-        adapt(ledger_transaction.type).getquoted(),
-        adapt(ledger_transaction.case_id).getquoted(),
-        adapt(ledger_transaction.entry_id).getquoted(),
-        adapt(ledger_transaction.section_id).getquoted(),
-        adapt(ledger_transaction.user_defined_type).getquoted(),
-        adapt(ledger_transaction.delta).getquoted(),
-        adapt(ledger_transaction.updated_balance).getquoted(),
+        ledger_transaction.id,
+        ledger_transaction.form_id,
+        ledger_transaction.server_date,
+        ledger_transaction.report_date,
+        ledger_transaction.type,
+        ledger_transaction.case_id,
+        ledger_transaction.entry_id,
+        ledger_transaction.section_id,
+        ledger_transaction.user_defined_type,
+        ledger_transaction.delta,
+        ledger_transaction.updated_balance,
     ]
-    return _adapt_fields(fields, LedgerTransaction_DB_TABLE)
+    return ObjectAdapter(fields, LedgerTransaction_DB_TABLE)
 
 
-def _adapt_fields(fields, table_name):
-    params = ['{}'] * len(fields)
-    template = "ROW({})::{}".format(','.join(params), table_name)
-    return AsIs(template.format(*fields))
+class ObjectAdapter(object):
+    def __init__(self, fields, table_name):
+        self.table_name = table_name
+        self.fields = [
+            adapt(field) for field in fields
+        ]
+
+    def getquoted(self):
+        fields = [field.getquoted() for field in self.fields]
+        params = ['{}'] * len(fields)
+        template = "ROW({})::{}".format(','.join(params), self.table_name)
+        return template.format(*fields)
+
+    def prepare(self, conn):
+        for field in self.fields:
+            if hasattr(field, 'prepare'):
+                field.prepare(conn)

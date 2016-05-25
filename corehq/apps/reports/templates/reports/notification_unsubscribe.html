@@ -1,0 +1,18 @@
+{% extends "reports_core/base_template_new.html" %}
+{% load i18n %}
+{% block title %}
+    {% trans 'Unsubscribe from emails' %}
+{% endblock %}
+
+{% block main_column_content %}
+    <form method="POST" style="margin-left: 20px">
+        {% csrf_token %}
+        <h3>
+            {% blocktrans %}Are you sure you want to opt out of report notifications for {% endblocktrans %}
+            {% for config in report.configs %}
+                {{ config.full_name }}{% if forloop.last %}?{% else %},{% endif %}
+            {% endfor %}
+        </h3>
+        <input class="btn btn-primary" type="submit" value="{% trans 'Unsubscribe' %}" />
+    </form>
+{% endblock %}

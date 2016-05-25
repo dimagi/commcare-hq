@@ -1,6 +1,4 @@
 from django.test import TestCase
-import uuid
-from casexml.apps.case.mock import CaseBlock
 from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner, get_owning_users
 from corehq.apps.users.models import CommCareUser

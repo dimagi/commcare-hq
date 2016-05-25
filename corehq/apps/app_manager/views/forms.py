@@ -28,7 +28,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     BlankXFormError,
     ConflictingCaseTypeError,
-)
+    FormNotFoundException)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.const import (
@@ -227,12 +227,19 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
     """
 
-    app = get_app(domain, app_id)
-    form = app.get_form(unique_form_id)
-    lang = request.COOKIES.get('lang', app.langs[0])
     ajax = json.loads(request.POST.get('ajax', 'true'))
-
     resp = {}
+
+    app = get_app(domain, app_id)
+    try:
+        form = app.get_form(unique_form_id)
+    except FormNotFoundException as e:
+        if ajax:
+            return HttpResponseBadRequest(unicode(e))
+        else:
+            messages.error(request, _("There was an error saving, please try again!"))
+            return back_to_main(request, domain, app_id=app_id)
+    lang = request.COOKIES.get('lang', app.langs[0])
 
     def should_edit(attribute):
         if attribute in request.POST:
@@ -486,6 +493,9 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
+        'is_module_filter_enabled': (feature_previews.MODULE_FILTER.enabled(request.domain) and
+                                     app.enable_module_filtering),
+        'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'case_xpath_pattern_matches': CASE_XPATH_PATTERN_MATCHES,
         'case_xpath_substring_matches': CASE_XPATH_SUBSTRING_MATCHES,
         'user_case_xpath_pattern_matches': USER_CASE_XPATH_PATTERN_MATCHES,

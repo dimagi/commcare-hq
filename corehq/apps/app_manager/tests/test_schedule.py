@@ -1,7 +1,6 @@
 # encoding: utf-8
 from mock import patch
 import copy
-import base64
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import (
     DetailColumn,
@@ -345,9 +344,8 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
 
     def _fetch_sources(self):
         for form in self.module.forms:
-            form.source = base64.b64decode(
-                self.app._attachments['{}.xml'.format(form.unique_id)]['data']
-            )
+            name = '{}.xml'.format(form.unique_id)
+            form.source = self.app.lazy_fetch_attachment(name)
 
     # xmlns is added because I needed to use WrappedNode.find() in the next few tests
     xmlns = ("xmlns='http://www.w3.org/2002/xforms' "

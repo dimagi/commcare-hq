@@ -197,7 +197,8 @@ class BlobMixin(Document):
                 typ, exc, tb = sys.exc_info()
                 # delete new blobs that were not saved
                 for name, meta in self.external_blobs.iteritems():
-                    if meta is not old_external_blobs.get(name):
+                    old_meta = old_external_blobs.get(name)
+                    if old_meta is None or meta.id != old_meta.id:
                         db.delete(meta.id, bucket)
                 self.external_blobs = old_external_blobs
                 if self.migrating_blobs_from_couch:
@@ -208,8 +209,9 @@ class BlobMixin(Document):
             if success:
                 # delete replaced blobs
                 deleted = set()
+                blobs = self.blobs
                 for name, meta in list(old_external_blobs.iteritems()):
-                    if meta is not self.blobs.get(name):
+                    if name not in blobs or meta.id != blobs[name].id:
                         db.delete(meta.id, bucket)
                         deleted.add(meta.id)
                 # delete newly created blobs that were overwritten or deleted

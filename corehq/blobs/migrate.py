@@ -73,7 +73,6 @@ from datetime import datetime
 from tempfile import mkdtemp
 
 from django.conf import settings
-from couchexport.models import SavedBasicExport
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.migratingdb import MigratingBlobDB
@@ -84,6 +83,11 @@ from corehq.dbaccessors.couchapps.all_docs import (
     get_doc_count_by_type,
 )
 from couchdbkit import ResourceConflict
+
+# models to be migrated
+from corehq.apps.app_manager.models import Application, RemoteApp
+from couchexport.models import SavedBasicExport
+
 
 MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be
@@ -207,6 +211,12 @@ class Migrator(object):
 MIGRATIONS = {m.slug: m for m in [
     Migrator("saved_exports", [SavedBasicExport], migrate_from_couch_to_blobdb),
     Migrator("migrate_backend", [SavedBasicExport], migrate_blob_db_backend),
+    Migrator("applications", [
+        Application,
+        RemoteApp,
+        ("Application-Deleted", Application),
+        ("RemoteApp-Deleted", RemoteApp),
+    ], migrate_from_couch_to_blobdb),
 ]}
 
 

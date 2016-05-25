@@ -39,7 +39,7 @@ class DomainInvoiceFactory(object):
     This handles all the little details when generating an Invoice.
     """
 
-    def __init__(self, date_start, date_end, domain):
+    def __init__(self, date_start, date_end, domain, recipients=None):
         """
         The Invoice generated will always be for the month preceding the
         invoicing_date.
@@ -49,6 +49,7 @@ class DomainInvoiceFactory(object):
         self.date_start = date_start
         self.date_end = date_end
         self.domain = ensure_domain_instance(domain)
+        self.recipients = recipients
         self.logged_throttle_error = False
         if self.domain is None:
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
@@ -144,7 +145,7 @@ class DomainInvoiceFactory(object):
             record = BillingRecord.generate_record(invoice)
         if record.should_send_email:
             try:
-                record.send_email()
+                record.send_email(contact_emails=self.recipients)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
                     log_accounting_error(e.message)

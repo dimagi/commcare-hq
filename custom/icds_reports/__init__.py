@@ -1,7 +1,8 @@
-from custom.icds_reports.reports.basic_info_report import BasicInfoReport
+from custom.icds_reports.reports.reports import MPRReport, ASRReport
 
 CUSTOM_REPORTS = (
     ('BLOCK REPORTS', (
-        BasicInfoReport,
+        MPRReport,
+        ASRReport
     )),
 )

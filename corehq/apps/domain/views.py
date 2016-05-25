@@ -29,7 +29,12 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    CaseSearchConfigJSON,
+    enable_case_search,
+    disable_case_search,
+)
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
@@ -388,14 +393,13 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 return DomainMetadataForm(
                     self.request.POST,
                     self.request.FILES,
-                    user=self.request.couch_user,
-                    domain=self.domain_object.name,
+                    domain=self.domain_object,
                     can_use_custom_logo=self.can_use_custom_logo,
                 )
             return DomainGlobalSettingsForm(
                 self.request.POST,
                 self.request.FILES,
-                domain=self.domain_object.name,
+                domain=self.domain_object,
                 can_use_custom_logo=self.can_use_custom_logo
             )
         if self.can_user_see_meta:
@@ -406,13 +410,12 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
             return DomainMetadataForm(
                 can_use_custom_logo=self.can_use_custom_logo,
-                user=self.request.couch_user,
-                domain=self.domain_object.name,
+                domain=self.domain_object,
                 initial=initial
             )
         return DomainGlobalSettingsForm(
             initial=initial,
-            domain=self.domain_object.name,
+            domain=self.domain_object,
             can_use_custom_logo=self.can_use_custom_logo
         )
 
@@ -2121,8 +2124,12 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
                 return []
             return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
 
+        if request.POST['enable'] == 'true':
+            enable_case_search(self.domain)
+        else:
+            disable_case_search(self.domain)
         CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
-            'enabled': request.POST['enable'],
+            'enabled': request.POST['enable'] == 'true',
             'config': CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
         })
         messages.success(request, _("Case search configuration updated successfully"))
@@ -2456,6 +2463,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'notes',
             'phone_model',
             'commtrack_domain',
+            'performance_threshold',
             'business_unit',
             'workshop_region',
         ]

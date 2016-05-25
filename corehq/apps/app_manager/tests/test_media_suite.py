@@ -41,6 +41,13 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertTrue(app.get_module(0).uses_media())
         self.assertEqual(app.all_media_paths, set(should_contain_media))
 
+    def test_all_media_paths_with_inline_video(self):
+        inline_video_path = 'jr://file/commcare/video-inline/data/inline_video.mp4'
+        app = Application.wrap(self.get_json('app_video_inline'))
+
+        self.assertTrue(app.get_module(0).uses_media())
+        self.assertEqual(app.all_media_paths, set([inline_video_path]))
+
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
     def test_case_list_media(self):
         app = Application.wrap(self.get_json('app'))

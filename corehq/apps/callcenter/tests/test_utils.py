@@ -339,14 +339,17 @@ class CallCenterDomainTest(SimpleTestCase):
         self.elasticsearch = get_es_new()
         ensure_index_deleted(self.index_info.index)
         initialize_index(self.elasticsearch, self.index_info)
+        import time
+        time.sleep(1)  # without this we get a 503 response about 30% of the time
 
     def tearDown(self):
         ensure_index_deleted(self.index_info.index)
 
     def test_get_call_center_domains(self):
-        _create_domain('cc-dom1', True, True, 'flw')
-        _create_domain('cc-dom2', True, False, 'aww')
-        _create_domain('cc-dom3', False, False, '')
+        _create_domain('cc-dom1', True, True, 'flw', 'user1', False)
+        _create_domain('cc-dom2', True, False, 'aww', None, True)
+        _create_domain('cc-dom3', False, False, '', 'user2', False)  # case type missing
+        _create_domain('cc-dom3', False, False, 'flw', None, False)  # owner missing
         self.elasticsearch.indices.refresh(self.index_info.index)
 
         domains = get_call_center_domains()
@@ -359,7 +362,7 @@ class CallCenterDomainTest(SimpleTestCase):
         self.assertFalse(dom2.use_fixtures)
 
 
-def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type):
+def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type, cc_case_owner_id, use_location_as_owner):
     with drop_connected_signals(commcare_domain_post_save):
         domain = Domain(
             _id=uuid.uuid4().hex,
@@ -370,6 +373,8 @@ def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type):
         domain.call_center_config.enabled = cc_enabled
         domain.call_center_config.use_fixtures = cc_use_fixtures
         domain.call_center_config.case_type = cc_case_type
+        domain.call_center_config.case_owner_id = cc_case_owner_id
+        domain.call_center_config.use_user_location_as_owner = use_location_as_owner
 
         send_to_elasticsearch(
             index='domains',

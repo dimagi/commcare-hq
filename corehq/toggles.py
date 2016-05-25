@@ -336,7 +336,8 @@ REPORT_BUILDER_MAP_REPORTS = StaticToggle(
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
-    TAG_PRODUCT_PATH
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(
@@ -709,6 +710,13 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+)
+
+MESSAGE_LOG_METADATA = StaticToggle(
+    'message_log_metadata',
+    'Include message id in Message Log export.',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
 )
 
 ABT_REMINDER_RECIPIENT = StaticToggle(

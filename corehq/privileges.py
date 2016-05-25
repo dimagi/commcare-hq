@@ -54,6 +54,8 @@ CUSTOM_INTENTS = 'custom_intents'
 
 ADVANCED_DOMAIN_SECURITY = 'advanced_domain_security'
 
+BUILD_PROFILES = 'build_profiles'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -82,6 +84,7 @@ MAX_PRIVILEGES = [
     DATA_CLEANUP,
     TEMPLATED_INTENTS,
     CUSTOM_INTENTS,
+    # BUILD_PROFILES,
     ADVANCED_DOMAIN_SECURITY,
 ]
 
@@ -123,5 +126,6 @@ class Titles(object):
             TEMPLATED_INTENTS: _('Built-in Integration'),
             CUSTOM_INTENTS: _('External Integration Framework'),
             DATA_CLEANUP: _('Data Management'),
-            ADVANCED_DOMAIN_SECURITY: _('Domain Level Security Features')
+            ADVANCED_DOMAIN_SECURITY: _('Domain Level Security Features'),
+            BUILD_PROFILES: _('Build Profiles')
         }.get(privilege, privilege)

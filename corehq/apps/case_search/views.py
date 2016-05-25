@@ -31,7 +31,7 @@ class CaseSearchView(DomainViewMixin, TemplateView):
         case_type = query.get('type')
         search_params = query.get('parameters', [])
         search = CaseSearchES()
-        search = search.domain(self.domain)
+        search = search.domain(self.domain).is_closed(False)
         if case_type:
             search = search.case_type(case_type)
         for param in search_params:

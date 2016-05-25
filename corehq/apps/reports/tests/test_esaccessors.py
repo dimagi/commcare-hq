@@ -41,6 +41,8 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_for_users,
     get_last_form_submission_for_xmlns,
     guess_form_name_from_submissions_using_xmlns,
+    get_all_user_ids_submitted,
+    get_username_in_last_form_user_id_submitted,
 )
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
@@ -650,6 +652,49 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         self.assertEqual(results['count'], 1)
         self.assertEqual(timedelta(milliseconds=results['max']), completion_time - time_start)
+
+    def test_get_all_user_ids_submitted_without_app_id(self):
+        user1, user2 = 'u1', 'u2'
+        app1, app2 = '123', '567'
+        xmlns1, xmlns2 = 'abc', 'efg'
+
+        received_on = datetime(2013, 7, 15, 0, 0, 0)
+
+        self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
+        self._send_form_to_es(received_on=received_on, user_id=user2, app_id=app2, xmlns=xmlns2)
+
+        user_ids = get_all_user_ids_submitted(self.domain)
+        self.assertEqual(user_ids, ['u1', 'u2'])
+
+    def test_get_all_user_ids_submitted_with_app_id(self):
+        user1, user2 = 'u1', 'u2'
+        app1, app2 = '123', '567'
+        xmlns1, xmlns2 = 'abc', 'efg'
+
+        received_on = datetime(2013, 7, 15, 0, 0, 0)
+
+        self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
+        self._send_form_to_es(received_on=received_on, user_id=user2, app_id=app2, xmlns=xmlns2)
+
+        user_ids = get_all_user_ids_submitted(self.domain, app1)
+        self.assertEqual(user_ids, ['u1'])
+        user_ids = get_all_user_ids_submitted(self.domain, app2)
+        self.assertEqual(user_ids, ['u2'])
+
+    def test_get_username_in_last_form_submitted(self):
+        user1, user2 = 'u1', 'u2'
+        app1 = '123'
+        xmlns1 = 'abc'
+
+        received_on = datetime(2013, 7, 15, 0, 0, 0)
+
+        self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1, username=user1)
+        self._send_form_to_es(received_on=received_on, user_id=user2, app_id=app1, xmlns=xmlns1, username=user2)
+
+        user_ids = get_username_in_last_form_user_id_submitted(self.domain, user1)
+        self.assertEqual(user_ids, 'u1')
+        user_ids = get_username_in_last_form_user_id_submitted(self.domain, user2)
+        self.assertEqual(user_ids, 'u2')
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

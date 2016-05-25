@@ -96,6 +96,10 @@ class IndicatorDocument(schema.Document):
     group_by_type_map = None
 
     @property
+    def table(self):
+        return self._table
+
+    @property
     def wrapped_group_by(self):
         def _wrap_if_necessary(string_or_attribute_getter):
             if isinstance(string_or_attribute_getter, basestring):
