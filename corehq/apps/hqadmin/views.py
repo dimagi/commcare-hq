@@ -591,7 +591,7 @@ class LoadtestReportView(BaseAdminSectionView):
         return context
 
 
-def _lookup_id_in_couch(doc_id, db_name=None):
+def _lookup_id_in_database(doc_id, db_name=None):
     db_result = namedtuple('db_result', 'dbname result status')
     STATUSES = defaultdict(lambda: 'warning', {
         'missing': 'default',
@@ -666,7 +666,7 @@ def doc_in_es(request):
             "doc_type": es_doc_type,
             "found_indices": found_indices,
         },
-        "couch_info": _lookup_id_in_couch(doc_id),
+        "couch_info": _lookup_id_in_database(doc_id),
     }
     return render(request, "hqadmin/doc_in_es.html", context)
 
@@ -677,7 +677,7 @@ def raw_couch(request):
     db_name = request.GET.get("db_name", None)
     if db_name and "__" in db_name:
         db_name = db_name.split("__")[-1]
-    context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
+    context = _lookup_id_in_database(doc_id, db_name) if doc_id else {}
     other_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
     context['all_databases'] = ['commcarehq'] + other_dbs
     return render(request, "hqadmin/raw_couch.html", context)
