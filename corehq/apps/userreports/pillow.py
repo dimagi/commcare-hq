@@ -6,7 +6,7 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicChe
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
-from corehq.apps.userreports.tasks import is_static, rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import get_migration_context, get_tables_to_rebuild
@@ -69,7 +69,7 @@ class ConfigurableReportTableManagerMixin(object):
             tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
             for table_name in tables_to_rebuild:
                 sql_adapter = table_map[table_name]
-                if not is_static(sql_adapter.config._id):
+                if not sql_adapter.config.is_static:
                     try:
                         rev_before_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
                         self.rebuild_table(sql_adapter)
