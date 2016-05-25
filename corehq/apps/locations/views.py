@@ -205,9 +205,15 @@ class LocationTypesView(BaseLocationView):
         loc_type = loc_type_db[loc_type_data['pk']]
         expand_from_id = loc_type_data['expand_from']
         expand_to_id = loc_type_data['expand_to']
-        loc_type.expand_from = loc_type_db[expand_from_id] if expand_from_id else None
+        try:
+            loc_type.expand_from = loc_type_db[expand_from_id] if expand_from_id else None
+        except KeyError:        # expand_from location type was deleted
+            loc_type.expand_from = None
         loc_type.expand_from_root = loc_type_data['expand_from_root']
-        loc_type.expand_to = loc_type_db[expand_to_id] if expand_to_id else None
+        try:
+            loc_type.expand_to = loc_type_db[expand_to_id] if expand_to_id else None
+        except KeyError:        # expand_to location type was deleted
+            loc_type.expand_to = None
         loc_type.save()
 
     def remove_old_location_types(self, pks):
