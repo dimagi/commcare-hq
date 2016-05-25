@@ -399,7 +399,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Given a base list of case ids, gets all ids of cases they reference (parent and host cases)
         """
         with get_cursor(CommCareCaseIndexSQL) as cursor:
-            cursor.execute('SELECT referenced_id FROM get_indexed_case_ids(%s, %s)', [domain, list(case_ids)])
+            cursor.execute(
+                'SELECT referenced_id FROM get_multiple_cases_indices(%s, %s)',
+                [domain, list(case_ids)]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.referenced_id for result in results]
 

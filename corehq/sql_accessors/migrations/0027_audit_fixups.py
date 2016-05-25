@@ -31,4 +31,13 @@ class Migration(migrations.Migration):
             "DROP FUNCTION IF EXISTS get_closed_case_ids(text, text)",
             "SELECT 1"
         ),
+        HqRunSQL(
+            "DROP FUNCTION IF EXISTS get_indexed_case_ids(TEXT, TEXT[])",
+            "SELECT 1"
+        ),
+        HqRunSQL(
+            "DROP FUNCTION IF EXISTS get_multiple_cases_indices(TEXT[]);",
+            "SELECT 1"
+        ),
+        migrator.get_migration('get_multiple_cases_indices.sql'),
     ]
