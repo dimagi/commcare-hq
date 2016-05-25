@@ -40,4 +40,8 @@ class Migration(migrations.Migration):
             "SELECT 1"
         ),
         migrator.get_migration('get_multiple_cases_indices.sql'),
+        HqRunSQL(
+            "DROP FUNCTION IF EXISTS get_mulitple_forms_attachments(TEXT[])",
+            "SELECT 1"
+        )
     ]

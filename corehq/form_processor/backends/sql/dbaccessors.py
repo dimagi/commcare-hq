@@ -120,7 +120,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         # attachments are already sorted by form_id in SQL
         attachments = XFormAttachmentSQL.objects.raw(
-            'SELECT * from get_mulitple_forms_attachments(%s)',
+            'SELECT * from get_multiple_forms_attachments(%s)',
             [form_ids]
         )
 
