@@ -38,7 +38,7 @@ hqDefine('style/js/components/multiselect_utils', function () {
                     selectionSearchString = '#'+that.$container.attr('id')+' .ms-elem-selection.ms-selected';
 
                 that.qs1 = $selectableSearch.quicksearch(selectableSearchString)
-                .on('keydown', function () {
+                .on('keydown', function (e) {
                     if (e.which === 40) {
                         that.$selectableUl.focus();
                         return false;
@@ -54,7 +54,7 @@ hqDefine('style/js/components/multiselect_utils', function () {
                 });
 
                 that.qs2 = $selectionSearch.quicksearch(selectionSearchString)
-                .on('keydown', function () {
+                .on('keydown', function (e) {
                     if (e.which === 40) {
                         that.$selectionUl.focus();
                         return false;
@@ -85,11 +85,11 @@ hqDefine('style/js/components/multiselect_utils', function () {
             },
         });
 
-        $('#' + selectAllId).click(function(e){
+        $('#' + selectAllId).click(function () {
             $('#' + multiselectId).multiSelect('select_all');
             return false;
         });
-        $('#' + removeAllId).click(function(e){
+        $('#' + removeAllId).click(function () {
             $('#' + multiselectId).multiSelect('deselect_all');
             return false;
         });
