@@ -278,7 +278,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     @property
     def is_static(self):
-        return _id_is_static(self._id)
+        return id_is_static(self._id)
 
     def deactivate(self):
         if not self.is_static:
@@ -576,7 +576,7 @@ def get_datasource_config(config_id, domain):
             'The data source referenced by this report could not be found.'
         ))
 
-    is_static = _id_is_static(config_id)
+    is_static = id_is_static(config_id)
     if is_static:
         config = StaticDataSourceConfiguration.by_id(config_id)
         if config.domain != domain:
@@ -589,7 +589,7 @@ def get_datasource_config(config_id, domain):
     return config, is_static
 
 
-def _id_is_static(data_source_id):
+def id_is_static(data_source_id):
     if data_source_id is None:
         return False
     return data_source_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
