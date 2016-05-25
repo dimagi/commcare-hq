@@ -595,7 +595,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_closed_case_ids(domain, owner_id):
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_closed_case_ids(%s, %s)', [domain, owner_id])
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
+                [domain, owner_id, True]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
 

@@ -27,4 +27,8 @@ class Migration(migrations.Migration):
             "DROP FUNCTION IF EXISTS get_case_form_ids(TEXT)",
             "SELECT 1"
         ),
+        HqRunSQL(
+            "DROP FUNCTION IF EXISTS get_closed_case_ids(text, text)",
+            "SELECT 1"
+        ),
     ]
