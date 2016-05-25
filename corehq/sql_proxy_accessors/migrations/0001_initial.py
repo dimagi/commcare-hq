@@ -51,7 +51,6 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_case_attachments.sql'),
         migrator.get_migration('get_case_by_id.sql'),
         migrator.get_migration('get_case_by_location_id.sql'),
-        migrator.get_migration('get_case_form_ids.sql'),
         migrator.get_migration('get_case_ids_in_domain.sql'),
         migrator.get_migration('get_case_indices.sql'),
         migrator.get_migration('get_case_indices_reverse.sql'),

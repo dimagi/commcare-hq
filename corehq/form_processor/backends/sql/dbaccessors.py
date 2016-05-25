@@ -354,7 +354,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case_xform_ids(case_id):
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT form_id FROM get_case_form_ids(%s)', [case_id])
+            cursor.execute(
+                'SELECT form_id FROM get_case_transactions_by_type(%s)',
+                [case_id, CaseTransaction.TYPE_FORM]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.form_id for result in results]
 
