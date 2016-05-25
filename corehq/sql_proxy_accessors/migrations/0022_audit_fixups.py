@@ -43,5 +43,9 @@ class Migration(migrations.Migration):
         HqRunSQL(
             "DROP FUNCTION IF EXISTS get_mulitple_forms_attachments(TEXT[])",
             "SELECT 1"
+        ),
+        HqRunSQL(
+            "DROP FUNCTION IF EXISTS get_form_by_id(TEXT);",
+            "SELECT 1"
         )
     ]
