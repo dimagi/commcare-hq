@@ -416,8 +416,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         )
         cases_by_id = {case.case_id: case for case in cases}
         indices = list(CommCareCaseIndexSQL.objects.raw(
-            'SELECT * FROM get_multiple_cases_indices(%s)',
-            [cases_by_id.keys()])
+            'SELECT * FROM get_multiple_cases_indices(%s, %s)',
+            [domain, cases_by_id.keys()])
         )
         _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases
