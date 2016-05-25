@@ -1922,7 +1922,12 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
         assert_user_has_case(self, self.other_user, extension.case_id,
                              restore_id=SyncLog.last_for_user(self.other_user_id)._id)
         # first user should also get it since it was updated
-        assert_user_has_case(self, self.user, extension.case_id, restore_id=SyncLog.last_for_user(self.user_id)._id)
+        assert_user_has_case(
+            self,
+            self.user,
+            extension.case_id,
+            restore_id=SyncLog.last_for_user(self.user_id)._id
+        )
 
         # other user syncs again, should not get the extension
         assert_user_doesnt_have_case(self, self.other_user, extension.case_id,

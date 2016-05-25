@@ -7,7 +7,6 @@ from casexml.apps.phone.tests.utils import generate_restore_payload
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.tests.util import (
-    check_xml_line_by_line,
     delete_all_cases,
     delete_all_sync_logs,
     assert_user_has_case,

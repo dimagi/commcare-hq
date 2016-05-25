@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.phone.models import OTARestoreUser, get_properly_wrapped_sync_log
+from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from datetime import datetime
 from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V2
