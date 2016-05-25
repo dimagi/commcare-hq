@@ -622,6 +622,7 @@ _SQL_DBS = OrderedDict((db.dbname, db) for db in [
     ),
 ])
 
+
 def _lookup_id_in_database(doc_id, db_name=None):
     db_result = namedtuple('db_result', 'dbname result status')
     STATUSES = defaultdict(lambda: 'warning', {
