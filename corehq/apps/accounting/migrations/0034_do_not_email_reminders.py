@@ -27,5 +27,5 @@ class Migration(migrations.Migration):
             field=models.BooleanField(default=False),
             preserve_default=True,
         ),
-        HqRunPython(do_not_email_migration)
+        HqRunPython(do_not_email_migration, reverse_code=lambda app, schema_editor: None)
     ]
