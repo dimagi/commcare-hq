@@ -5,7 +5,6 @@ from collections import namedtuple
 from corehq.apps.export.models import (
     ExportItem,
     ExportColumn,
-    GeopointItem,
     Option, MultipleChoiceItem)
 from corehq.apps.export.models.new import (
     MAIN_TABLE,
