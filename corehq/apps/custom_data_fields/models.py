@@ -14,22 +14,19 @@ SYSTEM_FIELDS = ("commtrack-supply-point", 'name', 'type', 'owner_id', 'external
 SYSTEM_PREFIX = "commcare"
 
 
-def _validate_reserved_words(slug):
+def validate_reserved_words(slug):
     if slug in SYSTEM_FIELDS:
-        return _('You may not use "{}" as a field name').format(slug)
+        raise ValidationError(_('You may not use "{}" as a field name').format(slug))
     for prefix in [SYSTEM_PREFIX, 'xml']:
         if slug and slug.startswith(prefix):
-            return _('Field names may not begin with "{}"').format(prefix)
+            raise ValidationError(_('Field names may not begin with "{}"').format(prefix))
 
 
 def is_system_key(slug):
-    return bool(_validate_reserved_words(slug))
-
-
-def validate_reserved_words(slug):
-    error = _validate_reserved_words(slug)
-    if error is not None:
-        raise ValidationError(error)
+    try:
+        validate_reserved_words(slug)
+    except ValidationError:
+        return True
 
 
 class CustomDataField(JsonObject):
