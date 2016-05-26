@@ -4781,6 +4781,9 @@ def validate_detail_screen_field(field):
 
 class SavedAppBuild(ApplicationBase):
 
+    # Whether the application has had data submitted against it
+    has_submissions = BooleanProperty(default=None)
+
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
         for key in ('modules', 'user_registration', 'external_blobs',
