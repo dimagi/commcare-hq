@@ -186,6 +186,7 @@ def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, dire
 
     _, last_day_message = calendar.monthrange(message_month_date.year, message_month_date.month)
 
+    billables = []
     for _ in range(0, num_sms):
         sms_billable = SmsBillable(
             gateway_fee=gateway_fee,
@@ -198,6 +199,8 @@ def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, dire
                                     random.randint(1, last_day_message)),
         )
         sms_billable.save()
+        billables.append(sms_billable)
+    return billables
 
 
 def create_excess_community_users(domain):
