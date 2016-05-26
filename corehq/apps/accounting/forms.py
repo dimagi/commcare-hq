@@ -1293,7 +1293,12 @@ class SoftwarePlanVersionForm(forms.Form):
     def role_dict(self):
         return {
             'currentValue': self['privileges'].value(),
-            'multiSelectField': 'privileges',
+            'multiSelectField': {
+                'slug': 'privileges',
+                'titleSelect': _("Privileges Available"),
+                'titleSelected': _("Privileges Selected"),
+                'titleSearch': _("Search Privileges..."),
+            },
             'existingRoles': list(self.existing_roles),
             'roleType': self['role_type'].value() or 'existing',
             'newPrivileges': self['privileges'].value(),
