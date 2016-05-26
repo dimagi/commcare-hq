@@ -198,7 +198,7 @@ APP_AWARE_SYNC = PredictablyRandomToggle(
     'App-aware Sync',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.3
+    randomness=0.6
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -336,7 +336,8 @@ REPORT_BUILDER_MAP_REPORTS = StaticToggle(
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
-    TAG_PRODUCT_PATH
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(

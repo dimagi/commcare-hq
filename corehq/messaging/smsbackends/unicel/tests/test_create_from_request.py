@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta
-from django.db import DatabaseError
+from datetime import timedelta
 from django.test import TestCase
 from django.test.client import Client
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, INCOMING
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import WebUser
 from corehq.messaging.smsbackends.unicel.models import InboundParams
 import json
 

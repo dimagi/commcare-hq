@@ -36,6 +36,8 @@ class CareReportMixin(object):
 
 class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, CareReportMixin):
 
+    base_template_filters = 'care_pathways/filters.html'
+
     @use_nvd3_v3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
         super(CareBaseReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
@@ -43,3 +45,11 @@ class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
+
+    def update_filter_context(self):
+        self.context.update({
+            'report_filters': [
+                dict(field=f.render(), slug=f.slug, filter_css_class=f.filter_css_class)
+                for f in self.filter_classes
+            ],
+        })

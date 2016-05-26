@@ -6,6 +6,7 @@
   default: "freq-never"
   values_txt: "After login, the application will look at the profile's defined reference for the authoritative location of the newest version. This check will occur with some periodicity since the last successful check based on this property. freq-never disables the automatic check."
   since: "1.3"
+  force: true
 
 - disabled: true
   name: "Purge Frequency"
@@ -15,6 +16,7 @@
   value_names: ["Whenever Possible", "Daily", "Once a Week", "Twice a Month", "Once a Month"]
   default: "0"
   values_txt: "Any positive integer. Represents period of purging in days."
+  force: true
 
 - name: "Days for Review"
   description: "Amount of time previously submitted forms remain accessible in the CommCare app."
@@ -34,6 +36,7 @@
   value_names: ["Enabled", "Disabled"]
   default: "Enabled"
   group: "log"
+  force: true
 
 - name: "Weekly Log Sending Frequency"
   description: "What kind of log transmission the phone should attempt on a weekly basis (submitted to PostURL)"
@@ -45,6 +48,7 @@
   values: ["log_never", "log_short", "log_full"]
   value_names: ["Never", "Short", "Full"]
   group: "log"
+  force: true
 
 - name: "Daily Log Sending Frequency"
   description: "What kind of log transmission the phone should attempt on a daily basis (submitted to PostURL)"
@@ -55,6 +59,7 @@
   values: ["log_never", "log_short", "log_full"]
   value_names: ["Never", "Short", "Full"]
   group: "log"
+  force: true
 
 - name: "Send Data"
   description: "Whether or not the phone collects, saves, and sends data."
@@ -64,6 +69,7 @@
   "//values": ["cc-send-file"]
   value_names: ["Yes", "No (NOT RECOMMENDED)"]
   "//value_names": ["Save to the File System"]
+  force: true
 
 - name: "Password Format"
   description: "Determines whether phone keys will type letters or numbers by default when typing in the password field."
@@ -71,18 +77,21 @@
   values: ["a", "n"]
   value_names: ["Alphanumeric", "Numeric"]
   default: "n"
+  force: true
 
 - name: "CommCare Home Screen Logo"
   description: "Choose an image to replace the default CommCare Home Screen logo"
   id: "logo_android_home"
   widget: "image_uploader"
   privilege: "commcare_logo_uploader"
+  force: true
 
 - name: "Login Logo"
   description: "Upload a file to serve as a login logo on Android phones"
   id: "logo_android_login"
   widget: "image_uploader"
   privilege: "commcare_logo_uploader"
+  force: true
 
 - disabled: true
   name: "Server User Registration"
@@ -92,6 +101,7 @@
   value_names: ["Required", "Skip"]
   values_txt: "Set to skip if your deployment does not require users to register with the server. Note that this will likely result in OTA Restore and other features being unavailable."
   default: "required"
+  force: true
 
 - name: "Sync Mode"
   description: "Determines if the server automatically attempts to send data to the phone (Two-Way), or only attempt to send data on demand (Push Only); projects using Case Sharing should choose Two-Way."
@@ -101,6 +111,7 @@
   default: "push-only"
   requires: "{hq.case_sharing}=false"
   contingent_default: [{"condition": "{hq.case_sharing}=true", "value": "sync"}]
+  force: true
 
 - name: "Auto-Sync Frequency"
   description: "Automatically trigger a two-way sync on a regular schedule"
@@ -111,6 +122,7 @@
   requires: "{properties.server-tether}='sync'"
   values_txt: "When auto-sync is enabled CommCare will attempt to submit forms and synchronize the user's data after logging in with the frequency chosen."
   since: "2.0"
+  force: true
 
 - disabled: true
   name: "OTA Restore Tolerance"
@@ -119,6 +131,7 @@
   values: ["strict", "loose"]
   value_names: ["Strict", "Loose"]
   default: "loose"
+  force: true
 
 - name: "Form Entry Style"
   description: "What user interface style should be used during form entry."
@@ -127,6 +140,7 @@
   value_names: ["Multiple Questions per Screen", "One Question per Screen"]
   values_txt: "Multiple Questions per Screen displays a running list of questions on the screen at the same time. One Question per Screen displays each question independently. Note: OQPS does not support some features"
   default: "v_chatterbox"
+  force: true
 
 - disabled: true
   id: "users"
@@ -138,6 +152,7 @@
   default: "true"
   group: "sense"
   widget: "bool"
+  force: true
 
 - id: "sense"
   type: "features"
@@ -148,6 +163,7 @@
   default: "false"
   group: "sense"
   widget: "bool"
+  force: true
 
 - id: "cc-user-mode"
   name: "User Login Mode"
@@ -159,6 +175,7 @@
   description: "In normal mode, users log in each time with their username and password. In auto-login mode, once a user (not the 'admin' or 'demo' users) has logged in, the application will start up with that user already logged in."
   group: "sense"
   since: "1.3"
+  force: true
 
 - name: "Item Selection Mode"
   description: "Whether form entry is optimized for speed, or for new users."
@@ -170,6 +187,7 @@
   default: "cc-entry-quick"
   contingent_default: [{"condition": "{features.sense}='true'", "value": "cc-entry-review"}]
   group: "sense"
+  force: true
 
 - name: "Send Forms Mode"
   description: "How Send All Unsent functionality is presented to the user"
@@ -195,6 +213,7 @@
   commcare_default: "cycle"
   contingent_default: [{"condition": "{features.sense}='true'", "value": "audio"}]
   group: "sense"
+  force: true
 
 - disabled: true
   name: "Loose Media Mode"
@@ -205,6 +224,7 @@
   default: "no"
   values_txt: "When loose media mode is set to yes, CommCare will search for alternative media formats for any media that it cannot play. If CommCare attempts to play a file at jr://file/media/prompt_one.mp3 and mp3 files are not supported, the media directory will be searched for other files named prompt_one with alternative extensions which may be supported, for instance prompt_one.wav, and play that instead."
   since: "1.3"
+  force: true
 
 # If cc-content-valid=yes it means the content has already been validated and should not be validated againmenu_
 - name: "Multimedia Validation"
@@ -215,6 +235,7 @@
   default: "yes"
   values_txt: "If multimedia validation is enabled, CommCare will perform an additional check after installing your app to ensure that all of your multimedia is present on the phone before allowing the app to run. It is recommended for deployment, but will make your app unable to run if multimedia is enabled."
   since: "2.0"
+  force: true
 
 - name: "Unsent Form Limit"
   description: "Number of unsent forms on phone before triggering warning text"
@@ -224,6 +245,7 @@
   default: "5"
   values_txt: "When the phone has this number of unsynced forms stored locally CommCare will trigger a warning"
   since: "2.1"
+  force: true
 
 - name: "Unsynced Time Limit"
   description: "Days allowed without syncing before triggering a warning"
@@ -235,6 +257,7 @@
   contingent_default: [{"condition": "{properties.server-tether}='push-only'", "value": "-1"}]
   values_txt: "When this many days have passed without the user syncing CommCare will trigger a warning"
   since: "2.4"
+  force: true
 
 - name: "Login Buttons"
   description: "Choose to label the login buttons with Icons or Text"
@@ -245,6 +268,7 @@
   contingent_default: [{"condition": "{features.sense}='true'", "value": "Yes"}]
   values_txt: "This value will set whether the login screen uses customizable icons for login and demo mode options or uses the standard buttons with labels."
   since: "2.8"
+  force: true
 
 - name: "Saved Forms"
   description: "Choose whether or not mobile workers can view previously submitted forms."
@@ -291,6 +315,7 @@
   disabled_default: "no"
   values_txt: "Whether searches can match similar strings"
   since: "2.15"
+  force: true
 
 - name: "Log Case Detail Views"
   description: "Whether to log each time a user views case details. May reduce mobile performance."
@@ -298,6 +323,7 @@
   widget: bool
   default: false
   since: "2.24"
+  force: true
 
 - name: "Login Duration"
   description: "Length of time after which you will be logged out automatically"
@@ -307,7 +333,8 @@
   default: "86400"
   values_txt: "This will set the amount of time you will remain logged in before automatically being logged out."
   since: "2.21"
-  
+  force: true
+
 - name: "Image Compatibility on Multiple Devices"
   description: "When a value is selected, this feature controls the display size of any user-provided image such
   that it will be consistent with the size of the original image file, and consistent across devices. Follow 
@@ -329,3 +356,4 @@
   disabled_default: "no"
   values_txt: "Whether to enable or disable Grid View for menus."
   since: "2.27"
+  force: true
