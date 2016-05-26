@@ -69,6 +69,8 @@ from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,
     get_datasource_config,
     get_report_config,
+    get_report_configs,
+    _config_id_is_static,
 )
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigurePieChartReportForm,
@@ -129,23 +131,105 @@ def swallow_programming_errors(fn):
     return decorated
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def configurable_reports_home(request, domain):
-    return render(request, 'userreports/configurable_reports_home.html', _shared_context(domain))
+class BaseUserConfigReportsView(BaseDomainView):
+    section_name = ugettext_lazy("Configurable Reports")
+
+    @property
+    def main_context(self):
+        static_reports = list(StaticReportConfiguration.by_domain(self.domain))
+        static_data_sources = list(StaticDataSourceConfiguration.by_domain(self.domain))
+        context = super(BaseUserConfigReportsView, self).main_context
+        context.update({
+            'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
+            'data_sources': DataSourceConfiguration.by_domain(self.domain) + static_data_sources,
+        })
+        return context
+
+    @property
+    def section_url(self):
+        return reverse(UserConfigReportsHomeView.urlname, args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @use_bootstrap3
+    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseUserConfigReportsView, self).dispatch(request, *args, **kwargs)
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def edit_report(request, domain, report_id):
-    config, is_static = get_report_config_or_404(report_id, domain)
-    return _edit_report_shared(request, domain, config, read_only=is_static)
+class UserConfigReportsHomeView(BaseUserConfigReportsView):
+    urlname = 'configurable_reports_home'
+    template_name = 'userreports/configurable_reports_home.html'
+    page_title = ugettext_lazy("Reports Home")
+
+    @property
+    def page_context(self):
+        return {}
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def create_report(request, domain):
-    return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
+class BaseEditConfigReportView(BaseUserConfigReportsView):
+    template_name = 'userreports/edit_report_config.html'
+
+    @property
+    def report_id(self):
+        return self.kwargs.get('report_id')
+
+    @property
+    def page_url(self):
+        if self.report_id:
+            return reverse(self.urlname, args=(self.domain, self.report_id,))
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.edit_form,
+            'report': self.config,
+        }
+
+    @property
+    @memoized
+    def config(self):
+        if self.report_id is None:
+            return ReportConfiguration(domain=self.domain)
+        try:
+            return get_report_configs([self.report_id], self.domain)[0]
+        except ReportConfigurationNotFoundError:
+            raise Http404()
+
+
+    @property
+    def read_only(self):
+        return _config_id_is_static(self.report_id) if self.report_id is not None else False
+
+    @property
+    @memoized
+    def edit_form(self):
+        if self.request.method == 'POST':
+            return ConfigurableReportEditForm(
+                self.domain, self.config, self.read_only,
+                data=self.request.POST)
+        return ConfigurableReportEditForm(self.domain, self.config, self.read_only)
+
+    def post(self, request, *args, **kwargs):
+        if self.edit_form.is_valid():
+            self.edit_form.save(commit=True)
+            messages.success(request, _(u'Report "{}" saved!').format(self.config.title))
+            return HttpResponseRedirect(reverse(
+                'edit_configurable_report', args=[self.domain, self.config._id])
+            )
+        return self.get(request, *args, **kwargs)
+
+
+class EditConfigReportView(BaseEditConfigReportView):
+    urlname = 'edit_configurable_report'
+    page_title = ugettext_lazy("Edit Report")
+
+
+class CreateConfigReportView(BaseEditConfigReportView):
+    urlname = 'create_configurable_report'
+    page_title = ugettext_lazy("Create Report")
 
 
 class ReportBuilderView(BaseDomainView):
@@ -687,23 +771,6 @@ class ConfigureMapReport(ConfigureChartReport):
     @memoized
     def configuration_form_class(self):
         return ConfigureMapReportForm
-
-
-def _edit_report_shared(request, domain, config, read_only=False):
-    if request.method == 'POST':
-        form = ConfigurableReportEditForm(domain, config, read_only, data=request.POST)
-        if form.is_valid():
-            form.save(commit=True)
-            messages.success(request, _(u'Report "{}" saved!').format(config.title))
-            return HttpResponseRedirect(reverse('edit_configurable_report', args=[domain, config._id]))
-    else:
-        form = ConfigurableReportEditForm(domain, config, read_only)
-    context = _shared_context(domain)
-    context.update({
-        'form': form,
-        'report': config
-    })
-    return render(request, "userreports/edit_report_config.html", context)
 
 
 def delete_report(request, domain, report_id):
