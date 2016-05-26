@@ -4197,6 +4197,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # AFAIK this is fixed in code, but my rear its ugly head in an as-yet-not-understood
     # way for apps that already had this problem. Just keep an eye out
     is_released = BooleanProperty(default=False)
+    released_at_least_once = BooleanProperty(default=False)
 
     # django-style salted hash of the admin password
     admin_password = StringProperty()
