@@ -74,7 +74,7 @@ class LoadtestUserTest(TestCase):
         )
         restore_config = RestoreConfig(
             project=self.domain,
-            user=self.user,
+            restore_user=self.user.to_ota_restore_user(),
             params=RestoreParams(version=V2)
         )
         payload_string = restore_config.get_payload().as_string()
