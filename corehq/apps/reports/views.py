@@ -163,11 +163,10 @@ from .util import (
 )
 from corehq.apps.style.decorators import (
     use_bootstrap3,
-    use_datatables,
     use_jquery_ui,
-    use_jquery_ui_multiselect,
     use_select2,
     use_datatables,
+    use_multiselect,
 )
 
 
@@ -881,8 +880,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     page_title = _("Scheduled Report")
     template_name = 'reports/edit_scheduled_report.html'
 
-    @use_jquery_ui
-    @use_jquery_ui_multiselect
+    @use_multiselect
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
