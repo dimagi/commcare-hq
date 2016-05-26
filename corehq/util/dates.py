@@ -13,10 +13,6 @@ def unix_time(dt):
     return delta.total_seconds()
 
 
-def unix_time_millis(dt):
-    return unix_time(dt) * 1000.0
-
-
 def get_timestamp(date):
     return time.mktime(date.timetuple())
 

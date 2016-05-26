@@ -198,7 +198,7 @@ class EditFormTest(TestCase, TestFileMixin):
             case_type='person',
             owner_id=owner_id,
         ).as_string()
-        create_form_id = submit_case_blocks(case_block, domain=self.domain)
+        create_form_id = submit_case_blocks(case_block, domain=self.domain).form_id
 
         # validate that worked
         case = self.casedb.get_case(case_id)
@@ -219,7 +219,7 @@ class EditFormTest(TestCase, TestFileMixin):
                 'property': 'first value',
             }
         ).as_string()
-        edit_form_id = submit_case_blocks(case_block, domain=self.domain)
+        edit_form_id = submit_case_blocks(case_block, domain=self.domain).form_id
 
         # validate that worked
         case = self.casedb.get_case(case_id)
@@ -237,7 +237,7 @@ class EditFormTest(TestCase, TestFileMixin):
                 'property': 'final value',
             }
         ).as_string()
-        second_edit_form_id = submit_case_blocks(case_block, domain=self.domain)
+        second_edit_form_id = submit_case_blocks(case_block, domain=self.domain).form_id
 
         # validate that worked
         case = self.casedb.get_case(case_id)

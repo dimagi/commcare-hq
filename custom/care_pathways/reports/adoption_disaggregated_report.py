@@ -98,9 +98,9 @@ class AdoptionDisaggregatedReport(CareBaseReport):
                 for ix, column in enumerate(row[1:]):
                     charts[ix].append({'x': group_name, 'y': float(column) / total})
 
-            chart.add_dataset('None', charts[0], "red")
-            chart.add_dataset('Some', charts[1], "yellow")
             chart.add_dataset('All', charts[2], "green")
+            chart.add_dataset('Some', charts[1], "yellow")
+            chart.add_dataset('None', charts[0], "red")
 
     @property
     def charts(self):

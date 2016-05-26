@@ -171,7 +171,7 @@ class CleanOwnerCaseSyncOperation(object):
         if self.is_clean(owner_id):
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids
-                return set(self.case_accessor.get_open_case_ids(owner_id))
+                return set(self.case_accessor.get_open_case_ids_for_owner(owner_id))
             else:
                 # for a clean owner's steady state sync, the base set is anything modified since last sync
                 return set(self.case_accessor.get_case_ids_modified_with_owner_since(
@@ -193,7 +193,7 @@ class CleanOwnerCaseSyncOperation(object):
         else:
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids and their extensions
-                all_case_ids = set(self.case_accessor.get_open_case_ids(owner_id))
+                all_case_ids = set(self.case_accessor.get_open_case_ids_for_owner(owner_id))
                 new_case_ids = set(all_case_ids)
                 while new_case_ids:
                     all_case_ids = all_case_ids | new_case_ids

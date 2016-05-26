@@ -41,7 +41,7 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
         return case
 
     def _iter_cases(self, case_ids):
-        return CaseAccessorSQL.get_cases(case_ids)
+        return iter(CaseAccessorSQL.get_cases(case_ids))
 
     def get_cases_for_saving(self, now):
         cases = self.get_changed()

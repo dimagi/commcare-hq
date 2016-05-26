@@ -13,7 +13,6 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
 from corehq.apps.locations.models import SQLLocation
-from corehq.feature_previews import CALLCENTER
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
@@ -170,9 +169,10 @@ def _user_case_changed(case, case_type, close, fields, owner_id):
 
 def sync_call_center_user_case(user):
     domain = user.project
-    if domain and domain.call_center_config.enabled:
+    config = domain.call_center_config
+    if domain and config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user, domain)
-        sync_user_case(user, domain.call_center_config.case_type, owner_id, case)
+        sync_user_case(user, config.case_type, owner_id, case)
 
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
@@ -233,19 +233,26 @@ def get_call_center_domains():
             'name',
             'default_timezone',
             'call_center_config.case_type',
+            'call_center_config.case_owner_id',
+            'call_center_config.use_user_location_as_owner',
             'call_center_config.use_fixtures'])
         .run()
     )
 
     def to_domain_lite(hit):
         config = hit.get('call_center_config', {})
-        return DomainLite(
-            name=hit['name'],
-            default_timezone=hit['default_timezone'],
-            cc_case_type=config.get('case_type', ''),
-            use_fixtures=config.get('use_fixtures', True)
-        )
-    return [to_domain_lite(hit) for hit in result.hits]
+        case_type = config.get('case_type', None)
+        case_owner_id = config.get('case_owner_id', None)
+        use_user_location_as_owner = config.get('use_user_location_as_owner', None)
+        if case_type and (case_owner_id or use_user_location_as_owner):
+            # see CallCenterProperties.config_is_valid()
+            return DomainLite(
+                name=hit['name'],
+                default_timezone=hit['default_timezone'],
+                cc_case_type=case_type,
+                use_fixtures=config.get('use_fixtures', True)
+            )
+    return filter(None, [to_domain_lite(hit) for hit in result.hits])
 
 
 def get_call_center_cases(domain_name, case_type, user=None):
@@ -270,5 +277,10 @@ def get_call_center_cases(domain_name, case_type, user=None):
 
 @quickcache(['domain'])
 def get_call_center_case_type_if_enabled(domain):
-    if CALLCENTER.enabled(domain):
-        return Domain.get_by_name(domain).call_center_config.case_type
+    domain_object = Domain.get_by_name(domain)
+    if not domain_object:
+        return
+
+    config = domain_object.call_center_config
+    if config.enabled and config.config_is_valid():
+        return config.case_type

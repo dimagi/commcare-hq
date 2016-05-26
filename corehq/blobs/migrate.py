@@ -86,6 +86,12 @@ from couchdbkit import ResourceConflict
 
 # models to be migrated
 from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.hqmedia.models import (
+    CommCareAudio,
+    CommCareImage,
+    CommCareMultimedia,
+    CommCareVideo,
+)
 from couchexport.models import SavedBasicExport
 
 
@@ -216,6 +222,12 @@ MIGRATIONS = {m.slug: m for m in [
         RemoteApp,
         ("Application-Deleted", Application),
         ("RemoteApp-Deleted", RemoteApp),
+    ], migrate_from_couch_to_blobdb),
+    Migrator("multimedia", [
+        CommCareAudio,
+        CommCareImage,
+        CommCareVideo,
+        CommCareMultimedia,
     ], migrate_from_couch_to_blobdb),
 ]}
 

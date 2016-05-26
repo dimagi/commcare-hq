@@ -4397,6 +4397,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def hq_profile_url(self):
+        # RemoteApp already has a property called "profile_url",
+        # Application.profile_url just points here to stop the conflict
+        # http://manage.dimagi.com/default.asp?227088#1149422
         return "%s?latest=true" % (
             reverse('download_profile', args=[self.domain, self._id])
         )
@@ -4736,7 +4739,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             for form in self.get_forms(bare=False):
                 xml = XForm(form['form'].source)
                 for lang in self.langs:
-                    media = [path for path in xml.all_references(lang) if path is not None]
+                    media = []
+                    for path in xml.all_references(lang):
+                        if path is not None:
+                            media.append(path)
+                            map_item = self.multimedia_map.get(path)
+                            #dont break if multimedia is missing
+                            if map_item:
+                                map_item.form_media = True
                     self.media_language_map[lang].media_refs.extend(media)
         else:
             self.media_language_map = {}

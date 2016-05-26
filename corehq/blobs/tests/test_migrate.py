@@ -15,6 +15,12 @@ from django.test import TestCase
 from testil import replattr, tempdir
 
 from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.hqmedia.models import (
+    CommCareAudio,
+    CommCareImage,
+    CommCareMultimedia,
+    CommCareVideo,
+)
 from couchexport.models import SavedBasicExport, ExportConfiguration
 
 NOT_SET = object()
@@ -228,6 +234,67 @@ class TestApplicationMigrations(BaseMigrationTest):
             exp = type(app).get(app._id)
             self.assertEqual(exp.fetch_attachment("form.xml"), new_form)
             self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
+
+
+class TestMultimediaMigrations(BaseMigrationTest):
+
+    slug = "multimedia"
+    test_items = [
+        (CommCareAudio, "audio.mp3"),
+        (CommCareImage, "image.jpg"),
+        (CommCareVideo, "video.3gp"),
+        (CommCareMultimedia, "file.bin"),
+    ]
+
+    @staticmethod
+    def make_unmigrated(media_class, filename, data):
+        media = media_class.get_by_data(data)
+        assert not media._id, media.aux_media
+
+        class OldAttachmentMedia(media_class):
+            def put_attachment(self, *args, **kw):
+                return super(BlobMixin, self).put_attachment(*args, **kw)
+
+        with replattr(media, "__class__", OldAttachmentMedia):
+            media.attach_data(data, filename)
+        return media
+
+    def test_migrate_saved_exports(self):
+        data = b'binary data not valid utf-8 \xe4\x94'
+        media = {}
+        for media_class, name in self.test_items:
+            item = self.make_unmigrated(media_class, name, name + data)
+            item.save()
+            media[item] = name
+
+        self.do_migration(list(media))
+
+        for item, name in media.items():
+            exp = type(item).get(item._id)
+            self.assertEqual(exp.fetch_attachment(exp.attachment_id), name + data)
+
+    def test_migrate_with_concurrent_modification(self):
+        new_data = 'something new not valid utf-8 \xe4\x94'
+        old_data = 'something old not valid utf-8 \xe4\x94'
+        media = {}
+        for media_class, name in self.test_items:
+            item = self.make_unmigrated(media_class, name, name + old_data)
+            super(BlobMixin, item).put_attachment(old_data, "other")
+            item.save()
+            self.assertEqual(len(item._attachments), 2)
+            media[item] = name
+
+        def modify():
+            for item in media:
+                # put_attachment() calls .save()
+                type(item).get(item._id).put_attachment(new_data, "other")
+
+        self.do_failed_migration({item: (1, 1) for item in media}, modify)
+
+        for item, name in media.items():
+            exp = type(item).get(item._id)
+            self.assertEqual(exp.fetch_attachment(exp.attachment_id), name + old_data)
+            self.assertEqual(exp.fetch_attachment("other"), new_data)
 
 
 class TestMigrateBackend(TestCase):
