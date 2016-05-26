@@ -526,11 +526,8 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         sms_date = utils.months_from_date(invoice_date, -1)
 
         num_sms = random.randint(self.sms_rate.monthly_limit + 1, self.sms_rate.monthly_limit + 2)
-        generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, sms_date, num_sms, direction=INCOMING
-        )
-        generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, sms_date, num_sms, direction=OUTGOING
+        billables = generator.arbitrary_sms_billables_for_domain(
+            self.subscription.subscriber.domain, sms_date, num_sms
         )
 
         tasks.generate_invoices(invoice_date)
@@ -541,12 +538,17 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         self.assertIsNone(sms_line_item.base_description)
         self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
 
+        sms_cost = sum(
+            billable.gateway_charge + billable.usage_charge
+            for billable in billables[self.sms_rate.monthly_limit:]
+        )
+
         self.assertEqual(sms_line_item.quantity, 1)
-        self.assertGreater(sms_line_item.unit_cost, Decimal('0.0000'))
+        self.assertEqual(sms_line_item.unit_cost, sms_cost)
         self.assertIsNotNone(sms_line_item.unit_description)
 
-        self.assertGreater(sms_line_item.subtotal, Decimal('0.0000'))
-        self.assertGreater(sms_line_item.total, Decimal('0.0000'))
+        self.assertEqual(sms_line_item.subtotal, sms_cost)
+        self.assertEqual(sms_line_item.total, sms_cost)
 
     def _delete_sms_billables(self):
         SmsBillable.objects.all().delete()
