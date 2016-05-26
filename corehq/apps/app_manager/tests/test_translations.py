@@ -2,7 +2,7 @@
 import os
 
 from lxml import etree
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import SuiteMixin
@@ -11,7 +11,7 @@ from corehq.apps.app_manager.translations import escape_output_value
 import commcare_translations
 
 
-class AppManagerTranslationsTest(SimpleTestCase, SuiteMixin):
+class AppManagerTranslationsTest(TestCase, SuiteMixin):
     root = os.path.dirname(__file__)
     file_path = ('data', 'suite')
 
