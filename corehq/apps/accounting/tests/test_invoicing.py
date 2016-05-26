@@ -473,6 +473,10 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         super(TestSmsLineItem, self).setUp()
         self.sms_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.SMS).get()
 
+    def tearDown(self):
+        self._delete_sms_billables()
+        super(TestSmsLineItem, self).tearDown()
+
     def test_under_limit(self):
         """
         Make sure that the Line Item for the SMS Rate has the following:
@@ -507,8 +511,6 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         self.assertIsNotNone(sms_line_item.unit_description)
         self.assertEqual(sms_line_item.subtotal, Decimal('0.0000'))
         self.assertEqual(sms_line_item.total, Decimal('0.0000'))
-
-        self._delete_sms_billables()
 
     def test_over_limit(self):
         """
@@ -545,8 +547,6 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
         self.assertGreater(sms_line_item.subtotal, Decimal('0.0000'))
         self.assertGreater(sms_line_item.total, Decimal('0.0000'))
-
-        self._delete_sms_billables()
 
     def _delete_sms_billables(self):
         SmsBillable.objects.all().delete()
