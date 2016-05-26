@@ -6,8 +6,6 @@ from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
-from django.core.serializers.json import DjangoJSONEncoder
-from django.forms import model_to_dict
 from django.utils.datastructures import SortedDict
 from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
@@ -40,6 +38,8 @@ from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
+from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
+    CommCareCaseSQLRawDocSerializer
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import (
@@ -614,11 +614,11 @@ class _Db(object):
 _SQL_DBS = OrderedDict((db.dbname, db) for db in [
     _Db(
         XFormInstanceSQL._meta.db_table,
-        lambda id_: model_to_dict(XFormInstanceSQL.get_obj_by_id(id_))
+        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data
     ),
     _Db(
         CommCareCaseSQL._meta.db_table,
-        lambda id_: model_to_dict(CommCareCaseSQL.get_obj_by_id(id_))
+        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data
     ),
 ])
 
@@ -651,7 +651,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
         else:
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({
-                "doc": json.dumps(doc, indent=4, sort_keys=True, cls=DjangoJSONEncoder),
+                "doc": json.dumps(doc, indent=4, sort_keys=True),
                 "doc_type": doc.get('doc_type', 'Unknown'),
                 "dbname": db.dbname,
             })

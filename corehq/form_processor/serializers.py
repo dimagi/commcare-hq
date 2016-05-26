@@ -1,3 +1,4 @@
+from json_field import JSONField
 from rest_framework import serializers
 
 from corehq.apps.commtrack.models import StockState
@@ -53,6 +54,25 @@ class XFormInstanceSQLSerializer(DeletableModelSerializer):
         exclude = ('id',)
 
 
+class HumanReadableChoiceField(serializers.ChoiceField):
+    def get_attribute(self, obj):
+        choice = super(serializers.ChoiceField, self).get_attribute(obj)
+        return self.choices[choice]
+
+
+class DeletableModelWithJsonSerializer(DeletableModelSerializer):
+    serializer_field_mapping = {}
+    serializer_field_mapping.update(DeletableModelSerializer.serializer_field_mapping)
+    serializer_field_mapping[JSONField] = serializers.DictField
+
+
+class XFormInstanceSQLRawDocSerializer(DeletableModelWithJsonSerializer):
+    state = HumanReadableChoiceField(choices=XFormInstanceSQL.STATES)
+
+    class Meta:
+        model = XFormInstanceSQL
+
+
 class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -66,6 +86,11 @@ class CaseTransactionActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CaseTransaction
         fields = ('xform_id', 'server_date', 'date', 'sync_log_id')
+
+
+class CommCareCaseSQLRawDocSerializer(DeletableModelWithJsonSerializer):
+    class Meta:
+        model = CommCareCaseSQL
 
 
 class CommCareCaseSQLSerializer(DeletableModelSerializer):
