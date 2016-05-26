@@ -590,10 +590,14 @@ For example, you are working on the `retire` method of `CommCareUser`. You are w
     $ sniffer -x <test.module.path>[:<TestClass>[.<test_name>]]
 
 In our example, we would run `sniffer -x corehq.apps.users.tests.retire:RetireUserTestCase`
-You should see beautiful green `In good standing` if all is well, otherwise a `Failed - Back to work!` message is displayed.
-If you want to run the whole test suite whenever a file is changed (not recommended), you would run sniffer without the `-x` argument
 
 You can also add the regular `nose` environment variables, like `REUSE_DB=1 sniffer -x <test>`
+
+For javascript tests, you can add `--js-` before the javascript app test name, for example:
+`sniffer -x --js-app_manager`
+
+You can combine the two to run the javascript tests when saving js files, and run the python tests when saving py files as follows:
+`sniffer -x --js-app_manager -x corehq.apps.app_manager:AppManagerViewTest`
 
 ### Sniffer Installation instructions
 https://github.com/jeffh/sniffer/
