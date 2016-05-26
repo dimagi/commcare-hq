@@ -488,10 +488,10 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
         num_sms = random.randint(0, self.sms_rate.monthly_limit/2)
         generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, INCOMING, sms_date, num_sms
+            self.subscription.subscriber.domain, sms_date, num_sms, direction=INCOMING
         )
         generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, OUTGOING, sms_date, num_sms
+            self.subscription.subscriber.domain, sms_date, num_sms, direction=OUTGOING
         )
 
         tasks.generate_invoices(invoice_date)
@@ -525,10 +525,10 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
         num_sms = random.randint(self.sms_rate.monthly_limit + 1, self.sms_rate.monthly_limit + 2)
         generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, INCOMING, sms_date, num_sms
+            self.subscription.subscriber.domain, sms_date, num_sms, direction=INCOMING
         )
         generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, OUTGOING, sms_date, num_sms
+            self.subscription.subscriber.domain, sms_date, num_sms, direction=OUTGOING
         )
 
         tasks.generate_invoices(invoice_date)

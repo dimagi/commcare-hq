@@ -9,6 +9,7 @@ import mock
 from django.conf import settings
 from django.core.management import call_command
 
+from corehq.apps.smsbillables.generator import DIRECTIONS
 from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (
@@ -175,8 +176,10 @@ def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
     return num_users
 
 
-def arbitrary_sms_billables_for_domain(domain, direction, message_month_date, num_sms):
+def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, direction=None):
     from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
+
+    direction = direction or random.choice(DIRECTIONS)
 
     gateway_fee = SmsGatewayFee.create_new('MACH', direction, Decimal(0.5))
     usage_fee = SmsUsageFee.create_new(direction, Decimal(0.25))
