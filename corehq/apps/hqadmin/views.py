@@ -13,7 +13,6 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
-from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.views.generic import FormView
 from django.utils.decorators import method_decorator
@@ -41,6 +40,7 @@ from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
     CommCareCaseSQLRawDocSerializer
 from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import (
     PillowtopSupervisorApi,
@@ -707,6 +707,12 @@ def doc_in_es(request):
         "couch_info": _lookup_id_in_database(doc_id),
     }
     return render(request, "hqadmin/doc_in_es.html", context)
+
+
+@require_superuser
+def raw_couch(request):
+    get_params = dict(request.GET.iteritems())
+    return HttpResponseRedirect(reverse("raw_doc", params=get_params))
 
 
 @require_superuser
