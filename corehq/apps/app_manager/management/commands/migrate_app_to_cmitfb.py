@@ -8,7 +8,7 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import XForm
 
 
-logger = logging.getLogger('cmitfb_toggle_migration')
+logger = logging.getLogger('app_migration')
 logger.setLevel('DEBUG')
 
 

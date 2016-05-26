@@ -7,7 +7,7 @@ from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
-logger = logging.getLogger('app_migration')
+logger = logging.getLogger('cmitfb_toggle_migration')
 logger.setLevel('DEBUG')
 
 class Command(BaseCommand):
