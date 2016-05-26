@@ -126,7 +126,7 @@ class APIResourceTest(TestCase):
                                                           resource_name=self.resource.Meta.resource_name,
                                                           pk=id))
 
-    def _api_params(self):
+    def _api_params(self, username=None, password=None):
         return {'username': self.username, 'api_key': self.api_key.key}
 
     def _assert_auth_get_resource(self, url, url_params={}, username=None, password=None):
@@ -145,12 +145,11 @@ class APIResourceTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
         # api_key auth should succeed
-        url_params.update({'username': username, 'api_key': api_key})
-        api_url = "%s?%s" % (url, urlencode(url_params))
+        params = url_params.copy()
+        params.update({'username': username, 'api_key': api_key})
+        api_url = "%s?%s" % (url, urlencode(params))
         print api_url, "binbong"
         response = self.client.get(api_url)
-        if response.status_code != 200:
-            import pdb; pdb.set_trace()
         self.assertEqual(response.status_code, 200)
         return response
 
