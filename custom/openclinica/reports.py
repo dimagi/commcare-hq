@@ -1,6 +1,8 @@
 from datetime import datetime
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.es import cases as case_es
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
@@ -17,6 +19,7 @@ from custom.openclinica.const import (
 )
 from custom.openclinica.models import Subject
 from custom.openclinica.utils import get_study_constant, originals_first
+from dimagi.utils.decorators.memoized import memoized
 
 
 class OdmExportReportView(GenericReportView):
@@ -103,8 +106,25 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
             ]
             yield row
 
-    def get_study_subject_cases(self):
-        cases = (CommCareCase.wrap(res['_source']) for res in self.es_results['hits'].get('hits', []))
+    @property
+    @memoized
+    def all_es_results(self):
+        """
+        When exporting as CDISC ODM, we don't want to paginate or sort. We want everything.
+        """
+        query = case_es.CaseES().domain(self.domain).case_type(CC_SUBJECT_CASE_TYPE)
+        if self.case_status:
+            query = query.is_closed(self.case_status == 'closed')
+        search_string = SearchFilter.get_value(self.request, self.domain)
+        if search_string:
+            query = query.set_query({"query_string": {"query": search_string}})
+        return query.run().raw
+
+    def get_study_subject_cases(self, export=False):
+        if export:
+            cases = (CommCareCase.wrap(res['_source']) for res in self.all_es_results['hits'].get('hits', []))
+        else:
+            cases = (CommCareCase.wrap(res['_source']) for res in self.es_results['hits'].get('hits', []))
         for case in cases:
             if case.type != CC_SUBJECT_CASE_TYPE:
                 # Skip cases that are not subjects.
@@ -122,9 +142,9 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
             'events'
         ]
 
-    def subject_rows(self):
+    def subject_rows(self, export=False):
         audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
-        for case in self.get_study_subject_cases():
+        for case in self.get_study_subject_cases(export):
             subject = Subject(getattr(case, CC_SUBJECT_KEY), getattr(case, CC_STUDY_SUBJECT_ID), self.domain)
             subject.enrollment_date = getattr(case, CC_ENROLLMENT_DATE, None)
             subject.sex = getattr(case, CC_SEX, None)
@@ -141,7 +161,7 @@ class OdmExportReport(OdmExportReportView, CustomProjectReport, CaseListMixin):
         CdiscOdmExportWriter will render this using the odm_export.xml template to combine subjects into a single
         ODM XML document.
         """
-        for subject in self.subject_rows():
+        for subject in self.subject_rows(export=True):
             row = [
                 'SS_' + subject.subject_key,  # OpenClinica prefixes subject key with "SS_" to make the OID
                 subject.study_subject_id,
