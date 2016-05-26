@@ -1,4 +1,4 @@
-from subprocess import call
+from subprocess import Popen
 from sniffer.api import runnable
 
 
@@ -6,4 +6,9 @@ from sniffer.api import runnable
 def execute_tests(*args):
     fn = ['python', 'manage.py', 'test', '--noinput', '--settings=testsettings']
     fn += args[1:]
-    return call(fn) == 0
+    process = Popen(fn)
+    try:
+        return process.wait() == 0
+    except KeyboardInterrupt:
+        process.terminate()
+        raise
