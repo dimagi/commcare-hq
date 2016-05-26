@@ -160,8 +160,9 @@ class ApplicationDataRMIHelper(object):
     APP_TYPE_NONE = 'no_app'
     APP_TYPE_UNKNOWN = 'unknown'
 
-    def __init__(self, domain, as_dict=True, form_placeholders=None, case_placeholders=None):
+    def __init__(self, domain, user, as_dict=True, form_placeholders=None, case_placeholders=None):
         self.domain = domain
+        self.user = user
         self.as_dict = as_dict
         default_form_placeholder = AppFormRMIPlaceholder(
             application=_("Select Application"),
@@ -400,7 +401,10 @@ class ApplicationDataRMIHelper(object):
         forms_by_app_by_module = {}
         for form in self._all_forms:
             has_app = form.get('has_app', False)
-            app_lang = form['app']['langs'][0] if 'langs' in form['app'] else 'en'
+            if self.user.language in form['app'].get('langs', {}):
+                app_lang = self.user.language
+            else:
+                app_lang = form['app']['langs'][0] if 'langs' in form['app'] else 'en'
             app_id = form['app']['id'] if has_app else self.UNKNOWN_SOURCE
             module = form.get('module')
             module_id = (module['id'] if has_app and module is not None
