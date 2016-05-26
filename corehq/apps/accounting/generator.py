@@ -176,7 +176,7 @@ def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
     return num_users
 
 
-def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, direction=None):
+def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, direction=None, multipart_count=1):
     from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
 
     direction = direction or random.choice(DIRECTIONS)
@@ -197,6 +197,7 @@ def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, dire
             direction=direction,
             date_sent=datetime.date(message_month_date.year, message_month_date.month,
                                     random.randint(1, last_day_message)),
+            multipart_count=multipart_count,
         )
         sms_billable.save()
         billables.append(sms_billable)
