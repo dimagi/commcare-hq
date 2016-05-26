@@ -437,14 +437,14 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
         raise Http404
 
     assert user.is_member_of(domain)
-    casexml_user = user.to_casexml_user()
+    restore_user = user.to_ota_restore_user()
     if not fixture_id:
         ret = ElementTree.Element("fixtures")
-        for fixture in generator.get_fixtures(casexml_user, version=V2):
+        for fixture in generator.get_fixtures(restore_user, version=V2):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        fixture = generator.get_fixture_by_id(fixture_id, casexml_user, version=V2)
+        fixture = generator.get_fixture_by_id(fixture_id, restore_user, version=V2)
         if not fixture:
             raise Http404
         assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
