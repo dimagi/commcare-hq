@@ -93,6 +93,9 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     Utility for getting an app, making sure it's in the domain specified, and
     wrapping it in the right class (Application or RemoteApp).
 
+    'target' is only used if latest=True.  It should be set to one of:
+       'build', 'release', or 'save'
+
     Here are some common usages and the simpler dbaccessor alternatives:
         current_app = get_app(domain, app_id)
                     = get_current_app(domain, app_id)
