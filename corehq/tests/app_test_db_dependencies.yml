@@ -330,6 +330,7 @@ corehq.apps.accounting:
   - corehq.apps.app_manager
   - corehq.apps.reminders
   - corehq.apps.data_interfaces
+  - corehq.apps.notifications
 corehq.apps.export:
   - corehq.apps.export
   - corehq.apps.domain

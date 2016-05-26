@@ -1,10 +1,19 @@
 # coding=utf-8
+import os
+
 from lxml import etree
 from django.test import SimpleTestCase
+
+from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.tests.util import SuiteMixin
 from corehq.apps.app_manager.translations import escape_output_value
 
+import commcare_translations
 
-class AppManagerTranslationsTest(SimpleTestCase):
+
+class AppManagerTranslationsTest(SimpleTestCase, SuiteMixin):
+    root = os.path.dirname(__file__)
+    file_path = ('data', 'suite')
 
     def test_escape_output_value(self):
         test_cases = [
@@ -20,3 +29,15 @@ class AppManagerTranslationsTest(SimpleTestCase):
         ]
         for input, expected_output in test_cases:
             self.assertEqual(expected_output, etree.tostring(escape_output_value(input)))
+
+    def test_language_names(self):
+        app_json = self.get_json('app')
+        app_json['langs'] = ['en', 'fra', 'hin', 'pol']
+        app = Application.wrap(app_json)
+        app.create_suite()
+        app_strings = app.create_app_strings('default')
+        app_strings_dict = commcare_translations.loads(app_strings)
+        self.assertEqual(app_strings_dict['en'], 'English')
+        self.assertEqual(app_strings_dict['fra'], u'Français')
+        self.assertEqual(app_strings_dict['hin'], u'हिंदी')
+        self.assertEqual(app_strings_dict['pol'], 'polski')
