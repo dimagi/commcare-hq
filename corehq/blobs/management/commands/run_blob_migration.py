@@ -20,13 +20,15 @@ class Command(BaseCommand):
     help = USAGE
     option_list = BaseCommand.option_list + (
         make_option('--file', help="Migration intermediate storage file."),
+        make_option('--reset', action="store_true", default=False,
+            help="Discard any existing migration state."),
     )
 
-    def handle(self, slug=None, file=None, **options):
+    def handle(self, slug=None, file=None, reset=False, **options):
         try:
             migrator = MIGRATIONS[slug]
         except KeyError:
             raise CommandError(USAGE)
-        total, skips = migrator.migrate(file)
+        total, skips = migrator.migrate(file, reset=reset)
         if skips:
             sys.exit(skips)

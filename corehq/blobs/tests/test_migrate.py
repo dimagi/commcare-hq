@@ -29,7 +29,7 @@ NOT_SET = object()
 class BaseMigrationTest(TestCase):
 
     def setUp(self):
-        mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
+        self.discard_migration_state(self.slug)
         self._old_flags = {}
         self.docs_to_delete = []
         for model in mod.MIGRATIONS[self.slug].doc_type_map.values():
@@ -37,7 +37,7 @@ class BaseMigrationTest(TestCase):
             model.migrating_blobs_from_couch = True
 
     def tearDown(self):
-        mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
+        self.discard_migration_state(self.slug)
         for doc in self.docs_to_delete:
             doc.get_db().delete_doc(doc._id)
         for model, flag in self._old_flags.items():
@@ -45,6 +45,16 @@ class BaseMigrationTest(TestCase):
                 del model.migrating_blobs_from_couch
             else:
                 model.migrating_blobs_from_couch = flag
+
+    @staticmethod
+    def discard_migration_state(slug):
+        doc_types = mod.MIGRATIONS[slug].doc_type_map
+        mod.ResumableDocsByTypeIterator(
+            list(doc_types.values())[0].get_db(),
+            doc_types,
+            slug + "-blob-migration",
+        ).discard_state()
+        mod.BlobMigrationState.objects.filter(slug=slug).delete()
 
     # abstract property, must be overridden in base class
     slug = None
@@ -94,35 +104,37 @@ class BaseMigrationTest(TestCase):
             self.assertFalse(exp._attachments, exp._attachments)
             self.assertEqual(len(exp.external_blobs), num_attachments)
 
-    def do_failed_migration(self, docs, modify_docs):
+    def do_failed_migration(self, docs, modify_doc):
         self.docs_to_delete.extend(docs)
         test_types = {d.doc_type for d in docs}
         if test_types != self.doc_types:
             raise Exception("bad test: must have at least one document per doc "
                             "type (got: {})".format(test_types))
-        modified = []
-        print_status = mod.print_status
-
-        # setup concurrent modification
-        def modify_doc_and_print_status(num, total, elapsed):
-            if not modified:
-                # do concurrent modification
-                modify_docs()
-                modified.append(True)
-            print_status(num, total, elapsed)
 
         # verify: attachments are in couch, not blob db
         for doc in docs:
             self.assertGreaterEqual(len(doc._attachments), 1)
             self.assertEqual(len(doc.external_blobs), 0)
 
-        # hook print_status() call to simulate concurrent modification
-        with replattr(mod, "print_status", modify_doc_and_print_status):
+        # hook doc_migrator_class to simulate concurrent modification
+        modified = set()
+        docs_by_id = {d._id: d for d in docs}
+        migrator = mod.MIGRATIONS[self.slug]
+
+        class ConcurrentModify(migrator.doc_migrator_class):
+            def migrate(self, doc, couchdb):
+                if doc["_id"] not in modified and doc["_id"] in docs_by_id:
+                    # do concurrent modification
+                    modify_doc(docs_by_id[doc["_id"]])
+                    modified.add(doc["_id"])
+                return super(ConcurrentModify, self).migrate(doc, couchdb)
+
+        with replattr(migrator, "doc_migrator_class", ConcurrentModify):
             # do migration
-            migrated, skipped = mod.MIGRATIONS[self.slug].migrate()
+            migrated, skipped = migrator.migrate(max_retry=0)
             self.assertGreaterEqual(skipped, len(docs))
 
-        self.assertTrue(modified)
+        self.assertEqual(modified, {d._id for d in docs})
 
         # verify: migration state not set when docs are skipped
         with self.assertRaises(mod.BlobMigrationState.DoesNotExist):
@@ -167,8 +179,8 @@ class TestSavedExportsMigrations(BaseMigrationTest):
         saved.save()
         self.assertEqual(len(saved._attachments), 2)
 
-        def modify():
-            doc = SavedBasicExport.get(saved._id)
+        def modify(doc):
+            doc = SavedBasicExport.get(doc._id)
             doc.set_payload(new_payload)
             doc.save()
 
@@ -228,10 +240,9 @@ class TestApplicationMigrations(BaseMigrationTest):
             self.assertEqual(len(app._attachments), 2)
             apps[app] = (1, 1)
 
-        def modify():
+        def modify(app):
             # put_attachment() calls .save()
-            for app in apps:
-                type(app).get(app._id).put_attachment(new_form, "form.xml")
+            type(app).get(app._id).put_attachment(new_form, "form.xml")
 
         self.do_failed_migration(apps, modify)
 
@@ -292,10 +303,9 @@ class TestMultimediaMigrations(BaseMigrationTest):
             self.assertEqual(len(item._attachments), 2)
             media[item] = name
 
-        def modify():
-            for item in media:
-                # put_attachment() calls .save()
-                type(item).get(item._id).put_attachment(new_data, "other")
+        def modify(item):
+            # put_attachment() calls .save()
+            type(item).get(item._id).put_attachment(new_data, "other")
 
         self.do_failed_migration({item: (1, 1) for item in media}, modify)
 
@@ -326,11 +336,11 @@ class TestMigrateBackend(TestCase):
         s3db = TemporaryS3BlobDB(config)
         self.db = TemporaryMigratingBlobDB(s3db, fsdb)
         assert get_blob_db() is self.db, (get_blob_db(), self.db)
-        mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
+        BaseMigrationTest.discard_migration_state(self.slug)
 
     def tearDown(self):
         self.db.close()
-        mod.BlobMigrationState.objects.filter(slug=self.slug).delete()
+        BaseMigrationTest.discard_migration_state(self.slug)
         for doc in self.migrate_docs:
             doc.get_db().delete_doc(doc._id)
 
