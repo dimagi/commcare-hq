@@ -37,7 +37,11 @@
         <% if (imageUrl) { %>
         <img class="module-icon" src="<%- imageUrl %>"/>
         <% } else { %>
-        <i class="fa fa-pencil fa-4x"></i>
+            <% if (navState === "JUMP") { %>
+                <i class="fa fa-pencil fa-4x"></i>
+            <% } else { %>
+                <i class="fa fa-folder-open fa-4x" aria-hidden="true"></i>
+            <% } %>
         <% } %>
     </td>
     <td class="col-sm-10">
