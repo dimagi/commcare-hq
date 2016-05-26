@@ -558,6 +558,43 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         self.assertEqual(sms_line_item.subtotal, Decimal('0.0000'))
         self.assertEqual(sms_line_item.total, Decimal('0.0000'))
 
+    def test_multipart_over_limit(self):
+        def _set_billable_date_sent_day(sms_billable, day):
+            sms_billable.date_sent = datetime.date(
+                sms_billable.date_sent.year,
+                sms_billable.date_sent.month,
+                day
+            )
+            sms_billable.save()
+
+        self._create_multipart_billables(self.sms_rate.monthly_limit - 1)
+        for billable in SmsBillable.objects.all():
+            _set_billable_date_sent_day(billable, 1)
+
+        half_charged_billable = generator.arbitrary_sms_billables_for_domain(
+            self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=2
+        )[0]
+        _set_billable_date_sent_day(half_charged_billable, 2)
+
+        fully_charged_billable = generator.arbitrary_sms_billables_for_domain(
+            self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=random.randint(2, 5)
+        )[0]
+        _set_billable_date_sent_day(fully_charged_billable, 3)
+
+        sms_cost = (
+            (half_charged_billable.gateway_charge + half_charged_billable.usage_charge) / 2
+            + fully_charged_billable.gateway_charge + fully_charged_billable.usage_charge
+        )
+
+        sms_line_item = self._create_sms_line_item()
+
+        self.assertEqual(sms_line_item.quantity, 1)
+        self.assertEqual(sms_line_item.unit_cost, sms_cost)
+        self.assertIsNotNone(sms_line_item.unit_description)
+
+        self.assertEqual(sms_line_item.subtotal, sms_cost)
+        self.assertEqual(sms_line_item.total, sms_cost)
+
     def _create_sms_line_item(self):
         tasks.generate_invoices(self.invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
