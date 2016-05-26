@@ -702,7 +702,7 @@ def _report_soh(soh_reports, case_id, domain):
 def _get_ota_balance_blocks(project, user):
     restore_config = RestoreConfig(
         project=project,
-        user=user.to_casexml_user(),
+        restore_user=user.to_ota_restore_user(),
         params=RestoreParams(version=V2),
     )
     return extract_balance_xml(restore_config.get_payload().as_string())
