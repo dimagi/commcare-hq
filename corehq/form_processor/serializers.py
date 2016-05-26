@@ -54,10 +54,17 @@ class XFormInstanceSQLSerializer(DeletableModelSerializer):
         exclude = ('id',)
 
 
-class HumanReadableChoiceField(serializers.ChoiceField):
+class XFormStateField(serializers.ChoiceField):
+    def __init__(self, **kwargs):
+        super(XFormStateField, self).__init__(XFormInstanceSQL.STATES, **kwargs)
+
     def get_attribute(self, obj):
         choice = super(serializers.ChoiceField, self).get_attribute(obj)
-        return self.choices[choice]
+        readable_state = []
+        for state, state_slug in self.choices.iteritems():
+            if choice & state:
+                readable_state.append(state_slug)
+        return ' '.join(readable_state)
 
 
 class DeletableModelWithJsonSerializer(DeletableModelSerializer):
@@ -67,7 +74,7 @@ class DeletableModelWithJsonSerializer(DeletableModelSerializer):
 
 
 class XFormInstanceSQLRawDocSerializer(DeletableModelWithJsonSerializer):
-    state = HumanReadableChoiceField(choices=XFormInstanceSQL.STATES)
+    state = XFormStateField()
 
     class Meta:
         model = XFormInstanceSQL
