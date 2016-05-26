@@ -10,6 +10,7 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 logger = logging.getLogger('cmitfb_toggle_migration')
 logger.setLevel('DEBUG')
 
+
 class Command(BaseCommand):
     help = '''
         Migrate apps to vellum_case_management for domains with
