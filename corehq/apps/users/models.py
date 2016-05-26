@@ -1541,7 +1541,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
 
         for phone_number in self.get_verified_numbers(True).values():
-            phone_number.retire(deletion_id=deletion_id, deletion_date=deletion_date)
+            phone_number.delete()
 
         try:
             django_user = self.get_django_user()

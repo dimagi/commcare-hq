@@ -2,10 +2,10 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from time import sleep
-from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
+from corehq.apps.sms.mixin import (InvalidFormatException,
     PhoneNumberInUseException)
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin, QueuedSMS)
+    PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception, create_billable_for_sms, get_utcnow)
 from django.db import transaction
@@ -263,17 +263,9 @@ def store_billable(self, msg):
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
 def delete_phone_numbers_for_owners(owner_ids):
-    for ids in chunked(owner_ids, 50):
-        results = VerifiedNumber.get_db().view(
-            'phone_numbers/verified_number_by_owner_id',
-            keys=ids,
-            include_docs=True
-        )
-        docs = [row['doc'] for row in results]
-        cache_info = [(doc['owner_id'], doc['phone_number']) for doc in docs]
-        for owner_id, phone_number in cache_info:
-            VerifiedNumber._clear_quickcaches(owner_id, phone_number)
-        soft_delete_docs(docs, VerifiedNumber)
+    for p in PhoneNumber.objects.filter(owner_id__in=owner_ids):
+        # Clear cache and delete
+        p.delete()
 
 
 @task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
@@ -318,7 +310,7 @@ def _sync_case_phone_number(contact_case):
                 return
 
             if not phone_number:
-                phone_number = VerifiedNumber(
+                phone_number = PhoneNumber(
                     domain=contact_case.domain,
                     owner_doc_type=contact_case.doc_type,
                     owner_id=contact_case.case_id,
