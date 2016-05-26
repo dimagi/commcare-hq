@@ -500,10 +500,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         generator.arbitrary_sms_billables_for_domain(
             self.subscription.subscriber.domain, self.sms_date, num_sms, direction=OUTGOING
         )
-
-        tasks.generate_invoices(self.invoice_date)
-        invoice = self.subscription.invoice_set.latest('date_created')
-        sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
+        sms_line_item = self._create_sms_line_item()
 
         # there is no base cost
         self.assertIsNone(sms_line_item.base_description)
@@ -529,10 +526,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         billables = generator.arbitrary_sms_billables_for_domain(
             self.subscription.subscriber.domain, self.sms_date, num_sms
         )
-
-        tasks.generate_invoices(self.invoice_date)
-        invoice = self.subscription.invoice_set.latest('date_created')
-        sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
+        sms_line_item = self._create_sms_line_item()
 
         # there is no base cost
         self.assertIsNone(sms_line_item.base_description)
@@ -549,6 +543,11 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
         self.assertEqual(sms_line_item.subtotal, sms_cost)
         self.assertEqual(sms_line_item.total, sms_cost)
+
+    def _create_sms_line_item(self):
+        tasks.generate_invoices(self.invoice_date)
+        invoice = self.subscription.invoice_set.latest('date_created')
+        return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
 
     def _delete_sms_billables(self):
         SmsBillable.objects.all().delete()
