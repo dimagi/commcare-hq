@@ -47,8 +47,8 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_jquery_ui,
-    use_jquery_ui_multiselect,
     use_select2,
+    use_multiselect,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
@@ -2415,8 +2415,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
     @use_bootstrap3
-    @use_jquery_ui
-    @use_jquery_ui_multiselect
+    @use_jquery_ui  # datepicker
+    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
 
