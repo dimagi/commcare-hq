@@ -1,7 +1,6 @@
 from collections import namedtuple
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
-from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0, MONTH1
+from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
 from corehq.apps.callcenter.models import CallCenterIndicatorConfig, TypedIndicator
