@@ -10,13 +10,12 @@ from .dbaccessors import get_by_domain_and_type
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # This list is used to grandfather in existing data, any new fields should use
 # the system prefix defined below
-SYSTEM_FIELDS = ("commtrack-supply-point",)
+SYSTEM_FIELDS = ("commtrack-supply-point", 'name', 'type', 'owner_id', 'external_id', 'hq_user_id')
 SYSTEM_PREFIX = "commcare"
-RESERVED_WORDS = ('name', 'type', 'owner_id', 'external_id', 'hq_user_id')
 
 
-def _validate_reserved_words(slug, words=SYSTEM_FIELDS):
-    if slug in words:
+def _validate_reserved_words(slug):
+    if slug in SYSTEM_FIELDS:
         return _('You may not use "{}" as a field name').format(slug)
     for prefix in [SYSTEM_PREFIX, 'xml']:
         if slug and slug.startswith(prefix):
@@ -28,7 +27,7 @@ def is_system_key(slug):
 
 
 def validate_reserved_words(slug):
-    error = _validate_reserved_words(slug, SYSTEM_FIELDS + RESERVED_WORDS)
+    error = _validate_reserved_words(slug)
     if error is not None:
         raise ValidationError(error)
 
