@@ -471,7 +471,13 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestSmsLineItem, self).setUp()
-        self.sms_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.SMS).get()
+        self.sms_rate = self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.SMS
+        ).get()
+        self.invoice_date = utils.months_from_date(
+            self.subscription.date_start, random.randint(2, self.subscription_length)
+        )
+        self.sms_date = utils.months_from_date(self.invoice_date, -1)
 
     def tearDown(self):
         self._delete_sms_billables()
@@ -487,18 +493,15 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         - quantity is equal to 1
         - total and subtotals are 0.0
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
-        sms_date = utils.months_from_date(invoice_date, -1)
-
         num_sms = random.randint(0, self.sms_rate.monthly_limit/2)
         generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, sms_date, num_sms, direction=INCOMING
+            self.subscription.subscriber.domain, self.sms_date, num_sms, direction=INCOMING
         )
         generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, sms_date, num_sms, direction=OUTGOING
+            self.subscription.subscriber.domain, self.sms_date, num_sms, direction=OUTGOING
         )
 
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices(self.invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
         sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
 
@@ -522,15 +525,12 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         - quantity is equal to 1
         - total and subtotals are greater than zero
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
-        sms_date = utils.months_from_date(invoice_date, -1)
-
         num_sms = random.randint(self.sms_rate.monthly_limit + 1, self.sms_rate.monthly_limit + 2)
         billables = generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, sms_date, num_sms
+            self.subscription.subscriber.domain, self.sms_date, num_sms
         )
 
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices(self.invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
         sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
 
