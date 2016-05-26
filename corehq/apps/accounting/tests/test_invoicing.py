@@ -544,10 +544,41 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         self.assertEqual(sms_line_item.subtotal, sms_cost)
         self.assertEqual(sms_line_item.total, sms_cost)
 
+    def test_multipart_under_limit(self):
+        self._create_multipart_billables(self.sms_rate.monthly_limit)
+
+        sms_line_item = self._create_sms_line_item()
+
+        self.assertIsNone(sms_line_item.base_description)
+        self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
+
+        self.assertEqual(sms_line_item.quantity, 1)
+        self.assertEqual(sms_line_item.unit_cost, Decimal('0.0000'))
+        self.assertIsNotNone(sms_line_item.unit_description)
+        self.assertEqual(sms_line_item.subtotal, Decimal('0.0000'))
+        self.assertEqual(sms_line_item.total, Decimal('0.0000'))
+
     def _create_sms_line_item(self):
         tasks.generate_invoices(self.invoice_date)
         invoice = self.subscription.invoice_set.latest('date_created')
         return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
+
+    def _create_multipart_billables(self, total_parts):
+        count_parts = 0
+        while True:
+            multipart_count = random.randint(1, 5)
+            if count_parts + multipart_count <= total_parts:
+                generator.arbitrary_sms_billables_for_domain(
+                    self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=multipart_count
+                )
+                count_parts += multipart_count
+            else:
+                break
+        remaining_parts = total_parts - count_parts
+        if remaining_parts > 0:
+            generator.arbitrary_sms_billables_for_domain(
+                self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=remaining_parts
+            )
 
     def _delete_sms_billables(self):
         SmsBillable.objects.all().delete()
