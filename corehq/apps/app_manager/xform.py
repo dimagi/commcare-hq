@@ -882,7 +882,8 @@ class XForm(WrappedNode):
         control_nodes = self.get_control_nodes()
         use_hashtags = False
         if form:
-            use_hashtags = form.get_app().vellum_case_management or toggles.VELLUM_RICH_TEXT.enabled(form.get_app().domain)
+            use_hashtags = (form.get_app().vellum_case_management
+                           or toggles.VELLUM_RICH_TEXT.enabled(form.get_app().domain))
 
         for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
             excluded_paths.add(path)
