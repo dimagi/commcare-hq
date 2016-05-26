@@ -1,3 +1,4 @@
+from functools import wraps
 import hotshot
 import resource
 import os
@@ -90,6 +91,7 @@ try:
             78         1      1004013 1004013.0     55.6      demo_follow()
         """
         def inner(func):
+            @wraps(func)
             def profiled_func(*args, **kwargs):
                 try:
                     profiler = LineProfiler()
