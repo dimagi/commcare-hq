@@ -39,7 +39,7 @@ Please note that these instructions are targeted toward UNIX-based systems.
 For Ubuntu 12.04, download the JDK (version 7) tar.gz from http://www.oracle.com/technetwork/java/javase/downloads/index.html and rename it jdk.tar.gz in the same directory as install.sh.
 Run the included `install.sh` script to install all
 dependencies, set them up to run at startup, and set up required databases.
-Then skip to "Setting up a virtualenv". 
+Then skip to "Setting up a virtualenv".
 
 Otherwise, install the following software from your OS package manager or the
 individual project sites when necessary.
@@ -50,7 +50,7 @@ individual project sites when necessary.
    For Mac users
        - use $ brew install couchdb
        - note that when installing erlang, you do NOT need to check out an older version of erlang.rb
-      
+
 + PostgreSQL >= 9.4 - (install from OS package manager (`sudo apt-get install postgresql`) or [here][postgres])
 + [Elasticsearch][elasticsearch] 1.7.4. In Ubuntu and other Debian derivatives,
   [download the deb package][elasticsearch], install, and then **hold** the version to prevent automatic upgrades:
@@ -64,10 +64,10 @@ individual project sites when necessary.
 
 + redis >= 3.0.3 (install from OS package manager (`sudo apt-get install redis-server`) or follow these
   [installation notes][redis])
-  
+
   On Mac, use:
 
-     	$ brew install redis 
+     	$ brew install redis
 
 + [Jython][jython] 2.5.3 (optional, only needed for CloudCare). **Note**: CloudCare will _not_ work on 2.7.0 which is
   the default version at jython.org. 2.5.3 is the default version in current versions of Ubuntu
@@ -75,7 +75,7 @@ individual project sites when necessary.
 
         $ sudo apt-get install jython=2.5.3
         $ sudo apt-mark hold jython
-        
+
    If the package is not in apt you will need to install manually: https://wiki.python.org/jython/InstallationInstructions
 
 + For additional requirements necessary only if you want to modify the default
@@ -116,7 +116,7 @@ And add an admin user:
 
 #### PostgreSQL Configuration
 
-Log in as the postgres user, and create a `commcarehq` user with password `commcarehq`, and `commcarehq` and 
+Log in as the postgres user, and create a `commcarehq` user with password `commcarehq`, and `commcarehq` and
 `commcarehq_reporting` databases:
 
     $ sudo su - postgres
@@ -124,7 +124,7 @@ Log in as the postgres user, and create a `commcarehq` user with password `commc
     postgres$ createdb commcarehq
     postgres$ createdb commcarehq_reporting
 
-If these commands give you difficulty, **particularly for Mac users** running Postgres.app, verify that the default 
+If these commands give you difficulty, **particularly for Mac users** running Postgres.app, verify that the default
 postgres role has been created, and run the same commands without first logging in as the postgres POSIX user:
 
     $ createuser -s -r postgres  # Create the postgres role if it does not yet exist
@@ -136,7 +136,7 @@ postgres role has been created, and run the same commands without first logging 
 ### Setting up a virtualenv
 
 A virtualenv is not required, but it may make your life easier. If you're on Windows see the section `Alternate steps
-for Windows` below. Ubuntu offers a convenient package for virtualenvwrapper, which makes managing and switching 
+for Windows` below. Ubuntu offers a convenient package for virtualenvwrapper, which makes managing and switching
 between environments easy:
 
     $ sudo apt-get install virtualenvwrapper
@@ -175,10 +175,12 @@ There is also a separate collection of Dimagi dev oriented tools that you can in
     $ pip install -r requirements/dev-requirements.txt
 
 Enter localsettings.py and do the following:
-    - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist 
+    - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist
 and are writeable. If they do not exist, create them.
-    - You may also want to add the line `from dev_settings import *` at the top of the file, which 
+    - You may also want to add the line `from dev_settings import *` at the top of the file, which
       includes some useful default settings.
+
+Once you have completed the above steps, you can use Docker to build and run all of the service containers. The steps for setting up Docker can be found in the [docker folder](docker/README.md).  
 
 ### Alternate steps for Windows
 On Windows it can be hard to compile some of the packages so we recommend installing those from their binary
@@ -200,7 +202,7 @@ that you have a 32bit version of Python installed.
   $PYTHON_HOME/Lib/distutils/cygwincompiler.py to remove all instances of '-mno-cygwin' which is a depreciated compiler
   option. The http-parser package is required by restkit.
 + Having installed those packages you can comment them out of the requirements/requirements.txt file.
-+ Now run 
++ Now run
 
         $ pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
 
@@ -228,8 +230,8 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-Create a project. The following command will do some basic setup, create a superuser, and create a project. The 
-project-name, email, and password given here are specific to your local development environment. Ignore warnings 
+Create a project. The following command will do some basic setup, create a superuser, and create a project. The
+project-name, email, and password given here are specific to your local development environment. Ignore warnings
 related to Raven for the following three commands.
 
     $ ./manage.py bootstrap <project-name> <email> <password>
@@ -238,27 +240,27 @@ To set up elasticsearch indexes, first run (and then kill once you see the "Star
 
     $ ./manage.py run_ptop --pillow-key=core
 
-This will do an initial run of the elasticsearch indexing process, but this will run as a service later. This run 
+This will do an initial run of the elasticsearch indexing process, but this will run as a service later. This run
 at least creates the indices for the first time.
 
-Next, set the aliases of the elastic indices. These can be set by a management command that sets the stored index 
+Next, set the aliases of the elastic indices. These can be set by a management command that sets the stored index
 names to the aliases.
 
     $ ./manage.py ptop_es_manage --flip_all_aliases
 
 ### Installing Bower
 
-We use bower to manage our javascript dependencies. In order to download the required javascript packages, 
+We use bower to manage our javascript dependencies. In order to download the required javascript packages,
 you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
 
-1. If you do not already have it, install [npm](https://www.npmjs.com/). In Ubuntu this is now bundled 
+1. If you do not already have it, install [npm](https://www.npmjs.com/). In Ubuntu this is now bundled
 with NodeJS. An up-to-date version is available on the NodeSource repository.
 
         $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
         $ sudo apt-get install -y nodejs
 
 2. Install bower:
- 
+
         $ `sudo npm -g install bower`
 
 3. Run bower with:
@@ -338,7 +340,7 @@ You can change that to wherever you clone the git repo for 1.7.3, or leave it
 as is and follow this accordingly:
 
 1. in `/opt`: `git clone https://github.com/less/less.js.git lessc`
-2. In the `lessc` repo `git reset --hard 546bedd3440ff7e626f629bef40c6cc54e658d7e` to go straight to the 1.7.3 
+2. In the `lessc` repo `git reset --hard 546bedd3440ff7e626f629bef40c6cc54e658d7e` to go straight to the 1.7.3
    release. Experiment with newer releases at will.
 3. Verify that `/opt/lessc/bin/lessc --version` is around 1.7.3
 
@@ -446,8 +448,8 @@ URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
  [file]: http://sourceforge.net/projects/gnuwin32/files/file/
 
 + On Windows, Touchforms may complain about not having permission to access `tmp`. To solve this make a `c:\tmp` folder.
- 
-+ On Windows, if Celery gives this error on startup: `TypeError: 'LazySettings' object is not iterable` apply the 
+
++ On Windows, if Celery gives this error on startup: `TypeError: 'LazySettings' object is not iterable` apply the
   changes decribed in this bug report comment: https://github.com/celery/django-celery/issues/228#issuecomment-13562642
 
 + On Amazon EC2's latest Ubuntu Server 14.04 Edition with default source list, `install.sh` may not install elasticsearch due to dependency issues. Use instructions provided in `https://gist.github.com/wingdspur/2026107` to install
@@ -523,7 +525,7 @@ To run a particular test or subset of tests
     $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
     $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest.test_picture_format
 
-If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database. 
+If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database.
 In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
 
 ## Javascript tests
@@ -572,7 +574,7 @@ http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/
 
 ### Continuous javascript testing
 
-By running the `watch` command, it's possible to continuously run the javascript test suite while developing 
+By running the `watch` command, it's possible to continuously run the javascript test suite while developing
 
     $ grunt watch:<app_name>  // (e.g. grunt watch:app_manager)
 
@@ -588,7 +590,7 @@ For example, you are working on the `retire` method of `CommCareUser`. You are w
     $ sniffer -x <test.module.path>[:<TestClass>[.<test_name>]]
 
 In our example, we would run `sniffer -x corehq.apps.users.tests.retire:RetireUserTestCase`
-You should see beautiful green `In good standing` if all is well, otherwise a `Failed - Back to work!` message is displayed. 
+You should see beautiful green `In good standing` if all is well, otherwise a `Failed - Back to work!` message is displayed.
 If you want to run the whole test suite whenever a file is changed (not recommended), you would run sniffer without the `-x` argument
 
 You can also add the regular `nose` environment variables, like `REUSE_DB=1 sniffer -x <test>`
@@ -596,4 +598,3 @@ You can also add the regular `nose` environment variables, like `REUSE_DB=1 snif
 ### Sniffer Installation instructions
 https://github.com/jeffh/sniffer/
 (recommended to install pyinotify or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
-
