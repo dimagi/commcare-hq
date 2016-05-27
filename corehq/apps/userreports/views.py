@@ -1048,21 +1048,34 @@ def data_source_json(request, domain, config_id):
     return json_response(config)
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-@swallow_programming_errors
-def preview_data_source(request, domain, config_id):
-    config, is_static = get_datasource_config_or_404(config_id, domain)
-    adapter = IndicatorSqlAdapter(config)
-    q = adapter.get_query_object()
-    context = _shared_context(domain)
-    context.update({
-        'data_source': config,
-        'columns': q.column_descriptions,
-        'data': q[:20],
-        'total_rows': q.count(),
-    })
-    return render(request, "userreports/preview_data.html", context)
+class PreviewDataSourceView(BaseUserConfigReportsView):
+    urlname = 'preview_configurable_data_source'
+    template_name = "userreports/preview_data.html"
+    page_title = ugettext_lazy("Preview Data Source")
+
+    @method_decorator(swallow_programming_errors)
+    def dispatch(self, request, *args, **kwargs):
+        return super(PreviewDataSourceView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def config_id(self):
+        return self.kwargs['config_id']
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.config_id,))
+
+    @property
+    def page_context(self):
+        config, is_static = get_datasource_config_or_404(self.config_id, self.domain)
+        adapter = IndicatorSqlAdapter(config)
+        q = adapter.get_query_object()
+        return {
+            'data_source': config,
+            'columns': q.column_descriptions,
+            'data': q[:20],
+            'total_rows': q.count(),
+        }
 
 
 ExportParameters = namedtuple('ExportParameters',
