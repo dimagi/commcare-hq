@@ -126,31 +126,53 @@ class APIResourceTest(TestCase):
                                                           resource_name=self.resource.Meta.resource_name,
                                                           pk=id))
 
-    def _api_params(self, username=None, password=None):
-        return {'username': self.username, 'api_key': self.api_key.key}
+    def _api_url(self, url, username=None):
+        if 'api_key' in url:
+            return url
 
-    def _assert_auth_get_resource(self, url, url_params={}, username=None, password=None):
         username = username or self.username
-        password = password or self.password
         api_key = self.api_key.key
-        if username:
+        if username != self.username:
             web_user = WebUser.get_by_username(username)
             api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(web_user))
             api_key = api_key.key
 
-        session_url = "%s?%s" % (url, urlencode(url_params))
+        api_params = urlencode({'username': username, 'api_key': api_key})
+
+        if "?" in url:
+            api_url = "%s&%s" % (url, api_params)
+        else:
+            api_url = "%s?%s" % (url, api_params)
+        return api_url
+
+    def _assert_auth_get_resource(self, url, username=None, password=None):
+        username = username or self.username
+        password = password or self.password
+
         # session based auth should fail
         self.client.login(username=username, password=password)
-        response = self.client.get(session_url)
-        self.assertEqual(response.status_code, 403)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 401)
 
-        # api_key auth should succeed
-        params = url_params.copy()
-        params.update({'username': username, 'api_key': api_key})
-        api_url = "%s?%s" % (url, urlencode(params))
-        print api_url, "binbong"
+        # api_key auth should succeed, caller can check for expected code
+        api_url = self._api_url(url, username)
         response = self.client.get(api_url)
-        self.assertEqual(response.status_code, 200)
+        return response
+
+    def _assert_auth_post_resource(self, url, post_data, content_type='application/json', method="POST"):
+        # session based auth should fail
+        self.client.login(username=self.username, password=self.password)
+        if method == "POST":
+            response = self.client.post(url, post_data)
+        elif method == "PUT":
+            self.assertEqual(response.status_code, 401)
+
+        # api_key auth should succeed, caller can check for expected code
+        api_url = self._api_url(url)
+        if method == "POST":
+            response = self.client.post(api_url, post_data, content_type=content_type)
+        elif method == "PUT":
+            response = self.client.put(api_url, post_data, content_type=content_type)
         return response
 
 
@@ -178,9 +200,8 @@ class TestXFormInstanceResource(APIResourceTest):
         fake_xform_es.run_query = mock_run_query
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
-        self.client.login(username=self.username, password=self.password)
 
-        response = self.client.get('%s?%s' % (self.list_endpoint, urlencode(url_params)))
+        response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))
         self.assertEqual(response.status_code, 200)
 
     def test_get_list(self):
@@ -211,9 +232,8 @@ class TestXFormInstanceResource(APIResourceTest):
         translated_doc = pillow.change_transform(backend_form.to_json())
         fake_xform_es.add_doc(translated_doc['_id'], translated_doc)
 
-        self.client.login(username=self.username, password=self.password)
 
-        response = self.client.get(self.list_endpoint)
+        response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
         api_forms = json.loads(response.content)['objects']
@@ -278,13 +298,12 @@ class TestXFormInstanceResource(APIResourceTest):
         fake_xform_es.run_query = mock_run_query
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
-        self.client.login(username=self.username, password=self.password)
 
-        response = self.client.get('%s?order_by=received_on' % self.list_endpoint) # Runs *2* queries
+        response = self._assert_auth_get_resource('%s?order_by=received_on' % self.list_endpoint) # Runs *2* queries
         self.assertEqual(response.status_code, 200)
         self.assertEqual(queries[0]['sort'], [{'received_on': 'asc'}])
 
-        response = self.client.get('%s?order_by=-received_on' % self.list_endpoint) # Runs *2* queries
+        response = self._assert_auth_get_resource('%s?order_by=-received_on' % self.list_endpoint) # Runs *2* queries
         self.assertEqual(response.status_code, 200)
         self.assertEqual(queries[2]['sort'], [{'received_on': 'desc'}])
 
@@ -311,8 +330,7 @@ class TestXFormInstanceResource(APIResourceTest):
         )
 
         # Fetch the xform through the API
-        self.client.login(username=self.username, password=self.password)
-        response = self.client.get(self.single_endpoint(form.form_id) + "?cases__full=true")
+        response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")
         self.assertEqual(response.status_code, 200)
         cases = json.loads(response.content)['cases']
 
@@ -349,9 +367,9 @@ class TestCommCareCaseResource(APIResourceTest):
         
         fake_case_es.add_doc(translated_doc['_id'], translated_doc)
 
-        self.client.login(username=self.username, password=self.password)
 
-        response = self.client.get(self.list_endpoint)
+
+        response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
         api_cases = json.loads(response.content)['objects']
@@ -387,8 +405,8 @@ class TestCommCareCaseResource(APIResourceTest):
         )
 
         # Fetch the child case through the API
-        self.client.login(username=self.username, password=self.password)
-        response = self.client.get(self.single_endpoint(child_case_id) + "?parent_cases__full=true")
+
+        response = self._assert_auth_get_resource(self.single_endpoint(child_case_id) + "?parent_cases__full=true")
         self.assertEqual(
             response.status_code,
             200,
@@ -401,8 +419,8 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(parent_cases[0]['id'], parent_case_id)
 
         # Fetch the parent case through the API
-        self.client.login(username=self.username, password=self.password)
-        response = self.client.get(self.single_endpoint(parent_case_id) + "?child_cases__full=true")
+
+        response = self._assert_auth_get_resource(self.single_endpoint(parent_case_id) + "?child_cases__full=true")
         self.assertEqual(
             response.status_code,
             200,
@@ -422,8 +440,8 @@ class TestCommCareCaseResource(APIResourceTest):
         community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
         new_user = WebUser.create(community_domain.name, 'test', 'testpass')
         new_user.save()
-        self.client.login(username='test', password='testpass')
-        response = self.client.get(self.list_endpoint)
+
+        response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
         self.assertEqual(response.status_code, 401)
 
         community_domain.delete()
@@ -437,8 +455,8 @@ class TestCommCareCaseResource(APIResourceTest):
         community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
         new_user = WebUser.create(community_domain.name, 'test', 'testpass', is_superuser=True)
         new_user.save()
-        self.client.login(username='test', password='testpass')
-        response = self.client.get(self.list_endpoint)
+
+        response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
         self.assertEqual(response.status_code, 200)
 
         community_domain.delete()
@@ -475,9 +493,7 @@ class TestHOPECaseResource(APIResourceTest):
 
         fake_case_es.add_doc(translated_doc['_id'], translated_doc)
 
-        self.client.login(username=self.username, password=self.password)
-
-        response = self.client.get(self.list_endpoint)
+        response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
         api_cases = json.loads(response.content)['objects']
@@ -497,13 +513,12 @@ class TestCommCareUserResource(APIResourceTest):
     api_name = 'v0.5'
 
     def test_get_list(self):
-        self.client.login(username=self.username, password=self.password)
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
         backend_id = commcare_user.get_id
         update_analytics_indexes()
 
-        response = self.client.get(self.list_endpoint)
+        response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
         api_users = json.loads(response.content)['objects']
@@ -513,12 +528,11 @@ class TestCommCareUserResource(APIResourceTest):
         commcare_user.delete()
 
     def test_get_single(self):
-        self.client.login(username=self.username, password=self.password)
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
         backend_id = commcare_user._id
 
-        response = self.client.get(self.single_endpoint(backend_id))
+        response = self._assert_auth_get_resource(self.single_endpoint(backend_id))
         self.assertEqual(response.status_code, 200)
 
         api_user = json.loads(response.content)
@@ -527,7 +541,6 @@ class TestCommCareUserResource(APIResourceTest):
         commcare_user.delete()
 
     def test_create(self):
-        self.client.login(username=self.username, password=self.password)
 
         group = Group({"name": "test"})
         group.save()
@@ -552,7 +565,7 @@ class TestCommCareUserResource(APIResourceTest):
                 "chw_id": "13/43/DFA"
             }
         }
-        response = self.client.post(self.list_endpoint,
+        response = self._assert_auth_post_resource(self.list_endpoint,
                                     json.dumps(user_json),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 201)
@@ -569,7 +582,6 @@ class TestCommCareUserResource(APIResourceTest):
         group.delete()
 
     def test_update(self):
-        self.client.login(username=self.username, password=self.password)
 
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234")
         group = Group({"name": "test"})
@@ -593,9 +605,10 @@ class TestCommCareUserResource(APIResourceTest):
         }
 
         backend_id = user._id
-        response = self.client.put(self.single_endpoint(backend_id),
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                    json.dumps(user_json),
-                                   content_type='application/json')
+                                   content_type='application/json',
+                                   method='PUT')
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(1, len(CommCareUser.by_domain(self.domain.name)))
         modified = CommCareUser.get(backend_id)
@@ -628,8 +641,10 @@ class TestWebUserResource(APIResourceTest):
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])
 
     def test_get_list(self):
-        print self.username
+
         response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 1)
         self._check_user_data(self.user, api_users[0])
@@ -639,20 +654,24 @@ class TestWebUserResource(APIResourceTest):
         another_user.save()
 
         response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 2)
 
         # username filter
-        response = self._assert_auth_get_resource(self.list_endpoint, {'username': 'anotherguy'})
+        response = self._assert_auth_get_resource('%s?username=%s' % (self.list_endpoint, 'anotherguy'))
+        self.assertEqual(response.status_code, 200)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 1)
         self._check_user_data(another_user, api_users[0])
 
-        response = self._assert_auth_get_resource(self.list_endpoint, {'username': 'nomatch'})
+        response = self._assert_auth_get_resource('%s?username=%s' % (self.list_endpoint, 'nomatch'))
+        self.assertEqual(response.status_code, 200)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 0)
 
     def test_get_single(self):
+
         response = self._assert_auth_get_resource(self.single_endpoint(self.user._id))
         self.assertEqual(response.status_code, 200)
 
@@ -660,6 +679,7 @@ class TestWebUserResource(APIResourceTest):
         self._check_user_data(self.user, api_user)
 
     def test_create(self):
+
         user_json = {
             "username":"test_1234",
             "password":"qwer1234",
@@ -678,8 +698,7 @@ class TestWebUserResource(APIResourceTest):
             ],
             "role":"admin"
         }
-        url = self.list_endpoint
-        response = self.client.post(url,
+        response = self._assert_auth_get_resource(self.list_endpoint,
                                     json.dumps(user_json),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 201)
@@ -691,6 +710,7 @@ class TestWebUserResource(APIResourceTest):
         user_back.delete()
 
     def test_update(self):
+
         user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
 
         user_json = {
@@ -711,10 +731,10 @@ class TestWebUserResource(APIResourceTest):
         }
 
         backend_id = user._id
-        url = self.single_endpoint(backend_id)
-        response = self.client.put(url,
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                    json.dumps(user_json),
-                                   content_type='application/json')
+                                   content_type='application/json',
+                                   method='PUT')
         self.assertEqual(response.status_code, 200, response.content)
         modified = WebUser.get(backend_id)
         self.assertEqual(modified.username, "test")
@@ -732,14 +752,13 @@ class TestRepeaterResource(APIResourceTest):
     repeater_types = [FormRepeater, CaseRepeater, ShortFormRepeater]
 
     def test_get(self):
-        self.client.login(username=self.username, password=self.password)
         # Add a repeater of various types and check that it comes back
         for cls in self.repeater_types:
             repeater = cls(domain=self.domain.name,
                            url='http://example.com/forwarding/{cls}'.format(cls=cls.__name__))
             repeater.save()
             backend_id = repeater._id
-            response = self.client.get(self.single_endpoint(backend_id))
+            response = self._assert_auth_get_resource(self.single_endpoint(backend_id))
             self.assertEqual(response.status_code, 200)
             result = json.loads(response.content)
             self.assertEqual(result['id'], backend_id)
@@ -749,14 +768,13 @@ class TestRepeaterResource(APIResourceTest):
             repeater.delete()
 
     def test_get_list(self):
-        self.client.login(username=self.username, password=self.password)
 
         # Add a form repeater and check that it comes back
         form_repeater = FormRepeater(domain=self.domain.name, url='http://example.com/forwarding/form')
         form_repeater.save()
         backend_id = form_repeater._id
 
-        response = self.client.get(self.list_endpoint)
+        response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
         api_repeaters = json.loads(response.content)['objects']
@@ -771,7 +789,7 @@ class TestRepeaterResource(APIResourceTest):
         case_repeater.save()
         backend_id = case_repeater._id
 
-        response = self.client.get(self.list_endpoint)
+        response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
         api_repeaters = json.loads(response.content)['objects']
@@ -786,7 +804,6 @@ class TestRepeaterResource(APIResourceTest):
         case_repeater.delete()
 
     def test_create(self):
-        self.client.login(username=self.username, password=self.password)
 
         for cls in self.repeater_types:
             self.assertEqual(0, len(cls.by_domain(self.domain.name)))
@@ -796,7 +813,7 @@ class TestRepeaterResource(APIResourceTest):
                 "type": cls.__name__,
                 "url": "http://example.com/forwarding/{cls}".format(cls=cls.__name__),
             }
-            response = self.client.post(self.list_endpoint,
+            response = self._assert_auth_post_resource(self.list_endpoint,
                                         json.dumps(repeater_json),
                                         content_type='application/json')
             self.assertEqual(response.status_code, 201, response.content)
@@ -807,7 +824,6 @@ class TestRepeaterResource(APIResourceTest):
             repeater_back.delete()
 
     def test_update(self):
-        self.client.login(username=self.username, password=self.password)
 
         for cls in self.repeater_types:
             repeater = cls(domain=self.domain.name,
@@ -819,9 +835,10 @@ class TestRepeaterResource(APIResourceTest):
                 "type": cls.__name__,
                 "url": "http://example.com/forwarding/modified/{cls}".format(cls=cls.__name__),
             }
-            response = self.client.put(self.single_endpoint(backend_id),
+            response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                        json.dumps(repeater_json),
-                                       content_type='application/json')
+                                       content_type='application/json',
+                                       method='PUT')
             self.assertEqual(response.status_code, 204, response.content)
             self.assertEqual(1, len(cls.by_domain(self.domain.name)))
             modified = cls.get(backend_id)
@@ -1219,14 +1236,14 @@ class TestSingleSignOnResource(APIResourceTest):
         '''
         If correct credentials for a web user are submitted, the response is the profile of that web user
         '''
-        response = self.client.post(self.list_endpoint, {'username': self.username, 'password': self.password})
+        response = self._assert_auth_post_resource(self.list_endpoint, {'username': self.username, 'password': self.password})
         self.assertEqual(response.status_code, 200)
 
     def test_commcare_user_success(self):
         '''
         If correct credentials for a commcare user are submitted, the response is the record for that commcare user
         '''
-        response = self.client.post(self.list_endpoint, {'username': self.commcare_username, 'password': self.commcare_password})
+        response = self._assert_auth_post_resource(self.list_endpoint, {'username': self.commcare_username, 'password': self.commcare_password})
         self.assertEqual(response.status_code, 200)
 
     def test_wrong_domain(self):
@@ -1246,7 +1263,7 @@ class TestSingleSignOnResource(APIResourceTest):
         wrong_list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=wrong_domain.name,
                                                                        api_name=self.api_name,
                                                                        resource_name=self.resource.Meta.resource_name))
-        response = self.client.post(wrong_list_endpoint, {'username': self.username, 'password': self.password})
+        response = self._assert_auth_post_resource(wrong_list_endpoint, {'username': self.username, 'password': self.password})
         self.assertEqual(response.status_code, 403)
         wrong_domain.delete()
 
@@ -1254,21 +1271,21 @@ class TestSingleSignOnResource(APIResourceTest):
         '''
         If incorrect password for the correct username and domain pair are submitted, the response is forbidden
         '''
-        response = self.client.post(self.list_endpoint, {'username': self.username, 'password': 'bimbizzleboozle'})
+        response = self._assert_auth_post_resource(self.list_endpoint, {'username': self.username, 'password': 'bimbizzleboozle'})
         self.assertEqual(response.status_code, 403)
 
     def test_no_username(self):
         '''
         If no username supplied, 400
         '''
-        response = self.client.post(self.list_endpoint, {'password': 'bimbizzleboozle'})
+        response = self._assert_auth_post_resource(self.list_endpoint, {'password': 'bimbizzleboozle'})
         self.assertEqual(response.status_code, 400)
 
     def test_no_password(self):
         '''
         If no password supplied, 400
         '''
-        response = self.client.post(self.list_endpoint, {'username': self.username})
+        response = self._assert_auth_post_resource(self.list_endpoint, {'username': self.username})
         self.assertEqual(response.status_code, 400)
 
 
@@ -1278,13 +1295,12 @@ class TestGroupResource(APIResourceTest):
     api_name = 'v0.5'
 
     def test_get_list(self):
-        self.client.login(username=self.username, password=self.password)
 
         group = Group({"name": "test", "domain": self.domain.name})
         group.save()
         backend_id = group.get_id
 
-        response = self.client.get(self.list_endpoint)
+        response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
         api_groups = json.loads(response.content)['objects']
@@ -1294,13 +1310,12 @@ class TestGroupResource(APIResourceTest):
         group.delete()
 
     def test_get_single(self):
-        self.client.login(username=self.username, password=self.password)
 
         group = Group({"name": "test", "domain": self.domain.name})
         group.save()
         backend_id = group.get_id
 
-        response = self.client.get(self.single_endpoint(backend_id))
+        response = self._assert_auth_get_resource(self.single_endpoint(backend_id))
         self.assertEqual(response.status_code, 200)
 
         api_groups = json.loads(response.content)
@@ -1308,7 +1323,6 @@ class TestGroupResource(APIResourceTest):
         group.delete()
 
     def test_create(self):
-        self.client.login(username=self.username, password=self.password)
 
         self.assertEqual(0, len(Group.by_domain(self.domain.name)))
 
@@ -1320,7 +1334,7 @@ class TestGroupResource(APIResourceTest):
             "name": "test group",
             "reporting": True,
         }
-        response = self.client.post(self.list_endpoint,
+        response = self._assert_auth_post_resource(self.list_endpoint,
                                     json.dumps(group_json),
                                     content_type='application/json')
         self.assertEqual(response.status_code, 201)
@@ -1332,7 +1346,6 @@ class TestGroupResource(APIResourceTest):
         group_back.delete()
 
     def test_update(self):
-        self.client.login(username=self.username, password=self.password)
 
         group = Group({"name": "test", "domain": self.domain.name})
         group.save()
@@ -1347,9 +1360,10 @@ class TestGroupResource(APIResourceTest):
         }
 
         backend_id = group._id
-        response = self.client.put(self.single_endpoint(backend_id),
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
                                    json.dumps(group_json),
-                                   content_type='application/json')
+                                   content_type='application/json',
+                                   method='PUT')
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(1, len(Group.by_domain(self.domain.name)))
         modified = Group.get(backend_id)
@@ -1457,9 +1471,8 @@ class TestBulkUserAPI(APIResourceTest):
         self.assertEqual(result.status_code, 400)
 
     def query(self, **params):
-        self.client.login(username=self.username, password=self.password)
         url = '%s?%s' % (self.list_endpoint, urlencode(params, doseq=True))
-        return self.client.get(url)
+        return self._assert_auth_get_resource(url)
 
     def test_paginate(self):
         limit = 3
@@ -1502,7 +1515,7 @@ class TestApiKey(APIResourceTest):
                                   "username": self.user.username,
                                   "api_key": self.api_key.key
                               }))
-        response = self.client.get(endpoint)
+        response = self._assert_auth_get_resource(endpoint)
         self.assertEqual(response.status_code, 200)
 
     def test_wrong_api_key(self):
@@ -1511,7 +1524,7 @@ class TestApiKey(APIResourceTest):
                                   "username": self.user.username,
                                   "api_key": 'blah'
                               }))
-        response = self.client.get(endpoint)
+        response = self._assert_auth_get_resource(endpoint)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_user_api_key(self):
@@ -1528,7 +1541,7 @@ class TestApiKey(APIResourceTest):
                                   "username": self.user.username,
                                   "api_key": other_api_key.key
                               }))
-        response = self.client.get(endpoint)
+        response = self._assert_auth_get_resource(endpoint)
         self.assertEqual(response.status_code, 401)
 
         other_api_key.delete()

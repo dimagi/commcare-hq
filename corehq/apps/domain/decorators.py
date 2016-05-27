@@ -144,7 +144,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
     def _outer(fn):
         @wraps(fn)
         def safe_fn(request, domain, *args, **kwargs):
-            if not request.user.is_authenticated():
+            if not request.user.is_authenticated() or not allow_sessions:
                 @check_lockout
                 @challenge_fn
                 @two_factor_check(api_key)
