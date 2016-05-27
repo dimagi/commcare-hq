@@ -65,7 +65,6 @@ from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -2325,7 +2324,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 pass
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
-        super(AdvancedForm, self).add_stuff_to_xform(xform)
+        super(AdvancedForm, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta_advanced(self)
 
     def requires_case(self):
@@ -3033,7 +3032,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
             return super(CareplanForm, cls).wrap(data)
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
-        super(CareplanForm, self).add_stuff_to_xform(xform)
+        super(CareplanForm, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_care_plan(self)
 
     def get_case_updates(self, case_type):

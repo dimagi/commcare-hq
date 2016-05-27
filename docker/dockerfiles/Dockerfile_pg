@@ -20,3 +20,5 @@ RUN wget --quiet https://github.com/markokr/pghashlib/archive/master.zip -O pgha
   && PG_CONFIG=/usr/lib/postgresql/$PGVERSION/bin/pg_config make \
   && PG_CONFIG=/usr/lib/postgresql/$PGVERSION/bin/pg_config make install \
   && ldconfig
+
+RUN sed -ri "s/^#?(shared_preload_libraries\s*=\s*)\S+/\1'pg_stat_statements'/" /usr/share/postgresql/$PG_MAJOR/postgresql.conf.sample

@@ -367,11 +367,6 @@ class LineItemFactory(object):
             raise LineItemError("No domain could be obtained as the subscriber.")
         return [self.subscription.subscriber.domain]
 
-    @property
-    @memoized
-    def line_item_details(self):
-        return []
-
     def create(self):
         line_item = LineItem(
             invoice=self.invoice,
@@ -591,16 +586,3 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             return True
         else:
             return self.num_sms <= self.rate.monthly_limit
-
-    @property
-    def line_item_details(self):
-        details = []
-        for billable in self.sms_billables:
-            gateway_api = billable.gateway_fee.criteria.backend_api_id if billable.gateway_fee else "custom"
-            gateway_fee = billable.gateway_charge
-            usage_fee = billable.usage_fee.amount if billable.usage_fee else Decimal('0.0')
-            total_fee = gateway_fee + usage_fee
-            details.append(
-                [billable.phone_number, billable.direction, gateway_api, total_fee]
-            )
-        return details

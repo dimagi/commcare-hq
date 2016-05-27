@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,

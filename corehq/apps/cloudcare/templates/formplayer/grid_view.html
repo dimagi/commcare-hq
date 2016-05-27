@@ -1,0 +1,17 @@
+{% load hq_shared_tags %}
+
+<script id="grid-template" type="text/template">
+
+    <div>
+        <h1>Applications</h1>
+    </div>
+
+    <div class="row application-container">
+
+    </div>
+</script>
+
+<script id="row-template" type="text/template">
+        <h3><%- name %></h3>
+        <image class="app-icon" src="{% static 'cloudcare/images/cc_flower.png' %}"/>
+</script>

@@ -18,9 +18,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         app_id = args[0]
         self.options = options
-        logger.info('migrating app'.format(app_id))
+        logger.info('migrating app {}'.format(app_id))
         self.migrate_app(app_id)
-        logger.info('done')
+        logger.info('done with migrate_app_to_cmitfb')
 
     def migrate_app(self, app_id):
         app = Application.get(app_id)
