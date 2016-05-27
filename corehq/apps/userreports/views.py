@@ -809,28 +809,39 @@ def delete_report(request, domain, report_id):
     return HttpResponseRedirect(redirect)
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def import_report(request, domain):
-    if request.method == "POST":
-        spec = request.POST['report_spec']
+class ImportConfigReportView(BaseUserConfigReportsView):
+    page_title = ugettext_lazy("Import Report")
+    template_name = "userreports/import_report.html"
+    urlname = 'import_configurable_report'
+
+    @property
+    def spec(self):
+        if self.request.method == "POST":
+            return self.request.POST['report_spec']
+        return ''
+
+    def post(self, request, *args, **kwargs):
         try:
-            json_spec = json.loads(spec)
+            json_spec = json.loads(self.spec)
             if '_id' in json_spec:
                 del json_spec['_id']
-            json_spec['domain'] = domain
+            json_spec['domain'] = self.domain
             report = ReportConfiguration.wrap(json_spec)
             report.validate()
             report.save()
             messages.success(request, _('Report created!'))
-            return HttpResponseRedirect(reverse('edit_configurable_report', args=[domain, report._id]))
+            return HttpResponseRedirect(reverse(
+                EditConfigReportView.urlname, args=[self.domain, report._id]
+            ))
         except (ValueError, BadSpecError) as e:
             messages.error(request, _('Bad report source: {}').format(e))
-    else:
-        spec = _('paste report source here')
-    context = _shared_context(domain)
-    context['spec'] = spec
-    return render(request, "userreports/import_report.html", context)
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'spec': self.spec,
+        }
 
 
 @login_and_domain_required
