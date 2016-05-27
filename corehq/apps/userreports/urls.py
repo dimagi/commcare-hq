@@ -7,6 +7,7 @@ from corehq.apps.userreports.views import (
     CreateDataSourceView,
     EditDataSourceView,
     PreviewDataSourceView,
+    CreateDataSourceFromAppView,
 )
 
 urlpatterns = patterns('corehq.apps.userreports.views',
@@ -25,8 +26,8 @@ urlpatterns = patterns('corehq.apps.userreports.views',
     url(r'^reports/delete/(?P<report_id>[\w-]+)/$', 'delete_report', name='delete_configurable_report'),
     url(r'^data_sources/create/$', CreateDataSourceView.as_view(),
         name=CreateDataSourceView.urlname),
-    url(r'^data_sources/create_from_app/$', 'create_data_source_from_app',
-        name='create_configurable_data_source_from_app'),
+    url(r'^data_sources/create_from_app/$', CreateDataSourceFromAppView.as_view(),
+        name=CreateDataSourceFromAppView.urlname),
     url(r'^data_sources/edit/(?P<config_id>[\w-]+)/$', EditDataSourceView.as_view(),
         name=EditDataSourceView.urlname),
     url(r'^data_sources/source/(?P<config_id>[\w-]+)/$', 'data_source_json', name='configurable_data_source_json'),

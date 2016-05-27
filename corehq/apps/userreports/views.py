@@ -853,14 +853,21 @@ def report_source_json(request, domain, report_id):
     return json_response(config)
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def create_data_source_from_app(request, domain):
-    if request.method == 'POST':
-        form = ConfigurableDataSourceFromAppForm(domain, request.POST)
-        if form.is_valid():
-            # save config
-            app_source = form.app_source_helper.get_app_source(form.cleaned_data)
+class CreateDataSourceFromAppView(BaseUserConfigReportsView):
+    urlname = 'create_configurable_data_source_from_app'
+    template_name = "userreports/data_source_from_app.html"
+    page_title = ugettext_lazy("Create Data Source from Application")
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return ConfigurableDataSourceFromAppForm(self.domain, self.request.POST)
+        return ConfigurableDataSourceFromAppForm(self.domain)
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            app_source = self.form.app_source_helper.get_app_source(self.form.cleaned_data)
             app = Application.get(app_source.application)
             if app_source.source_type == 'case':
                 data_source = get_case_data_source(app, app_source.source)
@@ -874,14 +881,16 @@ def create_data_source_from_app(request, domain):
                 messages.success(request, _(u"Data source created for '{}'".format(xform.default_name())))
 
             return HttpResponseRedirect(reverse(
-                EditDataSourceView.urlname, args=[domain, data_source._id]
+                EditDataSourceView.urlname, args=[self.domain, data_source._id]
             ))
-    else:
-        form = ConfigurableDataSourceFromAppForm(domain)
-    context = _shared_context(domain)
-    context['sources_map'] = form.app_source_helper.all_sources
-    context['form'] = form
-    return render(request, 'userreports/data_source_from_app.html', context)
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'sources_map': self.form.app_source_helper.all_sources,
+            'form': self.form,
+        }
 
 
 class BaseEditDataSourceView(BaseUserConfigReportsView):

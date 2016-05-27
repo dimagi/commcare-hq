@@ -230,8 +230,24 @@ class ConfigurableDataSourceFromAppForm(forms.Form):
         self.fields.update(report_source_fields)
         self.helper = FormHelper()
         self.helper.form_id = "data-source-config"
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = '#'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-9'
+
         self.helper.layout = crispy.Layout(
-            crispy.Div(
-                *report_source_fields.keys() + [Submit('submit', _('Save Changes'))]
-            )
+            crispy.Fieldset(
+                _("Create Data Source from Application"),
+                *report_source_fields.keys()
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Create Data Source"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+            ),
         )
