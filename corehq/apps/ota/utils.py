@@ -28,6 +28,9 @@ def turn_on_demo_mode(commcare_user, domain):
     Turns demo mode ON for commcare_user, and resets restore to latest
     """
     try:
+        # the order of following two is important, because the restore XML should contain...
+        # user_type='demo' in user_data element
+        commcare_user.is_demo_user = True
         reset_demo_user_restore(commcare_user, domain)
     except Exception as e:
         notify_exception(None, message=e.message)
@@ -35,7 +38,6 @@ def turn_on_demo_mode(commcare_user, domain):
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}
     else:
-        commcare_user.is_demo_user = True
         commcare_user.save()
         return {'errors': []}
 

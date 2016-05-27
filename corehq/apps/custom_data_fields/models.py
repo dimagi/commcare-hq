@@ -11,6 +11,9 @@ CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # This list is used to grandfather in existing data, any new fields should use
 # the system prefix defined below
 SYSTEM_FIELDS = ("commtrack-supply-point",)
+# If mobile-worker is demo, this will be set to value 'demo'
+COMMCARE_USER_TYPE_KEY = 'user_type'
+COMMCARE_USER_TYPE_DEMO = 'demo'
 SYSTEM_PREFIX = "commcare"
 RESERVED_WORDS = ('name', 'type', 'owner_id', 'external_id', 'hq_user_id')
 

@@ -33,7 +33,8 @@ class User(object):
 
     def __init__(self, user_id, username, password, date_joined, first_name=None,
                  last_name=None, phone_number=None, user_data=None,
-                 additional_owner_ids=None, domain=None, loadtest_factor=1):
+                 additional_owner_ids=None, domain=None, loadtest_factor=1,
+                 is_demo_user=False):
         self.user_id = user_id
         self.username = username
         self.first_name = first_name
@@ -45,14 +46,25 @@ class User(object):
         self.additional_owner_ids = additional_owner_ids or []
         self.domain = domain
         self.loadtest_factor = loadtest_factor
+        self.is_demo_user = is_demo_user
 
     @property
     def user_session_data(self):
         # todo: this is redundant with the implementation in CouchUser.
         # this will go away when the two are reconciled
-        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+        from corehq.apps.custom_data_fields.models import (
+            SYSTEM_PREFIX,
+            COMMCARE_USER_TYPE_KEY,
+            COMMCARE_USER_TYPE_DEMO
+        )
 
         session_data = copy(self.user_data)
+
+        if self.is_demo_user:
+            session_data.update({
+                COMMCARE_USER_TYPE_KEY: COMMCARE_USER_TYPE_DEMO
+            })
+
         session_data.update({
             '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
             '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
