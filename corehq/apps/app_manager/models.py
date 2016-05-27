@@ -4196,6 +4196,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # AFAIK this is fixed in code, but my rear its ugly head in an as-yet-not-understood
     # way for apps that already had this problem. Just keep an eye out
     is_released = BooleanProperty(default=False)
+    released_at_least_once = BooleanProperty(default=False)
 
     # django-style salted hash of the admin password
     admin_password = StringProperty()
@@ -4786,6 +4787,9 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
+
+    # Whether the application has had data submitted against it
+    has_submissions = BooleanProperty(default=None)
 
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()

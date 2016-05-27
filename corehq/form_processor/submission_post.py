@@ -85,6 +85,7 @@ class SubmissionPost(object):
 
         xform.app_id = self.app_id
         xform.build_id = self.build_id
+        # Async set the application has_submissions
         xform.export_tag = ["domain", "xmlns"]
         xform.partial_submission = self.partial_submission
         return xform

@@ -1036,6 +1036,7 @@ class CaseExportDataSchema(ExportDataSchema):
         else:
             current_case_schema = CaseExportDataSchema()
 
+        # Only grab apps that have data submitted to them and the latest build
         app_build_ids = CaseExportDataSchema._get_app_build_ids_to_process(
             domain,
             current_case_schema.last_app_versions,
