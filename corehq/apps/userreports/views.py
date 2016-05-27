@@ -71,6 +71,7 @@ from corehq.apps.userreports.models import (
     get_report_config,
     get_report_configs,
     _config_id_is_static,
+    id_is_static,
 )
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigurePieChartReportForm,
@@ -180,6 +181,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def page_url(self):
         if self.report_id:
             return reverse(self.urlname, args=(self.domain, self.report_id,))
+        return super(BaseEditConfigReportView, self).page_url
 
     @property
     def page_context(self):
@@ -197,7 +199,6 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             return get_report_configs([self.report_id], self.domain)[0]
         except ReportConfigurationNotFoundError:
             raise Http404()
-
 
     @property
     def read_only(self):
@@ -854,19 +855,6 @@ def report_source_json(request, domain, report_id):
 
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def edit_data_source(request, domain, config_id):
-    config, is_static = get_datasource_config_or_404(config_id, domain)
-    return _edit_data_source_shared(request, domain, config, read_only=is_static)
-
-
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def create_data_source(request, domain):
-    return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain), create=True)
-
-
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def create_data_source_from_app(request, domain):
     if request.method == 'POST':
         form = ConfigurableDataSourceFromAppForm(domain, request.POST)
@@ -885,7 +873,9 @@ def create_data_source_from_app(request, domain):
                 data_source.save()
                 messages.success(request, _(u"Data source created for '{}'".format(xform.default_name())))
 
-            return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, data_source._id]))
+            return HttpResponseRedirect(reverse(
+                EditDataSourceView.urlname, args=[domain, data_source._id]
+            ))
     else:
         form = ConfigurableDataSourceFromAppForm(domain)
     context = _shared_context(domain)
@@ -894,31 +884,90 @@ def create_data_source_from_app(request, domain):
     return render(request, 'userreports/data_source_from_app.html', context)
 
 
-def _edit_data_source_shared(request, domain, config, read_only=False, create=False):
-    if request.method == 'POST':
-        form = ConfigurableDataSourceEditForm(domain, config, read_only, data=request.POST)
-        if form.is_valid():
-            config = form.save(commit=True)
-            messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
-            if create:
-                # if we just created a data source, redirect to the edit view to avoid creating a new one
-                return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
-    else:
-        form = ConfigurableDataSourceEditForm(domain, config, read_only)
-    context = _shared_context(domain)
-    context.update({
-        'form': form,
-        'data_source': config,
-        'read_only': read_only
-    })
-    if config.is_deactivated:
-        messages.info(
-            request, _(
-                'Data source "{}" has no associated table.\n'
-                'Click "Rebuild Data Source" to recreate the table.'
-            ).format(config.display_name)
+class BaseEditDataSourceView(BaseUserConfigReportsView):
+    template_name = 'userreports/edit_data_source.html'
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.edit_form,
+            'data_source': self.config,
+            'read_only': self.read_only
+        }
+
+    @property
+    def page_url(self):
+        if self.config_id:
+            return reverse(self.urlname, args=(self.domain, self.config_id,))
+        return super(BaseEditDataSourceView, self).page_url
+
+    @property
+    def config_id(self):
+        return self.kwargs.get('config_id')
+
+    @property
+    def read_only(self):
+        return id_is_static(self.config_id) if self.config_id is not None else False
+
+    @property
+    @memoized
+    def config(self):
+        if self.config_id is None:
+            return DataSourceConfiguration(domain=self.domain)
+        try:
+            return get_datasource_config(self.config_id, self.domain)[0]
+        except DataSourceConfigurationNotFoundError:
+            raise Http404()
+
+    @property
+    @memoized
+    def edit_form(self):
+        if self.request.method == 'POST':
+            return ConfigurableDataSourceEditForm(
+                self.domain,
+                self.config,
+                self.read_only,
+                data=self.request.POST
+            )
+        return ConfigurableDataSourceEditForm(
+            self.domain, self.config, self.read_only
         )
-    return render(request, "userreports/edit_data_source.html", context)
+
+    def post(self, request, *args, **kwargs):
+        if self.edit_form.is_valid():
+            config = self.edit_form.save(commit=True)
+            messages.success(request, _(u'Data source "{}" saved!').format(
+                config.display_name
+            ))
+            if self.config_id is None:
+                return HttpResponseRedirect(reverse(
+                    EditDataSourceView.urlname, args=[self.domain, config._id])
+                )
+        return self.get(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        if self.config.is_deactivated:
+            messages.info(
+                request, _(
+                    'Data source "{}" has no associated table.\n'
+                    'Click "Rebuild Data Source" to recreate the table.'
+                ).format(self.config.display_name)
+            )
+        return super(BaseEditDataSourceView, self).get(request, *args, **kwargs)
+
+
+class CreateDataSourceView(BaseEditDataSourceView):
+    urlname = 'create_configurable_data_source'
+    page_title = ugettext_lazy("Create Data Source")
+
+
+class EditDataSourceView(BaseEditDataSourceView):
+    urlname = 'edit_configurable_data_source'
+    page_title = ugettext_lazy("Edit Data Source")
+
+    @property
+    def page_name(self):
+        return "Edit {}".format(self.config.display_name)
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -956,7 +1005,9 @@ def rebuild_data_source(request, domain, config_id):
     )
 
     rebuild_indicators.delay(config_id)
-    return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -984,7 +1035,9 @@ def resume_building_data_source(request, domain, config_id):
             _(u'Resuming rebuilding table "{}".').format(config.display_name)
         )
         resume_building_indicators.delay(config_id)
-    return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
 
 
 @login_and_domain_required

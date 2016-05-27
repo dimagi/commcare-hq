@@ -150,6 +150,38 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 ('Location', _('locations'))
             )
             self.fields['referenced_doc_type'].choices = choices
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = '#'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-9'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Edit Data Source"),
+                'table_id',
+                'referenced_doc_type',
+                'display_name',
+                'description',
+                'base_item_expression',
+                'configured_filter',
+                'configured_indicators',
+                'named_expressions',
+                'named_filters',
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save Changes"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+            ),
+        )
+
+
 
     def clean_table_id(self):
         # todo: validate table_id as [a-z][a-z0-9_]*
