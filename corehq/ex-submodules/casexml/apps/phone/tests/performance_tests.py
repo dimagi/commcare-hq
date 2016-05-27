@@ -25,11 +25,6 @@ REFERRED_TO_GROUP = 'other_group'
 REFERRAL_TYPE = 'referral'
 
 
-def setupModule():
-    from unittest import SkipTest
-    raise SkipTest("These aren't real tests. Comment this out if you want to run them.")
-
-
 class SyncPerformanceTest(SyncBaseTest):
     """
     Tests the interaction of two users in sync mode doing various things

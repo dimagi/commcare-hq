@@ -6,7 +6,7 @@ from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.util.soft_assert import soft_assert
-from corehq.util.timezones.conversions import UserTime, ServerTime
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.logging import notify_exception
 
 utc = pytz.utc

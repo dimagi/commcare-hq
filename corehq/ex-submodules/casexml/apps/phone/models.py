@@ -135,7 +135,7 @@ class OTARestoreWebUser(OTARestoreUser):
     def get_owner_ids(self):
         return [self.user_id]
 
-    def get_call_center_indicators(self):
+    def get_call_center_indicators(self, config):
         return None
 
     def get_case_sharing_groups(self):
@@ -179,7 +179,7 @@ class OTARestoreCommCareUser(OTARestoreUser):
     def get_owner_ids(self):
         return self._couch_user.get_owner_ids(self.domain)
 
-    def get_call_center_indicators(self):
+    def get_call_center_indicators(self, config):
         from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 
         return CallCenterIndicators(
@@ -187,8 +187,8 @@ class OTARestoreCommCareUser(OTARestoreUser):
             self.project.default_timezone,
             self.project.call_center_config.case_type,
             self._couch_user,
+            indicator_config=config
         )
-        return self._couch_user.get_call_center_indicators(self.domain)
 
     def get_case_sharing_groups(self):
         return self._couch_user.get_case_sharing_groups()
