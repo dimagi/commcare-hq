@@ -4,7 +4,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
-from corehq.elastic import stream_es_query
+from corehq.elastic import SIZE_LIMIT
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import Format
 from custom.openclinica.const import (
@@ -123,10 +123,9 @@ class OdmExportReport(CustomProjectReport, CaseListMixin, GenericReportView):
         ODM XML document.
         """
         audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
-        query = self._build_query()
-        results = stream_es_query(q=query.es_query, es_index='cases', size=999999, chunksize=100)
-        for res in results:
-            case = CommCareCase.wrap(res['_source'])
+        query = self._build_query().start(0).size(SIZE_LIMIT)
+        for result in query.scroll():
+            case = CommCareCase.wrap(result)
             if not self.is_subject_selected(case):
                 continue
             subject = Subject.wrap(case, audit_log_id_ref)
