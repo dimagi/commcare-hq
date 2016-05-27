@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from django.conf import settings
 import sqlalchemy
 from sqlalchemy.orm.scoping import scoped_session
@@ -24,6 +26,23 @@ class SessionHelper(object):
         self._session_factory = sessionmaker(bind=self.engine)
         # Session is the actual constructor object
         self.Session = scoped_session(self._session_factory)
+
+    @property
+    def session_context(self):
+        @contextmanager
+        def session_scope():
+            """Provide a transactional scope around a series of operations."""
+            session = Session()
+            try:
+                yield session
+                session.commit()
+            except:
+                session.rollback()
+                raise
+            finally:
+                session.close()
+
+        return session_scope
 
 
 class ConnectionManager(object):
