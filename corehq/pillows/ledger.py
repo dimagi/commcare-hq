@@ -13,7 +13,18 @@ from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeP
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
-def _set_ledger_consumption(ledger):
+def _prepare_ledger_for_es(ledger):
+    from corehq.apps.commtrack.models import CommtrackConfig
+    commtrack_config = CommtrackConfig.for_domain(ledger['domain'])
+
+    if commtrack_config and commtrack_config.use_auto_consumption:
+        daily_consumption = _get_daily_consumption_for_ledger(ledger)
+        ledger['daily_consumption'] = daily_consumption
+
+    return ledger
+
+
+def _get_daily_consumption_for_ledger(ledger):
     from corehq.apps.commtrack.consumption import get_consumption_for_ledger_json
     daily_consumption = get_consumption_for_ledger_json(ledger)
     if should_use_sql_backend(ledger['domain']):
@@ -27,8 +38,7 @@ def _set_ledger_consumption(ledger):
         from corehq.apps.commtrack.models import StockState
         StockState.objects.filter(pk=ledger['_id']).update(daily_consumption=daily_consumption)
 
-    ledger['daily_consumption'] = daily_consumption
-    return ledger
+    return daily_consumption
 
 
 def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
@@ -38,7 +48,7 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=LEDGER_INDEX_INFO,
-        doc_prep_fn=_set_ledger_consumption
+        doc_prep_fn=_prepare_ledger_for_es
     )
     return ConstructedPillow(
         name=pillow_id,

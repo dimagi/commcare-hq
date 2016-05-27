@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
+from corehq.sql_db.operations import HqRunPython
+
 
 def migrate_metadata(apps, schema_editor):
     Subscriptions = apps.get_model("accounting", "Subscription")
@@ -25,5 +27,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(migrate_metadata),
+        HqRunPython(migrate_metadata),
     ]

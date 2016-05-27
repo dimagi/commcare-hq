@@ -41,6 +41,10 @@
         {% include 'icds_reports/partials/report_table.html' with report_table=thisreport.report_table%}
         {% endif %}
         <br/>
+        {% if thisreport.posttitlte %}
+            {{ thisreport.posttitle }}
+        <br/>
+        {% endif %}
     {% endfor %}
 {% endif %}
 {% endblock %}

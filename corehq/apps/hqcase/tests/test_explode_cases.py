@@ -10,7 +10,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseAttachment
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from casexml.apps.case.xml import V2
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqcase.tasks import explode_cases
 from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks

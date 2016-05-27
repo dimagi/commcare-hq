@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from mock import patch
+from mock import patch, Mock
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.app_manager import get_case_data_sources, get_form_data_sources
@@ -24,6 +24,7 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
             return json.loads(f.read())
 
     @patch('corehq.apps.userreports.specs.datetime')
+    @patch('corehq.apps.app_manager.util.get_per_type_defaults', Mock(return_value={}))
     def test_simple_case_management(self, datetime_mock):
         fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
         datetime_mock.utcnow.return_value = fake_time_now

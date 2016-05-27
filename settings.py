@@ -400,7 +400,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.ivr',
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
-    'corehq.apps.ota',
     'corehq.apps.settings',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
@@ -601,8 +600,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
-FORMPLAYER_URL = 'http://localhost:8080'
-OFFLINE_TOUCHFORMS_PORT = 4444
+FORMPLAYER_URL = 'http://localhost:8090'
 
 ####### Couchlog config #######
 
@@ -1546,7 +1544,12 @@ PILLOWTOPS = {
         {
             'name': 'BlobDeletionPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
+            'instance': 'corehq.blobs.pillow.get_main_blob_deletion_pillow',
+        },
+        {
+            'name': 'ApplicationBlobDeletionPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.blobs.pillow.get_application_blob_deletion_pillow',
         },
         {
             'name': 'CaseSearchToElasticsearchPillow',

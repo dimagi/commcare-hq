@@ -185,9 +185,13 @@
                         data-index="{{ module.id }}">
                         <a href="{% url "view_module" domain app.id module.id %}">
                             <i class="drag_handle"></i>
-                            <i class="fa fa-folder-open"></i>
+                            {% if module.module_type == 'advanced' %}<i class="fa fa-gears"></i>
+                            {% elif module.module_type == 'report' %}<i class="fa fa-bar-chart"></i>
+                            {% elif module.module_type == 'shadow' %}<i class="fa fa-folder-open-o"></i>
+                            {% else %}<i class="fa fa-folder-open"></i>{% endif %}
                             <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
                                 {{ module.name|html_trans:langs }}
+
                             </span>
                         </a>
                         <ul class="nav nav-hq-sidebar {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable-forms sortable">
