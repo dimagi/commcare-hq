@@ -46,7 +46,7 @@ class FormAccessorTestsSQL(TestCase):
         form2 = create_form_for_test(DOMAIN)
 
         forms = FormAccessorSQL.get_forms(['missing_form'])
-        self.assertEqual([], forms)
+        self.assertEqual(0, len(forms))
 
         forms = FormAccessorSQL.get_forms([form1.form_id])
         self.assertEqual(1, len(forms))
@@ -123,13 +123,14 @@ class FormAccessorTestsSQL(TestCase):
             [form_with_pic.form_id, plain_form.form_id], ordered=True
         )
         self.assertEqual(2, len(forms))
-        self.assertEqual(form_with_pic.form_id, forms[0].form_id)
+        form = forms[0]
+        self.assertEqual(form_with_pic.form_id, form.form_id)
         with self.assertNumQueries(0, using=db_for_read_write(XFormAttachmentSQL)):
             expected = {
                 'form.xml': 'text/xml',
                 'pic.jpg': 'image/jpeg',
             }
-            attachments = forms[0].get_attachments()
+            attachments = form.get_attachments()
             self.assertEqual(2, len(attachments))
             self.assertEqual(expected, {att.name: att.content_type for att in attachments})
 

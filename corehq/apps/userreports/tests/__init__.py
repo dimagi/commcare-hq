@@ -18,6 +18,7 @@ from .test_report_charts import *
 from .test_report_config import *
 from .test_report_data import *
 from .test_report_filters import *
+from .test_resume_rebuild import *
 from .test_save_errors import *
 from .test_transforms import *
 from .test_utils import *
