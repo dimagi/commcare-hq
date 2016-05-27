@@ -32,11 +32,14 @@ import commcare_translations
 
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
+    _multiprocess_shared_ = True
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def test_normal_suite(self):
