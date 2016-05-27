@@ -14,7 +14,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
     SQLMobileBackendMapping, PhoneNumber)
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -34,12 +33,6 @@ from casexml.apps.case.mock import CaseBlock
 
 def time_parser(value):
     return parse(value).time()
-
-
-def delete_domain_phone_numbers(domain):
-    for v in VerifiedNumber.by_domain(domain):
-        # Ensure cache is cleared for all phone lookups
-        v.delete()
 
 
 @nottest

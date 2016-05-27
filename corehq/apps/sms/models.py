@@ -905,6 +905,13 @@ class PhoneNumber(SyncSQLToCouchMixin, models.Model):
         return v
 
     @classmethod
+    def by_couch_id(cls, couch_id):
+        try:
+            return cls.objects.get(couch_id=couch_id)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
     def by_phone(cls, phone_number, include_pending=False):
         result = cls._by_phone(apply_leniency(phone_number))
         return cls._filter_pending(result, include_pending)
@@ -912,7 +919,7 @@ class PhoneNumber(SyncSQLToCouchMixin, models.Model):
     @classmethod
     def by_suffix(cls, phone_number, include_pending=False):
         """
-        Used to lookup a VerifiedNumber, trying to exclude country code digits.
+        Used to lookup a PhoneNumber, trying to exclude country code digits.
         """
         result = cls._by_suffix(apply_leniency(phone_number))
         return cls._filter_pending(result, include_pending)
@@ -1752,7 +1759,7 @@ class SelfRegistrationInvitation(models.Model):
                 invalid_format_numbers.append(phone_number)
                 continue
 
-            if VerifiedNumber.by_phone(phone_number, include_pending=True):
+            if PhoneNumber.by_phone(phone_number, include_pending=True):
                 numbers_in_use.append(phone_number)
                 continue
 

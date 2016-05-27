@@ -65,7 +65,6 @@ from corehq.apps.users.models import CommCareUser, Permissions
 from dimagi.utils.decorators.memoized import memoized
 from .models import UI_SIMPLE_FIXED, UI_COMPLEX
 from .util import get_form_list, get_sample_list, get_recipient_name, get_form_name, can_use_survey_reminders
-from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.util import register_sms_contact, update_contact
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group

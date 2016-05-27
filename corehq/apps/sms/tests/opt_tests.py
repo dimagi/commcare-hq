@@ -5,8 +5,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.sms.api import incoming, send_sms_to_verified_number
 from corehq.apps.sms.messages import MSG_OPTED_IN, MSG_OPTED_OUT, get_message
-from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import PhoneBlacklist, SMS
+from corehq.apps.sms.models import PhoneBlacklist, SMS, PhoneNumber
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
@@ -33,7 +32,7 @@ class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 
         incoming('99912345678', 'join opt-test', 'GVI')
-        v = VerifiedNumber.by_phone('99912345678')
+        v = PhoneNumber.by_phone('99912345678')
         self.assertIsNotNone(v)
 
         incoming('99912345678', 'stop', 'GVI')
@@ -65,7 +64,7 @@ class OptTestCase(BaseAccountingTest, DomainSubscriptionMixin):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 
         incoming('99912345678', 'join opt-test', 'GVI')
-        v = VerifiedNumber.by_phone('99912345678')
+        v = PhoneNumber.by_phone('99912345678')
         self.assertIsNotNone(v)
 
         send_sms_to_verified_number(v, 'hello')
