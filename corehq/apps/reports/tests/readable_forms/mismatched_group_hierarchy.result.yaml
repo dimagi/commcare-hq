@@ -258,6 +258,7 @@
       response: 'yes'
       tag: select1
       type: Select
+      value: /data/fada_obv1/fada_checklist_poster_used_obv1
       hashtagValue: /data/fada_obv1/fada_checklist_poster_used_obv1
       relevant: null
       required: true
