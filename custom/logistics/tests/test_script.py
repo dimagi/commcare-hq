@@ -1,8 +1,7 @@
 import re
 from django.test.testcases import TestCase
 from corehq.apps.sms.api import incoming
-from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import SMS, OUTGOING
+from corehq.apps.sms.models import SMS, OUTGOING, PhoneNumber
 from corehq.apps.sms.util import strip_plus
 
 
@@ -36,7 +35,7 @@ class TestScript(TestCase):
         commands = self.parse_script(script)
         for command in commands:
             phone_number = command['phone_number']
-            v = VerifiedNumber.by_phone(phone_number)
+            v = PhoneNumber.by_phone(phone_number)
             if command['direction'] == '>':
                 incoming(phone_number, command['text'], v.backend_id, domain_scope=v.domain)
             else:

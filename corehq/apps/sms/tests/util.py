@@ -16,13 +16,14 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
-    SQLMobileBackendMapping)
+    SQLMobileBackendMapping, PhoneNumber)
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.groups.models import Group
 from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
     RECIPIENT_SENDER, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS, METHOD_SMS)
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.util.test_utils import unit_testing_only
 from django.contrib.sites.models import Site
 from couchforms.dbaccessors import get_forms_by_type
 from time import sleep
@@ -332,3 +333,10 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         self.backend_mapping.delete()
         self.backend.delete()
         self.teardown_subscription()
+
+
+@unit_testing_only
+def delete_domain_phone_numbers(domain):
+    for p in PhoneNumber.by_domain(domain):
+        # Clear cache and delete
+        p.delete()
