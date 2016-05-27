@@ -392,7 +392,6 @@ class CommCareMobileContactMixin(object):
         v.backend_id = backend_id
         v.ivr_backend_id = ivr_backend_id
         v.save()
-        return v
 
     def delete_verified_number(self, phone_number=None):
         """
