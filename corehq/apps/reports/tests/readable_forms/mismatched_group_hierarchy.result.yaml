@@ -8,6 +8,7 @@
   tag: select1
   type: Select
   value: /data/need_facility_trigger
+  hashtagValue: /data/need_facility_trigger
   relevant: "/data/fada_facility_id = ''"
   required: true
 - children:
@@ -22,6 +23,7 @@
     tag: select1
     type: Select
     value: /data/current_site_confirm
+    hashtagValue: /data/current_site_confirm
     relevant: null
     required: true
   - group: /data/whole_form
@@ -32,6 +34,7 @@
     tag: input
     type: Int
     value: /data/fada_yearly_number
+    hashtagValue: /data/fada_yearly_number
     relevant: null
     required: true
   - group: /data/whole_form
@@ -42,6 +45,7 @@
     tag: input
     type: Int
     value: /data/fada_monthly_number
+    hashtagValue: /data/fada_monthly_number
     relevant: null
     required: true
   - group: /data/whole_form
@@ -56,6 +60,7 @@
     tag: select1
     type: Select
     value: /data/already_registered
+    hashtagValue: /data/already_registered
     relevant: "count(instance('casedb')/casedb/case[@case_type='fada_patient'][@status='open'][case_name= /data/fada_patient_id]) > 0"
     required: true
   - group: /data/whole_form
@@ -66,6 +71,7 @@
     tag: input
     type: Date
     value: /data/fada_date_admission
+    hashtagValue: /data/fada_date_admission
     relevant: null
     required: true
   - group: /data/whole_form
@@ -81,6 +87,7 @@
     tag: select
     type: MSelect
     value: /data/fada_observation_points_observed
+    hashtagValue: /data/fada_observation_points_observed
     relevant: null
     required: true
   - group: /data/whole_form
@@ -95,6 +102,7 @@
     tag: select1
     type: Select
     value: /data/fada_mother_referred
+    hashtagValue: /data/fada_mother_referred
     relevant: null
     required: true
   - group: /data/whole_form
@@ -108,6 +116,7 @@
     tag: select1
     type: Select
     value: /data/fada_maternal_death
+    hashtagValue: /data/fada_maternal_death
     relevant: null
     required: true
   - group: /data/whole_form
@@ -121,6 +130,7 @@
     tag: select1
     type: Select
     value: /data/fada_stillbirth_neonatal_death
+    hashtagValue: /data/fada_stillbirth_neonatal_death
     relevant: null
     required: true
   - group: /data/whole_form
@@ -134,6 +144,7 @@
     tag: select1
     type: Select
     value: /data/fada_csection
+    hashtagValue: /data/fada_csection
     relevant: null
     required: true
   - group: /data/whole_form
@@ -147,6 +158,7 @@
     tag: select1
     type: Select
     value: /data/fada_healthworker_assent
+    hashtagValue: /data/fada_healthworker_assent
     relevant: null
     required: true
   - children:
@@ -163,6 +175,7 @@
       tag: select
       type: MSelect
       value: /data/fada_obv1/fada_assisted_by_obv1
+      hashtagValue: /data/fada_obv1/fada_assisted_by_obv1
       relevant: null
       required: true
     - group: /data/fada_obv1
@@ -176,6 +189,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_maternal_temp
+      hashtagValue: /data/fada_obv1/fada_maternal_temp
       relevant: null
       required: true
     - group: /data/fada_obv1
@@ -189,6 +203,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_maternal_bp
+      hashtagValue: /data/fada_obv1/fada_maternal_bp
       relevant: null
       required: true
     - group: /data/fada_obv1
@@ -202,6 +217,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_partograph
+      hashtagValue: /data/fada_obv1/fada_partograph
       relevant: null
       required: true
     - group: /data/fada_obv1
@@ -215,6 +231,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_checklist_picked_up_obv1
+      hashtagValue: /data/fada_obv1/fada_checklist_picked_up_obv1
       relevant: null
       required: true
     - group: /data/fada_obv1
@@ -228,6 +245,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_checklist_used_after_care_obv1
+      hashtagValue: /data/fada_obv1/fada_checklist_used_after_care_obv1
       relevant: null
       required: true
     - group: /data/fada_obv1
@@ -240,7 +258,7 @@
       response: 'yes'
       tag: select1
       type: Select
-      value: /data/fada_obv1/fada_checklist_poster_used_obv1
+      hashtagValue: /data/fada_obv1/fada_checklist_poster_used_obv1
       relevant: null
       required: true
     - group: /data/fada_obv1
@@ -254,6 +272,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv1/fada_birth_companion_present_obv1
+      hashtagValue: /data/fada_obv1/fada_birth_companion_present_obv1
       relevant: null
       required: true
     group: /data/whole_form
@@ -264,6 +283,7 @@
     tag: group
     type: Group
     value: /data/fada_obv1
+    hashtagValue: /data/fada_obv1
     relevant: "selected(/data/fada_observation_points_observed, '1')"
     required: false
   - children:
@@ -280,6 +300,7 @@
       tag: select
       type: MSelect
       value: /data/fada_obv2/fada_assisted_by_obv2
+      hashtagValue: /data/fada_obv2/fada_assisted_by_obv2
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -293,6 +314,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_oxycotin_administered_obv2
+      hashtagValue: /data/fada_obv2/fada_oxycotin_administered_obv2
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -306,6 +328,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_oxycotin_administration_location
+      hashtagValue: /data/fada_obv2/fada_oxycotin_administration_location
       relevant: "/data/fada_obv2/fada_oxycotin_administered_obv2 = '1'"
       required: true
     - group: /data/fada_obv2
@@ -319,6 +342,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_water_usage
+      hashtagValue: /data/fada_obv2/fada_water_usage
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -332,6 +356,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_soap_usage
+      hashtagValue: /data/fada_obv2/fada_soap_usage
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -345,6 +370,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_alcohol_rub
+      hashtagValue: /data/fada_obv2/fada_alcohol_rub
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -358,6 +384,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_clean_gloves
+      hashtagValue: /data/fada_obv2/fada_clean_gloves
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -371,6 +398,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_clean_towel
+      hashtagValue: /data/fada_obv2/fada_clean_towel
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -384,6 +412,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_scissors_blade
+      hashtagValue: /data/fada_obv2/fada_scissors_blade
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -397,6 +426,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_cord_tie
+      hashtagValue: /data/fada_obv2/fada_cord_tie
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -410,6 +440,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_mucus_extractor
+      hashtagValue: /data/fada_obv2/fada_mucus_extractor
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -423,6 +454,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_neonatal_bag
+      hashtagValue: /data/fada_obv2/fada_neonatal_bag
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -436,6 +468,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_pads
+      hashtagValue: /data/fada_obv2/fada_pads
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -449,6 +482,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_checklist_picked_up_obv2
+      hashtagValue: /data/fada_obv2/fada_checklist_picked_up_obv2
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -462,6 +496,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_checklist_used_after_care_obv2
+      hashtagValue: /data/fada_obv2/fada_checklist_used_after_care_obv2
       relevant: null
       required: true
     - group: /data/fada_obv2
@@ -475,6 +510,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv2/fada_checklist_poster_used_obv2
+      hashtagValue: /data/fada_obv2/fada_checklist_poster_used_obv2
       relevant: null
       required: true
     group: /data/whole_form
@@ -485,6 +521,7 @@
     tag: group
     type: Group
     value: /data/fada_obv2
+    hashtagValue: /data/fada_obv2
     relevant: "selected(/data/fada_observation_points_observed, '2')"
     required: false
   - children:
@@ -501,6 +538,7 @@
       tag: select
       type: MSelect
       value: /data/fada_obv3/fada_assisted_by_obv3
+      hashtagValue: /data/fada_obv3/fada_assisted_by_obv3
       relevant: null
       required: true
     - group: /data/fada_obv3
@@ -514,6 +552,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv3/fada_oxycotin_administered_obv3
+      hashtagValue: /data/fada_obv3/fada_oxycotin_administered_obv3
       relevant: null
       required: true
     - group: /data/fada_obv3
@@ -527,6 +566,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv3/fada_neonatal_bag_usage
+      hashtagValue: /data/fada_obv3/fada_neonatal_bag_usage
       relevant: null
       required: true
     - group: /data/fada_obv3
@@ -540,6 +580,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv3/fada_birth_companion_present_obv3
+      hashtagValue: /data/fada_obv3/fada_birth_companion_present_obv3
       relevant: null
       required: true
     group: /data/whole_form
@@ -550,6 +591,7 @@
     tag: group
     type: Group
     value: /data/fada_obv3
+    hashtagValue: /data/fada_obv3
     relevant: "selected(/data/fada_observation_points_observed, '3')"
     required: false
   - children:
@@ -566,6 +608,7 @@
       tag: select
       type: MSelect
       value: /data/fada_obv4/fada_assisted_by_obv4
+      hashtagValue: /data/fada_obv4/fada_assisted_by_obv4
       relevant: null
       required: true
     - group: /data/fada_obv4
@@ -579,6 +622,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_baby_wt
+      hashtagValue: /data/fada_obv4/fada_baby_wt
       relevant: null
       required: true
     - group: /data/fada_obv4
@@ -592,6 +636,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_baby_temp
+      hashtagValue: /data/fada_obv4/fada_baby_temp
       relevant: null
       required: true
     - group: /data/fada_obv4
@@ -605,6 +650,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_baby_skin_to_skin
+      hashtagValue: /data/fada_obv4/fada_baby_skin_to_skin
       relevant: null
       required: true
     - group: /data/fada_obv4
@@ -618,6 +664,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_baby_skin_to_skin_for_1_hour
+      hashtagValue: /data/fada_obv4/fada_baby_skin_to_skin_for_1_hour
       relevant: "/data/fada_obv4/fada_baby_skin_to_skin = '1'"
       required: true
     - group: /data/fada_obv4
@@ -631,6 +678,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_breastfeeding
+      hashtagValue: /data/fada_obv4/fada_breastfeeding
       relevant: "/data/fada_obv4/fada_baby_skin_to_skin = '1'"
       required: true
     - group: /data/fada_obv4
@@ -644,6 +692,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_checklist_picked_up_obv4
+      hashtagValue: /data/fada_obv4/fada_checklist_picked_up_obv4
       relevant: null
       required: true
     - group: /data/fada_obv4
@@ -657,6 +706,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_checklist_used_after_care_obv4
+      hashtagValue: /data/fada_obv4/fada_checklist_used_after_care_obv4
       relevant: null
       required: true
     - group: /data/fada_obv4
@@ -670,6 +720,7 @@
       tag: select1
       type: Select
       value: /data/fada_obv4/fada_checklist_poster_used_obv4
+      hashtagValue: /data/fada_obv4/fada_checklist_poster_used_obv4
       relevant: null
       required: true
     group: /data/whole_form
@@ -680,6 +731,7 @@
     tag: group
     type: Group
     value: /data/fada_obv4
+    hashtagValue: /data/fada_obv4
     relevant: "selected(/data/fada_observation_points_observed, '4')"
     required: false
   - children:
@@ -694,6 +746,7 @@
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_maternal_temp_anytime
+      hashtagValue: /data/fada_other_observations/fada_maternal_temp_anytime
       relevant: null
       required: true
     - group: /data/fada_other_observations
@@ -707,6 +760,7 @@
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_maternal_bp_anytime
+      hashtagValue: /data/fada_other_observations/fada_maternal_bp_anytime
       relevant: null
       required: true
     - group: /data/fada_other_observations
@@ -720,6 +774,7 @@
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_magnesium
+      hashtagValue: /data/fada_other_observations/fada_magnesium
       relevant: null
       required: true
     - group: /data/fada_other_observations
@@ -733,6 +788,7 @@
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_ab_mother
+      hashtagValue: /data/fada_other_observations/fada_ab_mother
       relevant: null
       required: true
     - group: /data/fada_other_observations
@@ -746,6 +802,7 @@
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_ab_baby
+      hashtagValue: /data/fada_other_observations/fada_ab_baby
       relevant: null
       required: true
     - group: /data/fada_other_observations
@@ -759,6 +816,7 @@
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_arv_mother
+      hashtagValue: /data/fada_other_observations/fada_arv_mother
       relevant: null
       required: true
     - group: /data/fada_other_observations
@@ -772,6 +830,7 @@
       tag: select1
       type: Select
       value: /data/fada_other_observations/fada_arv_baby
+      hashtagValue: /data/fada_other_observations/fada_arv_baby
       relevant: null
       required: true
     group: /data/whole_form
@@ -782,6 +841,7 @@
     tag: group
     type: FieldList
     value: /data/fada_other_observations
+    hashtagValue: /data/fada_other_observations
     relevant: null
     required: false
   - group: /data/whole_form
@@ -795,6 +855,7 @@
     tag: select1
     type: Select
     value: /data/fada_highlight_record
+    hashtagValue: /data/fada_highlight_record
     relevant: null
     required: true
   - group: /data/whole_form
@@ -805,6 +866,7 @@
     tag: input
     type: Text
     value: /data/fada_highlight_comment
+    hashtagValue: /data/fada_highlight_comment
     relevant: "/data/fada_highlight_record = 'yes'"
     required: true
   - group: /data/whole_form
@@ -815,6 +877,7 @@
     tag: input
     type: Geopoint
     value: /data/fada_gps_location
+    hashtagValue: /data/fada_gps_location
     relevant: null
     required: false
   group: null
@@ -825,6 +888,7 @@
   tag: group
   type: Group
   value: /data/whole_form
+  hashtagValue: /data/whole_form
   relevant: "/data/fada_facility_id != ''"
   required: false
 - group: null
@@ -835,6 +899,7 @@
   tag: hidden
   type: DataBindOnly
   value: /data/fada_facility_id
+  hashtagValue: /data/fada_facility_id
   relevant: null
   required: null
 - group: null
@@ -845,6 +910,7 @@
   tag: hidden
   type: DataBindOnly
   value: /data/fada_patient_id
+  hashtagValue: /data/fada_patient_id
   relevant: null
   required: null
 - group: null
@@ -855,6 +921,7 @@
   tag: hidden
   type: DataBindOnly
   value: /data/facility_number_usage
+  hashtagValue: /data/facility_number_usage
   relevant: null
   required: null
 - group: null
@@ -865,6 +932,7 @@
   tag: hidden
   type: DataBindOnly
   value: /data/patient_number
+  hashtagValue: /data/patient_number
   relevant: null
   required: null
 - group: null
@@ -875,6 +943,7 @@
   tag: hidden
   type: DataBindOnly
   value: /data/patient_number_padded
+  hashtagValue: /data/patient_number_padded
   relevant: null
   required: null
 - group: null
@@ -885,5 +954,6 @@
   tag: hidden
   type: DataBindOnly
   value: /data/facility_owner_id
+  hashtagValue: /data/facility_owner_id
   relevant: null
   required: null
