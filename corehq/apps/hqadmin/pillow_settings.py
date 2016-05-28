@@ -34,16 +34,21 @@ def _apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
         # the default is to include if nothing specified
         relevant = True
         # the order of these checks is important since the actions are resolved in the order they are passed in
+        def _is_a_match(p_config, list_of_pillows):
+            return (
+                p_config.class_name in list_of_pillows or
+                p_config.name in list_of_pillows
+            )
         for action in pillow_actions:
             if pillow_config.section in action.include_groups:
                 assert pillow_config.section not in action.exclude_groups
                 relevant = True
             if pillow_config.section in action.exclude_groups:
                 relevant = False
-            if pillow_config.class_name in action.include_pillows:
+            if _is_a_match(pillow_config, action.include_pillows):
                 assert pillow_config.class_name not in action.exclude_pillows
                 relevant = True
-            if pillow_config.class_name in action.exclude_pillows:
+            if _is_a_match(pillow_config, action.exclude_pillows):
                 relevant = False
 
         return relevant
