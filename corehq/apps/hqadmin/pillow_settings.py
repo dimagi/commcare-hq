@@ -31,14 +31,16 @@ def _get_pillow_configs_from_settings_dict(pillows_by_group):
 
 def _apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
     def is_relevant(pillow_actions, pillow_config):
-        # the default is to include if nothing specified
-        relevant = True
-        # the order of these checks is important since the actions are resolved in the order they are passed in
+
         def _is_a_match(p_config, list_of_pillows):
             return (
                 p_config.class_name in list_of_pillows or
                 p_config.name in list_of_pillows
             )
+
+        # the default is to include if nothing specified
+        relevant = True
+        # the order of these checks is important since the actions are resolved in the order they are passed in
         for action in pillow_actions:
             if pillow_config.section in action.include_groups:
                 assert pillow_config.section not in action.exclude_groups
