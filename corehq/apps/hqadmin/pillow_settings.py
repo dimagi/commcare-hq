@@ -21,6 +21,14 @@ def apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
     return _apply_pillow_actions_to_pillows(map(coerce_to_pillow_action, pillow_actions), pillows_by_group)
 
 
+def _get_pillow_configs_from_settings_dict(pillows_by_group):
+    # this sucks, but not sure there's a better way to make it available to fabric
+    from manage import init_hq_python_path
+    init_hq_python_path()
+    from pillowtop.utils import get_pillow_configs_from_settings_dict
+    return get_pillow_configs_from_settings_dict(pillows_by_group)
+
+
 def _apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
     def is_relevant(pillow_actions, pillow_config):
         # the default is to include if nothing specified
@@ -40,13 +48,9 @@ def _apply_pillow_actions_to_pillows(pillow_actions, pillows_by_group):
 
         return relevant
 
-    # this sucks, but not sure there's a better way to make it available to fabric
-    from manage import init_hq_python_path
-    init_hq_python_path()
-    from pillowtop.utils import get_pillow_configs_from_settings_dict
     return filter(
         lambda p_conf: is_relevant(pillow_actions, p_conf),
-        set(get_pillow_configs_from_settings_dict(pillows_by_group))
+        set(_get_pillow_configs_from_settings_dict(pillows_by_group))
     )
 
 
@@ -77,19 +81,21 @@ def get_pillows_for_env(pillow_env_configs, pillows_by_group=None):
 
 
 def test_pillow_settings(env_name, pillows_by_group, extra_debugging=False):
-    def dump_yaml(obj):
-        return yaml.safe_dump(obj, default_flow_style=False)
+    def dump_yaml(pillow_configs):
+        names = [config.name for config in pillow_configs]
+        return yaml.safe_dump(names, default_flow_style=False)
 
     if extra_debugging:
         print 'Pillow settings overview for {}'.format(env_name)
         print dump_yaml([action.to_json()
                          for action in get_pillow_actions_for_env(env_name)])
 
-    pillows = get_pillows_for_env(env_name, pillows_by_group=pillows_by_group)
+    from fab.fabfile import get_pillow_env_config
+    pillows = list(get_pillows_for_env([get_pillow_env_config(env_name)], pillows_by_group=pillows_by_group))
 
     print 'Included Pillows'
     print dump_yaml(sorted(pillows))
 
     print 'Excluded Pillows'
-    print dump_yaml(sorted({pillow for _pillows in pillows_by_group.values()
-                            for pillow in _pillows} - pillows))
+    pillow_configs = list(_get_pillow_configs_from_settings_dict(pillows_by_group))
+    print dump_yaml(sorted(set(pillow_configs) - set(pillows)))
