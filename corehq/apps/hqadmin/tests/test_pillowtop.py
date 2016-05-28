@@ -54,6 +54,25 @@ class TestPillowTopFiltering(SimpleTestCase):
         configs_back = apply_pillow_actions_to_pillows([{'exclude_groups': ['phonelog']}], self.pillowtops)
         self.assertEqual(expected_pillows, set([c.name for c in configs_back]))
 
+    def test_with_exclusion_by_name(self):
+        expected_pillows = {'CasePillow',
+                            'XFormPillow',
+                            'PhoneLogPillow',
+                            }
+
+        configs_back = apply_pillow_actions_to_pillows([{'exclude_pillows': ['FakeConstructedPillowName']}], self.pillowtops)
+        self.assertEqual(expected_pillows, set([c.name for c in configs_back]))
+
+    def test_with_exclusion_by_class(self):
+        expected_pillows = {'CasePillow',
+                            'XFormPillow',
+                            'PhoneLogPillow',
+                            }
+
+        configs_back = apply_pillow_actions_to_pillows(
+            [{'exclude_pillows': ['pillowtop.tests.FakeConstructedPillow']}], self.pillowtops)
+        self.assertEqual(expected_pillows, set([c.name for c in configs_back]))
+
     def test_loading_existing_conf_file(self):
         config = {'include_groups': ['mvp_indicators']}
 
