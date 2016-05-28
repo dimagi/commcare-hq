@@ -1,4 +1,8 @@
 from collections import namedtuple
+
+from django.conf import settings
+from django.test.utils import override_settings
+
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
@@ -13,6 +17,9 @@ from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
 from django.core import cache
+
+from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.tests.utils import database_creator
 
 CASE_TYPE = 'cc_flw'
 
@@ -522,3 +529,41 @@ class CallCenterTestOpenedClosed(BaseCCTests):
             if key.startswith('cases_opened') or key.startswith('cases_closed'):
                 expected[key] = 0L
         self._test_indicators(self.user, indicator_set.get_data(), expected)
+
+
+class TestSavingToUCRDatabase(BaseCCTests):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.cc_domain, cls.cc_user = create_domain_and_user('callcentertest', 'user1')
+        create_cases_for_types(cls.cc_domain.name, ['person', 'dog'])
+
+        cls.ucr_db_name = 'cchq_ucr_tests'
+        db_conn_parts = settings.SQL_REPORTING_DATABASE_URL.split('/')
+        db_conn_parts[-1] = cls.ucr_db_name
+        cls.ucr_db_url = '/'.join(db_conn_parts)
+
+        cls.db_context = database_creator(cls.ucr_db_name)
+        cls.db_context.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        clear_data(cls.cc_domain.name)
+        cls.cc_user.delete()
+        cls.cc_domain.delete()
+
+        connection_manager.dispose_engine('ucr')
+        cls.db_context.__exit__(None, None, None)
+
+    def test_standard_indicators(self):
+        with override_settings(UCR_DATABASE_URL=self.ucr_db_url):
+            load_data(self.cc_domain.name, self.cc_user.user_id)
+
+            indicator_set = CallCenterIndicators(
+                self.cc_domain.name,
+                self.cc_domain.default_timezone,
+                self.cc_domain.call_center_config.case_type,
+                self.cc_user,
+                custom_cache=locmem_cache
+            )
+            self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())
