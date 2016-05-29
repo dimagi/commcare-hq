@@ -135,13 +135,12 @@
   - {calculate: null, group: '', label: Adherence, relevant: null, repeat: null, required: false,
     response: null, tag: group, type: FieldList, value: ''}
   - {calculate: null, group: '', label: Doses Missed in the Last 7 Days, relevant: null,
-    repeat: null, required: false, response: null, tag: input, type: Int, value: /progress_note/note/adherence/missed,
+    repeat: null, required: false, response: null, tag: input, type: Int, value: /progress_note/note/adherence/missed}
   - {calculate: null, group: '', label: Doses Possible in the Last 7 Days, relevant: null,
     repeat: null, required: false, response: null, tag: input, type: Int, value: /progress_note/note/adherence/possible}
   - {calculate: null, group: '', label: 'Patient''s response to "How was it taking
       your meds today?"', relevant: null, repeat: null, required: false, response: null,
-    tag: input, type: Text, value: /progress_note/note/adherence/freetext,
-    hashtagVale: /progress_note/note/adherence/freetext}
+    tag: input, type: Text, value: /progress_note/note/adherence/freetext}
   - calculate: null
     group: ''
     label: 'Patient Self Report: How much of your medicine did you take in the last
@@ -619,8 +618,7 @@
 - {calculate: null, group: null, label: note/conversations/which, relevant: null,
   repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/conversations/which}
 - {calculate: null, group: null, label: note/discussed_appointments, relevant: null,
-  repeat: null, required: null, response: 'no', tag: null, type: null,
-  value: /progress_note/note/discussed_appointments}
+  repeat: null, required: null, response: 'no', tag: null, type: null, value: /progress_note/note/discussed_appointments}
 - {calculate: null, group: null, label: note/discussed_followup, relevant: null, repeat: null,
   required: null, response: 'no', tag: null, type: null, value: /progress_note/note/discussed_followup}
 - {calculate: null, group: null, label: note/discussed_goals, relevant: null, repeat: null,
@@ -638,8 +636,7 @@
 - {calculate: null, group: null, label: note/reviewed_cd, relevant: null, repeat: null,
   required: null, response: 'no', tag: null, type: null, value: /progress_note/note/reviewed_cd}
 - {calculate: null, group: null, label: note/times/accompaniment, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null,
-  value: /progress_note/note/times/accompaniment}
+  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/times/accompaniment}
 - {calculate: null, group: null, label: note/times/administrative, relevant: null,
   repeat: null, required: null, response: '', tag: null, type: null,
   value: /progress_note/note/times/administrative}
@@ -658,4 +655,4 @@
 - {calculate: null, group: null, label: note/times/travel, relevant: null, repeat: null,
   required: null, response: '', tag: null, type: null, value: /progress_note/note/times/travel}
 - {calculate: null, group: null, label: note/times/wait, relevant: null, repeat: null}
-  required: null, response: '', tag: null, type: null, value: /progress_note/note/times/wait,
+  required: null, response: '', tag: null, type: null, value: /progress_note/note/times/wait}
