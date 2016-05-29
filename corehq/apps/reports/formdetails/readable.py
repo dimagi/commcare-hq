@@ -465,6 +465,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
                 FormQuestionResponse(
                     label=joined_key,
                     value='%s%s' % (path_context, joined_key),
+                    hashtagValue='%s%s' % (path_context, joined_key),
                     response=response,
                 )
             )
