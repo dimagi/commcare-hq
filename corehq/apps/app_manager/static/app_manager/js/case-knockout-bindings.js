@@ -12,7 +12,7 @@
         },
         getLabel: function (question, MAXLEN) {
             return utils.truncateLabel((question.repeat ? '- ' : '')
-                    + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
+                    + question.label, question.tag === 'hidden' ? ' (Hidden)' : '', MAXLEN);
         },
         truncateLabel: function (label, suffix, MAXLEN) {
             suffix = suffix || "";

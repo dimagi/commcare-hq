@@ -907,7 +907,7 @@ class XForm(WrappedNode):
                 "required": required == "true()"
             }
             if use_hashtags:
-                question.update({ "hashtagValue": self.hashtag_path(path) })
+                question.update({"hashtagValue": self.hashtag_path(path)})
 
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
@@ -950,6 +950,7 @@ class XForm(WrappedNode):
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                 }
                 if use_hashtags:
+                    hashtag_path = self.hashtag_path(path)
                     question.update({
                         "label": hashtag_path,
                         "hashtagValue": hashtag_path,
