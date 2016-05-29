@@ -900,13 +900,14 @@ class XForm(WrappedNode):
                 "label": self.get_label_text(node, langs),
                 "tag": node.tag_name,
                 "value": path,
-                "hashtagValue": self.hashtag_path(path) if use_hashtags else path,
                 "repeat": repeat,
                 "group": group,
                 "type": data_type,
                 "relevant": relevant,
                 "required": required == "true()"
             }
+            if use_hashtags:
+                question.update({ "hashtagValue": self.hashtag_path(path) })
 
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
@@ -940,17 +941,23 @@ class XForm(WrappedNode):
                     ][0]
                 except IndexError:
                     matching_repeat_context = None
-                hashtag_path = self.hashtag_path(path) if use_hashtags else path
                 question = {
-                    "label": hashtag_path,
                     "tag": "hidden",
                     "value": path,
-                    "hashtagValue": hashtag_path,
                     "repeat": matching_repeat_context,
                     "group": matching_repeat_context,
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                 }
+                if use_hashtags:
+                    question.update({
+                        "label": hashtag_path,
+                        "hashtagValue": hashtag_path,
+                    })
+                else:
+                    question.update({
+                        "label": path,
+                    })
                 if include_translations:
                     question["translations"] = {}
 

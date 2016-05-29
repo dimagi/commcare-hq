@@ -7,10 +7,12 @@
             return '';
         },
         getDisplay: function (question, MAXLEN) {
-            return utils.getIcon(question) + utils.getLabel(question, MAXLEN) + " (" + question.hashtagValue + ")";
+            return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
+                    + " (" + (question.hashtagValue || question.value) + ")";
         },
         getLabel: function (question, MAXLEN) {
-            return utils.truncateLabel((question.repeat ? '- ' : '') + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
+            return utils.truncateLabel((question.repeat ? '- ' : '')
+                    + question.label, question.tag == 'hidden' ? ' (Hidden)' : '', MAXLEN);
         },
         truncateLabel: function (label, suffix, MAXLEN) {
             suffix = suffix || "";

@@ -10,7 +10,6 @@ QUESTIONS = [
         'repeat': None,
         'group': None,
         'value': '/data/question1',
-        'hashtagValue': '/data/question1',
         'label': u'label en ____ label en',
         'translations': {
             'en': u'label en ____ label en',
@@ -30,7 +29,6 @@ QUESTIONS = [
         'repeat': None,
         'group': None,
         'value': '/data/question2',
-        'hashtagValue': '/data/question2',
         'label': u'label en ____ label en',
         'translations': {'en': u'label en ____ label en'},
         'type': 'Text',
@@ -42,7 +40,6 @@ QUESTIONS = [
         'repeat': None,
         'group': None,
         'value': '/data/question3',
-        'hashtagValue': '/data/question3',
         'label': u'no references here!',
         'translations': {'en': u'no references here!'},
         'type': 'Text',
@@ -54,7 +51,6 @@ QUESTIONS = [
         'repeat': None,
         'group': None,
         'value': '/data/hi',
-        'hashtagValue': '/data/hi',
         'label': 'woo',
         'translations': {'en': u'woo'},
         'type': 'Trigger',
@@ -66,7 +62,6 @@ QUESTIONS = [
         'repeat': '/data/question15',
         'group': '/data/question15',
         'value': '/data/question15/question16',
-        'hashtagValue': '/data/question15/question16',
         'label': None,
         'translations': {},
         'type': 'Text',
@@ -85,7 +80,6 @@ QUESTIONS = [
             }
         ],
         'value': '/data/question15/question21',
-        'hashtagValue': '/data/question15/question21',
         'label': None,
         'translations': {},
         'type': 'Select',
@@ -97,7 +91,6 @@ QUESTIONS = [
         'repeat': '/data/question15',
         'group': '/data/question15',
         'value': '/data/question15/question25',
-        'hashtagValue': '/data/question15/question25',
         'label': None,
         'translations': {},
         'type': 'Int',
@@ -109,7 +102,6 @@ QUESTIONS = [
         'repeat': None,
         'group': None,
         'value': '/data/thing',
-        'hashtagValue': '/data/thing',
         'label': None,
         'translations': {},
         'type': 'Text',
@@ -121,7 +113,6 @@ QUESTIONS = [
         'repeat': None,
         'group': None,
         'value': '/data/datanode',
-        'hashtagValue': '/data/datanode',
         'label': '/data/datanode',
         'translations': {},
         'type': 'DataBindOnly',
@@ -154,7 +145,7 @@ class GetFormQuestionsTest(SimpleTestCase):
 
     def test_get_questions(self):
         form = self.app.get_form(self.form_unique_id)
-        questions = form.wrapped_xform().get_questions(['en', 'es'], include_translations=True)
+        questions = form.wrapped_xform().get_questions(['en', 'es'], include_translations=True, form=form)
 
         non_label_questions = [
             q for q in QUESTIONS if q['tag'] not in ('label', 'trigger')]
@@ -164,6 +155,6 @@ class GetFormQuestionsTest(SimpleTestCase):
     def test_get_questions_with_triggers(self):
         form = self.app.get_form(self.form_unique_id)
         questions = form.wrapped_xform().get_questions(
-            ['en', 'es'], include_triggers=True, include_translations=True)
+            ['en', 'es'], include_triggers=True, include_translations=True, form=form)
 
         self.assertEqual(questions, QUESTIONS)
