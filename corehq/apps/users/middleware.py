@@ -36,11 +36,7 @@ class UsersMiddleware(object):
             if 'domain' in view_kwargs:
                 domain = request.domain
                 if not request.couch_user:
-                    couch_domain = Domain.get_by_name(domain)
-                    if couch_domain and couch_domain.is_public:
-                        request.couch_user = PublicUser(domain)
-                    else:
-                        request.couch_user = InvalidUser()
+                    request.couch_user = InvalidUser()
                 if request.couch_user:
                     request.couch_user.current_domain = domain
         return None
