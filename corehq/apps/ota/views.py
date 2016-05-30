@@ -85,13 +85,13 @@ def claim(request, domain):
         get_first_claim(domain, couch_user.user_id, case_id)
     ):
         return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
-                            status=400)
+                            status=409)
     try:
         claim_case(domain, couch_user.user_id, case_id,
                    host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
-                            status=404)
+                            status=410)
     request.session['last_claimed_case_id'] = case_id
     return HttpResponse(status=200)
 

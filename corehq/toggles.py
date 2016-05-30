@@ -662,6 +662,13 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+USE_FORMPLAYER_FRONTEND = StaticToggle(
+    'use_formplayer_frontend',
+    'Use the new formplayer frontend',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 USE_FORMPLAYER = StaticToggle(
     'use_formplayer',
     'Use the new formplayer server',
@@ -701,13 +708,6 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
     'Allow mobile workers to self register',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
-TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
-    'telerivet_setup_walkthrough',
-    'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )

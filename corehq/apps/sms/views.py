@@ -1191,10 +1191,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     def post(self, request, *args, **kwargs):
         if self.action == 'new_backend':
             hq_api_id = request.POST['hq_api_id']
-            if (
-                toggles.TELERIVET_SETUP_WALKTHROUGH.enabled(self.domain) and
-                hq_api_id == SQLTelerivetBackend.get_api_id()
-            ):
+            if hq_api_id == SQLTelerivetBackend.get_api_id():
                 from corehq.messaging.smsbackends.telerivet.views import TelerivetSetupView
                 return HttpResponseRedirect(reverse(TelerivetSetupView.urlname, args=[self.domain]))
             return HttpResponseRedirect(reverse(AddDomainGatewayView.urlname, args=[self.domain, hq_api_id]))

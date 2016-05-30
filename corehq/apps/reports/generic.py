@@ -196,6 +196,7 @@ class GenericReportView(object):
         self.context = state.get('context', {})
 
         class FakeHttpRequest(object):
+            method = 'GET'
             GET = {}
             META = {}
             couch_user = None

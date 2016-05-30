@@ -330,6 +330,7 @@ corehq.apps.accounting:
   - corehq.apps.app_manager
   - corehq.apps.reminders
   - corehq.apps.data_interfaces
+  - corehq.apps.notifications
 corehq.apps.export:
   - corehq.apps.export
   - corehq.apps.domain
@@ -351,6 +352,7 @@ corehq.apps.callcenter:
   - corehq.apps.products
   - corehq.apps.notifications
   - corehq.apps.reminders
+  - corehq.apps.notifications
   - corehq.apps.sofabed
   - corehq.apps.tour
   - corehq.apps.userhack
