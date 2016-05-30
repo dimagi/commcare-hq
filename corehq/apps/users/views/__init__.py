@@ -3,7 +3,6 @@ from datetime import datetime
 import json
 import langcodes
 import logging
-import re
 import urllib
 
 from django.conf import settings
@@ -64,7 +63,7 @@ from corehq.apps.style.decorators import (
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
-                                     UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
+                                     UpdateUserPermissionForm, UpdateUserRoleForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
                                       DomainMembershipError)
