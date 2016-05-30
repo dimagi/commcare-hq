@@ -295,11 +295,11 @@ class AdoptionDisaggregatedSqlData(CareSqlData):
     def columns(self):
         return [
             DatabaseColumn('', AliasColumn('gender'), format_fn=self._to_display),
-            AggregateColumn('None', lambda x:x,
+            AggregateColumn('Farmers who adopted No practices', lambda x:x,
                             [CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")])]),
-            AggregateColumn('Some', lambda x:x,
+            AggregateColumn('Farmers who adopted Some practices', lambda x:x,
                             [CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1")])]),
-            AggregateColumn('All', lambda x:x,
+            AggregateColumn('Farmers who adopted All practices', lambda x:x,
                             [CareCustomColumn('all', filters=self.filters + [RawFilter("maxmin = 2")])])
 
         ]
@@ -332,12 +332,16 @@ class TableCardSqlData(CareSqlData):
         if self.config['table_card_group_by'] == 'group_name':
             return x
         else:
+            group_by = 'Groups'
+            if self.config['table_card_group_by'] == 'group_leadership':
+                group_by = 'Leadership'
+
             if int(x) == 0:
-                return 'None Women'
+                return 'All Male %s' % group_by
             elif int(x) == 1:
-                return 'Some Women'
+                return 'Mixed %s' % group_by
             elif int(x) == 2:
-                return 'All Women'
+                return 'All Female %s' % group_by
 
     @property
     def columns(self):
