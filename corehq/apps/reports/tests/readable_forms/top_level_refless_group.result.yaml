@@ -638,8 +638,7 @@
 - {calculate: null, group: null, label: note/times/accompaniment, relevant: null,
   repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/times/accompaniment}
 - {calculate: null, group: null, label: note/times/administrative, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null,
-  value: /progress_note/note/times/administrative}
+  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/times/administrative}
 - {calculate: null, group: null, label: note/times/discussion, relevant: null, repeat: null,
   required: null, response: '', tag: null, type: null, value: /progress_note/note/times/discussion}
 - {calculate: null, group: null, label: note/times/home, relevant: null, repeat: null,
@@ -654,5 +653,5 @@
   required: null, response: '', tag: null, type: null, value: /progress_note/note/times/phone}
 - {calculate: null, group: null, label: note/times/travel, relevant: null, repeat: null,
   required: null, response: '', tag: null, type: null, value: /progress_note/note/times/travel}
-- {calculate: null, group: null, label: note/times/wait, relevant: null, repeat: null}
+- {calculate: null, group: null, label: note/times/wait, relevant: null, repeat: null,
   required: null, response: '', tag: null, type: null, value: /progress_note/note/times/wait}
