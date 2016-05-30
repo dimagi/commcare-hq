@@ -1345,7 +1345,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     # used by loadtesting framework - should typically be empty
     loadtest_factor = IntegerProperty()
     is_demo_user = BooleanProperty(default=False)
-    demo_restore_id = StringProperty()
+    demo_restore_id = IntegerProperty()
 
     @classmethod
     def wrap(cls, data):

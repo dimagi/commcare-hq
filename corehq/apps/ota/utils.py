@@ -57,7 +57,7 @@ def reset_demo_user_restore(commcare_user, domain):
     demo_restore = DemoUserRestore.create(commcare_user._id, restore)
 
     # set reference to new restore
-    commcare_user.demo_restore_id = str(demo_restore.id)
+    commcare_user.demo_restore_id = demo_restore.id
 
 
 def demo_user_restore_response(commcare_user):
