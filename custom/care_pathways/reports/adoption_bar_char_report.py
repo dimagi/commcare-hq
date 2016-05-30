@@ -50,11 +50,11 @@ class AdoptionBarChartReport(CareBaseReport):
         if self.report_config['group'] == 'domain':
             chart.height = 550
             chart.rotateLabels = -55
-            chart.marginBottom = 250
+            chart.marginBottom = 150
         elif self.report_config['group'] == 'practice':
             chart.height = 700
             chart.rotateLabels = -55
-            chart.marginBottom = 400
+            chart.marginBottom = 300
         else:
             chart.height = 320
             chart.rotateLabels = 0
@@ -85,13 +85,11 @@ class AdoptionBarChartReport(CareBaseReport):
                     charts[ix].append({'x': group_name, 'y': p2f(column) / 100.0})
 
             chart.add_dataset('Farmers who adopted All practices', charts[0], "green")
-            if group_by != 'practice':
+            if group_by == 'practice':
+                chart.add_dataset('Farmers who adopted No practices', charts[1], "red")
+            else:
                 chart.add_dataset('Farmers who adopted Some practices', charts[1], "yellow")
-
-            chart.add_dataset('Farmers who adopted No practices', charts[2], "red")
-            chart.add_dataset('All', charts[0], "green")
-            chart.add_dataset('Some', charts[1], "yellow")
-            chart.add_dataset('None', charts[2], "red")
+                chart.add_dataset('Farmers who adopted No practices', charts[2], "red")
 
     @property
     def charts(self):
