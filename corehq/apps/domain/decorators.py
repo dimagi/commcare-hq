@@ -139,6 +139,11 @@ def api_key():
 
 
 def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True):
+    """
+    kwargs:
+        allow_cc_users: authorize non-WebUser users
+        allow_sessions: allow session based authorization
+    """
     # ensure someone is logged in, or challenge
     # challenge_fn should itself be a decorator that can handle authentication
     def _outer(fn):
@@ -169,18 +174,8 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
     return _outer
 
 
-def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
-
-login_or_digest = login_or_digest_ex()
-digest_auth = login_or_digest_ex(allow_sessions=False)
-
-
 def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
-
-login_or_basic = login_or_basic_ex()
-basic_auth =  login_or_basic_ex(allow_sessions=False)
 
 
 def login_or_digest_or_basic_or_apikey(default=BASIC):
@@ -208,7 +203,16 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
     )
 
 
+def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+# Use these decorators on views to allow sesson-auth or an extra authorization method
+login_or_digest = login_or_digest_ex()
+login_or_basic = login_or_basic_ex()
 login_or_api_key = login_or_api_key_ex()
+# Use these decorators on views to exclusively allow any one authorization method and not session based auth
+digest_auth = login_or_digest_ex(allow_sessions=False)
+basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
 
 
