@@ -1,13 +1,8 @@
 from django.conf import settings
 import django.core.exceptions
-from dimagi.utils.couch.cache import cache_core
+from corehq.apps.users.models import CouchUser, InvalidUser
 
 
-rcache = cache_core.get_redis_default_cache()
-
-############################################################################################################
-from corehq.apps.users.models import CouchUser, PublicUser, InvalidUser
-from corehq.apps.domain.models import Domain
 
 SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
 
@@ -40,5 +35,3 @@ class UsersMiddleware(object):
                 if request.couch_user:
                     request.couch_user.current_domain = domain
         return None
-    
-############################################################################################################
