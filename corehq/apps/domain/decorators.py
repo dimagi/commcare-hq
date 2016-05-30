@@ -61,9 +61,9 @@ def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
 
 def _page_is_whitelist(path, domain):
     pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
-    return [
+    return bool([
         x for x in pages_not_restricted_for_dimagi if x % {'domain': domain} == path
-    ]
+    ])
 
 
 def domain_specific_login_redirect(request, domain):
