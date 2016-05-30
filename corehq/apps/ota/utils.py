@@ -15,7 +15,7 @@ def turn_off_demo_mode(commcare_user):
     # delete old restore
     old_restore_id = commcare_user.demo_restore_id
     if old_restore_id:
-        old_restore = DemoUserRestore.objects.get(uuid=old_restore_id)
+        old_restore = DemoUserRestore.objects.get(id=old_restore_id)
         old_restore.delete()
 
     commcare_user.demo_restore_id = None
@@ -57,13 +57,12 @@ def reset_demo_user_restore(commcare_user, domain):
     demo_restore = DemoUserRestore.create(commcare_user._id, restore)
 
     # set reference to new restore
-    commcare_user.demo_restore_id = str(demo_restore.uuid)
+    commcare_user.demo_restore_id = str(demo_restore.id)
 
 
 def demo_user_restore_response(commcare_user):
     # Todo handle case where user is in demo-mode, but demo restore is not set due to task fail
     assert commcare_user.is_commcare_user()
-    assert bool(commcare_user.demo_restore_id)
 
-    restore = DemoUserRestore.objects.get(uuid=commcare_user.demo_restore_id)
+    restore = DemoUserRestore.objects.get(id=commcare_user.demo_restore_id)
     return restore.get_restore_http_response()

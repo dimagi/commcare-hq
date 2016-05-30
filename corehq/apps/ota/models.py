@@ -6,13 +6,10 @@ from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import NotFound
 
-import uuidfield
-
 
 class DemoUserRestore(models.Model):
-    uuid = uuidfield.UUIDField(unique=True, auto=True, db_index=True)
     demo_user_id = models.CharField(max_length=255, default=None, db_index=True)
-    restore_blob_id = models.CharField(max_length=255, default=None, db_index=True)
+    restore_blob_id = models.CharField(max_length=255, default=None)
     content_length = models.IntegerField(null=True)
     timestamp_created = models.DateTimeField(auto_now=True)
     restore_comment = models.CharField(max_length=250, null=True, blank=True)
