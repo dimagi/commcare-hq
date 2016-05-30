@@ -222,7 +222,7 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
                         if (setting.computeDefault()) {
                             return setting.value() || setting.computeDefault();
                         } else {
-                            return setting.value()
+                            return setting.value();
                         }
                     } else {
                         return null;
