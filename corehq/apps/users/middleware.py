@@ -25,7 +25,6 @@ class UsersMiddleware(object):
         if not found_domain_app:
             raise django.core.exceptions.MiddlewareNotUsed
     
-    #def process_request(self, request):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if 'domain' in view_kwargs:
             request.domain = view_kwargs['domain']
