@@ -53,15 +53,17 @@ class CallCenterUtilsTests(TestCase):
     def tearDown(self):
         delete_all_cases()
 
+    @run_with_all_backends
     def test_sync(self):
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEquals(case.name, self.user.username)
-        self.assertEquals(case.username, self.user.raw_username)
-        self.assertIsNotNone(case.language)
-        self.assertIsNotNone(case.phone_number)
+        self.assertEquals(case.get_case_property('username'), self.user.raw_username)
+        self.assertIsNotNone(case.get_case_property('language'))
+        self.assertIsNotNone(case.get_case_property('phone_number'))
 
+    @run_with_all_backends
     def test_sync_full_name(self):
         name = 'Ricky Bowwood'
         self.user.set_full_name(name)
@@ -70,6 +72,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertIsNotNone(case)
         self.assertEquals(case.name, name)
 
+    @run_with_all_backends
     def test_sync_inactive(self):
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
@@ -80,6 +83,7 @@ class CallCenterUtilsTests(TestCase):
         case = self._get_user_case()
         self.assertTrue(case.closed)
 
+    @run_with_all_backends
     def test_sync_retired(self):
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
@@ -90,6 +94,7 @@ class CallCenterUtilsTests(TestCase):
         case = self._get_user_case()
         self.assertTrue(case.closed)
 
+    @run_with_all_backends
     def test_sync_update_update(self):
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
@@ -102,6 +107,7 @@ class CallCenterUtilsTests(TestCase):
         case = self._get_user_case()
         self.assertEquals(case.name, name)
 
+    @run_with_all_backends
     def test_sync_custom_user_data(self):
         self.user.user_data = {
             '': 'blank_key',
@@ -115,8 +121,8 @@ class CallCenterUtilsTests(TestCase):
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
         self.assertIsNotNone(case)
-        self.assertEquals(case.blank_val, '')
-        self.assertEquals(case.ok, 'good')
+        self.assertEquals(case.get_case_property('blank_val'), '')
+        self.assertEquals(case.get_case_property('ok'), 'good')
 
     @run_with_all_backends
     def test_get_call_center_cases_for_user(self):
@@ -154,6 +160,7 @@ class CallCenterUtilsTests(TestCase):
         cases = get_call_center_cases(TEST_DOMAIN, CASE_TYPE)
         self.assertEqual(len(cases), 3)
 
+    @run_with_all_backends
     def test_call_center_not_default_case_owner(self):
         """
         call center case owner should not change on sync
