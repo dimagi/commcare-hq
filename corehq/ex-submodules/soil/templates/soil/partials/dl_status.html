@@ -1,7 +1,7 @@
 {% load i18n %}
 {% if error %}
     <h4>{% trans "There was an error processing your request" %}</h4>
-    <div id="error_{{ download_id }}" class="alert alert-error">
+    <div id="error_{{ download_id }}" class="alert alert-danger">
         {{ error|unordered_list}}
     </div>
 {% elif is_ready %}
@@ -9,15 +9,15 @@
     {% if has_file %}
         <p class="lead">
         {% if custom_message %}
-            <i class="icon icon-ok"></i>&nbsp;{{ custom_message }}
+            <i class="fa fa-check"></i>&nbsp;{{ custom_message }}
         {% else %}
-            <i class="icon icon-ok"></i>&nbsp;{% trans 'Your export is ready.' %}
+            <i class="fa fa-check"></i>&nbsp;{% trans 'Your export is ready.' %}
         {% endif %}
         </p>
         {% if allow_dropbox_sync %}
             <p class="alert alert-info">
             <small>
-                <i class="icon icon-info-sign"></i>&nbsp;{% blocktrans %}
+                <i class="fa fa-info-circle"></i>&nbsp;{% blocktrans %}
                 If you are downloading a large file over a slow or unstable connection, we recommend syncing to Dropbox. Learn more about
                 <a href="https://confluence.dimagi.com/display/commcarepublic/Syncing+Downloads+to+Dropbox">Sync to Dropbox</a>.
                 {% endblocktrans %}
@@ -27,12 +27,12 @@
         <form class="form-inline download-form" method="POST" action="{% url 'dropbox_upload' download_id %}">{% csrf_token %}
             <input type="hidden" name="dropbox-next" value="" />
             <a class="btn btn-primary" href="{% url 'retrieve_download' download_id %}?get_file">
-                <i class="icon icon-white icon-download-alt"></i>
+                <i class="fa fa-download"></i>
                 {% trans "Download File Now" %}
             </a>
             {% if allow_dropbox_sync %}
                 <button type="submit" class="btn" id="dropbox-sync-submit">
-                    <i class="icon icon-inbox"></i> {% trans 'Sync to Dropbox' %}
+                    <i class="fa fa-envelope"></i> {% trans 'Sync to Dropbox' %}
                 </button>
             {% endif %}
         </form>
@@ -58,5 +58,5 @@
     </script>
     </div>
 {% else %}
-    {% include 'soil/partials/bootstrap2/download_in_progress.html' %}
+    {% include 'soil/partials/download_in_progress.html' %}
 {% endif %}

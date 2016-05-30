@@ -83,7 +83,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
             DataTablesColumn(ugettext_lazy("Device ID"), span=2, prop_name='device_id'),
             DataTablesColumn(ugettext_lazy("Message"), span=5, prop_name='msg'),
             DataTablesColumn(ugettext_lazy("App Version"), span=1, prop_name='app_version'),
-            DataTablesColumn(ugettext_lazy("CommCare Version"), span=1, prop_name='commcare_version'),
+            DataTablesColumn(ugettext_lazy("CommCare Version"), span=1, prop_name='commcare_version', sortable=False),
         )
 
     @property

@@ -1,6 +1,4 @@
-import codecs
 from django.test import SimpleTestCase
-import os
 from StringIO import StringIO
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application

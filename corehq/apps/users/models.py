@@ -2098,33 +2098,6 @@ class FakeUser(WebUser):
         return "fake-user"
 
 
-class PublicUser(FakeUser):
-    """
-    Public users have read-only access to certain domains
-    """
-
-    domain_memberships = None
-
-    def __init__(self, domain, **kwargs):
-        super(PublicUser, self).__init__(**kwargs)
-        self.domain = domain
-        self.domains = [domain]
-        dm = CustomDomainMembership(domain=domain, is_admin=False)
-        dm.set_permission('view_reports', True)
-        self.domain_memberships = [dm]
-
-    @memoized
-    def get_role(self, domain=None, checking_global_admin=None):
-        assert(domain == self.domain)
-        return super(PublicUser, self).get_role(domain)
-
-    def is_eula_signed(self):
-        return True # hack for public domain so eula modal doesn't keep popping up
-
-    def get_domains(self):
-        return []
-
-
 class InvalidUser(FakeUser):
     """
     Public users have read-only access to certain domains

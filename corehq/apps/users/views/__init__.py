@@ -66,7 +66,7 @@ from corehq.apps.users.decorators import require_can_edit_web_users, require_per
 from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
                                      UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
-                                      DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
+                                      DomainRemovalRecord, UserRole, AdminUserRole, Invitation,
                                       DomainMembershipError)
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
@@ -120,18 +120,16 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
     @memoized
     def redirect(self):
         redirect = None
-        # good ol' public domain...
-        if not isinstance(self.couch_user, PublicUser):
-            user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
-            if user:
-                if user.has_permission(self.domain, 'edit_commcare_users'):
-                    from corehq.apps.users.views.mobile import MobileWorkerListView
-                    redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
-                elif user.has_permission(self.domain, 'edit_web_users'):
-                    redirect = reverse(
-                        ListWebUsersView.urlname,
-                        args=[self.domain]
-                    )
+        user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
+        if user:
+            if user.has_permission(self.domain, 'edit_commcare_users'):
+                from corehq.apps.users.views.mobile import MobileWorkerListView
+                redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
+            elif user.has_permission(self.domain, 'edit_web_users'):
+                redirect = reverse(
+                    ListWebUsersView.urlname,
+                    args=[self.domain]
+                )
         return redirect
 
     def get(self, request, *args, **kwargs):
