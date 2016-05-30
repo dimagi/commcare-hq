@@ -9,7 +9,6 @@ INSTALLED_APPS = (
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
 ) + tuple(INSTALLED_APPS)
-assert not TEST_APPS, "TEST_APPS is deprecated; use LOCAL_APPS instead"
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [

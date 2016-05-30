@@ -389,9 +389,6 @@ HQ_APPS = (
     'custom.icds_reports',
 )
 
-# DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
-TEST_APPS = ()
-
 # also excludes any app starting with 'django.'
 APPS_TO_EXCLUDE_FROM_TESTS = (
     'a5288',
@@ -595,7 +592,6 @@ WSGI_APPLICATION = 'ws4redis.django_runserver.application'
 WS4REDIS_ALLOWED_CHANNELS = helper.get_allowed_websocket_channels
 
 
-TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 # this is what gets appended to @domain after your accounts
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
