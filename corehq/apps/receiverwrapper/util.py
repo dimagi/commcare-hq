@@ -201,9 +201,12 @@ def should_ignore_submission(request):
     If submission request.GET has `submit_mode=demo` and submitting user is not demo_user,
     the submissions should be ignored
     """
+    if not request.GET.get('submit_mode') == 'demo':
+        return False
+
     instance, _ = couchforms.get_instance_and_attachment(request)
     form_json = convert_xform_to_json(instance)
-    if request.GET.get('submit_mode') == 'demo' and not from_demo_user(form_json):
+    if not from_demo_user(form_json):
         return True
     else:
         return False
