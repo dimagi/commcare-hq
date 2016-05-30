@@ -12,7 +12,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_publishers import change_meta_from_sql_form
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.user import get_user_pillow, get_unknown_users_pillow

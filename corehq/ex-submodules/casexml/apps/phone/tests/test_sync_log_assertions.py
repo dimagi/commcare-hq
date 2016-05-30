@@ -5,7 +5,7 @@ from casexml.apps.case.const import CASE_ACTION_UPDATE
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.models import SyncLog, CaseState, SimplifiedSyncLog
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from couchforms.models import XFormInstance
 
 

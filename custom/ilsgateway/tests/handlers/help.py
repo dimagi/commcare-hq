@@ -1,6 +1,6 @@
 from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.reminders import HELP_REGISTERED
-from custom.ilsgateway.tests import ILSTestScript
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
 class TestHelp(ILSTestScript):

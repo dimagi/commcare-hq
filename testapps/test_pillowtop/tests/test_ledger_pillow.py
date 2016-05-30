@@ -47,7 +47,7 @@ class LedgerPillowTest(TestCase):
         # have to get the seq id before the change is processed
         kafka_seq = consumer.offsets()['fetch'][(topics.LEDGER, 0)]
 
-        from corehq.apps.commtrack.tests import get_single_balance_block
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
         from corehq.apps.hqcase.utils import submit_case_blocks
         submit_case_blocks([
             get_single_balance_block(case.case_id, self.product_id, 100)],

@@ -9,7 +9,8 @@ from corehq.apps.app_manager.models import (
     FormSchedule,
     ScheduleVisit
 )
-from corehq.apps.app_manager.tests import TestXmlMixin, AppFactory
+from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from django.test.testcases import SimpleTestCase
 from mock import patch, MagicMock
 

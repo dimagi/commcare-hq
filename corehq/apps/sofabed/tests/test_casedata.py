@@ -5,7 +5,7 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2
 from corehq.apps.sofabed.models import CaseData, CASE_NAME_LEN
 from datetime import date, datetime, timedelta
-from casexml.apps.case.tests import delete_all_xforms, delete_all_cases
+from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 
 TEST_DOMAIN = 'test'
 TEST_NAME_LEN = CASE_NAME_LEN-8

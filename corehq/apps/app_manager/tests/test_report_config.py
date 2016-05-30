@@ -7,7 +7,7 @@ from corehq.apps.app_manager.fixtures import report_fixture_generator
 
 from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
     ReportGraphConfig, MobileSelectFilter
-from corehq.apps.app_manager.tests import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configurations, \
     mock_report_configuration_get, mock_report_data
 from corehq.apps.reports_core.filters import Choice

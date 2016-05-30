@@ -2,7 +2,7 @@ from datetime import datetime
 
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
-from corehq.apps.sms.tests import setup_default_sms_test_backend, delete_domain_phone_numbers
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroups, SupplyPointStatusTypes, \
     SupplyPointStatusValues, SLABConfig

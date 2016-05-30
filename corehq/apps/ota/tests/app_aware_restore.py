@@ -7,7 +7,7 @@ from corehq.apps.app_manager.fixtures.mobile_ucr import report_fixture_generator
 from corehq.apps.app_manager.models import Application, ReportModule, ReportAppConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.userreports.tests import get_sample_report_config
+from corehq.apps.userreports.tests.utils import get_sample_report_config
 from corehq.apps.users.models import CommCareUser
 
 

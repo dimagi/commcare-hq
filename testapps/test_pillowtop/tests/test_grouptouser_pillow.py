@@ -7,7 +7,7 @@ from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.document_types import change_meta_from_doc, GROUP
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.groups.models import Group
-from corehq.apps.groups.tests import delete_all_groups
+from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_to_user_pillow, \

@@ -3,8 +3,9 @@ from django.test import SimpleTestCase
 from mock import Mock, patch
 from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProvider
 from corehq.apps.app_manager.models import ReportAppConfig, StaticChoiceListFilter
-from corehq.apps.app_manager.tests import TestXmlMixin, MAKE_REPORT_CONFIG, \
-    mock_report_configuration_get
+from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configuration_get
+from corehq.apps.app_manager.tests.test_report_config import MAKE_REPORT_CONFIG
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
 class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):

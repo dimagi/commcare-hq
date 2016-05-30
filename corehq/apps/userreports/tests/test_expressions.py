@@ -18,7 +18,7 @@ from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import generate_cases, create_and_save_a_form, create_and_save_a_case
 
 

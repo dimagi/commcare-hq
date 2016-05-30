@@ -11,7 +11,7 @@ from casexml.apps.phone.exceptions import BadStateException
 from casexml.apps.phone.tests.utils import generate_restore_response, \
     get_exactly_one_wrapped_sync_log, generate_restore_payload
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)

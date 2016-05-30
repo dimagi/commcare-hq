@@ -9,7 +9,7 @@ from casexml.apps.phone.exceptions import SyncLogCachingError
 from casexml.apps.phone.models import SimplifiedSyncLog, get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.dummy import dummy_restore_xml
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class CacheUtilsTest(SimpleTestCase):

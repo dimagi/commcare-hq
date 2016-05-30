@@ -3,7 +3,7 @@ from mock import patch
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, CaseSearch, CaseSearchProperty
-from corehq.apps.app_manager.tests import TestXmlMixin, SuiteMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin
 
 
 DOMAIN = 'test_domain'

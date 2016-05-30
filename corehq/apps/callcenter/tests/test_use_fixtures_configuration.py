@@ -7,7 +7,7 @@ from corehq.apps.callcenter.app_parser import (
     _get_indicators_used_in_modules, _get_indicators_used_in_forms
 )
 from corehq.apps.callcenter import const
-from corehq.apps.callcenter.tests import get_indicator_slugs_from_config
+from corehq.apps.callcenter.tests.test_models import get_indicator_slugs_from_config
 from corehq.apps.domain.models import Domain, CallCenterProperties
 from corehq.apps.callcenter.fixturegenerators import IndicatorsFixturesProvider
 from corehq.util.test_utils import generate_cases, TestFileMixin

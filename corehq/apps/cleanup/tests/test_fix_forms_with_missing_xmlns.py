@@ -9,7 +9,7 @@ from testil import tempdir
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.tests import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.cleanup.management.commands.fix_forms_with_missing_xmlns import (
     generate_random_xmlns,

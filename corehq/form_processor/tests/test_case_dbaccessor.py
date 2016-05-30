@@ -13,7 +13,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAcce
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 

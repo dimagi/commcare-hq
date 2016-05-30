@@ -11,7 +11,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import get_case_search_reindexer
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO, CASE_SEARCH_INDEX
 from corehq.util.elastic import ensure_index_deleted

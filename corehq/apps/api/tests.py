@@ -9,7 +9,7 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.tests import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends
 from django_prbac.models import Role
 from tastypie.models import ApiKey
 from tastypie.resources import Resource

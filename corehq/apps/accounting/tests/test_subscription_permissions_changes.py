@@ -7,7 +7,7 @@ from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, \
     SoftwarePlanEdition, Subscription, SoftwarePlan, SoftwarePlanVersion, \
     SubscriptionType, ProBonoStatus, SoftwarePlanVisibility, SoftwareProduct, \
     SoftwareProductType
-from corehq.apps.accounting.tests import BaseAccountingTest
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.models import DataSourceConfiguration, \
