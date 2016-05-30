@@ -202,6 +202,7 @@ class CloudcareMain(View):
             "sessions_enabled": request.couch_user.is_commcare_user(),
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
             "username": request.user.username,
+            "formplayer_url": settings.FORMPLAYER_URL,
         }
         context.update(_url_context())
         if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
