@@ -54,12 +54,12 @@ class ProjectReportsTab(UITab):
     @property
     def sidebar_items(self):
         tools = self._get_tools_items()
-        user_reports = self._get_report_builder_items()
+        report_builder_nav = self._get_report_builder_items()
         project_reports = ProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + user_reports + project_reports + custom_reports
+        sidebar_items = tools + report_builder_nav + project_reports + custom_reports
         return self._filter_sidebar_items(sidebar_items)
 
     def _get_tools_items(self):
