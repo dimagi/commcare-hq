@@ -59,6 +59,13 @@ def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
     return HttpResponseRedirect(nextURL)
 
 
+def _page_is_whitelist(path, domain):
+    pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
+    return [
+        x for x in pages_not_restricted_for_dimagi if x % {'domain': domain} == path
+    ]
+
+
 def domain_specific_login_redirect(request, domain):
     project = Domain.get_by_name(domain)
     login_url = reverse('login')
@@ -66,8 +73,6 @@ def domain_specific_login_redirect(request, domain):
 
 
 def login_and_domain_required(view_func):
-
-    pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
 
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
@@ -97,7 +102,7 @@ def login_and_domain_required(view_func):
                     else:
                         return view_func(req, domain_name, *args, **kwargs)
 
-                elif user.is_superuser and (dimagi_pages or not domain.restrict_superusers):
+                elif user.is_superuser and (_page_is_whitelist(req.path, domain_name) or not domain.restrict_superusers):
                     # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)
                 elif domain.is_snapshot:
@@ -311,8 +316,6 @@ def domain_admin_required_ex(redirect_page_name=None):
     if redirect_page_name is None:
         redirect_page_name = getattr(settings, 'DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME', 'homepage')
 
-    pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
-
     def _outer(view_func):
         @login_and_domain_required
         @wraps(view_func)
@@ -324,10 +327,8 @@ def domain_admin_required_ex(redirect_page_name=None):
             domain_name, domain = load_domain(request, domain)
             if not domain:
                 raise Http404()
-            dimagi_pages = [
-                x for x in pages_not_restricted_for_dimagi if x % {'domain': domain_name} == request.path
-            ]
-            if not dimagi_pages and not request.couch_user.is_domain_admin(domain_name):
+            if not _page_is_whitelist(request.path, domain_name) and \
+               not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
 
