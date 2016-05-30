@@ -17,7 +17,7 @@
                     {% endifequal %}
 
                     {% ifequal phone.status "pending" %}
-                    <span class="label">{% trans 'VERIFICATION PENDING' %}</span>
+                    <span class="label label-default">{% trans 'VERIFICATION PENDING' %}</span>
                     {% endifequal %}
 
                     {% ifequal phone.status "duplicate" %}
@@ -27,7 +27,7 @@
                     {% endifequal %}
 
                     {% ifequal phone.status "invalid" %}
-                    <span class="label">{% trans 'INVALID FORMAT' %}</span>
+                    <span class="label label-default">{% trans 'INVALID FORMAT' %}</span>
                     {% endifequal %}
 
                     {% endif %}
