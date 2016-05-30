@@ -353,22 +353,25 @@ def toggle_demo_mode(request, domain, user_id):
     demo_mode = request.POST.get('demo_mode', 'no')
     demo_mode = True if demo_mode == 'yes' else False
 
+    edit_user_url = reverse(EditCommCareUserView.urlname, args=[domain, user_id])
     # handle bad POST param
     if user.is_demo_user == demo_mode:
         warning = _("User is already in Demo mode!") if user.is_demo_user else _("User is not in Demo mode!")
         messages.warning(request, warning)
-        return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
+        return HttpResponseRedirect(edit_user_url)
 
     if demo_mode:
         download = DownloadBase()
         res = turn_on_demo_mode_task.delay(user, domain)
         download.set_task(res)
         turn_on_demo_mode(user, domain)
-        return redirect('hq_soil_download', domain, download.download_id)
+        response = redirect('hq_soil_download', domain, download.download_id)
+        response['Location'] += '?next=%s' % (edit_user_url)
+        return response
     else:
         turn_off_demo_mode(user)
         messages.success(request, _("Successfully turned off demo mode!"))
-    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
+    return HttpResponseRedirect(edit_user_url)
 
 
 @require_can_edit_commcare_users
