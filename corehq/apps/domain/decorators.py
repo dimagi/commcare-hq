@@ -102,7 +102,10 @@ def login_and_domain_required(view_func):
                     else:
                         return view_func(req, domain_name, *args, **kwargs)
 
-                elif user.is_superuser and (_page_is_whitelist(req.path, domain_name) or not domain.restrict_superusers):
+                elif (
+                    _page_is_whitelist(req.path, domain_name) or
+                    not domain.restrict_superusers
+                ) and user.is_superuser:
                     # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)
                 elif domain.is_snapshot:
