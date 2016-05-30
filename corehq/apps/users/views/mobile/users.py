@@ -387,7 +387,10 @@ def reset_demo_user_restore(request, domain, user_id):
     res = reset_demo_user_restore_task.delay(user, domain)
     download.set_task(res)
     turn_on_demo_mode(user, domain)
-    return redirect('hq_soil_download', domain, download.download_id)
+
+    response = redirect('hq_soil_download', domain, download.download_id)
+    response['Location'] += '?next=%s' % (reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
+    return response
 
 
 @require_can_edit_commcare_users

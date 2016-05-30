@@ -53,7 +53,7 @@ def reset_demo_user_restore(commcare_user, domain):
         project=Domain.get_by_name(domain),
         user=commcare_user.to_casexml_user(),
         params=RestoreParams(version=V2),
-    ).get_payload().as_string()
+    ).get_payload().as_file()
     demo_restore = DemoUserRestore.create(commcare_user._id, restore)
 
     # set reference to new restore
