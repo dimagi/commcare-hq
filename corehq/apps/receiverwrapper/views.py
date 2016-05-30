@@ -211,7 +211,7 @@ def secure_post(request, domain, app_id=None):
 
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
-        return SubmissionPost.get_success_response(None, None)
+        return SubmissionPost.submission_ignored_response()
 
     try:
         decorated_view = authtype_map[determine_authtype(request)]
