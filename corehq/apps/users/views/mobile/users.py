@@ -236,7 +236,7 @@ class EditCommCareUserView(BaseEditUserView):
             if self.update_commtrack_form.is_valid():
                 self.update_commtrack_form.save(self.editable_user)
                 messages.success(request, _("Information updated!"))
-        if self.request.POST['form_type'] == "add-phonenumber":
+        elif self.request.POST['form_type'] == "add-phonenumber":
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub('\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
