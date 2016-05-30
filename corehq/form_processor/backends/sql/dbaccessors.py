@@ -595,6 +595,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=True)
 
     @staticmethod
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_id=None):
+        owners = [owner_id] if owner_id else None
+        return CaseAccessorSQL._get_case_ids_in_domain(
+            domain, case_type=case_type, owner_ids=owners, is_closed=False
+        )
+
+    @staticmethod
     def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None):
         owner_ids = list(owner_ids) if owner_ids else None
         with get_cursor(CommCareCaseSQL) as cursor:
