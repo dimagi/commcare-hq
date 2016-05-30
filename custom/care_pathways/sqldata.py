@@ -62,11 +62,12 @@ class CareQueryMeta(QueryMeta):
 
         group_having = ''
         having_group_by = []
-        if ('disaggregate_by' in filter_values and filter_values['disaggregate_by'] == 'group') or ('table_card_group_by' in filter_values and filter_values['table_card_group_by']):
-            group_having = "group_leadership=\'Y\'"
+        if ('disaggregate_by' in filter_values and filter_values['disaggregate_by'] == 'group') or \
+                ('table_card_group_by' in filter_values and filter_values['table_card_group_by']):
             having_group_by.append('group_leadership')
         elif 'group_leadership' in filter_values and filter_values['group_leadership']:
-            group_having = "(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) = :group_leadership and group_leadership=\'Y\'"
+            group_having = "(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) " \
+                           "= :group_leadership and group_leadership=\'Y\'"
             having_group_by.append('group_leadership')
             filter_cols.append('group_leadership')
         elif 'gender' in filter_values and filter_values['gender']:
@@ -222,33 +223,38 @@ class AdoptionBarChartReportSqlData(CareSqlData):
         elif group == 'practice':
             first_columns = 'practices'
 
-        return [
+        columns = [
             DatabaseColumn('', SimpleColumn(first_columns), self.group_name_fn),
             AggregateColumn(
-                'All', self.percent_fn,
+                'Farmers who adopted All practices', self.percent_fn,
                 [
                     CareCustomColumn('all', filters=self.filters + [RawFilter("maxmin = 2")]),
                     AliasColumn('some'),
                     AliasColumn('none')
                 ]
-            ),
-            AggregateColumn(
-                'Some', self.percent_fn,
+            )
+        ]
+
+        if group != 'practice':
+            columns.append(AggregateColumn(
+                'Farmers who adopted Some practices', self.percent_fn,
                 [
                     CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1")]),
                     AliasColumn('all'),
                     AliasColumn('none')
                 ]
-            ),
-            AggregateColumn(
-                'None', self.percent_fn,
-                [
-                    CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")]),
-                    AliasColumn('all'),
-                    AliasColumn('some')
-                ]
-            )
-        ]
+            ))
+
+        columns.append(AggregateColumn(
+            'Farmers who adopted No practices', self.percent_fn,
+            [
+                CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")]),
+                AliasColumn('all'),
+                AliasColumn('some')
+            ]
+        ))
+
+        return columns
 
     @property
     def group_by(self):
@@ -271,12 +277,17 @@ class AdoptionDisaggregatedSqlData(CareSqlData):
 
     def _to_display(self, value):
         display = {'sort_key': 0, 'html': 0}
+        disaggregate_by = self.config['disaggregate_by']
+        disaggregation_type = 'Groups'
+        if disaggregate_by == 'group':
+            disaggregation_type = 'Leadership'
+
         if value == 0:
-            display = {'sort_key': 0, 'html': 'None Women'}
+            display = {'sort_key': 0, 'html': 'All Male %s' % disaggregation_type}
         elif value == 1:
-            display = {'sort_key': 0, 'html': 'Some Women'}
+            display = {'sort_key': 0, 'html': 'Mixed %s' % disaggregation_type}
         elif value == 2:
-            display = {'sort_key': 0, 'html': 'All Women'}
+            display = {'sort_key': 0, 'html': 'All Female %s' % disaggregation_type}
 
         return display
 
