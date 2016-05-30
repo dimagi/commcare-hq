@@ -63,7 +63,6 @@ def REPORTS(project):
     reports = []
 
     reports.extend(_get_configurable_reports(project))
-    reports.extend(_get_report_builder_reports(project))
 
     reports.extend([
         (ugettext_lazy("Monitor Workers"), (
@@ -108,6 +107,8 @@ def REPORTS(project):
         if config:
             cp_reports = tuple(make_careplan_reports(config))
             reports.insert(0, (ugettext_lazy("Care Plans"), cp_reports))
+
+    reports = list(_get_report_builder_reports(project)) + reports
 
     from corehq.apps.accounting.utils import domain_has_privilege
     messaging_reports = []
