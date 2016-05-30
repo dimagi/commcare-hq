@@ -219,7 +219,11 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
             setting.valueToSave = ko.computed({
                 read: function () {
                     if (setting.enabled()) {
-                        return setting.value() || setting.computeDefault();
+                        if (setting.computeDefault()) {
+                            return setting.value() || setting.computeDefault();
+                        } else {
+                            return setting.value()
+                        }
                     } else {
                         return null;
                     }
