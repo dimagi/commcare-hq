@@ -136,7 +136,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_open_case_ids_in_domain_by_type(domain, case_type, owner_id=None):
-        get_open_case_ids_in_domain(domain, type=case_type, owner_id=owner_id)
+        return get_open_case_ids_in_domain(domain, type=case_type, owner_id=owner_id)
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):

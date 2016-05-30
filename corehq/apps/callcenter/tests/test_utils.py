@@ -119,6 +119,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertEquals(case.blank_val, '')
         self.assertEquals(case.ok, 'good')
 
+    @run_with_all_backends
     def test_get_call_center_cases_for_user(self):
         factory = CaseFactory(domain=TEST_DOMAIN, case_defaults={
             'user_id': self.user_id,
@@ -138,6 +139,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertEqual(case_ids, set([c1.case_id, c2.case_id]))
         self.assertEqual(user_ids, set([self.user_id]))
 
+    @run_with_all_backends
     def test_get_call_center_cases_all(self):
         factory = CaseFactory(domain=TEST_DOMAIN, case_defaults={
             'user_id': self.user_id,

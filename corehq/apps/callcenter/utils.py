@@ -3,7 +3,6 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
 from casexml.apps.case.const import CASE_ACTION_CLOSE
-from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain
 from casexml.apps.case.mock import CaseBlock
 import uuid
 from xml.etree import ElementTree
@@ -258,18 +257,23 @@ def get_call_center_domains():
 def get_call_center_cases(domain_name, case_type, user=None):
     all_cases = []
 
-    if user:
-        docs = (doc for owner_id in user.get_owner_ids()
-                for doc in get_open_case_docs_in_domain(domain_name, case_type,
-                                                        owner_id=owner_id))
-    else:
-        docs = get_open_case_docs_in_domain(domain_name, case_type)
+    case_accessor = CaseAccessors(domain_name)
 
-    for case_doc in docs:
-        hq_user_id = case_doc.get('hq_user_id', None)
+    if user:
+        case_ids = [
+            case_id for owner_id in user.get_owner_ids()
+            for case_id in case_accessor.get_open_case_ids_in_domain_by_type(
+                case_type=case_type, owner_id=owner_id
+            )
+        ]
+    else:
+        case_ids = case_accessor.get_open_case_ids_in_domain_by_type(case_type=case_type)
+
+    for case in case_accessor.iter_cases(case_ids):
+        hq_user_id = case.get_case_property('hq_user_id')
         if hq_user_id:
             all_cases.append(CallCenterCase(
-                case_id=case_doc['_id'],
+                case_id=case.case_id,
                 hq_user_id=hq_user_id
             ))
     return all_cases
