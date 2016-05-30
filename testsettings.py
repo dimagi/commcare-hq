@@ -18,7 +18,6 @@ NOSE_ARGS = [
 NOSE_PLUGINS = [
     'corehq.tests.nose.AppLabelsPlugin',
     'corehq.tests.nose.HqTestFinderPlugin',
-    'corehq.tests.nose.OmitDjangoInitModuleTestsPlugin',
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
 
