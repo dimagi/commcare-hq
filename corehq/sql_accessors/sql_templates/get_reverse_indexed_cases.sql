@@ -26,7 +26,7 @@ BEGIN
         INNER JOIN form_processor_commcarecaseindexsql
             ON ( form_processor_commcarecasesql.case_id = form_processor_commcarecaseindexsql.case_id )
     WHERE
-        form_processor_commcarecasesql.domain = domain_name
+        form_processor_commcarecaseindexsql.domain = domain_name
         AND form_processor_commcarecaseindexsql.referenced_id = ANY(case_ids);
 END;
 $$ LANGUAGE plpgsql;

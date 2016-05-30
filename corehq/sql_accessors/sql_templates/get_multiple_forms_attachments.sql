@@ -1,6 +1,6 @@
-DROP FUNCTION IF EXISTS get_mulitple_forms_attachments(TEXT[]);
+DROP FUNCTION IF EXISTS get_multiple_forms_attachments(TEXT[]);
 
-CREATE FUNCTION get_mulitple_forms_attachments(form_ids TEXT[]) RETURNS SETOF form_processor_xformattachmentsql AS $$
+CREATE FUNCTION get_multiple_forms_attachments(form_ids TEXT[]) RETURNS SETOF form_processor_xformattachmentsql AS $$
 BEGIN
     -- order by form id so that we don't have to do it in python
     RETURN QUERY

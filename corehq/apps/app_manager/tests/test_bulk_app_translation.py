@@ -69,9 +69,6 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         Note: Use upload_raw_excel_translations() instead. It allows easy modifications
         and diffs of xlsx data.
 
-        ToDo: Refactor tests using do_upload to use upload_raw_excel_translations(), use
-        WorkbookJSONReader.work_book_headers_as_tuples(), and
-        WorkbookJSONReader.work_book_data_as_tuples(), for making tuples from excel files
         """
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]

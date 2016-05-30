@@ -28,6 +28,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.tour import tours
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -887,14 +888,22 @@ def resume_building_data_source(request, domain, config_id):
     if not is_static and config.meta.build.finished:
         messages.warning(
             request,
-            _('Table "{}" has already finished building. Rebuild table to start over.').format(
+            _(u'Table "{}" has already finished building. Rebuild table to start over.').format(
+                config.display_name
+            )
+        )
+    elif not DataSourceResumeHelper(config).has_resume_info():
+        messages.warning(
+            request,
+            _(u'Table "{}" did not finish building but resume information is not available. '
+              u'Unfortunately, this means you need to rebuild the table.').format(
                 config.display_name
             )
         )
     else:
         messages.success(
             request,
-            _('Resuming rebuilding table "{}".').format(config.display_name)
+            _(u'Resuming rebuilding table "{}".').format(config.display_name)
         )
         resume_building_indicators.delay(config_id)
     return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))

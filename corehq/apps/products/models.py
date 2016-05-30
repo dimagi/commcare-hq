@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 import itertools
-import json_field
+import jsonfield
 
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -309,7 +309,7 @@ class SQLProduct(models.Model):
     program_id = models.CharField(max_length=100, null=True, default='')
     cost = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     units = models.CharField(max_length=100, null=True, default='')
-    product_data = json_field.JSONField(
+    product_data = jsonfield.JSONField(
         default={},
     )
     created_at = models.DateTimeField(auto_now_add=True)

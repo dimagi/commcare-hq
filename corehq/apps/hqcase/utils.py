@@ -49,12 +49,12 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
         'username': username,
         'user_id': user_id,
     })
-    submit_form_locally(
+    response, xform, cases = submit_form_locally(
         instance=form_xml,
         domain=domain,
         attachments=attachments,
     )
-    return form_id
+    return xform
 
 
 def get_case_wrapper(data):

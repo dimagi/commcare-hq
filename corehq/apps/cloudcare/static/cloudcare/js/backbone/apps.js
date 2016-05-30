@@ -701,7 +701,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                 $.ajax({
                     type: 'POST',
                     url: submitUrl,
-                    data: xml,
+                    data: xml.output,
                     success: function () {
                         self._clearFormPlayer();
                         self.showModule(selectedModule);
