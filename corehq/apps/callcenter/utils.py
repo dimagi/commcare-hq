@@ -10,7 +10,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
-from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
@@ -181,7 +181,9 @@ def _get_call_center_case_and_owner(user, domain):
     """
     Return the appropriate owner id for the given users call center case.
     """
-    case = get_case_by_domain_hq_user_id(user.project.name, user._id, domain.call_center_config.case_type)
+    case = CaseAccessors(domain.name).get_case_by_domain_hq_user_id(
+        user._id, domain.call_center_config.case_type
+    )
     if domain.call_center_config.use_user_location_as_owner:
         owner_id = call_center_location_owner(user, domain.call_center_config.user_location_ancestor_level)
     elif case and case.owner_id:

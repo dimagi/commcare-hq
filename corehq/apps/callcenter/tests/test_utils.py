@@ -13,7 +13,6 @@ from corehq.apps.callcenter.utils import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase, SimpleTestCase
 
@@ -56,7 +55,7 @@ class CallCenterUtilsTests(TestCase):
 
     def test_sync(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEquals(case.name, self.user.username)
         self.assertEquals(case.username, self.user.raw_username)
@@ -67,40 +66,40 @@ class CallCenterUtilsTests(TestCase):
         name = 'Ricky Bowwood'
         self.user.set_full_name(name)
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEquals(case.name, name)
 
     def test_sync_inactive(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
 
         self.user.is_active = False
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertTrue(case.closed)
 
     def test_sync_retired(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
 
         self.user.base_doc += DELETED_SUFFIX
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertTrue(case.closed)
 
     def test_sync_update_update(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEquals(case.name, self.user.username)
 
         name = 'Ricky Bowwood'
         self.user.set_full_name(name)
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertEquals(case.name, name)
 
     def test_sync_custom_user_data(self):
@@ -114,7 +113,7 @@ class CallCenterUtilsTests(TestCase):
             '._starts_with_punctuation': '0',
         }
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEquals(case.blank_val, '')
         self.assertEquals(case.ok, 'good')
@@ -169,8 +168,11 @@ class CallCenterUtilsTests(TestCase):
             CaseStructure(attrs={'create': True})
         ])
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertEqual(case.owner_id, cases[0].owner_id)
+
+    def _get_user_case(self):
+        return CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, CASE_TYPE)
 
 
 class CallCenterUtilsUserCaseTests(TestCase):
