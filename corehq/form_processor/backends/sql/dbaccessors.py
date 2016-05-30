@@ -503,13 +503,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
-                [domain, owner_ids, closed]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
     @unit_testing_only
@@ -594,20 +588,19 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
-                [domain, [owner_id], False]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=False)
 
     @staticmethod
     def get_closed_case_ids_for_owner(domain, owner_id):
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=True)
+
+    @staticmethod
+    def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None):
+        owner_ids = list(owner_ids) if owner_ids else None
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
-                [domain, [owner_id], True]
+                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s)',
+                [domain, case_type, owner_ids, is_closed]
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]

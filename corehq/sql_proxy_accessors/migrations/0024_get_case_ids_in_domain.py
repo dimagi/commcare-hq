@@ -14,13 +14,9 @@ migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_proxy_accessors', '0001_initial'),
+        ('sql_proxy_accessors', '0023_rename_get_multiple_forms_attachments'),
     ]
 
     operations = [
-        migrator.get_migration('get_case_last_modified_dates.sql'),
-        migrator.get_migration('get_extension_case_ids.sql'),
-        migrator.get_migration('case_has_transactions_since_sync.sql'),
-        migrator.get_migration('get_all_reverse_indices.sql'),
-        migrator.get_migration('get_case_ids_modified_with_owner_since.sql'),
+        migrator.get_migration('get_case_ids_in_domain_1sql'),
     ]
