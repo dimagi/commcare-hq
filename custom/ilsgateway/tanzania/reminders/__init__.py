@@ -71,7 +71,7 @@ SUBMITTED_REMINDER_FACILITY = _(
 SUBMITTED_REMINDER_DISTRICT = _(
     "How many R&R forms have you submitted to MSD? "
     "Reply with 'submitted A <number of R&Rs submitted for group A> "
-    "B <number of R&Rs submitted for group B>'"
+    "B <number of R&Rs submitted for group B> C <number of R&Rs submitted for group C>'"
 )
 SUBMITTED_INVALID_QUANTITY = _(
     'Not a valid number: %(number)s'
