@@ -336,37 +336,6 @@ def get_domain_languages(domain):
     return sorted(domain_languages) or langcodes.get_all_langs_for_select()
 
 
-class BaseFullEditUserView(BaseEditUserView):
-    edit_user_form_title = ""
-
-    @property
-    def main_context(self):
-        context = super(BaseFullEditUserView, self).main_context
-        context.update({
-            'edit_user_form_title': self.edit_user_form_title,
-        })
-        return context
-
-    @property
-    @memoized
-    def form_user_update(self):
-        form = super(BaseFullEditUserView, self).form_user_update
-        form.load_language(language_choices=get_domain_languages(self.domain))
-        return form
-
-    def post(self, request, *args, **kwargs):
-        if self.request.POST['form_type'] == "add-phonenumber":
-            phone_number = self.request.POST['phone_number']
-            phone_number = re.sub('\s', '', phone_number)
-            if re.match(r'\d+$', phone_number):
-                self.editable_user.add_phone_number(phone_number)
-                self.editable_user.save()
-                messages.success(request, _("Phone number added!"))
-            else:
-                messages.error(request, _("Please enter digits only."))
-        return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
-
-
 class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")
