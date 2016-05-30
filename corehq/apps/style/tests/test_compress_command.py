@@ -7,7 +7,6 @@ from django.template.loader_tags import ExtendsNode
 from django.core.management import call_command
 from django.test import SimpleTestCase
 from nose.plugins.attrib import attr
-from unittest.util import safe_repr
 
 B3_BASE = 'style/bootstrap3/base.html'
 

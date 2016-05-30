@@ -1,6 +1,6 @@
 import json
 import logging
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.utils import html
 from corehq.apps.receiverwrapper.util import (
     get_version_from_appversion_text,
@@ -19,21 +19,18 @@ from corehq.apps.reports.datatables import (
     DataTablesColumn,
     DataTablesHeader,
     DTSortDirection,
-    DTSortType,
 )
-from corehq.apps.reports.util import _report_user_dict, SimplifiedUserInfo
-from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
 from urllib import urlencode
 
 logger = logging.getLogger(__name__)
 
-DATA_NOTICE = ugettext_noop(
+DATA_NOTICE = ugettext_lazy(
     "This report will only show data for the past 60 days. Furthermore the report may not "
     "always show the latest log data but will be updated over time",
 )
@@ -45,7 +42,7 @@ TAGS = {
 
 
 class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
-    name = ugettext_noop("Device Log Details")
+    name = ugettext_lazy("Device Log Details")
     slug = "log_details"
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'corehq.apps.reports.filters.devicelog.DeviceLogTagFilter',
@@ -73,20 +70,20 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Log Date", span=1, sort_type=DATE, prop_name='date',
+            DataTablesColumn(ugettext_lazy("Log Date"), span=1, sort_type=DATE, prop_name='date',
                              sort_direction=[DTSortDirection.DSC,
                                              DTSortDirection.ASC]),
-            DataTablesColumn("Server Date", span=1, sort_type=DATE, prop_name='server_date',
+            DataTablesColumn(ugettext_lazy("Log Submission Date"), span=1, sort_type=DATE, prop_name='server_date',
                              sort_direction=[DTSortDirection.DSC,
                                              DTSortDirection.ASC]),
-            DataTablesColumn("Log Type", span=1, prop_name='type'),
-            DataTablesColumn("Logged in Username", span=2,
+            DataTablesColumn(ugettext_lazy("Log Type"), span=1, prop_name='type'),
+            DataTablesColumn(ugettext_lazy("Logged in Username"), span=2,
                              prop_name='username'),
-            DataTablesColumn("Device Users", span=2),
-            DataTablesColumn("Device ID", span=2, prop_name='device_id'),
-            DataTablesColumn("Message", span=5, prop_name='msg'),
-            DataTablesColumn("App Version", span=1, prop_name='app_version'),
-            DataTablesColumn("CommCare Version", span=1, prop_name='commcare_version'),
+            DataTablesColumn(ugettext_lazy("Device Users"), span=2),
+            DataTablesColumn(ugettext_lazy("Device ID"), span=2, prop_name='device_id'),
+            DataTablesColumn(ugettext_lazy("Message"), span=5, prop_name='msg'),
+            DataTablesColumn(ugettext_lazy("App Version"), span=1, prop_name='app_version'),
+            DataTablesColumn(ugettext_lazy("CommCare Version"), span=1, prop_name='commcare_version', sortable=False),
         )
 
     @property
@@ -228,11 +225,11 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
                 self._device_users_fmt % {
                     "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
                                             DeviceLogUsersFilter.slug,
-                                            username,
+                                            device_username,
                                             user_query),
-                    "username": username,
+                    "username": device_username,
                 }
-                for username in device_users
+                for device_username in device_users
             ])
 
             log_tag = log.type or 'unknown'

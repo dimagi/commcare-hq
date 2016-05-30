@@ -10,7 +10,6 @@ from corehq.apps.importer import util as importer_util
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from soil import DownloadBase
-from casexml.apps.case.xml import V2
 from dimagi.utils.prime_views import prime_views
 from couchdbkit.exceptions import ResourceNotFound
 import uuid
@@ -64,13 +63,27 @@ def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLO
     ids_seen = set()
 
     def _submit_caseblocks(caseblocks):
+        err = False
         if caseblocks:
-            submit_case_blocks(
-                [ElementTree.tostring(cb.as_xml()) for cb in caseblocks],
-                domain,
-                username,
-                user_id,
-            )
+            try:
+                form = submit_case_blocks(
+                    [ElementTree.tostring(cb.as_xml()) for cb in caseblocks],
+                    domain,
+                    username,
+                    user_id,
+                )
+                if form.is_error:
+                    errors.add(
+                        error=ImportErrors.ImportErrorMessage,
+                        row_number=form.problem
+                    )
+            except Exception:
+                err = True
+                errors.add(
+                    error=ImportErrors.ImportErrorMessage,
+                    row_number=caseblocks[0]._id
+                )
+        return err
 
     for i in range(row_count):
         if task:
@@ -250,7 +263,8 @@ def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLO
             caseblocks = []
 
     # final purge of anything left in the queue
-    _submit_caseblocks(caseblocks)
+    if _submit_caseblocks(caseblocks):
+        match_count -= 1
     num_chunks += 1
     return {
         'created_count': created_count,

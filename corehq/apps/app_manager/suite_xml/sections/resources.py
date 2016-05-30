@@ -46,6 +46,8 @@ class LocaleResourceContributor(SectionContributor):
             else self.app.build_profiles[self.build_profile_id].langs
         for lang in ["default"] + langs:
             path = './{lang}/app_strings.txt'.format(lang=lang)
+            if self.build_profile_id:
+                path += '?profile={profile}'.format(profile=self.build_profile_id)
             resource = LocaleResource(
                 language=lang,
                 id=id_strings.locale_resource(lang),

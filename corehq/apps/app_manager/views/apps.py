@@ -3,8 +3,7 @@ import json
 from collections import defaultdict
 from StringIO import StringIO
 
-from django.core.cache import cache
-from django.utils.translation import ugettext as _, get_language
+from django.utils.translation import ugettext as _
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
@@ -41,12 +40,10 @@ from corehq.util.compression import decompress
 from corehq.apps.app_manager.xform import (
     XFormException, XForm)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
-from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
 from couchexport.export import FormattedRow
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.web import json_response, json_request
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import (

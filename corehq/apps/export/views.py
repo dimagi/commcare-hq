@@ -1270,7 +1270,7 @@ class FormExportListView(BaseExportListView):
         if self.is_deid:
             raise Http404()
         try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain)
+            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_form_rmi_response()
         except Exception as e:
             return format_angular_error(
@@ -1384,7 +1384,7 @@ class CaseExportListView(BaseExportListView):
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
         try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain)
+            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_case_rmi_response()
         except Exception as e:
             return format_angular_error(

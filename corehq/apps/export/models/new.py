@@ -23,6 +23,7 @@ from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.toggles import USE_SQL_BACKEND
 from corehq.util.global_request import get_request
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
@@ -916,6 +917,10 @@ class FormExportDataSchema(ExportDataSchema):
         )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            # TODO: Remove this when we mark applications that have been submitted
+            if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
+                continue
+
             app = Application.wrap(app_doc)
             xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
             if not xform:
@@ -1042,6 +1047,9 @@ class CaseExportDataSchema(ExportDataSchema):
         )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            # TODO: Remove this when we mark applications that have been submitted
+            if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
+                continue
             app = Application.wrap(app_doc)
             case_property_mapping = get_case_properties(
                 app,

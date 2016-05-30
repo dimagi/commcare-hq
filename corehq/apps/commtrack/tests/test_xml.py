@@ -427,23 +427,23 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
     @run_with_all_backends
     def test_blank_case_id_in_balance(self):
-        instance_id = submit_case_blocks(
+        form = submit_case_blocks(
             case_blocks=get_single_balance_block(case_id='', product_id=self.products[0]._id, quantity=100),
             domain=self.domain.name,
         )
-        instance = FormAccessors(self.domain.name).get_form(instance_id)
+        instance = FormAccessors(self.domain.name).get_form(form.form_id)
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
 
     @run_with_all_backends
     def test_blank_case_id_in_transfer(self):
-        instance_id = submit_case_blocks(
+        form = submit_case_blocks(
             case_blocks=get_single_transfer_block(
                 src_id='', dest_id='', product_id=self.products[0]._id, quantity=100,
             ),
             domain=self.domain.name,
         )
-        instance = FormAccessors(self.domain.name).get_form(instance_id)
+        instance = FormAccessors(self.domain.name).get_form(form.form_id)
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
 
@@ -695,8 +695,8 @@ def _report_soh(soh_reports, case_id, domain):
         )
         for report in soh_reports
     ]
-    form_id = submit_case_blocks(balance_blocks, domain)
-    return json_format_datetime(FormAccessors(domain).get_form(form_id).received_on)
+    form = submit_case_blocks(balance_blocks, domain)
+    return json_format_datetime(FormAccessors(domain).get_form(form.form_id).received_on)
 
 
 def _get_ota_balance_blocks(project, user):
