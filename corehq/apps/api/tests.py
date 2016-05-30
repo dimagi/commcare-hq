@@ -163,11 +163,12 @@ class APIResourceTest(TestCase):
         # session based auth should fail
         self.client.login(username=self.username, password=self.password)
         if method == "POST":
-            response = self.client.post(url, post_data)
+            response = self.client.post(url, post_data, content_type=content_type)
         elif method == "PUT":
-            self.assertEqual(response.status_code, 401)
+            response = self.client.put(url, post_data, content_type=content_type)
+        self.assertEqual(response.status_code, 401)
 
-        # api_key auth should succeed, caller can check for expected code
+        # api_key auth should succeed, caller should check expected response status and content
         api_url = self._api_url(url)
         if method == "POST":
             response = self.client.post(api_url, post_data, content_type=content_type)
@@ -1515,7 +1516,7 @@ class TestApiKey(APIResourceTest):
                                   "username": self.user.username,
                                   "api_key": self.api_key.key
                               }))
-        response = self._assert_auth_get_resource(endpoint)
+        response = self.client.get(endpoint)
         self.assertEqual(response.status_code, 200)
 
     def test_wrong_api_key(self):
@@ -1524,7 +1525,7 @@ class TestApiKey(APIResourceTest):
                                   "username": self.user.username,
                                   "api_key": 'blah'
                               }))
-        response = self._assert_auth_get_resource(endpoint)
+        response = self.client.get(endpoint)
         self.assertEqual(response.status_code, 401)
 
     def test_wrong_user_api_key(self):
@@ -1541,7 +1542,7 @@ class TestApiKey(APIResourceTest):
                                   "username": self.user.username,
                                   "api_key": other_api_key.key
                               }))
-        response = self._assert_auth_get_resource(endpoint)
+        response = self.client.get(endpoint)
         self.assertEqual(response.status_code, 401)
 
         other_api_key.delete()
