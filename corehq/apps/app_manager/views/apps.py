@@ -279,7 +279,9 @@ def copy_app_check_domain(request, domain, name, app_id_or_source):
 @require_can_edit_apps
 def copy_app(request, domain):
     app_id = request.POST.get('app')
-    form = CopyApplicationForm(app_id, request.POST)
+    form = CopyApplicationForm(
+        app_id, request.POST, export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
+    )
     if form.is_valid():
         gzip = request.FILES.get('gzip')
         if gzip:
@@ -318,7 +320,7 @@ def app_from_template(request, domain, slug):
 
 @require_can_edit_apps
 def export_gzip(req, domain, app_id):
-    app_json = get_app(None, app_id)
+    app_json = get_app(domain, app_id)
     fd, fpath = tempfile.mkstemp()
     with os.fdopen(fd, 'w') as tmp:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
