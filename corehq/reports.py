@@ -1,3 +1,4 @@
+import datetime
 from django.core.urlresolvers import reverse
 from corehq import privileges
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
@@ -62,6 +63,7 @@ def REPORTS(project):
     reports = []
 
     reports.extend(_get_configurable_reports(project))
+    reports.extend(_get_report_builder_reports(project))
 
     reports.extend([
         (ugettext_lazy("Monitor Workers"), (
@@ -193,6 +195,44 @@ def _safely_get_report_configs(project_name):
     return configs
 
 
+def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
+    from corehq.apps.reports.generic import GenericReportView
+
+    # this is really annoying.
+    # the report metadata should really be pulled outside of the report classes
+    @classmethod
+    def get_url(cls, domain, **kwargs):
+        from corehq.apps.userreports.models import CUSTOM_REPORT_PREFIX
+        slug = (
+            ConfigurableReport.slug
+            if not config._id.startswith(CUSTOM_REPORT_PREFIX)
+            else CustomConfigurableReportDispatcher.slug
+        )
+        return reverse(slug, args=[domain, config._id])
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        if show_in_nav:
+            return config.visible or (
+            user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
+        return False
+
+    @classmethod
+    def display_in_dropdown(cls, domain=None, project=None, user=None):
+        if show_in_dropdown:
+            return config.visible or (
+            user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
+        return False
+
+    return type('DynamicReport{}'.format(config._id), (GenericReportView,), {
+        'name': config.title,
+        'description': config.description or None,
+        'get_url': get_url,
+        'show_in_navigation': show_in_navigation,
+        'display_in_dropdown': display_in_dropdown,
+    })
+
+
 def _get_configurable_reports(project):
     """
     User configurable reports
@@ -200,34 +240,33 @@ def _get_configurable_reports(project):
     configs = _safely_get_report_configs(project.name)
 
     if configs:
-        def _make_report_class(config):
-            from corehq.apps.reports.generic import GenericReportView
+        yield (_('Reports'), [_make_report_class(config, show_in_nav=True) for config in configs])
 
-            # this is really annoying.
-            # the report metadata should really be pulled outside of the report classes
-            @classmethod
-            def get_url(cls, domain, **kwargs):
-                from corehq.apps.userreports.models import CUSTOM_REPORT_PREFIX
-                slug = (
-                    ConfigurableReport.slug
-                    if not config._id.startswith(CUSTOM_REPORT_PREFIX)
-                    else CustomConfigurableReportDispatcher.slug
-                )
-                return reverse(slug, args=[domain, config._id])
 
-            @classmethod
-            def show_in_navigation(cls, domain=None, project=None, user=None):
-                return config.visible or (user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
+def _get_report_builder_reports(project):
+    """
+    Yield a section with the two most recently edited report builder reports
+    for display in the dropdown.
+    """
+    configs = _safely_get_report_configs(project.name)
+    report_builder_reports = [c for c in configs if c.report_meta.created_by_builder]
 
-            return type('DynamicReport{}'.format(config._id), (GenericReportView, ), {
-                'name': config.title,
-                'description': config.description or None,
-                'get_url': get_url,
-                'show_in_navigation': show_in_navigation,
-            })
+    def key(config):
+        """Key function for sorting configs"""
+        modified = config.report_meta.last_modified
+        if not modified:
+            # Use the minimum date for any config thats missing it
+            modified = datetime.datetime(1, 1, 1)
+        return modified
 
-        yield (_('Reports'), [_make_report_class(config) for config in configs])
-
+    report_builder_reports.sort(key=key, reverse=True)
+    if len(report_builder_reports) > 2:
+        report_builder_reports = report_builder_reports[:2]
+    if configs:
+        yield (
+            _('Report Builder Reports'),
+            [_make_report_class(config, show_in_dropdown=True) for config in report_builder_reports]
+        )
 
 DATA_INTERFACES = (
     (ugettext_lazy("Export Data"), (

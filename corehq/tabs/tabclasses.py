@@ -85,7 +85,19 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        return tools + user_reports + project_reports + custom_reports
+        sidebar_items = tools + user_reports + project_reports + custom_reports
+
+        filtered_sidebar_items = []
+        for section, items in sidebar_items:
+            filtered_items = []
+            for item in items:
+                if item.has_key("show_in_navigation") and not item["show_in_navigation"]:
+                    continue
+                filtered_items.append(item)
+            if filtered_items:
+                filtered_sidebar_items.append((section, filtered_items))
+                
+        return filtered_sidebar_items
 
     @property
     def dropdown_items(self):
