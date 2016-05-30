@@ -8,32 +8,28 @@ from .dbaccessors import get_by_domain_and_type
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
-# This list is used to grandfather in existing data, any new fields should use
-# the system prefix defined below
-SYSTEM_FIELDS = ("commtrack-supply-point",)
 # If mobile-worker is demo, this will be set to value 'demo'
 COMMCARE_USER_TYPE_KEY = 'user_type'
 COMMCARE_USER_TYPE_DEMO = 'demo'
+# This list is used to grandfather in existing data, any new fields should use
+# the system prefix defined below
+SYSTEM_FIELDS = ("commtrack-supply-point", 'name', 'type', 'owner_id', 'external_id', 'hq_user_id')
 SYSTEM_PREFIX = "commcare"
-RESERVED_WORDS = ('name', 'type', 'owner_id', 'external_id', 'hq_user_id')
-
-
-def _validate_reserved_words(slug, words=SYSTEM_FIELDS):
-    if slug in words:
-        return _('You may not use "{}" as a field name').format(slug)
-    for prefix in [SYSTEM_PREFIX, 'xml']:
-        if slug and slug.startswith(prefix):
-            return _('Field names may not begin with "{}"').format(prefix)
-
-
-def is_system_key(slug):
-    return bool(_validate_reserved_words(slug))
 
 
 def validate_reserved_words(slug):
-    error = _validate_reserved_words(slug, SYSTEM_FIELDS + RESERVED_WORDS)
-    if error is not None:
-        raise ValidationError(error)
+    if slug in SYSTEM_FIELDS:
+        raise ValidationError(_('You may not use "{}" as a field name').format(slug))
+    for prefix in [SYSTEM_PREFIX, 'xml']:
+        if slug and slug.startswith(prefix):
+            raise ValidationError(_('Field names may not begin with "{}"').format(prefix))
+
+
+def is_system_key(slug):
+    try:
+        validate_reserved_words(slug)
+    except ValidationError:
+        return True
 
 
 class CustomDataField(JsonObject):

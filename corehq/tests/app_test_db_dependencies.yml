@@ -352,6 +352,7 @@ corehq.apps.callcenter:
   - corehq.apps.products
   - corehq.apps.notifications
   - corehq.apps.reminders
+  - corehq.apps.notifications
   - corehq.apps.sofabed
   - corehq.apps.tour
   - corehq.apps.userhack
