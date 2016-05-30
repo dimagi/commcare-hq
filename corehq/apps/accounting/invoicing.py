@@ -98,12 +98,6 @@ class DomainInvoiceFactory(object):
             created_by=self.__class__.__name__,
             entry_point=EntryPoint.SELF_STARTED,
         )[0]
-        if account.date_confirmed_extra_charges is None:
-            log_accounting_info(
-                "Did not generate invoice because date_confirmed_extra_charges "
-                "was null for domain %s" % self.domain.name
-            )
-            do_not_invoice = True
 
         for start_date, end_date in community_ranges:
             # create a new community subscription for each

@@ -129,9 +129,7 @@ class TestInvoice(BaseInvoiceTestCase):
         generator.create_excess_community_users(domain)
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
-        billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
-        account.date_confirmed_extra_charges = datetime.date.today()
-        account.save()
+        generator.arbitrary_contact_info(account, self.dimagi_user)
         tasks.generate_invoices()
         subscriber = Subscriber.objects.get(domain=domain.name)
         invoices = Invoice.objects.filter(subscription__subscriber=subscriber)
@@ -388,9 +386,7 @@ class TestUserLineItem(BaseInvoiceTestCase):
 
         account = BillingAccount.get_or_create_account_by_domain(
             domain, created_by=self.dimagi_user)[0]
-        billing_contact = generator.arbitrary_contact_info(account, self.dimagi_user)
-        account.date_confirmed_extra_charges = datetime.date.today()
-        account.save()
+        generator.arbitrary_contact_info(account, self.dimagi_user)
 
         tasks.generate_invoices()
         subscriber = Subscriber.objects.get(domain=domain.name)
