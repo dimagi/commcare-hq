@@ -1237,14 +1237,15 @@ class TestSingleSignOnResource(APIResourceTest):
         '''
         If correct credentials for a web user are submitted, the response is the profile of that web user
         '''
-        response = self._assert_auth_post_resource(self.list_endpoint, {'username': self.username, 'password': self.password})
+        response = self.client.post(self.list_endpoint, {'username': self.username, 'password': self.password})
         self.assertEqual(response.status_code, 200)
 
     def test_commcare_user_success(self):
         '''
         If correct credentials for a commcare user are submitted, the response is the record for that commcare user
         '''
-        response = self._assert_auth_post_resource(self.list_endpoint, {'username': self.commcare_username, 'password': self.commcare_password})
+        response = self.client.post(self.list_endpoint,
+                                    {'username': self.commcare_username, 'password': self.commcare_password})
         self.assertEqual(response.status_code, 200)
 
     def test_wrong_domain(self):
@@ -1261,10 +1262,11 @@ class TestSingleSignOnResource(APIResourceTest):
         new_subscription = Subscription.new_domain_subscription(new_account, wrong_domain.name, plan)
         new_subscription.is_active = True
         new_subscription.save()
-        wrong_list_endpoint = reverse('api_dispatch_list', kwargs=dict(domain=wrong_domain.name,
-                                                                       api_name=self.api_name,
-                                                                       resource_name=self.resource.Meta.resource_name))
-        response = self._assert_auth_post_resource(wrong_list_endpoint, {'username': self.username, 'password': self.password})
+        wrong_list_endpoint = reverse('api_dispatch_list',
+                                      kwargs=dict(domain=wrong_domain.name,
+                                                  api_name=self.api_name,
+                                                  resource_name=self.resource.Meta.resource_name))
+        response = self.client.post(wrong_list_endpoint, {'username': self.username, 'password': self.password})
         self.assertEqual(response.status_code, 403)
         wrong_domain.delete()
 
@@ -1272,21 +1274,21 @@ class TestSingleSignOnResource(APIResourceTest):
         '''
         If incorrect password for the correct username and domain pair are submitted, the response is forbidden
         '''
-        response = self._assert_auth_post_resource(self.list_endpoint, {'username': self.username, 'password': 'bimbizzleboozle'})
+        response = self.client.post(self.list_endpoint, {'username': self.username, 'password': 'bimbizzleboozle'})
         self.assertEqual(response.status_code, 403)
 
     def test_no_username(self):
         '''
         If no username supplied, 400
         '''
-        response = self._assert_auth_post_resource(self.list_endpoint, {'password': 'bimbizzleboozle'})
+        response = self.client.post(self.list_endpoint, {'password': 'bimbizzleboozle'})
         self.assertEqual(response.status_code, 400)
 
     def test_no_password(self):
         '''
         If no password supplied, 400
         '''
-        response = self._assert_auth_post_resource(self.list_endpoint, {'username': self.username})
+        response = self.client.post(self.list_endpoint, {'username': self.username})
         self.assertEqual(response.status_code, 400)
 
 
@@ -1411,6 +1413,9 @@ class TestBulkUserAPI(APIResourceTest):
         cls.make_users()
         set_up_subscription(cls)
         cls.domain = Domain.get(cls.domain._id)
+
+        django_user = WebUser.get_django_user(cls.user)
+        cls.api_key, _ = ApiKey.objects.get_or_create(user=django_user)
 
     @classmethod
     def tearDownClass(cls):
