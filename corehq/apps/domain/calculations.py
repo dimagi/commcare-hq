@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_number_of_cases_per_domain
@@ -16,7 +17,7 @@ from corehq.apps.hqadmin.reporting.reports import (
 )
 from couchforms.analytics import get_number_of_forms_per_domain, \
     get_number_of_forms_in_domain, domain_has_submission_in_last_30_days, \
-    get_first_form_submission_received, get_last_form_submission_received
+    get_first_form_submission_received, get_last_form_submission_received, get_300th_form_submission_received
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
@@ -285,7 +286,8 @@ CALC_FNS = {
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
     'j2me_forms_in_last': j2me_forms_in_last,
-    'j2me_forms_in_last_bool': j2me_forms_in_last_bool
+    'j2me_forms_in_last_bool': j2me_forms_in_last_bool,
+    '300th_form_submission': get_300th_form_submission_received
 }
 
 
