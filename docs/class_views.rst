@@ -116,13 +116,13 @@ in addition to:
     This shows up as the root name on the section breadcrumbs.
 
 `template_name`
-    Your template should extend `style/bootstrap3/base_section.html`
+    Your template should extend `style/base_section.html`
 
     It might look something like:
 
     .. code-block:: html
 
-        {% extends 'style/bootstrap3/base_section.html' %}
+        {% extends 'style/base_section.html' %}
 
         {% block js %}{{ block.super }}
             {# some javascript imports #}
@@ -142,7 +142,7 @@ in addition to:
 
 .. note:: Organizing Section Templates
 
-    Currently, the practice is to extend `style/bootstrap3/base_section.html` in a base template for
+    Currently, the practice is to extend `style/base_section.html` in a base template for
     your section (e.g. `users/base_template.html`) and your section page will then extend
     its section's base template.
 
