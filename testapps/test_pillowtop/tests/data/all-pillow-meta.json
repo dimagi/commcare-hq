@@ -91,19 +91,6 @@
         "include_docs": false,
         "name": "CareBiharFluffPillow"
     },
-    "CaseDataPillow": {
-        "advertised_name": "corehq.pillows.sofabed.CaseDataPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.sofabed.CaseDataPillow.testhq",
-        "couch_filter": "case/casedocs",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.sofabed.CaseDataPillow",
-        "include_docs": false,
-        "name": "CaseDataPillow"
-    },
     "CasePillow": {
         "advertised_name": "corehq.pillows.case.CasePillow.85e1a25ff57c5892b6fa95caf949ae4c.testhq",
         "change_feed_type": "CouchChangeFeed",
