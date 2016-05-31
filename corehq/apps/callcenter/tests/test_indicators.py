@@ -12,12 +12,13 @@ from corehq.apps.callcenter.utils import sync_call_center_user_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
 from django.core import cache
 
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import connection_manager
 from corehq.sql_db.tests.utils import database_creator
 
@@ -124,7 +125,7 @@ class BaseCCTests(TestCase):
         locmem_cache.clear()
 
     def _test_indicators(self, user, data_set, expected):
-        user_case = get_case_by_domain_hq_user_id(user.domain, user.user_id, CASE_TYPE)
+        user_case = CaseAccessors(user.domain).get_case_by_domain_hq_user_id(user.user_id, CASE_TYPE)
         case_id = user_case.case_id
         self.assertIn(case_id, data_set)
 
@@ -286,7 +287,7 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_sync_log(self):
-        user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user.get_id, CASE_TYPE)
+        user_case = CaseAccessors(self.cc_domain.name).get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
 
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
@@ -330,7 +331,7 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_caching(self):
-        user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user._id, CASE_TYPE)
+        user_case = CaseAccessors(self.cc_domain.name).get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
         expected_indicators = {'a': 1, 'b': 2}
         cached_data = CachedIndicators(
             user_id=self.cc_user.get_id,

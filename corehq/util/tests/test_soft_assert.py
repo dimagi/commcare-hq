@@ -83,7 +83,7 @@ class SoftAssertHelpersTest(SimpleTestCase):
         santized_request = get_sanitized_request_repr(raw_request)
 
         # raw request exposes password
-        self.assertTrue('mypass' in str(raw_request))
+        self.assertTrue('mypass' in str(raw_request.POST))
 
         # sanitized_request should't expose password
         self.assertFalse('mypass' in santized_request)

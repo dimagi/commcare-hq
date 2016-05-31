@@ -48,14 +48,14 @@
 
     <suite><resource id="suite" version="{{ app.version }}">
         {% if app.enable_relative_suite_path or not is_odk %}
-            <location authority="local">{{ app.suite_loc }}{% if build_profile_id %}?profile={{ build_profile_id }}{% endif %}</location>
+            <location authority="local">{{ app.suite_loc }}</location>
         {% endif %}
         <location authority="remote">{{ app.suite_url }}{% if build_profile_id %}?profile={{ build_profile_id }}{% endif %}</location>
     </resource></suite>
     {% if include_media_suite %}
     <suite><resource id="media-suite" version="{{ app.version }}">
         {% if app.enable_relative_suite_path or not is_odk %}
-            <location authority="local">{{ app.media_suite_loc }}{% if build_profile_id %}?profile={{ build_profile_id }}{% endif %}</location>
+            <location authority="local">{{ app.media_suite_loc }}</location>
         {% endif %}
         <location authority="remote">{{ app.media_suite_url }}{% if build_profile_id %}?profile={{ build_profile_id }}{% endif %}</location>
     </resource></suite>

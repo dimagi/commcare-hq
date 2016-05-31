@@ -19,6 +19,7 @@ class DBAccessorsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(DBAccessorsTest, cls).setUpClass()
         cls.domain = 'domain-domain'
         cls.db = get_db()
 
