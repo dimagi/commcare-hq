@@ -920,10 +920,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
     def config(self):
         if self.config_id is None:
             return DataSourceConfiguration(domain=self.domain)
-        try:
-            return get_datasource_config(self.config_id, self.domain)[0]
-        except DataSourceConfigurationNotFoundError:
-            raise Http404()
+        return get_datasource_config_or_404(self.config_id, self.domain)[0]
 
     @property
     @memoized
