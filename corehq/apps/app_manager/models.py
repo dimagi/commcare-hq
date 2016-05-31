@@ -4235,7 +4235,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
-    vellum_case_management = BooleanProperty(default=False)
+    vellum_case_management = BooleanProperty(default=True)
 
     build_profiles = SchemaDictProperty(BuildProfile)
 
@@ -5535,6 +5535,8 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
+
+    vellum_case_management = False
 
     def is_remote_app(self):
         return True
