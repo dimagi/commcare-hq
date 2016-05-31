@@ -833,7 +833,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
             'next_url_text': _("Return to manage mobile workers"),
         })
-        return render(request, 'style/bootstrap3/soil_status_full.html', context)
+        return render(request, 'style/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
