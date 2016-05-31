@@ -32,7 +32,7 @@
             g.clearUserCookie=function(d,i){d=n.domain;while(1){n.cookie='fs_uid=;domain='+d+
                     ';path=/;expires='+new Date(0);i=d.indexOf('.');if(i<0)break;d=d.slice(i+1)}}
         })(window,document,'FS','script','user');
-        FS.identify('{{ request.couch_user.username }}');
+        FS.identify('{{ request.couch_user.username }}',{'displayName': '{{ request.couch_user.username }}'});
     </script>
 {% endblock %}
 {% block js %}{{ block.super }}
