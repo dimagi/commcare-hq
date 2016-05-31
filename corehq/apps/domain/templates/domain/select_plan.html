@@ -59,29 +59,6 @@
             <input type="hidden" name="from_plan_page" value="true">
             {% endif %}
             <input type="hidden" name="plan_edition" data-bind="value: selected_edition">
-            {% if is_non_ops_superuser %}
-            <div class="alert alert-info" data-bind="visible: isSuperuserNoticeVisible">
-                {% blocktrans %}
-                    <p>
-                        <strong>Hey there, Dimagi!</strong>
-                    </p>
-                    <p>
-                        Sorry, but you can only sign up projects for
-                        Community or the Dimagi Enterprise Plan
-                        <strong>(internal projects only, please!)</strong>.
-                    </p>
-                    <p>
-                        If you want to sign this project space up for a
-                        different plan, please have one of the non-Dimagi
-                        project admins sign up or talk to someone on
-                        the Operations Team to deal with contracts.
-                    </p>
-                    <p>
-                        Thanks! <3
-                    </p>
-                {% endblocktrans %}
-            </div>
-            {% endif %}
 
             <div class="pricing-table-bg-container">
                 <div class="pricing-table-bg">
