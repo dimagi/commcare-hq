@@ -31,11 +31,11 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.es import CaseES, aggregations
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_bootstrap3, use_nvd3_v3
 from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import (
@@ -710,7 +710,7 @@ def callcenter_test(request):
             doc_type = doc.get('doc_type', None)
             if doc_type == 'CommCareUser':
                 case_type = domain.call_center_config.case_type
-                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], case_type)
+                user_case = CaseAccessors(doc['domain']).get_case_by_domain_hq_user_id(doc['_id'], case_type)
             elif doc_type == 'CommCareCase':
                 if doc.get('hq_user_id'):
                     user_case = CommCareCase.wrap(doc)

@@ -12,7 +12,7 @@ from corehq.apps.callcenter.queries import CaseQueryTotalLegacy, StandardFormQue
 from corehq.apps.callcenter.queries import CustomFormQuery
 from corehq.apps.callcenter.utils import get_call_center_cases
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 from dimagi.utils.decorators.memoized import memoized
 
@@ -170,7 +170,7 @@ class CallCenterIndicators(object):
         """
         :return: Set of all case types for the domain excluding the CallCenter case type.
         """
-        case_types = get_case_types_for_domain(self.domain)
+        case_types = CaseAccessors(self.domain).get_case_types()
         case_types.remove(self.cc_case_type)
         return case_types
 
