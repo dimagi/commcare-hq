@@ -6,7 +6,7 @@ import json
 from django.views.generic.base import TemplateView
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from corehq.apps.domain.views import BaseDomainView, LoginAndDomainMixin
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
@@ -26,7 +26,7 @@ from urllib2 import URLError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.base import ContentFile
 from django.core.servers.basehttp import FileWrapper
 from django.http import (
@@ -791,31 +791,31 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     config.filters = filters
 
-    report_id = None
-    if config.report and hasattr(config.report, '_id'):
-        report_id = config.report._id
-
-    body = _render_report_configs(request, [config],
-                                  domain,
-                                  user_id, request.couch_user,
-                                  True,
-                                  lang=request.couch_user.language,
-                                  notes=form.cleaned_data['notes'],
-                                  once=once,
-                                  report_id=report_id)[0].content
+    report = None
+    if config.report:
+        report = config.report
 
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
+    content = _render_report_configs(
+        request, [config], domain, user_id, request.couch_user, True, lang=request.couch_user.language,
+        notes=form.cleaned_data['notes'], once=once
+    )[0]
 
     if form.cleaned_data['send_to_owner']:
-        send_html_email_async.delay(subject, request.couch_user.get_email(), body,
-                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                                    ga_tracking_info={'cd4': request.domain})
+        email = request.couch_user.get_email()
+        body = render_full_report_notification(request, content, email, report).content
+
+        send_html_email_async.delay(
+            subject, email, body,
+            email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+            ga_tracking_info={'cd4': request.domain})
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
-            send_html_email_async.delay(subject, recipient, body,
-                                        email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                                        ga_tracking_info={'cd4': request.domain})
+            send_html_email_async.delay(
+                subject, recipient, render_full_report_notification(request, content, recipient, report).content,
+                email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+                ga_tracking_info={'cd4': request.domain})
 
     return HttpResponse()
 
@@ -1036,40 +1036,56 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class ReportNotificationUnsubscribeView(LoginAndDomainMixin, TemplateView):
+class ReportNotificationUnsubscribeView(TemplateView):
     template_name = 'reports/notification_unsubscribe.html'
     urlname = 'notification_unsubscribe'
     report = None
 
     @use_bootstrap3
     def get(self, request, *args, **kwargs):
-        self.domain = request.domain
         try:
             self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
-            user_email = request.couch_user.get_email()
-            if user_email not in self.report.all_recipient_emails:
-                messages.error(request, _('You are already unsubscribed from this report.'))
-            else:
-                return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
+            email = kwargs.pop('user_email')
+
+            if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
+                raise ValidationError('Invalid link')
+            if email not in self.report.all_recipient_emails:
+                raise ValidationError('This email address has already been unsubscribed.')
+            return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
+        except ValidationError as err:
+            messages.error(request, _(err.message))
         except ResourceNotFound:
-            pass
+            messages.error(request, _('Could not find the requested Scheduled Report'))
+
         return HttpResponseRedirect(reverse('homepage'))
 
     def get_context_data(self, **kwargs):
         context = super(ReportNotificationUnsubscribeView, self).get_context_data(**kwargs)
-        context.update({'domain': self.domain, 'report': self.report})
+        context.update({'report': self.report})
         return context
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, **kwargs):
         try:
-            report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
-            report.remove_recipient(request.couch_user.get_email())
-            report.save()
+            self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
+            email = kwargs.pop('user_email')
+
+            if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
+                raise ValidationError('Invalid link')
+
+            self.report.remove_recipient(email)
+
+            if len(self.report.recipient_emails) > 0 or self.report.send_to_owner:
+                self.report.save()
+            else:
+                self.report.delete()
+
             messages.info(request, _('Successfully unsubscribed from report notification.'))
         except ResourceNotFound:
             messages.error(request, _('Could not unsubscribe from report notification.'))
-        return HttpResponseRedirect(reverse('homepage'))
+        except ValidationError as err:
+            messages.error(request, _(err.message))
 
+        return HttpResponseRedirect(reverse('homepage'))
 
 @login_and_domain_required
 @require_POST
@@ -1110,7 +1126,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
-                                  email=True, attach_excel=False):
+                                  email=True, attach_excel=False, user_email=None):
     """
     This function somewhat confusingly returns a tuple of: (response, excel_files)
     If attach_excel is false, excel_files will always be an empty list.
@@ -1134,17 +1150,20 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
         email,
         attach_excel=attach_excel,
         lang=notification.language,
-        report_id=scheduled_report_id
     )
 
 
 def _render_report_configs(request, configs, domain, owner_id, couch_user, email,
-                           notes=None, attach_excel=False, once=False, lang=None, report_id=None):
+                           notes=None, attach_excel=False, once=False, lang=None):
+    """
+    Renders only notification's main content, which then may be used to generate full notification body.
+    """
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
     excel_attachments = []
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
+
     for config in configs:
         content, excel_file = config.get_report_content(lang, attach_excel=attach_excel)
         if excel_file:
@@ -1163,7 +1182,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
             "enddate": date_range.get("enddate") if date_range else "",
         })
 
-    return render(request, "reports/report_email.html", {
+    return render(request, "reports/report_email_content.html", {
         "reports": report_outputs,
         "domain": domain,
         "couch_user": owner_id,
@@ -1171,18 +1190,45 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
-        "unsub_link": get_url_base() + reverse('notification_unsubscribe', kwargs={
-            'scheduled_report_id': report_id, 'domain': domain}) if report_id else None,
         "report_type": _("once off report") if once else _("scheduled report"),
-    }), excel_attachments
+    }).content, excel_attachments
+
+
+def render_full_report_notification(request, content, email=None, report=None):
+    """
+    Renders full notification body with provided main content.
+    """
+    from dimagi.utils.web import get_url_base
+    from django.http import HttpRequest
+
+    if request is None:
+        if report is None:
+            raise ValueError("Can't render notification without providing request or report")
+        request = HttpRequest()
+        request.couch_user = report.couch_user
+        request.user = request.couch_user.get_django_user()
+        request.domain = report.domain
+        request.couch_user.current_domain = report.domain
+
+    unsub_link = None
+    if report and email:
+        unsub_link = get_url_base() + reverse('notification_unsubscribe', kwargs={
+            'scheduled_report_id': report._id,
+            'user_email': email,
+            'scheduled_report_secret': report.get_secret(email)
+        })
+
+    return render(request, "reports/report_email.html", {
+        'email_content': content,
+        'unsub_link': unsub_link
+    })
 
 
 @login_and_domain_required
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
-    return get_scheduled_report_response(
-        request.couch_user, domain, scheduled_report_id, email=False
-    )[0]
+    content = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
+    return render_full_report_notification(request, content, report=ReportNotification.get(scheduled_report_id))
 
 
 class CaseDetailsView(BaseProjectReportSectionView):

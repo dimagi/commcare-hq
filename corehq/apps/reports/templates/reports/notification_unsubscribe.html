@@ -1,18 +1,23 @@
-{% extends "reports_core/base_template_new.html" %}
+{% extends 'style/bootstrap3/base.html' %}
 {% load i18n %}
-{% block title %}
-    {% trans 'Unsubscribe from emails' %}
-{% endblock %}
 
-{% block main_column_content %}
+{% block content %}
     <form method="POST" style="margin-left: 20px">
         {% csrf_token %}
-        <h3>
-            {% blocktrans %}Are you sure you want to opt out of report notifications for {% endblocktrans %}
+        <h2>
+            {% blocktrans %}Unsubscribe from {% endblocktrans %}
             {% for config in report.configs %}
                 {{ config.full_name }}{% if forloop.last %}?{% else %},{% endif %}
             {% endfor %}
+        </h2>
+
+        <h3>
+            {% blocktrans %}
+                You will no longer receive this scheduled report.
+                To add yourself, you will need to contact the person who initially added you.
+            {% endblocktrans %}
         </h3>
-        <input class="btn btn-primary" type="submit" value="{% trans 'Unsubscribe' %}" />
+        <input type="submit" value="Confirm" class="btn btn-primary" />
+        <a href="{% url 'homepage' %}" class="btn btn-default">Cancel</a>
     </form>
 {% endblock %}
