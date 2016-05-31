@@ -5,3 +5,8 @@
 .module-icon {
     max-height: 100px;
 }
+
+/* Need to override this http://stackoverflow.com/questions/27638228/bootstrap-glyphicons-not-showing */
+#case-list-search-button {
+    font-size: 4px;
+}
