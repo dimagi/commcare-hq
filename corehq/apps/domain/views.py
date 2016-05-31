@@ -1668,8 +1668,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def next_plan_version(self):
-        new_edition = self.request.POST.get('plan_edition').title()
-        plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, new_edition)
+        plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, self.new_edition)
         if plan_version is None:
             log_accounting_error(
                 "Could not find a matching renewable plan "
@@ -1704,9 +1703,15 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             'next_plan': self.next_plan_version.user_facing_description,
         }
 
+    @property
+    def new_edition(self):
+        return self.request.POST.get('plan_edition').title()
+
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
+        if self.new_edition == SoftwarePlanEdition.ENTERPRISE:
+            return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         if self.confirm_form.is_valid():
             is_saved = self.confirm_form.save()
             if not is_saved:
