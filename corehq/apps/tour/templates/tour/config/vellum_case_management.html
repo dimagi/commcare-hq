@@ -1,0 +1,25 @@
+<script type="text/javascript">
+    $(function () {
+        var form_tour = new Tour({
+            name: '{{ request.guided_tour.slug }}',
+            orphan: true,  // needed due to the async nature of the app manager
+            steps: [
+                {
+                    element: '.fd-head-external-sources',
+                    title: gettext("NEW! Case properties window"),
+                    content: gettext("Reference case properties in your form quickly by clicking "
+                                     + "and dragging them from this window."),
+                    placement: 'top',
+                    onShown: function () {
+                        analytics.workflow('Initiated vellum case management guided tour');
+                    }
+                }
+            ],
+            onEnd: TourUtils.getEndTourAsync('{{ request.guided_tour.endUrl }}'),
+            template: TourUtils.getCustomTemplate()
+        });
+        form_tour.setCurrentStep(0);
+        form_tour.init(true);
+        form_tour.start(true);
+    });
+</script>

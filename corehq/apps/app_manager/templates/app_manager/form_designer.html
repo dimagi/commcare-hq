@@ -13,6 +13,7 @@
     {% elif vellum_debug == "dev-min" %}
         <link href="{% new_static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
     {% endif %}
+    {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
     <script>
         var CKEDITOR_BASEPATH = "{% new_static "app_manager/js/vellum/lib/ckeditor/" %}";
 
