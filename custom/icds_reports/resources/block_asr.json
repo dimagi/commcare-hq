@@ -545,7 +545,7 @@
             "agg_fun": "count_if",
             "condition": {
               "operator": "==",
-              "value": "1"
+              "value": 1
             }
           },
           {
@@ -554,7 +554,7 @@
             "agg_fun": "count_if",
             "condition": {
               "operator": "==",
-              "value": "2"
+              "value": 2
             }
           },
           {
@@ -563,7 +563,7 @@
             "agg_fun": "count_if",
             "condition": {
               "operator": "==",
-              "value": "3"
+              "value": 3
             }
           },
           {
@@ -589,7 +589,7 @@
             "column_in_report": "other_building_3",
             "agg_fun": "count_if",
             "condition": {
-              "operator": "==",
+              "operator": "in",
               "value": [3, 6]
             }
           },
