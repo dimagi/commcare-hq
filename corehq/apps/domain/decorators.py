@@ -330,8 +330,10 @@ def domain_admin_required_ex(redirect_page_name=None):
             domain_name, domain = load_domain(request, domain)
             if not domain:
                 raise Http404()
-            if not _page_is_whitelist(request.path, domain_name) and \
-               not request.couch_user.is_domain_admin(domain_name):
+
+            if not (
+                _page_is_whitelist(request.path, domain_name) and request.user.is_superuser
+            ) and not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
 
