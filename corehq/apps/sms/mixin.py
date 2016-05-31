@@ -355,6 +355,7 @@ class CommCareMobileContactMixin(object):
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
+        from corehq.apps.sms.models import PhoneNumber
         self.validate_number_format(phone_number)
         v = PhoneNumber.by_phone(phone_number, include_pending=True)
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self.get_id):

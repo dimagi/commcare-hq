@@ -3,6 +3,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.models import (SQLMobileBackend, SQLMobileBackendMapping,
     PhoneNumber)
+from corehq.apps.sms.tests.util import delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -12,6 +13,7 @@ from django.test import TestCase
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.test_utils import create_test_case
+from mock import patch
 
 
 class PhoneNumberCacheClearTestCase(TestCase):
@@ -19,11 +21,11 @@ class PhoneNumberCacheClearTestCase(TestCase):
     def assertNoMatch(self, phone_search, suffix_search, owner_id_search):
         self.assertIsNone(PhoneNumber.by_phone(phone_search))
         self.assertIsNone(PhoneNumber.by_suffix(suffix_search))
-        self.assertEqual(PhoneNumber.by_owner_id(owner_id_search), [])
+        self.assertEqual(PhoneNumber.by_owner_id(owner_id_search).count(), 0)
 
-    def assertPhoneNumbersEqual(phone1, phone2):
+    def assertPhoneNumbersEqual(self, phone1, phone2):
         for field in phone1._meta.fields:
-            self.assertEqual(getattr(phone1, field), getattr(phone2, field))
+            self.assertEqual(getattr(phone1, field.name), getattr(phone2, field.name))
 
     def assertMatch(self, match, phone_search, suffix_search, owner_id_search):
         lookedup = PhoneNumber.by_phone(phone_search)
@@ -89,9 +91,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
         self.domain = 'case-phone-number-test'
 
     def tearDown(self):
-        for v in PhoneNumber.by_domain(self.domain):
-            # Clear cache and delete
-            v.delete()
+        delete_domain_phone_numbers(self.domain)
 
     def set_case_property(self, case, property_name, value):
         update_case(self.domain, case.case_id, case_properties={property_name: value})
