@@ -145,7 +145,7 @@ class GetFormQuestionsTest(SimpleTestCase):
 
     def test_get_questions(self):
         form = self.app.get_form(self.form_unique_id)
-        questions = form.wrapped_xform().get_questions(['en', 'es'], include_translations=True)
+        questions = form.wrapped_xform().get_questions(['en', 'es'], include_translations=True, form=form)
 
         non_label_questions = [
             q for q in QUESTIONS if q['tag'] not in ('label', 'trigger')]
@@ -155,6 +155,6 @@ class GetFormQuestionsTest(SimpleTestCase):
     def test_get_questions_with_triggers(self):
         form = self.app.get_form(self.form_unique_id)
         questions = form.wrapped_xform().get_questions(
-            ['en', 'es'], include_triggers=True, include_translations=True)
+            ['en', 'es'], include_triggers=True, include_translations=True, form=form)
 
         self.assertEqual(questions, QUESTIONS)
