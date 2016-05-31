@@ -20,7 +20,7 @@ from django.core import cache
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import connection_manager
-from corehq.sql_db.tests.utils import database_creator
+from corehq.sql_db.tests.utils import temporary_database
 
 CASE_TYPE = 'cc_flw'
 
@@ -544,7 +544,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
         db_conn_parts[-1] = cls.ucr_db_name
         cls.ucr_db_url = '/'.join(db_conn_parts)
 
-        cls.db_context = database_creator(cls.ucr_db_name)
+        cls.db_context = temporary_database(cls.ucr_db_name)
         cls.db_context.__enter__()
 
     @classmethod

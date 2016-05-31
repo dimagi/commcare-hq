@@ -10,7 +10,7 @@ from corehq.apps.userreports.tests.utils import get_sample_data_source, get_samp
     get_sample_report_config, doc_to_change
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.sql_db import connections
-from corehq.sql_db.tests.utils import database_creator
+from corehq.sql_db.tests.utils import temporary_database
 
 
 class UCRMultiDBTest(TestCase):
@@ -43,7 +43,7 @@ class UCRMultiDBTest(TestCase):
         cls.ds_2.engine_id = 'engine-2'
         cls.ds_2.save()
 
-        cls.db_context = database_creator(cls.db2_name)
+        cls.db_context = temporary_database(cls.db2_name)
         cls.db_context.__enter__()
 
         cls.ds1_adapter = IndicatorSqlAdapter(cls.ds_1)
