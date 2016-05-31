@@ -1,39 +1,11 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.sofabed.exceptions import InvalidDataException
-from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.read_only import ReadOnlyObject
 from pillowtop.listener import SQLPillow
-from couchforms.models import XFormInstance
-from corehq.apps.sofabed.models import FormData, CaseData
+from corehq.apps.sofabed.models import CaseData
 import logging
 
 logger = logging.getLogger('pillowtop')
-
-
-class FormDataPillow(SQLPillow):
-    document_class = XFormInstance
-    couch_filter = 'couchforms/xforms'
-    include_docs = False
-
-    def process_sql(self, doc_dict, delete=False):
-        if delete or doc_dict['doc_type'] != 'XFormInstance':
-            try:
-                FormData.objects.get(instance_id=doc_dict['_id']).delete()
-            except FormData.DoesNotExist:
-                pass
-            return
-
-        if doc_dict.get('xmlns') == DEVICE_LOG_XMLNS:
-            return
-
-        doc = self.document_class.wrap(doc_dict)
-        doc = ReadOnlyObject(doc)
-
-        try:
-            FormData.create_or_update_from_instance(doc)
-        except InvalidDataException, e:
-            # this is a less severe class of errors
-            logger.info("FormDataPillow: bad update in form listener for line: %s\n%s" % (doc_dict, e))
 
 
 class CaseDataPillow(SQLPillow):

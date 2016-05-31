@@ -174,19 +174,6 @@
         "include_docs": false,
         "name": "FarmerRecordFluffPillow"
     },
-    "FormDataPillow": {
-        "advertised_name": "corehq.pillows.sofabed.FormDataPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.sofabed.FormDataPillow.testhq",
-        "couch_filter": "couchforms/xforms",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.sofabed.FormDataPillow",
-        "include_docs": false,
-        "name": "FormDataPillow"
-    },
     "GeographyFluffPillow": {
         "advertised_name": "fluff.GeographyFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",
