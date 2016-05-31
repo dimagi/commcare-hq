@@ -27,7 +27,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var pricingTable = new PricingTable({{ pricing_table|JSON }}, '{{ current_edition }}', {{ is_non_ops_superuser|BOOL }}, {{ is_renewal|BOOL }});
+        var pricingTable = new PricingTable({{ pricing_table|JSON }}, '{{ current_edition }}', {{ is_renewal|BOOL }});
         $('#pricing-table').koApplyBindings(pricingTable);
         pricingTable.init();
     </script>
