@@ -1404,9 +1404,9 @@ class TestBulkUserAPI(APIResourceTest):
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
-        cls.admin_user = WebUser.create(cls.domain.name, cls.username, cls.password)
-        cls.admin_user.set_role(cls.domain.name, 'admin')
-        cls.admin_user.save()
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
+        cls.user.set_role(cls.domain.name, 'admin')
+        cls.user.save()
 
         cls.fake_user_es = FakeUserES()
         v0_5.MOCK_BULK_USER_ES = cls.mock_es_wrapper
@@ -1419,7 +1419,7 @@ class TestBulkUserAPI(APIResourceTest):
 
     @classmethod
     def tearDownClass(cls):
-        cls.admin_user.delete()
+        cls.user.delete()
         SubscriptionAdjustment.objects.all().delete()
 
         if cls.subscription:
