@@ -260,6 +260,12 @@ class CachedResponse(object):
             headers['Content-Length'] = content_length
         return stream_response(self.payload.as_file(), headers)
 
+    def as_file(self):
+        if self.payload:
+            return self.payload.as_file()
+        else:
+            return None
+
 
 class RestoreParams(object):
     """
