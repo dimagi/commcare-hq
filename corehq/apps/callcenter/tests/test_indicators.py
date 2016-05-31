@@ -19,6 +19,7 @@ from django.test import TestCase
 from django.core import cache
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.sql_db.connections import connection_manager
 from corehq.sql_db.tests.utils import temporary_database
 from corehq.util.test_utils import OverridableSettingsTestMixin
@@ -386,38 +387,37 @@ class CallCenterTestsSQL(CallCenterTests):
 
 class CallCenterSupervisorGroupTest(BaseCCTests):
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         domain_name = 'cc_supervisor'
-        cls.domain = create_domain(domain_name)
-        cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
+        self.domain = create_domain(domain_name)
+        self.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
 
-        cls.supervisor_group = Group(
+        self.supervisor_group = Group(
             domain=domain_name,
             name='supervisor group',
             case_sharing=True,
-            users=[cls.supervisor.get_id]
+            users=[self.supervisor.get_id]
         )
-        cls.supervisor_group.save()
+        self.supervisor_group.save()
 
-        cls.domain.call_center_config.enabled = True
-        cls.domain.call_center_config.case_owner_id = cls.supervisor_group.get_id
-        cls.domain.call_center_config.case_type = 'cc_flw'
-        cls.domain.save()
+        self.domain.call_center_config.enabled = True
+        self.domain.call_center_config.case_owner_id = self.supervisor_group.get_id
+        self.domain.call_center_config.case_type = 'cc_flw'
+        self.domain.save()
 
-        cls.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
-        sync_call_center_user_case(cls.user)
+        self.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
+        sync_call_center_user_case(self.user)
 
-        load_data(domain_name, cls.user.user_id)
+        load_data(domain_name, self.user.user_id)
 
         # create one case of each type so that we get the indicators where there is no data for the period
         create_cases_for_types(domain_name, ['person', 'dog'])
 
-    @classmethod
-    def tearDownClass(cls):
-        clear_data(cls.domain.name)
-        cls.domain.delete()
+    def tearDown(self):
+        clear_data(self.domain.name)
+        self.domain.delete()
 
+    @run_with_all_backends
     def test_users_assigned_via_group(self):
         """
         Ensure that users who are assigned to the supervisor via a group are also included
