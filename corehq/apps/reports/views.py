@@ -794,7 +794,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     config.filters = filters
 
     report_id = None
-    if config.report:
+    if config.report and hasattr(config.report, '_id'):
         report_id = config.report._id
 
     body = _render_report_configs(request, [config],
