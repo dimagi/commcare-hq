@@ -1318,12 +1318,6 @@ class SelectPlanView(DomainAccountingSettings):
             return DESC_BY_EDITION[self.edition]['name']
 
     @property
-    def is_non_ops_superuser(self):
-        if not self.request.couch_user.is_superuser:
-            return False
-        return not has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
-
-    @property
     def parent_pages(self):
         return [
             {
@@ -1362,7 +1356,6 @@ class SelectPlanView(DomainAccountingSettings):
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
                                 else ""),
-            'is_non_ops_superuser': self.is_non_ops_superuser,
         }
 
 
