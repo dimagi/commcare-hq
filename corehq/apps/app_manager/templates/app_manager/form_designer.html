@@ -59,6 +59,15 @@
                         console.log(less_error.text());
                         less_error.hide();
                     }
+                    {% if request.guided_tour %}
+                    form_tour_start();
+                    {% endif %}
+                },
+                {% else %}
+                onReady: function() {
+                    {% if request.guided_tour %}
+                    form_tour_start();
+                    {% endif %}
                 },
                 {% endif %}
                 sessionid: {{ sessionid|JSON }},
