@@ -166,7 +166,7 @@ class CrispyTemplate(object):
 
 
 class FieldWithHelpBubble(Field):
-    template = "field_with_help_bubble.html"
+    template = "style/crispy/field_with_help_bubble.html"
 
     def __init__(self, *args, **kwargs):
         super(FieldWithHelpBubble, self).__init__(*args, **kwargs)
@@ -174,7 +174,6 @@ class FieldWithHelpBubble(Field):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        self.template = "style/crispy/{}/{}".format(template_pack, self.template)
         context.update({
             'help_bubble_text': self.help_bubble_text,
         })
