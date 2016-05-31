@@ -907,7 +907,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
             for form in self.all_relevant_forms.values():
                 xmlnss.append(form['xmlns'])
-                app_ids.append(form['app_id'])
+                if form['app_id']:
+                    app_ids.append(form['app_id'])
                 form_map[form['xmlns']] = form['name']
 
             paged_result = get_forms(
@@ -1271,7 +1272,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @staticmethod
     def _html_anchor_tag(href, value):
-        return '<a href="{}" target="_blank">{}</a>'.format(href, value)
+        return u'<a href="{}" target="_blank">{}</a>'.format(href, value)
 
     @staticmethod
     def _make_url(base_url, params):
@@ -1355,7 +1356,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         url = self._make_url(base_url, params)
 
         return util.format_datatables_data(
-            self._html_anchor_tag(url, group_name.encode('utf-8')),
+            self._html_anchor_tag(url, group_name),
             group_name,
         )
 

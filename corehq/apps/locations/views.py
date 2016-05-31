@@ -110,8 +110,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     template_name = "custom_data_fields/custom_data_fields.html"
 
     @method_decorator(is_locations_admin)
-    @use_bootstrap3
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
@@ -699,7 +697,7 @@ class LocationImportView(BaseLocationView):
 
 @locations_access_required
 def location_importer_job_poll(request, domain, download_id,
-                               template="style/bootstrap3/partials/download_status.html"):
+                               template="style/partials/download_status.html"):
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:

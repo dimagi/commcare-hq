@@ -478,7 +478,6 @@ DOMAIN_FACETS = [
     "internal.commtrack_domain",
 
     "is_approved",
-    "is_public",
     "is_shared",
     "is_sms_billable",
     "is_snapshot",

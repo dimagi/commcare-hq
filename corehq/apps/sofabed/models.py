@@ -2,8 +2,8 @@ from django.db import models
 from corehq.apps.sofabed.exceptions import (
     InvalidFormUpdateException,
     InvalidMetaBlockException,
-    InvalidCaseUpdateException
-)
+    InvalidCaseUpdateException,
+    InvalidDomainException)
 
 CASE_NAME_LEN = 512
 
@@ -77,6 +77,10 @@ class FormData(BaseDataIndex):
         Update this object based on an XFormInstance doc
         """
         instance_id = self.get_instance_id(instance)
+        if not instance.domain:
+            raise InvalidDomainException(
+                "Instance %s didn't have a domain!" % instance_id)
+
         if not instance.metadata:
             raise InvalidMetaBlockException(
                 "Instance %s didn't have a meta block!" % instance_id)

@@ -109,6 +109,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('sms', 'SQLLastReadMessage', 'domain'),
     ModelDeletion('sms', 'ExpectedCallback', 'domain'),
     ModelDeletion('ivr', 'Call', 'domain'),
+    ModelDeletion('sms', 'PhoneNumber', 'domain'),
     ModelDeletion('sms', 'MessagingSubEvent', 'parent__domain'),
     ModelDeletion('sms', 'MessagingEvent', 'domain'),
     ModelDeletion('sms', 'SelfRegistrationInvitation', 'domain'),

@@ -1,4 +1,3 @@
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.models import (SQLMobileBackend, SQLMobileBackendMapping,

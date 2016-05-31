@@ -15,5 +15,9 @@ class BadName(Error):
     """Blob name error"""
 
 
+class InvalidContext(Error):
+    """Raise when code is executed outside a valid context"""
+
+
 class NotFound(Error):
     """Raised when an attachment cannot be found"""

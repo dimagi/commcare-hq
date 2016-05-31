@@ -2,7 +2,6 @@ import urllib
 from django.conf import settings
 import urllib2
 from corehq.apps.sms.models import SQLSMSBackend, SMS
-from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.mach.forms import MachBackendForm
 
 MACH_URL = "http://smsgw.a2p.mme.syniverse.com/sms.php"

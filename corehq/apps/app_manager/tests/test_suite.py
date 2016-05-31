@@ -7,7 +7,6 @@ from corehq.apps.app_manager.models import (
     Application,
     DetailColumn,
     FormActionCondition,
-    FormSchedule,
     MappingItem,
     Module,
     OpenCaseAction,
@@ -15,7 +14,6 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     ReportAppConfig,
     ReportModule,
-    ScheduleVisit,
     SortElement,
     UpdateCaseAction,
 )
@@ -732,13 +730,14 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         report_app_config._report.columns[0]['transform'] = {
             'type': 'translation',
             'translations': {
-                '1': [
+                u'एक': [
                     ['en', 'one'],
                     ['es', 'uno'],
                 ],
                 '2': [
                     ['en', 'two'],
                     ['es', 'dos\''],
+                    ['hin', u'दो'],
                 ],
             }
         }

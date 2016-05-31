@@ -1,5 +1,3 @@
-from django.test import TestCase
-from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest

@@ -12,7 +12,6 @@ from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, In
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.quickcache import quickcache
-from casexml.apps.case.models import CommCareCase
 from django_prbac.utils import has_privilege
 
 

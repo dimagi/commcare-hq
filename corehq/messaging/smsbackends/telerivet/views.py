@@ -1,7 +1,7 @@
 import uuid
 from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
 from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
@@ -92,19 +92,23 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
             id_only=True
         ) is not None
 
+        webhook_url = absolute_reverse('telerivet_in')
         return {
             'outgoing_sms_form': TelerivetOutgoingSMSForm(),
             'test_sms_form': TelerivetPhoneNumberForm(),
             'finalize_gateway_form': FinalizeGatewaySetupForm(
                 initial={
+                    'name': 'TELERIVET',
                     'set_as_default': (FinalizeGatewaySetupForm.NO
                                        if domain_has_default_gateway
                                        else FinalizeGatewaySetupForm.YES),
                 }
             ),
-            'webhook_url': absolute_reverse('telerivet_in'),
+            'webhook_url': webhook_url,
+            'include_https_notice': webhook_url.startswith('https'),
             'webhook_secret': webhook_secret,
             'request_token': request_token,
+            'gateway_list_url': reverse(DomainSmsGatewayListView.urlname, args=[self.domain]),
         }
 
     @property
@@ -193,7 +197,7 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
         webhook_secret = self.get_cached_webhook_secret(data.get('request_token'))
         values = {
             'name': data.get('name'),
-            'description': _("My Telerivet Gateway '{}'").format(data.get('name')),
+            'description': _("My Telerivet Gateway"),
             'api_key': data.get('api_key'),
             'project_id': data.get('project_id'),
             'phone_id': data.get('phone_id'),
@@ -217,6 +221,10 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
                     phone_id=form.cleaned_data.get('phone_id'),
                     webhook_secret=webhook_secret
                 )
+                phone_number = backend.get_phone_number_or_none()
+                if phone_number:
+                    backend.description += ' {}'.format(phone_number)
+                    backend.reply_to_phone_number = phone_number
                 backend.save()
                 if data.get('set_as_default') == FinalizeGatewaySetupForm.YES:
                     SQLMobileBackendMapping.set_default_domain_backend(self.domain, backend)

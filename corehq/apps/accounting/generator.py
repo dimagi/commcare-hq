@@ -9,6 +9,7 @@ import mock
 from django.conf import settings
 from django.core.management import call_command
 
+from corehq.apps.smsbillables.generator import DIRECTIONS
 from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (
@@ -175,14 +176,17 @@ def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
     return num_users
 
 
-def arbitrary_sms_billables_for_domain(domain, direction, message_month_date, num_sms):
+def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, direction=None, multipart_count=1):
     from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
+
+    direction = direction or random.choice(DIRECTIONS)
 
     gateway_fee = SmsGatewayFee.create_new('MACH', direction, Decimal(0.5))
     usage_fee = SmsUsageFee.create_new(direction, Decimal(0.25))
 
     _, last_day_message = calendar.monthrange(message_month_date.year, message_month_date.month)
 
+    billables = []
     for _ in range(0, num_sms):
         sms_billable = SmsBillable(
             gateway_fee=gateway_fee,
@@ -193,8 +197,11 @@ def arbitrary_sms_billables_for_domain(domain, direction, message_month_date, nu
             direction=direction,
             date_sent=datetime.date(message_month_date.year, message_month_date.month,
                                     random.randint(1, last_day_message)),
+            multipart_count=multipart_count,
         )
         sms_billable.save()
+        billables.append(sms_billable)
+    return billables
 
 
 def create_excess_community_users(domain):

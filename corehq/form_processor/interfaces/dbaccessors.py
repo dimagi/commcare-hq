@@ -122,13 +122,10 @@ class FormAccessors(object):
                 yield form
 
     def form_exists(self, form_id):
-        return self.db_accessor.form_exists(form_id)
+        return self.db_accessor.form_exists(form_id, domain=self.domain)
 
     def get_all_form_ids_in_domain(self):
-        return self.get_form_ids_in_domain_by_type('XFormInstance')
-
-    def get_form_ids_in_domain_by_type(self, type_):
-        return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, type_)
+        self.db_accessor.get_form_ids_in_domain_by_type(self.domain, 'XFormInstance')
 
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
@@ -184,11 +181,11 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_open_case_ids(domain, owner_id):
+    def get_open_case_ids_for_owner(domain, owner_id):
         raise NotImplementedError
 
     @abstractmethod
-    def get_closed_case_ids(domain, owner_id):
+    def get_closed_case_ids_for_owner(domain, owner_id):
         raise NotImplementedError
 
     @abstractmethod
@@ -285,8 +282,8 @@ class CaseAccessors(object):
         """
         return self.db_accessor.get_case_ids_in_domain_by_owners(self.domain, owner_ids)
 
-    def get_open_case_ids(self, owner_id):
-        return self.db_accessor.get_open_case_ids(self.domain, owner_id)
+    def get_open_case_ids_for_owner(self, owner_id):
+        return self.db_accessor.get_open_case_ids_for_owner(self.domain, owner_id)
 
     def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
         return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
@@ -300,8 +297,8 @@ class CaseAccessors(object):
     def get_last_modified_dates(self, case_ids):
         return self.db_accessor.get_last_modified_dates(self.domain, case_ids)
 
-    def get_closed_case_ids(self, owner_id):
-        return self.db_accessor.get_closed_case_ids(self.domain, owner_id)
+    def get_closed_case_ids_for_owner(self, owner_id):
+        return self.db_accessor.get_closed_case_ids_for_owner(self.domain, owner_id)
 
     def get_all_reverse_indices_info(self, case_ids):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)

@@ -128,7 +128,7 @@ class CloudcareMain(View):
         def _default_lang():
             if apps:
                 # unfortunately we have to go back to the DB to find this
-                return Application.get(apps[0]["_id"]).build_langs[0]
+                return Application.get(apps[0]["_id"]).langs[0]
             else:
                 return "en"
 
@@ -204,7 +204,10 @@ class CloudcareMain(View):
             "username": request.user.username,
         }
         context.update(_url_context())
-        return render(request, "cloudcare/cloudcare_home.html", context)
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+            return render(request, "cloudcare/formplayer_home.html", context)
+        else:
+            return render(request, "cloudcare/cloudcare_home.html", context)
 
 
 @login_and_domain_required

@@ -65,14 +65,14 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_form(form_id):
         try:
-            return XFormInstanceSQL.objects.raw('SELECT * from get_form_by_id(%s)', [form_id])[0]
+            return FormAccessorSQL.get_forms([form_id])[0]
         except IndexError:
             raise XFormNotFound
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
         assert isinstance(form_ids, list)
-        forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
+        forms = RawQuerySetWrapper(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
         if ordered:
             forms = _order_list(form_ids, forms, 'form_id')
 
@@ -116,11 +116,11 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_forms_with_attachments_meta(form_ids, ordered=False):
         assert isinstance(form_ids, list)
-        forms = FormAccessorSQL.get_forms(form_ids)
+        forms = list(FormAccessorSQL.get_forms(form_ids))
 
         # attachments are already sorted by form_id in SQL
         attachments = XFormAttachmentSQL.objects.raw(
-            'SELECT * from get_mulitple_forms_attachments(%s)',
+            'SELECT * from get_multiple_forms_attachments(%s)',
             [form_ids]
         )
 
@@ -138,10 +138,10 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert limit is not None
         # apply limit in python as well since we may get more results than we expect
         # if we're in a sharded environment
-        forms = list(XFormInstanceSQL.objects.raw(
+        forms = XFormInstanceSQL.objects.raw(
             'SELECT * from get_forms_by_state(%s, %s, %s, %s)',
             [domain, state, limit, recent_first]
-        ))
+        )
         forms = sorted(forms, key=lambda f: f.received_on, reverse=recent_first)
         return forms[:limit]
 
@@ -311,8 +311,10 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_forms_received_since(received_on_since=None, limit=500):
         received_on_since = received_on_since or datetime.min
-        results = list(XFormInstanceSQL.objects.raw('SELECT * FROM get_all_forms_received_since(%s, %s)',
-                                                    [received_on_since, limit]))
+        results = XFormInstanceSQL.objects.raw(
+            'SELECT * FROM get_all_forms_received_since(%s, %s)',
+            [received_on_since, limit]
+        )
         # sort and add additional limit in memory in case the sharded setup returns more than
         # the requested number of cases
         return sorted(results, key=lambda form: form.received_on)[:limit]
@@ -334,7 +336,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_cases(case_ids, ordered=False):
         assert isinstance(case_ids, list)
-        cases = list(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
+        cases = RawQuerySetWrapper(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
         if ordered:
             cases = _order_list(case_ids, cases, 'case_id')
 
@@ -354,7 +356,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case_xform_ids(case_id):
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT form_id FROM get_case_form_ids(%s)', [case_id])
+            cursor.execute(
+                'SELECT form_id FROM get_case_transactions_by_type(%s, %s)',
+                [case_id, CaseTransaction.TYPE_FORM]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.form_id for result in results]
 
@@ -375,10 +380,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
-        # TODO: If the domain field is used on CommCareCaseIndexSQL
-        # in the future, this function should filter by it.
         assert isinstance(case_ids, list)
-        indexes = CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_all_reverse_indices(%s)', [case_ids])
+        indexes = CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_all_reverse_indices(%s, %s)',
+            [domain, case_ids]
+        )
         return [
             CaseIndexInfo(
                 case_id=index.case_id,
@@ -395,7 +401,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Given a base list of case ids, gets all ids of cases they reference (parent and host cases)
         """
         with get_cursor(CommCareCaseIndexSQL) as cursor:
-            cursor.execute('SELECT referenced_id FROM get_indexed_case_ids(%s, %s)', [domain, list(case_ids)])
+            cursor.execute(
+                'SELECT referenced_id FROM get_multiple_cases_indices(%s, %s)',
+                [domain, list(case_ids)]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.referenced_id for result in results]
 
@@ -409,8 +418,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         )
         cases_by_id = {case.case_id: case for case in cases}
         indices = list(CommCareCaseIndexSQL.objects.raw(
-            'SELECT * FROM get_multiple_cases_indices(%s)',
-            [cases_by_id.keys()])
+            'SELECT * FROM get_multiple_cases_indices(%s, %s)',
+            [domain, cases_by_id.keys()])
         )
         _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases
@@ -525,8 +534,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         if server_modified_on_since is None:
             server_modified_on_since = datetime.min
-        results = list(CommCareCaseSQL.objects.raw('SELECT * FROM get_all_cases_modified_since(%s, %s)',
-                                                [server_modified_on_since, limit]))
+        results = CommCareCaseSQL.objects.raw(
+            'SELECT * FROM get_all_cases_modified_since(%s, %s)',
+            [server_modified_on_since, limit]
+        )
         # sort and add additional limit in memory in case the sharded setup returns more than
         # the requested number of cases
         return sorted(results, key=lambda case: case.server_modified_on)[:limit]
@@ -582,16 +593,22 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     attachment.delete_content()
 
     @staticmethod
-    def get_open_case_ids(domain, owner_id):
+    def get_open_case_ids_for_owner(domain, owner_id):
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_open_case_ids(%s, %s)', [domain, owner_id])
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
+                [domain, [owner_id], False]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_closed_case_ids(domain, owner_id):
+    def get_closed_case_ids_for_owner(domain, owner_id):
         with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_closed_case_ids(%s, %s)', [domain, owner_id])
+            cursor.execute(
+                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
+                [domain, [owner_id], True]
+            )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
 
@@ -700,9 +717,9 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         """
         if modified_since is None:
             modified_since = datetime.min
-        results = RawQuerySetWrapper(LedgerValue.objects.raw(
+        results = LedgerValue.objects.raw(
             'SELECT * FROM get_all_ledger_values_modified_since(%s, %s)',
-            [modified_since, limit])
+            [modified_since, limit]
         )
         # sort and add additional limit in memory in case the sharded setup returns more than
         # the requested number of ledgers
@@ -751,7 +768,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def get_ledger_values_for_product_ids(product_ids):
-        return list(LedgerValue.objects.raw(
+        return RawQuerySetWrapper(LedgerValue.objects.raw(
             'SELECT * FROM get_ledger_values_for_product_ids(%s)',
             [product_ids]
         ))

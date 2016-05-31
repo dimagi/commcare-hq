@@ -5,6 +5,7 @@ from corehq.apps.app_manager import models
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
     ConfigurationItem, GraphTemplate, Graph, Xpath, XpathVariable
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.quickcache import quickcache
 
 
@@ -12,9 +13,12 @@ from corehq.util.quickcache import quickcache
 def _load_reports(report_module):
     if not report_module._loaded:
         # load reports in bulk to avoid hitting the database for each one
-        for i, report in enumerate(report_module.reports):
-            report_module.report_configs[i]._report = report
-    report_module._loaded = True
+        try:
+            for i, report in enumerate(report_module.reports):
+                report_module.report_configs[i]._report = report
+            report_module._loaded = True
+        except ReportConfigurationNotFoundError:
+            pass
 
 
 class ReportModuleSuiteHelper(object):
@@ -201,14 +205,14 @@ def _get_summary_details(config, domain):
             ),
             _get_data_detail(config, domain),
         ],
-    ).serialize())
+    ).serialize().decode('utf-8'))
 
 
 def _get_data_detail(config, domain):
     def _column_to_field(column):
         def _get_xpath(col):
             def _get_conditional(condition, if_true, if_false):
-                return 'if({condition}, {if_true}, {if_false})'.format(
+                return u'if({condition}, {if_true}, {if_false})'.format(
                     condition=condition,
                     if_true=if_true,
                     if_false=if_false,
@@ -223,7 +227,7 @@ def _get_data_detail(config, domain):
                         "$lang = '{lang}'".format(
                             lang=lang,
                         ),
-                        "'{translation}'".format(
+                        u"'{translation}'".format(
                             translation=translation.replace("'", "''"),
                         ),
                         word_eval
@@ -236,7 +240,7 @@ def _get_data_detail(config, domain):
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
                     xpath_function = _get_conditional(
-                        "{value} = '{word}'".format(
+                        u"{value} = '{word}'".format(
                             value=default_val,
                             word=word,
                         ),

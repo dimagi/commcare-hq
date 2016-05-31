@@ -11,9 +11,10 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests import TestXmlMixin, AppFactory
 from django.test.testcases import SimpleTestCase
-from mock import patch
+from mock import patch, MagicMock
 
 
+@patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
 class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data',)
 
@@ -90,20 +91,9 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
         phase.add_form(form)
 
 
+@patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=False))
+@patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
 class SchemaTest(SimpleTestCase):
-
-    def setUp(self):
-        self.models_is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        self.models_is_usercase_in_use_mock = self.models_is_usercase_in_use_patch.start()
-        self.models_is_usercase_in_use_mock.return_value = False
-        self.util_is_usercase_in_use_patch = patch('corehq.apps.app_manager.util.is_usercase_in_use')
-        self.util_is_usercase_in_use_mock = self.util_is_usercase_in_use_patch.start()
-        self.util_is_usercase_in_use_mock.return_value = False
-
-    def tearDown(self):
-        self.models_is_usercase_in_use_patch.stop()
-        self.util_is_usercase_in_use_patch.stop()
-
     def test_get_casedb_schema_empty_app(self):
         app = self.make_app()
         schema = util.get_casedb_schema(app)

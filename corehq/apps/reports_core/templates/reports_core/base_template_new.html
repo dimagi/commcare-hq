@@ -92,7 +92,7 @@
 
             ajaxSource: '{{ url }}',
             ajaxParams: function() {
-                return $('#report-filters').serializeArray();
+                return $('#paramSelectorForm').serializeArray();
             },
             {% if report_table.left_col.is_fixed %}
                 fixColumns: true,
@@ -102,7 +102,7 @@
             successCallbacks: [successCallback, updateCharts, updateMap],
             errorCallbacks: [errorCallback]
         });
-        $('#report-filters').submit(function(event) {
+        $('#paramSelectorForm').submit(function(event) {
             $('#reportHint').remove();
             $('#reportContent').removeClass('hide');
             event.preventDefault();
@@ -153,55 +153,10 @@
     </div>
     {% endblock report_alerts %}
     {% block main_column_content %}
-    <div class="report-controls">
-        {% if report.spec.description %}<p class="lead">{{ report.spec.description }}</p>{% endif %}
-        <form id="report-filters" class="form form-horizontal" method="GET" action="">
-            <fieldset>
-                <legend>{% trans "Report Filters" %}</legend>
-                <input type="hidden" name="format" value="json"/>
-                {% for filter in report.filters %}
-                    {% include filter.template with filter=filter context_=filter_context|dict_lookup:filter.css_id %}
-                {% endfor %}
-            </fieldset>
+    {% block filter_panel %}
+        {% include "reports_core/partials/filter_panel.html" %}
+    {% endblock %}
 
-            <div class="form-actions report-filter-actions">
-                <div class="col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2">
-                    {% block report_filter_actions %}
-                    <button type="submit" class="btn btn-primary"
-                            data-loading-text="{% trans "Generating Report..." %}"
-                            data-standard-text="{% trans "Apply" %}">
-                        {% trans "Apply" %}
-                    </button>
-                    {% endblock %}
-                </div>
-            </div>
-        </form>
-
-        <div class="report-actions">
-            {% if report.show_filters %}
-                <a href="#reportFilters" class="btn" id="toggle-report-filters"
-                    data-toggle="collapse" data-open-text="{% trans "Show Filter Options" %}"
-                    data-close-text="{% trans "Hide Filter Options" %}">
-                    {% trans "Filter Options" %}
-                </a>
-            {% endif %}
-            {% if report.is_exportable %}
-                <a href="#" class="btn{% if report.needs_filters %} hide{% endif %} btn-default" id="export-report-excel">
-                    <i class="icon icon-share"></i> {% trans "Export to Excel" %}
-                </a>
-            {% endif %}
-            {% if report.is_emailable %}
-                <a href="#email-report-modal" class="btn{% if report.needs_filters %} hide{% endif %} btn-default" data-toggle="modal" id="email-report">
-                    <i class="icon icon-envelope"></i> {% trans "Email report" %}
-                </a>
-            {% endif %}
-            {% if report.is_printable %}
-                <a href="#" class="btn{% if report.needs_filters %} hide{% endif %} btn-default" id="print-report">
-                    <i class="icon icon-print"></i> {% trans "Print" %}
-                </a>
-            {% endif %}
-        </div>
-    </div>
     <hr />
     <div id="reportHint" class="alert alert-info">
         <h4><i class="fa fa-info-circle"></i> {% blocktrans %}Why can't I see any data?{% endblocktrans %}</h4>

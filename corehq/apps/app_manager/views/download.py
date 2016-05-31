@@ -22,6 +22,8 @@ from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.web import json_response
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq import privileges
 
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
@@ -206,9 +208,13 @@ def download_file(request, domain, app_id, path):
         content_type = None
     response = HttpResponse(content_type=content_type)
 
+    build_profile = request.GET.get('profile')
+    build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
     if path in ('CommCare.jad', 'CommCare.jar'):
         set_file_download(response, path)
         full_path = path
+    elif build_profile and build_profile in request.app.build_profiles and build_profile_access:
+        full_path = 'files/%s/%s' % (build_profile, path)
     else:
         full_path = 'files/%s' % path
 
@@ -223,7 +229,16 @@ def download_file(request, domain, app_id, path):
             path=full_path,
         ))
         if not obj.is_cached():
-            payload = request.app.fetch_attachment(full_path)
+            #lazily create language profiles to avoid slowing initial build
+            try:
+                payload = request.app.fetch_attachment(full_path)
+            except ResourceNotFound:
+                if build_profile in request.app.build_profiles and build_profile_access:
+                    request.app.create_build_files(save=True, build_profile_id=build_profile)
+                    request.app.save()
+                    payload = request.app.fetch_attachment(full_path)
+                else:
+                    raise
             if type(payload) is unicode:
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
@@ -368,12 +383,36 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
         return HttpResponse(response_html)
 
 
-def download_index_files(app):
+def _file_needed_for_CCZ(path, prefix, profiles):
+    if path.startswith(prefix):
+        # already narrowed to specific profile
+        if prefix != 'files/':
+            return True
+        else:
+            second = path.split('/')[1]
+            # dont want to return files from other profiles
+            if second in profiles:
+                return False
+            else:
+                return True
+    else:
+        return False
+
+
+def download_index_files(app, build_profile_id=None):
     files = []
+    prefix = 'files/'
+    profiles = set(app.build_profiles.keys())
+    if build_profile_id:
+        prefix += build_profile_id + '/'
     if app.copy_of:
-        files = [(path[len('files/'):], app.fetch_attachment(path))
-                 for path in app._attachments
-                 if path.startswith('files/')]
+        if (prefix + 'profile.ccpr') not in app.blobs:
+            # profile hasnt been built yet
+            app.create_build_files(save=True, build_profile_id=build_profile_id)
+            app.save()
+        files = [(path[len(prefix):], app.fetch_attachment(path))
+                 for path in app.blobs
+                 if _file_needed_for_CCZ(path, prefix, profiles)]
     else:
         files = app.create_all_files().items()
 
