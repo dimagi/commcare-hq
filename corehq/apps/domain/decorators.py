@@ -59,6 +59,13 @@ def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
     return HttpResponseRedirect(nextURL)
 
 
+def _page_is_whitelist(path, domain):
+    pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
+    return bool([
+        x for x in pages_not_restricted_for_dimagi if x % {'domain': domain} == path
+    ])
+
+
 def domain_specific_login_redirect(request, domain):
     project = Domain.get_by_name(domain)
     login_url = reverse('login')
@@ -66,6 +73,7 @@ def domain_specific_login_redirect(request, domain):
 
 
 def login_and_domain_required(view_func):
+
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
         user = req.user
@@ -94,7 +102,10 @@ def login_and_domain_required(view_func):
                     else:
                         return view_func(req, domain_name, *args, **kwargs)
 
-                elif user.is_superuser and not domain.restrict_superusers:
+                elif (
+                    _page_is_whitelist(req.path, domain_name) or
+                    not domain.restrict_superusers
+                ) and user.is_superuser:
                     # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)
                 elif domain.is_snapshot:
@@ -319,7 +330,10 @@ def domain_admin_required_ex(redirect_page_name=None):
             domain_name, domain = load_domain(request, domain)
             if not domain:
                 raise Http404()
-            if not request.couch_user.is_domain_admin(domain_name):
+
+            if not (
+                _page_is_whitelist(request.path, domain_name) and request.user.is_superuser
+            ) and not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
 
