@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('get_case_ids_in_domain_1sql'),
+        migrator.get_migration('get_case_ids_in_domain_1.sql'),
         HqRunSQL(
             "DROP FUNCTION IF EXISTS get_case_ids_in_domain_by_owners(text, text[], boolean)",
             "SELECT 1"
