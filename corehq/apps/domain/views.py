@@ -1559,24 +1559,13 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     @property
     @memoized
     def billing_account_info_form(self):
-        initial = None
-        if self.edition == SoftwarePlanEdition.ENTERPRISE and self.request.couch_user.is_superuser:
-            initial = {
-                'company_name': "Dimagi",
-                'first_line': "585 Massachusetts Ave",
-                'second_line': "Suite 4",
-                'city': "Cambridge",
-                'state_province_region': "MA",
-                'postal_code': "02139",
-                'country': "US",
-            }
         if self.request.method == 'POST' and self.is_form_post:
             return ConfirmNewSubscriptionForm(
                 self.account, self.domain, self.request.couch_user.username,
-                self.selected_plan_version, self.current_subscription, data=self.request.POST, initial=initial
+                self.selected_plan_version, self.current_subscription, data=self.request.POST
             )
         return ConfirmNewSubscriptionForm(self.account, self.domain, self.request.couch_user.username,
-                                          self.selected_plan_version, self.current_subscription, initial=initial)
+                                          self.selected_plan_version, self.current_subscription)
 
     @property
     def page_context(self):
@@ -1589,8 +1578,6 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
-        if self.edition == SoftwarePlanEdition.ENTERPRISE and not self.request.couch_user.is_superuser:
-            return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name'].encode('utf-8')
