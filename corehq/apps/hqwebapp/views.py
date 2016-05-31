@@ -575,31 +575,32 @@ def bug_report(req):
     return HttpResponse()
 
 
-def render_static(request, template):
+def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "style/bootstrap2/blank.html", {'tmpl': template})
+    return render(request, "style/blank.html",
+                  {'tmpl': template, 'page_name': page_name})
 
 
 def eula(request):
-    return render_static(request, "eula.html")
+    return render_static(request, "eula.html", _("End User License Agreement"))
 
 
 def cda(request):
-    return render_static(request, "cda.html")
+    return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
 
 def apache_license(request):
-    return render_static(request, "apache_license.html")
+    return render_static(request, "apache_license.html", _("Apache License"))
 
 
 def bsd_license(request):
-    return render_static(request, "bsd_license.html")
+    return render_static(request, "bsd_license.html", _("BSD License"))
 
 
 def product_agreement(request):
-    return render_static(request, "product_agreement.html")
+    return render_static(request, "product_agreement.html", _("Product Subscription Agreement"))
 
 
 def unsubscribe(request, user_id):
