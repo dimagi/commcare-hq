@@ -61,13 +61,13 @@ of django's `TemplateView`.
     `page_name` will not show up in the `<title>` tags, as you can include html in this name.
 
 `template_name`
-    Your template should extend `style/bootstrap3/base_page.html`
+    Your template should extend `style/base_page.html`
 
     It might look something like:
 
     .. code-block:: html
 
-        {% extends 'style/bootstrap3/base_page.html' %}
+        {% extends 'style/base_page.html' %}
 
         {% block js %}{{ block.super }}
             {# some javascript imports #}
