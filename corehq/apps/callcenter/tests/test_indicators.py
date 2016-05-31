@@ -21,6 +21,7 @@ from django.core import cache
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import connection_manager
 from corehq.sql_db.tests.utils import temporary_database
+from corehq.util.test_utils import OverridableSettingsTestMixin
 
 CASE_TYPE = 'cc_flw'
 
@@ -119,7 +120,7 @@ def expected_standard_indicators(no_data=False, include_legacy=True, include_tot
     return expected
 
 
-class BaseCCTests(TestCase):
+class BaseCCTests(OverridableSettingsTestMixin, TestCase):
 
     def setUp(self):
         locmem_cache.clear()
@@ -148,6 +149,7 @@ class CallCenterTests(BaseCCTests):
 
     @classmethod
     def setUpClass(cls):
+        super(CallCenterTests, cls).setUpClass()
         cls.cc_domain, cls.cc_user = create_domain_and_user('callcentertest', 'user1')
         load_data(cls.cc_domain.name, cls.cc_user.user_id)
         cls.cc_user_no_data = CommCareUser.create(cls.cc_domain.name, 'user3', '***')
@@ -167,6 +169,7 @@ class CallCenterTests(BaseCCTests):
         cls.cc_domain.delete()
         cls.aarohi_user.delete()
         cls.aarohi_domain.delete()
+        super(CallCenterTests, cls).setUpClass()
 
     def check_cc_indicators(self, data_set, expected):
         self._test_indicators(self.cc_user, data_set, expected)
@@ -372,6 +375,13 @@ class CallCenterTests(BaseCCTests):
         self.assertEqual(indicator_set.users_needing_data, set())
         self.assertEqual(indicator_set.owners_needing_data, set())
         self.assertEqual(indicator_set.get_data(), {})
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class CallCenterTestsSQL(CallCenterTests):
+    """Run all tests in ``CallCenterTests`` with SQL backend
+    """
+    pass
 
 
 class CallCenterSupervisorGroupTest(BaseCCTests):
