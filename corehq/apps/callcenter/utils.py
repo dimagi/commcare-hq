@@ -95,7 +95,16 @@ class _UserCaseHelper(object):
         )
         self._submit_case_block(caseblock)
 
-CallCenterCase = namedtuple('CallCenterCase', 'case_id hq_user_id')
+
+class CallCenterCase(namedtuple('CallCenterCase', 'case_id hq_user_id')):
+    @classmethod
+    def from_case(cls, case):
+        if not case:
+            return
+
+        hq_user_id = case.get_case_property('hq_user_id')
+        if hq_user_id:
+            return CallCenterCase(case_id=case.case_id, hq_user_id=hq_user_id)
 
 
 def sync_user_case(commcare_user, case_type, owner_id, case=None):
@@ -272,12 +281,9 @@ def get_call_center_cases(domain_name, case_type, user=None):
         case_ids = case_accessor.get_open_case_ids_in_domain_by_type(case_type=case_type)
 
     for case in case_accessor.iter_cases(case_ids):
-        hq_user_id = case.get_case_property('hq_user_id')
-        if hq_user_id:
-            all_cases.append(CallCenterCase(
-                case_id=case.case_id,
-                hq_user_id=hq_user_id
-            ))
+        cc_case = CallCenterCase.from_case(case)
+        if cc_case:
+            all_cases.append(cc_case)
     return all_cases
 
 

@@ -8,7 +8,7 @@ from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
 from corehq.apps.callcenter.models import CallCenterIndicatorConfig, TypedIndicator
-from corehq.apps.callcenter.utils import sync_call_center_user_case
+from corehq.apps.callcenter.utils import sync_call_center_user_case, CallCenterCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
@@ -295,7 +295,7 @@ class CallCenterTests(BaseCCTests):
             self.cc_domain.call_center_config.case_type,
             self.cc_user,
             custom_cache=locmem_cache,
-            override_cases=[user_case]
+            override_cases=[CallCenterCase.from_case(user_case)]
         )
         self.assertEqual(indicator_set.user_to_case_map.keys(), [self.cc_user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id]))

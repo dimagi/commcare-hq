@@ -29,6 +29,7 @@ from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
+from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.es import CaseES, aggregations
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_bootstrap3, use_nvd3_v3
@@ -781,6 +782,7 @@ def callcenter_test(request):
 
     if user or user_case:
         custom_cache = None if enable_caching else cache.caches['dummy']
+        override_case = CallCenterCase.from_case(user_case)
         cci = CallCenterIndicators(
             domain.name,
             domain.default_timezone,
@@ -788,7 +790,7 @@ def callcenter_test(request):
             user,
             custom_cache=custom_cache,
             override_date=query_date,
-            override_cases=[user_case] if user_case else None
+            override_cases=[override_case] if override_case else None
         )
         data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
     else:
