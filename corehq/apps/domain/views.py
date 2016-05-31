@@ -170,7 +170,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         if domain and domain.is_active:
             # mirrors logic in login_and_domain_required
             if (
-                request.couch_user.is_member_of(domain) or domain.is_public
+                request.couch_user.is_member_of(domain)
                 or (request.user.is_superuser and not domain.restrict_superusers)
                 or domain.is_snapshot
             ):

@@ -712,13 +712,6 @@ MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
-    'telerivet_setup_walkthrough',
-    'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
 MESSAGE_LOG_METADATA = StaticToggle(
     'message_log_metadata',
     'Include message id in Message Log export.',

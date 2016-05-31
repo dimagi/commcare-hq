@@ -18,6 +18,8 @@ TABLE_IDS = {
 
 CallCenterReportDataSources = namedtuple('CallCenterReportDataSources', 'forms, cases, case_actions')
 
+CallCenterReportDataSources = namedtuple('CallCenterReportDataSources', 'forms, cases, case_actions')
+
 
 def call_center_data_source_provider():
     call_center_data_sources = get_data_source_templates()

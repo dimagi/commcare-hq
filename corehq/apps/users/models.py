@@ -1687,6 +1687,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.location_id = location.location_id
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.get_domain_membership(self.domain).location_id = location.location_id
         self.save()
 
     def unset_location(self):
@@ -1701,6 +1702,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.location_id = None
         self.clear_location_delegates()
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.get_domain_membership(self.domain).location_id = None
         self.save()
 
     @property
@@ -2096,33 +2098,6 @@ class FakeUser(WebUser):
     @property
     def _id(self):
         return "fake-user"
-
-
-class PublicUser(FakeUser):
-    """
-    Public users have read-only access to certain domains
-    """
-
-    domain_memberships = None
-
-    def __init__(self, domain, **kwargs):
-        super(PublicUser, self).__init__(**kwargs)
-        self.domain = domain
-        self.domains = [domain]
-        dm = CustomDomainMembership(domain=domain, is_admin=False)
-        dm.set_permission('view_reports', True)
-        self.domain_memberships = [dm]
-
-    @memoized
-    def get_role(self, domain=None, checking_global_admin=None):
-        assert(domain == self.domain)
-        return super(PublicUser, self).get_role(domain)
-
-    def is_eula_signed(self):
-        return True # hack for public domain so eula modal doesn't keep popping up
-
-    def get_domains(self):
-        return []
 
 
 class InvalidUser(FakeUser):

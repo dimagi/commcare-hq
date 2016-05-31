@@ -70,8 +70,13 @@ class KafkaChangeFeed(ChangeFeed):
                     offset = 0
                 self._processed_topic_offsets = {single_topic: offset}
 
-            offsets = [(topic, self._partition, self._processed_topic_offsets[topic])
-                       for topic in self._topics if topic in self._processed_topic_offsets]
+            def _make_offset_tuple(topic):
+                if topic in self._processed_topic_offsets:
+                    return (topic, self._partition, self._processed_topic_offsets[topic])
+                else:
+                    return (topic, self._partition)
+
+            offsets = [_make_offset_tuple(topic) for topic in self._topics]
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
         try:

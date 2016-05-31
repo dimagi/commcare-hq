@@ -24,6 +24,7 @@ from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from openpyxl.utils.exceptions import InvalidFileException
+import re
 
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
@@ -67,7 +68,7 @@ from corehq.apps.users.forms import (
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
-from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
+from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
@@ -81,7 +82,7 @@ BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
 DEFAULT_USER_LIST_LIMIT = 10
 
 
-class EditCommCareUserView(BaseFullEditUserView):
+class EditCommCareUserView(BaseEditUserView):
     template_name = "users/edit_commcare_user.html"
     urlname = "edit_commcare_user"
     user_update_form_class = UpdateCommCareUserInfoForm
@@ -90,6 +91,14 @@ class EditCommCareUserView(BaseFullEditUserView):
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        context = super(EditCommCareUserView, self).main_context
+        context.update({
+            'edit_user_form_title': self.edit_user_form_title,
+        })
+        return context
 
     @property
     @memoized
@@ -208,6 +217,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     @memoized
     def form_user_update(self):
         form = super(EditCommCareUserView, self).form_user_update
+        form.load_language(language_choices=get_domain_languages(self.domain))
         if self.can_change_user_roles:
             form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
         else:
@@ -226,6 +236,15 @@ class EditCommCareUserView(BaseFullEditUserView):
             if self.update_commtrack_form.is_valid():
                 self.update_commtrack_form.save(self.editable_user)
                 messages.success(request, _("Information updated!"))
+        elif self.request.POST['form_type'] == "add-phonenumber":
+            phone_number = self.request.POST['phone_number']
+            phone_number = re.sub('\s', '', phone_number)
+            if re.match(r'\d+$', phone_number):
+                self.editable_user.add_phone_number(phone_number)
+                self.editable_user.save()
+                messages.success(request, _("Phone number added!"))
+            else:
+                messages.error(request, _("Please enter digits only."))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
 
     def custom_user_is_valid(self):
