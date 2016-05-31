@@ -70,7 +70,7 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
     get_report_config,
     get_report_configs,
-    _config_id_is_static,
+    is_report_config_id_static,
     id_is_static,
 )
 from corehq.apps.userreports.reports.builder.forms import (
@@ -195,14 +195,11 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def config(self):
         if self.report_id is None:
             return ReportConfiguration(domain=self.domain)
-        try:
-            return get_report_configs([self.report_id], self.domain)[0]
-        except ReportConfigurationNotFoundError:
-            raise Http404()
+        return get_report_config_or_404(self.report_id, self.domain)[0]
 
     @property
     def read_only(self):
-        return _config_id_is_static(self.report_id) if self.report_id is not None else False
+        return is_report_config_id_static(self.report_id) if self.report_id is not None else False
 
     @property
     @memoized

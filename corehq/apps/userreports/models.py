@@ -595,7 +595,7 @@ def id_is_static(data_source_id):
     return data_source_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
 
 
-def _config_id_is_static(config_id):
+def is_report_config_id_static(config_id):
     """
     Return True if the given report configuration id refers to a static report
     configuration.
@@ -615,7 +615,7 @@ def get_report_configs(config_ids, domain):
     static_report_config_ids = []
     dynamic_report_config_ids = []
     for config_id in config_ids:
-        if _config_id_is_static(config_id):
+        if is_report_config_id_static(config_id):
             static_report_config_ids.append(config_id)
         else:
             dynamic_report_config_ids.append(config_id)
@@ -643,4 +643,4 @@ def get_report_config(config_id, domain):
     config_id may be a ReportConfiguration or StaticReportConfiguration id
     """
     config = get_report_configs([config_id], domain)[0]
-    return config, _config_id_is_static(config_id)
+    return config, is_report_config_id_static(config_id)
