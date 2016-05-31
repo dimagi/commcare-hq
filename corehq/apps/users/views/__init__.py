@@ -3,7 +3,6 @@ from datetime import datetime
 import json
 import langcodes
 import logging
-import re
 import urllib
 
 from django.conf import settings
@@ -64,7 +63,7 @@ from corehq.apps.style.decorators import (
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
-                                     UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
+                                     UpdateUserPermissionForm, UpdateUserRoleForm)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, Invitation,
                                       DomainMembershipError)
@@ -332,37 +331,6 @@ def get_domain_languages(domain):
         domain_languages.append((lang_code, label))
 
     return sorted(domain_languages) or langcodes.get_all_langs_for_select()
-
-
-class BaseFullEditUserView(BaseEditUserView):
-    edit_user_form_title = ""
-
-    @property
-    def main_context(self):
-        context = super(BaseFullEditUserView, self).main_context
-        context.update({
-            'edit_user_form_title': self.edit_user_form_title,
-        })
-        return context
-
-    @property
-    @memoized
-    def form_user_update(self):
-        form = super(BaseFullEditUserView, self).form_user_update
-        form.load_language(language_choices=get_domain_languages(self.domain))
-        return form
-
-    def post(self, request, *args, **kwargs):
-        if self.request.POST['form_type'] == "add-phonenumber":
-            phone_number = self.request.POST['phone_number']
-            phone_number = re.sub('\s', '', phone_number)
-            if re.match(r'\d+$', phone_number):
-                self.editable_user.add_phone_number(phone_number)
-                self.editable_user.save()
-                messages.success(request, _("Phone number added!"))
-            else:
-                messages.error(request, _("Please enter digits only."))
-        return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
 
 
 class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):

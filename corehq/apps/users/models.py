@@ -1687,6 +1687,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.location_id = location.location_id
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.get_domain_membership(self.domain).location_id = location.location_id
         self.save()
 
     def unset_location(self):
@@ -1701,6 +1702,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.location_id = None
         self.clear_location_delegates()
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.get_domain_membership(self.domain).location_id = None
         self.save()
 
     @property
