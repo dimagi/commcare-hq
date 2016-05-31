@@ -10,16 +10,14 @@ from corehq.apps.userreports.views import (
     CreateDataSourceFromAppView,
 )
 
-urlpatterns = patterns('corehq.apps.userreports.views',
+urlpatterns = patterns(
+    'corehq.apps.userreports.views',
     url(r'^$', UserConfigReportsHomeView.as_view(),
-        name=UserConfigReportsHomeView.urlname
-    ),
+        name=UserConfigReportsHomeView.urlname),
     url(r'^reports/create/$', CreateConfigReportView.as_view(),
-        name=CreateConfigReportView.urlname
-    ),
+        name=CreateConfigReportView.urlname),
     url(r'^reports/import/$', ImportConfigReportView.as_view(),
-        name=ImportConfigReportView.urlname
-    ),
+        name=ImportConfigReportView.urlname),
     url(r'^reports/edit/(?P<report_id>[\w-]+)/$', EditConfigReportView.as_view(),
         name=EditConfigReportView.urlname),
     url(r'^reports/source/(?P<report_id>[\w-]+)/$', 'report_source_json', name='configurable_report_json'),
