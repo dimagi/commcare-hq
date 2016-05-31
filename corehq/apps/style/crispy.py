@@ -232,12 +232,7 @@ class B3TextField(OldField):
 
 
 class FieldsetAccordionGroup(AccordionGroup):
-    template = "style/crispy/{template_pack}/accordion_group.html"
-
-    def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        self.template = self.template.format(template_pack=template_pack)
-        return super(FieldsetAccordionGroup, self).render(form, form_style, context, template_pack)
+    template = "style/crispy/accordion_group.html"
 
 
 class HiddenFieldWithErrors(Field):
