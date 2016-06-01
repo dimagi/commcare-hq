@@ -25,7 +25,6 @@ def get_test_kafka_consumer(topic):
 
 def get_current_kafka_seq(topic):
     consumer = get_test_kafka_consumer(topic)
-    # have to get the seq id before the change is processed
     return consumer.offsets()['fetch'].get((topic, 0), 0)
 
 
