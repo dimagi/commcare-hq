@@ -552,9 +552,9 @@ def hq_deid_download_saved_export(req, domain, export_id):
 
 
 def _download_saved_export(req, domain, saved_export):
-    # quasi-security hack: the first key of the index is always assumed
-    # to be the domain
-    assert domain == saved_export.configuration.index[0]
+    if domain != saved_export.configuration.index[0]:
+        raise Http404()
+
     if should_update_export(saved_export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
