@@ -1022,8 +1022,8 @@ class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProject
     is_bootstrap3 = True
 
     @use_maps
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(HealthMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(HealthMapReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def report_subtitles(self):

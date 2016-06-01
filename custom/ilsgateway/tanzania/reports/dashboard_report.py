@@ -23,7 +23,7 @@ class DashboardReport(MultiReport):
     @use_jquery_ui
     @use_select2
     @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+    def decorator_dispatcher(self, request, *args, **kwargs):
         pass
 
     @property
