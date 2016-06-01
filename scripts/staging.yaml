@@ -52,7 +52,6 @@ branches:
   - notifications-perms-change # j$ 5/11
   - calculatedIcons # Sravan 3/2
   - xform-blobs  # daniel 5/23
-  - b3-groups-pt2  # biyeun 5/25
   - b3-groups-pt2+master  # daniel 5/30
 submodules:
   submodules/touchforms-src:
