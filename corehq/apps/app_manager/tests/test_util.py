@@ -151,6 +151,93 @@ class SchemaTest(SimpleTestCase):
             },
         })
 
+    def test_get_session_schema_form_parent_child_case(self):
+        self.factory.new_basic_module('child visit', 'child')
+        m2, m2f0 = self.factory.new_basic_module('child visit', 'visit')
+        self.factory.form_requires_case(m2f0, parent_case_type='child')
+
+        schema = util.get_session_schema(m2f0)
+        self.assertDictEqual(schema["structure"], {
+            'parent_id': {
+                "reference": {
+                    "source": "casedb",
+                    "subset": "child",
+                    "key": "@case_id",
+                }
+            },
+            'case_id': {
+                "reference": {
+                    "source": "casedb",
+                    "subset": "visit",
+                    "key": "@case_id",
+                }
+            }
+        })
+
+    def test_get_session_schema_advanced_form(self):
+        m2, m2f0 = self.factory.new_advanced_module('visit history', 'visit')
+        self.factory.form_requires_case(m2f0, 'visit')
+
+        schema = util.get_session_schema(m2f0)
+        self.assertDictEqual(schema["structure"]["case_id_load_visit_0"], {
+            "reference": {
+                "source": "casedb",
+                "subset": "visit",
+                "key": "@case_id",
+            },
+        })
+
+    def test_get_session_schema_advanced_form_multiple_cases(self):
+        self.factory.new_advanced_module('visit history', 'child')
+        m2, m2f0 = self.factory.new_advanced_module('visit history', 'visit')
+        self.factory.form_requires_case(m2f0, 'child')
+        self.factory.form_requires_case(m2f0, 'visit', parent_case_type='child')
+
+        schema = util.get_session_schema(m2f0)
+        self.assertDictEqual(schema["structure"], {
+            'case_id_load_child_0': {
+                "reference": {
+                    "source": "casedb",
+                    "subset": "child",
+                    "key": "@case_id",
+                }
+            },
+            'case_id_load_visit_0': {
+                "reference": {
+                    "source": "casedb",
+                    "subset": "visit",
+                    "key": "@case_id",
+                }
+            }
+        })
+
+    def test_get_session_schema_form_child_module(self):
+        self.module_0, m0f0 = self.factory.new_basic_module('parent', 'gold-fish')
+        self.module_1, m1f0 = self.factory.new_basic_module('child', 'guppy', parent_module=self.module_0)
+        self.factory.form_requires_case(m0f0)
+        self.factory.form_opens_case(m0f0, 'guppy', is_subcase=True)
+
+        self.factory.form_requires_case(m1f0, 'gold-fish')
+        self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
+
+        schema = util.get_session_schema(m1f0)
+        self.assertDictEqual(schema["structure"], {
+            'case_id': {
+                "reference": {
+                    "source": "casedb",
+                    "subset": "gold-fish",
+                    "key": "@case_id",
+                }
+            },
+            'case_id_guppy': {
+                "reference": {
+                    "source": "casedb",
+                    "subset": "guppy",
+                    "key": "@case_id",
+                }
+            },
+        })
+
     # -- helpers --
 
     def assert_has_kv_pairs(self, test_dict, expected_dict):
