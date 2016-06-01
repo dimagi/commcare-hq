@@ -34,7 +34,6 @@ from corehq.apps.es import CaseES, aggregations
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
-from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
@@ -665,7 +664,6 @@ def _lookup_id_in_database(doc_id, db_name=None):
 @require_superuser
 def web_user_lookup(request):
     template = "hqadmin/web_user_lookup.html"
-    set_bootstrap_version3()
     web_user_email = request.GET.get("q")
     if not web_user_email:
         return render(request, template, {})
