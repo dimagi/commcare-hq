@@ -1009,7 +1009,7 @@ def osdd(request, template='osdd.xml'):
 
 
 @require_superuser
-def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.html'):
+def maintenance_alerts(request, template='style/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
 
     return render(request, template, {
