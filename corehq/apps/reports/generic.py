@@ -700,7 +700,7 @@ class GenericReportView(object):
     @use_select2
     @use_datatables
     @use_daterangepicker
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+    def decorator_dispatcher(self, request, *args, **kwargs):
         """
         Decorate this method in your report subclass and call super to make sure
         appropriate decorators are used to render the page and its javascript

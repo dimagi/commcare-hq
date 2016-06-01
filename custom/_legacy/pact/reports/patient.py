@@ -31,7 +31,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
 
     @use_timeago
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        return super(PactPatientInfoReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+        return super(PactPatientInfoReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def patient_id(self):
