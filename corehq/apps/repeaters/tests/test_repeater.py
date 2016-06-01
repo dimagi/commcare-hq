@@ -1,6 +1,6 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
-from mock import patch, MagicMock
+from mock import patch
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 
@@ -206,7 +206,6 @@ class RepeaterTest(BaseRepeaterTest):
         self.assertEqual(len(RepeatRecord.all()), 2)
 
         with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_fire:
-            mock_fire.return_value = MagicMock(status_code=200)
             check_repeaters()
             self.assertEqual(mock_fire.call_count, 2)
 
@@ -397,8 +396,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.assertFalse(repeat_record.succeeded)
 
         # Should be marked as successful after a successful run
-        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout') as mock_process:
-            mock_process.return_value = MagicMock(status_code=200)
+        with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout'):
             repeat_record.fire()
 
         self.assertTrue(repeat_record.succeeded)
