@@ -2,17 +2,14 @@ from xml.etree import ElementTree
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.xml import V2
 from corehq.apps.fixtures import fixturegenerators
-from corehq.apps.fixtures.dbaccessors import (
-    get_number_of_fixture_data_types_in_domain,
-    get_fixture_data_types_in_domain,
-    delete_all_fixture_data_types,
-)
+from corehq.apps.fixtures.dbaccessors import \
+    get_number_of_fixture_data_types_in_domain, \
+    get_fixture_data_types_in_domain
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership, FixtureTypeField, \
     FixtureItemField, FieldList
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from django.test import TestCase, SimpleTestCase
 
 
@@ -21,8 +18,6 @@ class FixtureDataTest(TestCase):
     def setUp(self):
         self.domain = 'qwerty'
         self.tag = "district"
-        delete_all_users()
-        delete_all_fixture_data_types()
 
         self.data_type = FixtureDataType(
             domain=self.domain,
@@ -92,16 +87,12 @@ class FixtureDataTest(TestCase):
             data_item_id=self.data_item.get_id
         )
         self.fixture_ownership.save()
-        get_fixture_data_types_in_domain.clear(self.domain)
 
     def tearDown(self):
         self.data_type.delete()
         self.data_item.delete()
         self.user.delete()
         self.fixture_ownership.delete()
-        delete_all_users()
-        delete_all_fixture_data_types()
-        get_fixture_data_types_in_domain.clear(self.domain)
 
     def test_xml(self):
         check_xml_line_by_line(self, """
@@ -117,7 +108,7 @@ class FixtureDataTest(TestCase):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
-        fixture, = fixturegenerators.item_lists(self.user.to_ota_restore_user(), V2)
+        fixture, = fixturegenerators.item_lists(self.user, V2)
 
         check_xml_line_by_line(self, """
         <fixture id="item-list:district" user_id="%s">
@@ -146,7 +137,7 @@ class FixtureDataTest(TestCase):
 
         self.data_item.remove_user(self.user)
 
-        fixtures = fixturegenerators.item_lists(self.user.to_ota_restore_user(), V2)
+        fixtures = fixturegenerators.item_lists(self.user, V2)
         self.assertEqual(1, len(fixtures))
         check_xml_line_by_line(
             self,
@@ -180,12 +171,10 @@ class DBAccessorTest(TestCase):
             FixtureDataType(domain='other-domain', tag='x'),
         ]
         FixtureDataType.get_db().bulk_save(cls.data_types)
-        get_fixture_data_types_in_domain.clear(cls.domain)
 
     @classmethod
     def tearDownClass(cls):
         FixtureDataType.get_db().bulk_delete(cls.data_types)
-        get_fixture_data_types_in_domain.clear(cls.domain)
 
     def test_get_number_of_fixture_data_types_in_domain(self):
         self.assertEqual(
@@ -195,9 +184,12 @@ class DBAccessorTest(TestCase):
         )
 
     def test_get_fixture_data_types_in_domain(self):
-        expected = [data_type.to_json() for data_type in self.data_types if data_type.domain == self.domain]
-        actual = [o.to_json() for o in get_fixture_data_types_in_domain(self.domain)]
-        self.assertItemsEqual(actual, expected)
+        self.assertItemsEqual(
+            [o.to_json()
+             for o in get_fixture_data_types_in_domain(self.domain)],
+            [data_type.to_json() for data_type in self.data_types
+             if data_type.domain == self.domain]
+        )
 
 
 class FieldNameCleanTest(TestCase):

@@ -39,7 +39,7 @@ def prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hours=None
             project = couch_user.project
             restore_config = RestoreConfig(
                 project=project,
-                restore_user=couch_user.to_ota_restore_user(),
+                user=couch_user.to_casexml_user(),
                 params=RestoreParams(
                     version=version,
                     include_item_count=True,

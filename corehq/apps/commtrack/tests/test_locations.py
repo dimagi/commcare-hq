@@ -154,7 +154,7 @@ class MultiLocationsTest(CommTrackTest):
         ).as_xml()
         check_user_has_case(
             self,
-            user.to_ota_restore_user(),
+            user.to_casexml_user(),
             caseblock,
             line_by_line=False,
             should_have=should_have,

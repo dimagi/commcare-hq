@@ -60,9 +60,9 @@ class CaseSharingTest(TestCase):
 
         def check_has_block(case_block, should_have, should_not_have, line_by_line=True):
             for user in should_have:
-                check_user_has_case(self, user.to_ota_restore_user(), case_block, line_by_line=line_by_line)
+                check_user_has_case(self, user.to_casexml_user(), case_block, line_by_line=line_by_line)
             for user in should_not_have:
-                check_user_has_case(self, user.to_ota_restore_user(), case_block, should_have=False, line_by_line=line_by_line)
+                check_user_has_case(self, user.to_casexml_user(), case_block, should_have=False, line_by_line=line_by_line)
 
         create_and_test(
             case_id='case-a-1',

@@ -1,7 +1,7 @@
 from collections import defaultdict
 from xml.etree import ElementTree
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
-from casexml.apps.phone.models import OTARestoreUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 
@@ -48,10 +48,10 @@ def item_lists_by_domain(domain):
 class ItemListsProvider(object):
     id = 'item-list'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
+    def __call__(self, user, version, last_sync=None, app=None):
+        assert isinstance(user, CommCareUser)
 
-        all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(restore_user.domain)])
+        all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(user.domain)])
         global_types = dict([(id, t) for id, t in all_types.items() if t.is_global])
 
         items_by_type = defaultdict(list)
@@ -62,11 +62,11 @@ class ItemListsProvider(object):
             item._data_type = data_type
 
         for global_fixture in global_types.values():
-            items = list(FixtureDataItem.by_data_type(restore_user.domain, global_fixture))
+            items = list(FixtureDataItem.by_data_type(user.domain, global_fixture))
             _ = [_set_cached_type(item, global_fixture) for item in items]
             items_by_type[global_fixture._id] = items
 
-        other_items = restore_user.get_fixture_data_items()
+        other_items = FixtureDataItem.by_user(user)
         data_types = {}
 
         for item in other_items:
@@ -85,12 +85,12 @@ class ItemListsProvider(object):
         for data_type in all_types_to_sync:
             fixtures.append(self._get_fixture_element(
                 data_type.tag,
-                restore_user.user_id,
+                user.user_id,
                 sorted(items_by_type[data_type.get_id], key=lambda x: x.sort_key)
             ))
         for data_type_id, data_type in all_types.iteritems():
             if data_type_id not in global_types and data_type_id not in data_types:
-                fixtures.append(self._get_fixture_element(data_type.tag, restore_user.user_id, []))
+                fixtures.append(self._get_fixture_element(data_type.tag, user.user_id, []))
         return fixtures
 
     def _get_fixture_element(self, tag, user_id, items):

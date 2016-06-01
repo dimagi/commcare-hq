@@ -1,51 +1,33 @@
-from mock import MagicMock
-from datetime import date, datetime
-from casexml.apps.case.xml.generator import date_to_xml_string
+from datetime import datetime
+from casexml.apps.phone.models import User
 
-DUMMY_ID = "foo"
 DUMMY_USERNAME = "mclovin"
+DUMMY_ID = "foo"
 DUMMY_PASSWORD = "changeme"
 
 
 def dummy_user():
-    return MagicMock(
-        username=DUMMY_USERNAME,
-        password=DUMMY_PASSWORD,
-        user_id=DUMMY_ID,
-        date_joined=date(2016, 12, 12),
-        user_session_data={
-            'first_name': 'mclovin',
-            'last_name': None,
-            'phone_number': '555555',
-            'something': 'arbitrary',
-        }
-    )
+    return User(user_id=DUMMY_ID,
+                username=DUMMY_USERNAME,
+                password=DUMMY_PASSWORD,
+                date_joined=datetime(2011, 6, 9),
+                user_data={"something": "arbitrary"})
 
 
-def dummy_user_xml(user=None):
-    username = user.username if user else DUMMY_USERNAME
-    password = user.password if user else DUMMY_PASSWORD
-    user_id = user.user_id if user else DUMMY_ID
-    date_joined = user.date_joined if user else datetime.utcnow()
-
-    return """
+def dummy_user_xml():
+        return """
     <Registration xmlns="http://openrosa.org/user/registration">
-        <username>{}</username>
-        <password>{}</password>
-        <uuid>{}</uuid>
-        <date>{}</date>
+        <username>mclovin</username>
+        <password>changeme</password>
+        <uuid>foo</uuid>
+        <date>2011-06-09</date>
         <user_data>
             <data key="commcare_first_name"/>
             <data key="commcare_last_name"/>
             <data key="something">arbitrary</data>
             <data key="commcare_phone_number"/>
         </user_data>
-    </Registration>""".format(
-        username,
-        password,
-        user_id,
-        date_to_xml_string(date_joined)
-    )
+    </Registration>"""
 
 DUMMY_RESTORE_XML_TEMPLATE = ("""
 <OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items_xml)s>
@@ -59,11 +41,11 @@ DUMMY_RESTORE_XML_TEMPLATE = ("""
 """)
 
 
-def dummy_restore_xml(restore_id, case_xml="", items=None, user=None):
+def dummy_restore_xml(restore_id, case_xml="", items=None):
     return DUMMY_RESTORE_XML_TEMPLATE % {
         "restore_id": restore_id,
         "items_xml": '' if items is None else (' items="%s"' % items),
-        "user_xml": dummy_user_xml(user),
+        "user_xml": dummy_user_xml(),
         "case_xml": case_xml,
         "message": "Successfully restored account mclovin!"
     }

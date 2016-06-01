@@ -1,5 +1,4 @@
 from corehq.util.quickcache import quickcache
-from corehq.util.test_utils import unit_testing_only
 
 
 def get_number_of_fixture_data_types_in_domain(domain):
@@ -37,17 +36,3 @@ def get_owner_ids_by_type(domain, owner_type, data_item_id):
         reduce=False,
         wrapper=lambda r: r['value']
     )
-
-
-@unit_testing_only
-def delete_all_fixture_data_types():
-    from corehq.apps.fixtures.models import FixtureDataType
-
-    results = FixtureDataType.get_db().view('fixtures/data_types_by_domain_tag', reduce=False).all()
-    for result in results:
-        try:
-            fixture_data_type = FixtureDataType.get(result['id'])
-        except Exception:
-            pass
-        else:
-            fixture_data_type.delete()

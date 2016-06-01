@@ -3,13 +3,14 @@ import string
 from xml.etree import ElementTree
 
 from casexml.apps.case.xml import V1
-from casexml.apps.phone.tests.utils import generate_restore_payload, create_restore_user
+from casexml.apps.phone.tests.utils import generate_restore_payload
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.products.fixtures import product_fixture_generator
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.tests.util import CommTrackTest
+from corehq.apps.commtrack.tests.util import bootstrap_user
 from casexml.apps.phone.models import SyncLog
 import datetime
 
@@ -109,7 +110,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         )
 
     def test_product_fixture(self):
-        user = create_restore_user(self.domain.name)
+        user = bootstrap_user(self, phone_number="1234567890")
         xml = self.generate_product_fixture_xml(user)
         fixture = product_fixture_generator(user, V1)
 
@@ -119,7 +120,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         )
 
     def test_selective_product_sync(self):
-        user = create_restore_user(self.domain.name)
+        user = bootstrap_user(self, phone_number="1234567890")
 
         expected_xml = self.generate_product_fixture_xml(user)
 
@@ -127,7 +128,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         self._initialize_product_names(len(product_list))
 
         fixture_original = product_fixture_generator(user, V1)
-        generate_restore_payload(self.domain, user)
+        generate_restore_payload(self.domain, user.to_casexml_user())
         self.assertXmlEqual(
             expected_xml,
             ElementTree.tostring(fixture_original[0])
@@ -146,7 +147,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         # second sync is before any changes are made, so there should
         # be no products synced
         fixture_pre_change = product_fixture_generator(user, V1, last_sync=first_sync)
-        generate_restore_payload(self.domain, user)
+        generate_restore_payload(self.domain, user.to_casexml_user())
         self.assertEqual(
             [],
             fixture_pre_change,
@@ -202,7 +203,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         )
 
     def test_program_fixture(self):
-        user = create_restore_user(self.domain.name)
+        user = bootstrap_user(self, phone_number="1234567890")
         Program(
             domain=user.domain,
             name="test1",
@@ -220,7 +221,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         )
 
     def test_selective_program_sync(self):
-        user = create_restore_user(self.domain.name)
+        user = bootstrap_user(self, phone_number="1234567890")
         Program(
             domain=user.domain,
             name="test1",
@@ -232,7 +233,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
 
         fixture_original = program_fixture_generator(user, V1)
 
-        generate_restore_payload(self.domain, user)
+        generate_restore_payload(self.domain, user.to_casexml_user())
         self.assertXmlEqual(
             program_xml,
             ElementTree.tostring(fixture_original[0])
@@ -251,7 +252,7 @@ class FixtureTest(CommTrackTest, TestXmlMixin):
         # second sync is before any changes are made, so there should
         # be no programs synced
         fixture_pre_change = program_fixture_generator(user, V1, last_sync=first_sync)
-        generate_restore_payload(self.domain, user)
+        generate_restore_payload(self.domain, user.to_casexml_user())
         self.assertEqual(
             [],
             fixture_pre_change,

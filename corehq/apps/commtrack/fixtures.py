@@ -1,12 +1,12 @@
 from xml.etree import ElementTree
 
 
-def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=None):
+def _simple_fixture_generator(user, id, name, fields, data_fn, last_sync=None):
     """
     Fixture generator used to build commtrack related fixtures such
     as products and programs.
     """
-    project = restore_user.project
+    project = user.project
     if not project or not project.commtrack_enabled:
         return []
 
@@ -20,7 +20,7 @@ def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=
     root = ElementTree.Element('fixture',
                                attrib={
                                    'id': id,
-                                   'user_id': restore_user.user_id
+                                   'user_id': user.user_id
                                })
     list_elem = ElementTree.Element(name_plural)
     root.append(list_elem)
