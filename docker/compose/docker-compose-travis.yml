@@ -4,13 +4,14 @@ web_test:
     service: web
   dockerfile: ./docker/dockerfiles/Dockerfile_commcarehq_test
   environment:
-    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS KAFKA ELASTICSEARCH"
+    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS KAFKA ELASTICSEARCH RIAKCS"
   links:
     - postgres_test:postgres
     - couch_test:couch
     - redis_test:redis
     - elasticsearch_test:elasticsearch
     - kafka:kafka
+    - riak_cs_test:riakcs
 
 postgres_test:
   extends:
@@ -43,10 +44,16 @@ kafka:
     file: docker-compose-base.yml
     service: kafka
 
+riak_cs_test:
+  extends:
+    file: docker-compose-base.yml
+    service: riakcs
+
 data_test:
   image: redis
   volumes:
     - /var/lib/postgresql
+    - /var/lib/riak-data
     - /usr/share/elasticsearch/data
     - /usr/local/var/lib/couchdb
   command: "true"

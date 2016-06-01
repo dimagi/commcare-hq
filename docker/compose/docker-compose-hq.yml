@@ -5,7 +5,7 @@ web:
   volumes:
     - ${DOCKER_DATA_HOME}/sharedfiles:/sharedfiles
   environment:
-    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS ELASTICSEARCH"
+    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS ELASTICSEARCH RIAKCS"
   ports:
     - "8000:8000"
   external_links:
@@ -13,3 +13,4 @@ web:
     - hqservice_couch_1:couch
     - hqservice_redis_1:redis
     - hqservice_elasticsearch_1:elasticsearch
+    - hqservice_riakcs_1:riakcs
