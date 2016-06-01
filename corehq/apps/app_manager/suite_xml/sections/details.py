@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
 
 from corehq.apps.app_manager.const import RETURN_TO
+from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
@@ -128,7 +129,7 @@ class DetailContributor(SectionContributor):
         else:
             # Add lookup
             if detail.lookup_enabled and detail.lookup_action:
-                d.lookup = self._get_lookup_element(detail)
+                d.lookup = self._get_lookup_element(detail, module)
 
             # Add variables
             variables = list(
@@ -165,13 +166,26 @@ class DetailContributor(SectionContributor):
                 # only yield the Detail if it has Fields
                 return d
 
-    def _get_lookup_element(self, detail):
+    def _get_lookup_element(self, detail, module):
+        if detail.lookup_display_results:
+            field = Field(
+                header=Header(
+                    width=None if detail.lookup_field_header else 0,
+                    text=Text(locale_id=callout_header_locale(module)) if detail.lookup_field_header else None,
+                ),
+                template=Template(
+                    text=Text(xpath_function=detail.lookup_field_template)
+                ),
+            )
+        else:
+            field = None
         return Lookup(
             name=detail.lookup_name or None,
             action=detail.lookup_action,
             image=detail.lookup_image or None,
             extras=[Extra(**e) for e in detail.lookup_extras],
             responses=[Response(**r) for r in detail.lookup_responses],
+            field=field,
         )
 
     def _add_reg_form_action_to_detail(self, detail, module):
