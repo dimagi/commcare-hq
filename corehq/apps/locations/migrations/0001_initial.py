@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
                 ('location_id', models.CharField(unique=True, max_length=100, db_index=True)),
                 ('site_code', models.CharField(max_length=255)),
                 ('external_id', models.CharField(max_length=255, null=True)),
-                ('metadata', jsonfield.fields.JSONField(default={})),
+                ('metadata', jsonfield.fields.JSONField(default=dict)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
                 ('is_archived', models.BooleanField(default=False)),

@@ -228,7 +228,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     location_type = models.ForeignKey(LocationType)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
-    metadata = jsonfield.JSONField(default={})
+    metadata = jsonfield.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     is_archived = models.BooleanField(default=False)
