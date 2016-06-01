@@ -17,12 +17,14 @@ class FormResourceContributor(SectionContributor):
             form = form_stuff["form"]
             path = './modules-{module.id}/forms-{form.id}.xml'.format(**form_stuff)
             if self.build_profile_id:
-                path += '?profile={profile}'.format(profile=self.build_profile_id)
+                remote_path = '{path}?profile={profile}'.format(path=path, profile=self.build_profile_id)
+            else:
+                remote_path = path
             resource = XFormResource(
                 id=id_strings.xform_resource(form),
                 version=form.get_version(),
                 local=path,
-                remote=path,
+                remote=remote_path,
             )
             if self.app.build_version >= '2.9':
                 default_lang = self.app.default_language if not self.build_profile_id \
@@ -46,12 +48,16 @@ class LocaleResourceContributor(SectionContributor):
             else self.app.build_profiles[self.build_profile_id].langs
         for lang in ["default"] + langs:
             path = './{lang}/app_strings.txt'.format(lang=lang)
+            if self.build_profile_id:
+                remote_path = '{path}?profile={profile}'.format(path=path, profile=self.build_profile_id)
+            else:
+                remote_path = path
             resource = LocaleResource(
                 language=lang,
                 id=id_strings.locale_resource(lang),
                 version=self.app.version,
                 local=path,
-                remote=path,
+                remote=remote_path,
             )
             if self.app.build_version >= '2.9':
                 unknown_lang_txt = u"Unknown Language (%s)" % lang

@@ -75,7 +75,6 @@ from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
-from corehq.feature_previews import CALLCENTER
 from corehq.privileges import (
     REPORT_BUILDER_5,
     REPORT_BUILDER_ADD_ON_PRIVS,
@@ -533,7 +532,8 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.domain = kwargs.pop('domain', None)
+        self.project = kwargs.pop('domain', None)
+        self.domain = self.project.name
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -557,8 +557,8 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['logo']
             del self.fields['delete_logo']
 
-        if self.domain:
-            if not CALLCENTER.enabled(self.domain):
+        if self.project:
+            if not self.project.call_center_config.enabled:
                 del self.fields['call_center_enabled']
                 del self.fields['call_center_type']
                 del self.fields['call_center_case_owner']
@@ -680,12 +680,9 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
     )
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        domain = kwargs.get('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
 
-        project = Domain.get_by_name(domain)
-        if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
+        if self.project.cloudcare_releases == 'default' or not domain_has_privilege(self.domain, privileges.CLOUDCARE):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']

@@ -139,6 +139,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 # no id, no index
                 if index_update.referenced_id:
                     index = CommCareCaseIndexSQL(
+                        domain=self.case.domain,
                         case=self.case,
                         identifier=index_update.identifier,
                         referenced_type=index_update.referenced_type,

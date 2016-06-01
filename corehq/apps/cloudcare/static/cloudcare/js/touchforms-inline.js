@@ -36,7 +36,7 @@
                         $.ajax({
                             type: 'POST',
                             url: options.submitUrl,
-                            data: xml,
+                            data: xml.output,
                             success: function () {
                                 $target.html(alertHtml('Form successfully submitted!', 'alert-success'));
                                 options.onsubmit();

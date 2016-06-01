@@ -122,7 +122,7 @@ class CallCenterProperties(DocumentSchema):
         return self.enabled and self.use_fixtures
 
     def config_is_valid(self):
-        return self.case_owner_id and self.case_type
+        return (self.use_user_location_as_owner or self.case_owner_id) and self.case_type
 
 
 class LicenseAgreement(DocumentSchema):
@@ -216,7 +216,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     name = StringProperty()
     is_active = BooleanProperty()
-    is_public = BooleanProperty(default=False)
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)
