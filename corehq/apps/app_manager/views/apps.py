@@ -7,6 +7,7 @@ from collections import defaultdict
 from StringIO import StringIO
 from wsgiref.util import FileWrapper
 
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -324,12 +325,15 @@ def export_gzip(req, domain, app_id):
     fd, fpath = tempfile.mkstemp()
     with os.fdopen(fd, 'w') as tmp:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
-            z.writestr(fpath, app_json.export_json())
+            z.writestr('application.json', app_json.export_json())
 
     wrapper = FileWrapper(open(fpath))
     response = HttpResponse(wrapper, content_type='application/zip')
     response['Content-Length'] = os.path.getsize(fpath)
-    set_file_download(response, app_id)
+    app = Application.get(app_id)
+    set_file_download(response, '{domain}-{app_name}-{app_version}.zip'.format(
+        app_name=slugify(app.name), app_version=slugify(unicode(app.version)), domain=domain
+    ))
     return response
 
 
