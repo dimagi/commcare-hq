@@ -31,10 +31,10 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.es import CaseES, aggregations
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
 from corehq.apps.style.utils import set_bootstrap_version3
-from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
@@ -104,7 +104,7 @@ def get_hqadmin_base_context(request):
     }
 
 
-class BaseAdminSectionView(BaseB3SectionPageView):
+class BaseAdminSectionView(BaseSectionPageView):
     section_name = ugettext_lazy("Admin Reports")
 
     @property
