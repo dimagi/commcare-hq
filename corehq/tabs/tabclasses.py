@@ -105,7 +105,7 @@ class ProjectReportsTab(UITab):
         for section, items in sidebar_items:
             filtered_items = []
             for item in items:
-                if item.has_key("show_in_navigation") and not item["show_in_navigation"]:
+                if not item.get("show_in_navigation", True):
                     continue
                 filtered_items.append(item)
             if filtered_items:
