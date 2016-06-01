@@ -125,15 +125,9 @@ function initTable(data, config) {
         }
     );
     var table;
-    if (window.USE_BOOTSTRAP_3) {
-        table = new HQReportDataTables({
-            aoColumns: colSorting,
-        });
-    } else {
-        table = new HQReportDataTables({
-            aoColumns: colSorting
-        });
-    }
+    table = new HQReportDataTables({
+        aoColumns: colSorting,
+    });
 
     table.render();
     return table.datatable;
