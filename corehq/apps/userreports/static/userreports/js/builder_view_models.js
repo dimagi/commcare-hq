@@ -144,6 +144,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         var self = this;
         options = options || {};
 
+        this.propertyOptions = options.propertyOptions;
         this.reportType = options.reportType;
         this.buttonText = getOrDefault(options, 'buttonText', 'Add property');
         // True if at least one column is required.
@@ -192,7 +193,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         }
     };
 
-    var ConfigForm = function(reportType, sourceType, columns, filters, propertyOptions){
+    var ConfigForm = function(reportType, sourceType, columns, filters, dataSourceIndicators, reportColumnOptions){
 
         var initialFilters = _.map(filters, function(i){
             return PropertyListItem.wrap(i);
@@ -201,23 +202,28 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             return PropertyListItem.wrap(i);
         });
 
-        this.optionsContainQuestions = _.any(propertyOptions, function (o) {
+        this.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
             return o.type === 'question';
         });
-        this.propertyOptions = propertyOptions;
+        this.dataSourceIndicators = dataSourceIndicators;
+        this.reportColumnOptions = reportColumnOptions;
         if (this.optionsContainQuestions) {
-            // Munge the property_options into the form expected by the questionsSelect binding.
-            this.propertyOptions = _.compact(_.map(this.propertyOptions, function (o) {
-                if (o.type === 'question') {
-                    return o.source;
-                } else if (o.type === 'meta') {
-                    return {
-                        value: o.source[0],
-                        label: o.text,
-                        type: o.type,
-                    };
-                }
-            }));
+            var transformPropertyOptions = function (options) {
+                return _.compact(_.map(options, function (o) {
+                    if (o.type === 'question') {
+                        return o.source;
+                    } else if (o.type === 'meta') {
+                        return {
+                            value: o.source[0],
+                            label: o.text,
+                            type: o.type,
+                        };
+                    }
+                }));
+            };
+            // Transform the property_options into the form expected by the questionsSelect binding.
+            this.dataSourceIndicators = transformPropertyOptions(this.dataSourceIndicators);
+            this.reportColumnOptions = transformPropertyOptions(this.reportColumnOptions);
         }
 
         this.filtersList = new PropertyList({
@@ -230,6 +236,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
             reportType: reportType,
+            propertyOptions: this.dataSourceIndicators,
         });
         this.columnsList = new PropertyList({
             hasFormatCol: false,
@@ -248,6 +255,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
                 );
             },
             reportType: reportType,
+            propertyOptions: this.reportColumnOptions,
         });
     };
     ConfigForm.prototype.submitHandler = function (formElement) {

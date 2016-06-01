@@ -624,7 +624,8 @@ class ConfigureChartReport(ReportBuilderView):
             'report_type': self.report_type,
             'form': report_form,
             'editing_existing_report': bool(self.existing_report),
-            'property_options': [p._asdict() for p in report_form.data_source_properties.values()],
+            'report_column_options': [p._asdict() for p in report_form.data_source_properties.values()],
+            'data_source_indicators': [p._asdict() for p in report_form.data_source_properties.values()],
             'initial_filters': [f._asdict() for f in report_form.initial_filters],
             'initial_columns': [
                 c._asdict() for c in getattr(report_form, 'initial_columns', [])

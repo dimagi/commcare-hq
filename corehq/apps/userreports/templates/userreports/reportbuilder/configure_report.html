@@ -28,8 +28,9 @@
         var initialFilters = {{ initial_filters|JSON }};
         var initialColumns = {{ initial_columns|JSON }};
         var sourceType = {{ form.source_type|JSON }};
-        var propertyOptions = {{ property_options|JSON }};
-        ReportBuilder.IS_NON_NUMERIC_MAP = propertyOptions.reduce(function(map, option) {
+        var dataSourceIndicators = {{ data_source_indicators|JSON }};
+        var reportColumnOptions = {{ report_column_options|JSON }};
+        ReportBuilder.IS_NON_NUMERIC_MAP = dataSourceIndicators.reduce(function(map, option) {
             map[option.id] = option.is_non_numeric;
             return map
         }, {});
@@ -37,7 +38,7 @@
 
         var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
         $("#report-config-form").koApplyBindings(
-            new ConfigForm(reportType, sourceType, initialColumns, initialFilters, propertyOptions)
+            new ConfigForm(reportType, sourceType, initialColumns, initialFilters, dataSourceIndicators, reportColumnOptions)
         );
 
 
