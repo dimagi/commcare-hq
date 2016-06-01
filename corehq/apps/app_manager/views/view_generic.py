@@ -30,7 +30,6 @@ from corehq.apps.app_manager.util import (
     get_commcare_versions,
     get_usercase_properties,
 )
-from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -42,7 +41,6 @@ from corehq.apps.app_manager.models import (
 from django_prbac.utils import has_privilege
 
 
-@use_bootstrap3
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                  copy_app_form=None):

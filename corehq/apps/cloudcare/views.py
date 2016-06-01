@@ -56,7 +56,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
     use_datatables,
-    use_bootstrap3,
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -85,7 +84,6 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 
 class CloudcareMain(View):
 
-    @use_bootstrap3
     @use_datatables
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
@@ -584,7 +582,6 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 

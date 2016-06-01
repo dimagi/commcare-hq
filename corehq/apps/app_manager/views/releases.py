@@ -26,7 +26,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
+from corehq.apps.style.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -339,7 +339,6 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = ugettext_lazy("App diff")
     template_name = 'app_manager/app_diff.html'
 
-    @use_bootstrap3
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         try:
