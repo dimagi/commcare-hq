@@ -237,7 +237,24 @@ def run_with_multiple_configs(fn, run_configs):
 class OverridableSettingsTestMixin(object):
     """Backport of core Django functionality to 1.7. Can be removed
     once Django >= 1.8
-    https://github.com/django/django/commit/d89f56dc4d03f6bf6602536b8b62602ec0d46d2f"""
+    https://github.com/django/django/commit/d89f56dc4d03f6bf6602536b8b62602ec0d46d2f
+
+    Usage:
+
+      @override_settings(A_SETTING=True)
+      class SomeTests(TestCase, OverridableSettingsTestMixin):
+
+          @classmethod
+          def setUpClass(cls):
+              super(SomeTests, cls).setUpClass()
+              # settings.A_SETTING is True here
+
+          @classmethod
+          def tearDownClass(cls):
+              # teardown stuff
+              # don't forget to call super to undo override_settings
+              super(SomeTests, cls).tearDownClass()
+    """
     @classmethod
     def setUpClass(cls):
         if cls._overridden_settings:
