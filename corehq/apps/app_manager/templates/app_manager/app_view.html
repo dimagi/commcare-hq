@@ -250,34 +250,33 @@
             </div>
 
         {% endif %}
-            <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
-                <div>
-                    <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-                        {% crispy copy_app_form %}
+        <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
+            <div>
+                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+                    {% crispy copy_app_form %}
+                </form>
+                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
+                    <h3>Export compressed application</h3>
+                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-arrow-down"></i>
+                            {% trans "Download" %}
+                        </button>
                     </form>
-                    {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-                        <h3>Export compressed application</h3>
-                        <form action="{% url "gzip_app" domain app.id %}" method="POST">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-arrow-down"></i>
-                                {% trans "Download" %}
-                            </button>
-                        </form>
-                    {% endif %}
-                </div>
+                {% endif %}
             </div>
         </div>
-        <div class="tab-pane" id="delete">
-            <h3>{% trans "Delete Application" %}</h3>
-            <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger disable-on-submit">
-                    <i class="fa fa-trash"></i>
-                    {% trans "Delete this application" %}
-                </button>
-            </form>
-        </div>
+    </div>
+    <div class="tab-pane" id="delete">
+        <h3>{% trans "Delete Application" %}</h3>
+        <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger disable-on-submit">
+                <i class="fa fa-trash"></i>
+                {% trans "Delete this application" %}
+            </button>
+        </form>
     </div>
 {% endblock %}
 
