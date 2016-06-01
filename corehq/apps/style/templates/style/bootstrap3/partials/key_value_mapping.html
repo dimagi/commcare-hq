@@ -106,7 +106,7 @@
 
 <!-- Read-only version of keys and values, displayed alongside button to pop up modal -->
 <div id="key_value_mapping_template" class="hide">
-    <div data-bind="template: 'key_value_mapping_display_template'"></div>
+    <div data-bind="template: {name: 'key_value_mapping_display_template', if: !$data.values_are_icons }"></div>
     <button class="btn btn-default" data-bind="click: openModal, visible: $data.edit">
         <i class="fa fa-pencil"></i>
         <span data-bind="text: $data.buttonText"></span>

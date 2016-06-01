@@ -167,6 +167,7 @@ uiElement.key_value_mapping = function (o) {
     var m = new MapList(o);
     m.edit = ko.observable(true);
     m.buttonText = o.buttonText || "Edit",
+    m.values_are_icons = o.values_are_icons || false;
     m.openModal = function () {
         // create a throw-away modal every time
         // lets us create a sandbox for editing that you can cancel

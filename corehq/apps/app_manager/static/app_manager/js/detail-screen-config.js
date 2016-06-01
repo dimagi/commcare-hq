@@ -609,6 +609,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         items: that.original['enum'],
                         property_name: that.field,
                         multimedia: that.screen.config.multimedia,
+                        values_are_icons: that.original.format == 'enum-image',
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());
