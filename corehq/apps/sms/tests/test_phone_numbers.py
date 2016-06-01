@@ -2,6 +2,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.models import (SQLMobileBackend, SQLMobileBackendMapping,
     PhoneNumber)
+from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
 from corehq.apps.sms.tests.util import delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
@@ -431,3 +432,30 @@ class SQLPhoneNumberTestCase(TestCase):
         number.save()
         [lookup] = PhoneNumber.by_owner_id('owner2')
         self.assertFalse(lookup.verified)
+
+    def create_case_contact(self, phone_number):
+        return create_test_case(
+            self.domain,
+            'participant',
+            'test',
+            case_properties={
+                'contact_phone_number': phone_number,
+                'contact_phone_number_is_verified': '1',
+            },
+            drop_signals=False
+        )
+
+    @run_with_all_backends
+    def test_delete_phone_numbers_for_owners(self):
+        with self.create_case_contact('9990001') as case1, \
+                self.create_case_contact('9990002') as case2, \
+                self.create_case_contact('9990003') as case3:
+
+            self.assertEqual(PhoneNumber.by_owner_id(case1.case_id).count(), 1)
+            self.assertEqual(PhoneNumber.by_owner_id(case2.case_id).count(), 1)
+            self.assertEqual(PhoneNumber.by_owner_id(case3.case_id).count(), 1)
+
+            delete_phone_numbers_for_owners([case2.case_id, case3.case_id])
+            self.assertEqual(PhoneNumber.by_owner_id(case1.case_id).count(), 1)
+            self.assertEqual(PhoneNumber.by_owner_id(case2.case_id).count(), 0)
+            self.assertEqual(PhoneNumber.by_owner_id(case3.case_id).count(), 0)
