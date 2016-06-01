@@ -15,6 +15,7 @@ TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
     #'--no-migrations' # trim ~120s from test run with db tests
     #'--with-fixture-bundling',
+    '--with-doctest',
 ]
 NOSE_PLUGINS = [
     'corehq.tests.nose.AppLabelsPlugin',
