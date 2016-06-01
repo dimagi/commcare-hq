@@ -128,8 +128,6 @@ function initTable(data, config) {
     if (window.USE_BOOTSTRAP_3) {
         table = new HQReportDataTables({
             aoColumns: colSorting,
-            useBootstrap3: true,
-            paginationType: 'bs_normal'
         });
     } else {
         table = new HQReportDataTables({

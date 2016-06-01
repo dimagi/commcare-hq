@@ -80,8 +80,6 @@
 
         var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
-            paginationType: 'bs_normal',
-            useBootstrap3: true,
             defaultRows: {{ report_table.default_rows|default:10 }},
             startAtRowNum: {{ report_table.start_at_row|default:0 }},
             showAllRowsOption: {{ report_table.show_all_rows|JSON }},
