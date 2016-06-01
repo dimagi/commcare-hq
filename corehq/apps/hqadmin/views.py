@@ -31,7 +31,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
-    use_bootstrap3, use_nvd3_v3
+    use_nvd3_v3
 from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
@@ -121,7 +121,6 @@ class AuthenticateAs(BaseAdminSectionView):
     template_name = 'hqadmin/authenticate_as.html'
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(AuthenticateAs, self).dispatch(*args, **kwargs)
 
@@ -151,7 +150,6 @@ class RecentCouchChangesView(BaseAdminSectionView):
     template_name = 'hqadmin/couch_changes.html'
     page_title = ugettext_lazy("Recent Couch Changes")
 
-    @use_bootstrap3
     @use_nvd3_v3
     @use_datatables
     @use_jquery_ui
@@ -815,7 +813,6 @@ class DownloadMALTView(BaseAdminSectionView):
     template_name = "hqadmin/malt_downloader.html"
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DownloadMALTView, self).dispatch(request, *args, **kwargs)
 
@@ -900,7 +897,6 @@ class CallcenterUCRCheck(BaseAdminSectionView):
     template_name = "hqadmin/call_center_ucr_check.html"
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(CallcenterUCRCheck, self).dispatch(request, *args, **kwargs)
 

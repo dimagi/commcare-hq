@@ -18,7 +18,6 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_jquery_ui,
     use_datatables,
     use_select2,
@@ -697,7 +696,6 @@ class GenericReportView(object):
         """
         return []
 
-    @use_bootstrap3
     @use_jquery_ui
     @use_select2
     @use_datatables

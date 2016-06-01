@@ -1,6 +1,6 @@
 from corehq.apps.style.decorators import use_daterangepicker, use_datatables, use_select2, use_jquery_ui, \
-    use_bootstrap3, use_nvd3
-from custom.ilsgateway.filters import ProgramFilter, B3ILSDateFilter, \
+    use_nvd3
+from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter, ILSAsyncLocationFilter, B3ILSDateFilter, \
     B3ILSAsyncLocationFilter
 from custom.ilsgateway.tanzania import MultiReport
 from custom.ilsgateway.tanzania.reports.configs.dashboard_config import DashboardConfig
@@ -18,7 +18,6 @@ class DashboardReport(MultiReport):
     slug = 'ils_dashboard_report'
     name = "Dashboard report"
 
-    @use_bootstrap3
     @use_datatables
     @use_daterangepicker
     @use_jquery_ui
