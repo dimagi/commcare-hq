@@ -197,11 +197,16 @@ class LocationTypesView(BaseLocationView):
         for loc_type in hierarchy:
             # apply sync boundaries (expand_from and expand_to) after the
             # locations are all created since there are dependencies between them
-            self._apply_boundaries(loc_type, sql_loc_types)
+            self._attach_sync_boundaries_to_location_type(loc_type, sql_loc_types)
 
         return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
 
-    def _apply_boundaries(self, loc_type_data, loc_type_db):
+    @staticmethod
+    def _attach_sync_boundaries_to_location_type(loc_type_data, loc_type_db):
+        """Store the sync expansion boundaries along with the location type. i.e. where
+        the user's locations start expanding from, and where they expand to
+
+        """
         loc_type = loc_type_db[loc_type_data['pk']]
         expand_from_id = loc_type_data['expand_from']
         expand_to_id = loc_type_data['expand_to']
