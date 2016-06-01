@@ -21,7 +21,6 @@ from corehq.apps.indicators.models import (
 )
 from corehq.apps.indicators.utils import get_indicator_domains, get_namespaces
 from corehq.apps.style.decorators import use_multiselect
-from corehq.apps.style.utils import set_bootstrap_version3
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 
@@ -31,7 +30,6 @@ from dimagi.utils.modules import to_function
 def default_admin(request, domain, template="reports/base_template.html", **kwargs):
     if request.domain not in get_indicator_domains():
         raise Http404
-    set_bootstrap_version3()
     request.use_jquery_ui = True
     request.use_datatables = True
     from corehq.apps.indicators.admin import BaseIndicatorAdminInterface
