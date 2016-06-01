@@ -378,7 +378,7 @@ class SubscriptionForm(forms.Form):
     )
     plan_product = forms.ChoiceField(
         label=ugettext_lazy("Core Product"), initial=SoftwareProductType.COMMCARE,
-        choices=[(SoftwareProductType.COMMCARE, SoftwareProductType.COMMCARE)],
+        choices=SoftwareProductType.CHOICES,
     )
     plan_edition = forms.ChoiceField(
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
@@ -461,18 +461,6 @@ class SubscriptionForm(forms.Form):
                     'plan_name': subscription.plan_version,
                 },
             )
-            try:
-                plan_product = subscription.plan_version.product_rate.product.product_type
-                self.fields['plan_product'].initial = plan_product
-            except (IndexError, SoftwarePlanVersion.DoesNotExist):
-                plan_product = (
-                    '<i class="fa fa-exclamation-triangle"></i> No Product Exists for '
-                    'the Plan (update required)'
-                )
-            plan_product_field = hqcrispy.B3TextField(
-                'plan_product',
-                plan_product,
-            )
             self.fields['plan_edition'].initial = subscription.plan_version.plan.edition
             plan_edition_field = hqcrispy.B3TextField(
                 'plan_edition',
@@ -543,13 +531,13 @@ class SubscriptionForm(forms.Form):
                 'domain', css_class="input-xxlarge",
                 placeholder="Search for Project Space"
             )
-            plan_product_field = crispy.Field('plan_product')
             plan_edition_field = crispy.Field('plan_edition')
             plan_version_field = crispy.Field(
                 'plan_version', css_class="input-xxlarge",
                 placeholder="Search for Software Plan"
             )
 
+        plan_product_field = self.plan_product_field()
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -601,6 +589,28 @@ class SubscriptionForm(forms.Form):
                 )
             )
         )
+
+    def plan_product_field(self):
+        # product type is now always commcare, but need to support old subscriptions
+        is_existing = self.subscription is not None
+        if is_existing:
+            try:
+                plan_product = self.subscription.plan_version.product_rate.product.product_type
+                self.fields['plan_product'].initial = plan_product
+            except (IndexError, SoftwarePlanVersion.DoesNotExist):
+                plan_product = (
+                    '<i class="fa fa-exclamation-triangle"></i> No Product Exists for '
+                    'the Plan (update required)'
+                )
+            return hqcrispy.B3TextField(
+                'plan_product',
+                plan_product,
+            )
+        return hqcrispy.B3TextField(
+            'plan_product',
+            SoftwareProductType.COMMCARE
+        )
+
 
     @transaction.atomic
     def create_subscription(self):
