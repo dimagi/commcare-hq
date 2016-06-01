@@ -19,8 +19,8 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
     export_format_override = 'csv'
 
     @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(MultiReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(MultiReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     @memoized

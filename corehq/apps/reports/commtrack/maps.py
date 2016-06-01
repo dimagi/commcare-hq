@@ -23,8 +23,8 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     }
 
     @use_maps
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(StockStatusMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(StockStatusMapReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def display_config(self):
@@ -192,5 +192,5 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
     }
 
     @use_maps
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(ReportingStatusMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(ReportingStatusMapReport, self).decorator_dispatcher(request, *args, **kwargs)

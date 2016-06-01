@@ -134,8 +134,8 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
 
     @maps_prefer_canvas
     @use_maps
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(StockStatusMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(StockStatusMapReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     def _get_data(self):
         adapter = self.data_source['adapter']
