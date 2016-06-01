@@ -85,9 +85,6 @@ class FormProcessorInterface(object):
         else:
             return LedgerDBCouch()
 
-    def save_xform(self, xform):
-        return self.processor.save_xform(xform)
-
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
         try:
