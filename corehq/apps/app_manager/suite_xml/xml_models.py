@@ -543,16 +543,6 @@ class Response(XmlObject):
     key = StringField("@key")
 
 
-class Lookup(XmlObject):
-    ROOT_NAME = 'lookup'
-
-    name = StringField("@name")
-    action = StringField("@action", required=True)
-    image = StringField("@image")
-    extras = NodeListField('extra', Extra)
-    responses = NodeListField('response', Response)
-
-
 class Field(OrderedXmlObject):
     ROOT_NAME = 'field'
     ORDER = ('header', 'template', 'sort_node')
@@ -563,6 +553,17 @@ class Field(OrderedXmlObject):
     template = NodeField('template', Template)
     sort_node = NodeField('sort', Sort)
     background = NodeField('background/text', Text)
+
+
+class Lookup(XmlObject):
+    ROOT_NAME = 'lookup'
+
+    name = StringField("@name")
+    action = StringField("@action", required=True)
+    image = StringField("@image")
+    extras = NodeListField('extra', Extra)
+    responses = NodeListField('response', Response)
+    field = NodeField('field', Field)
 
 
 class ActionMixin(OrderedXmlObject):
