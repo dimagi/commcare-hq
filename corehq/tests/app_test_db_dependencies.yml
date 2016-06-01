@@ -60,7 +60,6 @@ casexml.apps.phone:
   - corehq.apps.reminders
   - corehq.apps.sms
   - corehq.apps.smsforms
-  - corehq.apps.notifications
   - phonelog
   - corehq.apps.domain
   # Needed for OtaFixtureTest (can we mock this stuff instead?) (I think it's because of the way that test uses users)

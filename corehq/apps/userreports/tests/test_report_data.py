@@ -5,7 +5,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfig
 from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tests.utils import doc_to_change
+from corehq.apps.userreports.tests import doc_to_change
 
 
 ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number'])

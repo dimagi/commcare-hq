@@ -5,7 +5,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration, \
     ReportConfiguration
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
+from corehq.apps.userreports.tests import ConfigurableReportTestMixin
 
 
 class TestReportAggregation(ConfigurableReportTestMixin, TestCase):

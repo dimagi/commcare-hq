@@ -1,6 +1,5 @@
 from xml.etree import ElementTree
 from django.utils.translation import ugettext as _
-from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.groups.models import Group
 from corehq.util.translation import localize
 from custom.bihar import BIHAR_DOMAINS
@@ -16,21 +15,19 @@ hard_coded_fixture_id = 'indicators:bihar-supervisor'
 class IndicatorFixtureProvider(object):
     id = hard_coded_fixture_id
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
-
-        if restore_user.domain in hard_coded_domains:
-            groups = filter(hard_coded_group_filter, restore_user.get_groups())
+    def __call__(self, user, version, last_sync=None, app=None):
+        if user.domain in hard_coded_domains:
+            groups = filter(hard_coded_group_filter, Group.by_user(user))
             if len(groups) == 1:
                 data_provider = IndicatorDataProvider(
-                    domain=restore_user.domain,
+                    domain=user.domain,
                     indicator_set=IndicatorConfig(INDICATOR_SETS).get_indicator_set(hard_coded_indicators),
                     groups=groups,
                 )
-                return [self.get_fixture(restore_user.user_id, data_provider)]
+                return [self.get_fixture(user, data_provider)]
         return []
 
-    def get_fixture(self, restore_user_id, data_provider):
+    def get_fixture(self, user, data_provider):
         """
         Generate a fixture representation of the indicator set. Something like the following:
            <fixture id="indicators:bihar-supervisor" user_id="3ce8b1611c38e956d3b3b84dd3a7ac18">
@@ -82,7 +79,7 @@ class IndicatorFixtureProvider(object):
         # switch to hindi so we can use our builtin translations
         with localize('hin'):
             root = ElementTree.Element('fixture',
-                attrib={'id': self.id, 'user_id': restore_user_id},
+                attrib={'id': self.id, 'user_id': user._id},
             )
             group = ElementTree.Element('group',
                 attrib={

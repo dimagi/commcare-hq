@@ -1,7 +1,7 @@
 from collections import namedtuple
-from casexml.apps.phone.models import OTARestoreUser
 from casexml.apps.case.xml import V1
 from django.conf import settings
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.modules import to_function
 import itertools
 
@@ -49,7 +49,10 @@ class FixtureGenerator(object):
         if version == V1:
             return []  # V1 phones will never use or want fixtures
 
-        if not isinstance(user, OTARestoreUser):
+        if getattr(user, "_hq_user", False):
+            user = user._hq_user
+
+        if not isinstance(user, CommCareUser):
             return []
 
         if group:

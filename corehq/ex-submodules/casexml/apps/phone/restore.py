@@ -8,6 +8,7 @@ import hashlib
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
+from casexml.apps.phone.data_providers.case.load_testing import get_loadtest_factor
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
@@ -15,13 +16,8 @@ from casexml.apps.phone.exceptions import (
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
-from casexml.apps.phone.models import (
-    SyncLog,
-    get_properly_wrapped_sync_log,
-    LOG_FORMAT_SIMPLIFIED,
-    get_sync_log_class_by_format,
-    OTARestoreUser,
-)
+from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, LOG_FORMAT_SIMPLIFIED, \
+    get_sync_log_class_by_format
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml as xml_util
@@ -310,14 +306,14 @@ class RestoreState(object):
     """
     restore_class = FileRestoreResponse
 
-    def __init__(self, project, restore_user, params):
+    def __init__(self, project, user, params):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
 
         self.project = project
         self.domain = project.name
 
-        self.restore_user = restore_user
+        self.user = user
         self.params = params
         self.provider_log = {}  # individual data providers can log stuff here
         # get set in the start_sync() function
@@ -356,9 +352,9 @@ class RestoreState(object):
                 raise MissingSyncLog('No sync log with ID {} found'.format(self.params.sync_log_id))
             if sync_log.doc_type != 'SyncLog':
                 raise InvalidSyncLogException('Bad sync log doc type for {}'.format(self.params.sync_log_id))
-            elif sync_log.user_id != self.restore_user.user_id:
+            elif sync_log.user_id != self.user.user_id:
                 raise SyncLogUserMismatch('Sync log {} does not match user id {} (was {})'.format(
-                    self.params.sync_log_id, self.restore_user.user_id, sync_log.user_id
+                    self.params.sync_log_id, self.user.user_id, sync_log.user_id
                 ))
 
             # convert to the right type if necessary
@@ -380,7 +376,7 @@ class RestoreState(object):
     @property
     @memoized
     def owner_ids(self):
-        return set(self.restore_user.get_owner_ids())
+        return set(self.user.get_owner_ids())
 
     @property
     @memoized
@@ -412,7 +408,7 @@ class RestoreState(object):
         previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
-            user_id=self.restore_user.user_id,
+            user_id=self.user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=list(self.owner_ids),
             date=datetime.utcnow(),
@@ -429,7 +425,7 @@ class RestoreState(object):
     @property
     @memoized
     def loadtest_factor(self):
-        return self.restore_user.loadtest_factor
+        return get_loadtest_factor(self.domain, self.user)
 
 
 class RestoreConfig(object):
@@ -437,21 +433,20 @@ class RestoreConfig(object):
     A collection of attributes associated with an OTA restore
 
     :param domain:          The domain object. An instance of `Domain`.
-    :param restore_user:    The restore user requesting the restore
+    :param user:            The mobile user requesting the restore
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     """
 
-    def __init__(self, project=None, restore_user=None, params=None, cache_settings=None):
-        assert isinstance(restore_user, OTARestoreUser)
+    def __init__(self, project=None, user=None, params=None, cache_settings=None):
         self.project = project
         self.domain = project.name if project else ''
-        self.restore_user = restore_user
+        self.user = user
         self.params = params or RestoreParams()
         self.cache_settings = cache_settings or RestoreCacheSettings()
 
         self.version = self.params.version
-        self.restore_state = RestoreState(self.project, self.restore_user, self.params)
+        self.restore_state = RestoreState(self.project, self.user, self.params)
 
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
@@ -488,7 +483,7 @@ class RestoreConfig(object):
         self.restore_state.start_sync()
 
         with self.restore_state.restore_class(
-                self.restore_user.username, items=self.params.include_item_count) as response:
+                self.user.username, items=self.params.include_item_count) as response:
             normal_providers = get_restore_providers()
             for provider in normal_providers:
                 for element in provider.get_elements(self.restore_state):
@@ -520,7 +515,7 @@ class RestoreConfig(object):
             return payload.get_http_response()
         except RestoreException, e:
             logging.exception("%s error during restore submitted by %s: %s" %
-                              (type(e).__name__, self.restore_user.username, str(e)))
+                              (type(e).__name__, self.user.username, str(e)))
             response = get_simple_response_xml(
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
@@ -530,7 +525,7 @@ class RestoreConfig(object):
 
     def _initial_cache_key(self):
         return hashlib.md5('ota-restore-{user}-{version}'.format(
-            user=self.restore_user.user_id,
+            user=self.user.user_id,
             version=self.version,
         )).hexdigest()
 

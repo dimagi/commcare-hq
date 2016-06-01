@@ -1,11 +1,9 @@
 import os
 from xml.etree import ElementTree
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 import mock
-from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.fixtures import report_fixture_generator
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
     ReportGraphConfig, MobileSelectFilter
@@ -18,6 +16,8 @@ from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvi
 from corehq.apps.userreports.reports.filters.specs import DynamicChoiceListFilterSpec
 from corehq.apps.userreports.reports.specs import FieldColumn, MultibarChartSpec, \
     GraphDisplayColumn
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import normalize_username
 from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
@@ -70,7 +70,7 @@ MAKE_REPORT_CONFIG = lambda domain, report_id: ReportConfiguration(
 )
 
 
-class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
+class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'mobile_ucr'
     root = os.path.dirname(__file__)
 
@@ -92,13 +92,13 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
-        delete_all_users()
         cls.report_id = '7b97e8b53d00d43ca126b10093215a9d'
         cls.report_config_uuid = 'a98c812873986df34fd1b4ceb45e6164ae9cc664'
         cls.domain = 'report-filter-test-domain'
-        cls.user = create_restore_user(
+        cls.user = CommCareUser(
+            username=normalize_username('ralph', cls.domain),
             domain=cls.domain,
-            username='ralph',
+            language='en',
         )
         update_toggle_cache(MOBILE_UCR.slug, cls.domain, True, NAMESPACE_DOMAIN)
 
