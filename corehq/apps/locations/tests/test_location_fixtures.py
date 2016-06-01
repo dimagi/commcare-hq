@@ -354,31 +354,20 @@ class ShouldSyncLocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         self.assertEqual(couch_location._id, location.location_id)
         self.assertEqual('winterfell', location.name)
-<<<<<<< HEAD
         location_db = LocationSet([location])
-        self.assertFalse(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
-=======
-        location_db = _location_footprint([location])
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
         )
->>>>>>> origin/master
 
         # archive the location
         couch_location.archive()
         after_archive = datetime.utcnow()
 
         location = SQLLocation.objects.last()
-<<<<<<< HEAD
         location_db = LocationSet([location])
-        self.assertTrue(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
-        self.assertFalse(should_sync_locations(SyncLog(date=after_archive), location_db, self.user))
-=======
-        location_db = _location_footprint([location])
         self.assertTrue(
             should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
         )
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_archive), location_db, self.user.to_ota_restore_user())
         )
->>>>>>> origin/master
