@@ -11,7 +11,6 @@ from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed.tests.utils import get_current_kafka_seq
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
