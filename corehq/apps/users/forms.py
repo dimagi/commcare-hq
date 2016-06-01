@@ -1,3 +1,4 @@
+from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import FormActions, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -100,6 +101,17 @@ class LanguageField(forms.CharField):
 
 class BaseUpdateUserForm(forms.Form):
 
+    def __init__(self, *args, **kwargs):
+        super(BaseUpdateUserForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
     @property
     def direct_properties(self):
         return []
@@ -185,7 +197,7 @@ class BaseUserInfoForm(forms.Form):
         required=False,
         help_text=mark_safe_lazy(
             ugettext_lazy(
-                "<i class=\"icon-info-sign\"></i> "
+                "<i class=\"fa fa-info-circle\"></i> "
                 "Becomes default language seen in CloudCare and reports (if applicable), "
                 "but does not affect mobile applications. "
                 "Supported languages for reports are en, fr (partial), and hin (partial)."
@@ -279,7 +291,7 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.fields['role'].help_text = _(mark_safe(
-            "<i class=\"icon-info-sign\"></i> "
+            "<i class=\"fa fa-info-circle\"></i> "
             "Only applies to mobile workers that will be entering data using "
             "<a href='https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry'>"
             "CloudCare</a>"
@@ -305,6 +317,33 @@ class RoleForm(forms.Form):
             role_choices = ()
         super(RoleForm, self).__init__(*args, **kwargs)
         self.fields['role'].choices = role_choices
+
+
+class SetUserPasswordForm(SetPasswordForm):
+
+    def __init__(self, domain, user_id, **kwargs):
+        super(SetUserPasswordForm, self).__init__(**kwargs)
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_tag = False
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_action = reverse("change_password", args=[domain, user_id])
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Reset Password for Mobile Worker"),
+                'new_password1',
+                'new_password2',
+                hqcrispy.FormActions(
+                    crispy.ButtonHolder(
+                        Submit('submit', _('Reset Password'))
+                    )
+                ),
+            ),
+        )
 
 
 class CommCareAccountForm(forms.Form):
@@ -488,41 +527,50 @@ class MultipleSelectionForm(forms.Form):
             form.fields['selected_ids'].choices = self.all_users
             return form
 
-        # template.html
-        <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
-
-        <script type="text/javascript">
-            $(function () {
-                $("#id_selected_ids").width(800).height(400).multiselect();
-            });
-        </script>
-
         <form class="form disable-on-submit" id="edit_users" action="" method='post'>
             <legend>{% trans 'Specify Users At This Location' %}</legend>
             {% crispy users_per_location_form %}
         </form>
 
-    To display multiple forms on the same page, you'll need to pass a prefix to
-    the MultipleSelectionForm constructor, like ``prefix="users"`` This will
-    change the css id to ``"#id_users-selected_ids"``, and the returned list of
-    ids to ``request.POST.getlist('users-selected_ids', [])``
+        @use_multiselect
+        def dispatch(self, request, *args, **kwargs):
+            return super(MyView, self).dispatch(request, *args, **kwargs)
+
+        # html
+        <script type="text/javascript">
+            // Multiselect widget
+            $(function () {
+                var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+                multiselect_utils.createFullMultiselectWidget(
+                    'id_of_multiselect_field',
+                    django.gettext("Available Things"),
+                    django.gettext("Things Selected"),
+                    django.gettext("Search Things...")
+                );
+            });
+        </script>
     """
     selected_ids = forms.MultipleChoiceField(
-        label="",
+        label=ugettext_lazy("Group Membership"),
         required=False,
     )
 
     def __init__(self, *args, **kwargs):
         submit_label = kwargs.pop('submit_label', "Update")
+        fieldset_title = kwargs.pop('fieldset_title', ugettext_lazy("Edit Group Membership"))
 
         super(MultipleSelectionForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_id = 'id-scheduledReportForm'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            'selected_ids',
+            crispy.Fieldset(
+                fieldset_title,
+                crispy.Field('selected_ids', css_class="hide"),
+            ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     Submit('submit', submit_label)
@@ -567,6 +615,14 @@ class CommtrackUserForm(forms.Form):
             self.fields['program_id'].choices = choices
         else:
             self.fields['program_id'].widget = forms.HiddenInput()
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     def save(self, user):
         location_id = self.cleaned_data['location']
@@ -632,6 +688,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         ) % {'pa_url': reverse('product_agreement')}
 
         from corehq.apps.users.views.mobile import MobileWorkerListView
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -651,10 +709,13 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 crispy.Field('country', css_class="input-large",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
-            crispy.Field('confirm_product_agreement'),
-            FormActions(
+            hqcrispy.B3MultiField(
+                '',
+                crispy.Field('confirm_product_agreement'),
+            ),
+            hqcrispy.FormActions(
                 crispy.HTML(
-                    '<a href="%(user_list_url)s" class="btn">%(text)s</a>' % {
+                    '<a href="%(user_list_url)s" class="btn btn-default">%(text)s</a>' % {
                         'user_list_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
                         'text': _("Back to Mobile Workers List")
                     }
