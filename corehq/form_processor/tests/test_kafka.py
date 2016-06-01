@@ -2,12 +2,12 @@ import uuid
 from django.test import TestCase, override_settings
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
+from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests import FormProcessorTestUtils
 from corehq.form_processor.tests.utils import post_xform
 from corehq.form_processor.utils import get_simple_form_xml
 from corehq.util.test_utils import OverridableSettingsTestMixin, create_and_save_a_case, create_and_save_a_form
-from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

@@ -11,6 +11,7 @@ from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.tests.utils import get_current_kafka_seq
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
@@ -22,7 +23,6 @@ from corehq.apps.userreports.tests.utils import get_sample_data_source, get_samp
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
-from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
 class ConfigurableReportTableManagerTest(SimpleTestCase):
