@@ -147,7 +147,7 @@ class SchemaTest(SimpleTestCase):
         app = self.make_app()
         form = self.add_form(app, "village")
         schema = util.get_session_schema(form)
-        self.assertDictEqual(schema["structure"]["case_id"], {
+        self.assertDictEqual(schema["structure"]["case_id_new_village_0"], {
             "reference": {
                 "source": "casedb",
                 "subset": "village",
