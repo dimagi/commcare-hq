@@ -2,6 +2,7 @@ from corehq.apps.sms.forms import BackendForm
 from corehq.util.validation import is_url_or_host_banned
 from dimagi.utils.django.fields import TrimmedCharField
 from crispy_forms import layout as crispy
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy, ugettext as _
 
 
