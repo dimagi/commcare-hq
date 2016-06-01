@@ -123,7 +123,7 @@ class ICDSMixin(object):
                     column_data = len(report_data)
                 elif column_agg_func == 'count_if':
                     value = column['condition']['value']
-                    if isinstance(str, value):
+                    if isinstance(value, str):
                         statement = 'val.get("{0}", "") {1} "{2}"'
                     else:
                         statement = 'val.get("{0}", 0) {1} {2}'
