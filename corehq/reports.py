@@ -211,26 +211,21 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
         )
         return reverse(slug, args=[domain, config._id])
 
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        if show_in_nav:
-            return config.visible or (
-            user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
-        return False
-
-    @classmethod
-    def display_in_dropdown(cls, domain=None, project=None, user=None):
-        if show_in_dropdown:
-            return config.visible or (
-            user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
-        return False
+    def get_show_item_method(additional_requirement):
+        @classmethod
+        def show_item(cls, domain=None, project=None, user=None):
+            return additional_requirement and (
+                config.visible or
+                (user and toggles.USER_CONFIGURABLE_REPORTS.enabled(user.username))
+            )
+        return show_item
 
     return type('DynamicReport{}'.format(config._id), (GenericReportView,), {
         'name': config.title,
         'description': config.description or None,
         'get_url': get_url,
-        'show_in_navigation': show_in_navigation,
-        'display_in_dropdown': display_in_dropdown,
+        'show_in_navigation': get_show_item_method(show_in_nav),
+        'display_in_dropdown': get_show_item_method(show_in_dropdown),
     })
 
 
