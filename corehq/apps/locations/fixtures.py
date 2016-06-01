@@ -1,5 +1,4 @@
 from collections import defaultdict
-from django.db.models import Min
 from xml.etree.ElementTree import Element
 from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.locations.models import SQLLocation
@@ -140,9 +139,7 @@ def _get_expand_from_level(domain, user_location, expand_from):
             .get_ancestors(include_self=True)
             .filter(location_type=expand_from, is_archived=False)
         )
-        highest_level = ancestors.aggregate(Min('level'))['level__min']
-        highest_locations = ancestors.filter(level=highest_level)
-        return highest_locations
+        return ancestors
 
 
 def _get_children(domain, root, expand_to):
