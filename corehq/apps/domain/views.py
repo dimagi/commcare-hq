@@ -46,7 +46,6 @@ from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_jquery_ui,
     use_select2,
     use_multiselect,
@@ -366,7 +365,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
     @method_decorator(domain_admin_required)
     @use_select2
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -460,7 +458,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     page_title = ugettext_lazy("My Timezone")
 
     @method_decorator(login_and_domain_required)
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
@@ -508,10 +505,6 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/dhis2_settings.html'
     urlname = 'dhis2_settings'
     page_title = ugettext_lazy("DHIS2 API settings")
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(EditDhis2SettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -634,7 +627,6 @@ def logo(request, domain):
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -1271,7 +1263,6 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     @use_jquery_ui
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -1403,7 +1394,6 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Privacy and Security")
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -1764,7 +1754,6 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("CommCare Exchange")
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -1784,7 +1773,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     strict_domain_fetching = True
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
@@ -2073,7 +2061,6 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/media_manager.html'
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2121,7 +2108,6 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2310,7 +2296,6 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
     template_name = 'domain/admin/domain_forwarding.html'
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2337,7 +2322,6 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     repeater_form_class = GenericRepeaterForm
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2452,7 +2436,6 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
-    @use_bootstrap3
     @use_jquery_ui  # datepicker
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
@@ -2552,7 +2535,6 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2676,10 +2658,6 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     urlname = 'pro_bono_static'
     use_domain_field = True
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProBonoStaticView, self).dispatch(request, *args, **kwargs)
-
     @property
     def requesting_domain(self):
         return self.pro_bono_form.cleaned_data['domain']
@@ -2689,10 +2667,6 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
     use_domain_field = False
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProBonoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def requesting_domain(self):
@@ -2718,7 +2692,6 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/feature_previews.html'
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2766,7 +2739,6 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Feature Flags")
     template_name = 'domain/admin/feature_flags.html'
 
-    @use_bootstrap3
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
@@ -2837,7 +2809,6 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             return {'form': self.transfer_domain_form}
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
@@ -2937,7 +2908,6 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
-    @use_bootstrap3
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
@@ -2965,7 +2935,6 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesSelect2AsyncHandler,
     ]
 
-    @use_bootstrap3
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(SMSRatesView, self).dispatch(request, *args, **kwargs)

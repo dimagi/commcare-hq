@@ -9,7 +9,7 @@ from django.views.generic import TemplateView
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
+from corehq.apps.style.decorators import use_jquery_ui
 from corehq.util.view_utils import json_error
 from dimagi.utils.web import json_request, json_response
 from dimagi.utils.couch.database import get_db
@@ -72,7 +72,6 @@ class EditMenuView(BasePageView):
     page_title = ugettext_lazy("Edit CommCare Builds")
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, *args, **kwargs):
         # different local caches on different workers

@@ -5,8 +5,9 @@ import json
 from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm
-from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
-    use_nvd3, use_jquery_ui
+from corehq.apps.style.decorators import (
+    use_nvd3,
+)
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,

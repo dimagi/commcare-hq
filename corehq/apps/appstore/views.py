@@ -3,7 +3,6 @@ from urllib import urlencode
 from django.utils.decorators import method_decorator
 from corehq.apps.appstore.exceptions import CopiedFromDeletedException
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq.apps.style.decorators import use_bootstrap3
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.resource_conflict import retry_resource
 
@@ -87,7 +86,6 @@ class BaseCommCareExchangeSectionView(BaseSectionPageView):
     section_name = ugettext_lazy("CommCare Exchange")
     template_name = 'appstore/appstore_base.html'
 
-    @use_bootstrap3
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if self.include_unapproved and not self.request.user.is_superuser:
