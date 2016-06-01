@@ -31,10 +31,11 @@ var MapItem = function(item, index, mappingContext){
     var uploaders = hqImport('#app_manager/partials/nav_menu_media_js_common.html');
     // attach a media-manager if item.value is a file-path to icon
     if (mappingContext.values_are_icons) {
-        var iconPath = item.value[mappingContext.lang] || self.generateIconPath();
+        var actualPath = item.value[mappingContext.lang];
+        var defaultIconPath = actualPath || self.generateIconPath();
         this.iconManager = new app_manager.AppMenuMediaManager({
             ref: {
-                "path": iconPath,
+                "path": actualPath,
                 "icon_type": "icon-picture",
                 "media_type": "Image",
                 "media_class": "CommCareImage",
@@ -42,7 +43,7 @@ var MapItem = function(item, index, mappingContext){
             },
             objectMap: mappingContext.multimedia,
             uploadController: uploaders.iconUploader,
-            defaultPath: iconPath,
+            defaultPath: defaultIconPath,
             inputElement: $("#" + self.cssId()),
         });
     };
@@ -58,7 +59,7 @@ var MapItem = function(item, index, mappingContext){
         _.each(langs, function(lang){
             // return ko reference to path in `iconManager` for current UI language value
             if (mappingContext.values_are_icons && lang === mappingContext.lang){
-                new_value.push([lang, self.iconManager.currentPath]);
+                new_value.push([lang, self.iconManager.customPath]);
             }
             // return new ko.observable for other languages
             else{
