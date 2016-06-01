@@ -1125,8 +1125,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
 
-def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
-                                  email=True, attach_excel=False, user_email=None):
+def get_scheduled_report_response(couch_user, domain, scheduled_report_id, email=True, attach_excel=False):
     """
     This function somewhat confusingly returns a tuple of: (response, excel_files)
     If attach_excel is false, excel_files will always be an empty list.
