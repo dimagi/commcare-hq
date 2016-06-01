@@ -350,8 +350,8 @@ def get_session_schema(form):
     structure = {}
     datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
     for datum in datums:
-        if datum.case_type:
-            session_var = datums[0].datum.id
+        if not datum.is_new_case_id and datum.case_type:
+            session_var = datum.datum.id
             structure[session_var] = {
                 "reference": {
                     "source": "casedb",

@@ -140,9 +140,10 @@ class SchemaTest(SimpleTestCase):
         assert "case_id" not in schema["structure"], schema["structure"]
 
     def test_get_session_schema_for_simple_module_with_case(self):
-        form = self.add_form("village")
+        module, form = self.factory.new_basic_module('village', 'village')
+        self.factory.form_requires_case(form)
         schema = util.get_session_schema(form)
-        self.assertDictEqual(schema["structure"]["case_id_new_village_0"], {
+        self.assertDictEqual(schema["structure"]["case_id"], {
             "reference": {
                 "source": "casedb",
                 "subset": "village",
