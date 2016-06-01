@@ -54,7 +54,6 @@ from django.views.generic import View
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
-from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -1229,17 +1228,14 @@ class CaseDetailsView(BaseProjectReportSectionView):
 
     @property
     def page_context(self):
-        if not should_use_sql_backend(self.domain):
-            # TODO: make this work for SQL
-            create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE,
-                                    self.case_instance.actions)
-            if not create_actions:
-                messages.error(self.request, _(
-                    "The case creation form could not be found. "
-                    "Usually this happens if the form that created the case is archived "
-                    "but there are other forms that updated the case. "
-                    "To fix this you can archive the other forms listed here."
-                ))
+        opening_transactions = self.case_instance.get_opening_transactions()
+        if not opening_transactions:
+            messages.error(self.request, _(
+                "The case creation form could not be found. "
+                "Usually this happens if the form that created the case is archived "
+                "but there are other forms that updated the case. "
+                "To fix this you can archive the other forms listed here."
+            ))
         return {
             "case_id": self.case_id,
             "case": self.case_instance,
