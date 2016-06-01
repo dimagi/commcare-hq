@@ -34,3 +34,26 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         change_meta = change_meta_from_kafka_message(kafka_consumer.next().value)
         self.assertEqual(case.case_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
+
+    def test_duplicate_form_and_cases_published(self):
+        form_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        form_xml = get_simple_form_xml(form_id, case_id)
+        orig_form = post_xform(form_xml, domain=self.domain)
+        self.assertEqual(form_id, orig_form.form_id)
+
+        form_consumer = get_test_kafka_consumer(topics.FORM_SQL)
+        case_consumer = get_test_kafka_consumer(topics.CASE_SQL)
+
+        # post an exact duplicate
+        dupe_form = post_xform(form_xml, domain=self.domain)
+        self.assertTrue(dupe_form.is_duplicate)
+        self.assertNotEqual(form_id, dupe_form.form_id)
+
+        # make sure changes made it to kafka
+        form_meta = change_meta_from_kafka_message(form_consumer.next().value)
+        self.assertEqual(orig_form.form_id, form_meta.document_id)
+        self.assertEqual(self.domain, form_meta.domain)
+        case_meta = change_meta_from_kafka_message(case_consumer.next().value)
+        self.assertEqual(case_id, case_meta.document_id)
+        self.assertEqual(self.domain, case_meta.domain)
