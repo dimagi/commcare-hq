@@ -89,10 +89,8 @@ class FormMultimediaExportTest(SimpleTestCase):
                 "image_2": image_2_name
             }
         }
-        with mock.patch(
-            'corehq.form_processor.models.XFormInstanceSQL.form_data',
-            new_callable=mock.PropertyMock(return_value=form)
-        ):
+        with mock.patch.object(XFormInstanceSQL, 'form_data') as form_data_mock:
+            form_data_mock.__get__ = mock.MagicMock(return_value=form)
             couch_xform = XFormInstance(
                 received_on=datetime.datetime.now(),
                 form=form,
