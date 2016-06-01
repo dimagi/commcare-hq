@@ -7,7 +7,6 @@
     <span title="{% if col.sort_key != "" %}{{ col.sort_key }}{% else %}{{ col }}{% endif %}"></span>
     {% if col.tooltip != None and col.tooltip != '' %}
         <span class="hq-help-template"
-              data-bootstrap3="true"
               data-content="{{ col.tooltip|safe }}"
         ></span>
     {% endif %}
