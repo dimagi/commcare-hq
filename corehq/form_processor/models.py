@@ -687,10 +687,13 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def case_attachments(self):
         return {attachment.identifier: attachment for attachment in self.get_attachments()}
 
-    @property
     @memoized
-    def closed_transactions(self):
+    def get_closing_transactions(self):
         return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE)
+
+    @memoized
+    def get_opening_transactions(self):
+        return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CREATE)
 
     def _transactions_by_type(self, transaction_type):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL

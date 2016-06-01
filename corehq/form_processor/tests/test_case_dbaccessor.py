@@ -686,8 +686,8 @@ class CaseAccessorTestsSQL(TestCase):
         case = _create_case()
         _create_case_transactions(case)
 
-        self.assertEqual(len(case.closed_transactions), 1)
-        self.assertTrue(case.closed_transactions[0].is_case_close)
+        self.assertEqual(len(case.get_closing_transactions()), 1)
+        self.assertTrue(case.get_closing_transactions()[0].is_case_close)
 
     def test_closed_transactions_with_tracked(self):
         case = _create_case()
@@ -708,7 +708,7 @@ class CaseAccessorTestsSQL(TestCase):
             type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_ATTACHMENT,
             revoked=False
         ))
-        self.assertEqual(len(case.closed_transactions), 2)
+        self.assertEqual(len(case.get_closing_transactions()), 2)
 
 
 class CaseAccessorsTests(TestCase):
