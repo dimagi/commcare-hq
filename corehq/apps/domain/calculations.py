@@ -17,7 +17,7 @@ from corehq.apps.hqadmin.reporting.reports import (
 )
 from couchforms.analytics import get_number_of_forms_per_domain, \
     get_number_of_forms_in_domain, domain_has_submission_in_last_30_days, \
-    get_first_form_submission_received, get_last_form_submission_received, get_300th_form_submission_received
+    get_first_form_submission_received, get_last_form_submission_received
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
@@ -198,6 +198,14 @@ def last_form_submission(domain, display=True):
     except ValueError:
         return None
     return display_time(submission_time, display) if submission_time else None
+
+
+def get_300th_form_submission_received(domain):
+    result = FormES().domain(domain).start(300).size(1).sort('received_on').fields(['received_on']).run().hits
+    if not result:
+        return
+
+    return iso_string_to_datetime(result[0]['received_on'])
 
 
 def has_app(domain, *args):

@@ -97,14 +97,6 @@ def get_last_form_submission_received(domain):
     return submission_time
 
 
-def get_300th_form_submission_received(domain):
-    result = FormES().domain(domain).start(300).size(1).sort('received_on').fields(['received_on']).run().hits
-    if not result:
-        return
-
-    return iso_string_to_datetime(result[0]['received_on'])
-
-
 def app_has_been_submitted_to_in_last_30_days(domain, app_id):
     now = datetime.datetime.utcnow()
     _30_days = datetime.timedelta(days=30)
