@@ -189,6 +189,7 @@ class ArchiveFormView(DataInterfaceSection):
     ONE_MB = 1000000
     MAX_SIZE = 3 * ONE_MB
 
+    @use_bootstrap3
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_CASE_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
         if not toggles.BULK_ARCHIVE_FORMS.enabled(request.user.username):
@@ -442,9 +443,9 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             }
         item_data = self._get_item_data(case)
         if case.case_id in self.case_group.cases:
-            message = '<span class="label label-important">%s</span>' % _("Case already in group")
+            message = '<span class="label label-danger">%s</span>' % _("Case already in group")
         elif case.doc_type != 'CommCareCase':
-            message = '<span class="label label-important">%s</span>' % _("It looks like this case was deleted.")
+            message = '<span class="label label-danger">%s</span>' % _("It looks like this case was deleted.")
         else:
             message = '<span class="label label-success">%s</span>' % _("Case added")
             self.case_group.cases.append(case.case_id)
@@ -521,6 +522,10 @@ class XFormManagementStatusView(DataInterfaceSection):
     urlname = 'xform_management_status'
     page_title = ugettext_noop('Form Status')
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(XFormManagementStatusView, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         context = super(XFormManagementStatusView, self).main_context
         mode = FormManagementMode(kwargs['mode'])
@@ -534,7 +539,7 @@ class XFormManagementStatusView(DataInterfaceSection):
             'title': mode.status_page_title,
             'error_text': mode.error_text,
         })
-        return render(request, 'style/bootstrap2/soil_status_full.html', context)
+        return render(request, 'style/bootstrap3/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

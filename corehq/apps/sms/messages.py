@@ -101,7 +101,7 @@ def get_message(msg_id, verified_number=None, context=None, domain=None, languag
     Translates the message according to the user's and domain's preferences.
 
     msg_id - one of the MSG_* constants above
-    verified_number - pass in the verified number of a contact in order to
+    verified_number - pass in the PhoneNumber of a contact in order to
                       use this contact's domain and language to translate
     context - some messages require additional parameters; pass them as a
               tuple or list

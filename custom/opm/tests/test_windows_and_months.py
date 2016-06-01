@@ -60,7 +60,6 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
         mock_case = MockCaseRow(case, self.report)
         self.assertTrue(mock_case.case_is_out_of_range)
 
-
     def test_child_first_month_not_valid(self):
         case = OPMCase(
             forms=[],
@@ -68,7 +67,6 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
         )
         mock_case = MockCaseRow(case, self.report)
         self.assertTrue(mock_case.case_is_out_of_range)
-
 
     def test_valid_child_month(self):
         for i in range(1, 18):
@@ -87,7 +85,6 @@ class TestPregnancyWindowAndMonths(OPMCaseReportTestBase):
         )
         mock_case = MockCaseRow(case, self.report)
         self.assertTrue(mock_case.case_is_out_of_range)
-
 
 
 class TestPregnancyFirstMonthWindow(OPMCaseReportTestBase):
@@ -184,6 +181,7 @@ class TestChildFirstMonthWindow(OPMCaseReportTestBase):
 
 
 class TestFormFiltering(TestCase):
+
     def check_form(self, received=None, months_before=None, months_after=None, xmlns=None):
         form = XFormInstance(received_on=received or datetime(2014, 6, 15),
                     form={'foo': 'bar'},

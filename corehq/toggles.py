@@ -16,6 +16,7 @@ ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, T
 
 
 class StaticToggle(object):
+
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None):
         self.slug = slug
@@ -197,7 +198,7 @@ APP_AWARE_SYNC = PredictablyRandomToggle(
     'App-aware Sync',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.3
+    randomness=0.6
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -335,7 +336,8 @@ REPORT_BUILDER_MAP_REPORTS = StaticToggle(
 STOCK_TRANSACTION_EXPORT = StaticToggle(
     'ledger_export',
     'Show "export transactions" link on case details page',
-    TAG_PRODUCT_PATH
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(
@@ -365,14 +367,6 @@ NO_VELLUM = StaticToggle(
     '(for custom forms that Vellum breaks)',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-VELLUM_BETA = PredictablyRandomToggle(
-    'vellum_beta',
-    'Use Vellum beta version',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    randomness=0.1
 )
 
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
@@ -605,6 +599,13 @@ CLOUDCARE_CACHE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+APPLICATION_ERROR_REPORT = StaticToggle(
+    'application_error_report',
+    'Show Application Error Report',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
@@ -661,6 +662,13 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+USE_FORMPLAYER_FRONTEND = StaticToggle(
+    'use_formplayer_frontend',
+    'Use the new formplayer frontend',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 USE_FORMPLAYER = StaticToggle(
     'use_formplayer',
     'Use the new formplayer server',
@@ -709,6 +717,13 @@ TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
     'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+)
+
+MESSAGE_LOG_METADATA = StaticToggle(
+    'message_log_metadata',
+    'Include message id in Message Log export.',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
 )
 
 ABT_REMINDER_RECIPIENT = StaticToggle(

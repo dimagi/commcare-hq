@@ -2,8 +2,6 @@ from decimal import Decimal
 import random
 import datetime
 
-from django.core.exceptions import ObjectDoesNotExist
-
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -124,7 +122,7 @@ class TestInvoice(BaseInvoiceTestCase):
         """
         domain = generator.arbitrary_domain()
         tasks.generate_invoices()
-        self.assertRaises(ObjectDoesNotExist,
+        self.assertRaises(Invoice.DoesNotExist,
                           lambda: Invoice.objects.get(subscription__subscriber__domain=domain.name))
         domain.delete()
 
@@ -239,6 +237,7 @@ class TestInvoice(BaseInvoiceTestCase):
 
 
 class TestContractedInvoices(BaseInvoiceTestCase):
+
     def setUp(self):
         super(TestContractedInvoices, self).setUp()
         generator.delete_all_subscriptions()
@@ -472,7 +471,17 @@ class TestSmsLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestSmsLineItem, self).setUp()
-        self.sms_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.SMS).get()
+        self.sms_rate = self.subscription.plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.SMS
+        ).get()
+        self.invoice_date = utils.months_from_date(
+            self.subscription.date_start, random.randint(2, self.subscription_length)
+        )
+        self.sms_date = utils.months_from_date(self.invoice_date, -1)
+
+    def tearDown(self):
+        self._delete_sms_billables()
+        super(TestSmsLineItem, self).tearDown()
 
     def test_under_limit(self):
         """
@@ -484,20 +493,14 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         - quantity is equal to 1
         - total and subtotals are 0.0
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
-        sms_date = utils.months_from_date(invoice_date, -1)
-
         num_sms = random.randint(0, self.sms_rate.monthly_limit/2)
         generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, INCOMING, sms_date, num_sms
+            self.subscription.subscriber.domain, self.sms_date, num_sms, direction=INCOMING
         )
         generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, OUTGOING, sms_date, num_sms
+            self.subscription.subscriber.domain, self.sms_date, num_sms, direction=OUTGOING
         )
-
-        tasks.generate_invoices(invoice_date)
-        invoice = self.subscription.invoice_set.latest('date_created')
-        sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
+        sms_line_item = self._create_sms_line_item()
 
         # there is no base cost
         self.assertIsNone(sms_line_item.base_description)
@@ -509,8 +512,6 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         self.assertEqual(sms_line_item.subtotal, Decimal('0.0000'))
         self.assertEqual(sms_line_item.total, Decimal('0.0000'))
 
-        self._delete_sms_billables()
-
     def test_over_limit(self):
         """
         Make sure that the Line Item for the SMS Rate has the following:
@@ -521,33 +522,100 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         - quantity is equal to 1
         - total and subtotals are greater than zero
         """
-        invoice_date = utils.months_from_date(self.subscription.date_start, random.randint(2, self.subscription_length))
-        sms_date = utils.months_from_date(invoice_date, -1)
-
         num_sms = random.randint(self.sms_rate.monthly_limit + 1, self.sms_rate.monthly_limit + 2)
-        generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, INCOMING, sms_date, num_sms
+        billables = generator.arbitrary_sms_billables_for_domain(
+            self.subscription.subscriber.domain, self.sms_date, num_sms
         )
-        generator.arbitrary_sms_billables_for_domain(
-            self.subscription.subscriber.domain, OUTGOING, sms_date, num_sms
-        )
-
-        tasks.generate_invoices(invoice_date)
-        invoice = self.subscription.invoice_set.latest('date_created')
-        sms_line_item = invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
+        sms_line_item = self._create_sms_line_item()
 
         # there is no base cost
         self.assertIsNone(sms_line_item.base_description)
         self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
 
+        sms_cost = sum(
+            billable.gateway_charge + billable.usage_charge
+            for billable in billables[self.sms_rate.monthly_limit:]
+        )
+
         self.assertEqual(sms_line_item.quantity, 1)
-        self.assertGreater(sms_line_item.unit_cost, Decimal('0.0000'))
+        self.assertEqual(sms_line_item.unit_cost, sms_cost)
         self.assertIsNotNone(sms_line_item.unit_description)
 
-        self.assertGreater(sms_line_item.subtotal, Decimal('0.0000'))
-        self.assertGreater(sms_line_item.total, Decimal('0.0000'))
+        self.assertEqual(sms_line_item.subtotal, sms_cost)
+        self.assertEqual(sms_line_item.total, sms_cost)
 
-        self._delete_sms_billables()
+    def test_multipart_under_limit(self):
+        self._create_multipart_billables(self.sms_rate.monthly_limit)
+
+        sms_line_item = self._create_sms_line_item()
+
+        self.assertIsNone(sms_line_item.base_description)
+        self.assertEqual(sms_line_item.base_cost, Decimal('0.0000'))
+
+        self.assertEqual(sms_line_item.quantity, 1)
+        self.assertEqual(sms_line_item.unit_cost, Decimal('0.0000'))
+        self.assertIsNotNone(sms_line_item.unit_description)
+        self.assertEqual(sms_line_item.subtotal, Decimal('0.0000'))
+        self.assertEqual(sms_line_item.total, Decimal('0.0000'))
+
+    def test_multipart_over_limit(self):
+        def _set_billable_date_sent_day(sms_billable, day):
+            sms_billable.date_sent = datetime.date(
+                sms_billable.date_sent.year,
+                sms_billable.date_sent.month,
+                day
+            )
+            sms_billable.save()
+
+        self._create_multipart_billables(self.sms_rate.monthly_limit - 1)
+        for billable in SmsBillable.objects.all():
+            _set_billable_date_sent_day(billable, 1)
+
+        half_charged_billable = generator.arbitrary_sms_billables_for_domain(
+            self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=2
+        )[0]
+        _set_billable_date_sent_day(half_charged_billable, 2)
+
+        fully_charged_billable = generator.arbitrary_sms_billables_for_domain(
+            self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=random.randint(2, 5)
+        )[0]
+        _set_billable_date_sent_day(fully_charged_billable, 3)
+
+        sms_cost = (
+            (half_charged_billable.gateway_charge + half_charged_billable.usage_charge) / 2
+            + fully_charged_billable.gateway_charge + fully_charged_billable.usage_charge
+        )
+
+        sms_line_item = self._create_sms_line_item()
+
+        self.assertEqual(sms_line_item.quantity, 1)
+        self.assertEqual(sms_line_item.unit_cost, sms_cost)
+        self.assertIsNotNone(sms_line_item.unit_description)
+
+        self.assertEqual(sms_line_item.subtotal, sms_cost)
+        self.assertEqual(sms_line_item.total, sms_cost)
+
+    def _create_sms_line_item(self):
+        tasks.generate_invoices(self.invoice_date)
+        invoice = self.subscription.invoice_set.latest('date_created')
+        return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).get()
+
+    def _create_multipart_billables(self, total_parts):
+        count_parts = 0
+        while True:
+            multipart_count = random.randint(1, 5)
+            if count_parts + multipart_count <= total_parts:
+                generator.arbitrary_sms_billables_for_domain(
+                    self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=multipart_count
+                )
+                count_parts += multipart_count
+            else:
+                break
+        remaining_parts = total_parts - count_parts
+        if remaining_parts > 0:
+            generator.arbitrary_sms_billables_for_domain(
+                self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=remaining_parts
+            )
 
     def _delete_sms_billables(self):
         SmsBillable.objects.all().delete()

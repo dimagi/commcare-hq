@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 import itertools
-import json_field
+import jsonfield
 
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -60,6 +60,7 @@ class Product(Document):
             return codes_by_domain[domain]
 
         for doc in docs:
+            doc.last_modified = datetime.utcnow()
             if not doc['code_']:
                 doc['code_'] = generate_code(
                     doc['name'],
@@ -266,6 +267,7 @@ class Product(Document):
 
 
 class ProductQueriesMixin(object):
+
     def product_ids(self):
         return self.values_list('product_id', flat=True)
 
@@ -285,6 +287,7 @@ class ProductQuerySet(ProductQueriesMixin, models.query.QuerySet):
 
 
 class ProductManager(ProductQueriesMixin, models.Manager):
+
     def get_queryset(self):
         return ProductQuerySet(self.model, using=self._db)
 
@@ -306,7 +309,7 @@ class SQLProduct(models.Model):
     program_id = models.CharField(max_length=100, null=True, default='')
     cost = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     units = models.CharField(max_length=100, null=True, default='')
-    product_data = json_field.JSONField(
+    product_data = jsonfield.JSONField(
         default={},
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -326,6 +329,10 @@ class SQLProduct(models.Model):
     @classmethod
     def by_domain(cls, domain):
         return cls.objects.filter(domain=domain).all()
+
+    @property
+    def get_id(self):
+        return self.product_id
 
     class Meta:
         app_label = 'products'

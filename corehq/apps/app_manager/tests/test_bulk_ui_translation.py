@@ -1,6 +1,4 @@
-import codecs
 from django.test import SimpleTestCase
-import os
 from StringIO import StringIO
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application
@@ -15,7 +13,6 @@ class BulkUiTranslation(SimpleTestCase):
     def setUpClass(cls):
         cls.app = Application.new_app("test-domain", "Test App", application_version=APP_V2)
         cls.app.langs = ["en", "fra"]
-        cls.app.build_langs = ["en", "fra"]
 
     def _build_translation_download_file(self, headers, data=None):
         if data is None:

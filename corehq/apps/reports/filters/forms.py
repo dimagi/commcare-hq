@@ -14,7 +14,6 @@ from corehq.apps.reports.analytics.esaccessors import (
     guess_form_name_from_submissions_using_xmlns,
 )
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
-from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.decorators.memoized import memoized
 
@@ -62,6 +61,7 @@ class FormsByApplicationFilterParams(object):
         except ValueError:
             return None
 
+
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
         Use this filter to drill down by
@@ -79,7 +79,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     css_class = "span5"
     drilldown_empty_text = ugettext_lazy("You don't have any applications set up, so there are no forms "
                                          "to choose from. Please create an application!")
-    template = "reports/filters/bootstrap2/form_app_module_drilldown.html"
+    template = "reports/filters/form_app_module_drilldown.html"
     unknown_slug = "unknown"
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True

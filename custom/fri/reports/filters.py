@@ -16,6 +16,7 @@ class InteractiveParticipantFilter(BaseSingleOptionFilter):
         cases = get_interactive_participants(self.domain)
         return [(case.get_id, case.name) for case in cases]
 
+
 class RiskProfileFilter(BaseSingleOptionFilter):
     slug = "risk_profile"
     label = _("Risk Profile")
@@ -33,6 +34,7 @@ class RiskProfileFilter(BaseSingleOptionFilter):
             (PROFILE_G, PROFILE_DESC[PROFILE_G]),
             (PROFILE_H, PROFILE_DESC[PROFILE_H]),
         ]
+
 
 class SurveyDateSelector(BaseSingleOptionFilter):
     """

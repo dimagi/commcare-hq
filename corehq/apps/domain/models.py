@@ -80,6 +80,7 @@ LICENSE_LINKS = {
     'cc-nc-nd': 'http://creativecommons.org/licenses/by-nc-nd/4.0',
 }
 
+
 def cached_property(method):
     def find_cached(self):
         try:
@@ -92,9 +93,11 @@ def cached_property(method):
 
 
 class UpdatableSchema():
+
     def update(self, new_dict):
         for kw in new_dict:
             self[kw] = new_dict[kw]
+
 
 class Deployment(DocumentSchema, UpdatableSchema):
     date = DateTimeProperty()
@@ -119,7 +122,7 @@ class CallCenterProperties(DocumentSchema):
         return self.enabled and self.use_fixtures
 
     def config_is_valid(self):
-        return self.case_owner_id and self.case_type
+        return (self.use_user_location_as_owner or self.case_owner_id) and self.case_type
 
 
 class LicenseAgreement(DocumentSchema):
@@ -129,6 +132,7 @@ class LicenseAgreement(DocumentSchema):
     user_id = StringProperty()
     user_ip = StringProperty()
     version = StringProperty()
+
 
 class InternalProperties(DocumentSchema, UpdatableSchema):
     """
@@ -144,7 +148,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     initiative = StringListProperty()
     workshop_region = StringProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
-    self_started = BooleanProperty()
+    self_started = BooleanProperty(default=True)
     area = StringProperty()
     sub_area = StringProperty()
     using_adm = BooleanProperty()
@@ -160,6 +164,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     goal_followup_rate = DecimalProperty()
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
+    performance_threshold = IntegerProperty()
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
 
 
@@ -173,12 +178,14 @@ class CaseDisplaySettings(DocumentSchema):
 
     # todo: case list
 
+
 class DynamicReportConfig(DocumentSchema):
     """configurations of generic/template reports to be set up for this domain"""
     report = StringProperty()  # fully-qualified path to template report class
     name = StringProperty()  # report display name in sidebar
     kwargs = DictProperty()  # arbitrary settings to configure report
     previewers_only = BooleanProperty()
+
 
 class DynamicReportSet(DocumentSchema):
     """a set of dynamic reports grouped under a section header in the sidebar"""
@@ -187,6 +194,7 @@ class DynamicReportSet(DocumentSchema):
 
 
 LOGO_ATTACHMENT = 'logo.png'
+
 
 class DayTimeWindow(DocumentSchema):
     """
@@ -331,6 +339,9 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     two_factor_auth = BooleanProperty(default=False)
 
+    requested_report_builder_trial = StringListProperty()
+    requested_report_builder_subscription = StringListProperty()
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
@@ -438,6 +449,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     def full_applications(self, include_builds=True):
         from corehq.apps.app_manager.models import Application, RemoteApp
         WRAPPERS = {'Application': Application, 'RemoteApp': RemoteApp}
+
         def wrap_application(a):
             return WRAPPERS[a['doc']['doc_type']].wrap(a['doc'])
 

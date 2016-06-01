@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.sms.mixin import InvalidFormatException, PhoneNumberInUseException
+
 
 class Command(BaseCommand):
     args = "<domain1 domain2 ... >"

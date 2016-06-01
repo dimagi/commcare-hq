@@ -6,7 +6,6 @@ from corehq.apps.users.models import WebUser
 from corehq.sql_db.connections import Session
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.parsing import json_format_date
 
 from .sql_fixture import load_data
 from .sql_reports import test_report, UserTestReport, RegionTestReport
@@ -15,6 +14,7 @@ DOMAIN = "test"
 
 
 class BaseReportTest(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         load_data()
@@ -60,6 +60,7 @@ class BaseReportTest(unittest.TestCase):
 
 
 class SimpleReportTest(BaseReportTest):
+
     def test_no_group_no_filter(self):
         html_data, sort_data = self._get_report_data(test_report(UserTestReport), "2013-01-01", "2013-02-01")
         self.assertEqual(len(sort_data), 1)

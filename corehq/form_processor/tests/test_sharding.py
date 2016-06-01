@@ -2,12 +2,12 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.test import TestCase
+from django.test.utils import override_settings
 from unittest import skipUnless, SkipTest
 
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.tests import create_form_for_test, FormProcessorTestUtils
 from corehq.sql_db.config import PartitionConfig
-from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'sharding-test'
 

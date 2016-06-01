@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Q
@@ -65,6 +65,7 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -137,13 +138,11 @@ class SoftwarePlanEdition(object):
         (RESELLER, RESELLER),
         (MANAGED_HOSTING, MANAGED_HOSTING),
     )
-    ORDER = [
+    SELF_SERVICE_ORDER = [
         COMMUNITY,
         STANDARD,
         PRO,
         ADVANCED,
-        RESELLER,
-        MANAGED_HOSTING,
     ]
 
 
@@ -407,7 +406,7 @@ class BillingAccount(models.Model):
             last_subscription = Subscription.objects.filter(
                 is_trial=False, subscriber__domain=domain).latest('date_end')
             return last_subscription.account
-        except ObjectDoesNotExist:
+        except Subscription.DoesNotExist:
             pass
         try:
             return cls.objects.exclude(
@@ -762,11 +761,11 @@ class DefaultProductPlan(models.Model):
     @classmethod
     def get_lowest_edition_by_domain(cls, domain, requested_privileges,
                                      return_plan=False):
-        for edition in SoftwarePlanEdition.ORDER:
+        for edition in SoftwarePlanEdition.SELF_SERVICE_ORDER:
             plan_version = cls.get_default_plan_by_domain(
                 domain, edition=edition
             )
-            privileges = get_privileges(plan_version)
+            privileges = get_privileges(plan_version) - REPORT_BUILDER_ADD_ON_PRIVS
             if privileges.issuperset(requested_privileges):
                 return (plan_version if return_plan
                         else plan_version.plan.edition)
@@ -997,6 +996,7 @@ class Subscriber(models.Model):
 
 
 class SubscriptionManager(models.Manager):
+
     def get_queryset(self):
         return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
@@ -1016,7 +1016,8 @@ class Subscription(models.Model):
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
     no_invoice_reason = models.CharField(blank=True, null=True, max_length=256)
-    do_not_email = models.BooleanField(default=False)
+    do_not_email_invoice = models.BooleanField(default=False)
+    do_not_email_reminder = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
     service_type = models.CharField(
@@ -1038,6 +1039,7 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
 
     objects = SubscriptionManager()
+    api_objects = Manager()
 
     class Meta:
         app_label = 'accounting'
@@ -1177,8 +1179,8 @@ class Subscription(models.Model):
 
     def update_subscription(self, date_start, date_end,
                             date_delay_invoicing=None, do_not_invoice=None,
-                            no_invoice_reason=None, do_not_email=None,
-                            salesforce_contract_id=None,
+                            no_invoice_reason=None, do_not_email_invoice=None,
+                            do_not_email_reminder=None, salesforce_contract_id=None,
                             auto_generate_credits=None,
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None):
@@ -1192,7 +1194,8 @@ class Subscription(models.Model):
         self._update_properties(
             do_not_invoice=do_not_invoice,
             no_invoice_reason=no_invoice_reason,
-            do_not_email=do_not_email,
+            do_not_email_invoice=do_not_email_invoice,
+            do_not_email_reminder=do_not_email_reminder,
             auto_generate_credits=auto_generate_credits,
             salesforce_contract_id=salesforce_contract_id,
             service_type=service_type,
@@ -1232,7 +1235,8 @@ class Subscription(models.Model):
         property_names = {
             'do_not_invoice',
             'no_invoice_reason',
-            'do_not_email',
+            'do_not_email_invoice',
+            'do_not_email_reminder',
             'auto_generate_credits',
             'salesforce_contract_id',
             'service_type',
@@ -1476,7 +1480,7 @@ class Subscription(models.Model):
 
             billing_contact_emails = self.account.billingcontactinfo.email_list
             if not billing_contact_emails:
-                raise SubscriptionReminderError(
+                log_accounting_error(
                     "Billing account %d doesn't have any contact emails" % self.account.id
                 )
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
@@ -1697,6 +1701,7 @@ class Subscription(models.Model):
 
 
 class InvoiceBaseManager(models.Manager):
+
     def get_queryset(self):
         return super(InvoiceBaseManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
@@ -1792,6 +1797,7 @@ class WireInvoice(InvoiceBase):
 
 
 class WirePrepaymentInvoice(WireInvoice):
+
     class Meta:
         app_label = 'accounting'
         proxy = True
@@ -2143,6 +2149,7 @@ class WireBillingRecord(BillingRecordBase):
 
 
 class WirePrepaymentBillingRecord(WireBillingRecord):
+
     class Meta:
         app_label = 'accounting'
         proxy = True
@@ -2189,8 +2196,8 @@ class BillingRecord(BillingRecordBase):
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
                             subscription.service_type == SubscriptionType.IMPLEMENTATION)
         hidden = self.invoice.is_hidden
-        do_not_email = self.invoice.subscription.do_not_email
-        return not (autogenerate or small_contracted or hidden or do_not_email)
+        do_not_email_invoice = self.invoice.subscription.do_not_email_invoice
+        return not (autogenerate or small_contracted or hidden or do_not_email_invoice)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month
@@ -2514,6 +2521,7 @@ class InvoicePdf(SafeSaveDocument):
 
 
 class LineItemManager(models.Manager):
+
     def get_products(self):
         return self.get_queryset().filter(feature_rate__exact=None)
 
@@ -2567,7 +2575,7 @@ class LineItem(models.Model):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, line_item=self)
 
 
-class CreditLine(models.Model):
+class CreditLine(ValidateModelMixin, models.Model):
     """
     The amount of money in USD that exists can can be applied toward a specific account,
     a specific subscription, or specific rates in that subscription.
@@ -2576,7 +2584,7 @@ class CreditLine(models.Model):
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
     product_type = models.CharField(max_length=25, null=True, blank=True,
                                     choices=((SoftwareProductType.ANY, SoftwareProductType.ANY),))
-    feature_type = models.CharField(max_length=10, null=True,
+    feature_type = models.CharField(max_length=10, null=True, blank=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
@@ -2644,18 +2652,34 @@ class CreditLine(models.Model):
             line_item.feature_rate.feature.feature_type
             if line_item.feature_rate is not None else None
         )
-        return itertools.chain(
-            cls.get_credits_by_subscription_and_features(
+
+        for credit_line in cls.get_credits_by_subscription_and_features(
+            line_item.invoice.subscription,
+            product_type=product_type,
+            feature_type=feature_type,
+        ):
+            yield credit_line
+
+        if product_type is not None:
+            for credit_line in cls.get_credits_by_subscription_and_features(
                 line_item.invoice.subscription,
-                product_type=product_type,
-                feature_type=feature_type,
-            ),
-            cls.get_credits_for_account(
+                product_type=SoftwareProductType.ANY,
+            ):
+                yield credit_line
+
+        for credit_line in cls.get_credits_for_account(
+            line_item.invoice.subscription.account,
+            product_type=product_type,
+            feature_type=feature_type,
+        ):
+            yield credit_line
+
+        if product_type is not None:
+            for credit_line in cls.get_credits_for_account(
                 line_item.invoice.subscription.account,
-                product_type=product_type,
-                feature_type=feature_type,
-            )
-        )
+                product_type=SoftwareProductType.ANY,
+            ):
+                yield credit_line
 
     @classmethod
     def get_credits_for_invoice(cls, invoice):

@@ -1,6 +1,4 @@
-import os
 import requests
-from dimagi.ext.couchdbkit import *
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.telerivet.forms import TelerivetBackendForm
@@ -11,6 +9,7 @@ MESSAGE_TYPE_SMS = "sms"
 
 
 class SQLTelerivetBackend(SQLSMSBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True

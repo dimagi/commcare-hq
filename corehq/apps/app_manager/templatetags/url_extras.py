@@ -3,6 +3,7 @@ import urllib
 
 register = template.Library()
 
+
 @register.tag
 def urlencode(parser, token):
     tokens = list(reversed(token.split_contents()))
@@ -34,7 +35,9 @@ def urlencode(parser, token):
 
     return URLEncodeNode(path_var, params_var, params, delete)
 
+
 class URLEncodeNode(template.Node):
+
     def __init__(self, path_var,  params_var, extra_params, delete_params):
         self.path_var = template.Variable(path_var)
         self.params_var = template.Variable(params_var)

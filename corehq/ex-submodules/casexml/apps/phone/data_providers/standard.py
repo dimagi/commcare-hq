@@ -24,6 +24,7 @@ class SyncElementProvider(RestoreDataProvider):
     """
     Gets the initial sync element.
     """
+
     def get_elements(self, restore_state):
         yield xml.get_sync_element(restore_state.current_sync_log._id)
 
@@ -32,6 +33,7 @@ class RegistrationElementProvider(RestoreDataProvider):
     """
     Gets the registration XML
     """
+
     def get_elements(self, restore_state):
         yield xml.get_registration_element(restore_state.user)
 
@@ -40,6 +42,7 @@ class FixtureElementProvider(RestoreDataProvider):
     """
     Gets any associated fixtures.
     """
+
     def get_elements(self, restore_state):
         # fixture block
         for fixture in generator.get_fixtures(

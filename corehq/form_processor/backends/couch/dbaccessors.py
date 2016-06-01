@@ -29,7 +29,7 @@ from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
     get_form_ids_for_user,
-    get_forms_by_id)
+    get_forms_by_id, get_form_ids_by_type)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
@@ -54,12 +54,12 @@ class FormAccessorCouch(AbstractFormAccessor):
         return XFormInstance.get(form_id)
 
     @staticmethod
-    def get_forms(form_ids):
+    def get_forms(form_ids, ordered=False):
         return get_forms_by_id(form_ids)
 
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
-        pass
+        return get_form_ids_by_type(domain, type_)
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
@@ -127,11 +127,11 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids, closed=closed)
 
     @staticmethod
-    def get_open_case_ids(domain, owner_id):
+    def get_open_case_ids_for_owner(domain, owner_id):
         return get_open_case_ids(domain, owner_id)
 
     @staticmethod
-    def get_closed_case_ids(domain, owner_id):
+    def get_closed_case_ids_for_owner(domain, owner_id):
         return get_closed_case_ids(domain, owner_id)
 
     @staticmethod
@@ -179,6 +179,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
 
 class LedgerAccessorCouch(AbstractLedgerAccessor):
+
     @staticmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         from casexml.apps.stock.models import StockTransaction
@@ -234,6 +235,11 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         from corehq.apps.commtrack.models import StockState
 
         return StockState.objects.filter(product_id__in=product_ids)
+
+    @staticmethod
+    def get_current_ledger_state(case_ids, ensure_form_id=False):
+        from casexml.apps.stock.utils import get_current_ledger_state
+        return get_current_ledger_state(case_ids, ensure_form_id=ensure_form_id)
 
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):

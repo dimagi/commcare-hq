@@ -14,6 +14,7 @@ from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
 
 class CaseAttachmentAPI(View):
+
     @method_decorator(login_or_digest_or_basic_or_apikey())
     def get(self, request, domain, case_id=None, attachment_id=None):
         """
@@ -113,6 +114,7 @@ class CaseAttachmentAPI(View):
 
 
 class FormAttachmentAPI(View):
+
     @method_decorator(login_or_digest_or_basic_or_apikey())
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id or not FormAccessors(domain).form_exists(form_id):

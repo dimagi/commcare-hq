@@ -4,6 +4,7 @@ from django.db import connection
 
 
 class BaseDeletion(object):
+
     def __init__(self, app_label):
         self.app_label = app_label
 
@@ -15,6 +16,7 @@ class BaseDeletion(object):
 
 
 class CustomDeletion(BaseDeletion):
+
     def __init__(self, app_label, deletion_fn):
         super(CustomDeletion, self).__init__(app_label)
         self.deletion_fn = deletion_fn
@@ -25,6 +27,7 @@ class CustomDeletion(BaseDeletion):
 
 
 class RawDeletion(BaseDeletion):
+
     def __init__(self, app_label, raw_query):
         super(RawDeletion, self).__init__(app_label)
         self.raw_query = raw_query
@@ -35,6 +38,7 @@ class RawDeletion(BaseDeletion):
 
 
 class ModelDeletion(BaseDeletion):
+
     def __init__(self, app_label, model_name, domain_filter_kwarg):
         super(ModelDeletion, self).__init__(app_label)
         self.domain_filter_kwarg = domain_filter_kwarg
@@ -105,6 +109,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('sms', 'SQLLastReadMessage', 'domain'),
     ModelDeletion('sms', 'ExpectedCallback', 'domain'),
     ModelDeletion('ivr', 'Call', 'domain'),
+    ModelDeletion('sms', 'PhoneNumber', 'domain'),
     ModelDeletion('sms', 'MessagingSubEvent', 'parent__domain'),
     ModelDeletion('sms', 'MessagingEvent', 'domain'),
     ModelDeletion('sms', 'SelfRegistrationInvitation', 'domain'),

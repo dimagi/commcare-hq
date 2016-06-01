@@ -33,6 +33,7 @@ class UUIDGeneratorMixin(object):
 
 # https://gist.github.com/glarrain/5448253
 class ValidateModelMixin(object):
+
     def save(self, *args, **kwargs):
         self.full_clean()
         super(ValidateModelMixin, self).save(*args, **kwargs)

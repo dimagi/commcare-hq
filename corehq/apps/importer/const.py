@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext_noop
 
+
 class LookupErrors:
     NotFound, MultipleResults = range(2)
 
@@ -13,3 +14,4 @@ class ImportErrors:
     CaseGeneration = ugettext_noop('Case Generation Error')
     DuplicateLocationName = ugettext_noop('Duplicated Location Name')
     InvalidInteger = ugettext_noop('Invalid Integer')
+    ImportErrorMessage = ugettext_noop('Import Error')

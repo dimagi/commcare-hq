@@ -1,6 +1,7 @@
 from django.http import Http404
 from django.views.generic import View
 
+
 class DomainAPI(View):
     """
     DomainAPI allows for additional separate RESTful assets to be accessible within or outside
@@ -32,10 +33,13 @@ class DomainAPI(View):
         raise NotImplementedError("This API's name is not implemented")
 
     http_method_names = ['get', 'post', 'head', ]
+
     def get(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
+
     def post(self,  *args, **kwargs):
         raise NotImplementedError("Not implemented")
+
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
 

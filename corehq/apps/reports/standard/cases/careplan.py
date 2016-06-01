@@ -6,13 +6,14 @@ from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectRe
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.style.decorators import use_timeago
-from django.core.urlresolvers import reverse, NoReverseMatch
+from django.core.urlresolvers import NoReverseMatch
 from django.utils import html
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.decorators.memoized import memoized
 
 
 class CareplanCaseDisplay(CaseDisplay):
+
     @property
     def case_detail_url(self):
         try:

@@ -24,6 +24,7 @@ LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
 
 class LocationTypeManager(models.Manager):
+
     def full_hierarchy(self, domain):
         """
         Returns a graph of the form
@@ -59,6 +60,7 @@ class LocationTypeManager(models.Manager):
         Sorts location types by hierarchy
         """
         ordered_loc_types = []
+
         def step_through_graph(hierarchy):
             for _, (loc_type, children) in hierarchy.items():
                 ordered_loc_types.append(loc_type)
@@ -147,6 +149,7 @@ class LocationType(models.Model):
 
 
 class LocationQueriesMixin(object):
+
     def location_ids(self):
         return self.values_list('location_id', flat=True)
 
@@ -171,6 +174,7 @@ class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
 
 
 class LocationManager(LocationQueriesMixin, TreeManager):
+
     def _get_base_queryset(self):
         return LocationQuerySet(self.model, using=self._db)
 
@@ -210,6 +214,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
 
 
 class OnlyUnarchivedLocationManager(LocationManager):
+
     def get_queryset(self):
         return (super(OnlyUnarchivedLocationManager, self).get_queryset()
                 .filter(is_archived=False))
@@ -543,6 +548,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return self.location_type_object.name
 
     _sql_location_type = None
+
     @location_type.setter
     def location_type(self, value):
         msg = "You can't create a location without a real location type"

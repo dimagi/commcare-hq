@@ -1,5 +1,3 @@
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
-from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, \
     MonthYearMixin
@@ -10,15 +8,9 @@ from corehq.util.dates import get_first_last_days
 
 class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin, GenericTabularReport):
 
-    title = 'Block MPR'
-    slug = 'icds_report'
-    name = 'Block MPR'
     report_template_path = "icds_reports/multi_report.html"
     flush_layout = True
     exportable = True
-    is_bootstrap3 = True
-
-    fields = [AsyncLocationFilter, MonthFilter, YearFilter]
 
     @property
     @memoized
@@ -48,30 +40,46 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     def report_context(self):
         context = {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
-            'title': self.title
+            'title': self.title,
         }
 
         return context
 
     def get_report_context(self, data_provider):
         context = dict(
+            has_sections=data_provider.has_sections,
+            posttitle=data_provider.posttitle,
             report_table=dict(
                 title=data_provider.title,
                 slug=data_provider.slug,
                 headers=data_provider.headers,
                 rows=data_provider.rows,
+                subtitle=data_provider.subtitle,
                 default_rows=self.default_rows,
-                start_at_row=0
+                start_at_row=0,
             )
         )
         return context
 
     @property
     def export_table(self):
-        reports = [r['report_table'] for r in self.report_context['reports']]
-        return [self._export_table(r['title'], r['headers'], r['rows']) for r in reports]
+        reports = []
+        for report in self.report_context['reports']:
+            if report['has_sections']:
+                for section in report['report_table']['rows']:
+                    reports.append(self._export_table(section['title'], [], section['headers'], section['rows']))
+            else:
+                reports.append(
+                    self._export_table(
+                        report['report_table']['title'],
+                        report['report_table']['subtitle'],
+                        report['report_table']['headers'],
+                        report['report_table']['rows'])
+                )
 
-    def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
+        return reports
+
+    def _export_table(self, export_sheet_name, subtitle, headers, formatted_rows, total_row=None):
         def _unformat_row(row):
             return [col.get("sort_key", col) if isinstance(col, dict) else col for col in row]
         if headers:
@@ -92,5 +100,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         table.extend(rows)
         if total_row:
             table.append(_unformat_row(total_row))
-
+        for sub in reversed(subtitle):
+            table.insert(0, [sub])
+        table.insert(0, [export_sheet_name])
         return [export_sheet_name, table]

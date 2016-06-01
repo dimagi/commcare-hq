@@ -32,6 +32,7 @@ variable CCHQ_IS_FRESH_INSTALL set to 1):
 
 
 class MigrationInfo(object):
+
     def __init__(self, migration_names, tag_name, commands):
         """
         migration_names - A list of MigrationStatus.MIGRATION_* constants
@@ -89,5 +90,15 @@ def assert_log_migration_complete(apps, schema_editor):
             [MigrationStatus.MIGRATION_LOGS],
             'logs-messaging-migration',
             ['migrate_logs_to_sql']
+        )
+    )
+
+
+def assert_phone_number_migration_complete(apps, schema_editor):
+    assert_messaging_migration_complete(
+        MigrationInfo(
+            [MigrationStatus.MIGRATION_PHONE_NUMBERS],
+            'phone-number-messaging-migration',
+            ['migrate_phone_numbers_to_sql']
         )
     )

@@ -1,7 +1,6 @@
-from django.core.management.base import CommandError
 from django.conf import settings
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.reminders.models import CaseReminderHandler, CaseReminder
+from corehq.apps.reminders.models import CaseReminder
 from corehq.apps.reminders.tasks import fire_reminder
 from corehq.apps.reminders.util import get_reminder_domain
 from hqscripts.generic_queue import GenericEnqueuingOperation
@@ -48,6 +47,7 @@ class ReminderEnqueuingOperation(GenericEnqueuingOperation):
             # If anything goes wrong here, no problem, the handle() thread will
             # pick it up later and enqueue.
             pass
+
 
 class Command(ReminderEnqueuingOperation):
     pass

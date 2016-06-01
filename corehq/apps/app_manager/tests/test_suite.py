@@ -8,7 +8,6 @@ from corehq.apps.app_manager.models import (
     Application,
     DetailColumn,
     FormActionCondition,
-    FormSchedule,
     MappingItem,
     Module,
     OpenCaseAction,
@@ -16,7 +15,6 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
     ReportAppConfig,
     ReportModule,
-    ScheduleVisit,
     SortElement,
     UpdateCaseAction,
 )
@@ -26,6 +24,7 @@ from corehq.apps.app_manager.xpath import (
     session_var,
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.feature_previews import MODULE_FILTER
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
@@ -618,7 +617,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "entry/session/datum"
         )
 
-
     def test_subcase_repeat_mixed(self):
         app = Application.new_app(None, "Untitled Application", application_version=APP_V2)
         module_0 = app.add_module(Module.new_module('parent', None))
@@ -733,4 +731,25 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             self.get_xml('reports_module_summary_detail_use_localized_description'),
             app.create_suite(),
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
+        )
+
+        report_app_config._report.columns[0]['transform'] = {
+            'type': 'translation',
+            'translations': {
+                u'एक': [
+                    ['en', 'one'],
+                    ['es', 'uno'],
+                ],
+                '2': [
+                    ['en', 'two'],
+                    ['es', 'dos\''],
+                    ['hin', u'दो'],
+                ],
+            }
+        }
+        report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
+        self.assertXmlPartialEqual(
+            self.get_xml('reports_module_data_detail-translated'),
+            app.create_suite(),
+            "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
         )

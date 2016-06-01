@@ -13,6 +13,7 @@ class DomainGenerationCache(GenerationCache):
         "domain/fields_by_prefix",
     ]
 
+
 class UserGenerationCache(GenerationCache):
     generation_key = '#gen#couch_user#'
     doc_types = ['CommCareUser', 'CouchUser', 'WebUser']

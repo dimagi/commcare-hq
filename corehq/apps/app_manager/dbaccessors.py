@@ -61,14 +61,51 @@ def get_latest_build_id(domain, app_id):
     return res['id'] if res else None
 
 
+def get_build_doc_by_version(domain, app_id, version):
+    from .models import Application
+    res = Application.get_db().view(
+        'app_manager/saved_app',
+        key=[domain, app_id, version],
+        include_docs=True,
+        reduce=False,
+        limit=1,
+    ).first()
+    return res['doc'] if res else None
+
+
+def wrap_app(app_doc, wrap_cls=None):
+    """Will raise DocTypeError if it can't figure out the correct class"""
+    from corehq.apps.app_manager.util import get_correct_app_class
+    cls = wrap_cls or get_correct_app_class(app_doc)
+    return cls.wrap(app_doc)
+
+
+def get_current_app(domain, app_id):
+    from .models import Application
+    app = Application.get_db().get(app_id)
+    if app.get('domain', None) != domain:
+        raise ResourceNotFound()
+    return wrap_app(app)
+
+
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     """
-    Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
-    (Application or RemoteApp).
+    Utility for getting an app, making sure it's in the domain specified, and
+    wrapping it in the right class (Application or RemoteApp).
 
+    'target' is only used if latest=True.  It should be set to one of:
+       'build', 'release', or 'save'
+
+    Here are some common usages and the simpler dbaccessor alternatives:
+        current_app = get_app(domain, app_id)
+                    = get_current_app(domain, app_id)
+        latest_released_build = get_app(domain, app_id, latest=True)
+                              = get_latest_released_app_doc(domain, app_id)
+        latest_build = get_app(domain, app_id, latest=True, target='build')
+                     = get_latest_build_doc(domain, app_id)
+    Use wrap_app() if you need the wrapped object.
     """
     from .models import Application
-    from corehq.apps.app_manager.util import get_correct_app_class
     if not app_id:
         raise Http404()
     if latest:
@@ -83,6 +120,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
                 raise Http404()
 
         if original_app.get('copy_of'):
+            # The id passed in corresponds to a build
             parent_app_id = original_app.get('copy_of')
             min_version = original_app['version'] if original_app.get('is_released') else -1
         else:
@@ -105,11 +143,9 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     if domain and app['domain'] != domain:
         raise Http404()
     try:
-        cls = wrap_cls or get_correct_app_class(app)
+        return wrap_app(app, wrap_cls=wrap_cls)
     except DocTypeError:
         raise Http404()
-    app = cls.wrap(app)
-    return app
 
 
 def get_apps_in_domain(domain, include_remote=True):

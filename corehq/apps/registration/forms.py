@@ -33,7 +33,8 @@ class DomainRegistrationForm(forms.Form):
 
     org = forms.CharField(widget=forms.HiddenInput(), required=False)
     hr_name = forms.CharField(label=_('Project Name'), max_length=max_name_length,
-                                      widget=forms.TextInput(attrs={'class': 'form-control'}))
+                                      widget=forms.TextInput(attrs={'class': 'form-control',
+                                        'placeholder': _('My CommCare Project')}))
 
     def __init__(self, *args, **kwargs):
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
@@ -140,6 +141,7 @@ class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
 # part of the distro
 
 class _BaseForm(object):
+
     def clean(self):
         for field in self.cleaned_data:
             if isinstance(self.cleaned_data[field], basestring):

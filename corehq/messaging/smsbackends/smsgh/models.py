@@ -1,8 +1,6 @@
 import requests
 from corehq.apps.sms.models import SMS, SQLSMSBackend
-from corehq.apps.sms.util import strip_plus
 from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm
-from dimagi.ext.couchdbkit import StringProperty
 
 
 GHANA_COUNTRY_CODE = '233'
@@ -14,6 +12,7 @@ class SMSGHException(Exception):
 
 
 class SQLSMSGHBackend(SQLSMSBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True

@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
 import os
-from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.app_manager.models import Application
 from corehq.apps.commtrack.util import unicode_slug
 
 
@@ -11,6 +11,7 @@ class Command(BaseCommand):
         Downloads an app's forms in a more convenient directory structure for working with offline.
         See also: upload_app_forms
     """
+
     def handle(self, *args, **options):
         # todo: would be nice if this worked off remote servers too
         if len(args) != 2:

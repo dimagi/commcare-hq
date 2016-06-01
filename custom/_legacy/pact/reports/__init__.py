@@ -17,6 +17,7 @@ class PactPatientDispatcher(CustomProjectReportDispatcher):
 
 
 class PactElasticTabularReportMixin(CustomProjectReport, ElasticProjectInspectionReport, ProjectReportParametersMixin):
+
     def format_date(self, date_string, format=ISO_DATE_FORMAT):
         try:
             date_obj = dateutil.parser.parse(date_string)

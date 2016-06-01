@@ -1,8 +1,7 @@
-from couchdbkit import ResourceNotFound
 import datetime
 import dateutil
 from django.core import cache
-from django.core.urlresolvers import reverse, NoReverseMatch
+from django.core.urlresolvers import NoReverseMatch
 from django.template.defaultfilters import yesno
 from django.utils import html
 from django.utils.translation import ugettext as _
@@ -10,13 +9,14 @@ import json
 from casexml.apps.case.models import CommCareCaseAction
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.decorators.memoized import memoized
 
 
 class CaseInfo(object):
+
     def __init__(self, report, case):
         """
         case is a dict object of the case doc
@@ -187,6 +187,7 @@ class CaseInfo(object):
 
 
 class CaseDisplay(CaseInfo):
+
     @property
     def closed_display(self):
         return yesno(self.is_closed, "closed,open")

@@ -10,7 +10,6 @@ from tastypie.throttle import CacheThrottle
 from corehq.messaging.smsbackends.grapevine.forms import GrapevineBackendForm
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.models import SQLSMSBackend
-from dimagi.ext.couchdbkit import *
 from xml.sax.saxutils import escape, unescape
 from django.conf import settings
 from corehq.apps.sms.api import incoming as incoming_sms
@@ -33,6 +32,7 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 class SQLGrapevineBackend(SQLSMSBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True
@@ -119,6 +119,7 @@ class UrlencodedDeserializer(Serializer):
 
 
 class SimpleApiAuthentication(Authentication):
+
     def is_authenticated(self, request, **kwargs):
         user = self.get_identifier(request)
         key = request.GET.get('apikey')

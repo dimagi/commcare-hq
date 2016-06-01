@@ -6,7 +6,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.phone.cleanliness import get_case_footprint_info
-from casexml.apps.phone.data_providers.case.load_testing import append_update_to_response
+from casexml.apps.phone.data_providers.case.load_testing import get_elements_for_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, LOG_FORMAT_SIMPLIFIED, IndexTree, SimplifiedSyncLog
@@ -66,7 +66,7 @@ class CleanOwnerCaseSyncOperation(object):
         extension_indices = defaultdict(set)
         all_dependencies_syncing = set()
         closed_cases = set()
-        potential_updates_to_sync = []
+        potential_elements_to_sync = {}
         while case_ids_to_sync:
             ids = pop_ids(case_ids_to_sync, chunk_size)
             # todo: see if we can avoid wrapping - serialization depends on it heavily for now
@@ -81,8 +81,7 @@ class CleanOwnerCaseSyncOperation(object):
             for update in updates:
                 case = update.case
                 all_synced.add(case.case_id)
-                potential_updates_to_sync.append(update)
-
+                potential_elements_to_sync[case.case_id] = get_elements_for_response(update, self.restore_state)
                 # update the indices in the new sync log
                 if case.indices:
                     extension_indices[case.case_id] = {
@@ -155,9 +154,10 @@ class CleanOwnerCaseSyncOperation(object):
         else:
             irrelevant_cases = purged_cases - self.restore_state.last_sync_log.case_ids_on_phone
 
-        for update in potential_updates_to_sync:
-            if update.case.case_id not in irrelevant_cases:
-                append_update_to_response(response, update, self.restore_state)
+        for element_case_id, elements in potential_elements_to_sync.iteritems():
+            if element_case_id not in irrelevant_cases:
+                for element in elements:
+                    response.append(element)
 
         return response
 
@@ -171,7 +171,7 @@ class CleanOwnerCaseSyncOperation(object):
         if self.is_clean(owner_id):
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids
-                return set(self.case_accessor.get_open_case_ids(owner_id))
+                return set(self.case_accessor.get_open_case_ids_for_owner(owner_id))
             else:
                 # for a clean owner's steady state sync, the base set is anything modified since last sync
                 return set(self.case_accessor.get_case_ids_modified_with_owner_since(
@@ -193,7 +193,7 @@ class CleanOwnerCaseSyncOperation(object):
         else:
             if self.restore_state.is_initial:
                 # for a clean owner's initial sync the base set is just the open ids and their extensions
-                all_case_ids = set(self.case_accessor.get_open_case_ids(owner_id))
+                all_case_ids = set(self.case_accessor.get_open_case_ids_for_owner(owner_id))
                 new_case_ids = set(all_case_ids)
                 while new_case_ids:
                     all_case_ids = all_case_ids | new_case_ids

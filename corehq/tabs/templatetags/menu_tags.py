@@ -68,6 +68,7 @@ def get_all_tabs(request, domain, couch_user, project):
 
 
 class MainMenuNode(template.Node):
+
     def render(self, context):
         request = context['request']
         couch_user = getattr(request, 'couch_user', None)

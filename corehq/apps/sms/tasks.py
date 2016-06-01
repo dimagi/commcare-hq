@@ -1,7 +1,6 @@
 import math
 from datetime import datetime, timedelta
 from celery.task import task
-from time import sleep
 from corehq.apps.sms.mixin import (VerifiedNumber, InvalidFormatException,
     PhoneNumberInUseException)
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
@@ -21,9 +20,7 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import soft_delete_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.rate_limit import rate_limit
-from threading import Thread
 
 
 def remove_from_queue(queued_sms):

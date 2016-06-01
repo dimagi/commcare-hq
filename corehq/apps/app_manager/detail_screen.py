@@ -68,6 +68,7 @@ class register_type_processor(object):
 
 
 class BaseXpathGenerator(object):
+
     def __init__(self, app, module, detail, column):
         self.app = app
         self.module = module
@@ -289,6 +290,7 @@ class Distance(FormattedDetailColumn):
 
 @register_format_type('phone')
 class Phone(FormattedDetailColumn):
+
     @property
     def template_form(self):
         if self.detail.display == 'long':
@@ -524,6 +526,7 @@ class Graph(FormattedDetailColumn):
 
 @register_type_processor(const.FIELD_TYPE_ATTACHMENT)
 class AttachmentXpathGenerator(BaseXpathGenerator):
+
     @property
     def xpath(self):
         return const.FIELD_TYPE_ATTACHMENT + "/" + self.column.field_property
@@ -531,6 +534,7 @@ class AttachmentXpathGenerator(BaseXpathGenerator):
 
 @register_type_processor(const.FIELD_TYPE_PROPERTY)
 class PropertyXpathGenerator(BaseXpathGenerator):
+
     @property
     def xpath(self):
         if self.column.model == 'product':
@@ -576,6 +580,7 @@ class PropertyXpathGenerator(BaseXpathGenerator):
 
 @register_type_processor(const.FIELD_TYPE_INDICATOR)
 class IndicatorXpathGenerator(BaseXpathGenerator):
+
     @property
     def xpath(self):
         indicator_set, indicator = self.column.field_property.split('/', 1)
@@ -585,6 +590,7 @@ class IndicatorXpathGenerator(BaseXpathGenerator):
 
 @register_type_processor(const.FIELD_TYPE_LOCATION)
 class LocationXpathGenerator(BaseXpathGenerator):
+
     @property
     def xpath(self):
         from corehq.apps.locations.util import parent_child

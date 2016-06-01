@@ -5,9 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from corehq.apps.smsbillables.utils import log_smsbillables_error
-from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
-from django.forms import forms
-from corehq.apps.users.util import format_username
+from corehq.apps.users.models import CommCareUser, WebUser
 
 from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
@@ -17,12 +15,11 @@ from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_backend_classes)
 from corehq.apps.sms.models import (OUTGOING, INCOMING,
     PhoneBlacklist, SMS, SelfRegistrationInvitation, MessagingEvent,
-    SQLMobileBackend, SQLSMSBackend, QueuedSMS)
+    SQLMobileBackend, SQLSMSBackend, QueuedSMS, PhoneNumber)
 from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
-from corehq.apps.sms.mixin import (VerifiedNumber,
-    BadSMSConfigException)
+from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.domain.models import Domain
 from datetime import datetime
 
@@ -51,6 +48,7 @@ def get_utcnow():
 
 
 class MessageMetadata(object):
+
     def __init__(self, *args, **kwargs):
         self.workflow = kwargs.get("workflow", None)
         self.xforms_session_couch_id = kwargs.get("xforms_session_couch_id", None)
@@ -119,7 +117,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
         text = text
     )
     if contact:
-        msg.couch_recipient = contact._id
+        msg.couch_recipient = contact.get_id
         msg.couch_recipient_doc_type = contact.doc_type
     add_msg_tags(msg, metadata)
 
@@ -131,7 +129,7 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
     """
     Sends an sms using the given verified phone number entry.
 
-    verified_number The VerifiedNumber entry to use when sending.
+    verified_number The PhoneNumber entry to use when sending.
     text            The text of the message to send.
 
     return  True on success, False on failure
@@ -490,7 +488,7 @@ def get_opt_keywords(msg):
 
 
 def process_incoming(msg):
-    v = VerifiedNumber.by_phone(msg.phone_number, include_pending=True)
+    v = PhoneNumber.by_phone(msg.phone_number, include_pending=True)
 
     if v is not None and v.verified:
         msg.couch_recipient_doc_type = v.owner_doc_type
@@ -509,8 +507,10 @@ def process_incoming(msg):
 
     can_receive_sms = PhoneBlacklist.can_receive_sms(msg.phone_number)
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
+    domain = v.domain if v else None
+
     if is_opt_message(msg.text, opt_out_keywords) and can_receive_sms:
-        if PhoneBlacklist.opt_out_sms(msg.phone_number):
+        if PhoneBlacklist.opt_out_sms(msg.phone_number, domain=domain):
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
             if v:
@@ -518,7 +518,7 @@ def process_incoming(msg):
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
     elif is_opt_message(msg.text, opt_in_keywords) and not can_receive_sms:
-        if PhoneBlacklist.opt_in_sms(msg.phone_number):
+        if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
             text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
             if v:
                 send_sms_to_verified_number(v, text)

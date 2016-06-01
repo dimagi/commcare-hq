@@ -31,6 +31,7 @@ from corehq.apps.app_manager.util import (
     get_usercase_properties,
 )
 from corehq.apps.style.decorators import use_bootstrap3
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -175,7 +176,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
         context.update({
             'multimedia': {
-                "references": app.get_references(),
                 "object_map": app.get_object_map(),
                 'upload_managers': {
                     'icon': MultimediaImageUploadController(
@@ -190,6 +190,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 },
             }
         })
+        try:
+            context['multimedia']['references'] = app.get_references()
+        except ReportConfigurationNotFoundError:
+            pass
         context['multimedia'].update(specific_media)
 
     error = request.GET.get('error', '')

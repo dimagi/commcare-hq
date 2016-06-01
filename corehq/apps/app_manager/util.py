@@ -164,6 +164,7 @@ def is_valid_case_type(case_type, module):
 
 
 class ParentCasePropertyBuilder(object):
+
     def __init__(self, app, defaults=(), per_type_defaults=None):
         self.app = app
         self.defaults = defaults
@@ -650,11 +651,6 @@ def update_unique_ids(app_source):
         for reference in reference_path.find(app_source):
             if reference.value in id_changes:
                 jsonpath_update(reference, id_changes[reference.value])
-
-    for module in app_source['modules']:
-        if module['module_type'] == 'report':
-            for report_config in module['report_configs']:
-                report_config['uuid'] = random_hex()
 
     return app_source
 

@@ -1,4 +1,3 @@
-import uuid
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
@@ -55,6 +54,7 @@ class TestLocationTypes(TestCase):
 
 
 class TestLocationTypeOwnership(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'locations-test-ownership'

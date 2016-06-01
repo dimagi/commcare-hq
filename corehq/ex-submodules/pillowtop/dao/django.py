@@ -8,6 +8,7 @@ class DjangoDocumentStore(DocumentStore):
     """
     An implementation of the DocumentStore that uses the Django ORM.
     """
+
     def __init__(self, model_class, doc_generator_fn, model_generator_fn=None):
         self._model_class = model_class
         self._doc_generator_fn = doc_generator_fn
@@ -30,3 +31,14 @@ class DjangoDocumentStore(DocumentStore):
 
     def delete_document(self, doc_id):
         self._model_class.objects.filter(pk=doc_id).delete()
+
+    def iter_document_ids(self, last_id=None):
+        # todo: support last_id
+        return self._model_class.objects.all().values_list('id', flat=True)
+
+    def iter_documents(self, ids):
+        from dimagi.utils.chunked import chunked
+        for chunk in chunked(ids, 500):
+            chunk = list(filter(None, chunk))
+            for model in self._model_class.objects.filter(pk__in=chunk):
+                yield self._doc_generator_fn(model)

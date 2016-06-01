@@ -21,7 +21,7 @@
         <tr class="{% cycle "odd" "even" %}">
             <td class="control-group form-inline">
                 {{ export.name|default:"[blank]" }}
-                {% if not deid and export.is_safe %}<span class="label">{% trans "de-identified" %}</span>{% endif %}
+                {% if not deid and export.is_safe %}<span class="label label-default">{% trans "de-identified" %}</span>{% endif %}
                 <div><p class="help-inline">{{ export.formname }}</p></div>
             </td>
             <td class="cell-vertical-centered">

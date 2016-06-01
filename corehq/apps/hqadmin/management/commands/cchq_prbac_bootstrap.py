@@ -149,6 +149,10 @@ class Command(BaseCommand):
         Role(slug=privileges.COMMCARE_LOGO_UPLOADER, name='Custom CommCare Logo Uploader', description=''),
         Role(slug=privileges.LOCATIONS, name='Locations', description=''),
         Role(slug=privileges.REPORT_BUILDER, name='User Configurable Report Builder', description=''),
+        Role(slug=privileges.REPORT_BUILDER_TRIAL, name='Report Builder Trial', description=''),
+        Role(slug=privileges.REPORT_BUILDER_5, name='Report Builder, 5 report limit', description=''),
+        Role(slug=privileges.REPORT_BUILDER_15, name='Report Builder, 15 report limit', description=''),
+        Role(slug=privileges.REPORT_BUILDER_30, name='Report Builder, 30 report limit', description=''),
         Role(slug=privileges.USER_CASE, name='User Case Management', description=''),
         Role(slug=privileges.DATA_CLEANUP, name='Data Management',
              description='Tools for cleaning up data, including editing submissions and archiving forms.'),
@@ -157,7 +161,9 @@ class Command(BaseCommand):
         Role(slug=privileges.CUSTOM_INTENTS, name='Custom Intents',
              description='Allows for specifying custom intents'),
         Role(slug=privileges.ADVANCED_DOMAIN_SECURITY, name='Advanced Domain Security',
-             description='Allows domains to set security policies for all web users')
+             description='Allows domains to set security policies for all web users'),
+        Role(slug=privileges.BUILD_PROFILES, name='Build Profiles',
+             description='Allows domains to create build profiles to customize app deploys')
     ]
 
     BOOTSTRAP_PLANS = [
@@ -201,7 +207,8 @@ class Command(BaseCommand):
         privileges.ACTIVE_DATA_MANAGEMENT,
         privileges.COMMCARE_LOGO_UPLOADER,
         privileges.CUSTOM_INTENTS,
-        privileges.ADVANCED_DOMAIN_SECURITY
+        privileges.ADVANCED_DOMAIN_SECURITY,
+        privileges.BUILD_PROFILES,
     ]
 
     enterprise_plan_features = advanced_plan_features + []

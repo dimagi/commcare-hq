@@ -7,7 +7,8 @@ from collections import defaultdict
 from contextlib import contextmanager
 
 from corehq.blobs import BlobInfo, get_blob_db
-from corehq.blobs.exceptions import NotFound
+from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
+from corehq.blobs.util import ClosingContextProxy, document_method
 from couchdbkit.exceptions import InvalidAttachment, ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,
@@ -69,6 +70,7 @@ class BlobMixin(Document):
         value.update(self.external_blobs)
         return value
 
+    @document_method
     def put_attachment(self, content, name=None, content_type=None, content_length=None):
         """Put attachment in blob database
 
@@ -106,6 +108,7 @@ class BlobMixin(Document):
             self._atomic_blobs[name].append(old_meta)
         return True
 
+    @document_method
     def fetch_attachment(self, name, stream=False):
         """Get named attachment
 
@@ -115,11 +118,15 @@ class BlobMixin(Document):
         """
         db = get_blob_db()
         try:
-            meta = self.external_blobs[name]
+            try:
+                meta = self.external_blobs[name]
+            except KeyError:
+                if self.migrating_blobs_from_couch:
+                    return super(BlobMixin, self) \
+                        .fetch_attachment(name, stream=stream)
+                raise NotFound
             blob = db.get(meta.id, self._blobdb_bucket())
-        except (KeyError, NotFound):
-            if self.migrating_blobs_from_couch:
-                return super(BlobMixin, self).fetch_attachment(name, stream=stream)
+        except NotFound:
             raise ResourceNotFound(u"{model} attachment: {name!r}".format(
                                    model=type(self).__name__, name=name))
         if stream:
@@ -152,6 +159,7 @@ class BlobMixin(Document):
             self.save()
         return deleted
 
+    @document_method
     def atomic_blobs(self, save=None):
         """Return a context manager to atomically save doc + blobs
 
@@ -189,7 +197,8 @@ class BlobMixin(Document):
                 typ, exc, tb = sys.exc_info()
                 # delete new blobs that were not saved
                 for name, meta in self.external_blobs.iteritems():
-                    if meta is not old_external_blobs.get(name):
+                    old_meta = old_external_blobs.get(name)
+                    if old_meta is None or meta.id != old_meta.id:
                         db.delete(meta.id, bucket)
                 self.external_blobs = old_external_blobs
                 if self.migrating_blobs_from_couch:
@@ -200,8 +209,9 @@ class BlobMixin(Document):
             if success:
                 # delete replaced blobs
                 deleted = set()
+                blobs = self.blobs
                 for name, meta in list(old_external_blobs.iteritems()):
-                    if meta is not self.blobs.get(name):
+                    if name not in blobs or meta.id != blobs[name].id:
                         db.delete(meta.id, bucket)
                         deleted.add(meta.id)
                 # delete newly created blobs that were overwritten or deleted
@@ -209,6 +219,205 @@ class BlobMixin(Document):
                     if meta.id not in deleted:
                         db.delete(meta.id, bucket)
         return atomic_blobs_context()
+
+
+class BlobHelper(object):
+    """Helper to get/set blobs given a document dict and couch database
+
+    NOTE: attachments will be stored in couch and will be inaccessible
+    using the normal attachments API if this is used to copy a document
+    having "_attachments" but not "external_blobs" to a database in
+    which the "doc_type" uses external blob storage and is not in
+    `migrating_blobs_from_couch` mode. To work around this limitation,
+    put `"external_blobs": {}` in documents having a "doc_type" that
+    uses external blob storage. The same is true when copying a document
+    with "external_blobs" to a database that is not using an external
+    blob database. To work around that, remove the "external_blobs" item
+    from the document (after fetching all blobs) and be sure that the
+    document has an "_attachments" value that is not `None`.
+
+    Modifying "_attachments" or "external_blobs" values in a document is
+    not recommended while it is wrapped in this class.
+    """
+
+    def __init__(self, doc, database):
+        if doc.get("_id") is None:
+            raise TypeError("BlobHelper requires a real _id")
+        self._id = doc["_id"]
+        self.doc = doc
+        self.database = database
+        self.couch_only = "external_blobs" not in doc
+        self.migrating_blobs_from_couch = bool(doc.get("_attachments")) \
+            and not self.couch_only
+        self._attachments = doc.get("_attachments")
+        blobs = doc.get("external_blobs", {})
+        self.external_blobs = {n: BlobMeta.wrap(m.copy())
+                               for n, m in blobs.iteritems()}
+
+    _atomic_blobs = None
+
+    @property
+    def blobs(self):
+        return BlobMixin.blobs.fget(self)
+
+    def _blobdb_bucket(self):
+        return join(self.database.dbname, self._id)
+
+    def put_attachment(self, content, name=None, *args, **kw):
+        if self._attachments is None and self.couch_only:
+            raise AmbiguousBlobStorageError(" ".join("""
+                Ambiguous blob storage: doc has no _attachments and no
+                external_blobs. Put a dict (may be empty) in one or both
+                to indicate where blobs are located (_attachments ->
+                couch, external_blobs -> blob db). If both are present,
+                new blobs will be stored in the blob db, but existing
+                blobs will be fetched from couch if there is no
+                corresponding key in the external_blobs dict.
+            """.split()))
+        if self.couch_only:
+            self.database.put_attachment(self.doc, content, name, *args, **kw)
+        else:
+            BlobMixin.put_attachment(self, content, name, *args, **kw)
+            self._sync_doc()
+        return True
+
+    def fetch_attachment(self, name, *args, **kw):
+        if name in self.external_blobs:
+            return BlobMixin.fetch_attachment(self, name, *args, **kw)
+        return self.database.fetch_attachment(self._id, name, *args, **kw)
+
+    def delete_attachment(self, *args, **kw):
+        raise NotImplementedError
+
+    def atomic_blobs(self, save=None):
+        if save is not None:
+            original_save = save
+
+            def save():
+                self._sync_doc()
+                original_save()
+
+        if self.couch_only:
+            @contextmanager
+            def context():
+                (self.save if save is None else save)()
+                yield
+        else:
+            @contextmanager
+            def context():
+                try:
+                    with BlobMixin.atomic_blobs(self, save):
+                        yield
+                except:
+                    self.doc["_attachments"] = self._attachments
+                    self.doc["external_blobs"] = {name: meta.to_json()
+                        for name, meta in self.external_blobs.iteritems()}
+                    raise
+        return context()
+
+    def _sync_doc(self):
+        if "_attachments" in self.doc:
+            assert self.doc["_attachments"] == self._attachments
+        if "external_blobs" in self.doc:
+            # because put_attachment calls self.save()
+            self.doc["external_blobs"] = {name: meta.to_json()
+                for name, meta in self.external_blobs.iteritems()}
+
+    def save(self):
+        self._sync_doc()
+        self.database.save_doc(self.doc)
+
+
+class DeferredBlobMixin(BlobMixin):
+    """Similar to BlobMixin, but can defer attachment puts until save
+
+    This class is intended for backward compatibility with code that set
+    `_attachments` to a dict of attachments with content. It is not
+    recommended to use this in new code.
+    """
+
+    class Meta:
+        abstract = True
+
+    _deferred_blobs = None
+
+    @property
+    def blobs(self):
+        value = super(DeferredBlobMixin, self).blobs
+        if self._deferred_blobs:
+            value = dict(value)
+            value.update((name, BlobMeta(
+                id=None,
+                content_type=info.get("content_type", None),
+                content_length=info.get("content_length", None),
+                digest=None,
+            )) for name, info in self._deferred_blobs.iteritems())
+        return value
+
+    def put_attachment(self, content, name=None, *args, **kw):
+        if self._deferred_blobs:
+            self._deferred_blobs.pop(name, None)
+        return super(DeferredBlobMixin, self).put_attachment(content, name,
+                                                             *args, **kw)
+
+    def fetch_attachment(self, name, stream=False):
+        if self._deferred_blobs and name in self._deferred_blobs:
+            body = self._deferred_blobs[name]["content"]
+            if stream:
+                return ClosingContextProxy(StringIO(body))
+            try:
+                body = body.decode("utf-8", "strict")
+            except UnicodeDecodeError:
+                # Return bytes on decode failure, otherwise unicode.
+                # Ugly, but consistent with restkit.wrappers.Response.body_string
+                pass
+            return body
+        return super(DeferredBlobMixin, self).fetch_attachment(name, stream)
+
+    def delete_attachment(self, name):
+        if self._deferred_blobs:
+            deleted = bool(self._deferred_blobs.pop(name, None))
+        else:
+            deleted = False
+        return super(DeferredBlobMixin, self).delete_attachment(name) or deleted
+
+    def deferred_put_attachment(self, content, name=None, content_type=None,
+                                content_length=None):
+        """Queue attachment to be persisted on save
+
+        WARNING this loads the entire blob content into memory. Use of
+        this method is discouraged:
+
+        - Generally it is bad practice to load large blobs into memory
+          in their entirety. Ideally blobs should be streamed between
+          the client and the blob database.
+        - JSON serialization becomes less efficient because blobs are
+          base-64 encoded, requiring even more memory.
+
+        This method takes the same parameters as `put_attachment`.
+        """
+        if isinstance(content, unicode):
+            content = content.encode('utf-8')
+        elif not isinstance(content, bytes):
+            content = content.read()
+        if self._deferred_blobs is None:
+            self._deferred_blobs = {}
+        length = len(content) if content_length is None else content_length
+        self._deferred_blobs[name] = {
+            "content": content,
+            "content_type": content_type,
+            "content_length": length,
+        }
+
+    def save(self):
+        if self._deferred_blobs:
+            with self.atomic_blobs(super(DeferredBlobMixin, self).save):
+                # list deferred blobs to avoid modification during iteration
+                for name, info in list(self._deferred_blobs.iteritems()):
+                    self.put_attachment(name=name, **info)
+                assert not self._deferred_blobs, self._deferred_blobs
+        else:
+            super(DeferredBlobMixin, self).save()
 
 
 @memoized

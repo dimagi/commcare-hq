@@ -16,7 +16,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.data_interfaces.utils import archive_forms_old
 from corehq import privileges, toggles
-from corehq.apps.accounting import generator
 
 THISDIR = dirname(abspath(__file__))
 BASE_PATH = join(THISDIR, 'files')
@@ -28,6 +27,7 @@ WRONG_FILETYPE = 'wrong_file.xyz'
 
 
 class BulkArchiveForms(TestCase):
+
     @classmethod
     def setUpClass(cls):
         create_domain(DOMAIN_NAME)

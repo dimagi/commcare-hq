@@ -119,7 +119,6 @@ class FluffPillow(PythonPillow):
             else:
                 indicators.delete()
 
-
         backend = BACKEND_SQL if self.save_direct_to_sql else BACKEND_COUCH
         indicator_document_updated.send(
             sender=self,

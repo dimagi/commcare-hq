@@ -1066,6 +1066,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     }
                 },
                 addProperty: function () {
+                    var type = this.columnKey === "short" ? "List" : "Detail";
+                    ga_track_event('Case Management', 'Module Level Case ' + type, 'Add Property');
                     this.addItem({hasAutocomplete: true});
                 },
                 addCalculation: function () {

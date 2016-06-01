@@ -110,7 +110,10 @@ class PropertyExpressionTest(SimpleTestCase):
             (None, "datetime", "2015-09-30 19:04:27Z"),
             (date(2015, 9, 30), "date", "2015-09-30T19:04:27Z"),
             (date(2015, 9, 30), "date", datetime(2015, 9, 30)),
-            (None, "datetime", "2015-09-30"),
+            (datetime(2015, 9, 30, 0, 0, 0), "datetime", "2015-09-30"),
+            ([None], "array", None),
+            ([3], "array", 3),
+            ([3, 4, 9], "array", [3, 4, 9]),
         ]:
             getter = ExpressionFactory.from_spec({
                 'type': 'property_name',

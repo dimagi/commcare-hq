@@ -13,6 +13,7 @@ from corehq.apps.importer.exceptions import (
     ImporterExcelError,
     ImporterFileNotFound,
     ImporterRefError,
+    InvalidCustomFieldNameException,
     InvalidDateException,
     InvalidIntegerException
 )
@@ -25,6 +26,11 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.soft_assert import soft_assert
 from couchexport.export import SCALAR_NEVER_WAS
+
+
+# Don't allow users to change the case type by accident using a custom field. But do allow users to change
+# owner_id, external_id, etc. (See also custom_data_fields.models.RESERVED_WORDS)
+RESERVED_FIELDS = ('type',)
 
 
 class ImporterConfig(object):
@@ -212,6 +218,7 @@ class ExcelFile(object):
         if sheet:
             return self._row_values(sheet, index)
 
+
 def convert_custom_fields_to_struct(config):
     excel_fields = config.excel_fields
     case_fields = config.case_fields
@@ -231,6 +238,7 @@ def convert_custom_fields_to_struct(config):
                 field_map[field]['field_name'] = custom_fields[i]
 
     return field_map
+
 
 class ImportErrorDetail(object):
 
@@ -269,6 +277,9 @@ class ImportErrorDetail(object):
             "Integer values were specified, but the values in excel were not "
             "all integers"
         ),
+        ImportErrors.ImportErrorMessage: _(
+            "Problems in importing cases. Please check the excel file."
+        )
     }
 
     def __init__(self, *args, **kwargs):
@@ -329,6 +340,7 @@ def parse_search_id(config, columns, row):
 
     return convert_field_value(search_id)
 
+
 def get_key_column_index(config, columns):
     key_column = config.key_column
     try:
@@ -338,6 +350,7 @@ def get_key_column_index(config, columns):
 
     return key_column_index
 
+
 def get_value_column_index(config, columns):
     value_column = config.value_column
     try:
@@ -346,6 +359,7 @@ def get_value_column_index(config, columns):
         value_column_index = False
 
     return value_column_index
+
 
 def lookup_case(search_field, search_id, domain, case_type):
     """
@@ -378,6 +392,7 @@ def lookup_case(search_field, search_id, domain, case_type):
     else:
         return (None, LookupErrors.NotFound)
 
+
 def populate_updated_fields(config, columns, row, datemode):
     """
     Returns a dict map of fields that were marked to be updated
@@ -398,10 +413,13 @@ def populate_updated_fields(config, columns, row, datemode):
             continue
 
         if 'field_name' in field_map[key]:
-            update_field_name = field_map[key]['field_name']
+            update_field_name = field_map[key]['field_name'].strip()
         else:
             # nothing was selected so don't add this value
             continue
+
+        if update_field_name in RESERVED_FIELDS:
+            raise InvalidCustomFieldNameException(_('Field name "{}" is reserved').format(update_field_name))
 
         if isinstance(update_value, basestring) and update_value.strip() == SCALAR_NEVER_WAS:
             # If we find any instances of blanks ('---'), convert them to an
@@ -422,7 +440,7 @@ def populate_updated_fields(config, columns, row, datemode):
             else:
                 update_value = convert_field_value(update_value)
 
-        fields_to_update[update_field_name.strip()] = update_value
+        fields_to_update[update_field_name] = update_value
 
     return fields_to_update
 

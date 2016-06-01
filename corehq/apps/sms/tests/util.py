@@ -1,5 +1,7 @@
 import os
 import json
+from unittest import SkipTest
+
 from django.test import LiveServerTestCase
 from django.conf import settings
 from nose.tools import nottest
@@ -10,7 +12,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
@@ -22,8 +24,6 @@ from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from django.contrib.sites.models import Site
-from couchforms.dbaccessors import get_forms_by_type
-from time import sleep
 from dateutil.parser import parse
 import uuid
 from casexml.apps.case.mock import CaseBlock
@@ -58,6 +58,7 @@ def setup_default_sms_test_backend():
 
 
 class BaseSMSTest(BaseAccountingTest, DomainSubscriptionMixin):
+
     def setUp(self):
         super(BaseSMSTest, self).setUp()
         self.account = None
@@ -108,10 +109,10 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
     def update_case_owner(self, case, owner):
         case_block = CaseBlock(
             create=False,
-            case_id=case._id,
+            case_id=case.case_id,
             case_type='participant',
-            owner_id=owner._id,
-            user_id=owner._id,
+            owner_id=owner.get_id,
+            user_id=owner.get_id,
         ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
 
@@ -120,8 +121,8 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             create=True,
             case_id=uuid.uuid4().hex,
             case_type='magic_map',
-            owner_id=user._id,
-            index={'parent': ('participant', case._id)}
+            owner_id=user.get_id,
+            index={'parent': ('participant', case.case_id)}
         ).as_xml()
         post_case_blocks([case_block], {'domain': self.domain})
 
@@ -134,7 +135,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         group = Group(
             domain=self.domain,
             name=name,
-            users=[user._id for user in users],
+            users=[user.get_id for user in users],
             case_sharing=True,
         )
         group.save()
@@ -251,17 +252,16 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         self.assertEquals(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
-        result = get_forms_by_type(self.domain, 'XFormInstance',
-                                   recent_first=True, limit=1)
+        result = FormAccessors(self.domain).get_forms_by_type('XFormInstance', 1, recent_first=True)
         return result[0] if len(result) > 0 else None
 
     def assertNoNewSubmission(self, last_submission):
         new_submission = self.get_last_form_submission()
-        self.assertEquals(last_submission._id, new_submission._id)
+        self.assertEquals(last_submission.form_id, new_submission.form_id)
 
     def assertFormQuestionEquals(self, form, question, value, cast=None):
-        self.assertIn(question, form.form)
-        form_value = form.form[question]
+        self.assertIn(question, form.form_data)
+        form_value = form.form_data[question]
         if cast:
             form_value = cast(form_value)
         self.assertEquals(form_value, value)
@@ -294,6 +294,11 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             self.assertEqual(sms.xforms_session_couch_id, xforms_session_couch_id)
         if workflow:
             self.assertEqual(sms.workflow, workflow)
+
+    @classmethod
+    def setUpClass(cls):
+        if getattr(settings, "SKIP_TOUCHFORMS_TESTS", False):
+            raise SkipTest("because settings.SKIP_TOUCHFORMS_TESTS")
 
     def setUp(self):
         self.users = []

@@ -1,10 +1,12 @@
 from xml.etree import ElementTree
 from datetime import datetime
 import pytz
+
+from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.users.models import CommCareUser
-from corehq.util.soft_assert import soft_assert
-from corehq.util.timezones.conversions import UserTime, ServerTime
+from corehq.util.soft_assert.api import soft_assert
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.logging import notify_exception
 
 utc = pytz.utc
@@ -23,13 +25,7 @@ def should_sync(domain, last_sync, utcnow=None):
     except pytz.UnknownTimeZoneError:
         timezone = utc
 
-    _assert = soft_assert(to=['droberts' + '@' + 'dimagi.com'])
-
     last_sync_utc = last_sync.date
-
-    if not _assert(last_sync_utc.tzinfo is None,
-                   'last_sync.date should be an offset-naive dt'):
-        last_sync_utc = UserTime(last_sync_utc).server_time().done()
 
     # check if user has already synced today (in local timezone).
     # Indicators only change daily.
@@ -54,12 +50,30 @@ class IndicatorsFixturesProvider(object):
         if self._should_return_no_fixtures(domain, last_sync):
             return fixtures
 
+        config = None
+        if app:
+            try:
+                config = get_call_center_config_from_app(app)
+            except:
+                notify_exception(None, "Error getting call center config from app", details={
+                    'domain': app.domain,
+                    'app_id': app.get_id
+                })
+
+        if config:
+            _assert = soft_assert(['skelly_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
+            _assert(not config.includes_legacy(), 'Domain still using legacy call center indicators', {
+                'domain': domain,
+                'config': config.to_json()
+            })
+
         try:
             fixtures.append(gen_fixture(user, CallCenterIndicators(
                 domain.name,
                 domain.default_timezone,
                 domain.call_center_config.case_type,
-                user
+                user,
+                indicator_config=config
             )))
         except Exception:  # blanket exception catching intended
             notify_exception(None, 'problem generating callcenter fixture', details={

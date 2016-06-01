@@ -56,7 +56,8 @@ def _get_case_properties(doc_dict):
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
+
+    def process_change(self, pillow_instance, change):
         assert isinstance(change, Change)
         if change.metadata is not None:
             # Comes from KafkaChangeFeed (i.e. running pillowtop)
@@ -65,9 +66,7 @@ class CaseSearchPillowProcessor(ElasticProcessor):
             # comes from ChangeProvider (i.e reindexing)
             domain = change.get_document()['domain']
         if domain and case_search_enabled_for_domain(domain):
-            super(CaseSearchPillowProcessor, self).process_change(
-                pillow_instance, change, do_set_checkpoint
-            )
+            super(CaseSearchPillowProcessor, self).process_change(pillow_instance, change)
 
 
 def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow'):
@@ -101,6 +100,7 @@ def _fail_gracefully_and_tell_admins():
     class FakeReindexer(object):
         """Used so that the ptop_preindex command completes successfully
         """
+
         def reindex(self):
             pass
 

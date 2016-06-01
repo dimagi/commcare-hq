@@ -58,7 +58,6 @@ class AdoptionDisaggregatedReport(CareBaseReport):
     def data_provider(self):
         return AdoptionDisaggregatedSqlData(domain=self.domain, config=self.report_config, request_params=self.request_params)
 
-
     @property
     def headers(self):
         columns = [DataTablesColumn(c.header, sortable=False) for c in self.data_provider.columns]
@@ -99,9 +98,9 @@ class AdoptionDisaggregatedReport(CareBaseReport):
                 for ix, column in enumerate(row[1:]):
                     charts[ix].append({'x': group_name, 'y': float(column) / total})
 
-            chart.add_dataset('None', charts[0], "red")
-            chart.add_dataset('Some', charts[1], "yellow")
             chart.add_dataset('All', charts[2], "green")
+            chart.add_dataset('Some', charts[1], "yellow")
+            chart.add_dataset('None', charts[0], "red")
 
     @property
     def charts(self):

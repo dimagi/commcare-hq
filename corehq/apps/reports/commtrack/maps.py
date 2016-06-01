@@ -22,8 +22,6 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         'report': 'corehq.apps.reports.commtrack.data_sources.StockStatusBySupplyPointDataSource',
     }
 
-    is_bootstrap3 = True
-
     @use_maps
     def bootstrap3_dispatcher(self, request, *args, **kwargs):
         super(StockStatusMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
@@ -192,8 +190,6 @@ class ReportingStatusMapReport(GenericMapReport, CommtrackReportMixin):
             },
         ],
     }
-
-    is_bootstrap3 = True
 
     @use_maps
     def bootstrap3_dispatcher(self, request, *args, **kwargs):

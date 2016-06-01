@@ -29,7 +29,12 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    CaseSearchConfigJSON,
+    enable_case_search,
+    disable_case_search,
+)
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
 from corehq.const import USER_DATE_FORMAT
@@ -204,6 +209,7 @@ class DomainViewMixin(object):
 
 
 class LoginAndDomainMixin(object):
+
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
@@ -387,14 +393,13 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 return DomainMetadataForm(
                     self.request.POST,
                     self.request.FILES,
-                    user=self.request.couch_user,
-                    domain=self.domain_object.name,
+                    domain=self.domain_object,
                     can_use_custom_logo=self.can_use_custom_logo,
                 )
             return DomainGlobalSettingsForm(
                 self.request.POST,
                 self.request.FILES,
-                domain=self.domain_object.name,
+                domain=self.domain_object,
                 can_use_custom_logo=self.can_use_custom_logo
             )
         if self.can_user_see_meta:
@@ -405,13 +410,12 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
             return DomainMetadataForm(
                 can_use_custom_logo=self.can_use_custom_logo,
-                user=self.request.couch_user,
-                domain=self.domain_object.name,
+                domain=self.domain_object,
                 initial=initial
             )
         return DomainGlobalSettingsForm(
             initial=initial,
-            domain=self.domain_object.name,
+            domain=self.domain_object,
             can_use_custom_logo=self.can_use_custom_logo
         )
 
@@ -502,6 +506,10 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
     urlname = 'dhis2_settings'
     page_title = ugettext_lazy("DHIS2 API settings")
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditDhis2SettingsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def dhis2_settings_form(self):
@@ -577,6 +585,7 @@ def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')
     results = Domain.field_by_prefix(field, prefix)
     return HttpResponse(json.dumps(results))
+
 
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
@@ -779,11 +788,14 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def billing_info_form(self):
+        is_ops_user = has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
         if self.request.method == 'POST':
             return EditBillingAccountInfoForm(
-                self.account, self.domain, self.request.couch_user.username, data=self.request.POST
+                self.account, self.domain, self.request.couch_user.username, data=self.request.POST,
+                is_ops_user=is_ops_user
             )
-        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username)
+        return EditBillingAccountInfoForm(self.account, self.domain, self.request.couch_user.username,
+                                          is_ops_user=is_ops_user)
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -1604,6 +1616,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
 
 
 class SubscriptionMixin(object):
+
     @property
     @memoized
     def subscription(self):
@@ -2111,8 +2124,12 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
                 return []
             return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
 
+        if request.POST['enable'] == 'true':
+            enable_case_search(self.domain)
+        else:
+            disable_case_search(self.domain)
         CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
-            'enabled': request.POST['enable'],
+            'enabled': request.POST['enable'] == 'true',
             'config': CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
         })
         messages.success(request, _("Case search configuration updated successfully"))
@@ -2152,7 +2169,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     dispatcher = DomainReportDispatcher
     ajax_pagination = True
     asynchronous = False
-    is_bootstrap3 = True
     sortable = False
 
     fields = [
@@ -2447,6 +2463,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'notes',
             'phone_model',
             'commtrack_domain',
+            'performance_threshold',
             'business_unit',
             'workshop_region',
         ]
@@ -2636,6 +2653,10 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     urlname = 'pro_bono_static'
     use_domain_field = True
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoStaticView, self).dispatch(request, *args, **kwargs)
+
     @property
     def requesting_domain(self):
         return self.pro_bono_form.cleaned_data['domain']
@@ -2645,6 +2666,10 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
     use_domain_field = False
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def requesting_domain(self):
@@ -2789,6 +2814,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             return {'form': self.transfer_domain_form}
 
     @method_decorator(domain_admin_required)
+    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
@@ -2915,6 +2941,11 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesAsyncHandler,
         SMSRatesSelect2AsyncHandler,
     ]
+
+    @use_bootstrap3
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(SMSRatesView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

@@ -13,11 +13,13 @@ VALID_USER_REGISTRATION_XMLNSES = [USER_REGISTRATION_XMLNS_DEPRECATED, USER_REGI
 
 SYNC_XMLNS = "http://commcarehq.org/sync"
 
+
 def escape(o):
     if o is None:
         return ""
     else:
         return saxutils.escape(unicode(o))
+
 
 def tostring(element):
     # save some typing, force UTF-8

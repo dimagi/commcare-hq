@@ -1,4 +1,4 @@
-{% extends "style/bootstrap2/partials/download_status.html" %}
+{% extends "style/partials/download_status.html" %}
 {% load i18n %}
 {% block results %}
 {% if result.success %}
@@ -7,7 +7,7 @@
         <p>{% blocktrans with count=result.number_of_fixtures %}Successfully uploaded {{ count }} tables.{% endblocktrans %}</p>
     </div>
     {% if result.errors %}
-        <div class="alert alert-error">
+        <div class="alert alert-danger">
         <h3>{% trans "However, we ran into the following problems:" %}</h3>
             {% for e in result.errors %}
             <p>{{ e }}</p>
@@ -23,7 +23,7 @@
         </div>
     {% endif %}
 {% else %}
-    <div class="alert alert-error">
+    <div class="alert alert-danger">
         <h3>{% trans "Upload failed! Details:" %}</h3>
             {% for e in result.errors %}
             <p>{{ e }}</p>

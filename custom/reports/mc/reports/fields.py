@@ -7,6 +7,7 @@ class DistrictField(AsyncDrillableFilter):
     slug = "location"
     hierarchy = [{"type": "district", "display": "name"}]
 
+
 class HealthFacilityField(AsyncDrillableFilter):
     label = ugettext_noop("Health Facility")
     slug = "location"

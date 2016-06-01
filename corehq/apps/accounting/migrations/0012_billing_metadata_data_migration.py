@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations
+
+from corehq.sql_db.operations import HqRunPython
+
 
 def migrate_metadata(apps, schema_editor):
     Subscriptions = apps.get_model("accounting", "Subscription")
@@ -17,7 +20,6 @@ def migrate_metadata(apps, schema_editor):
         subscription.save(update_fields=['service_type','pro_bono_status'])
 
 
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -25,5 +27,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(migrate_metadata),
+        HqRunPython(migrate_metadata),
     ]

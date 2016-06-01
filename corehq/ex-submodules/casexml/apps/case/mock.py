@@ -56,6 +56,7 @@ class CaseBlock(dict):
 
     """
     undefined = object()
+
     def __init__(self,
             case_id,
             date_modified=None,
@@ -148,7 +149,6 @@ class CaseBlock(dict):
         else:
             self['update'].update(create_or_update)
 
-
         if close:
             self['close'] = {}
 
@@ -177,6 +177,7 @@ class CaseBlock(dict):
         case = ElementTree.Element('case')
         order = ['case_id', 'date_modified', 'create', 'update', 'close',
                  self.CASE_TYPE, 'user_id', 'case_name', 'external_id', 'date_opened', 'owner_id']
+
         def sort_key(item):
             word, _ = item
             try:
@@ -341,4 +342,4 @@ class CaseFactory(object):
         )
 
         case_ids = [id for structure in case_structures for id in structure.walk_ids()]
-        return CaseAccessors(self.domain).get_cases(case_ids, ordered=True)
+        return list(CaseAccessors(self.domain).get_cases(case_ids, ordered=True))

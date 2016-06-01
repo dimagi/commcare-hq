@@ -17,7 +17,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import FormActions, StrictButton, InlineField
+from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from corehq.apps.style import crispy as hqcrispy
 from django_countries.data import COUNTRIES
@@ -171,6 +171,33 @@ class BillingAccountBasicForm(forms.Form):
                 'Basic Information',
                 'name',
                 crispy.Field('email_list', css_class='input-xxlarge'),
+                crispy.Div(
+                    crispy.Div(
+                        css_class='col-sm-3 col-md-2'
+                    ),
+                    crispy.Div(
+                        crispy.HTML(self.initial['email_list']),
+                        css_class='col-sm-9 col-md-8 col-lg-6'
+                    ),
+                    css_id='emails-text',
+                    css_class='collapse form-group'
+                ) if self.initial.get('email_list') else crispy.Div(),
+                crispy.Div(
+                    crispy.Div(
+                        css_class='col-sm-3 col-md-2'
+                    ),
+                    crispy.Div(
+                        StrictButton(
+                            "Show contact emails as text",
+                            type="button",
+                            css_class='btn btn-default',
+                            css_id='show_emails'
+                        ),
+                        crispy.HTML('<p class="help-block">Useful when you want to copy contact emails</p>'),
+                        css_class='col-sm-9 col-md-8 col-lg-6'
+                    ),
+                    css_class='form-group'
+                ) if self.initial.get('email_list') else crispy.Div(),
                 'dimagi_contact',
                 'salesforce_account_id',
                 'currency',
@@ -368,7 +395,8 @@ class SubscriptionForm(forms.Form):
     no_invoice_reason = forms.CharField(
         label=ugettext_lazy("Justify why \"Do Not Invoice\""), max_length=256, required=False
     )
-    do_not_email = forms.BooleanField(label="Do Not Email", required=False)
+    do_not_email_invoice = forms.BooleanField(label="Do Not Email Invoices", required=False)
+    do_not_email_reminder = forms.BooleanField(label="Do Not Email Subscription Reminders", required=False)
     auto_generate_credits = forms.BooleanField(
         label=ugettext_lazy("Auto-generate Plan Credits"), required=False
     )
@@ -475,7 +503,8 @@ class SubscriptionForm(forms.Form):
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
             self.fields['no_invoice_reason'].initial = subscription.no_invoice_reason
-            self.fields['do_not_email'].initial = subscription.do_not_email
+            self.fields['do_not_email_invoice'].initial = subscription.do_not_email_invoice
+            self.fields['do_not_email_reminder'].initial = subscription.do_not_email_reminder
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
@@ -555,7 +584,7 @@ class SubscriptionForm(forms.Form):
                     crispy.Field(
                         'no_invoice_reason', data_bind="attr: {required: noInvoice}"),
                     data_bind="visible: noInvoice"),
-                hqcrispy.B3MultiField("Email Options", 'do_not_email'),
+                hqcrispy.B3MultiField("Email Options", 'do_not_email_invoice', 'do_not_email_reminder'),
                 hqcrispy.B3MultiField("Credit Options", 'auto_generate_credits'),
                 'service_type',
                 'pro_bono_status',
@@ -606,7 +635,8 @@ class SubscriptionForm(forms.Form):
             date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
             no_invoice_reason=self.cleaned_data['no_invoice_reason'],
-            do_not_email=self.cleaned_data['do_not_email'],
+            do_not_email_invoice=self.cleaned_data['do_not_email_invoice'],
+            do_not_email_reminder=self.cleaned_data['do_not_email_reminder'],
             auto_generate_credits=self.cleaned_data['auto_generate_credits'],
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
             service_type=self.cleaned_data['service_type'],
@@ -1686,7 +1716,9 @@ class TriggerInvoiceForm(forms.Form):
         invoice_start, invoice_end = get_first_last_days(year, month)
         domain = Domain.get_by_name(self.cleaned_data['domain'])
         self.clean_previous_invoices(invoice_start, invoice_end, domain.name)
-        invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain)
+        invoice_factory = DomainInvoiceFactory(
+            invoice_start, invoice_end, domain, recipients=[settings.ACCOUNTS_EMAIL]
+        )
         invoice_factory.create_invoices()
 
     @staticmethod

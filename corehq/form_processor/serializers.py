@@ -1,8 +1,10 @@
 from rest_framework import serializers
+
+from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
-    XFormInstanceSQL, XFormOperationSQL
-)
+    XFormInstanceSQL, XFormOperationSQL,
+    LedgerValue)
 
 
 def get_instance_from_data(SerializerClass, data):
@@ -16,7 +18,8 @@ def get_instance_from_data(SerializerClass, data):
     # you always want to save(). This function does everything ModelSerializer.save() does, just without saving.
     ModelClass = SerializerClass.Meta.model
     serializer = SerializerClass(data=data)
-    assert serializer.is_valid(), 'Unable to deserialize data while creating {}'.format(ModelClass)
+    if not serializer.is_valid():
+        raise ValueError('Unable to deserialize data while creating {}: {}'.format(ModelClass, serializer.errors))
     return ModelClass(**serializer.validated_data)
 
 
@@ -28,7 +31,7 @@ class DeletableModelSerializer(serializers.ModelSerializer):
 
     def __init__(self, instance=None, *args, **kwargs):
         super(DeletableModelSerializer, self).__init__(instance=instance, *args, **kwargs)
-        if not instance.is_deleted:
+        if instance is not None and not instance.is_deleted:
             self.fields.pop('deletion_id')
             self.fields.pop('deleted_on')
 
@@ -58,7 +61,7 @@ class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
 
 class CaseTransactionActionSerializer(serializers.ModelSerializer):
     xform_id = serializers.CharField(source='form_id')
-    date = serializers.CharField(source='server_date')
+    date = serializers.DateTimeField(source='server_date')
 
     class Meta:
         model = CaseTransaction
@@ -112,4 +115,30 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
             'indices',
             'reverse_indices',
             'attachments',
+        )
+
+
+class LedgerValueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LedgerValue
+        exclude = ('id',)
+
+
+class StockStateSerializer(serializers.ModelSerializer):
+    _id = serializers.IntegerField(source='id')
+    entry_id = serializers.CharField(source='product_id')
+    location_id = serializers.CharField(source='sql_location.location_id')
+    balance = serializers.IntegerField(source='stock_on_hand')
+    last_modified = serializers.DateTimeField(source='last_modified_date')
+    domain = serializers.CharField()
+
+    class Meta:
+        model = StockState
+        exclude = (
+            'id',
+            'product_id',
+            'stock_on_hand',
+            'last_modified_date',
+            'sql_product',
+            'sql_location',
         )
