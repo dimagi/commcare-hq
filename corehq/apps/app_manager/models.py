@@ -4436,7 +4436,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return spec
 
     def get_jadjar(self):
-        return self.get_build().get_jadjar(self.get_jar_path())
+        return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
 
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
