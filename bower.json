@@ -51,7 +51,8 @@
     "font-awesome": "fontawesome#4.5.0",
     "ui-select": "angular-ui/ui-select#v0.13.2",
     "jquery-migrate": "1.2.1",
-    "moment": "2.12.0"
+    "moment": "2.12.0",
+    "jquery-treetable": "^3.2.0"
   },
   "devDependencies": {
     "chai": "3.3.0",
