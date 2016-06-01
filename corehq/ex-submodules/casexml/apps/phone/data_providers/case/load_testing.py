@@ -3,19 +3,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
 from casexml.apps.phone.xml import get_case_element
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.toggles import ENABLE_LOADTEST_USERS
 from casexml.apps.phone.xml import tostring
-
-
-def get_loadtest_factor(domain, user):
-    """
-    Gets the loadtest factor for a domain and user. Is always 1 unless
-    both the toggle is enabled for the domain, and the user has a non-zero,
-    non-null factor set.
-    """
-    if domain and ENABLE_LOADTEST_USERS.enabled(domain):
-        return getattr(user, 'loadtest_factor', 1) or 1
-    return 1
 
 
 def transform_loadtest_update(update, factor):
