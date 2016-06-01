@@ -19,7 +19,12 @@ run_tests() {
     fi
 
     if [ -z ${COMMAND_OVERRIDE} ]; then
-        docker_run $ENV_VARS web_test ".travis/test_runner.sh $TESTS"
+        # --divide-depth=1 to descend into django-nose database contexts
+        # --divide-depth is ignored if --divided-we-run is not specified
+        COMMAND="coverage run manage.py test"
+        OPTS="--noinput --stop --verbosity=2 --no-migration-optimizer --divide-depth=1"
+        echo "Running tests: $COMMAND $OPTS $TESTS"
+        docker_run $ENV_VARS web_test "$COMMAND $OPTS $TESTS"
     else
         docker_run $ENV_VARS web_test $COMMAND_OVERRIDE
     fi
