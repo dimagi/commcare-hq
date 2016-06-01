@@ -15,8 +15,6 @@
         $(function() {
                 var reportTables = new HQReportDataTables({
                     {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %},
-                    useBootstrap3: true,
-                    paginationType: 'bs_normal'
                 });
                 reportTables.render();
         });
