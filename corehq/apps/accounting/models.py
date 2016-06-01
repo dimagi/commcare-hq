@@ -512,7 +512,7 @@ class BillingContactInfo(models.Model):
     )
     # TODO - replace with models.ArrayField once django >= 1.9
     email_list = jsonfield.JSONField(
-        default=[],
+        default=list,
         verbose_name=_("Contact Emails"),
         help_text=_("We will email communications regarding your account "
                     "to the emails specified here.")
