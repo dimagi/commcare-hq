@@ -46,9 +46,6 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  #- lang-profiles+revamp-multimedia # Jenny 5/13
-  #- revamp-multimedia # Jenny 2/16
-  - lang-profiles  # Cal 5/4
   - notifications-perms-change # j$ 5/11
   - calculatedIcons # Sravan 3/2
   - xform-blobs  # daniel 5/23
