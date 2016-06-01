@@ -2,7 +2,7 @@ import HTMLParser
 import json
 import socket
 from datetime import timedelta, date
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
@@ -13,7 +13,6 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
-from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.views.generic import FormView
 from django.utils.decorators import method_decorator
@@ -31,12 +30,17 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.es import CaseES, aggregations
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_bootstrap3, use_nvd3_v3
 from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
+from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
+    CommCareCaseSQLRawDocSerializer
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import (
     PillowtopSupervisorApi,
@@ -591,7 +595,35 @@ class LoadtestReportView(BaseAdminSectionView):
         return context
 
 
-def _lookup_id_in_couch(doc_id, db_name=None):
+class _Db(object):
+    """
+    Light wrapper for providing interface like Couchdbkit's Database objects.
+    """
+
+    def __init__(self, dbname, getter):
+        self.dbname = dbname
+        self._getter = getter
+
+    def get(self, record_id):
+        try:
+            return self._getter(record_id)
+        except (XFormNotFound, CaseNotFound):
+            raise ResourceNotFound("missing")
+
+
+_SQL_DBS = OrderedDict((db.dbname, db) for db in [
+    _Db(
+        XFormInstanceSQL._meta.db_table,
+        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data
+    ),
+    _Db(
+        CommCareCaseSQL._meta.db_table,
+        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data
+    ),
+])
+
+
+def _lookup_id_in_database(doc_id, db_name=None):
     db_result = namedtuple('db_result', 'dbname result status')
     STATUSES = defaultdict(lambda: 'warning', {
         'missing': 'default',
@@ -599,9 +631,15 @@ def _lookup_id_in_couch(doc_id, db_name=None):
     })
 
     if db_name:
-        dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
+        db = _SQL_DBS.get(db_name, None)
+        if db:
+            dbs = [db]
+        else:
+            dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
     else:
-        dbs = couch_config.all_dbs_by_slug.values()
+        couch_dbs = couch_config.all_dbs_by_slug.values()
+        sql_dbs = _SQL_DBS.values()
+        dbs = couch_dbs + sql_dbs
 
     db_results = []
     response = {"doc_id": doc_id}
@@ -666,20 +704,26 @@ def doc_in_es(request):
             "doc_type": es_doc_type,
             "found_indices": found_indices,
         },
-        "couch_info": _lookup_id_in_couch(doc_id),
+        "couch_info": _lookup_id_in_database(doc_id),
     }
     return render(request, "hqadmin/doc_in_es.html", context)
 
 
 @require_superuser
 def raw_couch(request):
+    get_params = dict(request.GET.iteritems())
+    return HttpResponseRedirect(reverse("raw_doc", params=get_params))
+
+
+@require_superuser
+def raw_doc(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
     if db_name and "__" in db_name:
         db_name = db_name.split("__")[-1]
-    context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
-    other_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
-    context['all_databases'] = ['commcarehq'] + other_dbs
+    context = _lookup_id_in_database(doc_id, db_name) if doc_id else {}
+    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
+    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
     return render(request, "hqadmin/raw_couch.html", context)
 
 
@@ -710,7 +754,7 @@ def callcenter_test(request):
             doc_type = doc.get('doc_type', None)
             if doc_type == 'CommCareUser':
                 case_type = domain.call_center_config.case_type
-                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], case_type)
+                user_case = CaseAccessors(doc['domain']).get_case_by_domain_hq_user_id(doc['_id'], case_type)
             elif doc_type == 'CommCareCase':
                 if doc.get('hq_user_id'):
                     user_case = CommCareCase.wrap(doc)

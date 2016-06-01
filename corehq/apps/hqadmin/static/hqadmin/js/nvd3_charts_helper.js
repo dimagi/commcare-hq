@@ -71,6 +71,9 @@ function fill_in_spaces(vals, start, end, interval) {
         cur_index = 0,
         ret = [];
 
+    vals.sort(function(a, b) {
+        return a.x - b.x;
+    });
     for (var i = start_date; i <= end_date; i=next_interval(i, interval)) {
         if (cur_index < vals.length && vals[cur_index].x === i.getTime()) {
             ret.push(vals[cur_index]);
@@ -83,7 +86,7 @@ function fill_in_spaces(vals, start, end, interval) {
     // if there are any real values left over then tack them on to the end
     // this should not happen
     if (cur_index < _.filter(vals, function(n) {return n.y > 0;}).length) {
-        ret = ret.concat(vals.slice(cur_index));
+        ret.concat(vals.slice(cur_index));
         console.log("There were extra values in a response");
     }
 
@@ -162,6 +165,9 @@ function findEnds(data, starting_time, ending_time) {
         if (data.hasOwnProperty(key)) {
             if (data[key].length > 0) {
                 var filteredData = _.filter(data[key], real_data);
+                filteredData.sort(function(a, b) {
+                    return a.time - b.time;
+                });
                 if (filteredData.length > 0) {
                     if (start > filteredData[0].time){
                         start = filteredData[0].time;

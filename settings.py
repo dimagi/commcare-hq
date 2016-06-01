@@ -453,6 +453,12 @@ LOGIN_URL = "/accounts/login/"
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
+PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
+    '/a/%(domain)s/settings/project/internal_subscription_management/',
+    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/internal/calculations/',
+    '/a/%(domain)s/settings/project/flags/'
+)
 
 ####### Release Manager App settings  #######
 RELEASE_FILE_PATH = os.path.join("data", "builds")
@@ -600,8 +606,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
-FORMPLAYER_URL = 'http://localhost:8080'
-OFFLINE_TOUCHFORMS_PORT = 4444
+FORMPLAYER_URL = 'http://localhost:8090'
 
 ####### Couchlog config #######
 
@@ -1444,8 +1449,6 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
         },
-        'corehq.pillows.sofabed.FormDataPillow',
-        'corehq.pillows.sofabed.CaseDataPillow',
         {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',

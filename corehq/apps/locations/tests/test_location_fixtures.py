@@ -14,6 +14,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from casexml.apps.case.xml import V2
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from .util import (
     LocationHierarchyPerTest,
@@ -269,6 +270,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_users()
         cls.domain = "Erebor"
         cls.domain_obj = create_domain(cls.domain)
         cls.username = "Durins Bane"
@@ -324,7 +326,9 @@ class ShouldSyncLocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         location_db = LocationSet([location])
 
-        self.assertFalse(should_sync_locations(SyncLog(date=yesterday), location_db, self.user))
+        self.assertFalse(
+            should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
+        )
 
         self.location_type.shares_cases = True
         self.location_type.save()
@@ -332,7 +336,9 @@ class ShouldSyncLocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         location_db = LocationSet([location])
 
-        self.assertTrue(should_sync_locations(SyncLog(date=yesterday), location_db, self.user))
+        self.assertTrue(
+            should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
+        )
 
     def test_archiving_location_should_resync(self):
         """
@@ -348,14 +354,31 @@ class ShouldSyncLocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         self.assertEqual(couch_location._id, location.location_id)
         self.assertEqual('winterfell', location.name)
+<<<<<<< HEAD
         location_db = LocationSet([location])
         self.assertFalse(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
+=======
+        location_db = _location_footprint([location])
+        self.assertFalse(
+            should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
+        )
+>>>>>>> origin/master
 
         # archive the location
         couch_location.archive()
         after_archive = datetime.utcnow()
 
         location = SQLLocation.objects.last()
+<<<<<<< HEAD
         location_db = LocationSet([location])
         self.assertTrue(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
         self.assertFalse(should_sync_locations(SyncLog(date=after_archive), location_db, self.user))
+=======
+        location_db = _location_footprint([location])
+        self.assertTrue(
+            should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
+        )
+        self.assertFalse(
+            should_sync_locations(SyncLog(date=after_archive), location_db, self.user.to_ota_restore_user())
+        )
+>>>>>>> origin/master

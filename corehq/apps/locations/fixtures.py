@@ -1,9 +1,9 @@
 from collections import defaultdict
 from django.db.models import Min
 from xml.etree.ElementTree import Element
+from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.locations.models import SQLLocation
 from corehq import toggles
-from corehq.apps.fixtures.models import UserFixtureType
 
 
 class LocationSet(object):
@@ -35,12 +35,7 @@ class LocationSet(object):
         return item in self.by_id
 
 
-def fixture_last_modified(user):
-    """Return when the fixture was last modified"""
-    return user.fixture_status(UserFixtureType.LOCATION)
-
-
-def should_sync_locations(last_sync, location_db, user):
+def should_sync_locations(last_sync, location_db, restore_user):
     """
     Determine if any locations (already filtered to be relevant
     to this user) require syncing.
@@ -48,7 +43,7 @@ def should_sync_locations(last_sync, location_db, user):
     if (
         not last_sync or
         not last_sync.date or
-        fixture_last_modified(user) >= last_sync.date
+        restore_user.get_fixture_last_modified() >= last_sync.date
     ):
         return True
 
@@ -66,7 +61,7 @@ def should_sync_locations(last_sync, location_db, user):
 class LocationFixtureProvider(object):
     id = 'commtrack:locations'
 
-    def __call__(self, user, version, last_sync=None, app=None):
+    def __call__(self, restore_user, version, last_sync=None, app=None):
         """
         By default this will generate a fixture for the users
         location and it's "footprint", meaning the path
@@ -75,15 +70,17 @@ class LocationFixtureProvider(object):
         There is an admin feature flag that will make this generate
         a fixture with ALL locations for the domain.
         """
-        if not user.project.uses_locations:
+        assert isinstance(restore_user, OTARestoreUser)
+
+        if not restore_user.project.uses_locations:
             return []
 
-        all_locations = _all_locations(user)
+        all_locations = _all_locations(restore_user)
 
-        if not should_sync_locations(last_sync, all_locations, user):
+        if not should_sync_locations(last_sync, all_locations, restore_user):
             return []
 
-        root_node = Element('fixture', {'id': self.id, 'user_id': user.user_id})
+        root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
         root_locations = all_locations.root_locations
 
         if root_locations:

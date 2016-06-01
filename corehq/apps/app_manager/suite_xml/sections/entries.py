@@ -8,7 +8,7 @@ from corehq.apps.app_manager.exceptions import (
     SuiteValidationError)
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
-    CAREPLAN_GOAL, CAREPLAN_TASK, RETURN_TO, USERCASE_ID, USERCASE_TYPE, )
+    CAREPLAN_GOAL, CAREPLAN_TASK, USERCASE_ID, USERCASE_TYPE, )
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.app_manager.xform import autoset_owner_id_for_open_case, \

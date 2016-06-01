@@ -1,4 +1,8 @@
 from collections import namedtuple
+
+from django.conf import settings
+from django.test.utils import override_settings
+
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
@@ -8,11 +12,15 @@ from corehq.apps.callcenter.utils import sync_call_center_user_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
 from django.core import cache
+
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.tests.utils import database_creator
 
 CASE_TYPE = 'cc_flw'
 
@@ -117,20 +125,20 @@ class BaseCCTests(TestCase):
         locmem_cache.clear()
 
     def _test_indicators(self, user, data_set, expected):
-        user_case = get_case_by_domain_hq_user_id(user.domain, user.user_id, CASE_TYPE)
+        user_case = CaseAccessors(user.domain).get_case_by_domain_hq_user_id(user.user_id, CASE_TYPE)
         case_id = user_case.case_id
         self.assertIn(case_id, data_set)
 
         user_data = data_set[case_id]
 
         mismatches = []
-        for k, v in expected.items():
-            expected_value = user_data.pop(k, None)
-            if expected_value != v:
-                mismatches.append('{}: {} != {}'.format(k, v, expected_value))
+        for indicator_key, expected_value in expected.items():
+            actual_value = user_data.pop(indicator_key, None)
+            if actual_value != expected_value:
+                mismatches.append('{}: {} != {}'.format(indicator_key, expected_value, actual_value))
 
         if mismatches:
-            self.fail('Mismatching indicators:\n{}'.format('\t\n'.join(mismatches)))
+            self.fail('Mismatching indicators:\n{}'.format('\t\n'.join(sorted(mismatches))))
 
         if user_data:
             self.fail('Additional indicators:\n{}'.format('\t\n'.join(user_data.keys())))
@@ -152,12 +160,13 @@ class CallCenterTests(BaseCCTests):
 
     @classmethod
     def tearDownClass(cls):
+        clear_data(cls.aarohi_domain.name)
+        clear_data(cls.cc_domain.name)
         cls.cc_user.delete()
         cls.cc_user_no_data.delete()
         cls.cc_domain.delete()
         cls.aarohi_user.delete()
         cls.aarohi_domain.delete()
-        clear_data()
 
     def check_cc_indicators(self, data_set, expected):
         self._test_indicators(self.cc_user, data_set, expected)
@@ -181,7 +190,7 @@ class CallCenterTests(BaseCCTests):
         self.check_cc_indicators(indicator_set.get_data(), expected_standard_indicators())
 
     def test_standard_indicators_no_legacy(self):
-        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
+        config = CallCenterIndicatorConfig.default_config(include_legacy=False)
 
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
@@ -197,7 +206,7 @@ class CallCenterTests(BaseCCTests):
             expected_standard_indicators(include_legacy=False))
 
     def test_standard_indicators_case_totals_only(self):
-        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
+        config = CallCenterIndicatorConfig.default_config(include_legacy=False)
         config.cases_total.all_types = False
         config.cases_opened.all_types = False
         config.cases_closed.all_types = False
@@ -220,32 +229,14 @@ class CallCenterTests(BaseCCTests):
                 case_types=[])
         )
 
-    def test_standard_indicators_load_config_from_db(self):
-        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
-        config.save()
-
-        self.addCleanup(config.delete)
-
-        indicator_set = CallCenterIndicators(
-            self.cc_domain.name,
-            self.cc_domain.default_timezone,
-            self.cc_domain.call_center_config.case_type,
-            self.cc_user,
-            custom_cache=locmem_cache,
-        )
-        self._test_indicators(
-            self.cc_user,
-            indicator_set.get_data(),
-            expected_standard_indicators(include_legacy=False))
-        
     def test_standard_indicators_case_dog_only(self):
-        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
-        config.forms_submitted.active = False
+        config = CallCenterIndicatorConfig.default_config(include_legacy=False)
+        config.forms_submitted.enabled = False
 
         def dog_only(conf):
-            conf.total.active = False
+            conf.totals.enabled = False
             conf.all_types = False
-            conf.types = [TypedIndicator(active=True, date_ranges=[WEEK0, MONTH0], type='dog')]
+            conf.by_type = [TypedIndicator(enabled=True, date_ranges={WEEK0, MONTH0}, type='dog')]
 
         dog_only(config.cases_total)
         dog_only(config.cases_opened)
@@ -271,12 +262,12 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_standard_indicators_case_week1_only(self):
-        config = CallCenterIndicatorConfig.default_config(self.cc_domain.name, include_legacy=False)
-        config.forms_submitted.date_ranges = [WEEK1]
-        config.cases_total.total.date_ranges = [WEEK1]
-        config.cases_opened.total.date_ranges = [WEEK1]
-        config.cases_closed.total.date_ranges = [WEEK1]
-        config.cases_active.total.date_ranges = [WEEK1]
+        config = CallCenterIndicatorConfig.default_config(include_legacy=False)
+        config.forms_submitted.date_ranges = {WEEK1}
+        config.cases_total.totals.date_ranges = {WEEK1}
+        config.cases_opened.totals.date_ranges = {WEEK1}
+        config.cases_closed.totals.date_ranges = {WEEK1}
+        config.cases_active.totals.date_ranges = {WEEK1}
 
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
@@ -296,7 +287,7 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_sync_log(self):
-        user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user.get_id, CASE_TYPE)
+        user_case = CaseAccessors(self.cc_domain.name).get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
 
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
@@ -340,7 +331,7 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_caching(self):
-        user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user._id, CASE_TYPE)
+        user_case = CaseAccessors(self.cc_domain.name).get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
         expected_indicators = {'a': 1, 'b': 2}
         cached_data = CachedIndicators(
             user_id=self.cc_user.get_id,
@@ -387,7 +378,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
 
     @classmethod
     def setUpClass(cls):
-        domain_name = 'cc_test_supervisor_group'
+        domain_name = 'cc_supervisor'
         cls.domain = create_domain(domain_name)
         cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
 
@@ -414,8 +405,8 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
 
     @classmethod
     def tearDownClass(cls):
+        clear_data(cls.domain.name)
         cls.domain.delete()
-        clear_data()
 
     def test_users_assigned_via_group(self):
         """
@@ -439,7 +430,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
 
     @classmethod
     def setUpClass(cls):
-        domain_name = 'cc_test_case_sharing'
+        domain_name = 'cc_sharing'
         cls.domain = create_domain(domain_name)
         cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
 
@@ -472,8 +463,8 @@ class CallCenterCaseSharingTest(BaseCCTests):
 
     @classmethod
     def tearDownClass(cls):
+        clear_data(cls.domain.name)
         cls.domain.delete()
-        clear_data()
 
     def test_cases_owned_by_group(self):
         """
@@ -498,7 +489,7 @@ class CallCenterTestOpenedClosed(BaseCCTests):
 
     @classmethod
     def setUpClass(cls):
-        domain_name = 'cc_test_opened_closed'
+        domain_name = 'cc_opened_closed'
         cls.domain = create_domain(domain_name)
         cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
 
@@ -517,8 +508,8 @@ class CallCenterTestOpenedClosed(BaseCCTests):
 
     @classmethod
     def tearDownClass(cls):
+        clear_data(cls.domain.name)
         cls.domain.delete()
-        clear_data()
 
     def test_opened_closed(self):
         """
@@ -539,3 +530,41 @@ class CallCenterTestOpenedClosed(BaseCCTests):
             if key.startswith('cases_opened') or key.startswith('cases_closed'):
                 expected[key] = 0L
         self._test_indicators(self.user, indicator_set.get_data(), expected)
+
+
+class TestSavingToUCRDatabase(BaseCCTests):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.cc_domain, cls.cc_user = create_domain_and_user('callcentertest', 'user1')
+        create_cases_for_types(cls.cc_domain.name, ['person', 'dog'])
+
+        cls.ucr_db_name = 'cchq_ucr_tests'
+        db_conn_parts = settings.SQL_REPORTING_DATABASE_URL.split('/')
+        db_conn_parts[-1] = cls.ucr_db_name
+        cls.ucr_db_url = '/'.join(db_conn_parts)
+
+        cls.db_context = database_creator(cls.ucr_db_name)
+        cls.db_context.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        clear_data(cls.cc_domain.name)
+        cls.cc_user.delete()
+        cls.cc_domain.delete()
+
+        connection_manager.dispose_engine('ucr')
+        cls.db_context.__exit__(None, None, None)
+
+    def test_standard_indicators(self):
+        with override_settings(UCR_DATABASE_URL=self.ucr_db_url):
+            load_data(self.cc_domain.name, self.cc_user.user_id)
+
+            indicator_set = CallCenterIndicators(
+                self.cc_domain.name,
+                self.cc_domain.default_timezone,
+                self.cc_domain.call_center_config.case_type,
+                self.cc_user,
+                custom_cache=locmem_cache
+            )
+            self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())

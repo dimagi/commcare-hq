@@ -1,6 +1,3 @@
-"""
-couch models go here
-"""
 from __future__ import absolute_import
 import copy
 from datetime import datetime
@@ -37,7 +34,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from casexml.apps.phone.models import User as CaseXMLUser
+from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
@@ -1202,6 +1199,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             couch_user.created_on = force_to_datetime(date)
         else:
             couch_user.created_on = datetime.utcnow()
+
+        user_data = kwargs.get('user_data', {})
+        couch_user.user_data = user_data
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1399,12 +1399,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             commcare_user.add_phone_number(phone_number)
 
         device_id = kwargs.get('device_id', '')
-        user_data = kwargs.get('user_data', {})
         # populate the couch user
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
-        commcare_user.user_data = user_data
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
@@ -1506,25 +1504,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_web_user(self):
         return False
 
-    def to_casexml_user(self):
-        user = CaseXMLUser(
-            user_id=self.userID,
-            username=self.raw_username,
-            password=self.password,
-            date_joined=self.date_joined,
-            user_data=self.user_data,
-            domain=self.domain,
-            loadtest_factor=self.loadtest_factor,
-            first_name=self.first_name,
-            last_name=self.last_name,
-            phone_number=self.phone_number,
+    def to_ota_restore_user(self):
+        return OTARestoreCommCareUser(
+            self.domain,
+            self,
+            loadtest_factor=self.loadtest_factor or 1,
         )
-
-        def get_owner_ids():
-            return self.get_owner_ids()
-        user.get_owner_ids = get_owner_ids
-        user._hq_user = self # don't tell anyone that we snuck this here
-        return user
 
     def _get_form_ids(self):
         return FormAccessors(self.domain).get_form_ids_for_user(self.user_id)
@@ -1532,7 +1517,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_case_ids(self):
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
-    def get_owner_ids(self):
+    def get_owner_ids(self, domain=None):
         owner_ids = [self.user_id]
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
@@ -1687,6 +1672,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.location_id = location.location_id
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.get_domain_membership(self.domain).location_id = location.location_id
         self.save()
 
     def unset_location(self):
@@ -1701,6 +1687,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.location_id = None
         self.clear_location_delegates()
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.get_domain_membership(self.domain).location_id = None
         self.save()
 
     @property
@@ -1934,6 +1921,12 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def is_web_user(self):
         return True
 
+    def to_ota_restore_user(self, domain):
+        return OTARestoreWebUser(
+            domain,
+            self,
+        )
+
     def get_email(self):
         # Do not change the name of this method because this is implementing
         # get_email() from the CommCareMobileContactMixin
@@ -2096,33 +2089,6 @@ class FakeUser(WebUser):
     @property
     def _id(self):
         return "fake-user"
-
-
-class PublicUser(FakeUser):
-    """
-    Public users have read-only access to certain domains
-    """
-
-    domain_memberships = None
-
-    def __init__(self, domain, **kwargs):
-        super(PublicUser, self).__init__(**kwargs)
-        self.domain = domain
-        self.domains = [domain]
-        dm = CustomDomainMembership(domain=domain, is_admin=False)
-        dm.set_permission('view_reports', True)
-        self.domain_memberships = [dm]
-
-    @memoized
-    def get_role(self, domain=None, checking_global_admin=None):
-        assert(domain == self.domain)
-        return super(PublicUser, self).get_role(domain)
-
-    def is_eula_signed(self):
-        return True # hack for public domain so eula modal doesn't keep popping up
-
-    def get_domains(self):
-        return []
 
 
 class InvalidUser(FakeUser):

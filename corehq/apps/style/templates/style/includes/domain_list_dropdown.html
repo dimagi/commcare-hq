@@ -1,12 +1,5 @@
 {% load i18n %}
 <ul class="dropdown-menu dropdown-menu-right" role="menu">
-    {% if is_public %}
-    <li>
-        <a href="{% url 'domain_select' %}">{% trans 'Back to My Projects' %}...</a>
-    </li>
-    <li class="divider"></li>
-    {% endif %}
-
     {% if domain_list %}
     <li class="dropdown-header nav-header">{% trans 'Change Project' %}</li>
     {% for d in domain_list %}
