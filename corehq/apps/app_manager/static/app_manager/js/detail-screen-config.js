@@ -316,7 +316,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 lookup_extras: _trimmed_extras(),
                 lookup_responses: _trimmed_responses(),
                 lookup_image: image_path,
-                lookup_display_results: self.lookup_attach_results() && self.lookup_display_results(),
+                lookup_display_results: self.lookup_display_results(),
                 lookup_field_header: self.lookup_field_header(),
                 lookup_field_template: self.lookup_field_template(),
             };
@@ -418,7 +418,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             self.add_item('responses');
         }
 
-        self.lookup_attach_results = ko.observable(state.lookup_display_results);  // We don't store lookup_attach_results
         self.lookup_display_results = ko.observable(state.lookup_display_results);
         self.lookup_field_header = ko.observable(state.lookup_field_header[lang]);
         self.lookup_field_template = ko.observable(state.lookup_field_template || '@case_id');
