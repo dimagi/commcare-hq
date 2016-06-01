@@ -791,10 +791,6 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     config.filters = filters
 
-    report = None
-    if config.report:
-        report = config.report
-
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
     content = _render_report_configs(
         request, [config], domain, user_id, request.couch_user, True, lang=request.couch_user.language,
@@ -803,7 +799,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     if form.cleaned_data['send_to_owner']:
         email = request.couch_user.get_email()
-        body = render_full_report_notification(request, content, email, report).content
+        body = render_full_report_notification(request, content).content
 
         send_html_email_async.delay(
             subject, email, body,
@@ -812,8 +808,9 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
+            body = render_full_report_notification(request, content).content
             send_html_email_async.delay(
-                subject, recipient, render_full_report_notification(request, content, recipient, report).content,
+                subject, recipient, body,
                 email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
                 ga_tracking_info={'cd4': request.domain})
 
@@ -1193,7 +1190,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
     }).content, excel_attachments
 
 
-def render_full_report_notification(request, content, email=None, report=None):
+def render_full_report_notification(request, content, email=None, report_notification=None):
     """
     Renders full notification body with provided main content.
     """
@@ -1201,20 +1198,14 @@ def render_full_report_notification(request, content, email=None, report=None):
     from django.http import HttpRequest
 
     if request is None:
-        if report is None:
-            raise ValueError("Can't render notification without providing request or report")
         request = HttpRequest()
-        request.couch_user = report.couch_user
-        request.user = request.couch_user.get_django_user()
-        request.domain = report.domain
-        request.couch_user.current_domain = report.domain
 
     unsub_link = None
-    if report and email:
+    if report_notification and email:
         unsub_link = get_url_base() + reverse('notification_unsubscribe', kwargs={
-            'scheduled_report_id': report._id,
+            'scheduled_report_id': report_notification._id,
             'user_email': email,
-            'scheduled_report_secret': report.get_secret(email)
+            'scheduled_report_secret': report_notification.get_secret(email)
         })
 
     return render(request, "reports/report_email.html", {
@@ -1227,7 +1218,8 @@ def render_full_report_notification(request, content, email=None, report=None):
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
     content = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
-    return render_full_report_notification(request, content, report=ReportNotification.get(scheduled_report_id))
+    return render_full_report_notification(
+        request, content, report_notification=ReportNotification.get(scheduled_report_id))
 
 
 class CaseDetailsView(BaseProjectReportSectionView):
