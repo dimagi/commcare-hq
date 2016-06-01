@@ -49,11 +49,17 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         dupe_form = post_xform(form_xml, domain=self.domain)
         self.assertTrue(dupe_form.is_duplicate)
         self.assertNotEqual(form_id, dupe_form.form_id)
+        self.assertEqual(form_id, dupe_form.orig_id)
 
         # make sure changes made it to kafka
-        form_meta = change_meta_from_kafka_message(form_consumer.next().value)
-        self.assertEqual(orig_form.form_id, form_meta.document_id)
-        self.assertEqual(self.domain, form_meta.domain)
+        # first the dupe
+        dupe_form_meta = change_meta_from_kafka_message(form_consumer.next().value)
+        self.assertEqual(dupe_form.form_id, dupe_form_meta.document_id)
+        # then the original form
+        orig_form_meta = change_meta_from_kafka_message(form_consumer.next().value)
+        self.assertEqual(orig_form.form_id, orig_form_meta.document_id)
+        self.assertEqual(self.domain, orig_form_meta.domain)
+        # and also the case
         case_meta = change_meta_from_kafka_message(case_consumer.next().value)
         self.assertEqual(case_id, case_meta.document_id)
         self.assertEqual(self.domain, case_meta.domain)
