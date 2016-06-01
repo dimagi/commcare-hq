@@ -7,10 +7,11 @@ from corehq.util.test_utils import flag_enabled
 from datetime import datetime, timedelta
 from django.test import TestCase
 from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.tests.util import bootstrap_domain
+from corehq.apps.users.models import CommCareUser
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from casexml.apps.case.xml import V2
@@ -102,7 +103,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
     def setUp(self):
         super(LocationFixturesTest, self).setUp()
-        self.user = CommCareUser.create(self.domain, 'user', '123')
+        self.user = create_restore_user(self.domain, 'user', '123')
 
     def test_no_user_locations_returns_empty(self, uses_locations):
         empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
@@ -251,7 +252,7 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
 
     def setUp(self):
         self.domain_obj = bootstrap_domain(self.domain)
-        self.user = CommCareUser.create(self.domain, 'user', '123')
+        self.user = create_restore_user(self.domain, 'user', '123')
         self.location_types = setup_location_types_with_structure(self.domain, self.location_type_structure)
         self.locations = setup_locations_with_structure(self.domain, self.location_structure)
 
