@@ -1,7 +1,7 @@
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed import data_sources
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.signals import sql_case_post_save
 from pillowtop.feed.interface import ChangeMeta
