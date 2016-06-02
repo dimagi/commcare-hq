@@ -3,9 +3,9 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'reports/javascripts/reports.util.js' %}"></script>
-    <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% new_static 'reports/ko/saved_reports.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.util.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
+    <script src="{% static 'reports/ko/saved_reports.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
