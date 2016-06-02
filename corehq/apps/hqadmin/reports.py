@@ -752,13 +752,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             11: "cp_n_cases",
             12: "cp_n_forms",
             13: "cp_n_forms_30_d",
-            16: "cp_n_web_users",
-            29: "cp_n_out_sms",
-            30: "cp_n_in_sms",
-            31: "cp_n_sms_ever",
-            32: "cp_n_sms_in_30_d",
-            33: "cp_n_sms_out_30_d",
-            36: "cp_j2me_90_d_bool",
+            17: "cp_n_web_users",
+            30: "cp_n_out_sms",
+            31: "cp_n_in_sms",
+            32: "cp_n_sms_ever",
+            33: "cp_n_sms_in_30_d",
+            34: "cp_n_sms_out_30_d",
+            35: "cp_j2me_90_d_bool",
         }
 
         def stat_row(name, what_to_get, type='float'):
