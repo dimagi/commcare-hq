@@ -855,7 +855,7 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     # ranges > 100 items aren't supported
     ("range(200)", {}, None),
 ])
-def test_supported_evluator_statements(self, eq, context, expected_value):
+def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
 
 
@@ -869,7 +869,7 @@ def test_supported_evluator_statements(self, eq, context, expected_value):
     ("int(10 in range(1,20))", {"a": 2}),
     ("max(a, b)", {"a": 3, "b": 5}),
 ])
-def test_unsupported_evluator_statements(self, eq, context):
+def test_unsupported_evaluator_statements(self, eq, context):
     with self.assertRaises(InvalidExpression):
         eval_statements(eq, context)
     expression = ExpressionFactory.from_spec({
