@@ -111,9 +111,9 @@ def cachebuster(url):
 
 
 @register.simple_tag()
-def new_static(url, **kwargs):
+def static(url, **kwargs):
     if kwargs:
-        warnings.warn('new_static no longer accepts arguments', PendingDeprecationWarning)
+        warnings.warn('static no longer accepts arguments', PendingDeprecationWarning)
     return static(url)
 
 

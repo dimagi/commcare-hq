@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block js %} {{ block.super }}
-<script type="text/javascript" src="{% new_static 'domain/js/media_manager.js' %}"></script>
+<script type="text/javascript" src="{% static 'domain/js/media_manager.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

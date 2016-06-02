@@ -5,8 +5,8 @@
 
 {% block js-inline %}{{ block.super }}
     {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
-        <script type="text/javascript" src="{% new_static 'app_manager/js/case-config-utils.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'app_manager/js/visit-scheduler.js' %}"></script>
+        <script type="text/javascript" src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
+        <script type="text/javascript" src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
         <script type="text/javascript">
         var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
         var visitScheduler = new VisitScheduler.ModuleScheduler({

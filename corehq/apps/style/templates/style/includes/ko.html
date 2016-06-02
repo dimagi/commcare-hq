@@ -2,11 +2,11 @@
 {% load compress %}
 
 {% compress js %}
-<script type="text/javascript" src="{% new_static 'knockout/dist/knockout.debug.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+<script type="text/javascript" src="{% static 'knockout/dist/knockout.debug.js' %}"></script>
+<script type="text/javascript" src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'style/ko/global_handlers.ko.js' %}"></script>
+<script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
 
-<script type="text/javascript" src="{% new_static 'style/ko/components/inline_edit.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'style/ko/components.ko.js' %}"></script>
+<script type="text/javascript" src="{% static 'style/ko/components/inline_edit.js' %}"></script>
+<script type="text/javascript" src="{% static 'style/ko/components.ko.js' %}"></script>
 {% endcompress %}

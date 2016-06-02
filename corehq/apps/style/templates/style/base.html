@@ -12,7 +12,7 @@
         <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
 
         {# link tags #}
-        <link rel="shortcut icon" href="{% new_static 'style/img/favicon.png' %}" />
+        <link rel="shortcut icon" href="{% static 'style/img/favicon.png' %}" />
         <link type="application/opensearchdescription+xml"
               rel="search"
               href="{% url 'osdd' %}"
@@ -22,37 +22,37 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/bootstrap.debug.less' %}" />
+                  href="{% static 'style/less/bootstrap.debug.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
+                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/font-commcare.less' %}" />
+                  href="{% static 'style/less/font-commcare.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/style.debug.less' %}" />
+                  href="{% static 'style/less/style.debug.less' %}" />
         {% else %}
         {% compress css %}
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/bootstrap.less' %}" />
+                  href="{% static 'style/less/bootstrap.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
+                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/font-commcare.less' %}" />
+                  href="{% static 'style/less/font-commcare.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/style.less' %}" />
+                  href="{% static 'style/less/style.less' %}" />
         {% endcompress %}
         {% endif %}
 
@@ -63,11 +63,11 @@
             <link type="text/css"
                    rel="stylesheet"
                    media="all"
-                   href="{% new_static 'select2-3.5.2-legacy/select2.css' %}" />
+                   href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
             <link type="text/css"
                    rel="stylesheet"
                    media="all"
-                   href="{% new_static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
+                   href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
         {% endcompress %}
         {% endif %}
 
@@ -76,7 +76,7 @@
             <link type="text/css"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'select2/dist/css/select2.min.css' %}" />
+                  href="{% static 'select2/dist/css/select2.min.css' %}" />
         {% endcompress %}
         {% endif %}
 
@@ -85,7 +85,7 @@
             <link type="text/css"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'nvd3/src/nv.d3.css' %}" />
+                  href="{% static 'nvd3/src/nv.d3.css' %}" />
         {% endcompress %}
         {% endif %}
 
@@ -94,7 +94,7 @@
             <link type="text/css"
                   rel="stylesheet"
                   media="screen"
-                  href="{% new_static "bootstrap-daterangepicker/daterangepicker.css" %}" />
+                  href="{% static "bootstrap-daterangepicker/daterangepicker.css" %}" />
         {% endcompress %}
         {% endif %}
 
@@ -103,7 +103,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="screen"
-                  href="{% new_static "bootstrap-timepicker/less/timepicker.less" %}" />
+                  href="{% static "bootstrap-timepicker/less/timepicker.less" %}" />
         {% endcompress %}
         {% endif %}
 
@@ -112,7 +112,7 @@
             <link type="text/css"
                   rel="stylesheet"
                   media="screen"
-                  href="{% new_static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
+                  href="{% static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
         {% endcompress %}
         {% endif %}
 
@@ -121,7 +121,7 @@
             <link type="text/css"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
+                  href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
         {% endcompress %}
         {% endif %}
 
@@ -150,7 +150,7 @@
             <link type="text/css"
                   rel="stylesheet"
                   media="screen"
-                  href="{% new_static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
+                  href="{% static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
         {% endif %}
 
         {# Core Libraries #}
@@ -161,32 +161,32 @@
         {% if request.use_jquery_ui %}
         {% compress js %}
             <!-- UI libraries needed for all other widgets and interactions -->
-            <script src="{% new_static 'jquery-ui/ui/core.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/widget.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/mouse.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/position.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/mouse.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
 
             <!-- Individual widgets and interactions -->
-            <script src="{% new_static 'jquery-ui/ui/menu.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/autocomplete.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/button.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/datepicker.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/draggable.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/resizable.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/droppable.js' %}"></script>
-            <script src="{% new_static 'jquery-ui/ui/sortable.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/menu.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/autocomplete.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/button.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/datepicker.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/draggable.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
+            <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
 
         {# Up here because if daterangepicker is called from within a form widget, #}
         {# the javascript requiring the config file is run before js-inline #}
         {% if request.use_daterangepicker %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'moment/moment.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/daterangepicker.config.js' %}"></script>
+        <script type="text/javascript" src="{% static 'moment/moment.js' %}"></script>
+        <script type="text/javascript" src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+        <script type="text/javascript" src="{% static 'style/js/daterangepicker.config.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -210,7 +210,7 @@
                     relativeUrls: false
                 };
             </script>
-            <script src="{% new_static 'less/dist/less-1.7.3.min.js' %}"></script>
+            <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
     </head>
@@ -293,7 +293,7 @@
                     <div class="row">
                         <div class="col-xs-12">
                             <a href="http://www.commcarehq.org/" class="footer-link-img">
-                                <img src="{% new_static 'hqwebapp/img/commcare-flower-footer.png' %}"
+                                <img src="{% static 'hqwebapp/img/commcare-flower-footer.png' %}"
                                      alt="CommCare"
                                      height="30"  />
                             </a>
@@ -332,14 +332,14 @@
         {# HQ Specific Libraries #}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% compress js %}
-        <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/hq-bug-report.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/layout.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/form_tools.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'hqwebapp/js/toggles.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/main.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+        <script type="text/javascript" src="{% static 'style/js/hq-bug-report.js' %}"></script>
+        <script type="text/javascript" src="{% static 'style/js/layout.js' %}"></script>
+        <script type="text/javascript" src="{% static 'style/js/form_tools.js' %}"></script>
+        <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+        <script type="text/javascript" src="{% static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
         {% if request.domain and request.user.username %}
@@ -356,7 +356,7 @@
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user and request|toggle_enabled:"NOTIFICATIONS" %}
-        <script type="text/javascript" src="{% new_static '/notifications/js/NotificationsService.ko.js' %}"></script>
+        <script type="text/javascript" src="{% static '/notifications/js/NotificationsService.ko.js' %}"></script>
         <script type="text/javascript">
             $(function () {
                 $('#js-settingsmenu-notifications').startNotificationsService('{% url 'notifications_service' %}');
@@ -411,58 +411,58 @@
 
         {% if request.use_select2 %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'select2-3.5.2-legacy/select2.js' %}"></script>
+        <script type="text/javascript" src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_select2_v4 %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'select2/dist/js/select2.full.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_nvd3 %}
         {% compress js %}
-        <script src="{% new_static 'nvd3/lib/d3.v2.js' %}"></script>
-        <script src="{% new_static 'nvd3/lib/fisheye.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'd3/d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
+        <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
+        <script src="{% static 'nvd3/lib/fisheye.js' %}"></script>
+        <script type="text/javascript" src="{% static 'd3/d3.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_nvd3_v3 %}
         {% compress js %}
-        <script src="{% new_static 'nvd3/lib/d3.v3.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'd3/d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
+        <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
+        <script type="text/javascript" src="{% static 'd3/d3.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_datatables %}
         {% compress js %}
-        <script src="{% new_static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
-        <script src="{% new_static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
-        <script src="{% new_static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
+        <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+        <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
+        <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_typeahead %}
         {% compress js %}
-        <script src="{% new_static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
-        <script src="{% new_static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
+        <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
+        <script src="{% static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_timepicker %}
         {% compress js %}
-        <script type="text/javascript" src="{% new_static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
+        <script type="text/javascript" src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.guided_tour %}
         {% compress js %}
-        <script src="{% new_static 'tour/js/tour.utils.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
+        <script src="{% static 'tour/js/tour.utils.js' %}"></script>
+        <script type="text/javascript" src="{% static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -493,7 +493,7 @@
         {% endif %}
 
         {% if request.use_timeago %}
-        <script src="{% new_static 'jquery-timeago/jquery.timeago.js' %}"></script>
+        <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
         <script>
             $(function () {
                 $.timeago.settings.allowFuture = true;
