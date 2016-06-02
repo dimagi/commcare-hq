@@ -96,7 +96,14 @@ legend .subtext {
 
 // Static width for select2 widgets, which otherwise grow too large on case management pages
 .app-manager-content .select2-container {
-  width: 210px;
+    @width: 210px;
+    width: @width;
+
+    // This needs a static width so that text-overflow: ellipsis will work in Firefox.
+    // Unusually specific selector to override select2's width: auto rule.
+    > .select2-choice > .select2-chosen {
+        width: @width - 35px;
+    }
 }
 
 // hack to fix issues with placeholder not showing up fully
@@ -157,6 +164,13 @@ legend .subtext {
   .ui-multiselect {
     margin-left: 20px;
   }
+}
+.form-horizontal .form-group > .controls-multiple > .row {
+  margin-left: -5px;
+}
+.form-horizontal .form-group > .controls-multiple .form-group {
+  margin: 0;
+  padding: 0;
 }
 
 .form-horizontal .date-range-picker {

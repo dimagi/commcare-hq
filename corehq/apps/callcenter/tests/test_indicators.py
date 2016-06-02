@@ -1,3 +1,4 @@
+import uuid
 from collections import namedtuple
 
 from django.conf import settings
@@ -8,18 +9,21 @@ from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
 from corehq.apps.callcenter.models import CallCenterIndicatorConfig, TypedIndicator
-from corehq.apps.callcenter.utils import sync_call_center_user_case
+from corehq.apps.callcenter.utils import sync_call_center_user_case, CallCenterCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.callcenter.tests.sql_fixture import load_data, load_custom_data, clear_data
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase
 
 from django.core import cache
 
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.sql_db.connections import connection_manager
-from corehq.sql_db.tests.utils import database_creator
+from corehq.sql_db.tests.utils import temporary_database
+from corehq.util.test_utils import OverridableSettingsTestMixin
 
 CASE_TYPE = 'cc_flw'
 
@@ -44,9 +48,9 @@ def create_cases_for_types(domain, case_types):
         submit_case_blocks(
             CaseBlock(
                 create=True,
-                case_id='person%s' % i,
+                case_id=uuid.uuid4().hex,
                 case_type=case_type,
-                user_id='user%s' % i,
+                user_id=uuid.uuid4().hex,
             ).as_string(), domain)
 
 
@@ -118,13 +122,18 @@ def expected_standard_indicators(no_data=False, include_legacy=True, include_tot
     return expected
 
 
-class BaseCCTests(TestCase):
+class BaseCCTests(OverridableSettingsTestMixin, TestCase):
+    domain_name = None
 
     def setUp(self):
         locmem_cache.clear()
+        CaseAccessors.get_case_types.clear(CaseAccessors(self.domain_name))
+
+    def tearDown(self):
+        CaseAccessors.get_case_types.clear(CaseAccessors(self.domain_name))
 
     def _test_indicators(self, user, data_set, expected):
-        user_case = get_case_by_domain_hq_user_id(user.domain, user.user_id, CASE_TYPE)
+        user_case = CaseAccessors(user.domain).get_case_by_domain_hq_user_id(user.user_id, CASE_TYPE)
         case_id = user_case.case_id
         self.assertIn(case_id, data_set)
 
@@ -144,10 +153,12 @@ class BaseCCTests(TestCase):
 
 
 class CallCenterTests(BaseCCTests):
+    domain_name = 'callcentertest'
 
     @classmethod
     def setUpClass(cls):
-        cls.cc_domain, cls.cc_user = create_domain_and_user('callcentertest', 'user1')
+        super(CallCenterTests, cls).setUpClass()
+        cls.cc_domain, cls.cc_user = create_domain_and_user(cls.domain_name, 'user1')
         load_data(cls.cc_domain.name, cls.cc_user.user_id)
         cls.cc_user_no_data = CommCareUser.create(cls.cc_domain.name, 'user3', '***')
 
@@ -159,6 +170,7 @@ class CallCenterTests(BaseCCTests):
 
     @classmethod
     def tearDownClass(cls):
+        CaseAccessors.get_case_types.clear(CaseAccessors(cls.aarohi_domain.name))
         clear_data(cls.aarohi_domain.name)
         clear_data(cls.cc_domain.name)
         cls.cc_user.delete()
@@ -166,6 +178,7 @@ class CallCenterTests(BaseCCTests):
         cls.cc_domain.delete()
         cls.aarohi_user.delete()
         cls.aarohi_domain.delete()
+        super(CallCenterTests, cls).tearDownClass()
 
     def check_cc_indicators(self, data_set, expected):
         self._test_indicators(self.cc_user, data_set, expected)
@@ -286,7 +299,7 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_sync_log(self):
-        user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user.get_id, CASE_TYPE)
+        user_case = CaseAccessors(self.cc_domain.name).get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
 
         indicator_set = CallCenterIndicators(
             self.cc_domain.name,
@@ -294,7 +307,7 @@ class CallCenterTests(BaseCCTests):
             self.cc_domain.call_center_config.case_type,
             self.cc_user,
             custom_cache=locmem_cache,
-            override_cases=[user_case]
+            override_cases=[CallCenterCase.from_case(user_case)]
         )
         self.assertEqual(indicator_set.user_to_case_map.keys(), [self.cc_user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id]))
@@ -330,7 +343,7 @@ class CallCenterTests(BaseCCTests):
         )
 
     def test_caching(self):
-        user_case = get_case_by_domain_hq_user_id(self.cc_domain.name, self.cc_user._id, CASE_TYPE)
+        user_case = CaseAccessors(self.cc_domain.name).get_case_by_domain_hq_user_id(self.cc_user.get_id, CASE_TYPE)
         expected_indicators = {'a': 1, 'b': 2}
         cached_data = CachedIndicators(
             user_id=self.cc_user.get_id,
@@ -373,40 +386,49 @@ class CallCenterTests(BaseCCTests):
         self.assertEqual(indicator_set.get_data(), {})
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class CallCenterTestsSQL(CallCenterTests):
+    """Run all tests in ``CallCenterTests`` with SQL backend
+    """
+    domain_name = "cc_test_sql"
+    pass
+
+
 class CallCenterSupervisorGroupTest(BaseCCTests):
+    domain_name = 'cc_supervisor'
 
-    @classmethod
-    def setUpClass(cls):
-        domain_name = 'cc_supervisor'
-        cls.domain = create_domain(domain_name)
-        cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
+    def setUp(self):
+        super(CallCenterSupervisorGroupTest, self).setUp()
+        self.domain = create_domain(self.domain_name)
+        self.supervisor = CommCareUser.create(self.domain_name, 'supervisor@' + self.domain_name, '***')
 
-        cls.supervisor_group = Group(
-            domain=domain_name,
+        self.supervisor_group = Group(
+            domain=self.domain_name,
             name='supervisor group',
             case_sharing=True,
-            users=[cls.supervisor.get_id]
+            users=[self.supervisor.get_id]
         )
-        cls.supervisor_group.save()
+        self.supervisor_group.save()
 
-        cls.domain.call_center_config.enabled = True
-        cls.domain.call_center_config.case_owner_id = cls.supervisor_group.get_id
-        cls.domain.call_center_config.case_type = 'cc_flw'
-        cls.domain.save()
+        self.domain.call_center_config.enabled = True
+        self.domain.call_center_config.case_owner_id = self.supervisor_group.get_id
+        self.domain.call_center_config.case_type = 'cc_flw'
+        self.domain.save()
 
-        cls.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
-        sync_call_center_user_case(cls.user)
+        self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***')
+        sync_call_center_user_case(self.user)
 
-        load_data(domain_name, cls.user.user_id)
+        load_data(self.domain_name, self.user.user_id)
 
         # create one case of each type so that we get the indicators where there is no data for the period
-        create_cases_for_types(domain_name, ['person', 'dog'])
+        create_cases_for_types(self.domain_name, ['person', 'dog'])
 
-    @classmethod
-    def tearDownClass(cls):
-        clear_data(cls.domain.name)
-        cls.domain.delete()
+    def tearDown(self):
+        super(CallCenterSupervisorGroupTest, self).tearDown()
+        clear_data(self.domain.name)
+        self.domain.delete()
 
+    @run_with_all_backends
     def test_users_assigned_via_group(self):
         """
         Ensure that users who are assigned to the supervisor via a group are also included
@@ -426,45 +448,46 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
 
 
 class CallCenterCaseSharingTest(BaseCCTests):
+    domain_name = 'cc_sharing'
 
-    @classmethod
-    def setUpClass(cls):
-        domain_name = 'cc_sharing'
-        cls.domain = create_domain(domain_name)
-        cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
+    def setUp(self):
+        super(CallCenterCaseSharingTest, self).setUp()
+        self.domain = create_domain(self.domain_name)
+        self.supervisor = CommCareUser.create(self.domain_name, 'supervisor@' + self.domain_name, '***')
 
-        cls.domain.call_center_config.enabled = True
-        cls.domain.call_center_config.case_owner_id = cls.supervisor.get_id
-        cls.domain.call_center_config.case_type = 'cc_flw'
-        cls.domain.save()
+        self.domain.call_center_config.enabled = True
+        self.domain.call_center_config.case_owner_id = self.supervisor.get_id
+        self.domain.call_center_config.case_type = 'cc_flw'
+        self.domain.save()
 
-        cls.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
-        sync_call_center_user_case(cls.user)
+        self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***')
+        sync_call_center_user_case(self.user)
 
-        cls.group = Group(
-            domain=domain_name,
+        self.group = Group(
+            domain=self.domain_name,
             name='case sharing group',
             case_sharing=True,
-            users=[cls.user.user_id]
+            users=[self.user.user_id]
         )
-        cls.group.save()
+        self.group.save()
 
         load_data(
-            domain_name,
-            cls.user.user_id,
+            self.domain_name,
+            self.user.user_id,
             'not this user',
-            cls.group.get_id,
-            case_opened_by=cls.user.user_id,
-            case_closed_by=cls.user.user_id)
+            self.group.get_id,
+            case_opened_by=self.user.user_id,
+            case_closed_by=self.user.user_id)
 
         # create one case of each type so that we get the indicators where there is no data for the period
-        create_cases_for_types(domain_name, ['person', 'dog'])
+        create_cases_for_types(self.domain_name, ['person', 'dog'])
 
-    @classmethod
-    def tearDownClass(cls):
-        clear_data(cls.domain.name)
-        cls.domain.delete()
+    def tearDown(self):
+        super(CallCenterCaseSharingTest, self).tearDown()
+        clear_data(self.domain.name)
+        self.domain.delete()
 
+    @run_with_all_backends
     def test_cases_owned_by_group(self):
         """
         Ensure that indicators include cases owned by a case sharing group the user is part of.
@@ -485,31 +508,32 @@ class CallCenterCaseSharingTest(BaseCCTests):
 
 
 class CallCenterTestOpenedClosed(BaseCCTests):
+    domain_name = 'cc_opened_closed'
 
-    @classmethod
-    def setUpClass(cls):
-        domain_name = 'cc_opened_closed'
-        cls.domain = create_domain(domain_name)
-        cls.supervisor = CommCareUser.create(domain_name, 'supervisor@' + domain_name, '***')
+    def setUp(self):
+        super(CallCenterTestOpenedClosed, self).setUp()
+        self.domain = create_domain(self.domain_name)
+        self.supervisor = CommCareUser.create(self.domain_name, 'supervisor@' + self.domain_name, '***')
 
-        cls.domain.call_center_config.enabled = True
-        cls.domain.call_center_config.case_owner_id = cls.supervisor.get_id
-        cls.domain.call_center_config.case_type = 'cc_flw'
-        cls.domain.save()
+        self.domain.call_center_config.enabled = True
+        self.domain.call_center_config.case_owner_id = self.supervisor.get_id
+        self.domain.call_center_config.case_type = 'cc_flw'
+        self.domain.save()
 
-        cls.user = CommCareUser.create(domain_name, 'user@' + domain_name, '***')
-        sync_call_center_user_case(cls.user)
+        self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***')
+        sync_call_center_user_case(self.user)
 
-        load_data(domain_name, cls.user.user_id, case_opened_by='not me', case_closed_by='not me')
+        load_data(self.domain_name, self.user.user_id, case_opened_by='not me', case_closed_by='not me')
 
         # create one case of each type so that we get the indicators where there is no data for the period
-        create_cases_for_types(domain_name, ['person', 'dog'])
+        create_cases_for_types(self.domain_name, ['person', 'dog'])
 
-    @classmethod
-    def tearDownClass(cls):
-        clear_data(cls.domain.name)
-        cls.domain.delete()
+    def tearDown(self):
+        super(CallCenterTestOpenedClosed, self).tearDown()
+        clear_data(self.domain.name)
+        self.domain.delete()
 
+    @run_with_all_backends
     def test_opened_closed(self):
         """
         Test that cases_closed and cases_opened indicators count based on the user that
@@ -532,29 +556,31 @@ class CallCenterTestOpenedClosed(BaseCCTests):
 
 
 class TestSavingToUCRDatabase(BaseCCTests):
+    domain_name = 'callcenterucrtest'
 
-    @classmethod
-    def setUpClass(cls):
-        cls.cc_domain, cls.cc_user = create_domain_and_user('callcentertest', 'user1')
-        create_cases_for_types(cls.cc_domain.name, ['person', 'dog'])
+    def setUp(self):
+        super(TestSavingToUCRDatabase, self).setUp()
+        self.cc_domain, self.cc_user = create_domain_and_user(self.domain_name, 'user_ucr')
+        create_cases_for_types(self.cc_domain.name, ['person', 'dog'])
 
-        cls.ucr_db_name = 'cchq_ucr_tests'
+        self.ucr_db_name = 'cchq_ucr_tests'
         db_conn_parts = settings.SQL_REPORTING_DATABASE_URL.split('/')
-        db_conn_parts[-1] = cls.ucr_db_name
-        cls.ucr_db_url = '/'.join(db_conn_parts)
+        db_conn_parts[-1] = self.ucr_db_name
+        self.ucr_db_url = '/'.join(db_conn_parts)
 
-        cls.db_context = database_creator(cls.ucr_db_name)
-        cls.db_context.__enter__()
+        self.db_context = temporary_database(self.ucr_db_name)
+        self.db_context.__enter__()
 
-    @classmethod
-    def tearDownClass(cls):
-        clear_data(cls.cc_domain.name)
-        cls.cc_user.delete()
-        cls.cc_domain.delete()
+    def tearDown(self):
+        super(TestSavingToUCRDatabase, self).tearDown()
+        clear_data(self.cc_domain.name)
+        self.cc_user.delete()
+        self.cc_domain.delete()
 
         connection_manager.dispose_engine('ucr')
-        cls.db_context.__exit__(None, None, None)
+        self.db_context.__exit__(None, None, None)
 
+    @run_with_all_backends
     def test_standard_indicators(self):
         with override_settings(UCR_DATABASE_URL=self.ucr_db_url):
             load_data(self.cc_domain.name, self.cc_user.user_id)
