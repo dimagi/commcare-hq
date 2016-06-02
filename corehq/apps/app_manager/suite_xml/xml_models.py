@@ -555,8 +555,9 @@ class Field(OrderedXmlObject):
     background = NodeField('background/text', Text)
 
 
-class Lookup(XmlObject):
+class Lookup(OrderedXmlObject):
     ROOT_NAME = 'lookup'
+    ORDER = ('extras', 'responses', 'field')
 
     name = StringField("@name")
     action = StringField("@action", required=True)
