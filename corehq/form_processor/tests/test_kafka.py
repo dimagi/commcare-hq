@@ -3,9 +3,9 @@ from django.test import TestCase, override_settings
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests import FormProcessorTestUtils
-from corehq.form_processor.tests.utils import post_xform
 from corehq.form_processor.utils import get_simple_form_xml
 from corehq.util.test_utils import OverridableSettingsTestMixin, create_and_save_a_case, create_and_save_a_form
 
@@ -39,14 +39,16 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(form_id, case_id)
-        orig_form = post_xform(form_xml, domain=self.domain)
+        orig_form = submit_form_locally(form_xml, domain=self.domain)[1]
         self.assertEqual(form_id, orig_form.form_id)
+        self.assertEqual(1, len(self.form_accessors.get_all_form_ids_in_domain()))
+        self.assertEqual(1, len(CaseAccessors(self.domain).get_case_ids_in_domain()))
 
         form_consumer = get_test_kafka_consumer(topics.FORM_SQL)
         case_consumer = get_test_kafka_consumer(topics.CASE_SQL)
 
         # post an exact duplicate
-        dupe_form = post_xform(form_xml, domain=self.domain)
+        dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
         self.assertTrue(dupe_form.is_duplicate)
         self.assertNotEqual(form_id, dupe_form.form_id)
         self.assertEqual(form_id, dupe_form.orig_id)
