@@ -18,6 +18,9 @@
     {% endcompress %}
 {% endblock %}
 
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
 {% block js %}{{ block.super }}
     <!--
         jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two
