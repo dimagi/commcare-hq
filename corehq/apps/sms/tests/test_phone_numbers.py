@@ -1,8 +1,9 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
-from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import (SQLMobileBackend, SQLMobileBackendMapping,
     PhoneNumber)
+from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
+from corehq.apps.sms.tests.util import delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -12,27 +13,29 @@ from django.test import TestCase
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.test_utils import create_test_case
+from mock import patch
 
 
-class PhoneNumberLookupTestCase(TestCase):
+class PhoneNumberCacheClearTestCase(TestCase):
 
     def assertNoMatch(self, phone_search, suffix_search, owner_id_search):
-        self.assertIsNone(VerifiedNumber.by_phone(phone_search))
-        self.assertIsNone(VerifiedNumber.by_suffix(suffix_search))
-        self.assertEqual(VerifiedNumber.by_owner_id(owner_id_search), [])
+        self.assertIsNone(PhoneNumber.by_phone(phone_search))
+        self.assertIsNone(PhoneNumber.by_suffix(suffix_search))
+        self.assertEqual(PhoneNumber.by_owner_id(owner_id_search).count(), 0)
+
+    def assertPhoneNumbersEqual(self, phone1, phone2):
+        for field in phone1._meta.fields:
+            self.assertEqual(getattr(phone1, field.name), getattr(phone2, field.name))
 
     def assertMatch(self, match, phone_search, suffix_search, owner_id_search):
-        lookedup = VerifiedNumber.by_phone(phone_search)
-        self.assertEqual(match._id, lookedup._id)
-        self.assertEqual(match._rev, lookedup._rev)
+        lookedup = PhoneNumber.by_phone(phone_search)
+        self.assertPhoneNumbersEqual(match, lookedup)
 
-        lookedup = VerifiedNumber.by_suffix(suffix_search)
-        self.assertEqual(match._id, lookedup._id)
-        self.assertEqual(match._rev, lookedup._rev)
+        lookedup = PhoneNumber.by_suffix(suffix_search)
+        self.assertPhoneNumbersEqual(match, lookedup)
 
-        [lookedup] = VerifiedNumber.by_owner_id(owner_id_search)
-        self.assertEqual(match._id, lookedup._id)
-        self.assertEqual(match._rev, lookedup._rev)
+        [lookedup] = PhoneNumber.by_owner_id(owner_id_search)
+        self.assertPhoneNumbersEqual(match, lookedup)
 
     def _test_cache_clear(self, refresh_each_time=True):
         """
@@ -42,7 +45,7 @@ class PhoneNumberLookupTestCase(TestCase):
         whether you're updating a document you just saved or getting a document
         fresh from the database and updating it.
         """
-        created = VerifiedNumber(
+        created = PhoneNumber(
             domain='phone-number-test',
             owner_doc_type='CommCareCase',
             owner_id='fake-owner-id1',
@@ -53,25 +56,22 @@ class PhoneNumberLookupTestCase(TestCase):
             contact_last_modified=datetime.utcnow()
         )
         created.save()
-        self.assertTrue(created._rev.startswith('1-'))
         self.assertNoMatch('99952345234', '52345234', 'fake-owner-id2')
         self.assertMatch(created, '99912341234', '12341234', 'fake-owner-id1')
 
         # Update Phone Number
         if refresh_each_time:
-            created = VerifiedNumber.get(created._id)
+            created = PhoneNumber.objects.get(pk=created.pk)
         created.phone_number = '99952345234'
         created.save()
-        self.assertTrue(created._rev.startswith('2-'))
         self.assertNoMatch('99912341234', '12341234', 'fake-owner-id2')
         self.assertMatch(created, '99952345234', '52345234', 'fake-owner-id1')
 
         # Update Owner Id
         if refresh_each_time:
-            created = VerifiedNumber.get(created._id)
+            created = PhoneNumber.objects.get(pk=created.pk)
         created.owner_id = 'fake-owner-id2'
         created.save()
-        self.assertTrue(created._rev.startswith('3-'))
         self.assertNoMatch('99912341234', '12341234', 'fake-owner-id1')
         self.assertMatch(created, '99952345234', '52345234', 'fake-owner-id2')
 
@@ -91,8 +91,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
         self.domain = 'case-phone-number-test'
 
     def tearDown(self):
-        for v in VerifiedNumber.by_domain(self.domain):
-            v.delete()
+        delete_domain_phone_numbers(self.domain)
 
     def set_case_property(self, case, property_name, value):
         update_case(self.domain, case.case_id, case_properties={property_name: value})
@@ -101,7 +100,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
     def get_case_verified_number(self, case):
         return case.get_verified_number()
 
-    def assertPhoneNumberDetails(self, case, phone_number, sms_backend_id, ivr_backend_id, _id=None, _rev=None):
+    def assertPhoneNumberDetails(self, case, phone_number, sms_backend_id, ivr_backend_id, pk=None):
         v = self.get_case_verified_number(case)
         self.assertEqual(v.domain, case.domain)
         self.assertEqual(v.owner_doc_type, case.doc_type)
@@ -112,11 +111,8 @@ class CaseContactPhoneNumberTestCase(TestCase):
         self.assertEqual(v.verified, True)
         self.assertEqual(v.contact_last_modified, case.server_modified_on)
 
-        if _id:
-            self.assertEqual(v._id, _id)
-
-        if _rev:
-            self.assertTrue(v._rev.startswith(_rev + '-'))
+        if pk:
+            self.assertEqual(v.pk, pk)
 
     @run_with_all_backends
     def test_case_phone_number_updates(self):
@@ -127,30 +123,31 @@ class CaseContactPhoneNumberTestCase(TestCase):
             self.assertIsNone(self.get_case_verified_number(case))
 
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
-            self.assertPhoneNumberDetails(case, '99987658765', None, None, _rev='1')
-            _id = self.get_case_verified_number(case)._id
+            self.assertPhoneNumberDetails(case, '99987658765', None, None)
+            pk = self.get_case_verified_number(case).pk
 
             case = self.set_case_property(case, 'contact_phone_number', '99987698769')
-            self.assertPhoneNumberDetails(case, '99987698769', None, None, _id=_id, _rev='2')
+            self.assertPhoneNumberDetails(case, '99987698769', None, None, pk=pk)
 
             case = self.set_case_property(case, 'contact_backend_id', 'sms-backend')
-            self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', None, _id=_id, _rev='3')
+            self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', None, pk=pk)
 
             case = self.set_case_property(case, 'contact_ivr_backend_id', 'ivr-backend')
-            self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', 'ivr-backend', _id=_id, _rev='4')
+            self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', 'ivr-backend', pk=pk)
 
             # If nothing changes, the phone entry should not be saved
-            case = self.set_case_property(case, 'abc', 'def')
-            self.assertTrue(self.get_case_verified_number(case)._rev.startswith('4-'))
+            with patch('corehq.apps.sms.models.PhoneNumber.save') as mock_save:
+                case = self.set_case_property(case, 'abc', 'def')
+                mock_save.assert_not_called()
 
             # If phone entry is ahead of the case in terms of contact_last_modified, no update should happen
             v = self.get_case_verified_number(case)
             v.contact_last_modified += timedelta(days=1)
             v.save()
-            self.assertTrue(v._rev.startswith('5-'))
 
-            case = self.set_case_property(case, 'contact_phone_number', '99912341234')
-            self.assertTrue(self.get_case_verified_number(case)._rev.startswith('5-'))
+            with patch('corehq.apps.sms.models.PhoneNumber.save') as mock_save:
+                case = self.set_case_property(case, 'contact_phone_number', '99912341234')
+                mock_save.assert_not_called()
 
     @run_with_all_backends
     def test_close_case(self):
@@ -211,23 +208,17 @@ class CaseContactPhoneNumberTestCase(TestCase):
             self.assertIsNone(self.get_case_verified_number(case2))
 
     def test_filter_pending(self):
-        v1 = VerifiedNumber(verified=True)
-        v1.save()
+        v1 = PhoneNumber(verified=True)
+        v2 = PhoneNumber(verified=False)
 
-        v2 = VerifiedNumber(verified=False)
-        v2.save()
+        self.assertIsNone(PhoneNumber._filter_pending(None, include_pending=True))
+        self.assertIsNone(PhoneNumber._filter_pending(None, include_pending=False))
 
-        self.assertIsNone(VerifiedNumber._filter_pending(None, include_pending=True))
-        self.assertIsNone(VerifiedNumber._filter_pending(None, include_pending=False))
+        self.assertEqual(v1, PhoneNumber._filter_pending(v1, include_pending=False))
+        self.assertIsNone(PhoneNumber._filter_pending(v2, include_pending=False))
 
-        self.assertEqual(v1, VerifiedNumber._filter_pending(v1, include_pending=False))
-        self.assertIsNone(VerifiedNumber._filter_pending(v2, include_pending=False))
-
-        self.assertEqual(v1, VerifiedNumber._filter_pending(v1, include_pending=True))
-        self.assertEqual(v2, VerifiedNumber._filter_pending(v2, include_pending=True))
-
-        v1.delete()
-        v2.delete()
+        self.assertEqual(v1, PhoneNumber._filter_pending(v1, include_pending=True))
+        self.assertEqual(v2, PhoneNumber._filter_pending(v2, include_pending=True))
 
 
 class SQLPhoneNumberTestCase(TestCase):
@@ -441,3 +432,30 @@ class SQLPhoneNumberTestCase(TestCase):
         number.save()
         [lookup] = PhoneNumber.by_owner_id('owner2')
         self.assertFalse(lookup.verified)
+
+    def create_case_contact(self, phone_number):
+        return create_test_case(
+            self.domain,
+            'participant',
+            'test',
+            case_properties={
+                'contact_phone_number': phone_number,
+                'contact_phone_number_is_verified': '1',
+            },
+            drop_signals=False
+        )
+
+    @run_with_all_backends
+    def test_delete_phone_numbers_for_owners(self):
+        with self.create_case_contact('9990001') as case1, \
+                self.create_case_contact('9990002') as case2, \
+                self.create_case_contact('9990003') as case3:
+
+            self.assertEqual(PhoneNumber.by_owner_id(case1.case_id).count(), 1)
+            self.assertEqual(PhoneNumber.by_owner_id(case2.case_id).count(), 1)
+            self.assertEqual(PhoneNumber.by_owner_id(case3.case_id).count(), 1)
+
+            delete_phone_numbers_for_owners([case2.case_id, case3.case_id])
+            self.assertEqual(PhoneNumber.by_owner_id(case1.case_id).count(), 1)
+            self.assertEqual(PhoneNumber.by_owner_id(case2.case_id).count(), 0)
+            self.assertEqual(PhoneNumber.by_owner_id(case3.case_id).count(), 0)

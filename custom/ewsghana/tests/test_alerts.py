@@ -4,9 +4,8 @@ from casexml.apps.stock.models import StockReport
 
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
-from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 
 from custom.ewsghana.alerts import ONGOING_NON_REPORTING, ONGOING_STOCKOUT_AT_SDP, ONGOING_STOCKOUT_AT_RMS
 from custom.ewsghana.tasks import on_going_non_reporting, on_going_stockout
@@ -88,8 +87,7 @@ class TestAlerts(EWSTestCase):
         cls.user1.delete()
         cls.national_user.delete()
         cls.regional_user.delete()
-        for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
-            vn.delete()
+        delete_domain_phone_numbers(TEST_DOMAIN)
         super(TestAlerts, cls).tearDownClass()
 
     def tearDown(self):
