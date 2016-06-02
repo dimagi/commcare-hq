@@ -1,17 +1,6 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% if request.upgrade_knockout_js %}
-{# FOR PAGES REQUIRING LEGACY KNOCKOUT #todo upgrade #}
-{% compress js %}
-<script type="text/javascript" src="{% new_static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'style/ko/global_handlers.ko.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
-{% endcompress %}
-
-{% else %}
-
 {% compress js %}
 <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.debug.js' %}"></script>
 <script type="text/javascript" src="{% new_static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
