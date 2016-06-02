@@ -319,20 +319,20 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
             'cases': cases,
             'id': form['_id']
         }
-        for k, v in form['_attachments'].iteritems():
-            if v['content_type'] == 'text/xml':
+        for name, blob_meta in form.blobs.iteritems():
+            if blob_meta.content_type == 'text/xml':
                 continue
             try:
-                question_id = unicode(u'-'.join(find_question_id(form['form'], k)))
+                question_id = unicode(u'-'.join(find_question_id(form['form'], name)))
             except TypeError:
                 question_id = unicode(u'unknown' + unicode(unknown_number))
                 unknown_number += 1
 
             if not properties or question_id in properties:
-                extension = unicode(os.path.splitext(k)[1])
+                extension = unicode(os.path.splitext(name)[1])
                 form_info['attachments'].append({
-                    'size': v['length'],
-                    'name': k,
+                    'size': blob_meta.content_length,
+                    'name': name,
                     'question_id': question_id,
                     'extension': extension,
                     'timestamp': parse(form['received_on']).timetuple(),
