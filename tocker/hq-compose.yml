@@ -1,0 +1,91 @@
+hq:
+  build: .
+  environment:
+    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS KAFKA ELASTICSEARCH RIAKCS"
+  privileged: true  # allows mount inside container
+  links:
+    - postgres
+    - couch
+    - redis
+    - elasticsearch
+    - kafka
+    - riakcs
+  volumes:
+    - ..:/mnt/commcare-hq-ro:ro
+    - ${VOLUME_PREFIX}lib:/mnt/lib
+
+postgres:
+  image: dimagi/docker-postgresql
+  environment:
+    POSTGRES_USER: commcarehq
+    POSTGRES_PASSWORD: commcarehq
+  labels:
+    commcare.name: "postgres"
+  expose:
+    - "5432"
+  ports:
+    - "5432:5432"
+  volumes:
+    - ${VOLUME_PREFIX}postgresql:/var/lib/postgresql
+
+couch:
+  image: klaemo/couchdb:latest
+  labels:
+    commcare.name: "couch"
+  expose:
+    - "5984"
+  ports:
+    - "5984:5984"
+  volumes:
+    - ${VOLUME_PREFIX}couchdb:/usr/local/var/lib/couchdb
+
+redis:
+  image: redis
+  labels:
+    commcare.name: "redis"
+  expose:
+    - "6379"
+  ports:
+    - "6379:6379"
+
+elasticsearch:
+  image: elasticsearch:1.7.4
+  environment:
+    ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
+  labels:
+    commcare.name: "elastic"
+  expose:
+    - "9200"
+  ports:
+    - "9200:9200"
+  volumes:
+    - ${ES_DATA_VOLUME}:/usr/share/elasticsearch/data
+
+kafka:
+  image: spotify/kafka
+  environment:
+    ADVERTISED_PORT: 9092
+  expose:
+    - "2181"
+    - "9092"
+  ports:
+    - "2181:2181"
+    - "9092:9092"
+  labels:
+    commcare.name: "kafka"
+  volumes:
+    - ${VOLUME_PREFIX}kafka:/tmp/kafka-logs
+    - ${VOLUME_PREFIX}zookeeper:/var/lib/zookeeper
+
+riakcs:
+  image: millerdev/riak-cs
+  labels:
+    commcare.name: "riakcs"
+  expose:
+    - "8080"
+    - "8098"
+  ports:
+    - "9880:8080"
+    - "8098:8098"
+  volumes:
+    - ${VOLUME_PREFIX}riakcs:/var/lib/riak-data
