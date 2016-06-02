@@ -787,7 +787,7 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
         },
         30 * 60
     ),
-    # supports string manupulation
+    # supports string manipulation
     ({}, "str(a)+'text'", {"a": 3}, "3text"),
     # context can contain expressions
     (
