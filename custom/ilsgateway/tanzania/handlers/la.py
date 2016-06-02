@@ -1,6 +1,8 @@
 from datetime import datetime
 from casexml.apps.stock.const import TRANSACTION_TYPE_LA, SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction, StockReport
+from django.db import transaction
+
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import SQLProduct
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
@@ -41,14 +43,15 @@ class LossAndAdjustment(KeywordHandler):
         )
         error = False
         products_without_soh = set()
-        for product_code, quantity in parsed_report:
-            try:
-                product_id = SQLProduct.objects.get(domain=self.domain, code__iexact=product_code).product_id
-                self._create_stock_transaction(report, product_id, quantity)
-            except SQLProduct.DoesNotExist:
-                error = True
-            except StockState.DoesNotExist:
-                products_without_soh.add(product_code.lower())
+        with transaction.atomic():
+            for product_code, quantity in parsed_report:
+                try:
+                    product_id = SQLProduct.objects.get(domain=self.domain, code__iexact=product_code).product_id
+                    self._create_stock_transaction(report, product_id, quantity)
+                except SQLProduct.DoesNotExist:
+                    error = True
+                except StockState.DoesNotExist:
+                    products_without_soh.add(product_code.lower())
 
         if error:
             self.respond(LOSS_ADJUST_BAD_FORMAT)
