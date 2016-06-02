@@ -3,6 +3,7 @@ from django.test import TestCase
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from ..fixtures import _location_to_fixture, _location_footprint, should_sync_locations
 from ..models import SQLLocation, LocationType, Location
@@ -12,6 +13,7 @@ class LocationFixturesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_users()
         cls.domain = "Erebor"
         cls.domain_obj = create_domain(cls.domain)
         cls.username = "Durins Bane"
@@ -67,7 +69,9 @@ class LocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         location_db = _location_footprint([location])
 
-        self.assertFalse(should_sync_locations(SyncLog(date=yesterday), location_db, self.user))
+        self.assertFalse(
+            should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
+        )
 
         self.location_type.shares_cases = True
         self.location_type.save()
@@ -75,7 +79,9 @@ class LocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         location_db = _location_footprint([location])
 
-        self.assertTrue(should_sync_locations(SyncLog(date=yesterday), location_db, self.user))
+        self.assertTrue(
+            should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
+        )
 
     def test_archiving_location_should_resync(self):
         """
@@ -92,7 +98,9 @@ class LocationFixturesTest(TestCase):
         self.assertEqual(couch_location._id, location.location_id)
         self.assertEqual('winterfell', location.name)
         location_db = _location_footprint([location])
-        self.assertFalse(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
+        self.assertFalse(
+            should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
+        )
 
         # archive the location
         couch_location.archive()
@@ -100,5 +108,9 @@ class LocationFixturesTest(TestCase):
 
         location = SQLLocation.objects.last()
         location_db = _location_footprint([location])
-        self.assertTrue(should_sync_locations(SyncLog(date=after_save), location_db, self.user))
-        self.assertFalse(should_sync_locations(SyncLog(date=after_archive), location_db, self.user))
+        self.assertTrue(
+            should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
+        )
+        self.assertFalse(
+            should_sync_locations(SyncLog(date=after_archive), location_db, self.user.to_ota_restore_user())
+        )
