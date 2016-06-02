@@ -35,17 +35,14 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         self.assertEqual(case.case_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
 
-    def test_duplicate_form_and_cases_published(self):
+    def test_duplicate_form_published(self):
         form_id = uuid.uuid4().hex
-        case_id = uuid.uuid4().hex
-        form_xml = get_simple_form_xml(form_id, case_id)
+        form_xml = get_simple_form_xml(form_id)
         orig_form = submit_form_locally(form_xml, domain=self.domain)[1]
         self.assertEqual(form_id, orig_form.form_id)
         self.assertEqual(1, len(self.form_accessors.get_all_form_ids_in_domain()))
-        self.assertEqual(1, len(CaseAccessors(self.domain).get_case_ids_in_domain()))
 
         form_consumer = get_test_kafka_consumer(topics.FORM_SQL)
-        case_consumer = get_test_kafka_consumer(topics.CASE_SQL)
 
         # post an exact duplicate
         dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
@@ -61,7 +58,18 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         orig_form_meta = change_meta_from_kafka_message(form_consumer.next().value)
         self.assertEqual(orig_form.form_id, orig_form_meta.document_id)
         self.assertEqual(self.domain, orig_form_meta.domain)
-        # and also the case
+
+    def test_duplicate_case_published(self):
+        case_id = uuid.uuid4().hex
+        form_xml = get_simple_form_xml(uuid.uuid4().hex, case_id)
+        submit_form_locally(form_xml, domain=self.domain)[1]
+        self.assertEqual(1, len(CaseAccessors(self.domain).get_case_ids_in_domain()))
+
+        case_consumer = get_test_kafka_consumer(topics.CASE_SQL)
+        dupe_form = submit_form_locally(form_xml, domain=self.domain)[1]
+        self.assertTrue(dupe_form.is_duplicate)
+
+        # check the case was republished
         case_meta = change_meta_from_kafka_message(case_consumer.next().value)
         self.assertEqual(case_id, case_meta.document_id)
         self.assertEqual(self.domain, case_meta.domain)
