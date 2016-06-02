@@ -27,10 +27,10 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=126)),
                 ('display_name', models.CharField(max_length=126, null=True)),
                 ('description', models.TextField(null=True)),
-                ('supported_countries', jsonfield.fields.JSONField(default=[])),
-                ('extra_fields', jsonfield.fields.JSONField(default={})),
+                ('supported_countries', jsonfield.fields.JSONField(default=list)),
+                ('extra_fields', jsonfield.fields.JSONField(default=dict)),
                 ('deleted', models.BooleanField(default=False)),
-                ('load_balancing_numbers', jsonfield.fields.JSONField(default=[])),
+                ('load_balancing_numbers', jsonfield.fields.JSONField(default=list)),
                 ('reply_to_phone_number', models.CharField(max_length=126, null=True)),
             ],
             options={
