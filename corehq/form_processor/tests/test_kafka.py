@@ -3,6 +3,9 @@ from django.test import TestCase, override_settings
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.commtrack.helpers import make_product
+from corehq.apps.commtrack.tests import get_single_balance_block
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests import FormProcessorTestUtils
@@ -73,3 +76,41 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
         case_meta = change_meta_from_kafka_message(case_consumer.next().value)
         self.assertEqual(case_id, case_meta.document_id)
         self.assertEqual(self.domain, case_meta.domain)
+
+    def test_duplicate_ledger_published(self):
+        # setup products and case
+        product_a = make_product(self.domain, 'A Product', 'prodcode_a')
+        product_b = make_product(self.domain, 'B Product', 'prodcode_b')
+        case_id = uuid.uuid4().hex
+        form_xml = get_simple_form_xml(uuid.uuid4().hex, case_id)
+        submit_form_locally(form_xml, domain=self.domain)[1]
+
+        # submit ledger data
+        balances = (
+            (product_a._id, 100),
+            (product_b._id, 50),
+        )
+        ledger_blocks = [
+            get_single_balance_block(case_id, prod_id, balance)
+            for prod_id, balance in balances
+        ]
+        form = submit_case_blocks(ledger_blocks, self.domain)
+
+        # submit duplicate
+        ledger_consumer = get_test_kafka_consumer(topics.LEDGER)
+        dupe_form = submit_form_locally(form.get_xml(), domain=self.domain)[1]
+        self.assertTrue(dupe_form.is_duplicate)
+
+        # confirm republished
+        ledger_meta_a = change_meta_from_kafka_message(ledger_consumer.next().value)
+        ledger_meta_b = change_meta_from_kafka_message(ledger_consumer.next().value)
+        format_id = lambda product_id: '{}/{}/{}'.format(case_id, 'stock', product_id)
+        expected_ids = {format_id(product_a._id), format_id(product_b._id)}
+        for meta in [ledger_meta_a, ledger_meta_b]:
+            self.assertTrue(meta.document_id in expected_ids)
+            expected_ids.remove(meta.document_id)
+            self.assertEqual(self.domain, meta.domain)
+
+        # cleanup
+        product_a.delete()
+        product_b.delete()
