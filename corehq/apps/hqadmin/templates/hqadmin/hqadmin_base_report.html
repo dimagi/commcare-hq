@@ -5,8 +5,8 @@
 {% block title %}{% if current_page and section %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} {% else %}{{ report.title }}{% endif %}: Admin Reports{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script type="text/javascript" src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'reports/javascripts/datepicker.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/datepicker.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}

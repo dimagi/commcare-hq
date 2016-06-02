@@ -10,35 +10,35 @@
   <link type="text/less"
   rel="stylesheet"
   media="all"
-  href="{% new_static 'style/less/bootstrap.less' %}" />
+  href="{% static 'style/less/bootstrap.less' %}" />
   <link type="text/less"
   rel="stylesheet"
   media="all"
-  href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
+  href="{% static 'font-awesome/less/font-awesome.less' %}" />
   <link type="text/less"
   rel="stylesheet"
   media="all"
-  href="{% new_static 'style/less/font-commcare.less' %}" />
+  href="{% static 'style/less/font-commcare.less' %}" />
   <link type="text/less"
   rel="stylesheet"
   media="all"
-  href="{% new_static 'style/less/style.less' %}" />
+  href="{% static 'style/less/style.less' %}" />
   {% endcompress %}
 
   {% compress css %}
-  <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'leaflet/dist/leaflet.css' %}" />
-  <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'hqadmin/css/project_map.css' %}" />
+  <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}" />
+  <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqadmin/css/project_map.css' %}" />
   {% endcompress %}
 
   {% compress js %}
-  <script src="{% new_static 'less/dist/less-1.7.3.min.js' %}"></script>
-  <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
-  <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-  <script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
-  <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
-  <script type="text/javascript" src="{% new_static 'leaflet/dist/leaflet.js' %}"></script>
-  <script type="text/javascript" src="{% new_static 'hqadmin/js/project_map.js' %}"></script>
-  <script src="{% new_static 'appstore/js/facet_sidebar.js' %}"></script>
+  <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'knockout/dist/knockout.js' %}"></script>
+  <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
+  <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+  <script type="text/javascript" src="{% static 'hqadmin/js/project_map.js' %}"></script>
+  <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
   {% endcompress %}
 </head>
 <body>

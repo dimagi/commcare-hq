@@ -8,13 +8,13 @@
 {% block pretable %}
     <div id="logo-top" class="row">
         <div class="col-sm-3" id="logo-top-left">
-            <img src="{% new_static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
+            <img src="{% static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
         </div>
         <div class="col-sm-6" id="logo-title">
             {{ block.super }}
         </div>
         <div class="col-sm-3" id="logo-top-right">
-            <img src="{% new_static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
+            <img src="{% static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
         </div>
     </div>
 {% endblock %}
@@ -22,7 +22,7 @@
 {% block posttable %}
     <div id="logo-bottom" class="row">
         <div class="col-sm-12">
-            <img src="{% new_static 'm4change/images/PathfinderInternationalLogo.jpg' %}"
+            <img src="{% static 'm4change/images/PathfinderInternationalLogo.jpg' %}"
                  alt="pathfinder_international_logo"/>
         </div>
     </div>
