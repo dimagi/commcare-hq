@@ -116,17 +116,21 @@ class CareDataFormatter(DataFormatter):
 
                 disp_name = find_name(value_chains, 0)
             row = self._format.format_row(group_row)
-            sum = row[1]['html'] + row[2]['html'] + row[3]['html']
-            sum = (100.0 / sum) if sum else 0
-            yield [disp_name, unicode(round(row[1]['html'] * sum
-                                            )) + '%',
-                   unicode(round(row[2]['html'] * sum)) + '%',
-                   unicode(round(row[3]['html'] * sum)) + '%']
+            sum_of_elements = sum([element['html'] for element in row[1:]])
+            sum_of_elements = (100.0 / sum_of_elements) if sum_of_elements else 0
+
+            result = [disp_name]
+
+            for element in row[1:]:
+                result.append(unicode(round(element['html'] * sum_of_elements)) + '%')
+            yield result
+
             for value in chunk:
                 formatted_row = self._format.format_row(value[1])
                 if self.filter_row(value[0], formatted_row):
-                    yield [formatted_row[0]['html'], formatted_row[1]['html'], formatted_row[2]['html'],
-                           formatted_row[3]['html']]
+                    result = [formatted_row[0]['html']]
+                    result.extend([element['html'] for element in formatted_row[1:]])
+                    yield result
 
 
 class TableCardDataGroupsFormatter(DataFormatter):

@@ -68,13 +68,23 @@
                 .datum(chart_data)
                 .transition().duration(500).call(chart);
 
-        nv.utils.windowResize(function() {
+        function update() {
             chart.update();
             d3.select(chart_id + ' svg').selectAll(".nv-x text")
                 .call(wrap, chart.xAxis.rangeBand());
-        });
+        }
+
+        nv.utils.windowResize(update);
         d3.select(chart_id + ' svg').selectAll(".nv-x text")
                 .call(wrap, chart.xAxis.rangeBand());
+        var maxTextHeight = Math.max.apply(null, d3.selectAll('svg .nv-x text')[0]
+                .map(function(x) { return $(x).height() }));
+        chart.margin({'bottom': maxTextHeight + 30});
+        update();
+
+        d3.select('svg').on('click', function() {
+            update()
+        });
 
         return chart;
     });
