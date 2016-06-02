@@ -188,10 +188,9 @@ def _get_shadow_module_view_context(app, module, lang=None):
     def is_incl(form):
         return form.unique_id not in module.excluded_form_ids
 
+    forms = (f for f in module.source_module.get_forms()) if module.source_module else []
     return {
-        'forms': [{'unique_id': f.unique_id,
-                   'name': f.name,
-                   'is_incl': is_incl(f)} for f in module.source_module.get_forms()]
+        'forms': [{'unique_id': f.unique_id, 'name': f.name, 'is_incl': is_incl(f)} for f in forms]
     }
 
 
@@ -503,9 +502,12 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 messages.error(_("Unknown Module"))
 
     if should_edit('incl_form_ids') and isinstance(module, ShadowModule):
-        incl = request.POST.getlist('incl_form_ids') or []
-        excl = {f.unique_id for f in module.source_module.get_forms()} - set(incl)
-        module.excluded_form_ids = list(excl)
+        incl = request.POST.getlist('incl_form_ids')
+        if module.source_module:
+            excl = {f.unique_id for f in module.source_module.get_forms()} - set(incl)
+            module.excluded_form_ids = list(excl)
+        else:
+            module.excluded_form_ids = []
 
     handle_media_edits(request, module, should_edit, resp, lang)
 
