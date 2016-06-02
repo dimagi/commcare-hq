@@ -124,7 +124,11 @@ class GroupLeadershipFilter(CareBaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [('2', 'All Female Leadership'), ('1', 'Mixed Leadership'), ('0', 'All Male Leadership')]
+        return [
+            ('2', 'All Female Leadership'),
+            ('1', 'Mixed Leadership'),
+            ('0', 'All Male Leadership')
+        ]
 
     @property
     @memoized
@@ -274,7 +278,7 @@ class TableCardGroupByFilter(CareBaseSingleOptionFilter):
     @property
     def options(self):
         return [('group_name', 'Group Name'), ('group_leadership', 'Group Leadership'),
-                ('gender', 'Sex of Members')]
+                ('gender', 'Group Gender')]
 
     @property
     @memoized

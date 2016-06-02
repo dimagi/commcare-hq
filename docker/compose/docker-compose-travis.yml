@@ -34,7 +34,7 @@ redis_test:
 elasticsearch_test:
   extends:
     file: docker-compose-base.yml
-    service: elasticsearch
+    service: elasticsearch_no_head
   volumes_from:
     - data_test
 

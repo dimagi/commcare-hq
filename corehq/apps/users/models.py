@@ -51,7 +51,6 @@ from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
     InvalidFormatException,
     PhoneNumberInUseException,
-    VerifiedNumber,
 )
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -917,55 +916,39 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return _get_default(self.phone_numbers)
     phone_number = default_phone_number
 
-    def phone_numbers_extended(self, active_user=None):
-        # TODO: what about web users... do we not want to verify phone numbers
-        # for them too? if so, CommCareMobileContactMixin should be on CouchUser,
-        # not CommCareUser
+    def phone_numbers_extended(self, requesting_user):
+        """
+        Returns information about the status of each of this user's phone numbers.
+        requesting_user - The user that is requesting this information (from a view)
+        """
+        from corehq.apps.sms.models import PhoneNumber
+        from corehq.apps.hqwebapp.doc_info import get_object_url
 
-        # hack to work around the above issue
-        if not isinstance(self, CommCareMobileContactMixin):
-            return [{'number': phone, 'status': 'unverified', 'contact': None} for phone in self.phone_numbers]
+        phone_entries = self.get_verified_numbers(True)
 
-        verified = self.get_verified_numbers(True)
+        def get_phone_info(phone):
+            info = {}
+            phone_entry = phone_entries.get(phone)
 
-        def extend_phone(phone):
-            extended_info = {}
-            contact = verified.get(phone)
-            if contact:
-                status = 'verified' if contact.verified else 'pending'
+            if phone_entry:
+                status = 'verified' if phone_entry.verified else 'pending'
             else:
                 try:
                     self.verify_unique_number(phone)
                     status = 'unverified'
                 except PhoneNumberInUseException:
                     status = 'duplicate'
-
-                    duplicate = VerifiedNumber.by_phone(phone, include_pending=True)
-                    assert duplicate is not None, 'expected duplicate VerifiedNumber entry'
-
-                    # TODO seems like this could be a useful utility function? where to put it...
-                    try:
-                        doc_type = {
-                            'CouchUser': 'user',
-                            'CommCareUser': 'user',
-                            'CommCareCase': 'case',
-                        }[duplicate.owner_doc_type]
-                        from corehq.apps.users.views.mobile import EditCommCareUserView
-                        url_ref, doc_id_param = {
-                            'user': (EditCommCareUserView.urlname, 'couch_user_id'),
-                            'case': ('case_details', 'case_id'),
-                        }[doc_type]
-                        dup_url = reverse(url_ref, kwargs={'domain': duplicate.domain, doc_id_param: duplicate.owner_id})
-
-                        if active_user is None or active_user.is_member_of(duplicate.domain):
-                            extended_info['dup_url'] = dup_url
-                    except Exception, e:
-                        pass
+                    if requesting_user.is_member_of(duplicate.domain):
+                        duplicate = PhoneNumber.by_phone(phone, include_pending=True)
+                        info['dup_url'] = get_object_url(duplicate.domain,
+                            duplicate.owner_doc_type, duplicate_owner_id)
                 except InvalidFormatException:
                     status = 'invalid'
-            extended_info.update({'number': phone, 'status': status, 'contact': contact})
-            return extended_info
-        return [extend_phone(phone) for phone in self.phone_numbers]
+
+            info.update({'number': phone, 'status': status})
+            return info
+
+        return [get_phone_info(phone) for phone in self.phone_numbers]
 
     @property
     def couch_id(self):
@@ -1543,7 +1526,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
 
         for phone_number in self.get_verified_numbers(True).values():
-            phone_number.retire(deletion_id=deletion_id, deletion_date=deletion_date)
+            phone_number.delete()
 
         try:
             django_user = self.get_django_user()

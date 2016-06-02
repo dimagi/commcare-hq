@@ -98,9 +98,13 @@ class AdoptionDisaggregatedReport(CareBaseReport):
                 for ix, column in enumerate(row[1:]):
                     charts[ix].append({'x': group_name, 'y': float(column) / total})
 
-            chart.add_dataset('Farmers who adopted All practices', charts[2], "green")
-            chart.add_dataset('Farmers who adopted Some practices', charts[1], "yellow")
-            chart.add_dataset('Farmers who adopted No practices', charts[0], "red")
+            if self.report_config['group'] != 'practice':
+                chart.add_dataset('Farmers who adopted All practices', charts[2], "green")
+                chart.add_dataset('Farmers who adopted Some practices', charts[1], "yellow")
+                chart.add_dataset('Farmers who adopted No practices', charts[0], "red")
+            else:
+                chart.add_dataset('Farmers who adopted All practices', charts[1], "green")
+                chart.add_dataset('Farmers who adopted No practices', charts[0], "red")
 
     @property
     def charts(self):

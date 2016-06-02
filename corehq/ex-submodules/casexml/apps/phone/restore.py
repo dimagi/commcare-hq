@@ -248,7 +248,7 @@ class CachedResponse(object):
     def __init__(self, payload):
         self.payload = payload
 
-    def exists(self):
+    def __nonzero__(self):
         return bool(self.payload)
 
     def as_string(self):
@@ -482,7 +482,7 @@ class RestoreConfig(object):
         self.validate()
 
         cached_response = self.get_cached_payload()
-        if cached_response.exists():
+        if cached_response:
             return cached_response
 
         self.restore_state.start_sync()

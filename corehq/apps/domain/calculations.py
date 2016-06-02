@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_number_of_cases_per_domain
@@ -199,6 +200,14 @@ def last_form_submission(domain, display=True):
     return display_time(submission_time, display) if submission_time else None
 
 
+def get_300th_form_submission_received(domain):
+    result = FormES().domain(domain).start(300).size(1).sort('received_on').fields(['received_on']).run().hits
+    if not result:
+        return
+
+    return iso_string_to_datetime(result[0]['received_on'])
+
+
 def has_app(domain, *args):
     return domain_has_apps(domain)
 
@@ -285,7 +294,8 @@ CALC_FNS = {
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
     'j2me_forms_in_last': j2me_forms_in_last,
-    'j2me_forms_in_last_bool': j2me_forms_in_last_bool
+    'j2me_forms_in_last_bool': j2me_forms_in_last_bool,
+    '300th_form_submission': get_300th_form_submission_received
 }
 
 

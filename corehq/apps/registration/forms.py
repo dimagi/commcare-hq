@@ -179,7 +179,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         self.excluded_emails = excluded_emails or []
 
         self.helper = FormHelper()
-
+        self.helper.form_tag = False
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal'
 
