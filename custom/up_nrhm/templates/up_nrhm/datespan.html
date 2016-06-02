@@ -8,7 +8,7 @@
             var separator = '{{ separator }}';
             var report_labels = JSON.parse('{{ report_labels|safe }}');
 
-            $('#filter_range').createBootstrap3DateRangePicker(
+            $('#filter_range').createDateRangePicker(
                 report_labels,
                 separator,
                 '{{ datespan.startdate|date:"Y-m-d" }}',
