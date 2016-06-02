@@ -203,7 +203,7 @@ class DateRangePickerWidget(Input):
                 $(function () {
                     var separator = '%(separator)s';
                     var report_labels = JSON.parse('%(range_labels_json)s');
-                    $('#%(elem_id)s').createBootstrap3DateRangePicker(
+                    $('#%(elem_id)s').createDateRangePicker(
                         report_labels, separator, '%(startdate)s',
                         '%(enddate)s'
                     );
