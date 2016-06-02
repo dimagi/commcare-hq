@@ -1,6 +1,5 @@
 postgres:
-  build: ../dockerfiles
-  dockerfile: Dockerfile_pg
+  image: dimagi/docker-postgresql
   environment:
     POSTGRES_USER: commcarehq
     POSTGRES_PASSWORD: commcarehq
