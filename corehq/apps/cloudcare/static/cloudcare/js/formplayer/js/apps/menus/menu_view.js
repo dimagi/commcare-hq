@@ -60,8 +60,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         templateHelpers: function () {
+            var appId = this.model.collection.appId;
             return {
                 data: this.options.model.get('data'),
+                styles: this.options.styles,
+                resolveUri: function(uri) {
+                    return FormplayerFrontend.request('resourceMap', uri, appId);
+                },
             };
         },
     });
@@ -71,6 +76,16 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         template: "#case-view-list-template",
         childView: MenuList.CaseView,
         childViewContainer: "tbody",
+
+        initialize: function (options) {
+            this.styles = options.styles;
+        },
+
+        childViewOptions: function (model, index) {
+            return {
+                styles: this.options.styles,
+            };
+        },
 
         ui: {
             button: '#double-management',
@@ -99,6 +114,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 action: this.options.action,
                 currentPage: this.options.currentPage,
                 pageCount: this.options.pageCount,
+                styles: this.options.styles,
             };
         },
     });

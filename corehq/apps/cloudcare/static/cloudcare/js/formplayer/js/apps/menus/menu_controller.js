@@ -21,6 +21,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                     action: menuResponse.action,
                     pageCount: menuResponse.pageCount,
                     currentPage: menuResponse.currentPage,
+                    styles: menuResponse.styles,
                 };
                 if (menuResponse.type === "commands") {
                     menuListView = new MenuList.MenuListView(menuData);
