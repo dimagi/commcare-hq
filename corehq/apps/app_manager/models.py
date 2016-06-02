@@ -3786,7 +3786,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def get_suite_forms(self):
         if not self.source_module:
             return []
-        return self.source_module.get_forms()
+        return (f for f in self.source_module.get_forms() if f.unique_id not in self.excluded_form_ids)
 
     @parse_int([1])
     def get_form(self, i):
