@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('domain', models.CharField(max_length=128)),
                 ('type', models.CharField(max_length=128)),
-                ('data', jsonfield.fields.JSONField(default='null')),
+                ('data', jsonfield.fields.JSONField()),
                 ('sql_location', models.ForeignKey(to='locations.SQLLocation')),
             ],
             options={
