@@ -250,6 +250,27 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label">
+                        {% trans "Include Forms" %}
+                    </label>
+                    <div class="col-sm-4">
+                        {% for form in forms %}
+                        <div class="checkbox">
+                            <label>
+                                <input name="incl_form_ids"
+                                       type="checkbox"
+                                       value="{{ form.unique_id }}"{% if form.is_incl %}
+                                       checked=""{% endif %}> {{ form.name|trans:langs }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                        <div class="hidden">
+                            {# Ensures that if all forms are excluded, we still hear about it #}
+                            <input name="incl_form_ids" type="checkbox" value="0" checked="">
+                        </div>
+                    </div>
+                </div>
                 {% endif %}
                 <div class="form-group">
                     <label class="col-sm-2 control-label">

@@ -87,6 +87,8 @@ def get_module_view_context(app, module, lang=None):
         context.update(_get_report_module_context(app, module))
     else:
         context.update(_get_basic_module_view_context(app, module, lang))
+    if isinstance(module, ShadowModule):
+        context.update(_get_shadow_module_view_context(app, module, lang))
     return context
 
 
@@ -179,6 +181,17 @@ def _get_basic_module_view_context(app, module, lang=None):
         ),
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
+    }
+
+
+def _get_shadow_module_view_context(app, module, lang=None):
+    def is_incl(form):
+        return form.unique_id not in module.excluded_form_ids
+
+    return {
+        'forms': [{'unique_id': f.unique_id,
+                   'name': f.name,
+                   'is_incl': is_incl(f)} for f in module.source_module.get_forms()]
     }
 
 
