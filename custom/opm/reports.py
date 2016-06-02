@@ -1019,8 +1019,6 @@ class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProject
         'report': 'custom.opm.reports.HealthMapSource',
     }
 
-    is_bootstrap3 = True
-
     @use_maps
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(HealthMapReport, self).decorator_dispatcher(request, *args, **kwargs)
