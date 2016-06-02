@@ -1,8 +1,8 @@
+from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed import data_sources
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.signals import sql_case_post_save
 from pillowtop.feed.interface import ChangeMeta
 
@@ -96,8 +96,6 @@ def change_meta_from_ledger_v1(stock_state):
 
 
 def _get_cases_from_form(domain, form):
-    processor = FormProcessorInterface(domain=domain)
-    case_updates = processor.get_cases_from_forms(
-        case_db=processor.casedb_cache(domain=domain), xforms=[form]
-    ).values()
-    return [update.case for update in case_updates]
+    from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
+    case_ids = get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form)
+    return CaseAccessors(domain).get_cases(list(case_ids))
