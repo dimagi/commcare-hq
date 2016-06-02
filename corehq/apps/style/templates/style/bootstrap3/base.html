@@ -88,15 +88,6 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_jquery_ui_multiselect %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% new_static "hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css" %}" />
-        {% endcompress %}
-        {% endif %}
-
         {% if request.use_nvd3 or request.use_nvd3_v3 %}
         {% compress css %}
             <link type="text/css"
@@ -193,13 +184,6 @@
             <script src="{% new_static 'jquery-ui/ui/droppable.js' %}"></script>
             <script src="{% new_static 'jquery-ui/ui/sortable.js' %}"></script>
         {% endcompress %}
-        {% endif %}
-
-        {% if request.use_jquery_ui_multiselect %}
-            {% compress js %}
-                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
-            {% endcompress %}
         {% endif %}
 
         <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
