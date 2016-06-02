@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-<form id="commtrack_form" class="form-horizontal" name="" method="post">
+<form id="commtrack_form" class="form form-horizontal" name="" method="post">
     {% csrf_token %}
     <input type="hidden" name="form_type" value="commtrack" />
     <fieldset>
@@ -12,17 +12,16 @@
         {% else %}
         <legend>{% trans 'Organization Settings' %}</legend>
         {% endif %}
-        {% crispy commtrack.update_form %}
+        {% bootstrap_form_errors commtrack.update_form %}
+        {% include 'hqstyle/forms/basic_fieldset.html' with form=commtrack.update_form %}
     </fieldset>
     <div class="form-actions">
-        <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-            <button type="submit" class="btn btn-primary disable-on-submit">
-                {% if commtrack_enabled %}
-                {% trans 'Update CommCare Supply Settings' %}
-                {% else %}
-                {% trans 'Update Location Settings' %}
-                {% endif %}
-            </button>
-        </div>
+      <button type="submit" class="btn btn-primary disable-on-submit">
+          {% if commtrack_enabled %}
+          {% trans 'Update CommCare Supply Settings' %}
+          {% else %}
+          {% trans 'Update Location Settings' %}
+          {% endif %}
+      </button>
     </div>
 </form>

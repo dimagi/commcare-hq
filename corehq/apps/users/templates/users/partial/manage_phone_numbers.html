@@ -1,14 +1,13 @@
 {% load i18n %}
 
 {% if phonenumbers %}
-    <hr />
     {% block phonenumber_list %}
     <div class="form form-horizontal">
         <fieldset>
             <legend>{% blocktrans %}Registered Phone Numbers{% endblocktrans %}</legend>
         {% for phone in phonenumbers %}
-            <div class="form-group">
-                <label class="control-label col-sm-3 col-md-2">+{{ phone.number }}<br />
+            <div class="control-group">
+                <label class="control-label">+{{ phone.number }}<br />
                     {% if user_type == "mobile" %}
 
                     {% ifequal phone.status "verified" %}
@@ -16,7 +15,7 @@
                     {% endifequal %}
 
                     {% ifequal phone.status "pending" %}
-                    <span class="label label-default">{% trans 'VERIFICATION PENDING' %}</span>
+                    <span class="label">{% trans 'VERIFICATION PENDING' %}</span>
                     {% endifequal %}
 
                     {% ifequal phone.status "duplicate" %}
@@ -26,12 +25,12 @@
                     {% endifequal %}
 
                     {% ifequal phone.status "invalid" %}
-                    <span class="label label-default">{% trans 'INVALID FORMAT' %}</span>
+                    <span class="label">{% trans 'INVALID FORMAT' %}</span>
                     {% endifequal %}
 
                     {% endif %}
                 </label>
-                <div class="col-sm-9 col-md-8 col-lg-6">
+                <div class="controls">
                     {% if user_type == "mobile" and can_use_inbound_sms %}
                     {% ifequal phone.status "unverified" %}
                         <form method="post"
@@ -40,7 +39,7 @@
                             {% csrf_token %}
                             <button type="submit"
                                     data-title="{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
-                                    class="btn btn-primary verify-button"><i class="fa fa-signal"></i> {% trans 'Verify' %}
+                                    class="btn btn-primary verify-button"><i class="icon-signal"></i> {% trans 'Verify' %}
                             </button>
                         </form>
                     {% endifequal %}
@@ -48,7 +47,7 @@
                     {% ifequal phone.status "duplicate" %}
                         <button data-title="You cannot verify this phone because it is already being used elsewhere"
                                 class="btn btn-primary disabled verify-button">
-                            <i class="fa fa-signal"></i> {% trans 'Verify' %}
+                            <i class="icon-signal"></i> {% trans 'Verify' %}
                         </button>
                     {% endifequal %}
 
@@ -57,7 +56,7 @@
                                 class="btn btn-primary verify-button"
                                 data-toggle="modal"
                                 href="#reverify_{{phone.number|urlencode}}">
-                            <i class="fa fa-signal"></i> {% trans 'Verify (retry)' %}
+                            <i class="icon icon-signal icon-white"></i> {% trans 'Verify (retry)' %}
                         </button>
                     {% endifequal %}
                     {% endif %}
@@ -65,7 +64,7 @@
                     <a class="btn btn-danger"
                        data-toggle="modal"
                        href="#delete_phonenumber_{{ forloop.counter }}">
-                        <i class="fa fa-remove"></i> {% trans 'Delete' %}
+                        <i class="icon-remove"></i> {% trans 'Delete' %}
                     </a>
                     {% if not forloop.first %}
                         <form class="input-inline input-append"
@@ -77,7 +76,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="form_type" value="make-phone-number-default"/>
                             <input type="hidden" name="phone_number" value="{{ phone.number }}"/>
-                            <button type="submit" class="btn btn-default">
+                            <button type="submit" class="btn">
                                 {% blocktrans %}Mark as primary{% endblocktrans %}
                             </button>
                         </form>
@@ -89,33 +88,29 @@
     </div>
     {% endblock %}
 {% endif %}
-<hr />
+
 <form id="add_phone_number" class="form form-horizontal" name="add_phone_number" method="post">
     {% csrf_token %}
     <input type="hidden" name="form_type" value="add-phonenumber" />
     <fieldset>
         <legend>{% trans 'Add a Phone Number' %}</legend>
-        <div class="form-group">
-            <label class="control-label col-sm-3 col-md-2" for="id_add_phone_number">{% trans 'Phone Number' %}</label>
-            <div class="col-sm-9 col-md-8 col-lg-6">
-                <div class="input-group">
-                    <span class="input-group-addon">+</span>
-                    <input id="id_add_phone_number" class="form-control" type="tel" pattern="\d+" name="phone_number" value="" maxlength="50" />
+        <div class="control-group">
+            <label class="control-label" for="id_add_phone_number">{% trans 'Phone Number' %}</label>
+            <div class="controls">
+                <div class="input-prepend">
+                    <span class="add-on">+</span>
+                    <input id="id_add_phone_number" type="tel" pattern="\d+" name="phone_number" value="" maxlength="50" />
                 </div>
-                <p id="phone_number_paste_error" class="help-block" style="display: none;">
+                <span id="phone_number_paste_error" class="help-inline" style="display: none;">
                     <strong>
                         {% trans "Phone numbers can only contain digits and we were unable to convert yours automatically." %}
                     </strong>
-                </p>
+                </span>
                 <p class="help-block">
                     {% blocktrans %}Please enter number, including country code, in digits only.{% endblocktrans %}
                 </p>
             </div>
         </div>
     </fieldset>
-    <div class="form-actions">
-        <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-            <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Add Number' %}</button>
-        </div>
-    </div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Add Number' %}</button></div>
 </form>

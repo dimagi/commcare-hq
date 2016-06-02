@@ -10,11 +10,7 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_POST, require_http_methods
 
 from couchdbkit import ResourceNotFound
-from corehq.apps.style.decorators import (
-    use_bootstrap3,
-    use_jquery_ui,
-    use_multiselect,
-)
+from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
 from corehq.util.files import file_extention_from_filename
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
@@ -56,7 +52,6 @@ def default(request, domain):
 
 
 class BaseLocationView(BaseDomainView):
-    section_name = ugettext_lazy("Locations")
 
     @method_decorator(locations_access_required)
     def dispatch(self, request, *args, **kwargs):
@@ -272,7 +267,7 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_bootstrap3
-    @use_multiselect
+    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -484,11 +479,9 @@ class EditLocationView(NewLocationView):
         form = MultipleSelectionForm(
             initial={'selected_ids': self.products_at_location},
             submit_label=_("Update Product List"),
-            fieldset_title=_("Specify Products Per Location"),
             prefix="products",
         )
         form.fields['selected_ids'].choices = self.active_products
-        form.fields['selected_ids'].label = _("Products at Location")
         return form
 
     @property
@@ -499,7 +492,6 @@ class EditLocationView(NewLocationView):
             location=self.location,
             data=self.request.POST if self.request.method == "POST" else None,
             submit_label=_("Update Users at this Location"),
-            fieldset_title=_("Specify Workers at this Location"),
             prefix="users",
         )
         return form

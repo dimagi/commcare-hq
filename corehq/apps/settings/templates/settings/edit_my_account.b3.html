@@ -37,13 +37,13 @@
 b3
 {% block modals %}{{ block.super }}
 {% if user_type == 'web' %}
-    {% include 'users/partial/basic_info_modals.html' %}
+    {% include 'users/partial/basic_info_modals.b3.html' %}
 {% endif %}
 {% endblock %}
 
 {% block page_content %}
     {% crispy form form.new_helper %}
     {% if user_type == 'web' %}
-        {% include 'users/partial/manage_my_numbers.html' %}
+        {% include 'users/partial/manage_phone_numbers.b3.html' %}
     {% endif %}
 {% endblock %}

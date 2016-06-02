@@ -8,11 +8,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.views import LocationsListView
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.style.decorators import (
-    use_jquery_ui,
-    use_bootstrap3,
-    use_multiselect,
-)
+from corehq.apps.style.decorators import use_jquery_ui, use_bootstrap3
 from custom.ilsgateway.models import SLABConfig
 from custom.ilsgateway.slab.forms import SLABEditLocationForm
 from dimagi.utils.couch import CriticalSection
@@ -34,7 +30,7 @@ class SLABEditLocationView(BaseDomainView):
     page_title = 'Edit location'
 
     @use_bootstrap3
-    @use_multiselect
+    @use_jquery_ui
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if self.sql_location.location_type.administrative:
@@ -68,7 +64,6 @@ class SLABEditLocationView(BaseDomainView):
             selected_ids = []
         form = SLABEditLocationForm(initial={'is_pilot': is_pilot, 'selected_ids': selected_ids})
         form.fields['selected_ids'].choices = self.choices
-        form.fields['selected_ids'].label = "Locations in Program"
         return {
             'form': form
         }
