@@ -443,7 +443,7 @@ class TestCommCareCaseResource(APIResourceTest):
         new_user.save()
 
         response = self._assert_auth_get_resource(self.list_endpoint, username='test', password='testpass')
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403)
 
         community_domain.delete()
         new_user.delete()
