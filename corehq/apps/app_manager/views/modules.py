@@ -362,6 +362,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "root_module_id": None,
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
+        "incl_form_ids": None,
     }
 
     if attr not in attributes:
@@ -487,6 +488,11 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 module["root_module_id"] = request.POST.get("root_module_id")
             except ModuleNotFoundException:
                 messages.error(_("Unknown Module"))
+
+    if should_edit('incl_form_ids') and isinstance(module, ShadowModule):
+        incl = request.POST.getlist('incl_form_ids') or []
+        excl = {f.unique_id for f in module.source_module.get_forms()} - set(incl)
+        module.excluded_form_ids = list(excl)
 
     handle_media_edits(request, module, should_edit, resp, lang)
 
