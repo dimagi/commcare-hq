@@ -27,12 +27,12 @@ class SimpleOtaRestoreTest(TestCase):
     def tearDown(self):
         delete_all_users()
 
-    def testRegistrationXML(self):
+    def test_registration_xml(self):
         user = create_restore_user()
         check_xml_line_by_line(self, dummy_user_xml(user),
                                xml.get_registration_xml(user))
 
-    def testNameAndNumber(self):
+    def test_name_and_number(self):
         user = create_restore_user(
             first_name='mclovin',
             last_name=None,
