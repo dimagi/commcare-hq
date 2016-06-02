@@ -66,6 +66,8 @@ from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.xml_utils import indent_xml
+from corehq.apps.analytics.tasks import track_clicked_preview_on_hubspot
+from corehq.apps.analytics.utils import get_meta
 
 
 @require_cloudcare_access
@@ -120,6 +122,8 @@ class CloudcareMain(View):
         else:
             apps = get_brief_apps_in_domain(domain)
             apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
+            meta = get_meta(request)
+            track_clicked_preview_on_hubspot(request.couch_user, request.COOKIES, meta)
 
         # trim out empty apps
         apps = filter(lambda app: app, apps)
@@ -202,6 +206,7 @@ class CloudcareMain(View):
             "sessions_enabled": request.couch_user.is_commcare_user(),
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
             "username": request.user.username,
+            "formplayer_url": settings.FORMPLAYER_URL,
         }
         context.update(_url_context())
         if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):

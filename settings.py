@@ -1449,8 +1449,6 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
         },
-        'corehq.pillows.sofabed.FormDataPillow',
-        'corehq.pillows.sofabed.CaseDataPillow',
         {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',

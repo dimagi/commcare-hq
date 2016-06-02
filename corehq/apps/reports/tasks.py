@@ -209,11 +209,14 @@ def update_calculated_properties():
                 "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
                 "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
                 "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
+                "cp_300th_form": CALC_FNS["300th_form_submission"](dom)
             }
             if calced_props['cp_first_form'] is None:
                 del calced_props['cp_first_form']
             if calced_props['cp_last_form'] is None:
                 del calced_props['cp_last_form']
+            if calced_props['cp_300th_form'] is None:
+                del calced_props['cp_300th_form']
             send_to_elasticsearch("domains", calced_props)
         except Exception, e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
