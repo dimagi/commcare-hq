@@ -303,7 +303,6 @@ class UsersAtLocationForm(MultipleSelectionForm):
             *args, **kwargs
         )
         self.fields['selected_ids'].choices = self.get_all_users()
-        self.fields['selected_ids'].label = ugettext_lazy("Workers at Location")
 
     def get_all_users(self):
         user_query = (UserES()

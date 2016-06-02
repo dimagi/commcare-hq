@@ -142,19 +142,6 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_multiselect %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static "multiselect/css/multi-select.css" %}" />
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% static "style/less/components/multiselect/multiselect.less" %}" />
-        {% endcompress %}
-        {% endif %}
-
 
         {% if request.use_maps or request.use_maps_async %}
         {% compress css %}
@@ -529,14 +516,6 @@
                 $(".timeago").timeago();
             });
         </script>
-        {% endif %}
-
-        {% if request.use_multiselect %}
-        {% compress js %}
-        <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
-        <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
-        <script src="{% static 'style/js/components/multiselect_utils.js' %}"></script>
-        {% endcompress %}
         {% endif %}
 
         {% block js %}{% endblock js %}

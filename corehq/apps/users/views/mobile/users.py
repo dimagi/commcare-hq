@@ -6,6 +6,7 @@ from datetime import datetime
 from zipfile import BadZipfile
 
 from django.contrib import messages
+from django.contrib.auth.forms import SetPasswordForm
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
@@ -54,19 +55,15 @@ from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import Location
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.style.decorators import (
-    use_bootstrap3,
-    use_select2,
-    use_angular_js,
-    use_multiselect,
-)
+from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
+    use_angular_js
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
-    SelfRegistrationForm, SetUserPasswordForm,
+    SelfRegistrationForm
 )
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.users.tasks import bulk_upload_async
@@ -91,9 +88,6 @@ class EditCommCareUserView(BaseEditUserView):
     user_update_form_class = UpdateCommCareUserInfoForm
     page_title = ugettext_noop("Edit Mobile Worker")
 
-    @use_bootstrap3
-    @use_multiselect
-    @use_select2
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
@@ -139,7 +133,7 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     @memoized
     def reset_password_form(self):
-        return SetUserPasswordForm(self.domain, self.editable_user_id, user="")
+        return SetPasswordForm(user="")
 
     @property
     @memoized
@@ -269,6 +263,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
     async_handlers = [
         Select2BillingInfoHandler,
     ]
+
     @property
     @memoized
     def account(self):
@@ -295,8 +290,6 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
             'billing_info_form': self.billing_info_form,
         }
 
-    @use_select2
-    @use_bootstrap3
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
@@ -719,7 +712,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
-    @use_bootstrap3
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
