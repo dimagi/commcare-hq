@@ -33,6 +33,15 @@ elasticsearch:
   expose:
     - "9200"
 
+elasticsearch_no_head:
+  image: elasticsearch:1.7.4
+  environment:
+    ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
+  labels:
+    commcare.name: "elastic"
+  expose:
+    - "9200"
+
 web:
   build: ../../
   dockerfile: ./docker/dockerfiles/Dockerfile_commcarehq
