@@ -44,6 +44,10 @@ contact_phone_number_is_verified
 If two cases are registered with the same phone number and both set the verified flag to 1, it will only
 be granted two-way phone number status to the case who registers it first.
 
+If a two-way phone number can be granted for the case, a PhoneNumber entry with verified set to True is
+created for it. This happens automatically by running celery task sync_case_phone_number
+(corehq/apps/sms/tasks.py) for a case each time a case is saved.
+
 Future State
 ^^^^^^^^^^^^
 

@@ -3,6 +3,7 @@ Messaging in CommCareHQ
 
 The term "messaging" in CommCareHQ commonly refers to the set of frameworks that allow the following types of use
 cases:
+
 * sending SMS to contacts
 * receiving SMS from contacts and performing pre-configured actions based on the content
 * scheduling reminders to contacts
@@ -22,3 +23,5 @@ knowledge of the messaging frameworks used in CommCareHQ.
     contacts
     outbound_sms
     inbound_sms
+    sms_backends
+    reminders

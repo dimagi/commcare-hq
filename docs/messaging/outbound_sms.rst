@@ -19,16 +19,16 @@ the rest happen automatically.
 #. The framework creates a QueuedSMS object representing the SMS to be sent.
 
 #. The SMS Queue polling process (python manage.py run_sms_queue), which runs as a supervisor process on one of
-the celery machines, picks up the QueuedSMS object and passes it to process_sms (corehq/apps/sms/tasks.py).
+   the celery machines, picks up the QueuedSMS object and passes it to process_sms (corehq/apps/sms/tasks.py).
 
 #. process_sms attempts to send the SMS. If an error happens, it is retried up to 2 more times on 5 minute
-intervals. After 3 total attempts, any failure causes the SMS to be marked with error = True.
+   intervals. After 3 total attempts, any failure causes the SMS to be marked with error = True.
 
 At a deeper level, process_sms performs the following important functions for outbound SMS.  To find out other
 more detailed functionality provided by process_sms, see the code.
 
 #. If the domain has restricted the times at which SMS can be sent, check those and requeue the SMS if it
-is not an allowed time.
+   is not an allowed time.
 
 #. Select an SMS backend by looking in the following order:
     * If using a two-way phone number, look up the SMS backend with the name given in the backend_id property
@@ -38,7 +38,7 @@ is not an allowed time.
     * Use the catch-all global backend (found from the global SQLMobileBackendMapping entry with prefix = '*')
 
 #. If the SMS backend has configured rate limiting or load balancing across multiple numbers, enforce those
-constraints.
+   constraints.
 
 #. Pass the SMS to the send() method of the SMS Backend, which is an instance of SQLSMSBackend
-(corehq/apps/sms/models.py).
+   (corehq/apps/sms/models.py).

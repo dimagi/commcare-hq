@@ -1,0 +1,150 @@
+SMS Backends
+============
+
+We have one SMS Backend per SMS Gateway that we make available.
+
+SMS Backends are defined by creating a new directory under corehq.messaging.smsbackends, and the code for
+each backend has two main parts:
+
+* The outbound part of the backend which is represented by a class that subclasses SQLSMSBackend
+  (corehq.apps.sms.models).
+
+* The inbound part of the backend which is represented by a view that subclasses NewIncomingBackendView
+  (corehq.apps.sms.views).
+
+
+Outbound
+^^^^^^^^
+
+The outbound part of the backend code is responsible for interacting with the SMS Gateway's API to send
+an SMS.
+
+All outbound SMS backends are subclasses of SQLSMSBackend, and you can't use a backend until
+you've created an instance of it and saved it in the database. You can have multiple instances of
+backends, if for example, you have multiple accounts with the same SMS gateway.
+
+Backend instances can either be global, in which case they are shared by all projects in CommCareHQ,
+or they can belong to a specific project. If belonged to a specific project, a backend can optionally
+be shared with other projects as well.
+
+To write the outbound backend code:
+
+#. Create a subclass of SQLSMSBackend (corehq.apps.sms.models) and implement the unimplemented methods:
+    get_api_id
+        should return a string that uniquely identifies the backend type (but is shared across backend instances);
+        we choose to not use the class name for this since class names can change but the api id should never
+        change; the api id is only used for sms billing to look up sms rates for this backend type
+    get_generic_name
+        a displayable name for the backend
+    get_available_extra_fields
+        each backend likely needs to store additional information, such as a username and password for
+        authenticating with the SMS gateway; list those fields here and they will be accessible via the
+        backend's config property
+    get_form_class
+        should return a subclass of BackendForm (corehq.apps.sms.forms), which should:
+        * have form fields for each of the fields in get_available_extra_fields, and
+        * implement the gateway_specific_fields property, which should return a crispy forms rendering of those
+          fields
+    send
+        takes a QueuedSMS (corehq.apps.sms.models) object as an argument and is responsible for interfacing with
+        the SMS Gateway's API to send the SMS; if you want the framework to retry the SMS, raise an exception in
+        this method, otherwise if no exception is raised the framework takes that to mean the process was
+        successful
+
+#. Add the backend to sms.SMS_LOADED_SQL_BACKENDS
+
+#. Add an outbound test for the backend in corehq.apps.sms.tests.test_backends. This will test that the backend is
+   reachable by the framework, but any testing of the direct API connection with the gateway must be tested
+   manually.
+
+Once that's done, you should be able to create instances of the backend by navigating to Messaging -> SMS
+Connectivity (for domain-level backend instances) or Admin -> SMS Connectivity and Billing (for global backend
+instances). To test it out, set it as the default backend for a project and try sending an SMS through the Compose
+SMS interface.
+
+Things to look out for:
+
+* Make sure you use the proper encoding of the message when you implement the send() method. Some gateways are
+  picky about the encoding needed. For example, some require everything to be UTF-8. Others might make you choose
+  between ASCII and Unicode. And for the ones that accept Unicode, you might need to sometimes convert it to a
+  hex representation. And remember that get/post data will be automatically url-encoded when you use python
+  requests. Consult the documentation for the gateway to see what is required.
+
+* The message limit for a single SMS is 160 7-bit structures. That works out to 140 bytes, or 70 words.
+  That means the limit for a single message is typically 160 GSM characters, or 70 Unicode characters. And it's
+  actually a little more complicated than that since some simple ASCII characters (such as '{') take up two GSM
+  characters, and each carrier uses the GSM alphabet according to language.
+
+  So the bottom line is, it's difficult to know whether the given text will fit in one SMS message or not.
+  As a result, you should find out if the gateway supports Concatenated SMS, a process which seamlessly
+  splits up long messages into multiple SMS and stiches them back up without you having to do any additional
+  work. You may need to have the gateway enable a setting to do this or include an additional parameter when
+  sending SMS to make this work.
+
+Inbound
+^^^^^^^
+
+The inbound part of the backend code is responsible for exposing a view which implements the API that the SMS
+Gateway expects so that the gateway can connect to CommCareHQ and notify us of inbound SMS.
+
+To write the inbound backend code:
+
+#. Create a subclass of NewIncomingBackendView (corehq.apps.sms.views), and implement the unimplemented property:
+    backend_class
+        should return the subclass of SQLSMSBackend that was written above
+
+#. Implement either the get() or post() method on the view based on the gateway's API. The only requirement of
+   the framework is that this method call the incoming function (corehq.apps.sms.api), but you should also:
+    * pass self.backend_couch_id as the backend_id kwarg to incoming()
+    * if the gateway gives you a unique identifier for the SMS in their system, pass that identifier as the
+      backend_message_id kwarg to incoming(); this can help later with debugging
+
+#. Create a url for the view. The url pattern should accept an api key and look something like:
+   r'^sms/(?P<api_key>[\w-]+)/$' . The API key used will need to match the inbound_api_key of a backend instance
+   in order to be processed.
+
+#. Let the SMS Gateway know the url to connect to, including the API Key. To get the API Key, look at the
+   value of the inbound_api_key property on the backend instance. This value is generated automatically when you
+   first create a backend instance.
+
+What happens behind the scenes is as follows:
+
+#. A contact sends an inbound SMS to the SMS Gateway
+
+#. The SMS Gateway connects to the URL configured above.
+
+#. The view automatically looks up the backend instance by api key and rejects the request if one is not found.
+
+#. Your get() or post() method is invoked which parses the parameters accordingly and passes the information to
+   the inbound incoming() entry point.
+
+#. The Inbound SMS framework takes it from there as described in the Inbound SMS section.
+
+NOTE: The api key is part of the URL because it's not always easy to make the gateway send us an extra arbitrary
+parameter on each inbound SMS.
+
+Rate Limiting
+^^^^^^^^^^^^^
+
+You may want (or need) to limit the rate at which SMS get sent from a given backend instance. To do so, just
+override the get_sms_rate_limit() method in your SQLSMSBackend, and have it return the maximum number of SMS
+that can be sent in a one minute period.
+
+Load Balancing
+^^^^^^^^^^^^^^
+
+If you want to load balance the Outbound SMS traffic automatically across multiple phone numbers, do the following:
+
+#. Make your BackendForm subclass the LoadBalancingBackendFormMixin (corehq.apps.sms.forms)
+
+#. Make your SQLSMSBackend subclass the PhoneLoadBalancingMixin (corehq.apps.sms.models)
+
+#. Make your SQLSMSBackend's send method take a orig_phone_number kwarg. This will be the phone number to use when
+   sending. This is always send to the send() method, even if there is just one phone number to load balance over.
+
+From there, the framework will automatically handle managing the phone numbers through the create/edit gateway UI
+and balancing the load across the numbers when sending. A simple round robin approach is taken when balancing the
+load.
+
+If your backend uses load balancing and rate limiting, the framework applies the rate limit to each phone number
+separately as you would expect.
