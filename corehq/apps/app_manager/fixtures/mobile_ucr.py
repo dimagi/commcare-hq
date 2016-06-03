@@ -5,6 +5,8 @@ from couchdbkit import ResourceNotFound
 from lxml.builder import E
 from django.conf import settings
 
+from casexml.apps.phone.models import OTARestoreUser
+
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
 from corehq.util.xml_utils import serialize
@@ -18,14 +20,16 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 class ReportFixturesProvider(object):
     id = 'commcare:reports'
 
-    def __call__(self, user, version, last_sync=None, app=None):
+    def __call__(self, restore_user, version, last_sync=None, app=None):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not toggles.MOBILE_UCR.enabled(user.domain):
+        assert isinstance(restore_user, OTARestoreUser)
+
+        if not toggles.MOBILE_UCR.enabled(restore_user.domain):
             return []
 
-        apps = [app] if app else (a for a in get_apps_in_domain(user.domain, include_remote=False))
+        apps = [app] if app else (a for a in get_apps_in_domain(restore_user.domain, include_remote=False))
         report_configs = [
             report_config
             for app_ in apps
@@ -39,7 +43,7 @@ class ReportFixturesProvider(object):
         reports_elem = E.reports(last_sync=datetime.utcnow().isoformat())
         for report_config in report_configs:
             try:
-                reports_elem.append(self._report_config_to_fixture(report_config, user))
+                reports_elem.append(self._report_config_to_fixture(report_config, restore_user))
             except BadReportConfigurationError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -54,13 +58,14 @@ class ReportFixturesProvider(object):
         return [root]
 
     @staticmethod
-    def _report_config_to_fixture(report_config, user):
+    def _report_config_to_fixture(report_config, restore_user):
         report, data_source = ReportFixturesProvider._get_report_and_data_source(
-            report_config.report_id, user.domain
+            report_config.report_id, restore_user.domain
         )
 
+        # TODO: Convert to be compatiable with restore_user
         all_filter_values = {
-            filter_slug: filter.get_filter_value(user, report.get_ui_filter(filter_slug))
+            filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
             for filter_slug, filter in report_config.filters.items()
         }
         filter_values = {

@@ -1,14 +1,15 @@
 from django.test import TestCase
 from mock import patch
 
+from casexml.apps.phone.tests.utils import create_restore_user
 from corehq import toggles
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.fixtures.mobile_ucr import report_fixture_generator
 from corehq.apps.app_manager.models import Application, ReportModule, ReportAppConfig
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.userreports.tests import get_sample_report_config
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.userreports.tests.utils import get_sample_report_config
 
 
 class OtaRestoreUrlTests(TestCase):
@@ -42,9 +43,10 @@ class AppAwareSyncTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_users()
         create_domain(cls.domain)
         toggles.MOBILE_UCR.set(cls.domain, True, toggles.NAMESPACE_DOMAIN)
-        cls.user = CommCareUser.create(cls.domain, 'john_doe', 's3cr3t')
+        cls.user = create_restore_user(cls.domain)
 
         cls.app1 = Application.new_app(cls.domain, 'Test App 1', application_version=APP_V2)
         cls.report_config1 = get_sample_report_config()
@@ -80,7 +82,7 @@ class AppAwareSyncTests(TestCase):
         cls.report_config1.delete()
         cls.app2.delete()
         cls.report_config2.delete()
-        cls.user.delete()
+        delete_all_users()
         domain = Domain.get_by_name(cls.domain)
         domain.delete()
 
