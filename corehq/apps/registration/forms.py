@@ -44,7 +44,7 @@ class DomainRegistrationForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
         help_text=mark_safe(
             "<p class=\"text-danger\">Read this first: "
-            "<a href=\"https://confluence.dimagi.com/display/ccinternal/Scale+Backend+Beta:+Information+and+Caveats\">"
+            "<a href=\"https://confluence.dimagi.com/display/ccinternal/Scale+Backend+Beta:+Information+and+Caveats\"  target=\"_blank\">"
             "Scale Backend Beta: Information and Caveats"
             "</a></p>"
         )
@@ -61,7 +61,8 @@ class DomainRegistrationForm(forms.Form):
             'hr_name',
             'org',
         ]
-        if current_user and current_user.is_superuser:
+        force_sql_backed = getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False)
+        if not force_sql_backed and current_user and current_user.is_superuser:
             fields.append('use_new_backend')
 
         fields.append(hqcrispy.FormActions(

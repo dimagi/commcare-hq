@@ -184,6 +184,7 @@ class RegisterDomainView(TemplateView):
 
         context.update({
             'form': kwargs.get('form') or DomainRegistrationForm(current_user=request.couch_user),
+            'force_sql_backend': getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False),
             'is_new_user': self.is_new_user,
         })
         return context
