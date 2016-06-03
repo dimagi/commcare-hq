@@ -941,7 +941,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                     duplicate = PhoneNumber.by_phone(phone, include_pending=True)
                     if requesting_user.is_member_of(duplicate.domain):
                         info['dup_url'] = get_object_url(duplicate.domain,
-                            duplicate.owner_doc_type, duplicate_owner_id)
+                            duplicate.owner_doc_type, duplicate.owner_id)
                 except InvalidFormatException:
                     status = 'invalid'
 
