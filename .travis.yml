@@ -7,8 +7,9 @@ env:
   matrix:
     - MATRIX_TYPE=javascript BOWER=yes NODE=yes
     # need node installs for app_manager.XpathValidatorTest
-    - MATRIX_TYPE=python NOSE_DIVIDED_WE_RUN=08 BOWER=yes NODE=yes
-    - MATRIX_TYPE=python NOSE_DIVIDED_WE_RUN=9f BOWER=yes NODE=yes
+    - MATRIX_TYPE=python NOSE_DIVIDED_WE_RUN=05 BOWER=yes NODE=yes
+    - MATRIX_TYPE=python NOSE_DIVIDED_WE_RUN=6a BOWER=yes NODE=yes
+    - MATRIX_TYPE=python NOSE_DIVIDED_WE_RUN=bf BOWER=yes NODE=yes
     - MATRIX_TYPE=python-sharded
 before_install:
   - "cp .travis/localsettings.py localsettings.py"

@@ -3,11 +3,6 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block head %}{{ block.super }}
-    {% if form %}
-        {{ form.media }}
-    {% endif %}
-{% endblock %}
 
 {% block js %}{{ block.super }}
 <script src="{% static 'reports/javascripts/scheduled_report_form.js' %}"></script>
@@ -65,9 +60,16 @@ $(function(){
         }
     };
 
-    $("#id_config_ids").width(600).height(200).multiselect().change(function(){
+    $("#id_config_ids").change(function(){
         updateUcrElements($(this).val());
     });
+    var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+    multiselect_utils.createFullMultiselectWidget(
+        'id_config_ids',
+        django.gettext("Available Reports"),
+        django.gettext("Included Reports"),
+        django.gettext("Search Reports...")
+    );
     updateUcrElements($("#id_config_ids").val());
 });
 </script>

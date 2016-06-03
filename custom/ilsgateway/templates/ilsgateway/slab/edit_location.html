@@ -3,19 +3,20 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block stylesheets %} {{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
-{% endblock %}
-
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+    <script src="{% static 'style/js/ui-element.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {
-            $("#id_selected_ids").width(800).height(400).multiselect();
+            var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+            multiselect_utils.createFullMultiselectWidget(
+                'id_selected_ids',
+                django.gettext("Available Locations"),
+                django.gettext("Locations in Program"),
+                django.gettext("Search Locations...")
+            );
         });
 
         var LocationModelView = function() {
@@ -29,7 +30,7 @@
     <div>
         <a class="btn btn-default" href="{% url 'slab_configuration' domain %}">Back to locations list</a>
     </div>
-    <form class="form disable-on-submit" id="edit_locations" action="" method='post'>
+    <form class="form-horizontal disable-on-submit" id="edit_locations" action="" method='post'>
         <legend>{% trans 'SLAB Pilot Program' %}</legend>
         {% crispy form %}
     </form>

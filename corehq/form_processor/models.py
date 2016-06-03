@@ -25,6 +25,7 @@ from corehq.form_processor import signals
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
+from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
 from corehq.sql_db.routers import db_for_read_write
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
@@ -273,7 +274,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
         form_json = convert_xform_to_json(xml)
-        adjust_datetimes(form_json)
+        # we can assume all sql domains are new timezone domains
+        with force_phone_timezones_should_be_processed():
+            adjust_datetimes(form_json)
         return form_json
 
     @property

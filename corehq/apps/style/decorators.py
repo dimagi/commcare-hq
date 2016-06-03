@@ -131,20 +131,20 @@ def use_jquery_ui(view_func):
     return _wrapped
 
 
-def use_jquery_ui_multiselect(view_func):
+def use_multiselect(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the jquery-ui multiselect library at the base template
+    to enable the inclusion of the multiselect library at the base template
     level.
 
     Example:
 
-    @use_jquery_ui_multiselect
+    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)
     """
     @wraps(view_func)
     def _wrapped(class_based_view, request, *args, **kwargs):
-        request.use_jquery_ui_multiselect = True
+        request.use_multiselect = True
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
 

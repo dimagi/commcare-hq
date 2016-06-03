@@ -9,7 +9,7 @@ from dimagi.utils.couch.migration import SyncSQLToCouchMixin, SyncCouchToSQLMixi
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
 from django.db import models, transaction
-import json_field
+import jsonfield
 from casexml.apps.case.cleanup import close_case
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
@@ -256,7 +256,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     location_type = models.ForeignKey(LocationType)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
-    metadata = json_field.JSONField(default={})
+    metadata = jsonfield.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     is_archived = models.BooleanField(default=False)

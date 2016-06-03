@@ -55,7 +55,7 @@ class OTARestoreUser(object):
 
     @property
     def username(self):
-        return self._couch_user.username
+        return self._couch_user.raw_username
 
     @property
     def password(self):

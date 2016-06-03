@@ -13,6 +13,7 @@ from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user_xml
+from corehq.apps.users.util import normalize_username
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
@@ -27,12 +28,17 @@ class SimpleOtaRestoreTest(TestCase):
     def tearDown(self):
         delete_all_users()
 
-    def testRegistrationXML(self):
+    def test_registration_xml(self):
         user = create_restore_user()
         check_xml_line_by_line(self, dummy_user_xml(user),
                                xml.get_registration_xml(user))
 
-    def testNameAndNumber(self):
+    def test_username_doesnt_have_domain(self):
+        user = create_restore_user(username=normalize_username('withdomain', domain='thedomain'))
+        restore_payload = xml.get_registration_xml(user)
+        self.assertTrue('thedomain' not in restore_payload)
+
+    def test_name_and_number(self):
         user = create_restore_user(
             first_name='mclovin',
             last_name=None,
