@@ -421,6 +421,7 @@ class ProductSelectionPane(ILSData):
 class StockOnHandReport(DetailsReport):
     slug = "stock_on_hand"
     name = 'Stock On Hand'
+    exportable = True
 
     @property
     def title(self):
