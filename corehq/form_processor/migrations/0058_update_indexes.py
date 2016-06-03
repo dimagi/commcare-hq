@@ -40,4 +40,17 @@ class Migration(migrations.Migration):
             name='xformattachmentsql',
             index_together=set([('form', 'name')]),
         ),
+
+        # case index
+        migrations.AlterField(
+            model_name='commcarecaseindexsql',
+            name='case',
+            field=models.ForeignKey(related_query_name=b'index', related_name='index_set', to_field=b'case_id',
+                                    to='form_processor.CommCareCaseSQL', db_index=False),
+            preserve_default=True,
+        ),
+        migrations.AlterIndexTogether(
+            name='commcarecaseindexsql',
+            index_together=set([('domain', 'case'), ('domain', 'referenced_id')]),
+        ),
     ]

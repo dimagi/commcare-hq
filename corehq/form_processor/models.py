@@ -896,7 +896,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=True,
+        'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name="index_set", related_query_name="index"
     )
     domain = models.CharField(max_length=255, default=None)
@@ -948,6 +948,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
 
     class Meta:
         index_together = [
+            ["domain", "case"],
             ["domain", "referenced_id"],
         ]
         db_table = CommCareCaseIndexSQL_DB_TABLE
