@@ -13,6 +13,7 @@ from test_soft_assert import *
 from test_spreadsheets import *
 from test_timezone_conversions import *
 from test_toggle import *
+from test_validation import *
 from test_xml import *
 
 from corehq.util.spreadsheets.excel import IteratorJSONReader

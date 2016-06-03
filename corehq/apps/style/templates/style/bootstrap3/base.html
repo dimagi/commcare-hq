@@ -88,15 +88,6 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_jquery_ui_multiselect %}
-        {% compress css %}
-            <link type="text/css"
-                  rel="stylesheet"
-                  media="screen"
-                  href="{% new_static "hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css" %}" />
-        {% endcompress %}
-        {% endif %}
-
         {% if request.use_nvd3 or request.use_nvd3_v3 %}
         {% compress css %}
             <link type="text/css"
@@ -142,6 +133,19 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_multiselect %}
+        {% compress css %}
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% static "multiselect/css/multi-select.css" %}" />
+            <link type="text/css"
+                  rel="stylesheet"
+                  media="screen"
+                  href="{% static "style/less/components/multiselect/multiselect.less" %}" />
+        {% endcompress %}
+        {% endif %}
+
 
         {% if request.use_maps or request.use_maps_async %}
         {% compress css %}
@@ -180,13 +184,6 @@
             <script src="{% new_static 'jquery-ui/ui/droppable.js' %}"></script>
             <script src="{% new_static 'jquery-ui/ui/sortable.js' %}"></script>
         {% endcompress %}
-        {% endif %}
-
-        {% if request.use_jquery_ui_multiselect %}
-            {% compress js %}
-                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-                <script src="{% new_static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
-            {% endcompress %}
         {% endif %}
 
         <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
@@ -516,6 +513,14 @@
                 $(".timeago").timeago();
             });
         </script>
+        {% endif %}
+
+        {% if request.use_multiselect %}
+        {% compress js %}
+        <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
+        <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
+        <script src="{% static 'style/js/components/multiselect_utils.js' %}"></script>
+        {% endcompress %}
         {% endif %}
 
         {% block js %}{% endblock js %}

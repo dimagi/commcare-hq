@@ -1,10 +1,8 @@
-from datetime import datetime
-
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.dbaccessors import get_extension_chain
 from casexml.apps.case.xform import get_extensions_to_close
-from casexml.apps.phone.models import User
+from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -18,8 +16,7 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         FormProcessorTestUtils.delete_all_xforms()
         self.domain = "domain"
         self.project = Domain(name=self.domain)
-        self.user = User(user_id='user', username='name', password="changeme",
-                         date_joined=datetime(2011, 6, 9))
+        self.user = create_restore_user(self.domain, username='name', password="changeme")
         self.factory = CaseFactory(domain=self.domain)
         self.extension_ids = ['1', '2', '3']
         self.host_id = 'host'

@@ -119,6 +119,7 @@ FormplayerFrontend.on("start", function (options) {
     user.language = options.language;
     user.apps = options.apps;
     user.domain = options.domain;
+    user.formplayer_url = options.formplayer_url;
     if (Backbone.history) {
         Backbone.history.start();
         // will be the same for every domain. TODO: get domain/username/pass from django

@@ -41,7 +41,6 @@ SHELL_PLUS_POST_IMPORTS = (
 
     # Data querying utils
     ('dimagi.utils.couch.database', 'get_db'),
-    ('corehq.apps.sofabed.models', ('FormData', 'CaseData')),
     ('corehq.apps.es', '*'),
 )
 

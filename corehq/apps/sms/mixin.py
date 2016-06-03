@@ -314,15 +314,16 @@ class CommCareMobileContactMixin(object):
         raise NotImplementedError('Please implement this method')
 
     def get_verified_numbers(self, include_pending=False):
-        v = VerifiedNumber.by_owner_id(self.get_id)
+        from corehq.apps.sms.models import PhoneNumber
+        v = PhoneNumber.by_owner_id(self.get_id)
         v = filter(lambda c: c.verified or include_pending, v)
         return dict((c.phone_number, c) for c in v)
 
     def get_verified_number(self, phone=None):
         """
-        Retrieves this contact's verified number entry by (self.doc_type, self._id).
+        Retrieves this contact's verified number entry by (self.doc_type, self.get_id).
 
-        return  the VerifiedNumber entry
+        return  the PhoneNumber entry
         """
         from corehq.apps.sms.util import strip_plus
         verified = self.get_verified_numbers(True)
@@ -354,8 +355,9 @@ class CommCareMobileContactMixin(object):
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
+        from corehq.apps.sms.models import PhoneNumber
         self.validate_number_format(phone_number)
-        v = VerifiedNumber.by_phone(phone_number, include_pending=True)
+        v = PhoneNumber.by_phone(phone_number, include_pending=True)
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self.get_id):
             raise PhoneNumberInUseException("Phone number is already in use.")
 
@@ -368,10 +370,12 @@ class CommCareMobileContactMixin(object):
             global settings for which backend will be used to send sms to
             this number
 
-        return  The VerifiedNumber
+        return  The PhoneNumber
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
+        from corehq.apps.sms.models import PhoneNumber
+
         phone_number = apply_leniency(phone_number)
         self.verify_unique_number(phone_number)
         if only_one_number_allowed:
@@ -379,7 +383,7 @@ class CommCareMobileContactMixin(object):
         else:
             v = self.get_verified_number(phone_number)
         if v is None:
-            v = VerifiedNumber(
+            v = PhoneNumber(
                 owner_doc_type=self.doc_type,
                 owner_id=self.get_id
             )
@@ -388,8 +392,7 @@ class CommCareMobileContactMixin(object):
         v.verified = verified
         v.backend_id = backend_id
         v.ivr_backend_id = ivr_backend_id
-        v.save(**get_safe_write_kwargs())
-        return v
+        v.save()
 
     def delete_verified_number(self, phone_number=None):
         """
@@ -400,7 +403,7 @@ class CommCareMobileContactMixin(object):
         """
         v = self.get_verified_number(phone_number)
         if v is not None:
-            v.retire()
+            v.delete()
 
 
 class MessagingCaseContactMixin(CommCareMobileContactMixin):

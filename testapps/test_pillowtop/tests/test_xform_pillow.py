@@ -1,6 +1,7 @@
 from django.test import TestCase, override_settings
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
+from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.es import FormES
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.utils import TestFormMetadata
@@ -9,7 +10,6 @@ from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pil
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
 from elasticsearch.exceptions import ConnectionError
-from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 
 class XFormPillowTest(TestCase):

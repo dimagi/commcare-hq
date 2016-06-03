@@ -3,6 +3,7 @@ from django.test import TestCase
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.document_types import GROUP, change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.tests.utils import get_current_kafka_seq
 from corehq.apps.es import GroupES
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
@@ -11,7 +12,6 @@ from corehq.pillows.group import get_group_pillow
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index
-from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
 class GroupPillowTest(TestCase):

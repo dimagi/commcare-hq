@@ -12,6 +12,8 @@
     "jquery-timeago": "1.2.0",
     "jquery-ui": "1.11.4",
     "jquery-ui-1.8.23-legacy": "jquery-ui#1.8.23",
+    "multiselect": "0.9.12",
+    "quicksearch": "2.2.1",
     "leaflet": "0.7.7",
     "jquery-color": "2.1.2",
     "jquery.rmi": "dimagi/jquery.rmi#8c34f32817",
@@ -51,7 +53,8 @@
     "font-awesome": "fontawesome#4.5.0",
     "ui-select": "angular-ui/ui-select#v0.13.2",
     "jquery-migrate": "1.2.1",
-    "moment": "2.12.0"
+    "moment": "2.12.0",
+    "jquery-treetable": "^3.2.0"
   },
   "devDependencies": {
     "chai": "3.3.0",

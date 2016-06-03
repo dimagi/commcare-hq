@@ -21,6 +21,10 @@ from corehq.apps.app_manager.suite_xml.xml_models import *
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action')):
 
+    @property
+    def is_new_case_id(self):
+        return self.datum.function == 'uuid()'
+
     def __repr__(self):
         return 'FormDataumMeta(datum=<SessionDatum(id={})>, case_type={}, requires_selection={}, action={})'.format(
             self.datum.id, self.case_type, self.requires_selection, self.action

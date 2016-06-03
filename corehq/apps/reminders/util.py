@@ -225,7 +225,7 @@ def get_verified_number_for_recipient(recipient):
                 for phone in recipient.phone_numbers:
                     if phone in contact_verified_numbers:
                         return contact_verified_numbers[phone]
-                raise Exception("Phone numbers and VerifiedNumbers are out "
+                raise Exception("Phone number list and PhoneNumber entries are out "
                     "of sync for user %s" % recipient.get_id)
             else:
                 raise Exception("Expected a CouchUser")

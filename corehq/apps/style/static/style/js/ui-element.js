@@ -1,4 +1,4 @@
-/*globals $, eventize, _ */
+/*globals $, eventize, _, django */
 
 var langcodeTag;
 
@@ -24,7 +24,7 @@ var langcodeTag;
                         this.lang_code = value;
                         this.button.text(this.lang_code);
                     }
-                }
+                },
             };
             return function ($elem, new_lang) {
                 return new LangCodeButton($elem, new_lang);
@@ -34,9 +34,9 @@ var langcodeTag;
             var values = value.split(langcodeTag.LANG_DELIN);
             return {
                 value: values[0],
-                lang: (values.length > 1 ? values[1] : null)
+                lang: (values.length > 1 ? values[1] : null),
             };
-        }
+        },
     };
 
 }());
@@ -88,12 +88,12 @@ var uiElement;
             if (translated.lang) {
                 this.ui.css("position", "relative");
                 var langcode_button = langcodeTag.button_tag(
-                    $('<a href="#" class="btn btn-info btn-xs btn-mini lang-text" style="position: absolute; top: 6px; right: 6px;" />'),
+                    $('<a href="#" class="btn btn-info btn-xs lang-text" style="position: absolute; top: 6px; right: 6px;" />'),
                     translated.lang);
                 this.ui.append(langcode_button.button);
                 this.setPlaceholderValue(translated.value);
                 this.$edit_view.change(function () {
-                    if ($(this).val() == "")
+                    if ($(this).val() === "")
                         langcode_button.button.show();
                     else
                         langcode_button.button.hide();
@@ -126,7 +126,7 @@ var uiElement;
                 this.$noedit_view.prependTo(this.ui);
             }
             return this;
-        }
+        },
     };
 
     uiElement = {
@@ -204,7 +204,7 @@ var uiElement;
                         this.$noedit_view.appendTo(this.ui);
                     }
                     return this;
-                }
+                },
             };
             return function (options) {
                 return new Select(options);
@@ -221,26 +221,36 @@ var uiElement;
                 this.modal_id = 'enumModal-'+guid;
                 this.modal_title = modal_title;
 
-                this.$edit_view = $('<div />');
+                this.$edit_view = $('<div class="well well-sm" />');
                 this.$noedit_view = $('<div />');
                 this.$formatted_view = $('<input type="hidden" />');
-                this.$modal_trigger = $('<a class="btn enum-edit" href="#'+this.modal_id+'" data-toggle="modal" />').html('<i class="icon icon-pencil"></i> Edit');
+                this.$modal_trigger = $('<a class="btn btn-default enum-edit" href="#'+this.modal_id+'" ' +
+                    'data-toggle="modal" />').html('<i class="fa fa-pencil"></i> ' + django.gettext('Edit'));
 
                 // Create new modal controller for this element
-                var $enumModal = $('<div id="'+this.modal_id+'" class="modal hide fade hq-enum-modal" />');
-                $enumModal.prepend('<div class="modal-header"><a class="close" data-dismiss="modal">×</a><h3>Edit Mapping for '+this.modal_title+'</h3></div>');
+                var $enumModal = $('<div id="'+this.modal_id+'" class="modal fade hq-enum-modal" />');
+                var $modalDialog = $('<div class="modal-dialog"/>');
+                var $modalContent = $('<div class="modal-content" />');
+
+                $modalContent.prepend('<div class="modal-header"><a class="close" data-dismiss="modal">×</a><h4 class="modal-title">'
+                    + django.gettext('Edit Mapping for ') + this.modal_title + '</h4></div>');
                 var $modal_form = $('<form class="form-horizontal hq-enum-editor" action="" />'),
                     $modal_body = $('<div class="modal-body" style="max-height:372px; overflow-y: scroll;" />');
                 $modal_body.append($('<fieldset />'));
-                $modal_body.append('<div class="control-group"><a href="#" class="btn btn-success" data-enum-action="add"><i class="icon icon-white icon-plus"></i> Add Key &rarr; Value Mapping</a></div>');
+                $modal_body.append('<a href="#" class="btn btn-success" data-enum-action="add"><i class="fa fa-plus"></i> ' +
+                    django.gettext('Add Key &rarr; Value Mapping') + '</a>');
 
                 $modal_form.append($modal_body);
-                $modal_form.append('<div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">Done</button></div>');
-                $enumModal.append($modal_form);
+                $modal_form.append('<div class="modal-footer"><button class="btn btn-primary" data-dismiss="modal">' +
+                    django.gettext('Done') + '</button></div>');
+                $modalContent.append($modal_form);
+                $modalDialog.append($modalContent);
+                $enumModal.append($modalDialog);
+
 
                 $('#hq-modal-home').append($enumModal);
 
-                $('#'+this.modal_id).on('hide', function() {
+                $('#'+this.modal_id).on('hide.bs.modal', function() {
                     var $inputMap = $(this).find('form .hq-input-map'),
                         pairs = {};
                     for (var i=0; i < $inputMap.length; i++) {
@@ -255,7 +265,7 @@ var uiElement;
                 });
 
                 $('#'+this.modal_id+' a').click(function() {
-                    if($(this).attr('data-enum-action') == 'add') {
+                    if($(this).attr('data-enum-action') === 'add') {
                         $(this).parent().parent().find('fieldset').append(uiElement.input_map(true).ui);
                         $(this).parent().parent().find('fieldset input.enum-key').last().focus();
                     }
@@ -273,13 +283,16 @@ var uiElement;
                         var $modal_fields = $('#'+this.modal_id+' form fieldset');
                         $modal_fields.text('');
                         this.$noedit_view.text('');
-                        this.$edit_view.text('');
+                        this.$edit_view.html(django.gettext('Click <strong>Edit</strong> below to add mappings'));
 
                         this.value = original_pairs;
-                        if (translated_pairs != undefined) {
+                        if (translated_pairs !== undefined) {
                             this.translated_value = translated_pairs;
                         }
                         this.$formatted_view.val(JSON.stringify(this.value));
+                        if (!_.isEmpty(this.value)) {
+                            this.$edit_view.text('');
+                        }
                         for (var key in this.value) {
                             $modal_fields.append(uiElement.input_map(true).val(key, this.value[key], this.translated_value[key]).ui);
                             this.$edit_view.append(uiElement.input_map(true).val(key, this.value[key], this.translated_value[key]).setEdit(false).$noedit_view);
@@ -300,7 +313,7 @@ var uiElement;
                         this.$noedit_view.appendTo(this.ui);
                     }
                     return this;
-                }
+                },
             };
             return function (guid, modal_title) {
                 return new KeyValList(guid, modal_title);
@@ -310,23 +323,23 @@ var uiElement;
             var InputMap = function (show_del_button) {
                 var that = this;
                 eventize(this);
-                this.ui = $('<div class="control-group hq-input-map" />');
+                this.ui = $('<div class="form-group hq-input-map" />');
                 this.value = {
                     key: "",
-                    val: ""
+                    val: "",
                 };
                 this.edit = true;
                 this.show_delete = show_del_button;
                 this.on('change', function() {
-                    this.val(this.ui.find(".enum-key").val(), this.ui.find(".enum-value").val())
+                    this.val(this.ui.find(".enum-key").val(), this.ui.find(".enum-value").val());
                 });
                 this.on('remove', function() {
                     this.ui.remove();
                 });
 
-                this.$edit_view = $('<div />');
-                var key_input = $('<input type="text" class="input-small enum-key" placeholder="key" />'),
-                    val_input = $('<input type="text" class="input-large enum-value" placeholder="value" />');
+                this.$edit_view = $('<div class="form-inline" style="margin-left:5px;" />');
+                var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + django.gettext('key') + '" />'),
+                    val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + django.gettext('value') + '" />');
                 key_input.change(function () {
                     that.fire('change');
                 });
@@ -334,11 +347,11 @@ var uiElement;
                     that.fire('change');
                 });
                 this.$edit_view.append(key_input);
-                this.$edit_view.append(' &rarr; ')
+                this.$edit_view.append(' <i class="fa fa-arrow-right"></i> ');
                 this.$edit_view.append(val_input);
                 if(this.show_delete) {
                     var $deleteButton = $('<a href="#" data-enum-action="remove" class="btn btn-danger" />');
-                    $deleteButton.append('<i class="icon icon-white icon-remove"></i> Delete');
+                    $deleteButton.append('<i class="fa fa-remove"></i> ' + django.gettext('Delete'));
                     $deleteButton.click(function() {
                         that.fire('remove');
                         return false;
@@ -352,32 +365,32 @@ var uiElement;
             };
             InputMap.prototype = {
                 val: function(map_key, map_val, translated_map_val) {
-                    if (map_key == undefined) {
+                    if (map_key === undefined) {
                         return this.value;
                     } else {
                         this.value = {
                             key: map_key,
-                            val: map_val
+                            val: map_val,
                         };
                         this.$edit_view.find(".enum-key").val(map_key);
                         this.$edit_view.find(".enum-value").val(map_val);
-                        if (map_val == "" && translated_map_val != undefined && translated_map_val != "") {
+                        if (map_val === "" && translated_map_val !== undefined && translated_map_val !== "") {
                             this.$edit_view.find(".enum-value").attr("placeholder", translated_map_val.value);
-                            var $langcodeButton = langcodeTag.button_tag($('<a href="#" class="btn btn-info btn-mini btn-xs lang-text" />'),
+                            var $langcodeButton = langcodeTag.button_tag($('<a href="#" class="btn btn-info btn-xs lang-text" />'),
                                 translated_map_val.lang);
                             $langcodeButton.button.attr("style", "position: absolute; top: 6px; right: 6px;");
                             this.$edit_view.find(".enum-value").css("position", "relative").after($langcodeButton.button);
                             this.on('change', function () {
-                                if (this.$edit_view.find(".enum-value").val() == "")
+                                if (this.$edit_view.find(".enum-value").val() === "")
                                     $langcodeButton.button.show();
                                 else
                                     $langcodeButton.button.hide();
-                            })
+                            });
 
                         }
                         if(map_key) {
                             this.$noedit_view.html('<strong>' + map_key + '</strong> &rarr; ' + (
-                                map_val ? map_val : '<i class="icon-remove-sign"></i>'
+                                map_val ? map_val : '<i class="fa fa-remove"></i>'
                             ));
                         }else{
                             this.$noedit_view.text("");
@@ -395,7 +408,7 @@ var uiElement;
                         this.$noedit_view.appendTo(this.ui);
                     }
                     return this;
-                }
+                },
             };
             return function (show_del_button) {
                 return new InputMap(show_del_button);
@@ -420,7 +433,7 @@ var uiElement;
                 this.val(this.value);
                 this.setEdit(this.edit);
             };
-            Checkbox.CHECKED = "icon-ok";
+            Checkbox.CHECKED = "fa fa-check";
             Checkbox.UNCHECKED = "";
             Checkbox.prototype = {
                 val: function (value) {
@@ -447,14 +460,14 @@ var uiElement;
                         this.$noedit_view.appendTo(this.ui);
                     }
                     return this;
-                }
+                },
             };
             return function () {
                 return new Checkbox();
             };
         }()),
         serialize: function (obj) {
-            var i, cpy;
+            var cpy;
             if (typeof obj.val === 'function') {
                 return obj.val();
             } else if (_.isArray(obj)) {
@@ -468,6 +481,6 @@ var uiElement;
             } else {
                 return obj;
             }
-        }
+        },
     };
 }());

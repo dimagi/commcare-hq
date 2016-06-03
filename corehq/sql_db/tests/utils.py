@@ -5,7 +5,9 @@ from sqlalchemy.exc import ProgrammingError
 from corehq.util.decorators import ContextDecorator
 
 
-class database_creator(ContextDecorator):
+class temporary_database(ContextDecorator):
+    """Create a database temporarily and remove it afterwards.
+    """
     def __init__(self, database_name):
         self.database_name = database_name
         # use db1 engine to create db2 http://stackoverflow.com/a/8977109/8207

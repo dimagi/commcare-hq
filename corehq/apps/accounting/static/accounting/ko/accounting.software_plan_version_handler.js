@@ -117,9 +117,15 @@ var PermissionsManager = function (options) {
     self.existing = new ExistingRoleManager(self.existingRoles, options.currentRoleSlug);
 
     self.init = function () {
-        $('[name="' + options.multiSelectField + '"]').width(770).height(200).multiselect({
-            sortable: false
-        });
+        if (options.multiSelectField) {
+            var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+            multiselect_utils.createFullMultiselectWidget(
+                'id_' + options.multiSelectField.slug,
+                options.multiSelectField.titleSelect,
+                options.multiSelectField.titleSelected,
+                options.multiSelectField.titleSearch
+            );
+        }
         self.existingRoles(_.map(options.existingRoles, function (data) {
             return new Role(data);
         }));

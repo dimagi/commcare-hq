@@ -293,16 +293,20 @@ class AdoptionDisaggregatedSqlData(CareSqlData):
 
     @property
     def columns(self):
-        return [
+        columns = [
             DatabaseColumn('', AliasColumn('gender'), format_fn=self._to_display),
-            AggregateColumn('Farmers who adopted No practices', lambda x:x,
-                            [CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")])]),
-            AggregateColumn('Farmers who adopted Some practices', lambda x:x,
-                            [CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1")])]),
-            AggregateColumn('Farmers who adopted All practices', lambda x:x,
-                            [CareCustomColumn('all', filters=self.filters + [RawFilter("maxmin = 2")])])
-
+            AggregateColumn('Farmers who adopted No practices', lambda x: x,
+                            [CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")])])
         ]
+
+        if self.config['group'] != 'practice':
+            columns.append(
+                AggregateColumn('Farmers who adopted Some practices', lambda x: x,
+                                [CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1")])]))
+
+        columns.append(AggregateColumn('Farmers who adopted All practices', lambda x: x,
+                       [CareCustomColumn('all', filters=self.filters + [RawFilter("maxmin = 2")])]))
+        return columns
 
 
 class TableCardSqlData(CareSqlData):
