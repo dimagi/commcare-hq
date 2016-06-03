@@ -206,7 +206,5 @@ def should_ignore_submission(request):
 
     instance, _ = couchforms.get_instance_and_attachment(request)
     form_json = convert_xform_to_json(instance)
-    if not from_demo_user(form_json):
-        return True
-    else:
-        return False
+
+    return False if from_demo_user(form_json) else True

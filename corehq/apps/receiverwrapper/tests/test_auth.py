@@ -127,7 +127,6 @@ class _AuthTest(TestCase):
             authtype='digest',
         )
 
-    @run_with_all_backends
     def test_submit_mode(self):
         # test 'submit_mode=demo' request param
 
