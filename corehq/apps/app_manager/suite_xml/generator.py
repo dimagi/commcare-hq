@@ -23,10 +23,11 @@ from corehq.apps.hqmedia.models import HQMediaMapItem
 class SuiteGenerator(object):
     descriptor = u"Suite File"
 
-    def __init__(self, app):
+    def __init__(self, app, build_profile_id=None):
         self.app = app
         self.modules = list(app.get_modules())
         self.suite = Suite(version=self.app.version, descriptor=self.descriptor)
+        self.build_profile_id = build_profile_id
 
     def _add_sections(self, contributors):
         for contributor in contributors:
@@ -39,9 +40,9 @@ class SuiteGenerator(object):
         # Note: the order in which things happen in this function matters
 
         self._add_sections([
-            FormResourceContributor(self.suite, self.app, self.modules),
-            LocaleResourceContributor(self.suite, self.app, self.modules),
-            DetailContributor(self.suite, self.app, self.modules),
+            FormResourceContributor(self.suite, self.app, self.modules, self.build_profile_id),
+            LocaleResourceContributor(self.suite, self.app, self.modules, self.build_profile_id),
+            DetailContributor(self.suite, self.app, self.modules, self.build_profile_id),
         ])
 
         # by module
@@ -79,8 +80,9 @@ class SuiteGenerator(object):
 class MediaSuiteGenerator(object):
     descriptor = u"Media Suite File"
 
-    def __init__(self, app):
+    def __init__(self, app, build_profile_id=None):
         self.app = app
+        self.build_profile = app.build_profiles[build_profile_id] if build_profile_id else None
         self.suite = Suite(
             version=self.app.version,
             descriptor=self.descriptor,
@@ -98,7 +100,15 @@ class MediaSuiteGenerator(object):
         self.app.remove_unused_mappings()
         if self.app.multimedia_map is None:
             self.app.multimedia_map = {}
+        filter_multimedia = self.app.media_language_map and self.build_profile
+        if filter_multimedia:
+            media_list = []
+            for lang in self.build_profile.langs:
+                media_list += self.app.media_language_map[lang].media_refs
+            requested_media = set(media_list)
         for path, m in self.app.multimedia_map.items():
+            if filter_multimedia and m.form_media and path not in requested_media:
+                continue
             unchanged_path = path
             if path.startswith(PREFIX):
                 path = path[len(PREFIX):]

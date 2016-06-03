@@ -1,10 +1,12 @@
 from xml.etree import ElementTree
 from datetime import datetime
 import pytz
+
+from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
+from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.users.models import CommCareUser
 from corehq.util.soft_assert import soft_assert
-from corehq.util.timezones.conversions import UserTime, ServerTime
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.logging import notify_exception
 
 utc = pytz.utc
@@ -23,13 +25,7 @@ def should_sync(domain, last_sync, utcnow=None):
     except pytz.UnknownTimeZoneError:
         timezone = utc
 
-    _assert = soft_assert(to=['droberts' + '@' + 'dimagi.com'])
-
     last_sync_utc = last_sync.date
-
-    if not _assert(last_sync_utc.tzinfo is None,
-                   'last_sync.date should be an offset-naive dt'):
-        last_sync_utc = UserTime(last_sync_utc).server_time().done()
 
     # check if user has already synced today (in local timezone).
     # Indicators only change daily.
@@ -45,26 +41,38 @@ def should_sync(domain, last_sync, utcnow=None):
 class IndicatorsFixturesProvider(object):
     id = 'indicators'
 
-    def __call__(self, user, version, last_sync=None, app=None):
-        assert isinstance(user, CommCareUser)
+    def __call__(self, restore_user, version, last_sync=None, app=None):
+        assert isinstance(restore_user, OTARestoreUser)
 
-        domain = user.project
+        domain = restore_user.project
         fixtures = []
 
         if self._should_return_no_fixtures(domain, last_sync):
             return fixtures
 
+        config = None
+        if app:
+            try:
+                config = get_call_center_config_from_app(app)
+            except:
+                notify_exception(None, "Error getting call center config from app", details={
+                    'domain': app.domain,
+                    'app_id': app.get_id
+                })
+
+        if config:
+            _assert = soft_assert(['skelly_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
+            _assert(not config.includes_legacy(), 'Domain still using legacy call center indicators', {
+                'domain': domain,
+                'config': config.to_json()
+            })
+
         try:
-            fixtures.append(gen_fixture(user, CallCenterIndicators(
-                domain.name,
-                domain.default_timezone,
-                domain.call_center_config.case_type,
-                user
-            )))
+            fixtures.append(gen_fixture(restore_user, restore_user.get_call_center_indicators(config)))
         except Exception:  # blanket exception catching intended
             notify_exception(None, 'problem generating callcenter fixture', details={
-                'user_id': user._id,
-                'domain': user.domain
+                'user_id': restore_user.user_id,
+                'domain': restore_user.domain
             })
 
         return fixtures
@@ -81,7 +89,7 @@ class IndicatorsFixturesProvider(object):
 indicators_fixture_generator = IndicatorsFixturesProvider()
 
 
-def gen_fixture(user, indicator_set):
+def gen_fixture(restore_user, indicator_set):
     """
     Generate the fixture from the indicator data.
 
@@ -103,12 +111,15 @@ def gen_fixture(user, indicator_set):
         </indicators>
     </fixture>
     """
+    if indicator_set is None:
+        return []
+
     name = indicator_set.name
     data = indicator_set.get_data()
 
     fixture = ElementTree.Element('fixture', attrib={
         'id': ':'.join((IndicatorsFixturesProvider.id, name)),
-        'user_id': user.user_id,
+        'user_id': restore_user.user_id,
         'date': indicator_set.reference_date.isoformat()
     })
     indicators_node = ElementTree.SubElement(fixture, 'indicators')

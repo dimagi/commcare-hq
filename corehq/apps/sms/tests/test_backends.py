@@ -1,5 +1,4 @@
 import json
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.models import ApiUser, PERMISSION_POST_SMS
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
@@ -366,20 +365,16 @@ class AllBackendTest(BaseSMSTest):
 
     @run_with_all_backends
     def test_apposit_inbound_sms(self):
-        user = ApiUser.create('apposit-api-key', 'apposit-api-key', permissions=[PERMISSION_POST_SMS])
-        user.save()
-
-        self._simulate_inbound_request(
-            '/apposit/in/apposit-api-key/',
-            phone_param='fromAddress',
-            msg_param='content',
-            msg_text='apposit test',
-            post=True,
-            additional_params={'channel': 'SMS'}
+        self._simulate_inbound_request_with_payload(
+            '/apposit/in/%s/' % self.apposit_backend.inbound_api_key,
+            'application/json',
+            json.dumps({
+                'from': self.test_phone_number,
+                'message': 'apposit test',
+            })
         )
-        self._verify_inbound_request('APPOSIT', 'apposit test')
-
-        user.delete()
+        self._verify_inbound_request('APPOSIT', 'apposit test',
+            backend_couch_id=self.apposit_backend.couch_id)
 
     @run_with_all_backends
     def test_push_inbound_sms(self):

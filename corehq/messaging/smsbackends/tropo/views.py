@@ -1,13 +1,11 @@
 import json
 from .models import SQLTropoBackend
 from tropo import Tropo
-from corehq.apps.ivr.api import incoming as incoming_call
 from corehq.apps.sms.api import incoming as incoming_sms
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from corehq.apps.ivr.models import Call
-from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import INCOMING
+from corehq.apps.sms.models import INCOMING, PhoneNumber
 from datetime import datetime
 from corehq.apps.sms.util import strip_plus
 
@@ -60,7 +58,7 @@ def ivr_in(request):
 
         if phone_number:
             cleaned_number = strip_plus(phone_number)
-            v = VerifiedNumber.by_extensive_search(cleaned_number)
+            v = PhoneNumber.by_extensive_search(cleaned_number)
         else:
             v = None
 

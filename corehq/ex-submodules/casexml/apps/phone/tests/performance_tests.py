@@ -1,13 +1,17 @@
+from unittest import skip
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.caselogic import get_related_cases
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest, PARENT_TYPE
-from casexml.apps.phone.tests.utils import synclog_from_restore_payload, generate_restore_payload
+from casexml.apps.phone.tests.utils import (
+    synclog_from_restore_payload,
+    generate_restore_payload,
+    create_restore_user,
+)
 from casexml.apps.case.tests.util import assert_user_has_cases
-from casexml.apps.phone.models import User
+from corehq.apps.groups.models import Group
 from casexml.apps.phone.restore import RestoreConfig
 from dimagi.utils.decorators.profile import line_profile
 from corehq.apps.domain.models import Domain
-from datetime import datetime
 
 USER_ID = "main_user"
 USERNAME = "syncguy"
@@ -31,13 +35,33 @@ class SyncPerformanceTest(SyncBaseTest):
         # the other user is an "owner" of the original users cases as well,
         # for convenience
         self.project = Domain(name='sync-performance-tests')
-        self.other_user = User(user_id=OTHER_USER_ID, username=OTHER_USERNAME,
-                               password="changeme", date_joined=datetime(2011, 6, 9),
-                               additional_owner_ids=[SHARED_ID], domain=self.project.name)
+        self.project.save()
+        self.factory.domain = self.project.name
+        self.other_user = create_restore_user(
+            domain=self.project.name,
+            username=OTHER_USERNAME,
+        )
 
-        self.referral_user = User(user_id=REFERRAL_USER_ID, username=REFERRAL_USERNAME,
-                               password="changeme", date_joined=datetime(2011, 6, 9),
-                               additional_owner_ids=[REFERRED_TO_GROUP], domain=self.project.name)
+        self.referral_user = create_restore_user(
+            domain=self.project.name,
+            username=REFERRAL_USERNAME,
+        )
+
+        self.shared_group = Group(
+            domain=self.project.name,
+            name='shared_group',
+            case_sharing=True,
+            users=[self.other_user.user_id, self.user.user_id]
+        )
+        self.shared_group.save()
+
+        self.referral_group = Group(
+            domain=self.project.name,
+            name='referral_group',
+            case_sharing=True,
+            users=[self.referral_user.user_id]
+        )
+        self.referral_group.save()
 
         # this creates the initial blank sync token in the database
         self.other_sync_log = synclog_from_restore_payload(generate_restore_payload(
@@ -47,16 +71,16 @@ class SyncPerformanceTest(SyncBaseTest):
             self.project, self.referral_user
         ))
 
-        self.assertTrue(SHARED_ID in self.other_sync_log.owner_ids_on_phone)
-        self.assertTrue(OTHER_USER_ID in self.other_sync_log.owner_ids_on_phone)
+        self.assertTrue(self.shared_group._id in self.other_sync_log.owner_ids_on_phone)
+        self.assertTrue(self.other_user.user_id in self.other_sync_log.owner_ids_on_phone)
 
-        self.user.additional_owner_ids = [SHARED_ID]
         self.sync_log = synclog_from_restore_payload(generate_restore_payload(
             self.project, self.user
         ))
-        self.assertTrue(SHARED_ID in self.sync_log.owner_ids_on_phone)
-        self.assertTrue(USER_ID in self.sync_log.owner_ids_on_phone)
+        self.assertTrue(self.shared_group._id in self.sync_log.owner_ids_on_phone)
+        self.assertTrue(self.user.user_id in self.sync_log.owner_ids_on_phone)
 
+    @skip('Comment out to profile')
     @line_profile([
         RestoreConfig.get_payload,
         get_related_cases,
@@ -65,7 +89,11 @@ class SyncPerformanceTest(SyncBaseTest):
         total_parent_cases = 50
 
         id_list = ['case_id_{}'.format(i) for i in range(total_parent_cases)]
-        self._createCaseStubs(id_list, user_id=USER_ID, owner_id=SHARED_ID)
+        self._createCaseStubs(
+            id_list,
+            user_id=self.user.user_id,
+            owner_id=self.shared_group._id
+        )
 
         new_case_ids = []
         caseblocks = []
@@ -75,8 +103,8 @@ class SyncPerformanceTest(SyncBaseTest):
             caseblocks.append(CaseBlock(
                 create=True,
                 case_id=case_id,
-                user_id=USER_ID,
-                owner_id=REFERRED_TO_GROUP,
+                user_id=self.user.user_id,
+                owner_id=self.referral_group._id,
                 case_type=REFERRAL_TYPE,
                 index={'parent': (PARENT_TYPE, parent_case_id)}
             ).as_xml())
@@ -85,6 +113,7 @@ class SyncPerformanceTest(SyncBaseTest):
         all_cases = id_list + new_case_ids
         assert_user_has_cases(self, self.referral_user, all_cases, restore_id=self.referral_sync_log.get_id)
 
+    @skip('Comment out to profile')
     @line_profile([
         RestoreConfig.get_payload,
         get_related_cases,
@@ -93,7 +122,11 @@ class SyncPerformanceTest(SyncBaseTest):
         total_parent_cases = 5
 
         parent_cases = ['case_id_{}'.format(i) for i in range(total_parent_cases)]
-        self._createCaseStubs(parent_cases, user_id=USER_ID, owner_id=SHARED_ID)
+        self._createCaseStubs(
+            parent_cases,
+            user_id=self.user.user_id,
+            owner_id=self.shared_group._id
+        )
 
         child_cases = []
         caseblocks = []
@@ -103,8 +136,8 @@ class SyncPerformanceTest(SyncBaseTest):
             caseblocks.append(CaseBlock(
                 create=True,
                 case_id=case_id,
-                user_id=USER_ID,
-                owner_id=SHARED_ID,
+                user_id=self.user.user_id,
+                owner_id=self.shared_group._id,
                 case_type='child',
                 index={'parent': (PARENT_TYPE, parent_case_id)}
             ).as_xml())
@@ -118,8 +151,8 @@ class SyncPerformanceTest(SyncBaseTest):
             caseblocks.append(CaseBlock(
                 create=True,
                 case_id=case_id,
-                user_id=USER_ID,
-                owner_id=REFERRED_TO_GROUP,
+                user_id=self.user.user_id,
+                owner_id=self.referral_group._id,
                 case_type=REFERRAL_TYPE,
                 index={'parent': ('child', child_case_id)}
             ).as_xml())

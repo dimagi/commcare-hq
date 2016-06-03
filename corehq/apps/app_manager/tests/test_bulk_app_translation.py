@@ -69,9 +69,6 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         Note: Use upload_raw_excel_translations() instead. It allows easy modifications
         and diffs of xlsx data.
 
-        ToDo: Refactor tests using do_upload to use upload_raw_excel_translations(), use
-        WorkbookJSONReader.work_book_headers_as_tuples(), and
-        WorkbookJSONReader.work_book_data_as_tuples(), for making tuples from excel files
         """
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]
@@ -436,7 +433,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-        self.app.build_langs = self.app.langs = ['en', 'afr', 'fra']
+        self.app.langs = ['en', 'afr', 'fra']
         module1 = self.app.add_module(Module.new_module('module', None))
         form1 = self.app.new_form(module1.id, "Untitled Form", None)
         form1.source = self.get_xml('initial_xform')

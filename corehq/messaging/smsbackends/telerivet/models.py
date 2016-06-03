@@ -1,11 +1,10 @@
-import os
 import requests
-from dimagi.ext.couchdbkit import *
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.telerivet.forms import TelerivetBackendForm
 from django.conf import settings
 from django.db import models
+from requests.exceptions import RequestException
 
 MESSAGE_TYPE_SMS = "sms"
 
@@ -43,6 +42,28 @@ class SQLTelerivetBackend(SQLSMSBackend):
     @classmethod
     def get_form_class(cls):
         return TelerivetBackendForm
+
+    def get_phone_info(self):
+        config = self.config
+        url = ('https://api.telerivet.com/v1/projects/{}/phones/{}'
+               .format(config.project_id, config.phone_id))
+
+        response = requests.post(
+            url,
+            auth=(config.api_key, ''),
+            verify=True,
+            timeout=settings.SMS_GATEWAY_TIMEOUT,
+        )
+
+        return response.json()
+
+    def get_phone_number_or_none(self):
+        try:
+            info = self.get_phone_info()
+        except RequestException:
+            return None
+
+        return info.get('phone_number')
 
     def send(self, msg, *args, **kwargs):
         text = msg.text.encode('utf-8')

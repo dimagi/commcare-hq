@@ -12,7 +12,6 @@ from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, In
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.quickcache import quickcache
-from casexml.apps.case.models import CommCareCase
 from django_prbac.utils import has_privilege
 
 
@@ -226,7 +225,7 @@ def get_verified_number_for_recipient(recipient):
                 for phone in recipient.phone_numbers:
                     if phone in contact_verified_numbers:
                         return contact_verified_numbers[phone]
-                raise Exception("Phone numbers and VerifiedNumbers are out "
+                raise Exception("Phone number list and PhoneNumber entries are out "
                     "of sync for user %s" % recipient.get_id)
             else:
                 raise Exception("Expected a CouchUser")

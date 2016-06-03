@@ -3,6 +3,7 @@ from functools import wraps
 import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
+from corehq import toggles
 from corehq.apps.app_manager.const import (
     APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
@@ -13,7 +14,9 @@ from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
+import collections
 import formtranslate.api
+import re
 
 
 def parse_xml(string):
@@ -40,6 +43,11 @@ namespaces = dict(
     v="{http://commcarehq.org/xforms/vellum}",
     odk="{http://opendatakit.org/xforms}",
 )
+
+HashtagReplacement = collections.namedtuple('HashtagReplacement', 'hashtag replaces')
+hashtag_replacements = [
+    HashtagReplacement(hashtag='#form/', replaces=r'^/data\/'),
+]
 
 
 def _make_elem(tag, attr=None):
@@ -556,6 +564,10 @@ class XForm(WrappedNode):
             xmlns = self.data_node.tag_xmlns
             self.namespaces.update(x="{%s}" % xmlns)
         self.has_casedb = False
+        # A dictionary mapping case types to sets of scheduler case properties
+        # updated by the form
+        self._scheduler_case_updates = defaultdict(set)
+        self._scheduler_case_updates_populated = False
 
     def __str__(self):
         return ET.tostring(self.xml) if self.xml is not None else ''
@@ -599,6 +611,11 @@ class XForm(WrappedNode):
         nodes = self.itext_node.findall('{f}translation/{f}text/{f}value[@form="%s"]' % form)
         return list(set([n.text for n in nodes]))
 
+    @requires_itext(list)
+    def media_references_by_lang(self, lang, form):
+        nodes = self.itext_node.findall('{f}translation[@lang="%s"]/{f}text/{f}value[@form="%s"]' % (lang, form))
+        return list(set([n.text for n in nodes]))
+
     @property
     def odk_intents(self):
         nodes = self.findall('{h}head/{odk}intent')
@@ -619,7 +636,14 @@ class XForm(WrappedNode):
 
     @property
     def video_references(self):
-        return self.media_references(form="video")
+        return self.media_references(form="video") + self.media_references(form="video-inline")
+
+    def all_references(self, lang):
+        images = self.media_references_by_lang(lang=lang, form="image")
+        video = self.media_references_by_lang(lang=lang, form="video")
+        audio = self.media_references_by_lang(lang=lang, form="audio")
+        inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
+        return images + video + audio + inline_video
 
     def set_name(self, new_name):
         title = self.find('{h}head/{h}title')
@@ -826,6 +850,11 @@ class XForm(WrappedNode):
         else:
             return "%s/%s" % (path_context, path)
 
+    def hashtag_path(self, path):
+        for hashtag, replaces in hashtag_replacements:
+            path = re.sub(replaces, hashtag, path)
+        return path
+
     @requires_itext(list)
     def get_languages(self):
         if not self.exists():
@@ -834,7 +863,7 @@ class XForm(WrappedNode):
         return self.translations().keys()
 
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False):
+                      include_groups=False, include_translations=False, form=None):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -851,6 +880,10 @@ class XForm(WrappedNode):
         excluded_paths = set()
 
         control_nodes = self.get_control_nodes()
+        use_hashtags = False
+        if form:
+            use_hashtags = (form.get_app().vellum_case_management
+                           or toggles.VELLUM_RICH_TEXT.enabled(form.get_app().domain))
 
         for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
             excluded_paths.add(path)
@@ -873,6 +906,8 @@ class XForm(WrappedNode):
                 "relevant": relevant,
                 "required": required == "true()"
             }
+            if use_hashtags:
+                question.update({"hashtagValue": self.hashtag_path(path)})
 
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
@@ -907,7 +942,6 @@ class XForm(WrappedNode):
                 except IndexError:
                     matching_repeat_context = None
                 question = {
-                    "label": path,
                     "tag": "hidden",
                     "value": path,
                     "repeat": matching_repeat_context,
@@ -915,6 +949,16 @@ class XForm(WrappedNode):
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                 }
+                if use_hashtags:
+                    hashtag_path = self.hashtag_path(path)
+                    question.update({
+                        "label": hashtag_path,
+                        "hashtagValue": hashtag_path,
+                    })
+                else:
+                    question.update({
+                        "label": path,
+                    })
                 if include_translations:
                     question["translations"] = {}
 
@@ -1497,6 +1541,7 @@ class XForm(WrappedNode):
         self.data_node.append(_make_elem(SCHEDULE_NEXT_DUE))
 
     def create_casexml_2_advanced(self, form):
+        self._scheduler_case_updates_populated = True
         from corehq.apps.app_manager.util import split_path
 
         if not form.actions.get_all_actions():
@@ -1520,6 +1565,7 @@ class XForm(WrappedNode):
                 )
             )
             update_block.append(make_case_elem(SCHEDULE_PHASE))
+            self._add_scheduler_case_update(action.case_type, SCHEDULE_PHASE)
 
             self.add_bind(
                 nodeset=u'/data/{}'.format(SCHEDULE_CURRENT_VISIT_NUMBER),
@@ -1540,6 +1586,7 @@ class XForm(WrappedNode):
                 calculate=u"/data/{}".format(SCHEDULE_CURRENT_VISIT_NUMBER),
             )
             update_block.append(make_case_elem(last_visit_num))
+            self._add_scheduler_case_update(action.case_type, last_visit_num)
 
             last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
             self.add_bind(
@@ -1549,6 +1596,7 @@ class XForm(WrappedNode):
                 relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
             )
             update_block.append(make_case_elem(last_visit_date))
+            self._add_scheduler_case_update(action.case_type, last_visit_date)
 
             self._schedule_global_next_visit_date(form, case)
 
@@ -2113,6 +2161,17 @@ class XForm(WrappedNode):
                 case_block.add_close_block(relevance)
                 self.data_node.append(case_block.elem)
 
+    def get_scheduler_case_updates(self):
+        """
+        Return a dictionary where each key is a case type and each value is a
+        set of case properties that this form updates on account of the scheduler module.
+        """
+        if not self._scheduler_case_updates_populated:
+            raise Exception('Scheduler case updates have not yet been populated')
+        return self._scheduler_case_updates
+
+    def _add_scheduler_case_update(self, case_type, case_property):
+        self._scheduler_case_updates[case_type].add(case_property)
 
 VELLUM_TYPES = {
     "AndroidIntent": {

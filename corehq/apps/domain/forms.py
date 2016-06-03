@@ -25,7 +25,7 @@ from django.contrib.sites.models import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
-    ImageField)
+    ImageField, IntegerField)
 from django.forms.widgets import  Select
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
@@ -49,6 +49,7 @@ from corehq.apps.accounting.models import (
     PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
+    SoftwarePlanVersion,
     Subscription,
     SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
@@ -58,7 +59,11 @@ from corehq.apps.accounting.models import (
     FundingSource
 )
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
-from corehq.apps.accounting.utils import domain_has_privilege, log_accounting_error
+from corehq.apps.accounting.utils import (
+    domain_has_privilege,
+    get_privileges,
+    log_accounting_error,
+)
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
@@ -70,7 +75,11 @@ from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
 from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
-from corehq.feature_previews import CALLCENTER
+from corehq.privileges import (
+    REPORT_BUILDER_5,
+    REPORT_BUILDER_ADD_ON_PRIVS,
+    REPORT_BUILDER_TRIAL,
+)
 from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
@@ -523,7 +532,8 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.domain = kwargs.pop('domain', None)
+        self.project = kwargs.pop('domain', None)
+        self.domain = self.project.name
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -547,8 +557,8 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['logo']
             del self.fields['delete_logo']
 
-        if self.domain:
-            if not CALLCENTER.enabled(self.domain):
+        if self.project:
+            if not self.project.call_center_config.enabled:
                 del self.fields['call_center_enabled']
                 del self.fields['call_center_type']
                 del self.fields['call_center_case_owner']
@@ -670,12 +680,9 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
     )
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        domain = kwargs.get('domain', None)
         super(DomainMetadataForm, self).__init__(*args, **kwargs)
 
-        project = Domain.get_by_name(domain)
-        if project.cloudcare_releases == 'default' or not domain_has_privilege(domain, privileges.CLOUDCARE):
+        if self.project.cloudcare_releases == 'default' or not domain_has_privilege(self.domain, privileges.CLOUDCARE):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']
@@ -868,6 +875,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text=ugettext_lazy("This app aims to improve the supply of goods and materials")
     )
+    performance_threshold = IntegerField(
+        label=ugettext_noop("Performance Threshold"),
+        required=False,
+        help_text=ugettext_lazy(
+            'The number of forms submitted per month for a user to count as "performing well". '
+            'The default value is 15.'
+        )
+    )
 
     def __init__(self, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -908,6 +923,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'business_unit',
                 'countries',
                 'commtrack_domain',
+                'performance_threshold',
                 crispy.Div(*additional_fields),
             ),
             crispy.Fieldset(
@@ -948,6 +964,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             notes=self.cleaned_data['notes'],
             phone_model=self.cleaned_data['phone_model'],
             commtrack_domain=self.cleaned_data['commtrack_domain'] == 'true',
+            performance_threshold=self.cleaned_data['performance_threshold'],
             business_unit=self.cleaned_data['business_unit'],
             **kwargs
         )
@@ -1177,7 +1194,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             'phone_number'
         ]
 
-        if is_ops_user:
+        if is_ops_user and self.initial.get('email_list'):
             fields.insert(4, crispy.Div(
                 crispy.Div(
                     css_class='col-sm-3 col-md-2'
@@ -1914,9 +1931,24 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain, edition=self.cleaned_data['software_plan_edition'],
-        )
+        new_plan_version = None
+        edition = self.cleaned_data['software_plan_edition']
+        for plan_version in SoftwarePlanVersion.objects.filter(plan__edition=edition).order_by('-date_created'):
+            privileges = get_privileges(plan_version)
+            if (
+                REPORT_BUILDER_5 in privileges
+                and not (REPORT_BUILDER_ADD_ON_PRIVS - REPORT_BUILDER_5 - REPORT_BUILDER_TRIAL) & privileges
+            ):
+                new_plan_version = plan_version
+                break
+        if not new_plan_version:
+            log_accounting_error(
+                "CommCare %s edition with privilege REPORT_BUILDER_5 was not found! Requires manual setup."
+                % edition
+            )
+            new_plan_version = DefaultProductPlan.get_default_plan_by_domain(
+                self.domain, edition=self.cleaned_data['software_plan_edition'],
+            )
 
         if (
             self.current_subscription

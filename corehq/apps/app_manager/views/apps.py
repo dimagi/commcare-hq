@@ -3,8 +3,7 @@ import json
 from collections import defaultdict
 from StringIO import StringIO
 
-from django.core.cache import cache
-from django.utils.translation import ugettext as _, get_language
+from django.utils.translation import ugettext as _
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
@@ -41,12 +40,10 @@ from corehq.util.compression import decompress
 from corehq.apps.app_manager.xform import (
     XFormException, XForm)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
-from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
 from couchexport.export import FormattedRow
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.web import json_response, json_request
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import (
@@ -365,16 +362,6 @@ def import_app(request, domain, template="app_manager/import_app.html"):
 @require_deploy_apps
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
-    # redirect old m=&f= urls
-    module_id = request.GET.get('m', None)
-    form_id = request.GET.get('f', None)
-    if module_id or form_id:
-        soft_assert('{}@{}'.format('skelly', 'dimagi.com')).call(
-            False, 'old m=&f= url still in use'
-        )
-        return back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                            form_id=form_id)
-
     return view_generic(request, domain, app_id)
 
 
@@ -458,7 +445,7 @@ def edit_app_langs(request, domain, app_id):
     """
     app = get_app(domain, app_id)
     try:
-        langs, rename, build = validate_langs(request, app.langs)
+        langs, rename = validate_langs(request, app.langs)
     except AssertionError:
         return HttpResponse(status=400)
 
@@ -467,13 +454,22 @@ def edit_app_langs(request, domain, app_id):
         if old != new:
             app.rename_lang(old, new)
 
+    #remove deleted languages from build profiles
+    new_langs = set(langs)
+    deleted = [lang for lang in app.langs if lang not in new_langs]
+    for id in app.build_profiles:
+        for lang in deleted:
+            try:
+                app.build_profiles[id].langs.remove(lang)
+            except ValueError:
+                pass
+
     def replace_all(list1, list2):
         if list1 != list2:
             while list1:
                 list1.pop()
             list1.extend(list2)
     replace_all(app.langs, langs)
-    replace_all(app.build_langs, build)
 
     app.save()
     return json_response(langs)

@@ -3,7 +3,6 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
 from casexml.apps.case.const import CASE_ACTION_CLOSE
-from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain
 from casexml.apps.case.mock import CaseBlock
 import uuid
 from xml.etree import ElementTree
@@ -11,9 +10,8 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
-from corehq.apps.hqcase.utils import submit_case_blocks, get_case_by_domain_hq_user_id
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
-from corehq.feature_previews import CALLCENTER
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
@@ -97,7 +95,16 @@ class _UserCaseHelper(object):
         )
         self._submit_case_block(caseblock)
 
-CallCenterCase = namedtuple('CallCenterCase', 'case_id hq_user_id')
+
+class CallCenterCase(namedtuple('CallCenterCase', 'case_id hq_user_id')):
+    @classmethod
+    def from_case(cls, case):
+        if not case:
+            return
+
+        hq_user_id = case.get_case_property('hq_user_id')
+        if hq_user_id:
+            return CallCenterCase(case_id=case.case_id, hq_user_id=hq_user_id)
 
 
 def sync_user_case(commcare_user, case_type, owner_id, case=None):
@@ -170,9 +177,10 @@ def _user_case_changed(case, case_type, close, fields, owner_id):
 
 def sync_call_center_user_case(user):
     domain = user.project
-    if domain and domain.call_center_config.enabled:
+    config = domain.call_center_config
+    if domain and config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user, domain)
-        sync_user_case(user, domain.call_center_config.case_type, owner_id, case)
+        sync_user_case(user, config.case_type, owner_id, case)
 
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
@@ -182,7 +190,9 @@ def _get_call_center_case_and_owner(user, domain):
     """
     Return the appropriate owner id for the given users call center case.
     """
-    case = get_case_by_domain_hq_user_id(user.project.name, user._id, domain.call_center_config.case_type)
+    case = CaseAccessors(domain.name).get_case_by_domain_hq_user_id(
+        user._id, domain.call_center_config.case_type
+    )
     if domain.call_center_config.use_user_location_as_owner:
         owner_id = call_center_location_owner(user, domain.call_center_config.user_location_ancestor_level)
     elif case and case.owner_id:
@@ -233,42 +243,56 @@ def get_call_center_domains():
             'name',
             'default_timezone',
             'call_center_config.case_type',
+            'call_center_config.case_owner_id',
+            'call_center_config.use_user_location_as_owner',
             'call_center_config.use_fixtures'])
         .run()
     )
 
     def to_domain_lite(hit):
         config = hit.get('call_center_config', {})
-        return DomainLite(
-            name=hit['name'],
-            default_timezone=hit['default_timezone'],
-            cc_case_type=config.get('case_type', ''),
-            use_fixtures=config.get('use_fixtures', True)
-        )
-    return [to_domain_lite(hit) for hit in result.hits]
+        case_type = config.get('case_type', None)
+        case_owner_id = config.get('case_owner_id', None)
+        use_user_location_as_owner = config.get('use_user_location_as_owner', None)
+        if case_type and (case_owner_id or use_user_location_as_owner):
+            # see CallCenterProperties.config_is_valid()
+            return DomainLite(
+                name=hit['name'],
+                default_timezone=hit['default_timezone'],
+                cc_case_type=case_type,
+                use_fixtures=config.get('use_fixtures', True)
+            )
+    return filter(None, [to_domain_lite(hit) for hit in result.hits])
 
 
 def get_call_center_cases(domain_name, case_type, user=None):
     all_cases = []
 
-    if user:
-        docs = (doc for owner_id in user.get_owner_ids()
-                for doc in get_open_case_docs_in_domain(domain_name, case_type,
-                                                        owner_id=owner_id))
-    else:
-        docs = get_open_case_docs_in_domain(domain_name, case_type)
+    case_accessor = CaseAccessors(domain_name)
 
-    for case_doc in docs:
-        hq_user_id = case_doc.get('hq_user_id', None)
-        if hq_user_id:
-            all_cases.append(CallCenterCase(
-                case_id=case_doc['_id'],
-                hq_user_id=hq_user_id
-            ))
+    if user:
+        case_ids = [
+            case_id for owner_id in user.get_owner_ids()
+            for case_id in case_accessor.get_open_case_ids_in_domain_by_type(
+                case_type=case_type, owner_id=owner_id
+            )
+        ]
+    else:
+        case_ids = case_accessor.get_open_case_ids_in_domain_by_type(case_type=case_type)
+
+    for case in case_accessor.iter_cases(case_ids):
+        cc_case = CallCenterCase.from_case(case)
+        if cc_case:
+            all_cases.append(cc_case)
     return all_cases
 
 
 @quickcache(['domain'])
 def get_call_center_case_type_if_enabled(domain):
-    if CALLCENTER.enabled(domain):
-        return Domain.get_by_name(domain).call_center_config.case_type
+    domain_object = Domain.get_by_name(domain)
+    if not domain_object:
+        return
+
+    config = domain_object.call_center_config
+    if config.enabled and config.config_is_valid():
+        return config.case_type

@@ -10,7 +10,11 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_POST, require_http_methods
 
 from couchdbkit import ResourceNotFound
-from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_multiselect,
+)
 from corehq.util.files import file_extention_from_filename
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
@@ -52,6 +56,7 @@ def default(request, domain):
 
 
 class BaseLocationView(BaseDomainView):
+    section_name = ugettext_lazy("Locations")
 
     @method_decorator(locations_access_required)
     def dispatch(self, request, *args, **kwargs):
@@ -110,8 +115,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     template_name = "custom_data_fields/custom_data_fields.html"
 
     @method_decorator(is_locations_admin)
-    @use_bootstrap3
-    @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
@@ -269,7 +272,7 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_bootstrap3
-    @use_jquery_ui
+    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -481,9 +484,11 @@ class EditLocationView(NewLocationView):
         form = MultipleSelectionForm(
             initial={'selected_ids': self.products_at_location},
             submit_label=_("Update Product List"),
+            fieldset_title=_("Specify Products Per Location"),
             prefix="products",
         )
         form.fields['selected_ids'].choices = self.active_products
+        form.fields['selected_ids'].label = _("Products at Location")
         return form
 
     @property
@@ -494,6 +499,7 @@ class EditLocationView(NewLocationView):
             location=self.location,
             data=self.request.POST if self.request.method == "POST" else None,
             submit_label=_("Update Users at this Location"),
+            fieldset_title=_("Specify Workers at this Location"),
             prefix="users",
         )
         return form
@@ -699,7 +705,7 @@ class LocationImportView(BaseLocationView):
 
 @locations_access_required
 def location_importer_job_poll(request, domain, download_id,
-                               template="style/bootstrap3/partials/download_status.html"):
+                               template="style/partials/download_status.html"):
     try:
         context = get_download_context(download_id, check_state=True)
     except TaskFailedError:

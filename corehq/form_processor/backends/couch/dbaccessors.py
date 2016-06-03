@@ -2,7 +2,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
 from casexml.apps.case.dbaccessors import get_extension_case_ids, \
-    get_indexed_case_ids, get_all_reverse_indices_info
+    get_indexed_case_ids, get_all_reverse_indices_info, get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.stock.models import StockTransaction
@@ -29,7 +29,7 @@ from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
     get_form_ids_for_user,
-    get_forms_by_id)
+    get_forms_by_id, get_form_ids_by_type)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
@@ -59,7 +59,7 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
-        pass
+        return get_form_ids_by_type(domain, type_)
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
@@ -127,12 +127,16 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids, closed=closed)
 
     @staticmethod
-    def get_open_case_ids(domain, owner_id):
+    def get_open_case_ids_for_owner(domain, owner_id):
         return get_open_case_ids(domain, owner_id)
 
     @staticmethod
-    def get_closed_case_ids(domain, owner_id):
+    def get_closed_case_ids_for_owner(domain, owner_id):
         return get_closed_case_ids(domain, owner_id)
+
+    @staticmethod
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_id=None):
+        return get_open_case_ids_in_domain(domain, type=case_type, owner_id=owner_id)
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):

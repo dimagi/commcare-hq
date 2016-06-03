@@ -12,6 +12,8 @@ from contextlib import contextmanager
 
 from functools import wraps
 from django.conf import settings
+from django.test.utils import override_settings
+
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
 
@@ -232,6 +234,40 @@ def run_with_multiple_configs(fn, run_configs):
     return inner
 
 
+class OverridableSettingsTestMixin(object):
+    """Backport of core Django functionality to 1.7. Can be removed
+    once Django >= 1.8
+    https://github.com/django/django/commit/d89f56dc4d03f6bf6602536b8b62602ec0d46d2f
+
+    Usage:
+
+      @override_settings(A_SETTING=True)
+      class SomeTests(TestCase, OverridableSettingsTestMixin):
+
+          @classmethod
+          def setUpClass(cls):
+              super(SomeTests, cls).setUpClass()
+              # settings.A_SETTING is True here
+
+          @classmethod
+          def tearDownClass(cls):
+              # teardown stuff
+              # don't forget to call super to undo override_settings
+              super(SomeTests, cls).tearDownClass()
+    """
+    @classmethod
+    def setUpClass(cls):
+        if cls._overridden_settings:
+            cls._cls_overridden_context = override_settings(**cls._overridden_settings)
+            cls._cls_overridden_context.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        if hasattr(cls, '_cls_overridden_context'):
+            cls._cls_overridden_context.disable()
+            delattr(cls, '_cls_overridden_context')
+
+
 class log_sql_output(ContextDecorator):
     """
     Can be used as either a context manager or decorator.
@@ -421,6 +457,23 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
             case.delete()
 
 create_test_case.__test__ = False
+
+
+def teardown(do_teardown):
+    """A decorator that adds teardown logic to a test function/method
+
+    NOTE this will not work for nose test generator functions.
+    """
+    def decorate(func):
+        @wraps(func)
+        def wrapper(*args, **kw):
+            try:
+                res = func(*args, **kw)
+                assert res is None, "{} returned value {!r}".format(func, res)
+            finally:
+                do_teardown(*args, **kw)
+        return wrapper
+    return decorate
 
 
 def set_parent_case(domain, child_case, parent_case):

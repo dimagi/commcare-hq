@@ -10,6 +10,8 @@ from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.userreports.sql import get_table_name
 from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
+from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.style import crispy as hqcrispy
 
 
 class DocumentFormBase(forms.Form):
@@ -59,6 +61,37 @@ class ConfigurableReportEditForm(DocumentFormBase):
     def __init__(self, domain, instance=None, read_only=False, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, read_only, *args, **kwargs)
         self.fields['config_id'] = ReportDataSourceField(domain=domain)
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = '#'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-9'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Report Configuration"),
+                'config_id',
+                'title',
+                'visible',
+                'description',
+                'aggregation_columns',
+                'filters',
+                'columns',
+                'configured_charts',
+                'sort_expression',
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save Changes"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+            ),
+        )
 
     def clean_visible(self):
         return self.cleaned_data['visible'] == 'True'
@@ -117,6 +150,38 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 ('Location', _('locations'))
             )
             self.fields['referenced_doc_type'].choices = choices
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = '#'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-9'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Edit Data Source"),
+                'table_id',
+                'referenced_doc_type',
+                'display_name',
+                'description',
+                'base_item_expression',
+                'configured_filter',
+                'configured_indicators',
+                'named_expressions',
+                'named_filters',
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save Changes"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+            ),
+        )
+
+
 
     def clean_table_id(self):
         # todo: validate table_id as [a-z][a-z0-9_]*
@@ -165,8 +230,24 @@ class ConfigurableDataSourceFromAppForm(forms.Form):
         self.fields.update(report_source_fields)
         self.helper = FormHelper()
         self.helper.form_id = "data-source-config"
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = '#'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-9'
+
         self.helper.layout = crispy.Layout(
-            crispy.Div(
-                *report_source_fields.keys() + [Submit('submit', _('Save Changes'))]
-            )
+            crispy.Fieldset(
+                _("Create Data Source from Application"),
+                *report_source_fields.keys()
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Create Data Source"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+            ),
         )

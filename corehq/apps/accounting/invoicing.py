@@ -3,7 +3,7 @@ import datetime
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import F, Q, Min, Max
+from django.db.models import F, Q, Min, Max, Sum
 from django.utils.translation import ugettext as _, ungettext
 
 from dimagi.utils.decorators.memoized import memoized
@@ -39,7 +39,7 @@ class DomainInvoiceFactory(object):
     This handles all the little details when generating an Invoice.
     """
 
-    def __init__(self, date_start, date_end, domain):
+    def __init__(self, date_start, date_end, domain, recipients=None):
         """
         The Invoice generated will always be for the month preceding the
         invoicing_date.
@@ -49,6 +49,7 @@ class DomainInvoiceFactory(object):
         self.date_start = date_start
         self.date_end = date_end
         self.domain = ensure_domain_instance(domain)
+        self.recipients = recipients
         self.logged_throttle_error = False
         if self.domain is None:
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
@@ -144,7 +145,7 @@ class DomainInvoiceFactory(object):
             record = BillingRecord.generate_record(invoice)
         if record.should_send_email:
             try:
-                record.send_email()
+                record.send_email(contact_emails=self.recipients)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
                     log_accounting_error(e.message)
@@ -366,11 +367,6 @@ class LineItemFactory(object):
             raise LineItemError("No domain could be obtained as the subscriber.")
         return [self.subscription.subscriber.domain]
 
-    @property
-    @memoized
-    def line_item_details(self):
-        return []
-
     def create(self):
         line_item = LineItem(
             invoice=self.invoice,
@@ -517,14 +513,18 @@ class SmsLineItemFactory(FeatureLineItemFactory):
 
         sms_count = 0
         for billable in self.sms_billables:
-            sms_count += 1
+            sms_count += billable.multipart_count
             if sms_count <= self.rate.monthly_limit:
                 # don't count fees until the free monthly limit is exceeded
                 continue
-            if billable.usage_fee:
-                total_excess += billable.usage_fee.amount
-            if billable.gateway_fee:
-                total_excess += billable.gateway_charge
+            else:
+                total_message_charge = billable.gateway_charge + billable.usage_charge
+                num_parts_over_limit = sms_count - self.rate.monthly_limit
+                already_over_limit = num_parts_over_limit >= billable.multipart_count
+                if already_over_limit:
+                    total_excess += total_message_charge
+                else:
+                    total_excess += total_message_charge * num_parts_over_limit / billable.multipart_count
         return Decimal("%.2f" % round(total_excess, 2))
 
     @property
@@ -581,7 +581,7 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     @property
     @memoized
     def num_sms(self):
-        return self.sms_billables_queryset.count()
+        return self.sms_billables_queryset.aggregate(Sum('multipart_count'))['multipart_count__sum'] or 0
 
     @property
     @memoized
@@ -590,16 +590,3 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             return True
         else:
             return self.num_sms <= self.rate.monthly_limit
-
-    @property
-    def line_item_details(self):
-        details = []
-        for billable in self.sms_billables:
-            gateway_api = billable.gateway_fee.criteria.backend_api_id if billable.gateway_fee else "custom"
-            gateway_fee = billable.gateway_charge
-            usage_fee = billable.usage_fee.amount if billable.usage_fee else Decimal('0.0')
-            total_fee = gateway_fee + usage_fee
-            details.append(
-                [billable.phone_number, billable.direction, gateway_api, total_fee]
-            )
-        return details

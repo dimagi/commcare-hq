@@ -1,5 +1,9 @@
 {% extends login_template %}
 
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
+
 {% block login-content %}
     <div class="row">
         {% block registration-content %}

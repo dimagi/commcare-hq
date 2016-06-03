@@ -4,6 +4,7 @@ from collections import namedtuple
 import time
 
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -15,7 +16,6 @@ from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
 from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
-from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'test-case-accessor'
 CaseTransactionTrace = namedtuple('CaseTransactionTrace', 'form_id include')
@@ -47,7 +47,7 @@ class CaseAccessorTestsSQL(TestCase):
         case2 = _create_case()
 
         cases = CaseAccessorSQL.get_cases(['missing_case'])
-        self.assertEqual([], cases)
+        self.assertEqual(0, len(cases))
 
         cases = CaseAccessorSQL.get_cases([case1.case_id])
         self.assertEqual(1, len(cases))
@@ -437,7 +437,7 @@ class CaseAccessorTestsSQL(TestCase):
         case2.closed = True
         CaseAccessorSQL.save_case(case2)
 
-        self.assertEqual(CaseAccessorSQL.get_open_case_ids(DOMAIN, "user1"), [case1.case_id])
+        self.assertEqual(CaseAccessorSQL.get_open_case_ids_for_owner(DOMAIN, "user1"), [case1.case_id])
 
     def test_get_closed_case_ids(self):
         case1 = _create_case(user_id="user1")
@@ -446,7 +446,20 @@ class CaseAccessorTestsSQL(TestCase):
         case2.closed = True
         CaseAccessorSQL.save_case(case2)
 
-        self.assertEqual(CaseAccessorSQL.get_closed_case_ids(DOMAIN, "user1"), [case2.case_id])
+        self.assertEqual(CaseAccessorSQL.get_closed_case_ids_for_owner(DOMAIN, "user1"), [case2.case_id])
+
+    def test_get_open_case_ids_in_domain_by_type(self):
+        case1 = _create_case(user_id="user1", case_type='t1')
+        case2 = _create_case(user_id="user1", case_type='t1')
+        _create_case(user_id="user1", case_type='t1', closed=True)
+        _create_case(user_id="user2", case_type='t1')
+        _create_case(user_id="user1", case_type='t2')
+
+        case_ids = CaseAccessorSQL.get_open_case_ids_in_domain_by_type(DOMAIN, 't1', "user1")
+        self.assertEqual(
+            set(case_ids),
+            {case1.case_id, case2.case_id}
+        )
 
     def test_get_case_ids_modified_with_owner_since(self):
         case1 = _create_case(user_id="user1")

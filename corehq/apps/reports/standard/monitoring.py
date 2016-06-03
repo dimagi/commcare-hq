@@ -907,7 +907,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 
             for form in self.all_relevant_forms.values():
                 xmlnss.append(form['xmlns'])
-                app_ids.append(form['app_id'])
+                if form['app_id']:
+                    app_ids.append(form['app_id'])
                 form_map[form['xmlns']] = form['name']
 
             paged_result = get_forms(
@@ -1271,7 +1272,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @staticmethod
     def _html_anchor_tag(href, value):
-        return '<a href="{}" target="_blank">{}</a>'.format(href, value)
+        return u'<a href="{}" target="_blank">{}</a>'.format(href, value)
 
     @staticmethod
     def _make_url(base_url, params):
@@ -1355,7 +1356,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         url = self._make_url(base_url, params)
 
         return util.format_datatables_data(
-            self._html_anchor_tag(url, group_name.encode('utf-8')),
+            self._html_anchor_tag(url, group_name),
             group_name,
         )
 
@@ -1495,12 +1496,12 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
 
         return WorkerActivityReportData(
-            avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan, self.user_ids),
-            submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan, self.user_ids),
-            active_cases_by_owner=get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types, self.user_ids),
-            total_cases_by_owner=get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types, self.user_ids),
-            cases_closed_by_user=get_case_counts_closed_by_user(self.domain, self.datespan, self.case_types, self.user_ids),
-            cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types, self.user_ids),
+            avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),
+            submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan),
+            active_cases_by_owner=get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types),
+            total_cases_by_owner=get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types),
+            cases_closed_by_user=get_case_counts_closed_by_user(self.domain, self.datespan, self.case_types),
+            cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types),
         )
 
     def _total_row(self, rows, report_data):

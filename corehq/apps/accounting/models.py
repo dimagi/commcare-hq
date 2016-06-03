@@ -65,6 +65,7 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -137,13 +138,11 @@ class SoftwarePlanEdition(object):
         (RESELLER, RESELLER),
         (MANAGED_HOSTING, MANAGED_HOSTING),
     )
-    ORDER = [
+    SELF_SERVICE_ORDER = [
         COMMUNITY,
         STANDARD,
         PRO,
         ADVANCED,
-        RESELLER,
-        MANAGED_HOSTING,
     ]
 
 
@@ -513,7 +512,7 @@ class BillingContactInfo(models.Model):
     )
     # TODO - replace with models.ArrayField once django >= 1.9
     email_list = jsonfield.JSONField(
-        default=[],
+        default=list,
         verbose_name=_("Contact Emails"),
         help_text=_("We will email communications regarding your account "
                     "to the emails specified here.")
@@ -762,11 +761,11 @@ class DefaultProductPlan(models.Model):
     @classmethod
     def get_lowest_edition_by_domain(cls, domain, requested_privileges,
                                      return_plan=False):
-        for edition in SoftwarePlanEdition.ORDER:
+        for edition in SoftwarePlanEdition.SELF_SERVICE_ORDER:
             plan_version = cls.get_default_plan_by_domain(
                 domain, edition=edition
             )
-            privileges = get_privileges(plan_version)
+            privileges = get_privileges(plan_version) - REPORT_BUILDER_ADD_ON_PRIVS
             if privileges.issuperset(requested_privileges):
                 return (plan_version if return_plan
                         else plan_version.plan.edition)
@@ -1017,7 +1016,8 @@ class Subscription(models.Model):
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
     no_invoice_reason = models.CharField(blank=True, null=True, max_length=256)
-    do_not_email = models.BooleanField(default=False)
+    do_not_email_invoice = models.BooleanField(default=False)
+    do_not_email_reminder = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
     service_type = models.CharField(
@@ -1039,6 +1039,7 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
 
     objects = SubscriptionManager()
+    api_objects = Manager()
 
     class Meta:
         app_label = 'accounting'
@@ -1178,8 +1179,8 @@ class Subscription(models.Model):
 
     def update_subscription(self, date_start, date_end,
                             date_delay_invoicing=None, do_not_invoice=None,
-                            no_invoice_reason=None, do_not_email=None,
-                            salesforce_contract_id=None,
+                            no_invoice_reason=None, do_not_email_invoice=None,
+                            do_not_email_reminder=None, salesforce_contract_id=None,
                             auto_generate_credits=None,
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None):
@@ -1193,7 +1194,8 @@ class Subscription(models.Model):
         self._update_properties(
             do_not_invoice=do_not_invoice,
             no_invoice_reason=no_invoice_reason,
-            do_not_email=do_not_email,
+            do_not_email_invoice=do_not_email_invoice,
+            do_not_email_reminder=do_not_email_reminder,
             auto_generate_credits=auto_generate_credits,
             salesforce_contract_id=salesforce_contract_id,
             service_type=service_type,
@@ -1233,7 +1235,8 @@ class Subscription(models.Model):
         property_names = {
             'do_not_invoice',
             'no_invoice_reason',
-            'do_not_email',
+            'do_not_email_invoice',
+            'do_not_email_reminder',
             'auto_generate_credits',
             'salesforce_contract_id',
             'service_type',
@@ -1477,7 +1480,7 @@ class Subscription(models.Model):
 
             billing_contact_emails = self.account.billingcontactinfo.email_list
             if not billing_contact_emails:
-                raise SubscriptionReminderError(
+                log_accounting_error(
                     "Billing account %d doesn't have any contact emails" % self.account.id
                 )
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
@@ -1705,7 +1708,6 @@ class InvoiceBaseManager(models.Manager):
 
 class InvoiceBase(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
-    date_received = models.DateField(blank=True, db_index=True, null=True)
     is_hidden = models.BooleanField(default=False)
     tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
@@ -2193,8 +2195,8 @@ class BillingRecord(BillingRecordBase):
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
                             subscription.service_type == SubscriptionType.IMPLEMENTATION)
         hidden = self.invoice.is_hidden
-        do_not_email = self.invoice.subscription.do_not_email
-        return not (autogenerate or small_contracted or hidden or do_not_email)
+        do_not_email_invoice = self.invoice.subscription.do_not_email_invoice
+        return not (autogenerate or small_contracted or hidden or do_not_email_invoice)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month

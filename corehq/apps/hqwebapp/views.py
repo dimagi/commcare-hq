@@ -16,7 +16,6 @@ from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
-from django.core.cache import InvalidCacheBackendError
 from django.core.mail.message import EmailMessage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404,\
@@ -35,23 +34,19 @@ from django.views.generic import TemplateView
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
-from restkit import Resource
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
-from soil import heartbeat, DownloadBase
+from soil import DownloadBase
 from soil import views as soil_views
 
 from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
@@ -59,6 +54,7 @@ from corehq.apps.dropbox.decorators import require_dropbox_session
 from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
+from corehq.apps.hqadmin import service_checks as checks
 from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -67,90 +63,17 @@ from corehq.apps.reports.util import is_mobile_worker_with_report_access
 from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
 
 
-def pg_check():
-    """check django db"""
-    try:
-        a_user = User.objects.all()[:1].get()
-    except:
-        a_user = None
-    return (a_user is not None, None)
-
-
-def couch_check():
-    """Confirm CouchDB is up and running, by hitting an arbitrary view."""
-    try:
-        results = Application.view('app_manager/builds_by_date', limit=1).all()
-    except Exception:
-        return False, None
-    else:
-        return isinstance(results, list), None
-
-
 def is_deploy_in_progress():
     cache = get_redis_default_cache()
     return cache.get(DEPLOY_IN_PROGRESS_FLAG) is not None
-
-
-def celery_check():
-    try:
-        from celery import Celery
-        from django.conf import settings
-        app = Celery()
-        app.config_from_object(settings)
-        i = app.control.inspect()
-        ping = i.ping()
-        if not ping:
-            chk = (False, 'No running Celery workers were found.')
-        else:
-            chk = (True, None)
-    except IOError as e:
-        chk = (False, "Error connecting to the backend: " + str(e))
-    except ImportError as e:
-        chk = (False, str(e))
-
-    return chk
-
-
-def hb_check():
-    celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
-    if celery_monitoring:
-        try:
-            cresource = Resource(celery_monitoring, timeout=3)
-            t = cresource.get("api/workers", params_dict={'status': True}).body_string()
-            all_workers = json.loads(t)
-            bad_workers = []
-            for hostname, status in all_workers.items():
-                if not status:
-                    bad_workers.append('* {} celery worker down'.format(hostname))
-            if bad_workers:
-                return (False, '\n'.join(bad_workers))
-            else:
-                hb = heartbeat.is_alive()
-        except Exception:
-            hb = False
-    else:
-        try:
-            hb = heartbeat.is_alive()
-        except Exception:
-            hb = False
-    return (hb, None)
-
-
-def redis_check():
-    try:
-        redis = cache.caches['redis']
-        result = redis.set('serverup_check_key', 'test')
-    except (InvalidCacheBackendError, ValueError):
-        result = True  # redis not in use, ignore
-    except:
-        result = False
-    return (result, None)
 
 
 def server_error(request, template_name='500.html'):
@@ -287,28 +210,23 @@ def server_up(req):
     checkers = {
         "heartbeat": {
             "always_check": False,
-            "message": "* celery heartbeat is down",
-            "check_func": hb_check
+            "check_func": checks.check_heartbeat,
         },
         "celery": {
             "always_check": True,
-            "message": "* celery is down",
-            "check_func": celery_check
+            "check_func": checks.check_celery,
         },
         "postgres": {
             "always_check": True,
-            "message": "* postgres has issues",
-            "check_func": pg_check
+            "check_func": checks.check_postgres,
         },
         "couch": {
             "always_check": True,
-            "message": "* couch has issues",
-            "check_func": couch_check
+            "check_func": checks.check_couch,
         },
         "redis": {
             "always_check": True,
-            "message": "* redis has issues",
-            "check_func": redis_check
+            "check_func": checks.check_redis,
         },
     }
 
@@ -316,13 +234,15 @@ def server_up(req):
     message = ['Problems with HQ (%s):' % os.uname()[1]]
     for check, check_info in checkers.items():
         if check_info['always_check'] or req.GET.get(check, None) is not None:
-            check_results, custom_msg = check_info['check_func']()
-            if not check_results:
+            try:
+                status = check_info['check_func']()
+            except Exception:
+                # Don't display the exception message
+                status = checks.ServiceStatus(False, "{} has issues".format(check))
+            if not status.success:
                 failed = True
-                if custom_msg:
-                    message.append(custom_msg)
-                else:
-                    message.append(check_info['message'])
+                message.append(status.msg)
+
     if failed and not is_deploy_in_progress():
         create_datadog_event(
             'Serverup check failed', '\n'.join(message),
@@ -655,31 +575,32 @@ def bug_report(req):
     return HttpResponse()
 
 
-def render_static(request, template):
+def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "style/bootstrap2/blank.html", {'tmpl': template})
+    return render(request, "style/blank.html",
+                  {'tmpl': template, 'page_name': page_name})
 
 
 def eula(request):
-    return render_static(request, "eula.html")
+    return render_static(request, "eula.html", _("End User License Agreement"))
 
 
 def cda(request):
-    return render_static(request, "cda.html")
+    return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
 
 def apache_license(request):
-    return render_static(request, "apache_license.html")
+    return render_static(request, "apache_license.html", _("Apache License"))
 
 
 def bsd_license(request):
-    return render_static(request, "bsd_license.html")
+    return render_static(request, "bsd_license.html", _("BSD License"))
 
 
 def product_agreement(request):
-    return render_static(request, "product_agreement.html")
+    return render_static(request, "product_agreement.html", _("Product Subscription Agreement"))
 
 
 def unsubscribe(request, user_id):

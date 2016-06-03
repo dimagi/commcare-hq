@@ -6,13 +6,14 @@ from requests import ConnectionError
 from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import DocTestMixin, trap_extra_setup
-from couchforms.analytics import domain_has_submission_in_last_30_days, \
-    get_number_of_forms_per_domain, get_number_of_forms_in_domain, \
-    get_first_form_submission_received, get_last_form_submission_received, \
-    app_has_been_submitted_to_in_last_30_days, update_analytics_indexes, \
-    get_username_in_last_form_user_id_submitted, get_all_user_ids_submitted, \
-    get_all_xmlns_app_id_pairs_submitted_to_in_domain, \
-    get_form_analytics_metadata, get_exports_by_form
+from couchforms.analytics import (
+    domain_has_submission_in_last_30_days,
+    get_number_of_forms_per_domain, get_number_of_forms_in_domain,
+    get_first_form_submission_received, get_last_form_submission_received,
+    app_has_been_submitted_to_in_last_30_days, update_analytics_indexes,
+    get_all_xmlns_app_id_pairs_submitted_to_in_domain,
+    get_form_analytics_metadata, get_exports_by_form,
+)
 from couchforms.models import XFormInstance, XFormError
 from pillowtop.es_utils import completely_initialize_pillow_index
 
@@ -76,15 +77,6 @@ class CouchformsAnalyticsTest(TestCase, DocTestMixin):
         self.assertEqual(
             app_has_been_submitted_to_in_last_30_days(self.domain, self.app_id),
             True)
-
-    def test_get_username_in_last_form_user_id_submitted(self):
-        self.assertEqual(
-            get_username_in_last_form_user_id_submitted(self.domain, self.user_id),
-            'francis')
-
-    def test_get_all_user_ids_submitted(self):
-        self.assertEqual(
-            get_all_user_ids_submitted(self.domain), {self.user_id})
 
     def test_get_all_xmlns_app_id_pairs_submitted_to_in_domain(self):
         self.assertEqual(

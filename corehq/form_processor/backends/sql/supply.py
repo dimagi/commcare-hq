@@ -38,4 +38,4 @@ class SupplyPointSQL(AbstractSupplyInterface):
 
     @staticmethod
     def get_supply_points(supply_point_ids):
-        return CaseAccessorSQL.get_cases(supply_point_ids)
+        return list(CaseAccessorSQL.get_cases(supply_point_ids))

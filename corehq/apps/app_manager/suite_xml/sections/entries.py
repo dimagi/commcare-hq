@@ -8,11 +8,11 @@ from corehq.apps.app_manager.exceptions import (
     SuiteValidationError)
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
-    CAREPLAN_GOAL, CAREPLAN_TASK, RETURN_TO, USERCASE_ID, USERCASE_TYPE, )
+    CAREPLAN_GOAL, CAREPLAN_TASK, USERCASE_ID, USERCASE_TYPE, )
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.app_manager.xform import autoset_owner_id_for_open_case, \
-    autoset_owner_id_for_subcase
+    autoset_owner_id_for_subcase, autoset_owner_id_for_advanced_action
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
     CaseTypeXpath, ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
     interpolate_xpath
@@ -20,6 +20,10 @@ from corehq.apps.app_manager.suite_xml.xml_models import *
 
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action')):
+
+    @property
+    def is_new_case_id(self):
+        return self.datum.function == 'uuid()'
 
     def __repr__(self):
         return 'FormDataumMeta(datum=<SessionDatum(id={})>, case_type={}, requires_selection={}, action={})'.format(
@@ -438,7 +442,7 @@ class EntriesHelper(object):
         def case_sharing_requires_assertion(form):
             actions = form.actions.open_cases
             for action in actions:
-                if 'owner_id' in action.case_properties:
+                if autoset_owner_id_for_advanced_action(action):
                     return True
             return False
 

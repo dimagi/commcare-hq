@@ -2,7 +2,9 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
-from casexml.apps.case.cleanup import claim_case
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
@@ -55,6 +57,7 @@ def search(request, domain):
     search_es = (CaseSearchES()
                  .domain(domain)
                  .case_type(case_type)
+                 .is_closed(False)
                  .size(CASE_SEARCH_MAX_RESULTS))
     config = CaseSearchConfig(domain=domain).config
     fuzzies = config.get_fuzzy_properties_for_case_type(case_type)
@@ -67,22 +70,29 @@ def search(request, domain):
     return HttpResponse(fixtures, content_type="text/xml")
 
 
+@csrf_exempt
+@require_POST
 @json_error
 @login_or_digest_or_basic_or_apikey()
 def claim(request, domain):
+    """
+    Allows a user to claim a case that they don't own.
+    """
     couch_user = CouchUser.from_django_user(request.user)
     case_id = request.POST['case_id']
-    if request.method == 'POST':
-        if request.session.get('last_claimed_case_id') == case_id:
-            return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
-                                status=400)
-        try:
-            claim_case(domain, couch_user.user_id, case_id,
-                       host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
-        except CaseNotFound:
-            return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
-                                status=404)
-        request.session['last_claimed_case_id'] = case_id
+    if (
+        request.session.get('last_claimed_case_id') == case_id or
+        get_first_claim(domain, couch_user.user_id, case_id)
+    ):
+        return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
+                            status=409)
+    try:
+        claim_case(domain, couch_user.user_id, case_id,
+                   host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
+    except CaseNotFound:
+        return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
+                            status=410)
+    request.session['last_claimed_case_id'] = case_id
     return HttpResponse(status=200)
 
 
@@ -105,18 +115,23 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None):
     # not a view just a view util
-    if not couch_user.is_commcare_user():
-        return HttpResponse("No linked chw found for %s" % couch_user.username,
-                            status=401)  # Authentication Failure
-    elif domain != couch_user.domain:
+    if couch_user.is_commcare_user() and domain != couch_user.domain:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
                             status=401)
+    elif couch_user.is_web_user() and domain not in couch_user.domains:
+        return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
+                            status=401)
+
+    if couch_user.is_commcare_user():
+        restore_user = couch_user.to_ota_restore_user()
+    elif couch_user.is_web_user():
+        restore_user = couch_user.to_ota_restore_user(domain)
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
-        user=couch_user.to_casexml_user(),
+        restore_user=restore_user,
         params=RestoreParams(
             sync_log_id=since,
             version=version,

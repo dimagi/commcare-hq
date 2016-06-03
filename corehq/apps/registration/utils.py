@@ -116,8 +116,6 @@ def request_new_domain(request, form, is_new_user=True):
                                        dom_req.domain,
                                        dom_req.activation_guid,
                                        request.user.get_full_name())
-    else:
-        send_global_domain_registration_email(request.user, new_domain.name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
     meta = get_meta(request)
@@ -193,47 +191,6 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
         send_html_email_async.delay(subject, recipient, message_html,
                                     text_content=message_plaintext,
                                     email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True)
-    except Exception:
-        logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
-
-
-def send_global_domain_registration_email(requesting_user, domain_name):
-    DNS_name = get_site_domain()
-    registration_link = 'http://' + DNS_name + reverse("domain_homepage", args=[domain_name])
-
-    message_plaintext = u"""
-Hello {name},
-
-You have successfully created and activated the project "{domain}" for the CommCare HQ user "{username}".
-
-You may access your project by following this link: {registration_link}
-
-""" + REGISTRATION_EMAIL_BODY_PLAINTEXT
-
-    message_html = u"""
-<h1>New project "{domain}" created!</h1>
-<p>Hello {name},</p>
-<p>You may now <a href="{registration_link}">visit your newly created project</a> with the CommCare HQ User <strong>{username}</strong>.</p>
-""" + REGISTRATION_EMAIL_BODY_HTML
-
-    params = {
-        "name": requesting_user.first_name,
-        "domain": domain_name,
-        "pricing_link": PRICING_LINK,
-        "registration_link": registration_link,
-        "username": requesting_user.email,
-        "users_link": USERS_LINK,
-        "wiki_link": WIKI_LINK,
-    }
-    message_plaintext = message_plaintext.format(**params)
-    message_html = message_html.format(**params)
-
-    subject = 'CommCare HQ: New project created!'.format(**locals())
-
-    try:
-        send_html_email_async.delay(subject, requesting_user.email, message_html,
-                                    text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 

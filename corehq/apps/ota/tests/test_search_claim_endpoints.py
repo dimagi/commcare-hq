@@ -6,6 +6,7 @@ from django.test import TestCase, Client
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
@@ -26,16 +27,17 @@ CASE_TYPE = 'case'
 OWNER_ID = 'nerc'
 TIMESTAMP = '2016-04-17T10:13:06.588694Z'
 PATTERN = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z'
-# because http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
+# cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
 
 
-class ClaimCaseTests(TestCase):
+class CaseClaimEndpointTests(TestCase):
 
     def setUp(self):
         self.domain = create_domain(DOMAIN)
         self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
         initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
         CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
+        delete_all_cases()
         self.case_id = uuid4().hex
         _, [self.case] = post_case_blocks([CaseBlock(
             create=True,
@@ -48,9 +50,12 @@ class ClaimCaseTests(TestCase):
             update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
         get_case_search_reindexer(DOMAIN).reindex()
+        es = get_es_new()
+        es.indices.refresh(CASE_SEARCH_INDEX)
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
+        self.user.delete()
         self.domain.delete()
 
     @run_with_all_backends
@@ -72,7 +77,7 @@ class ClaimCaseTests(TestCase):
         self.assertEqual(claim.name, CASE_NAME)
 
     @run_with_all_backends
-    def test_duplicate_claim(self):
+    def test_duplicate_client_claim(self):
         """
         Server should not allow the same client to claim the same case more than once
         """
@@ -84,7 +89,25 @@ class ClaimCaseTests(TestCase):
         self.assertEqual(response.status_code, 200)
         # Dup claim
         response = client.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.content, 'You have already claimed that case')
+
+    @run_with_all_backends
+    def test_duplicate_user_claim(self):
+        """
+        Server should not allow the same user to claim the same case more than once
+        """
+        client1 = Client()
+        client1.login(username=USERNAME, password=PASSWORD)
+        url = reverse('claim_case', kwargs={'domain': DOMAIN})
+        # First claim
+        response = client1.post(url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 200)
+        # Dup claim
+        client2 = Client()
+        client2.login(username=USERNAME, password=PASSWORD)
+        response = client2.post(url, {'case_id': self.case_id})
+        self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content, 'You have already claimed that case')
 
     @run_with_all_backends

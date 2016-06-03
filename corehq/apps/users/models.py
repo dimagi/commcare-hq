@@ -1,6 +1,3 @@
-"""
-couch models go here
-"""
 from __future__ import absolute_import
 import copy
 from datetime import datetime
@@ -18,7 +15,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -27,7 +23,6 @@ from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
 
@@ -36,11 +31,10 @@ from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import skippable_quickcache, quickcache
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from casexml.apps.phone.models import User as CaseXMLUser
+from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
@@ -57,9 +51,7 @@ from corehq.apps.sms.mixin import (
     CommCareMobileContactMixin,
     InvalidFormatException,
     PhoneNumberInUseException,
-    VerifiedNumber,
 )
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
@@ -68,7 +60,6 @@ from dimagi.utils.django.database import get_unique_value
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
-from dimagi.utils.parsing import json_format_datetime
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -925,55 +916,39 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return _get_default(self.phone_numbers)
     phone_number = default_phone_number
 
-    def phone_numbers_extended(self, active_user=None):
-        # TODO: what about web users... do we not want to verify phone numbers
-        # for them too? if so, CommCareMobileContactMixin should be on CouchUser,
-        # not CommCareUser
+    def phone_numbers_extended(self, requesting_user):
+        """
+        Returns information about the status of each of this user's phone numbers.
+        requesting_user - The user that is requesting this information (from a view)
+        """
+        from corehq.apps.sms.models import PhoneNumber
+        from corehq.apps.hqwebapp.doc_info import get_object_url
 
-        # hack to work around the above issue
-        if not isinstance(self, CommCareMobileContactMixin):
-            return [{'number': phone, 'status': 'unverified', 'contact': None} for phone in self.phone_numbers]
+        phone_entries = self.get_verified_numbers(True)
 
-        verified = self.get_verified_numbers(True)
+        def get_phone_info(phone):
+            info = {}
+            phone_entry = phone_entries.get(phone)
 
-        def extend_phone(phone):
-            extended_info = {}
-            contact = verified.get(phone)
-            if contact:
-                status = 'verified' if contact.verified else 'pending'
+            if phone_entry:
+                status = 'verified' if phone_entry.verified else 'pending'
             else:
                 try:
                     self.verify_unique_number(phone)
                     status = 'unverified'
                 except PhoneNumberInUseException:
                     status = 'duplicate'
-
-                    duplicate = VerifiedNumber.by_phone(phone, include_pending=True)
-                    assert duplicate is not None, 'expected duplicate VerifiedNumber entry'
-
-                    # TODO seems like this could be a useful utility function? where to put it...
-                    try:
-                        doc_type = {
-                            'CouchUser': 'user',
-                            'CommCareUser': 'user',
-                            'CommCareCase': 'case',
-                        }[duplicate.owner_doc_type]
-                        from corehq.apps.users.views.mobile import EditCommCareUserView
-                        url_ref, doc_id_param = {
-                            'user': (EditCommCareUserView.urlname, 'couch_user_id'),
-                            'case': ('case_details', 'case_id'),
-                        }[doc_type]
-                        dup_url = reverse(url_ref, kwargs={'domain': duplicate.domain, doc_id_param: duplicate.owner_id})
-
-                        if active_user is None or active_user.is_member_of(duplicate.domain):
-                            extended_info['dup_url'] = dup_url
-                    except Exception, e:
-                        pass
+                    if requesting_user.is_member_of(duplicate.domain):
+                        duplicate = PhoneNumber.by_phone(phone, include_pending=True)
+                        info['dup_url'] = get_object_url(duplicate.domain,
+                            duplicate.owner_doc_type, duplicate_owner_id)
                 except InvalidFormatException:
                     status = 'invalid'
-            extended_info.update({'number': phone, 'status': status, 'contact': contact})
-            return extended_info
-        return [extend_phone(phone) for phone in self.phone_numbers]
+
+            info.update({'number': phone, 'status': status})
+            return info
+
+        return [get_phone_info(phone) for phone in self.phone_numbers]
 
     @property
     def couch_id(self):
@@ -1207,6 +1182,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             couch_user.created_on = force_to_datetime(date)
         else:
             couch_user.created_on = datetime.utcnow()
+
+        user_data = kwargs.get('user_data', {})
+        couch_user.user_data = user_data
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1404,12 +1382,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             commcare_user.add_phone_number(phone_number)
 
         device_id = kwargs.get('device_id', '')
-        user_data = kwargs.get('user_data', {})
         # populate the couch user
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
-        commcare_user.user_data = user_data
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
@@ -1511,25 +1487,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_web_user(self):
         return False
 
-    def to_casexml_user(self):
-        user = CaseXMLUser(
-            user_id=self.userID,
-            username=self.raw_username,
-            password=self.password,
-            date_joined=self.date_joined,
-            user_data=self.user_data,
-            domain=self.domain,
-            loadtest_factor=self.loadtest_factor,
-            first_name=self.first_name,
-            last_name=self.last_name,
-            phone_number=self.phone_number,
+    def to_ota_restore_user(self):
+        return OTARestoreCommCareUser(
+            self.domain,
+            self,
+            loadtest_factor=self.loadtest_factor or 1,
         )
-
-        def get_owner_ids():
-            return self.get_owner_ids()
-        user.get_owner_ids = get_owner_ids
-        user._hq_user = self # don't tell anyone that we snuck this here
-        return user
 
     def _get_form_ids(self):
         return FormAccessors(self.domain).get_form_ids_for_user(self.user_id)
@@ -1537,7 +1500,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_case_ids(self):
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
-    def get_owner_ids(self):
+    def get_owner_ids(self, domain=None):
         owner_ids = [self.user_id]
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
@@ -1563,7 +1526,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
 
         for phone_number in self.get_verified_numbers(True).values():
-            phone_number.retire(deletion_id=deletion_id, deletion_date=deletion_date)
+            phone_number.delete()
 
         try:
             django_user = self.get_django_user()
@@ -1692,6 +1655,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.location_id = location.location_id
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.get_domain_membership(self.domain).location_id = location.location_id
         self.save()
 
     def unset_location(self):
@@ -1706,6 +1670,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.location_id = None
         self.clear_location_delegates()
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.get_domain_membership(self.domain).location_id = None
         self.save()
 
     @property
@@ -1939,6 +1904,12 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def is_web_user(self):
         return True
 
+    def to_ota_restore_user(self, domain):
+        return OTARestoreWebUser(
+            domain,
+            self,
+        )
+
     def get_email(self):
         # Do not change the name of this method because this is implementing
         # get_email() from the CommCareMobileContactMixin
@@ -2101,33 +2072,6 @@ class FakeUser(WebUser):
     @property
     def _id(self):
         return "fake-user"
-
-
-class PublicUser(FakeUser):
-    """
-    Public users have read-only access to certain domains
-    """
-
-    domain_memberships = None
-
-    def __init__(self, domain, **kwargs):
-        super(PublicUser, self).__init__(**kwargs)
-        self.domain = domain
-        self.domains = [domain]
-        dm = CustomDomainMembership(domain=domain, is_admin=False)
-        dm.set_permission('view_reports', True)
-        self.domain_memberships = [dm]
-
-    @memoized
-    def get_role(self, domain=None, checking_global_admin=None):
-        assert(domain == self.domain)
-        return super(PublicUser, self).get_role(domain)
-
-    def is_eula_signed(self):
-        return True # hack for public domain so eula modal doesn't keep popping up
-
-    def get_domains(self):
-        return []
 
 
 class InvalidUser(FakeUser):

@@ -122,7 +122,7 @@ class CallCenterProperties(DocumentSchema):
         return self.enabled and self.use_fixtures
 
     def config_is_valid(self):
-        return self.case_owner_id and self.case_type
+        return (self.use_user_location_as_owner or self.case_owner_id) and self.case_type
 
 
 class LicenseAgreement(DocumentSchema):
@@ -148,7 +148,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     initiative = StringListProperty()
     workshop_region = StringProperty()
     project_state = StringProperty(choices=["", "POC", "transition", "at-scale"], default="")
-    self_started = BooleanProperty()
+    self_started = BooleanProperty(default=True)
     area = StringProperty()
     sub_area = StringProperty()
     using_adm = BooleanProperty()
@@ -164,6 +164,7 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     goal_followup_rate = DecimalProperty()
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
+    performance_threshold = IntegerProperty()
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
 
 
@@ -215,7 +216,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     name = StringProperty()
     is_active = BooleanProperty()
-    is_public = BooleanProperty(default=False)
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)

@@ -45,7 +45,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqdomains",
-        "index": "test_hqdomains_20160318_1339",
+        "index": "test_hqdomains_20160531_1131",
         "type": "hqdomain"
     },
     {
@@ -57,6 +57,11 @@ EXPECTED_PROD_INDICES = [
         "alias": "hqusers",
         "index": "test_hqusers_2016-02-16_1402",
         "type": "user"
+    },
+    {
+        "alias": "ledgers",
+        "index": "test_ledgers_2016-03-15",
+        "type": "ledger"
     },
     {
         "alias": "report_cases",

@@ -3,9 +3,12 @@ import os
 import tempfile
 from StringIO import StringIO
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.reports.util import \
+    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
 from corehq.apps.style.decorators import use_bootstrap3, \
     use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from couchexport.shortcuts import export_response
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
@@ -58,6 +61,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     slug = "configurable"
     prefix = slug
     emailable = True
+    is_exportable = True
+    show_filters = True
 
     _domain = None
 
@@ -184,6 +189,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 return self.email_response
             elif kwargs.get('render_as') == 'excel':
                 return self.excel_response
+            elif request.GET.get('format', None) == "export":
+                return self.export_response
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request)
             self.content_type = None
@@ -220,6 +227,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
             'has_report_builder_trial': has_report_builder_trial(self.request),
+            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
         }
         context.update(self.saved_report_context_data)
         context.update(self.pop_report_builder_context_data())
@@ -411,6 +419,13 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         file = StringIO()
         export_from_tables(self.export_table, file, Format.XLS_2007)
         return file
+
+    @property
+    @memoized
+    def export_response(self):
+        temp = StringIO()
+        export_from_tables(self.export_table, temp, Format.XLS_2007)
+        return export_response(temp, Format.XLS_2007, self.title)
 
 
 # Base class for classes that provide custom rendering for UCRs

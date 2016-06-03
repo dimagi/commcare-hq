@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.db import models, migrations
+from django.db import migrations
 
 from corehq.sql_db.config import PartitionConfig
 from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_drop_server_sql, \
@@ -51,15 +51,12 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_case_attachments.sql'),
         migrator.get_migration('get_case_by_id.sql'),
         migrator.get_migration('get_case_by_location_id.sql'),
-        migrator.get_migration('get_case_form_ids.sql'),
-        migrator.get_migration('get_case_ids_in_domain.sql'),
         migrator.get_migration('get_case_indices.sql'),
         migrator.get_migration('get_case_indices_reverse.sql'),
         migrator.get_migration('get_case_transactions.sql'),
         migrator.get_migration('get_cases_by_id.sql'),
         migrator.get_migration('get_form_attachment_by_name.sql'),
         migrator.get_migration('get_form_attachments.sql'),
-        migrator.get_migration('get_form_by_id.sql'),
         migrator.get_migration('delete_all_forms.sql', testing_only=True),
         migrator.get_migration('delete_all_cases.sql', testing_only=True),
         migrator.get_migration('get_form_operations.sql'),

@@ -7,7 +7,6 @@ from corehq.apps.ivr.models import Call
 from corehq.apps.reminders.util import get_unverified_number_for_recipient
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
-from corehq.apps.sms.mixin import VerifiedNumber
 from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
@@ -26,10 +25,8 @@ from django.conf import settings
 from corehq.apps.app_manager.models import Form
 from corehq.apps.ivr.tasks import initiate_outbound_call
 from corehq.form_processor.utils import is_commcarecase
-from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext_noop
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.modules import to_function
 
 TRIAL_MAX_EMAILS = 50
@@ -57,7 +54,7 @@ Each method accepts the following parameters:
                         will be list of CommCareUsers or CommCareCases.
                         
     verified_numbers    A dictionary of recipient.get_id : <first non-pending verified number>
-                        If the recipient doesn't have a verified VerifiedNumber entry, None is the 
+                        If the recipient doesn't have a verified PhoneNumber entry, None is the
                         corresponding value.
 
 Any changes to the reminder object made by the event handler method will be saved
@@ -250,9 +247,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
             for session_id in reminder.xforms_session_ids:
                 session = get_session_by_session_id(session_id)
                 if session.end_time is None:
-                    vn = VerifiedNumber.view("phone_numbers/verified_number_by_owner_id",
-                                             key=session.connection_id,
-                                             include_docs=True).first()
+                    vn = verified_numbers.get(session.connection_id)
                     if vn is not None:
                         metadata = MessageMetadata(
                             workflow=get_workflow(handler),

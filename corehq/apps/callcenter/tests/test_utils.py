@@ -13,7 +13,6 @@ from corehq.apps.callcenter.utils import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.users.models import CommCareUser
 from django.test import TestCase, SimpleTestCase
 
@@ -54,55 +53,61 @@ class CallCenterUtilsTests(TestCase):
     def tearDown(self):
         delete_all_cases()
 
+    @run_with_all_backends
     def test_sync(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEquals(case.name, self.user.username)
-        self.assertEquals(case.username, self.user.raw_username)
-        self.assertIsNotNone(case.language)
-        self.assertIsNotNone(case.phone_number)
+        self.assertEquals(case.get_case_property('username'), self.user.raw_username)
+        self.assertIsNotNone(case.get_case_property('language'))
+        self.assertIsNotNone(case.get_case_property('phone_number'))
 
+    @run_with_all_backends
     def test_sync_full_name(self):
         name = 'Ricky Bowwood'
         self.user.set_full_name(name)
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEquals(case.name, name)
 
+    @run_with_all_backends
     def test_sync_inactive(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
 
         self.user.is_active = False
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertTrue(case.closed)
 
+    @run_with_all_backends
     def test_sync_retired(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
 
         self.user.base_doc += DELETED_SUFFIX
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertTrue(case.closed)
 
+    @run_with_all_backends
     def test_sync_update_update(self):
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEquals(case.name, self.user.username)
 
         name = 'Ricky Bowwood'
         self.user.set_full_name(name)
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertEquals(case.name, name)
 
+    @run_with_all_backends
     def test_sync_custom_user_data(self):
         self.user.user_data = {
             '': 'blank_key',
@@ -114,11 +119,12 @@ class CallCenterUtilsTests(TestCase):
             '._starts_with_punctuation': '0',
         }
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertIsNotNone(case)
-        self.assertEquals(case.blank_val, '')
-        self.assertEquals(case.ok, 'good')
+        self.assertEquals(case.get_case_property('blank_val'), '')
+        self.assertEquals(case.get_case_property('ok'), 'good')
 
+    @run_with_all_backends
     def test_get_call_center_cases_for_user(self):
         factory = CaseFactory(domain=TEST_DOMAIN, case_defaults={
             'user_id': self.user_id,
@@ -138,6 +144,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertEqual(case_ids, set([c1.case_id, c2.case_id]))
         self.assertEqual(user_ids, set([self.user_id]))
 
+    @run_with_all_backends
     def test_get_call_center_cases_all(self):
         factory = CaseFactory(domain=TEST_DOMAIN, case_defaults={
             'user_id': self.user_id,
@@ -153,6 +160,7 @@ class CallCenterUtilsTests(TestCase):
         cases = get_call_center_cases(TEST_DOMAIN, CASE_TYPE)
         self.assertEqual(len(cases), 3)
 
+    @run_with_all_backends
     def test_call_center_not_default_case_owner(self):
         """
         call center case owner should not change on sync
@@ -167,8 +175,11 @@ class CallCenterUtilsTests(TestCase):
             CaseStructure(attrs={'create': True})
         ])
         sync_call_center_user_case(self.user)
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = self._get_user_case()
         self.assertEqual(case.owner_id, cases[0].owner_id)
+
+    def _get_user_case(self):
+        return CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, CASE_TYPE)
 
 
 class CallCenterUtilsUserCaseTests(TestCase):
@@ -339,14 +350,17 @@ class CallCenterDomainTest(SimpleTestCase):
         self.elasticsearch = get_es_new()
         ensure_index_deleted(self.index_info.index)
         initialize_index(self.elasticsearch, self.index_info)
+        import time
+        time.sleep(1)  # without this we get a 503 response about 30% of the time
 
     def tearDown(self):
         ensure_index_deleted(self.index_info.index)
 
     def test_get_call_center_domains(self):
-        _create_domain('cc-dom1', True, True, 'flw')
-        _create_domain('cc-dom2', True, False, 'aww')
-        _create_domain('cc-dom3', False, False, '')
+        _create_domain('cc-dom1', True, True, 'flw', 'user1', False)
+        _create_domain('cc-dom2', True, False, 'aww', None, True)
+        _create_domain('cc-dom3', False, False, '', 'user2', False)  # case type missing
+        _create_domain('cc-dom3', False, False, 'flw', None, False)  # owner missing
         self.elasticsearch.indices.refresh(self.index_info.index)
 
         domains = get_call_center_domains()
@@ -359,7 +373,7 @@ class CallCenterDomainTest(SimpleTestCase):
         self.assertFalse(dom2.use_fixtures)
 
 
-def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type):
+def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type, cc_case_owner_id, use_location_as_owner):
     with drop_connected_signals(commcare_domain_post_save):
         domain = Domain(
             _id=uuid.uuid4().hex,
@@ -370,6 +384,8 @@ def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type):
         domain.call_center_config.enabled = cc_enabled
         domain.call_center_config.use_fixtures = cc_use_fixtures
         domain.call_center_config.case_type = cc_case_type
+        domain.call_center_config.case_owner_id = cc_case_owner_id
+        domain.call_center_config.use_user_location_as_owner = use_location_as_owner
 
         send_to_elasticsearch(
             index='domains',

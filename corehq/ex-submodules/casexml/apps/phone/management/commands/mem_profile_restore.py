@@ -30,7 +30,7 @@ class Command(BaseCommand):
 
         restore_config = RestoreConfig(
             project=project,
-            user=couch_user.to_casexml_user(),
+            restore_user=couch_user.to_ota_restore_user(),
             params=RestoreParams(
                 version=V2,
                 include_item_count=True,
