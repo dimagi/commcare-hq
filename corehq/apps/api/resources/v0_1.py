@@ -270,7 +270,7 @@ class WebUserResource(UserResource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        username = bundle.request.GET.get('username')
+        username = bundle.request.GET.get('web_username')
         if username:
             user = WebUser.get_by_username(username)
             return [user] if user else []

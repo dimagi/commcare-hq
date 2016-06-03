@@ -660,13 +660,13 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(len(api_users), 2)
 
         # username filter
-        response = self._assert_auth_get_resource('%s?username=%s' % (self.list_endpoint, 'anotherguy'))
+        response = self._assert_auth_get_resource('%s?web_username=%s' % (self.list_endpoint, 'anotherguy'))
         self.assertEqual(response.status_code, 200)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 1)
         self._check_user_data(another_user, api_users[0])
 
-        response = self._assert_auth_get_resource('%s?username=%s' % (self.list_endpoint, 'nomatch'))
+        response = self._assert_auth_get_resource('%s?web_username=%s' % (self.list_endpoint, 'nomatch'))
         self.assertEqual(response.status_code, 200)
         api_users = json.loads(response.content)['objects']
         self.assertEqual(len(api_users), 0)
