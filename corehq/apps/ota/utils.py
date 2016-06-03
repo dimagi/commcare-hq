@@ -66,7 +66,6 @@ def delete_demo_restore_for_user(commcare_user):
 
 
 def demo_user_restore_response(commcare_user):
-    # Todo handle case where user is in demo-mode, but demo restore is not set due to task fail
     assert commcare_user.is_commcare_user()
 
     restore = DemoUserRestore.objects.get(id=commcare_user.demo_restore_id)

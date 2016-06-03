@@ -8,6 +8,9 @@ from corehq.blobs.exceptions import NotFound
 
 
 class DemoUserRestore(models.Model):
+    """
+    This holds the frozen restore XML blob for a demo mobile worker
+    """
     demo_user_id = models.CharField(max_length=255, default=None, db_index=True)
     restore_blob_id = models.CharField(max_length=255, default=None)
     content_length = models.IntegerField(null=True)
@@ -16,6 +19,12 @@ class DemoUserRestore(models.Model):
 
     @classmethod
     def create(cls, user_id, restore_content, comment=""):
+        """
+        The method to create a new DemoUserRestore object
+        ags:
+            user_id: the id of the CommCareUser
+            restore_content: a string or file-like object of user's restore XML
+        """
         restore = cls(
             demo_user_id=user_id,
             restore_comment=comment,
@@ -26,6 +35,9 @@ class DemoUserRestore(models.Model):
         return restore
 
     def get_restore_http_response(self):
+        """
+        Returns restore XML as a streaming http response
+        """
         payload = self._get_restore_xml()
         headers = {
             'Content-Length': self.content_length,
@@ -43,6 +55,9 @@ class DemoUserRestore(models.Model):
         return blob
 
     def delete(self):
+        """
+        Deletes the restore object and the xml blob permenantly
+        """
         self._delete_restore_blob()
         super(DemoUserRestore, self).delete()
 

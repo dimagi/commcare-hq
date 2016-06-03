@@ -28,6 +28,7 @@ class TestDemoUser(TestCase):
         return list(streaming_response.streaming_content)[0]
 
     def _assert_restore(self, should_change=True):
+        # makes two consective restore requests and compares them
         first_response = self._raw_restore_response()
         second_response = self._raw_restore_response()
 
@@ -51,6 +52,7 @@ class TestDemoUser(TestCase):
         self._assert_restore(should_change=True)
 
     def test_demo_user_data_in_restore(self):
+        # assert that demo users have '<data user_type="demo">' element in restore XML
         demo_element = '<data key="{}">{}</data>'.format(COMMCARE_USER_TYPE_KEY, COMMCARE_USER_TYPE_DEMO)
 
         turn_off_demo_mode(self.user)
