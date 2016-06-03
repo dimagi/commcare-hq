@@ -43,7 +43,7 @@ from django.http.response import (
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, get_language
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, get_language
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import (
     require_GET,
@@ -1036,38 +1036,45 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 class ReportNotificationUnsubscribeView(TemplateView):
     template_name = 'reports/notification_unsubscribe.html'
     urlname = 'notification_unsubscribe'
+    not_found_error = ugettext_noop('Could not find the requested Scheduled Report')
+    broken_link_error = ugettext_noop('Invalid unsubscribe link')
     report = None
 
     @use_bootstrap3
     def get(self, request, *args, **kwargs):
-        try:
-            self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
-            email = kwargs.pop('user_email')
+        if 'success' not in kwargs and 'error' not in kwargs:
+            try:
+                self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
+                email = kwargs.pop('user_email')
 
-            if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
-                raise ValidationError('Invalid link')
-            if email not in self.report.all_recipient_emails:
-                raise ValidationError('This email address has already been unsubscribed.')
-            return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
-        except ValidationError as err:
-            messages.error(request, _(err.message))
-        except ResourceNotFound:
-            messages.error(request, _('Could not find the requested Scheduled Report'))
+                if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
+                    raise ValidationError(self.broken_link_error)
+                if email not in self.report.all_recipient_emails:
+                    raise ValidationError(ugettext_noop('This email address has already been unsubscribed.'))
+            except ResourceNotFound:
+                kwargs['error'] = self.not_found_error
+            except ValidationError as err:
+                kwargs['error'] = err.message
 
-        return HttpResponseRedirect(reverse('homepage'))
+        if 'error' in kwargs:
+            messages.error(request, ugettext_lazy(kwargs['error']))
+        elif 'success' in kwargs:
+            messages.success(request, ugettext_lazy(kwargs['success']))
+
+        return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(ReportNotificationUnsubscribeView, self).get_context_data(**kwargs)
         context.update({'report': self.report})
         return context
 
-    def post(self, request, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
             self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
             email = kwargs.pop('user_email')
 
             if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
-                raise ValidationError('Invalid link')
+                raise ValidationError(self.broken_link_error)
 
             self.report.remove_recipient(email)
 
@@ -1076,13 +1083,14 @@ class ReportNotificationUnsubscribeView(TemplateView):
             else:
                 self.report.delete()
 
-            messages.info(request, _('Successfully unsubscribed from report notification.'))
+            kwargs['success'] = ugettext_noop('Successfully unsubscribed from report notification.')
         except ResourceNotFound:
-            messages.error(request, _('Could not unsubscribe from report notification.'))
+            kwargs['error'] = self.not_found_error
         except ValidationError as err:
-            messages.error(request, _(err.message))
+            kwargs['error'] = err.message
 
-        return HttpResponseRedirect(reverse('homepage'))
+        return self.get(request, *args, **kwargs)
+
 
 @login_and_domain_required
 @require_POST
@@ -1218,8 +1226,7 @@ def render_full_report_notification(request, content, email=None, report_notific
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
     content = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
-    return render_full_report_notification(
-        request, content, report_notification=ReportNotification.get(scheduled_report_id))
+    return render_full_report_notification(request, content)
 
 
 class CaseDetailsView(BaseProjectReportSectionView):
