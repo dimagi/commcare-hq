@@ -163,6 +163,9 @@ class OTARestoreCommCareUser(OTARestoreUser):
     def locations(self):
         return self._couch_user.locations
 
+    def set_location(self, location):
+        return self._couch_user.set_location(location)
+
     def get_fixture_data_items(self):
         from corehq.apps.fixtures.models import FixtureDataItem
 

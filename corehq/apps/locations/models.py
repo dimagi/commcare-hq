@@ -81,6 +81,14 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+    _expand_from = models.ForeignKey(
+        'self',
+        null=True,
+        related_name='+',
+        db_column='expand_from',
+    )  # levels below this location type that we start expanding from
+    _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
+    expand_to = models.ForeignKey('self', null=True, related_name='+')  # levels above this type that are synced
     last_modified = models.DateTimeField(auto_now=True)
 
     emergency_level = StockLevelField(default=0.5)
@@ -95,6 +103,26 @@ class LocationType(models.Model):
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
         self._administrative_old = self.administrative
+
+    @property
+    def expand_from(self):
+        return self._expand_from
+
+    @expand_from.setter
+    def expand_from(self, value):
+        if self._expand_from_root is True:
+            self._expand_from_root = False
+        self._expand_from = value
+
+    @property
+    def expand_from_root(self):
+        return self._expand_from_root
+
+    @expand_from_root.setter
+    def expand_from_root(self, value):
+        if self._expand_from_root is False and value is True:
+            self._expand_from = None
+        self._expand_from_root = value
 
     @property
     @memoized

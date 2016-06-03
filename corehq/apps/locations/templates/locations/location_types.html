@@ -13,7 +13,9 @@
             var loc_types = {{ location_types|JSON }};
             var commtrack_enabled = {{ commtrack_enabled|JSON }};
 
-            var model = new LocationSettingsViewModel(loc_types, commtrack_enabled);
+            var locationSettingsModel = hqImport('locations/ko/location_types.js').LocationSettingsViewModel
+            var model = new locationSettingsModel(loc_types, commtrack_enabled);
+
             var $settings = $('#settings');
 
             var warnBeforeUnload = function() {
@@ -98,11 +100,30 @@
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
-                                <!-- ko if:advanced_mode -->
-                                <th>
+                                <th data-bind="visible: advanced_mode">
                                     {% trans "Type Code"%}
                                 </th>
-                                <!-- /ko -->
+                                <th data-bind="visible: advanced_mode">
+                                    {% trans "Level to expand from"%}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Level to expand from" %}"
+                                          data-content="{% blocktrans %}
+                                                        <p>When directly accessing locations in your app, this controls the level below which all possible locations are available.</p>
+                                                        <p>The default is to make the user's location's ancestors and all descendants available</p>
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
+                                <th data-bind="visible: advanced_mode">
+                                    {% trans "Level to expand to"%}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Level to expand to" %}"
+                                          data-content="{% blocktrans %}
+                                                        <p>When directly accessing locations in your app, this controls the depth of locations available.</p>
+                                                        <p>This can reduce the sync size and time - for example, a user at the State level may not need to see all Cities in that state.</p>
+                                                        <p>The default is to make the user's location's ancestors and all descendants available.</p>
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
                                 {% if commtrack_enabled %}
                                 <th>
                                     {% trans "Tracks Stock" %}
@@ -164,11 +185,27 @@
                                                    optionsCaption: '\u2013top level\u2013'">
                                 </select>
                             </td>
-                            <!-- ko if:$parent.advanced_mode() -->
-                            <td class="form-group">
+                            <td class="form-group" data-bind="visible: $parent.advanced_mode">
                                 <input class="form-control typecode" data-bind="value: code" type="text" />
                             </td>
-                            <!-- /ko -->
+                            <td class="form-group" data-bind="visible: $parent.advanced_mode">
+                                <select class="form-control"
+                                        data-bind="options: $data.expand_from_options(),
+                                                   optionsText: 'name',
+                                                   optionsValue: 'pk',
+                                                   value: expand_from,
+                                                   optionsCaption: '\u2013{%trans 'default'%} (' + name() + ')\u2013'">
+                                </select>
+                            </td>
+                            <td class="form-group" data-bind="visible: $parent.advanced_mode">
+                                <select class="form-control"
+                                        data-bind="options: $data.expand_to_options().children,
+                                                   optionsText: 'name',
+                                                   optionsValue: 'pk',
+                                                   value: expand_to,
+                                                   optionsCaption: '\u2013{%trans 'default'%} (' + $data.expand_to_options().leaf.name() + ')\u2013'">
+                                </select>
+                            </td>
                             {% if commtrack_enabled %}
                             <td>
                                 <input data-bind="checked: tracks_stock" type="checkbox" />
