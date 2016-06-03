@@ -1276,7 +1276,7 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     server_date = models.DateTimeField()
     report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
-    case_id = models.CharField(max_length=255, db_index=True, default=None)
+    case_id = models.CharField(max_length=255, default=None)
     entry_id = models.CharField(max_length=100, default=None)
     section_id = models.CharField(max_length=100, default=None)
 
@@ -1354,7 +1354,7 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
         db_table = LedgerTransaction_DB_TABLE
         app_label = "form_processor"
         index_together = [
-            ["case_id", "entry_id", "section_id"],
+            ["case_id", "section_id", "entry_id"],
         ]
 
 

@@ -67,4 +67,17 @@ class Migration(migrations.Migration):
             name='casetransaction',
             index_together=set([('case', 'form_id'), ('case', 'server_date', 'sync_log_id')]),
         ),
+
+        # ledger transaction
+        migrations.AlterField(
+            model_name='ledgertransaction',
+            name='case_id',
+            field=models.CharField(default=None, max_length=255),
+            preserve_default=True,
+        ),
+        migrations.AlterIndexTogether(
+            name='ledgertransaction',
+            index_together=set([('case_id', 'section_id', 'entry_id')]),
+        ),
+
     ]
