@@ -455,7 +455,7 @@ class CaseAccessorTestsSQL(TestCase):
         _create_case(user_id="user2", case_type='t1')
         _create_case(user_id="user1", case_type='t2')
 
-        case_ids = CaseAccessorSQL.get_open_case_ids_in_domain_by_type(DOMAIN, 't1', "user1")
+        case_ids = CaseAccessorSQL.get_open_case_ids_in_domain_by_type(DOMAIN, 't1', ["user1"])
         self.assertEqual(
             set(case_ids),
             {case1.case_id, case2.case_id}
