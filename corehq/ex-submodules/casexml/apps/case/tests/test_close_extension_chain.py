@@ -5,7 +5,7 @@ from casexml.apps.case.xform import get_extensions_to_close
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.util.test_utils import flag_enabled
 
 
@@ -71,6 +71,7 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         )
         return self.factory.create_or_update_cases([extension_2])
 
+    @run_with_all_backends
     def test_get_extension_chain_simple(self):
         host = CaseStructure(case_id=self.host_id)
         extension = CaseStructure(
@@ -83,12 +84,14 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         self.factory.create_or_update_cases([extension])
         self.assertEqual(set(self.extension_ids[0]), get_extension_chain([self.host_id], self.domain))
 
+    @run_with_all_backends
     def test_get_extension_chain_multiple(self):
         created_cases = self._create_extension_chain()
         self.assertEqual(set(self.extension_ids),
                          get_extension_chain([created_cases[-1]], self.domain))
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    @run_with_all_backends
     def test_get_extension_to_close(self):
         """should return empty if case is not a host, otherwise should return full chain"""
         created_cases = self._create_extension_chain()
@@ -110,6 +113,7 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         self.assertEqual(set(), no_cases)
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    @run_with_all_backends
     def test_get_extension_to_close_child_host(self):
         """should still return extension chain if outgoing index is a child index"""
         created_cases = self._create_host_is_subcase_chain()
@@ -134,6 +138,7 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         self.assertEqual(set(self.extension_ids[0:2]), full_chain)
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    @run_with_all_backends
     def test_close_cases_host(self):
         """Closing a host should close all the extensions"""
         self._create_extension_chain()
@@ -160,6 +165,7 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         self.assertTrue(CommCareCase.get(self.extension_ids[2]).closed)
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    @run_with_all_backends
     def test_close_cases_child(self):
         """Closing a host that is also a child should close all the extensions"""
         self._create_host_is_subcase_chain()
