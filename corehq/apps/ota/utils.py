@@ -12,12 +12,7 @@ def turn_off_demo_mode(commcare_user):
     Turns demo mode OFF for commcare_user and deletes existing demo restore
     """
 
-    # delete old restore
-    old_restore_id = commcare_user.demo_restore_id
-    if old_restore_id:
-        old_restore = DemoUserRestore.objects.get(id=old_restore_id)
-        old_restore.delete()
-
+    delete_demo_restore_for_user(commcare_user)
     commcare_user.demo_restore_id = None
     commcare_user.is_demo_user = False
     commcare_user.save()
@@ -28,18 +23,16 @@ def turn_on_demo_mode(commcare_user, domain):
     Turns demo mode ON for commcare_user, and resets restore to latest
     """
     try:
-        # the order of following two is important, because the restore XML should contain...
-        # user_type='demo' in user_data element
+        # the order of following two is important, because the restore XML will contain
+        # <data user_type='demo'> only if commcare_user.is_demo_user is True
         commcare_user.is_demo_user = True
         reset_demo_user_restore(commcare_user, domain)
+        return {'errors': []}
     except Exception as e:
         notify_exception(None, message=e.message)
         return {'errors': [
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}
-    else:
-        commcare_user.save()
-        return {'errors': []}
 
 
 def reset_demo_user_restore(commcare_user, domain):
@@ -48,6 +41,8 @@ def reset_demo_user_restore(commcare_user, domain):
     """
     assert commcare_user.domain == domain
 
+    # if there is a restore already, delete it
+    delete_demo_restore_for_user(commcare_user)
     # get latest restore
     restore = RestoreConfig(
         project=Domain.get_by_name(domain),
@@ -58,6 +53,16 @@ def reset_demo_user_restore(commcare_user, domain):
 
     # set reference to new restore
     commcare_user.demo_restore_id = demo_restore.id
+    commcare_user.save()
+
+
+def delete_demo_restore_for_user(commcare_user):
+    # Deletes the users' current demo restore object
+    # Caller should save the user doc
+    old_restore_id = commcare_user.demo_restore_id
+    if old_restore_id:
+        old_restore = DemoUserRestore.objects.get(id=old_restore_id)
+        old_restore.delete()
 
 
 def demo_user_restore_response(commcare_user):
