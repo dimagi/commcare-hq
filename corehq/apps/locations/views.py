@@ -648,7 +648,7 @@ class FacilitySyncView(BaseSyncView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
-    template_name = 'style/bootstrap3/soil_status_full.html'
+    template_name = 'style/soil_status_full.html'
 
     @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):

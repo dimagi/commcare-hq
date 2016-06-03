@@ -163,7 +163,7 @@
 
         {# Core Libraries #}
         {% compress js %}
-        {% include "style/includes/bootstrap3/core_libraries.html" %}
+        {% include "style/includes/core_libraries.html" %}
         {% endcompress %} 
 
         {% if request.use_jquery_ui %}
@@ -352,7 +352,7 @@
         <script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'hqwebapp/js/hqModules.js' %}"></script>
         <script type="text/javascript" src="{% new_static 'hqwebapp/js/toggles.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'style/js/bootstrap3/main.js' %}"></script>
+        <script type="text/javascript" src="{% new_static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
         {% if request.domain and request.user.username %}
@@ -377,7 +377,7 @@
         </script>
         {% endif %}
 
-        {% include "style/includes/bootstrap3/ko.html" %}
+        {% include "style/includes/ko.html" %}
 
         <script type="text/javascript">
             /*
@@ -418,7 +418,7 @@
 
         {% if request.use_angular_js %}
         {% compress js %}
-        {% include "style/includes/bootstrap3/angular.html" %}
+        {% include "style/includes/angular.html" %}
         {% endcompress %}
         {% endif %}
 

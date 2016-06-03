@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap2/two_column.html' %}
+{% extends 'style/two_column.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -20,7 +20,7 @@
             }
         );
         $(function () {
-            $('#editable-paginated-list').koApplyBindings(paginatedListModel);
+            ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
         });
     </script>
     {% block js-paginated %}{% endblock %}
@@ -29,15 +29,15 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     {% block pagination_header %}{% endblock %}
     {% block pagination_structure %}
         <div id="editable-paginated-list">
         {% block paginated_list_top %}{% endblock %}
 
-            <div class="row-fluid" data-bind="visible: isLoadingVisible">
-                <div class="span12">
-                   <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading" />
+            <div class="row" data-bind="visible: isLoadingVisible">
+                <div class="col-md-12">
+                   <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading" />
                     {{ pagination.text.loading }}
                 </div>
             </div>
@@ -49,7 +49,7 @@
                         hide: !isAlertVisible()
                     }
                 ">
-                <div class="span12">
+                <div class="col-md-12">
                     <div class="alert"
                          data-bind="html: alertHtml"></div>
                 </div>
@@ -62,11 +62,11 @@
                         hide: isLoadingVisible
                     }
                 ">
-                <div class="row-fluid" data-bind="visible: isPaginationActive">
-                    <div class="span4">
+                <div class="row" data-bind="visible: isPaginationActive">
+                    <div class="col-md-4">
                         <div class="form-inline" style="margin: 1.6em 0;">
                             <label for="pagination-limit">{% trans 'Show' %}</label>
-                            <select id="pagination-limit" data-bind="event: {change: updateListLimit}">
+                            <select class="form-control" id="pagination-limit" data-bind="event: {change: updateListLimit}">
                                 {% for limit in pagination.limit_options %}
                                     <option value="{{ limit }}">
                                         {{ limit }} {{ pagination.text.limit }}
@@ -75,13 +75,13 @@
                             </select>
                         </div>
                     </div>
-                    <div class="span8">
-                        {% include 'style/bootstrap2/partials/pagination.html' %}
+                    <div class="col-md-8">
+                        {% include 'style/partials/pagination.html' %}
                     </div>
                 </div>
 
-                <div class="row-fluid">
-                    <div class="span12">
+                <div class="row">
+                    <div class="col-md-12">
                         <table class="table table-striped table-bordered"
                                style="margin-bottom: 0;">
                             <thead>
@@ -171,9 +171,9 @@
                     </div>
                 </div>
             </div>
-            <div class="row-fluid" data-bind="visible: isPaginationActive">
-                <div class="span12">
-                    {% include 'style/bootstrap2/partials/pagination.html' %}
+            <div class="row" data-bind="visible: isPaginationActive">
+                <div class="col-md-12">
+                    {% include 'style/partials/pagination.html' %}
                 </div>
             </div>
         </div>
