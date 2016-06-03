@@ -197,6 +197,7 @@
                     </div>
                 </fieldset>
             </div>
+            {% if has_demo_mobile_workers_privilege or couch_user.is_demo_user  %}
             {% if request|toggle_enabled:"MOBILE_USER_DEMO_MODE" or couch_user.is_demo_user %}
             <div class="alert alert-info">
                 <p>
@@ -233,6 +234,7 @@
                     </button>
                 </form>
             </div>
+            {% endif %}
             {% endif %}
         </div>
         {% endif %}

@@ -177,6 +177,7 @@ class EditCommCareUserView(BaseFullEditUserView):
                 users_have_locations(self.domain) and
                 not has_privilege(self.request, privileges.LOCATIONS)
             ),
+            'has_demo_mobile_workers_privilege': domain_has_privilege(self.domain, privileges.DEMO_MOBILE_WORKERS),
         }
         if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
@@ -349,6 +350,10 @@ def delete_commcare_user(request, domain, user_id):
 @require_can_edit_commcare_users
 @require_POST
 def toggle_demo_mode(request, domain, user_id):
+    """
+    Note on privileges: Users need `DEMO_MOBILE_WORKERS` privilege to turn on demo mode,
+    but can turn off demo mode without the privilege (after a downgrade)
+    """
     user = CommCareUser.get_by_user_id(user_id, domain)
     demo_mode = request.POST.get('demo_mode', 'no')
     demo_mode = True if demo_mode == 'yes' else False
@@ -361,6 +366,9 @@ def toggle_demo_mode(request, domain, user_id):
         return HttpResponseRedirect(edit_user_url)
 
     if demo_mode:
+        # Turn On demo mode
+        if not domain_has_privilege(request.domain, privileges.DEMO_MOBILE_WORKERS):
+            return HttpResponseForbidden()
         download = DownloadBase()
         res = turn_on_demo_mode_task.delay(user, domain)
         download.set_task(res)
@@ -375,6 +383,7 @@ def toggle_demo_mode(request, domain, user_id):
 
 
 @require_can_edit_commcare_users
+@requires_privilege_with_fallback(privileges.DEMO_MOBILE_WORKERS)
 @require_POST
 def reset_demo_user_restore(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)

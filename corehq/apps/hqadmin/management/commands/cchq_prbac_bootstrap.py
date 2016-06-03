@@ -127,6 +127,8 @@ class Command(BaseCommand):
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
         Role(slug=privileges.LOOKUP_TABLES, name='Lookup Tables', description=''),
         Role(slug=privileges.CLOUDCARE, name='Web-based Applications (CloudCare)', description=''),
+        Role(slug=privileges.DEMO_MOBILE_WORKERS, name="Demo mode for Mobile Workers",
+             description='Ability to create Demo mobile workers and freeze restore for such users'),
         Role(slug=privileges.CUSTOM_BRANDING, name='Custom Branding', description=''),
         Role(slug=privileges.ACTIVE_DATA_MANAGEMENT, name='Active Data Management', description=''),
         Role(slug=privileges.CUSTOM_REPORTS, name='Custom Reports', description=''),
@@ -189,6 +191,7 @@ class Command(BaseCommand):
         privileges.ALLOW_EXCESS_USERS,
         privileges.LOCATIONS,
         privileges.USER_CASE,
+        privileges.DEMO_MOBILE_WORKERS,
     ]
 
     pro_plan_features = standard_plan_features + [
