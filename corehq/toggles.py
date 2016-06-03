@@ -763,8 +763,8 @@ VIEW_BUILD_SOURCE = StaticToggle(
 
 USE_SQL_BACKEND = StaticToggle(
     'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing (testing only)',
-    TAG_EXPERIMENTAL,
+    'Uses a sql backend instead of a couch backend for form processing (beta)',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -843,3 +843,9 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+
+def enable_toggles_for_scale_beta(domain):
+    USE_SQL_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
+    NEW_EXPORTS.set(domain, True, namespace=NAMESPACE_DOMAIN)
+    TF_USES_SQLITE_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)

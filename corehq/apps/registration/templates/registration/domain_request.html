@@ -40,6 +40,14 @@
                         {% endblocktrans %}
                     </p>
                 {% endif %}
+                {% if force_sql_backend %}
+                    <div class="alert alert-warning" role="alert">
+                        <p>This domain will be using the new SQL backend.</p>
+                        <p>See <a href="https://confluence.dimagi.com/display/ccinternal/Scale+Backend+Beta:+Information+and+Caveats" target="_blank">
+                            Scale Backend Beta: Information and Caveats
+                        </a> for more info.</p>
+                    </div>
+                {% endif %}
                 {% crispy form %}
             </div>
     {% endblock %}
