@@ -4,7 +4,6 @@ LOOKUP_TABLES = 'lookup_tables'
 API_ACCESS = 'api_access'
 
 CLOUDCARE = 'cloudcare'
-DEMO_MOBILE_WORKERS = 'demo_mode_for_mobile_workers'
 
 ACTIVE_DATA_MANAGEMENT = 'active_data_management'
 CUSTOM_BRANDING = 'custom_branding'
@@ -61,7 +60,6 @@ MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
     CLOUDCARE,
-    DEMO_MOBILE_WORKERS,
     ACTIVE_DATA_MANAGEMENT,
     CUSTOM_BRANDING,
     CUSTOM_REPORTS,
@@ -106,7 +104,6 @@ class Titles(object):
             LOOKUP_TABLES: _("Lookup Tables"),
             API_ACCESS: _("API Access"),
             CLOUDCARE: _("Web-Based Apps (CloudCare)"),
-            DEMO_MOBILE_WORKERS: _("Demo mode for Mobile Workers"),
             ACTIVE_DATA_MANAGEMENT: _("Active Data Management"),
             CUSTOM_BRANDING: _("Custom Branding"),
             ROLE_BASED_ACCESS: _("Advanced Role-Based Access"),
