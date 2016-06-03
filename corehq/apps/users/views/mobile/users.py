@@ -372,7 +372,6 @@ def toggle_demo_mode(request, domain, user_id):
         download = DownloadBase()
         res = turn_on_demo_mode_task.delay(user, domain)
         download.set_task(res)
-        turn_on_demo_mode(user, domain)
         response = redirect('hq_soil_download', domain, download.download_id)
         response['Location'] += '?next=%s' % (edit_user_url)
         return response
@@ -395,7 +394,6 @@ def reset_demo_user_restore(request, domain, user_id):
     download = DownloadBase()
     res = reset_demo_user_restore_task.delay(user, domain)
     download.set_task(res)
-    turn_on_demo_mode(user, domain)
 
     response = redirect('hq_soil_download', domain, download.download_id)
     response['Location'] += '?next=%s' % (reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
