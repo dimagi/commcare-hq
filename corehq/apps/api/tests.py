@@ -699,9 +699,9 @@ class TestWebUserResource(APIResourceTest):
             ],
             "role":"admin"
         }
-        response = self._assert_auth_get_resource(self.list_endpoint,
-                                    json.dumps(user_json),
-                                    content_type='application/json')
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
         self.assertEqual(user_back.username, "test_1234")
