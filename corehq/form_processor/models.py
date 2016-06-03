@@ -521,7 +521,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     opened_by = models.CharField(max_length=255, null=True)
 
     modified_on = models.DateTimeField(null=False)
-    server_modified_on = models.DateTimeField(null=False)
+    server_modified_on = models.DateTimeField(null=False, db_index=True)
     modified_by = models.CharField(max_length=255)
 
     closed = models.BooleanField(default=False, null=False)
@@ -787,11 +787,9 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         ).format(c=self)
 
     class Meta:
-        # TODO SK 2015-11-05: verify that these are the indexes we want
-        # also consider partial indexes
         index_together = [
-            ["domain", "owner_id"],
-            ["domain", "closed", "server_modified_on"],
+            ["domain", "owner_id", "closed"],
+            ["domain", "external_id", "type"],
         ]
         app_label = "form_processor"
         db_table = CommCareCaseSQL_DB_TABLE
