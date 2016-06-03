@@ -80,4 +80,33 @@ class Migration(migrations.Migration):
             index_together=set([('case_id', 'section_id', 'entry_id')]),
         ),
 
+        # ledger value
+        migrations.AlterField(
+            model_name='ledgervalue',
+            name='case_id',
+            field=models.CharField(default=None, max_length=255),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='ledgervalue',
+            name='entry_id',
+            field=models.CharField(default=None, max_length=100),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='ledgervalue',
+            name='last_modified',
+            field=models.DateTimeField(auto_now=True, db_index=True),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='ledgervalue',
+            name='section_id',
+            field=models.CharField(default=None, max_length=100),
+            preserve_default=True,
+        ),
+        migrations.AlterUniqueTogether(
+            name='ledgervalue',
+            unique_together=set([('case_id', 'section_id', 'entry_id')]),
+        ),
     ]

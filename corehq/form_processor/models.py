@@ -1218,14 +1218,14 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     objects = RestrictedManager()
 
     domain = models.CharField(max_length=255, null=False, default=None)
-    case_id = models.CharField(max_length=255, db_index=True, default=None)  # remove foreign key until we're sharding this
+    case_id = models.CharField(max_length=255, default=None)  # remove foreign key until we're sharding this
     location_id = models.CharField(max_length=255, null=True, default=None)
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
-    entry_id = models.CharField(max_length=100, db_index=True, default=None)
-    section_id = models.CharField(max_length=100, db_index=True, default=None)
-    balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
-    last_modified = models.DateTimeField(auto_now=True)
+    entry_id = models.CharField(max_length=100, default=None)
+    section_id = models.CharField(max_length=100, default=None)
+    balance = models.IntegerField(default=0)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
     last_modified_form_id = models.CharField(max_length=100, null=True, default=None)
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
 
@@ -1262,6 +1262,7 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
+        unique_together = ("case_id", "section_id", "entry_id")
 
 
 class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
