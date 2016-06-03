@@ -35,6 +35,15 @@ International Format (also referred to as E.164 Format) for a Phone Number:
     operations to perform on the number before putting into international format, such as removing a leading
     zero
 
+SMS Survey
+    a way of collecting data over SMS that involves asking questions one SMS at a time and waiting for a
+    contact's response before sending the next SMS
+
+Structured SMS
+    a way for collecting data over SMS that involves collecting all data points in one SMS rather than
+    asking one question at a time as in an SMS Survey; for example: "REGISTER Joe 25" could be one way
+    to define a Structured SMS that registers a contact named Joe whose age is 25.
+
 Messaging Terms Commonly Used in CommCareHQ
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

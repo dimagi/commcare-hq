@@ -25,3 +25,4 @@ knowledge of the messaging frameworks used in CommCareHQ.
     inbound_sms
     sms_backends
     reminders
+    keywords
