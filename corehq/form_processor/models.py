@@ -987,7 +987,7 @@ class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
         TYPE_FORM,
     )
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=True,
+        'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name="transaction_set", related_query_name="transaction"
     )
     form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
@@ -1165,6 +1165,10 @@ class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
         ordering = ['server_date']
         db_table = CaseTransaction_DB_TABLE
         app_label = "form_processor"
+        index_together = [
+            ('case', 'form_id'),
+            ('case', 'server_date', 'sync_log_id'),
+        ]
 
 
 class CaseTransactionDetail(JsonObject):

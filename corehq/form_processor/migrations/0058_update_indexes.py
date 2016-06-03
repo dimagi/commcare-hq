@@ -53,4 +53,18 @@ class Migration(migrations.Migration):
             name='commcarecaseindexsql',
             index_together=set([('domain', 'case'), ('domain', 'referenced_id')]),
         ),
+
+        # case transaction
+        migrations.AlterField(
+            model_name='casetransaction',
+            name='case',
+            field=models.ForeignKey(
+                related_name="transaction_set", related_query_name=b"transaction", to_field=b'case_id',
+                to='form_processor.CommCareCaseSQL', db_index=False),
+            preserve_default=True,
+        ),
+        migrations.AlterIndexTogether(
+            name='casetransaction',
+            index_together=set([('case', 'form_id'), ('case', 'server_date', 'sync_log_id')]),
+        ),
     ]
