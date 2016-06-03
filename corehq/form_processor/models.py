@@ -365,7 +365,6 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
 class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     attachment_id = UUIDField(unique=True, db_index=True)
-    name = models.CharField(max_length=255, db_index=True, default=None)
     content_type = models.CharField(max_length=255, null=True)
     content_length = models.IntegerField(null=True)
     blob_id = models.CharField(max_length=255, default=None)
@@ -422,6 +421,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'form'
 
+    name = models.CharField(max_length=255, db_index=True, default=None)
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id',
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
@@ -430,6 +430,9 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     class Meta:
         db_table = XFormAttachmentSQL_DB_TABLE
         app_label = "form_processor"
+        index_together = [
+            ["form", "name"],
+        ]
 
 
 class XFormOperationSQL(DisabledDbMixin, models.Model):
@@ -799,6 +802,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'case'
 
+    name = models.CharField(max_length=255, default=None)
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=True,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
@@ -873,6 +877,9 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     class Meta:
         app_label = "form_processor"
         db_table = CaseAttachmentSQL_DB_TABLE
+        index_together = [
+            ["case", "identifier"],
+        ]
 
 
 class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
