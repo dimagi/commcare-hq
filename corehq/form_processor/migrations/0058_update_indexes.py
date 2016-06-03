@@ -85,7 +85,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterIndexTogether(
             name='casetransaction',
-            index_together=set([('case', 'form_id'), ('case', 'server_date', 'sync_log_id')]),
+            index_together=set([('case', 'server_date', 'sync_log_id')]),
         ),
 
         # ledger transaction

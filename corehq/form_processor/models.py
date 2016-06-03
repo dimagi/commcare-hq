@@ -1170,7 +1170,6 @@ class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
         db_table = CaseTransaction_DB_TABLE
         app_label = "form_processor"
         index_together = [
-            ('case', 'form_id'),
             ('case', 'server_date', 'sync_log_id'),
         ]
 
