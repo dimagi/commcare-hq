@@ -602,7 +602,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @memoized
     def reverse_indices(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_reverse_indices(self.case_id)
+        return CaseAccessorSQL.get_reverse_indices(self.domain, self.case_id)
 
     @memoized
     def get_subcases(self, index_identifier=None):
@@ -623,7 +623,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         if hasattr(self, cached_indices):
             return getattr(self, cached_indices)
 
-        return CaseAccessorSQL.get_indices(self.case_id) if self.is_saved() else []
+        return CaseAccessorSQL.get_indices(self.domain, self.case_id) if self.is_saved() else []
 
     @property
     def indices(self):

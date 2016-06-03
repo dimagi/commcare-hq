@@ -97,7 +97,7 @@ class CaseAccessorTestsSQL(TestCase):
 
         CaseAccessorSQL.save_case(case)
 
-        indices = CaseAccessorSQL.get_indices(case.case_id)
+        indices = CaseAccessorSQL.get_indices(case.domain, case.case_id)
         self.assertEqual(2, len(indices))
         self.assertEqual([index1, index2], indices)
 
@@ -117,7 +117,7 @@ class CaseAccessorTestsSQL(TestCase):
 
         CaseAccessorSQL.save_case(case)
 
-        indices = CaseAccessorSQL.get_reverse_indices(referenced_case_id)
+        indices = CaseAccessorSQL.get_reverse_indices(case.domain, referenced_case_id)
         self.assertEqual(1, len(indices))
         self.assertEqual(index1, indices[0])
 
@@ -171,7 +171,7 @@ class CaseAccessorTestsSQL(TestCase):
         with self.assertRaises(CaseNotFound):
             CaseAccessorSQL.get_case(case1.case_id)
 
-        self.assertEqual([], CaseAccessorSQL.get_indices(case1.case_id))
+        self.assertEqual([], CaseAccessorSQL.get_indices(case1.domain, case1.case_id))
         self.assertEqual([], CaseAccessorSQL.get_attachments(case1.case_id))
         self.assertEqual([], CaseAccessorSQL.get_transactions(case1.case_id))
 
@@ -319,7 +319,7 @@ class CaseAccessorTestsSQL(TestCase):
         case.track_create(original_index)
         CaseAccessorSQL.save_case(case)
 
-        [index] = CaseAccessorSQL.get_indices(case.case_id)
+        [index] = CaseAccessorSQL.get_indices(case.domain, case.case_id)
         index.identifier = 'new_identifier'  # shouldn't get saved
         index.referenced_type = 'new_type'
         index.referenced_id = uuid.uuid4().hex
@@ -327,7 +327,7 @@ class CaseAccessorTestsSQL(TestCase):
         case.track_update(index)
         CaseAccessorSQL.save_case(case)
 
-        [updated_index] = CaseAccessorSQL.get_indices(case.case_id)
+        [updated_index] = CaseAccessorSQL.get_indices(case.domain, case.case_id)
         self.assertEqual(updated_index.id, index.id)
         self.assertEqual(updated_index.identifier, original_index.identifier)
         self.assertEqual(updated_index.referenced_type, index.referenced_type)
@@ -346,10 +346,10 @@ class CaseAccessorTestsSQL(TestCase):
         ))
         CaseAccessorSQL.save_case(case)
 
-        [index] = CaseAccessorSQL.get_indices(case.case_id)
+        [index] = CaseAccessorSQL.get_indices(case.domain, case.case_id)
         case.track_delete(index)
         CaseAccessorSQL.save_case(case)
-        self.assertEqual([], CaseAccessorSQL.get_indices(case.case_id))
+        self.assertEqual([], CaseAccessorSQL.get_indices(case.domain, case.case_id))
 
     def test_save_case_delete_attachment(self):
         case = _create_case()
