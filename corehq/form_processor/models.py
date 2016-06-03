@@ -198,7 +198,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     edited_on = models.DateTimeField(null=True)
 
     # The time at which the server has received the form
-    received_on = models.DateTimeField()
+    received_on = models.DateTimeField(db_index=True)
 
     auth_context = JSONField(default=dict)
     openrosa_headers = JSONField(default=dict)
@@ -361,6 +361,10 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     class Meta:
         db_table = XFormInstanceSQL_DB_TABLE
         app_label = "form_processor"
+        index_together = [
+            ('domain', 'state'),
+            ('domain', 'user_id'),
+        ]
 
 
 class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):

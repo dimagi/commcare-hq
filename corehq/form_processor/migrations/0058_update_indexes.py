@@ -109,4 +109,16 @@ class Migration(migrations.Migration):
             name='ledgervalue',
             unique_together=set([('case_id', 'section_id', 'entry_id')]),
         ),
+
+        # form
+        migrations.AlterField(
+            model_name='xforminstancesql',
+            name='received_on',
+            field=models.DateTimeField(db_index=True),
+            preserve_default=True,
+        ),
+        migrations.AlterIndexTogether(
+            name='xforminstancesql',
+            index_together=set([('domain', 'user_id'), ('domain', 'state')]),
+        ),
     ]
