@@ -425,9 +425,9 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'form'
 
-    name = models.CharField(max_length=255, db_index=True, default=None)
+    name = models.CharField(max_length=255, default=None)
     form = models.ForeignKey(
-        XFormInstanceSQL, to_field='form_id',
+        XFormInstanceSQL, to_field='form_id', db_index=False,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
@@ -808,7 +808,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
 
     name = models.CharField(max_length=255, default=None)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=True,
+        'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
     identifier = models.CharField(max_length=255, default=None)

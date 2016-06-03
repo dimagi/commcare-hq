@@ -26,6 +26,13 @@ class Migration(migrations.Migration):
         # case attachment
         migrations.AlterField(
             model_name='caseattachmentsql',
+            name='case',
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachment_set',
+                                    to_field=b'case_id', to='form_processor.CommCareCaseSQL', db_index=False),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='caseattachmentsql',
             name='name',
             field=models.CharField(default=None, max_length=255),
             preserve_default=True,
@@ -36,6 +43,19 @@ class Migration(migrations.Migration):
         ),
 
         # form attachment
+        migrations.AlterField(
+            model_name='xformattachmentsql',
+            name='form',
+            field=models.ForeignKey(related_query_name=b'attachment', related_name='attachment_set',
+                                    to_field=b'form_id', to='form_processor.XFormInstanceSQL', db_index=False),
+            preserve_default=True,
+        ),
+        migrations.AlterField(
+            model_name='xformattachmentsql',
+            name='name',
+            field=models.CharField(default=None, max_length=255),
+            preserve_default=True,
+        ),
         migrations.AlterIndexTogether(
             name='xformattachmentsql',
             index_together=set([('form', 'name')]),
