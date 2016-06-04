@@ -1,4 +1,4 @@
-from json_field import JSONField
+from jsonfield import JSONField
 from rest_framework import serializers
 
 from corehq.apps.commtrack.models import StockState
@@ -38,7 +38,6 @@ class DeletableModelSerializer(serializers.ModelSerializer):
 
 
 class XFormOperationSQLSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = XFormOperationSQL
 
@@ -70,7 +69,7 @@ class XFormStateField(serializers.ChoiceField):
 class DeletableModelWithJsonSerializer(DeletableModelSerializer):
     serializer_field_mapping = {}
     serializer_field_mapping.update(DeletableModelSerializer.serializer_field_mapping)
-    serializer_field_mapping[JSONField] = serializers.DictField
+    serializer_field_mapping[JSONField] = serializers.JSONField
 
 
 class XFormInstanceSQLRawDocSerializer(DeletableModelWithJsonSerializer):
@@ -81,7 +80,6 @@ class XFormInstanceSQLRawDocSerializer(DeletableModelWithJsonSerializer):
 
 
 class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = CommCareCaseIndexSQL
 
