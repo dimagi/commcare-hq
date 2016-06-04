@@ -63,7 +63,7 @@ class XFormStateField(serializers.ChoiceField):
         for state, state_slug in self.choices.iteritems():
             if choice & state:
                 readable_state.append(state_slug)
-        return ' '.join(readable_state)
+        return ' / '.join(readable_state)
 
 
 class JsonFieldSerializerMixin(object):

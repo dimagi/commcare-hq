@@ -1062,7 +1062,7 @@ class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
         for type_, type_slug in self.TYPE_CHOICES:
             if self.type & type_:
                 readable_type.append(type_slug)
-        return ' '.join(readable_type)
+        return ' / '.join(readable_type)
 
     def __eq__(self, other):
         if not isinstance(other, CaseTransaction):
