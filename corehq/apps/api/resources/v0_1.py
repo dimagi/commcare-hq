@@ -47,6 +47,9 @@ from corehq.apps.api.resources import (
 from dimagi.utils.parsing import string_to_boolean
 
 
+TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username']
+
+
 def api_auth(view_func):
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
