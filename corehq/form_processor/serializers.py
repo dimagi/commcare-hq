@@ -80,8 +80,12 @@ class XFormInstanceSQLRawDocSerializer(DeletableModelWithJsonSerializer):
 
 
 class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
+    case_id = serializers.CharField()
+    relationship = serializers.CharField()
+
     class Meta:
         model = CommCareCaseIndexSQL
+        fields = ('case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship')
 
 
 class CaseTransactionActionSerializer(serializers.ModelSerializer):
