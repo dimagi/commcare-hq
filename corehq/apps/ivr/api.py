@@ -1,8 +1,8 @@
 from datetime import datetime
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (INCOMING, OUTGOING,
-    MessagingSubEvent, MessagingEvent, SQLMobileBackend)
-from corehq.apps.sms.mixin import VerifiedNumber
+    MessagingSubEvent, MessagingEvent, SQLMobileBackend,
+    PhoneNumber)
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session, _get_responses
 from corehq.apps.smsforms.models import XFORMS_SESSION_IVR, get_session_by_session_id
@@ -288,7 +288,7 @@ def handle_known_call_session(call_log_entry, backend, ivr_event,
 
 def log_call(phone_number, gateway_session_id, backend=None):
     cleaned_number = strip_plus(phone_number)
-    v = VerifiedNumber.by_extensive_search(cleaned_number)
+    v = PhoneNumber.by_extensive_search(cleaned_number)
 
     call = Call(
         phone_number=cleaned_number,

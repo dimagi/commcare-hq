@@ -4,7 +4,7 @@ from corehq.apps.domain.utils import grandfathered_domain_re
 from .views import (DefaultProjectUserSettingsView, DomainRequestView, EditWebUserView,
     ListWebUsersView, InviteWebUserView)
 from .views.mobile.custom_data_fields import UserFieldsView
-from .views.mobile.groups import (EditGroupsView, EditGroupMembersView,
+from .views.mobile.groups import (GroupsListView, EditGroupMembersView,
     BulkSMSVerificationView)
 from .views.mobile.users import (
     UploadCommCareUsers, EditCommCareUserView,
@@ -78,7 +78,7 @@ patterns("corehq.apps.users.views.mobile.users",
         name=CommCareUserSelfRegistrationView.urlname),
 ) +\
 patterns("corehq.apps.users.views.mobile.groups",
-    url(r'^groups/$', EditGroupsView.as_view(), name=EditGroupsView.urlname),
+    url(r'^groups/$', GroupsListView.as_view(), name=GroupsListView.urlname),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),
     url(r'^groups/sms_verification/(?P<group_id>[ \w-]+)$', BulkSMSVerificationView.as_view(),
         name=BulkSMSVerificationView.urlname),

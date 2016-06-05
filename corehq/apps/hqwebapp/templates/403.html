@@ -1,12 +1,8 @@
 {% extends "error_base.html" %}
 {% load i18n %}
-{% block title %}403 Forbidden {% endblock %}
+{% block title %}403 {% trans "Forbidden" %} {% endblock %}
 {% block tabs %}{% endblock tabs %}
-{% block centered-content %}
-    <div class="page-header">
-        <h1>403
-            <small>{% trans "Sorry, you don't have permission to access that page!" %}</small>
-        </h1>
-    </div>
+{% block page_name %}403 <small>{% trans "Sorry, you don't have permission to access that page!" %}</small>{% endblock %}
+{% block page_content %}
     <p>{% trans "Contact your administrator if you believe this is a mistake." %}</p>
 {% endblock %}

@@ -146,8 +146,7 @@ class SubmissionPost(object):
                     raise
 
             elif instance.is_duplicate:
-                self.formdb.save_new_form(instance)
-
+                self.interface.save_processed_models([instance])
             elif not instance.is_error:
                 try:
                     case_stock_result = self.process_xforms_for_cases(xforms)

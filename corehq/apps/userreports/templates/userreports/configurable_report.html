@@ -119,6 +119,15 @@
             title: '{% trans "You can email a saved version<br />of this report." %}'
         });
     </script>
+    {% if report.spec.report_meta.created_by_builder %}
+        <script>
+            window.analytics.usage(
+                    'Report Builder',
+                    '{{ report.spec.report_meta.builder_report_type }}',
+                    'Load a report that was built in report builder'
+            )
+        </script>
+    {% endif %}
 {% endblock %}
 
 {% block report_alerts %}

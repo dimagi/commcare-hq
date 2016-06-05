@@ -1,13 +1,8 @@
 from django.conf import settings
 import django.core.exceptions
-from dimagi.utils.couch.cache import cache_core
+from corehq.apps.users.models import CouchUser, InvalidUser
 
 
-rcache = cache_core.get_redis_default_cache()
-
-############################################################################################################
-from corehq.apps.users.models import CouchUser, PublicUser, InvalidUser
-from corehq.apps.domain.models import Domain
 
 SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
 
@@ -25,7 +20,6 @@ class UsersMiddleware(object):
         if not found_domain_app:
             raise django.core.exceptions.MiddlewareNotUsed
     
-    #def process_request(self, request):
     def process_view(self, request, view_func, view_args, view_kwargs):
         if 'domain' in view_kwargs:
             request.domain = view_kwargs['domain']
@@ -37,13 +31,7 @@ class UsersMiddleware(object):
             if 'domain' in view_kwargs:
                 domain = request.domain
                 if not request.couch_user:
-                    couch_domain = Domain.get_by_name(domain)
-                    if couch_domain and couch_domain.is_public:
-                        request.couch_user = PublicUser(domain)
-                    else:
-                        request.couch_user = InvalidUser()
+                    request.couch_user = InvalidUser()
                 if request.couch_user:
                     request.couch_user.current_domain = domain
         return None
-    
-############################################################################################################

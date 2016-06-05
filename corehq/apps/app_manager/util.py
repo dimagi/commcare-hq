@@ -346,21 +346,19 @@ def get_casedb_schema(app):
 def get_session_schema(form):
     """Get form session schema definition
     """
+    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     structure = {}
-    # TODO handle advanced modules with more than one case
-    if hasattr(form, 'get_module'):
-        case_type = form.get_module().case_type
-    else:
-        case_type = None
-
-    if case_type:
-        structure["case_id"] = {
-            "reference": {
-                "source": "casedb",
-                "subset": case_type,
-                "key": "@case_id",
-            },
-        }
+    datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
+    for datum in datums:
+        if not datum.is_new_case_id and datum.case_type:
+            session_var = datum.datum.id
+            structure[session_var] = {
+                "reference": {
+                    "source": "casedb",
+                    "subset": datum.case_type,
+                    "key": "@case_id",
+                },
+            }
     return {
         "id": "commcaresession",
         "uri": "jr://instance/session",

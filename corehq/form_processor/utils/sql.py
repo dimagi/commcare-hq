@@ -5,7 +5,7 @@ in the table DSL
 import json
 from collections import namedtuple
 
-from json_field.fields import JSONEncoder
+from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (

@@ -1,14 +1,14 @@
 import codecs
 import os
 import re
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from django.conf import settings
 
 BOWER_PATH = '../../../../../../bower_components'
 B3_REGEX = r"@\{b3-import-[a-z]+-[a-z]+\}"
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = ("check to see which files are using the b3 import variable"
             " and replace the variable with the appropriate static file"
             " path once collectstatic is run on production"

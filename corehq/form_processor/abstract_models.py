@@ -121,6 +121,10 @@ class AbstractXFormInstance(object):
     def type(self):
         return self.form_data.get(const.TAG_TYPE, "")
 
+    @property
+    def name(self):
+        return self.form_data.get(const.TAG_NAME, "")
+
     @memoized
     def get_sync_token(self):
         from casexml.apps.phone.models import get_properly_wrapped_sync_log

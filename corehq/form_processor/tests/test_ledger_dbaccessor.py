@@ -20,6 +20,7 @@ class LedgerDBAccessorTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(LedgerDBAccessorTest, cls).setUpClass()
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
         cls.product_a = make_product(DOMAIN, 'A Product', 'prodcode_a')
@@ -34,14 +35,17 @@ class LedgerDBAccessorTest(TestCase):
 
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        super(LedgerDBAccessorTest, cls).tearDownClass()
 
     def setUp(self):
+        super(LedgerDBAccessorTest, self).setUp()
         self.factory = CaseFactory(domain=DOMAIN)
         self.case_one = self.factory.create_case()
         self.case_two = self.factory.create_case()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_ledgers(DOMAIN)
+        super(LedgerDBAccessorTest, self).tearDown()
 
     def _submit_ledgers(self, ledger_blocks):
         return submit_case_blocks(ledger_blocks, DOMAIN).form_id

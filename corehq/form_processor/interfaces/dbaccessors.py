@@ -125,7 +125,7 @@ class FormAccessors(object):
         return self.db_accessor.form_exists(form_id, domain=self.domain)
 
     def get_all_form_ids_in_domain(self):
-        self.db_accessor.get_form_ids_in_domain_by_type(self.domain, 'XFormInstance')
+        return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, 'XFormInstance')
 
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
@@ -186,6 +186,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_closed_case_ids_for_owner(domain, owner_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_id=None):
         raise NotImplementedError
 
     @abstractmethod
@@ -284,6 +288,9 @@ class CaseAccessors(object):
 
     def get_open_case_ids_for_owner(self, owner_id):
         return self.db_accessor.get_open_case_ids_for_owner(self.domain, owner_id)
+
+    def get_open_case_ids_in_domain_by_type(self, case_type, owner_id=None):
+        return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_id)
 
     def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
         return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
