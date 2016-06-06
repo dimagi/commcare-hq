@@ -88,6 +88,13 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         Returns a list of CommCare Users based on domain, group, and user 
         filter (demo_user, admin, registered, unknown)
     """
+    def _create_temp_user(user_id):
+        username = get_username_from_forms(domain, user_id).lower()
+        temp_user = TempCommCareUser(domain, username, user_id)
+        if user_filter[temp_user.filter_flag].show:
+            return temp_user
+        return None
+
     user_ids = user_ids if user_ids and user_ids[0] else None
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
@@ -99,7 +106,15 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         users = group.get_users(is_active=(not include_inactive), only_commcare=True)
     elif user_ids is not None:
         try:
-            users = [CommCareUser.get_by_user_id(id) for id in user_ids]
+            users = []
+            for id in user_ids:
+                user = CommCareUser.get_by_user_id(id)
+                if not user and (user_filter[HQUserType.ADMIN].show or
+                      user_filter[HQUserType.DEMO_USER].show or
+                      user_filter[HQUserType.UNKNOWN].show):
+                    user = _create_temp_user(id)
+                if user:
+                    users.append(user)
         except Exception:
             users = []
         if users and users[0] is None:
@@ -116,13 +131,12 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
                 user = registered_user_ids[user_id]
                 users.append(user)
-            elif not user_id in registered_user_ids and \
+            elif (user_id not in registered_user_ids and
                  (user_filter[HQUserType.ADMIN].show or
                   user_filter[HQUserType.DEMO_USER].show or
-                  user_filter[HQUserType.UNKNOWN].show):
-                username = get_username_from_forms(domain, user_id).lower()
-                temp_user = TempCommCareUser(domain, username, user_id)
-                if user_filter[temp_user.filter_flag].show:
+                  user_filter[HQUserType.UNKNOWN].show)):
+                user = _create_temp_user(user_id)
+                if user:
                     users.append(temp_user)
         if user_filter[HQUserType.UNKNOWN].show:
             users.append(TempCommCareUser(domain, '*', None))
@@ -130,7 +144,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if user_filter[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
             for user_id in registered_user_ids:
-                if not user_id in submitted_user_ids:
+                if user_id not in submitted_user_ids:
                     user = CommCareUser.get_by_user_id(user_id)
                     users.append(user)
 
