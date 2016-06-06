@@ -163,11 +163,10 @@ from .util import (
 )
 from corehq.apps.style.decorators import (
     use_bootstrap3,
-    use_datatables,
     use_jquery_ui,
-    use_jquery_ui_multiselect,
     use_select2,
     use_datatables,
+    use_multiselect,
 )
 
 
@@ -552,9 +551,9 @@ def hq_deid_download_saved_export(req, domain, export_id):
 
 
 def _download_saved_export(req, domain, saved_export):
-    # quasi-security hack: the first key of the index is always assumed
-    # to be the domain
-    assert domain == saved_export.configuration.index[0]
+    if domain != saved_export.configuration.index[0]:
+        raise Http404()
+
     if should_update_export(saved_export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
@@ -794,7 +793,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     config.filters = filters
 
     report_id = None
-    if config.report:
+    if config.report and hasattr(config.report, '_id'):
         report_id = config.report._id
 
     body = _render_report_configs(request, [config],
@@ -881,8 +880,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     page_title = _("Scheduled Report")
     template_name = 'reports/edit_scheduled_report.html'
 
-    @use_jquery_ui
-    @use_jquery_ui_multiselect
+    @use_multiselect
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
@@ -1801,7 +1799,8 @@ def download_attachment(request, domain, instance_id):
     except AttachmentNotFound:
         raise Http404()
 
-    return StreamingHttpResponse(streaming_content=attach.content_stream, content_type=attach.content_type)
+    return StreamingHttpResponse(streaming_content=FileWrapper(attach.content_stream),
+                                 content_type=attach.content_type)
 
 
 @require_form_view_permission

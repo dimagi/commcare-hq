@@ -364,12 +364,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.form_id for result in results]
 
     @staticmethod
-    def get_indices(case_id):
-        return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices(%s)', [case_id]))
+    def get_indices(domain, case_id):
+        return list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_case_indices(%s, %s)', [domain, case_id]
+        ))
 
     @staticmethod
-    def get_reverse_indices(case_id):
-        indices = list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
+    def get_reverse_indices(domain, case_id):
+        indices = list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
+        ))
 
         def _set_referenced_id(index):
             # see corehq/couchapps/case_indices/views/related/map.js
@@ -503,13 +507,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
-                [domain, owner_ids, closed]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
     @unit_testing_only
@@ -594,20 +592,25 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
-                [domain, [owner_id], False]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=False)
 
     @staticmethod
     def get_closed_case_ids_for_owner(domain, owner_id):
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=True)
+
+    @staticmethod
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
+        return CaseAccessorSQL._get_case_ids_in_domain(
+            domain, case_type=case_type, owner_ids=owner_ids, is_closed=False
+        )
+
+    @staticmethod
+    def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None):
+        owner_ids = list(owner_ids) if owner_ids else None
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
-                [domain, [owner_id], True]
+                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s)',
+                [domain, case_type, owner_ids, is_closed]
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]

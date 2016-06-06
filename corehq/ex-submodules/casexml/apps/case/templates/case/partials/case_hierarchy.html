@@ -1,8 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.css" %}">
-<link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.theme.default.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "jquery-treetable/css/jquery.treetable.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "case/css/jquery.treetable.css" %}">
 
 <style>
     .touchforms-inline.webforms #form {
@@ -37,7 +37,7 @@
 
 <script>
     $.when(
-        $.getScript('{% static "case/js/lib/jquery-treetable/jquery.treetable.js" %}')
+        $.getScript('{% static "jquery-treetable/jquery.treetable.js" %}')
     ).done(function () {
         var tree = $("#related_cases").treetable({
             expandable: true,
@@ -129,7 +129,7 @@
 
                 {% if case.edit_data.edit_form_id != None or case.add_child_data.create_form_id != None %}
                 <br style="line-height:0">
-                <span class="indenter" style="line-height:0; padding-left:{{ case.edit_data.indent_px }}px"></span>
+                <span class="indenter" style="line-height:0; padding: 0 {{ case.edit_data.indent_px }}px"></span>
                 <div class="touchforms-inline" id="edit_{{ case.get_id }}">
                     <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
                 </div>

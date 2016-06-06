@@ -9,13 +9,13 @@
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% new_static 'dashboard/less/dashboard.less' %}" />
+          href="{% static 'dashboard/less/dashboard.less' %}" />
 {% endcompress %}
 {% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'style/js/bootstrap2/main.js' %}"></script>
-    <script src="{% new_static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
+    <script src="{% static 'style/js/main.js' %}"></script>
+    <script src="{% static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

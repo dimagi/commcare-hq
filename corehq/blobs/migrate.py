@@ -339,8 +339,10 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
                         print("Skip: {doc_type} {_id}".format(**doc))
                         skipped += 1
                 if (migrated + skipped) % 100 == 0:
-                    print("Migrated {} of {} documents in {}"
-                          .format(migrated, visited, datetime.now() - start))
+                    elapsed = datetime.now() - start
+                    remaining = elapsed / visited * total
+                    print("Migrated {}/{} of {} documents in {} ({} remaining)"
+                          .format(migrated, visited, total, elapsed, remaining))
 
     doc_migrator.after_migration()
 
@@ -348,10 +350,11 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
         os.remove(filename)
         os.rmdir(dirpath)
 
-    print("Migrated {} of {} documents ({} previously migrated, {} had no attachments)."
+    print("Migrated {}/{} of {} documents ({} previously migrated, {} had no attachments)."
         .format(
-            visited - skipped,
+            migrated,
             visited,
+            total,
             total - visited,
             visited - (migrated + skipped)
         ))

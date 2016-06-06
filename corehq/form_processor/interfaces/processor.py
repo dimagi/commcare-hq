@@ -85,9 +85,6 @@ class FormProcessorInterface(object):
         else:
             return LedgerDBCouch()
 
-    def save_xform(self, xform):
-        return self.processor.save_xform(xform)
-
     def acquire_lock_for_xform(self, xform_id):
         lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
         try:
@@ -161,12 +158,12 @@ class FormProcessorInterface(object):
     def hard_rebuild_case(self, case_id, detail):
         return self.processor.hard_rebuild_case(self.domain, case_id, detail)
 
-    def get_cases_from_forms(self, xforms, case_db):
+    def get_cases_from_forms(self, case_db, xforms):
         """
         Returns a dict of case_ids to CaseUpdateMetadata objects containing the touched cases
         (with the forms' updates already applied to the cases)
         """
-        return self.processor.get_cases_from_forms(xforms, case_db)
+        return self.processor.get_cases_from_forms(case_db, xforms)
 
     def submission_error_form_instance(self, instance, message):
         return self.processor.submission_error_form_instance(self.domain, instance, message)

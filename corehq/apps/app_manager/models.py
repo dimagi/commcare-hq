@@ -65,7 +65,6 @@ from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -110,7 +109,6 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     update_unique_ids,
     app_callout_templates,
-    use_app_aware_sync,
     xpath_references_case,
     xpath_references_user_case,
 )
@@ -2325,7 +2323,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 pass
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
-        super(AdvancedForm, self).add_stuff_to_xform(xform)
+        super(AdvancedForm, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta_advanced(self)
 
     def requires_case(self):
@@ -3033,7 +3031,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
             return super(CareplanForm, cls).wrap(data)
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
-        super(CareplanForm, self).add_stuff_to_xform(xform)
+        super(CareplanForm, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_care_plan(self)
 
     def get_case_updates(self, case_type):
@@ -4387,9 +4385,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def ota_restore_url(self):
-        if use_app_aware_sync(self):
-            return reverse('app_aware_restore', args=[self.domain, self._id])
-        return reverse('ota_restore', args=[self.domain])
+        return reverse('app_aware_restore', args=[self.domain, self._id])
 
     @absolute_url_property
     def form_record_url(self):

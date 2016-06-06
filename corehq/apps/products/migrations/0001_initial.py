@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('program_id', models.CharField(default=b'', max_length=100, null=True)),
                 ('cost', models.DecimalField(null=True, max_digits=20, decimal_places=5)),
                 ('units', models.CharField(default=b'', max_length=100, null=True)),
-                ('product_data', jsonfield.fields.JSONField(default={})),
+                ('product_data', jsonfield.fields.JSONField(default=dict)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
             ],

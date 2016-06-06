@@ -22,7 +22,6 @@ from corehq.apps.userreports.tests.utils import get_sample_data_source, get_samp
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
-from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
 class ConfigurableReportTableManagerTest(SimpleTestCase):
@@ -151,11 +150,11 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
             case.save()
 
         # send to kafka
-        since = get_current_kafka_seq(topics.CASE)
+        since = self.pillow.get_change_feed().get_current_offsets()
         producer.send_change(topics.CASE, doc_to_change(sample_doc).metadata)
 
         # run pillow and check changes
-        self.pillow.process_changes(since={topics.CASE: since}, forever=False)
+        self.pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
         case.delete()
 

@@ -121,6 +121,10 @@ class AbstractXFormInstance(object):
     def type(self):
         return self.form_data.get(const.TAG_TYPE, "")
 
+    @property
+    def name(self):
+        return self.form_data.get(const.TAG_NAME, "")
+
     @memoized
     def get_sync_token(self):
         from casexml.apps.phone.models import get_properly_wrapped_sync_log
@@ -184,6 +188,9 @@ class AbstractCommCareCase(object):
         raise NotImplementedError()
 
     def to_api_json(self):
+        raise NotImplementedError()
+
+    def set_case_id(self, case_id):
         raise NotImplementedError()
 
     def _resolve_case_property(self, property_name, result):
