@@ -11,6 +11,7 @@ from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
     NoDomainProvided,
@@ -273,7 +274,7 @@ def get_extensions_to_close(case, domain):
     outgoing_extension_indices = [index.relationship for index in case.indices
                                   if index.relationship == CASE_INDEX_EXTENSION]
     if not outgoing_extension_indices and case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
-        return get_extension_chain([case.case_id], domain)
+        return CaseAccessors(domain).get_extension_chain([case.case_id])
     else:
         return set()
 
