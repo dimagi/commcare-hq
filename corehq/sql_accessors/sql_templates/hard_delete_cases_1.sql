@@ -12,7 +12,9 @@ BEGIN
             AND form_processor_commcarecasesql.domain = domain_name
     );
     DELETE FROM form_processor_casetransaction WHERE form_processor_casetransaction.case_id = ANY(verified_case_ids);
-    DELETE FROM form_processor_commcarecaseindexsql WHERE form_processor_commcarecaseindexsql.case_id = ANY(verified_case_ids);
+    DELETE FROM form_processor_commcarecaseindexsql WHERE
+        form_processor_commcarecaseindexsql.domain = domain_name
+        AND form_processor_commcarecaseindexsql.case_id = ANY(verified_case_ids);
     DELETE FROM form_processor_caseattachmentsql WHERE form_processor_caseattachmentsql.case_id = ANY(verified_case_ids);
     DELETE FROM form_processor_commcarecasesql WHERE form_processor_commcarecasesql.case_id = ANY(verified_case_ids);
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
