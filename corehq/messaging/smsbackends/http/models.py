@@ -1,4 +1,3 @@
-import re
 from urllib import urlencode
 from urllib2 import urlopen
 import sys
@@ -11,18 +10,10 @@ from dimagi.ext.couchdbkit import *
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number, strip_plus
+from corehq.util.validation import is_url_or_host_banned
 from django.utils.translation import ugettext as _, ugettext_noop
 from crispy_forms import layout as crispy
 from django.conf import settings
-
-BANNED_URL_REGEX = (
-    r".*://.*commcarehq.org.*",
-    r".*://10.*",
-    r".*://172.16.*",
-    r".*://192.168.*",
-    r".*://127.0.0.1.*",
-    r".*://.*localhost.*",
-)
 
 
 class HttpBackendForm(BackendForm):
@@ -59,9 +50,8 @@ class HttpBackendForm(BackendForm):
 
     def clean_url(self):
         value = self.cleaned_data.get("url")
-        for regex in BANNED_URL_REGEX:
-            if re.match(regex, value):
-                raise ValidationError(_("Invalid URL."))
+        if is_url_or_host_banned(value):
+            raise ValidationError(_("Invalid URL"))
         return value
 
     def clean_additional_params(self):

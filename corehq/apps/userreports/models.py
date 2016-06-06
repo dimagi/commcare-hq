@@ -290,6 +290,9 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
     created_by_builder = BooleanProperty(default=False)
+    # `True` if this report was ever edited in the advanced JSON UIs (after June 7, 2016)
+    edited_manually = BooleanProperty(default=False)
+    last_modified = DateTimeProperty()
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
 
 
@@ -311,6 +314,10 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.title)
+
+    def save(self, *args, **kwargs):
+        self.report_meta.last_modified = datetime.utcnow()
+        super(ReportConfiguration, self).save(*args, **kwargs)
 
     @property
     @memoized

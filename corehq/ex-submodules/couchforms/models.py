@@ -153,10 +153,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return self.form
 
     @property
-    def name(self):
-        return self.form.get(const.TAG_NAME, "")
-
-    @property
     def user_id(self):
         return getattr(self.metadata, 'userID', None)
 

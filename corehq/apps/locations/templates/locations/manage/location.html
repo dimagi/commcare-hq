@@ -1,4 +1,4 @@
-{% extends "style/bootstrap3/base_section.html" %}
+{% extends "style/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
@@ -7,7 +7,7 @@
 {% block js %}{{ block.super }}
     <script type="text/javascript" src="{% static 'locations/ko/location_drilldown.async.js' %}"></script>
     <script type="text/javascript" src="{% static 'locations/ko/location.js' %}"></script>
-    <script type="text/javascript" src="{% static 'style/js/bootstrap3/ui-element.js' %}"></script>
+    <script type="text/javascript" src="{% static 'style/js/ui-element.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

@@ -147,6 +147,9 @@ class LocationTypesView(BaseLocationView):
             'shares_cases': loc_type.shares_cases,
             'view_descendants': loc_type.view_descendants,
             'code': loc_type.code,
+            'expand_from': loc_type.expand_from.pk if loc_type.expand_from else None,
+            'expand_from_root': loc_type.expand_from_root,
+            'expand_to': loc_type.expand_to.pk if loc_type.expand_to else None,
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     def post(self, request, *args, **kwargs):
@@ -157,7 +160,7 @@ class LocationTypesView(BaseLocationView):
             return isinstance(pk, basestring) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative,
-                       shares_cases, view_descendants, pk, code):
+                       shares_cases, view_descendants, pk, code, expand_from, expand_from_root, expand_to):
             parent = sql_loc_types[parent_type] if parent_type else None
 
             loc_type = None
@@ -174,8 +177,8 @@ class LocationTypesView(BaseLocationView):
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
             loc_type.code = unicode_slug(code)
-            loc_type.save()
             sql_loc_types[pk] = loc_type
+            loc_type.save()
 
         loc_types = payload['loc_types']
         pks = []
@@ -193,9 +196,35 @@ class LocationTypesView(BaseLocationView):
             return self.get(request, *args, **kwargs)
 
         for loc_type in hierarchy:
+            # make all locations in order
             mk_loctype(**loc_type)
 
+        for loc_type in hierarchy:
+            # apply sync boundaries (expand_from and expand_to) after the
+            # locations are all created since there are dependencies between them
+            self._attach_sync_boundaries_to_location_type(loc_type, sql_loc_types)
+
         return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+    @staticmethod
+    def _attach_sync_boundaries_to_location_type(loc_type_data, loc_type_db):
+        """Store the sync expansion boundaries along with the location type. i.e. where
+        the user's locations start expanding from, and where they expand to
+
+        """
+        loc_type = loc_type_db[loc_type_data['pk']]
+        expand_from_id = loc_type_data['expand_from']
+        expand_to_id = loc_type_data['expand_to']
+        try:
+            loc_type.expand_from = loc_type_db[expand_from_id] if expand_from_id else None
+        except KeyError:        # expand_from location type was deleted
+            loc_type.expand_from = None
+        loc_type.expand_from_root = loc_type_data['expand_from_root']
+        try:
+            loc_type.expand_to = loc_type_db[expand_to_id] if expand_to_id else None
+        except KeyError:        # expand_to location type was deleted
+            loc_type.expand_to = None
+        loc_type.save()
 
     def remove_old_location_types(self, pks):
         existing_pks = (LocationType.objects.filter(domain=self.domain)
@@ -619,7 +648,7 @@ class FacilitySyncView(BaseSyncView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
-    template_name = 'style/bootstrap3/soil_status_full.html'
+    template_name = 'style/soil_status_full.html'
 
     @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):

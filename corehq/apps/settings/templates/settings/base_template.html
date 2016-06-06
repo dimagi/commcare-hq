@@ -1,0 +1,18 @@
+{% extends "style/base_section.html" %}
+{% load hq_shared_tags %}
+
+{% block js %} {{ block.super }}
+    <script type="text/javascript" src="{% static 'style/js/main.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(function () {
+            var path = '{{ request.path }}';
+            $('.hq-help-template').each(function () {
+                COMMCAREHQ.transformHelpTemplate($(this), false);
+            });
+            $('.hq-help').hqHelp();
+        });
+    </script>
+{% endblock %}

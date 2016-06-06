@@ -22,7 +22,6 @@ from corehq.apps.userreports.tests.utils import get_sample_data_source, get_samp
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
-from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
 class ConfigurableReportTableManagerTest(SimpleTestCase):

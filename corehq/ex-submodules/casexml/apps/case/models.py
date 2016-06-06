@@ -202,6 +202,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     
     case_id = property(__get_case_id, __set_case_id)
 
+    def set_case_id(self, case_id):
+        self.__set_case_id(case_id)
+
     @property
     def modified_by(self):
         return self.user_id

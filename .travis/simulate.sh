@@ -10,8 +10,8 @@
 #       --override-command    [Override test command completely]
 #
 # e.g.
-#   simulate.sh python-catchall --override-test app_manager.SuiteTest
-#   simulate.sh python-catchall --override-command bash
+#   simulate.sh python-05 --override-test app_manager.SuiteTest
+#   simulate.sh python-05 --override-command bash
 
 set -e
 
@@ -58,7 +58,7 @@ run() {
 
 trap cleanup SIGINT SIGTERM EXIT ERR
 
-OPTIONS="javascript|python-07|python-8f|python-sharded"
+OPTIONS="javascript|python-05|python-6a|python-bf|python-sharded"
 
 MATRIX="$1"
 shift
@@ -91,11 +91,14 @@ case $MATRIX in
     javascript)
         set_env javascript "" yes yes
         ;;
-    python-07)
-        set_env python "07" yes yes
+    python-05)
+        set_env python "05" yes yes
         ;;
-    python-8f)
-        set_env python "8f" yes yes
+    python-6a)
+        set_env python "6a" yes yes
+        ;;
+    python-bf)
+        set_env python "bf" yes yes
         ;;
     python-sharded)
         set_env python-sharded "" "" ""

@@ -12,27 +12,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.tests.utils import get_sample_report_config
 
 
-class OtaRestoreUrlTests(TestCase):
-    domain = 'test_domain'
-
-    @classmethod
-    def setUpClass(cls):
-        cls.app = Application.new_app(cls.domain, 'Test App', application_version=APP_V2)
-        cls.app.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.app.delete()
-
-    def test_app_aware_url(self):
-        toggles.APP_AWARE_SYNC.set(self.domain, True, toggles.NAMESPACE_DOMAIN)
-        self.assertIn(self.app._id, self.app.ota_restore_url)
-
-    def test_default_url(self):
-        toggles.APP_AWARE_SYNC.set(self.domain, False, toggles.NAMESPACE_DOMAIN)
-        self.assertNotIn(self.app._id, self.app.ota_restore_url)
-
-
 class AppAwareSyncTests(TestCase):
     domain = 'test_domain'
     rows = [{

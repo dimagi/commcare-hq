@@ -163,11 +163,10 @@ from .util import (
 )
 from corehq.apps.style.decorators import (
     use_bootstrap3,
-    use_datatables,
     use_jquery_ui,
-    use_jquery_ui_multiselect,
     use_select2,
     use_datatables,
+    use_multiselect,
 )
 
 
@@ -881,8 +880,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     page_title = _("Scheduled Report")
     template_name = 'reports/edit_scheduled_report.html'
 
-    @use_jquery_ui
-    @use_jquery_ui_multiselect
+    @use_multiselect
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
@@ -1801,7 +1799,8 @@ def download_attachment(request, domain, instance_id):
     except AttachmentNotFound:
         raise Http404()
 
-    return StreamingHttpResponse(streaming_content=attach.content_stream, content_type=attach.content_type)
+    return StreamingHttpResponse(streaming_content=FileWrapper(attach.content_stream),
+                                 content_type=attach.content_type)
 
 
 @require_form_view_permission

@@ -11,7 +11,7 @@ from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
 from corehq.util.xml_utils import serialize
 
-from corehq.apps.userreports.exceptions import UserReportsError, BadReportConfigurationError
+from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -44,7 +44,7 @@ class ReportFixturesProvider(object):
         for report_config in report_configs:
             try:
                 reports_elem.append(self._report_config_to_fixture(report_config, restore_user))
-            except BadReportConfigurationError as err:
+            except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
             except UserReportsError:
@@ -95,14 +95,8 @@ class ReportFixturesProvider(object):
 
     @staticmethod
     def _get_report_and_data_source(report_id, domain):
-        try:
-            report = get_report_config(report_id, domain)[0]
-        except ResourceNotFound as err:
-            # ReportConfiguration not found
-            raise BadReportConfigurationError('Error getting ReportConfiguration with ID "{}": {}'.format(
-                report_id, err))
+        report = get_report_config(report_id, domain)[0]
         data_source = ReportFactory.from_spec(report)
-
         return report, data_source
 
     @staticmethod

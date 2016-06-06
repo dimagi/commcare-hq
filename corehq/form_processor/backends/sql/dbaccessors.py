@@ -364,12 +364,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.form_id for result in results]
 
     @staticmethod
-    def get_indices(case_id):
-        return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices(%s)', [case_id]))
+    def get_indices(domain, case_id):
+        return list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_case_indices(%s, %s)', [domain, case_id]
+        ))
 
     @staticmethod
-    def get_reverse_indices(case_id):
-        indices = list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
+    def get_reverse_indices(domain, case_id):
+        indices = list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
+        ))
 
         def _set_referenced_id(index):
             # see corehq/couchapps/case_indices/views/related/map.js
@@ -595,10 +599,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=True)
 
     @staticmethod
-    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_id=None):
-        owners = [owner_id] if owner_id else None
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
         return CaseAccessorSQL._get_case_ids_in_domain(
-            domain, case_type=case_type, owner_ids=owners, is_closed=False
+            domain, case_type=case_type, owner_ids=owner_ids, is_closed=False
         )
 
     @staticmethod

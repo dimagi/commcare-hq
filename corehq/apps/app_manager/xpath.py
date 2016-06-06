@@ -47,7 +47,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
     ]):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
-        raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR, module=module, form=form)
+        raise CaseXPathValidationError(_(CASE_REFERENCE_VALIDATION_ERROR), module=module, form=form)
     replacements = {
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),

@@ -13,6 +13,10 @@ var dimagisphere = (function() {
         /**
          * Adds data to self.formData. Returns whether anything was done.
          */
+        dimagisphere.formData.domainToCountry[dataItem.domain] = dataItem.country;
+        var currentDomainCount = dimagisphere.formData.totalFormsByDomain[dataItem.domain] || 0;
+        currentDomainCount += 1;
+        dimagisphere.formData.totalFormsByDomain[dataItem.domain] = currentDomainCount;
         if (dataItem.country) {
             // update totals
             var currentCount = self.formData.totalFormsByCountry[dataItem.country] || 0;

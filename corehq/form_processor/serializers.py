@@ -1,4 +1,4 @@
-from json_field import JSONField
+from jsonfield import JSONField
 from rest_framework import serializers
 
 from corehq.apps.commtrack.models import StockState
@@ -38,7 +38,6 @@ class DeletableModelSerializer(serializers.ModelSerializer):
 
 
 class XFormOperationSQLSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = XFormOperationSQL
 
@@ -64,16 +63,16 @@ class XFormStateField(serializers.ChoiceField):
         for state, state_slug in self.choices.iteritems():
             if choice & state:
                 readable_state.append(state_slug)
-        return ' '.join(readable_state)
+        return ' / '.join(readable_state)
 
 
-class DeletableModelWithJsonSerializer(DeletableModelSerializer):
+class JsonFieldSerializerMixin(object):
     serializer_field_mapping = {}
     serializer_field_mapping.update(DeletableModelSerializer.serializer_field_mapping)
-    serializer_field_mapping[JSONField] = serializers.DictField
+    serializer_field_mapping[JSONField] = serializers.JSONField
 
 
-class XFormInstanceSQLRawDocSerializer(DeletableModelWithJsonSerializer):
+class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
     state = XFormStateField()
 
     class Meta:
@@ -81,9 +80,12 @@ class XFormInstanceSQLRawDocSerializer(DeletableModelWithJsonSerializer):
 
 
 class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
+    case_id = serializers.CharField()
+    relationship = serializers.CharField()
 
     class Meta:
         model = CommCareCaseIndexSQL
+        fields = ('case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship')
 
 
 class CaseTransactionActionSerializer(serializers.ModelSerializer):
@@ -95,7 +97,18 @@ class CaseTransactionActionSerializer(serializers.ModelSerializer):
         fields = ('xform_id', 'server_date', 'date', 'sync_log_id')
 
 
-class CommCareCaseSQLRawDocSerializer(DeletableModelWithJsonSerializer):
+class CaseTransactionactionRawDocSerializer(JsonFieldSerializerMixin, CaseTransactionActionSerializer):
+    type = serializers.CharField(source='readable_type')
+
+    class Meta:
+        model = CaseTransaction
+        fields = ('form_id', 'server_date', 'date', 'sync_log_id', 'type', 'details')
+
+
+class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
+    indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
+    transactions = CaseTransactionactionRawDocSerializer(many=True, read_only=True, source='non_revoked_transactions')
+
     class Meta:
         model = CommCareCaseSQL
 

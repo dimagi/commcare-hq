@@ -112,20 +112,14 @@ def get_doc_info(doc, domain_hint=None, cache=None):
         doc_info = DocInfo(
             display=raw_username(doc['username']),
             type_display=_('Mobile Worker'),
-            link=reverse(
-                'edit_commcare_user',
-                args=[domain, doc_id],
-            ),
+            link=get_commcareuser_url(domain, doc_id),
             is_deleted=doc.get('base_doc', '').endswith(DELETED_SUFFIX),
         )
     elif doc_type in ('WebUser',):
         doc_info = DocInfo(
             type_display=_('Web User'),
             display=doc['username'],
-            link=reverse(
-                'user_account',
-                args=[domain, doc_id],
-            ),
+            link=get_webuser_url(domain, doc_id),
             is_deleted=doc.get('base_doc', '').endswith(DELETED_SUFFIX),
         )
     elif has_doc_type(doc_type, 'Group'):
@@ -195,11 +189,29 @@ def case_docinfo(domain, doc_id, name, is_deleted):
     return DocInfo(
         display=name,
         type_display=_('Case'),
-        link=reverse(
-            'case_details',
-            args=[domain, doc_id],
-        ),
+        link=get_case_url(domain, doc_id),
         is_deleted=is_deleted,
+    )
+
+
+def get_case_url(domain, case_id):
+    return reverse(
+        'case_details',
+        args=[domain, case_id],
+    )
+
+
+def get_commcareuser_url(domain, user_id):
+    return reverse(
+        'edit_commcare_user',
+        args=[domain, user_id],
+    )
+
+
+def get_webuser_url(domain, user_id):
+    return reverse(
+        'user_account',
+        args=[domain, user_id],
     )
 
 
@@ -245,3 +257,14 @@ def get_object_info(obj, cache=None):
         cache[cache_key] = doc_info
 
     return doc_info
+
+
+def get_object_url(domain, doc_type, doc_id):
+    if doc_type == 'CommCareCase':
+        return get_case_url(domain, doc_id)
+    elif doc_type == 'CommCareUser':
+        return get_commcareuser_url(domain, doc_id)
+    elif doc_type == 'WebUser':
+        return get_webuser_url(domain, doc_id)
+
+    return None

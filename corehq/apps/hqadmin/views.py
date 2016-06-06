@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.http import (
@@ -29,6 +29,7 @@ from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
+from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.es import CaseES, aggregations
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_bootstrap3, use_nvd3_v3
@@ -600,9 +601,10 @@ class _Db(object):
     Light wrapper for providing interface like Couchdbkit's Database objects.
     """
 
-    def __init__(self, dbname, getter):
+    def __init__(self, dbname, getter, doc_type):
         self.dbname = dbname
         self._getter = getter
+        self.doc_type = doc_type
 
     def get(self, record_id):
         try:
@@ -614,11 +616,13 @@ class _Db(object):
 _SQL_DBS = OrderedDict((db.dbname, db) for db in [
     _Db(
         XFormInstanceSQL._meta.db_table,
-        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data
+        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data,
+        XFormInstanceSQL.__name__
     ),
     _Db(
         CommCareCaseSQL._meta.db_table,
-        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data
+        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data,
+        CommCareCaseSQL.__name__
     ),
 ])
 
@@ -652,7 +656,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({
                 "doc": json.dumps(doc, indent=4, sort_keys=True),
-                "doc_type": doc.get('doc_type', 'Unknown'),
+                "doc_type": doc.get('doc_type', getattr(db, 'doc_type', 'Unknown')),
                 "dbname": db.dbname,
             })
 
@@ -781,6 +785,7 @@ def callcenter_test(request):
 
     if user or user_case:
         custom_cache = None if enable_caching else cache.caches['dummy']
+        override_case = CallCenterCase.from_case(user_case)
         cci = CallCenterIndicators(
             domain.name,
             domain.default_timezone,
@@ -788,7 +793,7 @@ def callcenter_test(request):
             user,
             custom_cache=custom_cache,
             override_date=query_date,
-            override_cases=[user_case] if user_case else None
+            override_cases=[override_case] if override_case else None
         )
         data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
     else:
@@ -921,4 +926,12 @@ class CallcenterUCRCheck(BaseAdminSectionView):
             'domain': domain
         }
 
+        return context
+
+
+class DimagisphereView(TemplateView):
+
+    def get_context_data(self, **kwargs):
+        context = super(DimagisphereView, self).get_context_data(**kwargs)
+        context['tvmode'] = 'tvmode' in self.request.GET
         return context
