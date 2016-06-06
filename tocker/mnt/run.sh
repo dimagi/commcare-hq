@@ -49,7 +49,6 @@ function run_tests() {
     shift
     test_setup $TEST
 
-    ln -sf .travis/localsettings.py localsettings.py
     if [ "$TEST" == "python-sharded" ]; then
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
@@ -90,5 +89,6 @@ ln -s /mnt/lib/node_modules lib/overlay/node_modules
 mount -t aufs -o br=lib/overlay:commcare-hq-ro none /mnt/commcare-hq
 
 cd commcare-hq
+ln -sf .travis/localsettings.py localsettings.py
 
 "$@"
