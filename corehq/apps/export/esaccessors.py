@@ -1,4 +1,4 @@
-from corehq.apps.es import CaseES, GroupES, LedgerES, aggregations
+from corehq.apps.es import CaseES, GroupES, LedgerES
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
 
