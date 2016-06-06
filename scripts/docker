@@ -84,6 +84,7 @@ else
             ${VOLUME_PREFIX}kafka \
             ${VOLUME_PREFIX}lib \
             ${VOLUME_PREFIX}postgresql \
+            ${VOLUME_PREFIX}redis \
             ${VOLUME_PREFIX}riakcs \
             ${VOLUME_PREFIX}zookeeper
     fi
