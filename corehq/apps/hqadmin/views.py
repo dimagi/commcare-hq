@@ -601,9 +601,10 @@ class _Db(object):
     Light wrapper for providing interface like Couchdbkit's Database objects.
     """
 
-    def __init__(self, dbname, getter):
+    def __init__(self, dbname, getter, doc_type):
         self.dbname = dbname
         self._getter = getter
+        self.doc_type = doc_type
 
     def get(self, record_id):
         try:
@@ -615,11 +616,13 @@ class _Db(object):
 _SQL_DBS = OrderedDict((db.dbname, db) for db in [
     _Db(
         XFormInstanceSQL._meta.db_table,
-        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data
+        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data,
+        XFormInstanceSQL.__name__
     ),
     _Db(
         CommCareCaseSQL._meta.db_table,
-        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data
+        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data,
+        CommCareCaseSQL.__name__
     ),
 ])
 
@@ -653,7 +656,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({
                 "doc": json.dumps(doc, indent=4, sort_keys=True),
-                "doc_type": doc.get('doc_type', 'Unknown'),
+                "doc_type": doc.get('doc_type', getattr(db, 'doc_type', 'Unknown')),
                 "dbname": db.dbname,
             })
 
