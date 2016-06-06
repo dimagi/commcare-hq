@@ -205,6 +205,14 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def get_reverse_indexed_cases(domain, case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_extension_chain(domain, case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_last_modified_dates(domain, case_ids):
         raise NotImplementedError
 
@@ -321,6 +329,9 @@ class CaseAccessors(object):
 
     def soft_delete_cases(self, case_ids, deletion_date=None, deletion_id=None):
         return self.db_accessor.soft_delete_cases(self.domain, case_ids, deletion_date, deletion_id)
+
+    def get_extension_chain(self, case_ids):
+        return self.db_accessor.get_extension_chain(self.domain, case_ids)
 
     @quickcache(['self.domain'], timeout=30 * 60)
     def get_case_types(self):

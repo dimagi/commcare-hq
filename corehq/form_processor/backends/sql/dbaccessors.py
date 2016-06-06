@@ -429,6 +429,20 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
+    def get_extension_chain(domain, case_ids):
+        assert isinstance(case_ids, list)
+
+        extension_chain_ids = set()
+        incoming_extensions = set(CaseAccessorSQL.get_extension_case_ids(domain, case_ids))
+        all_extension_ids = set(incoming_extensions)
+        new_extensions = set(incoming_extensions)
+        while new_extensions:
+            new_extensions = set(CaseAccessorSQL.get_extension_case_ids(domain, list(new_extensions)))
+            all_extension_ids = all_extension_ids | new_extensions
+            extension_chain_ids = extension_chain_ids | all_extension_ids
+        return extension_chain_ids
+
+    @staticmethod
     def hard_delete_cases(domain, case_ids):
         assert isinstance(case_ids, list)
         with get_cursor(CommCareCaseSQL) as cursor:

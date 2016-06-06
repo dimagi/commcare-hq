@@ -1,12 +1,12 @@
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from casexml.apps.case.dbaccessors import get_extension_chain
 from casexml.apps.case.xform import get_extensions_to_close
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.util.test_utils import flag_enabled
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 
 class AutoCloseExtensionsTest(SyncBaseTest):
@@ -14,12 +14,18 @@ class AutoCloseExtensionsTest(SyncBaseTest):
     def setUp(self):
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
+        delete_all_users()
         self.domain = "domain"
         self.project = Domain(name=self.domain)
         self.user = create_restore_user(self.domain, username='name', password="changeme")
         self.factory = CaseFactory(domain=self.domain)
         self.extension_ids = ['1', '2', '3']
         self.host_id = 'host'
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
+        delete_all_users()
 
     def _create_extension_chain(self):
         host = CaseStructure(case_id=self.host_id)
@@ -82,13 +88,18 @@ class AutoCloseExtensionsTest(SyncBaseTest):
             )],
         )
         self.factory.create_or_update_cases([extension])
-        self.assertEqual(set(self.extension_ids[0]), get_extension_chain([self.host_id], self.domain))
+        self.assertEqual(
+            set(self.extension_ids[0]),
+            CaseAccessors(self.domain).get_extension_chain([self.host_id])
+        )
 
     @run_with_all_backends
     def test_get_extension_chain_multiple(self):
         created_cases = self._create_extension_chain()
-        self.assertEqual(set(self.extension_ids),
-                         get_extension_chain([created_cases[-1]], self.domain))
+        self.assertEqual(
+            set(self.extension_ids),
+            CaseAccessors(self.domain).get_extension_chain([created_cases[-1].case_id])
+        )
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     @run_with_all_backends
