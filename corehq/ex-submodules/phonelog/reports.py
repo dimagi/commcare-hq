@@ -167,6 +167,8 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
 
     @property
     def rows(self):
+        range = slice(self.pagination.start,
+                      self.pagination.start + self.pagination.count + 1)
         if self.goto_key:
             log = self.goto_log
             assert log.domain == self.domain
@@ -175,11 +177,9 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
                 domain__exact=self.domain,
                 device_id__exact=log.device_id,
             )
-            return self._create_rows(logs, matching_id=log.id)
+            return self._create_rows(logs, matching_id=log.id, range=range)
         else:
             logs = self._filter_logs()
-            range = slice(self.pagination.start,
-                          self.pagination.start + self.pagination.count + 1)
             return self._create_rows(logs, range=range)
 
     @property
