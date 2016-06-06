@@ -1,6 +1,5 @@
 from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.models import PhoneNumber
-from dimagi.utils.couch.database import iter_docs_with_retry, iter_bulk_delete_with_doc_type_verification
+from dimagi.utils.couch.database import iter_bulk_delete_with_doc_type_verification
 from django.core.management.base import BaseCommand
 from optparse import make_option
 
