@@ -11,18 +11,15 @@ function test_setup() {
 
     if [ "$TEST" = "python" -o "$TEST" = "python-sharded" ]; then
 
-        if [ -f python_env/bin/activate ]; then
-            source python_env/bin/activate
-        else
-            virtualenv ./python_env
-        fi
-
         scripts/uninstall-requirements.sh
         pip install \
             -r requirements/requirements.txt \
             -r requirements/dev-requirements.txt \
             coveralls
-        rm -rf /root/.cache/pip  # skip Running setup.py bdist_wheel for ...
+
+        # some kind of optimization?
+        # skip Running setup.py bdist_wheel for ... ?
+        rm -rf /root/.cache/pip
 
         /usr/lib/jvm/jdk1.7.0/bin/keytool -genkey \
             -keyalg RSA \
