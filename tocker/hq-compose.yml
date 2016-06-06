@@ -3,8 +3,10 @@ web:
   environment:
     JS_SETUP: "${JS_SETUP}"
     NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
-    DEPENDENT_SERVICES: "COUCH POSTGRES REDIS KAFKA ELASTICSEARCH RIAKCS"
+    DEPENDENT_SERVICES: "couch postgres redis kafka elasticsearch riakcs"
   privileged: true  # allows mount inside container
+  expose:
+    - "8000"
   links:
     - postgres
     - couch

@@ -17,11 +17,11 @@ function usage() {
             echo ""
             ;;
         bash)
-            echo "Run bash in the web container"
+            echo "Run bash in web container"
             echo ""
             ;;
         shell)
-            echo "Run the Django shell in the web container"
+            echo "Run Django shell in web container"
             echo ""
             ;;
         services)
