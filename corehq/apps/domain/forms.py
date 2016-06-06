@@ -1,4 +1,3 @@
-import copy
 import datetime
 import io
 import logging
@@ -8,11 +7,10 @@ import uuid
 from urlparse import urlparse, parse_qs
 
 import dateutil
-import django
 from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import FormActions, StrictButton
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from dateutil.relativedelta import relativedelta
 from django import forms
