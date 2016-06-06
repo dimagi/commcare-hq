@@ -613,17 +613,43 @@ class ConfigureChartReport(ReportBuilderView):
 
     @property
     def page_context(self):
+        try:
+            report_form = self.report_form
+        except Exception as e:
+            if self.existing_report and self.existing_report.report_meta.edited_manually:
+                error_message_base = _(
+                    'It looks like this report was edited by hand and is no longer editable in report builder.'
+                )
+                if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
+                    error_message = '{} {}'.format(error_message_base, _(
+                        'You can edit the report manually using the <a href="{}">advanced UI</a>.'
+                    ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
+                else:
+                    error_message = '{} {}'.format(error_message_base, _(
+                        'You can delete and recreate this report using the button below, or '
+                        'report an issue if you believe you are seeing this page in error.'
+                    ))
+                self.template_name = 'userreports/report_error.html'
+                return {
+                    'report_id': self.existing_report.get_id,
+                    'is_static': self.existing_report.is_static,
+                    'error_message': error_message,
+                    'details': unicode(e)
+                }
+            else:
+                raise
+
         return {
             'report': {
                 "title": self.page_name
             },
             'report_type': self.report_type,
-            'form': self.report_form,
+            'form': report_form,
             'editing_existing_report': bool(self.existing_report),
-            'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
-            'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
+            'property_options': [p._asdict() for p in report_form.data_source_properties.values()],
+            'initial_filters': [f._asdict() for f in report_form.initial_filters],
             'initial_columns': [
-                c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
+                c._asdict() for c in getattr(report_form, 'initial_columns', [])
             ],
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
