@@ -55,30 +55,24 @@ function usage() {
     exit
 }
 
-XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
-
-# export variables for compose file (they must be set or it complains)
-export JS_SETUP="${JS_SETUP:-no}"
-export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
-
-if [ "$DOCKER_BETA" == "true" ]; then
-    DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
-elif [ `uname` == 'Linux' ]; then
-    DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
-    UDO="sudo"
-else
-    DOCKER_DATA_HOME=/data
-fi
-
-if [ `uname` == 'Darwin' -a "$DOCKER_BETA" != "true" ]; then
-    docker-machine ssh $DOCKER_MACHINE_NAME sudo mkdir -p $DOCKER_DATA_HOME
-else
-    mkdir -p $DOCKER_DATA_HOME
-fi
-
 CMD=$1
 shift
 if [ "$CMD" == "services" ]; then
+    XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
+    if [ "$DOCKER_BETA" == "true" ]; then
+        DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
+    elif [ `uname` == 'Linux' ]; then
+        DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
+    else
+        DOCKER_DATA_HOME=/data
+    fi
+
+    if [ `uname` == 'Darwin' -a "$DOCKER_BETA" != "true" ]; then
+        docker-machine ssh $DOCKER_MACHINE_NAME sudo mkdir -p $DOCKER_DATA_HOME
+    else
+        mkdir -p $DOCKER_DATA_HOME
+    fi
+
     export COMPOSE_FILE=tocker/hq-compose-services.yml
     export COMPOSE_PROJECT_NAME=hqservice
     CMD=$1
@@ -91,6 +85,19 @@ else
     export COMPOSE_FILE=tocker/hq-compose.yml
     export COMPOSE_PROJECT_NAME=hqtest
     export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
+fi
+# export variables for compose file (they must be set or it complains)
+export JS_SETUP="${JS_SETUP:-no}"
+export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
+
+if [ "$DOCKER_BETA" == "true" ]; then
+    # Put elasticsearch data in a named data volume, automatically
+    # created by docker, instead of $DOCKER_DATA_HOME/elasticsearch.
+    # https://forums.docker.com/t/elasticsearch-1-7-0-fails-to-start-on-docker4mac-1-11-1-beta10/11692/3
+    # The commit that introduced this can be reverted when the issue is resolved.
+    export ES_DATA_VOLUME=$COMPOSE_PROJECT_NAME-elasticsearch
+else
+    export ES_DATA_VOLUME=${VOLUME_PREFIX}elasticsearch
 fi
 
 case $CMD in
@@ -107,16 +114,6 @@ case $CMD in
         CMD="down --rmi local -v --remove-orphans"
         ;;
 esac
-
-if [ "$DOCKER_BETA" == "true" ]; then
-    # Put elasticsearch data in a named data volume, automatically
-    # created by docker, instead of $DOCKER_DATA_HOME/elasticsearch.
-    # https://forums.docker.com/t/elasticsearch-1-7-0-fails-to-start-on-docker4mac-1-11-1-beta10/11692/3
-    # The commit that introduced this can be reverted when the issue is resolved.
-    export ES_DATA_VOLUME=$COMPOSE_PROJECT_NAME-elasticsearch
-else
-    export ES_DATA_VOLUME=${VOLUME_PREFIX}elasticsearch
-fi
 
 if [ "$CMD" == "test" ]; then
     docker-compose run -T --rm web run_tests "${TEST:-python}" "$@"
