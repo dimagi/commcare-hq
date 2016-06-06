@@ -34,7 +34,7 @@ function test_setup() {
 
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
         npm install
-        bower install
+        bower install --silent
     fi
 
     /mnt/wait.sh
@@ -69,14 +69,24 @@ function run_tests() {
         ./manage.py test "$@" $TESTS
     else
         ./manage.py migrate --noinput
+        ./manage.py runserver 0.0.0.0:8000 &> /var/log/commcare-hq.log &
+        host=127.0.0.1 port=8000 /mnt/wait.sh hq
+        # HACK curl to avoid
+        # Warning: PhantomJS timed out, possibly due to a missing Mocha run() call.
+        curl http://localhost:8000/mocha/app_manager/ &> /dev/null
+        echo "grunt mocha $@"
         grunt mocha "$@"
     fi
 }
 
+export -f run_tests
+export -f test_setup
+
 # commcare-hq source overlay prevents modifications in this container
 # from leaking to the host; allows safe overwrite of localsettings.py
 rm -rf /mnt/lib/overlay  # clear source overlay
-mkdir -p commcare-hq lib/overlay
+mkdir -p commcare-hq lib/overlay lib/node_modules
+ln -s /mnt/lib/node_modules lib/overlay/node_modules
 mount -t aufs -o br=lib/overlay:commcare-hq-ro none /mnt/commcare-hq
 
 cd commcare-hq
