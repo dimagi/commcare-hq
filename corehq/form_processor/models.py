@@ -548,6 +548,9 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def get_id(self):
         return self.case_id
 
+    def set_case_id(self, case_id):
+        self.case_id = case_id
+
     @property
     @memoized
     def xform_ids(self):

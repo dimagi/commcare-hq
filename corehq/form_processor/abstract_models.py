@@ -190,6 +190,9 @@ class AbstractCommCareCase(object):
     def to_api_json(self):
         raise NotImplementedError()
 
+    def set_case_id(self, case_id):
+        raise NotImplementedError()
+
     def _resolve_case_property(self, property_name, result):
         CasePropertyResult = collections.namedtuple('CasePropertyResult', 'case value')
 
