@@ -279,6 +279,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportInstanceFromSavedInstance, cls).setUpClass()
         cls.app_id = '1234'
         cls.schema = FormExportDataSchema(
             group_schemas=[

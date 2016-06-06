@@ -31,6 +31,7 @@ class AppManagerTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AppManagerTest, cls).setUpClass()
         cls.build1 = {'version': '1.2.dev', 'build_number': 7106}
         cls.build2 = {'version': '2.7.0', 'build_number': 20655}
 
@@ -44,6 +45,7 @@ class AppManagerTest(TestCase):
             cls.xform_str = f.read()
 
     def setUp(self):
+        super(AppManagerTest, self).setUp()
         self.app = Application.new_app(self.domain, "TestApp", application_version=APP_V1)
 
         for i in range(3):
@@ -67,6 +69,7 @@ class AppManagerTest(TestCase):
 
     def tearDown(self):
         self.app.delete()
+        super(AppManagerTest, self).tearDown()
 
     def testSetUp(self):
         self.assertEqual(len(self.app.modules), 3)
