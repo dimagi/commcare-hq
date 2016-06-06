@@ -201,7 +201,6 @@ class TestXFormInstanceResource(APIResourceTest):
         fake_xform_es.run_query = mock_run_query
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
-
         response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))
         self.assertEqual(response.status_code, 200)
 
@@ -232,7 +231,6 @@ class TestXFormInstanceResource(APIResourceTest):
         backend_form.save()
         translated_doc = pillow.change_transform(backend_form.to_json())
         fake_xform_es.add_doc(translated_doc['_id'], translated_doc)
-
 
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
@@ -295,16 +293,16 @@ class TestXFormInstanceResource(APIResourceTest):
         def mock_run_query(es_query):
             queries.append(es_query)
             return prior_run_query(es_query)
-            
+
         fake_xform_es.run_query = mock_run_query
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
-
-        response = self._assert_auth_get_resource('%s?order_by=received_on' % self.list_endpoint) # Runs *2* queries
+        # Runs *2* queries
+        response = self._assert_auth_get_resource('%s?order_by=received_on' % self.list_endpoint)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(queries[0]['sort'], [{'received_on': 'asc'}])
-
-        response = self._assert_auth_get_resource('%s?order_by=-received_on' % self.list_endpoint) # Runs *2* queries
+        # Runs *2* queries
+        response = self._assert_auth_get_resource('%s?order_by=-received_on' % self.list_endpoint)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(queries[2]['sort'], [{'received_on': 'desc'}])
 
@@ -365,10 +363,8 @@ class TestCommCareCaseResource(APIResourceTest):
         backend_case.save()
 
         translated_doc = pillow.change_transform(backend_case.to_json())
-        
+
         fake_case_es.add_doc(translated_doc['_id'], translated_doc)
-
-
 
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
@@ -607,9 +603,9 @@ class TestCommCareUserResource(APIResourceTest):
 
         backend_id = user._id
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
-                                   json.dumps(user_json),
-                                   content_type='application/json',
-                                   method='PUT')
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(1, len(CommCareUser.by_domain(self.domain.name)))
         modified = CommCareUser.get(backend_id)
@@ -733,9 +729,9 @@ class TestWebUserResource(APIResourceTest):
 
         backend_id = user._id
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
-                                   json.dumps(user_json),
-                                   content_type='application/json',
-                                   method='PUT')
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
         self.assertEqual(response.status_code, 200, response.content)
         modified = WebUser.get(backend_id)
         self.assertEqual(modified.username, "test")
@@ -1364,9 +1360,9 @@ class TestGroupResource(APIResourceTest):
 
         backend_id = group._id
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
-                                   json.dumps(group_json),
-                                   content_type='application/json',
-                                   method='PUT')
+                                                   json.dumps(group_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(1, len(Group.by_domain(self.domain.name)))
         modified = Group.get(backend_id)
