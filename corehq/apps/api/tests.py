@@ -833,9 +833,9 @@ class TestRepeaterResource(APIResourceTest):
                 "url": "http://example.com/forwarding/modified/{cls}".format(cls=cls.__name__),
             }
             response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
-                                       json.dumps(repeater_json),
-                                       content_type='application/json',
-                                       method='PUT')
+                                                       json.dumps(repeater_json),
+                                                       content_type='application/json',
+                                                       method='PUT')
             self.assertEqual(response.status_code, 204, response.content)
             self.assertEqual(1, len(cls.by_domain(self.domain.name)))
             modified = cls.get(backend_id)
