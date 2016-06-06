@@ -11,7 +11,7 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded
-script: "scripts/docker test"
+script: "scripts/docker test --noinput --stop --verbosity=2 --no-migration-optimizer --divide-depth=1"
 after_success:
   - coverage report
   - coveralls

@@ -65,8 +65,8 @@ function run_tests() {
     fi
 
     if [ "$TEST" != "javascript" ]; then
-        echo "./manage.py test $@ $TESTS"
-        ./manage.py test "$@" $TESTS
+        echo "coverage run manage.py test $@ $TESTS"
+        coverage run manage.py test "$@" $TESTS
     else
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> /var/log/commcare-hq.log &
