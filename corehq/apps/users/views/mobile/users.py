@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
@@ -52,6 +52,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import Location
+from corehq.apps.ota.utils import turn_off_demo_mode
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.style.decorators import (
@@ -69,13 +70,14 @@ from corehq.apps.users.forms import (
     SelfRegistrationForm, SetUserPasswordForm,
 )
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
-from corehq.apps.users.tasks import bulk_upload_async
+from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader
+from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -368,6 +370,51 @@ def delete_commcare_user(request, domain, user_id):
     user.retire()
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
+
+
+@require_can_edit_commcare_users
+@require_POST
+def toggle_demo_mode(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    demo_mode = request.POST.get('demo_mode', 'no')
+    demo_mode = True if demo_mode == 'yes' else False
+
+    edit_user_url = reverse(EditCommCareUserView.urlname, args=[domain, user_id])
+    # handle bad POST param
+    if user.is_demo_user == demo_mode:
+        warning = _("User is already in Demo mode!") if user.is_demo_user else _("User is not in Demo mode!")
+        messages.warning(request, warning)
+        return HttpResponseRedirect(edit_user_url)
+
+    if demo_mode:
+        download = DownloadBase()
+        res = turn_on_demo_mode_task.delay(user, domain)
+        download.set_task(res)
+        response = redirect('hq_soil_download', domain, download.download_id)
+        response['Location'] += '?next=%s' % (edit_user_url)
+        return response
+    else:
+        turn_off_demo_mode(user)
+        messages.success(request, _("Successfully turned off demo mode!"))
+    return HttpResponseRedirect(edit_user_url)
+
+
+@require_can_edit_commcare_users
+@require_POST
+def reset_demo_user_restore(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if not user.is_demo_user:
+        warning = _("The user is not a demo user.")
+        messages.warning(require_POST, warning)
+        return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
+
+    download = DownloadBase()
+    res = reset_demo_user_restore_task.delay(user, domain)
+    download.set_task(res)
+
+    response = redirect('hq_soil_download', domain, download.download_id)
+    response['Location'] += '?next=%s' % (reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
+    return response
 
 
 @require_can_edit_commcare_users
