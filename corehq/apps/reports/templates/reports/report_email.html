@@ -10,14 +10,13 @@ th, td {
 td.null-entry {
     color: #ccc;
 }
-
 .pagebreak {
     page-break-after: always;
 }
 </style>
 </head>
 <body>
-    {{ email_content }}
+    {{ email_content|safe }}
     <br><hr />
     {% if unsub_link %}
         <a href="{{ unsub_link }}">{% trans 'Unsubscribe from this report' %}</a>.

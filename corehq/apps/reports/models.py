@@ -1,5 +1,6 @@
 import calendar
 import hashlib
+import uuid
 from collections import defaultdict, namedtuple
 from datetime import datetime
 import functools
@@ -14,7 +15,6 @@ from django.conf import settings
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
-from django_otp.util import random_hex
 
 from sqlalchemy.util import immutabledict
 
@@ -767,7 +767,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def _get_or_create_uuid(self):
         if not self.uuid:
-            self.uuid = random_hex()
+            self.uuid = uuid.uuid4().hex
             self.save()
         return self.uuid
 
