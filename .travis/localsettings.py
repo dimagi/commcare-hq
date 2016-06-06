@@ -9,12 +9,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == 'yes'
 PARTITION_DATABASE_CONFIG = get_partitioned_database_config(USE_PARTITIONED_DATABASE)
 
-BASE_ADDRESS = '{}:8000'.format(os.environ.get('WEB_TEST_PORT_8000_TCP_ADDR', 'localhost'))
-
-####### S3 mock server config ######
-S3_BLOB_DB_SETTINGS = {"url": "http://localhost:5000"}
-
-KAFKA_URL = 'kafka:9092'
+BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localhost'))
 
 ######## Email setup ########
 # email settings: these ones are the custom hq ones

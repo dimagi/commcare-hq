@@ -17,6 +17,10 @@
 
 XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
 
+# export variables for compose file (they must be set or it complains)
+export JS_SETUP="${JS_SETUP:-no}"
+export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
+
 if [ "$DOCKER_BETA" == "true" ]; then
     DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
 elif [ `uname` == 'Linux' ]; then

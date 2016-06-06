@@ -95,4 +95,13 @@ CACHES = {
 ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
 
+S3_BLOB_DB_SETTINGS = {
+    "url": "http://riakcs:8080/",
+    "access_key": "admin-key",
+    "secret_key": "admin-secret",
+    "config": {"connect_timeout": 3, "read_timeout": 5},
+}
+
+KAFKA_URL = 'kafka:9092'
+
 SHARED_DRIVE_ROOT = '/sharedfiles'

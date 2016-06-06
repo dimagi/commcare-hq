@@ -1,6 +1,8 @@
 hq:
   build: .
   environment:
+    JS_SETUP: "${JS_SETUP}"
+    NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
     DEPENDENT_SERVICES: "COUCH POSTGRES REDIS KAFKA ELASTICSEARCH RIAKCS"
   privileged: true  # allows mount inside container
   links:

@@ -35,7 +35,7 @@ function test_setup() {
             -dname 'CN=Foo, OU=Bar, O=Bizzle, L=Bazzle, ST=Bingle, C=US'
     fi
 
-    if [ "$TEST" = "javascript" -o "$JS" = "yes" ]; then
+    if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
         npm install
         bower install
     fi
@@ -52,10 +52,10 @@ function run_tests() {
     shift
     test_setup $TEST
 
-    rm localsettings.py  # remove first in case it's a dangling symlink
-    cp .travis/localsettings.py localsettings.py
+    ln -sf .travis/localsettings.py localsettings.py
     if [ "$TEST" == "python-sharded" ]; then
         export USE_PARTITIONED_DATABASE=yes
+        # TODO make it possible to run a subset of python-sharded tests
         TESTS=" \
             corehq.form_processor \
             corehq.sql_db \
@@ -67,18 +67,22 @@ function run_tests() {
         TESTS=""
     fi
 
-    ./manage.py test "$@" $TESTS
+    if [ "$TEST" != "javascript" ]; then
+        echo "./manage.py test $@ $TESTS"
+        ./manage.py test "$@" $TESTS
+    else
+        ./manage.py migrate --noinput
+        grunt mocha "$@"
+    fi
 }
 
 # commcare-hq source overlay prevents modifications in this container
 # from leaking to the host; allows safe overwrite of localsettings.py
 rm -rf /mnt/lib/overlay  # clear source overlay
-mkdir -p commcare-hq lib/overlay lib/python_env lib/node_modules
+mkdir -p commcare-hq lib/overlay lib/node_modules
 mount -t aufs -o br=lib/overlay:commcare-hq-ro none /mnt/commcare-hq
 
 cd commcare-hq
 ln -sf /mnt/lib/node_modules node_modules
-ln -sf /mnt/lib/python_env python_env
 
-echo "docker command: $@"
 "$@"
