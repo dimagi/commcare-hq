@@ -875,7 +875,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             COMMCARE_USER_TYPE_DEMO
         )
 
-        session_data = copy.copy(self.user_data)
+        session_data = copy.deepcopy(dict(self.user_data))
 
         if self.is_demo_user:
             session_data.update({
