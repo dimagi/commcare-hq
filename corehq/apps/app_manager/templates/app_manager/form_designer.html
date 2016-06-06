@@ -63,7 +63,8 @@
                 sessionid: {{ sessionid|JSON }},
                 externalLinks: {
                     changeSubscription: '{% url "domain_subscription_view" domain=domain %}'
-                }
+                },
+                invalidCaseProperties: ['name'],
             },
             intents: {
                 templates: {{ app_callout_templates|JSON }}
