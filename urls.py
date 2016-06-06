@@ -71,7 +71,7 @@ domain_specific = patterns('',
     (r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
     (r'^', include('custom.icds.urls')),
     (r'^_base_template/$', login_and_domain_required(
-        lambda request, domain: render(request, 'style/bootstrap3/base.html', {'domain': domain})
+        lambda request, domain: render(request, 'style/base.html', {'domain': domain})
     ))
 )
 

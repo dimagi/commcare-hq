@@ -1799,7 +1799,8 @@ def download_attachment(request, domain, instance_id):
     except AttachmentNotFound:
         raise Http404()
 
-    return StreamingHttpResponse(streaming_content=attach.content_stream, content_type=attach.content_type)
+    return StreamingHttpResponse(streaming_content=FileWrapper(attach.content_stream),
+                                 content_type=attach.content_type)
 
 
 @require_form_view_permission

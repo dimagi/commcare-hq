@@ -272,9 +272,8 @@ def get_call_center_cases(domain_name, case_type, user=None):
 
     if user:
         case_ids = [
-            case_id for owner_id in user.get_owner_ids()
-            for case_id in case_accessor.get_open_case_ids_in_domain_by_type(
-                case_type=case_type, owner_id=owner_id
+            case_id for case_id in case_accessor.get_open_case_ids_in_domain_by_type(
+                case_type=case_type, owner_ids=user.get_owner_ids()
             )
         ]
     else:

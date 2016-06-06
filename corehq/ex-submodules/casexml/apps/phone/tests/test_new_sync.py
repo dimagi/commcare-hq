@@ -5,10 +5,10 @@ from jsonobject import JsonObject
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
-from casexml.apps.phone.models import User, SyncLog, SimplifiedSyncLog, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LEGACY, \
+from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LEGACY, \
     CaseState
 from casexml.apps.phone.restore import RestoreConfig
-from casexml.apps.phone.tests.utils import synclog_from_restore_payload
+from casexml.apps.phone.tests.utils import synclog_from_restore_payload, create_restore_user
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests import run_with_all_backends
 from corehq.toggles import LEGACY_SYNC_SUPPORT
@@ -132,13 +132,15 @@ class TestNewSyncSpecifics(TestCase):
     def setUpClass(cls):
         cls.domain = uuid.uuid4().hex
         cls.project = Domain(name=cls.domain)
-        cls.user_id = uuid.uuid4().hex
-        cls.user = User(user_id=cls.user_id, username=uuid.uuid4().hex,
-                        password="changeme", date_joined=datetime(2014, 6, 6))
+        cls.user = create_restore_user(
+            cls.domain,
+            username=uuid.uuid4().hex,
+        )
+        cls.user_id = cls.user.user_id
 
     @run_with_all_backends
     def test_legacy_support_toggle(self):
-        restore_config = RestoreConfig(self.project, user=self.user)
+        restore_config = RestoreConfig(self.project, restore_user=self.user)
         factory = CaseFactory(domain=self.project.name, case_defaults={'owner_id': self.user_id})
         # create a parent and child case (with index) from one user
         parent_id, child_id = [uuid.uuid4().hex for i in range(2)]

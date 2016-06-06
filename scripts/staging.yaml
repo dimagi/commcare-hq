@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - demo-user # sravan 6/3
   - vellum-staging # J$ 11/13
   - notifications-perms-change # j$ 5/11
   - calculatedIcons # Sravan 3/2
