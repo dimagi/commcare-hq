@@ -36,6 +36,7 @@
     "bootstrap-daterangepicker": "2.1.13",
     "bootstrap-timepicker": "0.5.1",
     "backbone.marionette": "2.4.5",
+    "blazy": "1.6.2",
     "datatables": "1.10.9",
     "datatables-bootstrap3": "0.1",
     "datatables-fixedcolumns": "3.2.0",
