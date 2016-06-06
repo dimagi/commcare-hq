@@ -1,4 +1,4 @@
-hq:
+web:
   build: .
   environment:
     JS_SETUP: "${JS_SETUP}"
@@ -25,8 +25,6 @@ postgres:
     commcare.name: "postgres"
   expose:
     - "5432"
-  ports:
-    - "5432:5432"
   volumes:
     - ${VOLUME_PREFIX}postgresql:/var/lib/postgresql/data
 
@@ -36,8 +34,6 @@ couch:
     commcare.name: "couch"
   expose:
     - "5984"
-  ports:
-    - "5984:5984"
   volumes:
     - ${VOLUME_PREFIX}couchdb:/usr/local/var/lib/couchdb
 
@@ -47,8 +43,6 @@ redis:
     commcare.name: "redis"
   expose:
     - "6379"
-  ports:
-    - "6379:6379"
   volumes:
     - ${VOLUME_PREFIX}redis:/data
 
@@ -60,8 +54,6 @@ elasticsearch:
     commcare.name: "elastic"
   expose:
     - "9200"
-  ports:
-    - "9200:9200"
   volumes:
     - ${ES_DATA_VOLUME}:/usr/share/elasticsearch/data
 
@@ -72,9 +64,6 @@ kafka:
   expose:
     - "2181"
     - "9092"
-  ports:
-    - "2181:2181"
-    - "9092:9092"
   labels:
     commcare.name: "kafka"
   volumes:
@@ -88,8 +77,5 @@ riakcs:
   expose:
     - "8080"
     - "8098"
-  ports:
-    - "9880:8080"
-    - "8098:8098"
   volumes:
     - ${VOLUME_PREFIX}riakcs:/var/lib/riak-data
