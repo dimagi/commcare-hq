@@ -1,19 +1,59 @@
 #! /bin/bash
-# Load docker environment
-#
-# Usage: docker [COMMAND] [OPTIONS]
-#
-# Commands:
-#   test - run tests. Use TEST environment variable to select which type: 
-#          python (default), python-sharded, javascript.
-#   services - run service commands.
-#   teardown - shortcut to remove all containers, images and data volumes.
-#
-# Interactive commands:
-#   bash - start hq container with bash.
-#   shell - start django shell in hq container.
-#
-# All other commands are passed directly to docker-compose
+# CommCare HQ docker helper
+
+function usage() {
+    case $1 in
+        test)
+            echo "Run tests"
+            echo ""
+            echo "test [OPTIONS]"
+            echo ""
+            echo "All OPTIONS are passed to the selected test runner."
+            echo ""
+            echo "Set TEST environment variable to select a test runner:"
+            echo "  TEST=python|python-sharded|javascript"
+            echo ""
+            echo "The default is python."
+            echo ""
+            ;;
+        bash)
+            echo "Run bash in the web container"
+            echo ""
+            ;;
+        shell)
+            echo "Run the Django shell in the web container"
+            echo ""
+            ;;
+        services)
+            echo "Manage CommCare HQ services"
+            echo ""
+            echo "Start services with ports mapped to the docker"
+            echo "host if no other options are given."
+            echo ""
+            echo "All docker-compose commands are also supported. For example:"
+            echo ""
+            echo "$0 services ps"
+            echo ""
+            ;;
+        teardown)
+            echo "Remove all containers, images and volumes"
+            echo ""
+            ;;
+        *)
+            echo "Manage docker services for CommCare HQ"
+            echo ""
+            echo "$0 COMMAND [OPTIONS]"
+            echo "      -h --help"
+            echo "      test|services|teardown|bash|shell|help"
+            echo ""
+            echo "$0 help COMMAND"
+            echo ""
+            echo "All other commands are passed directly to docker-compose."
+            echo ""
+            ;;
+    esac
+    exit
+}
 
 XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
 
@@ -53,11 +93,20 @@ else
     export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
 fi
 
-if [ "$CMD" == "teardown" ]; then
-    TEARDOWN=yes
-    shift
-    CMD="down --rmi local -v --remove-orphans"
-fi
+case $CMD in
+    -h | --help | help | "")
+        if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
+            usage services
+        else
+            usage $@
+        fi
+        ;;
+    teardown)
+        TEARDOWN=yes
+        shift
+        CMD="down --rmi local -v --remove-orphans"
+        ;;
+esac
 
 if [ "$DOCKER_BETA" == "true" ]; then
     # Put elasticsearch data in a named data volume, automatically
