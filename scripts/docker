@@ -39,7 +39,8 @@ fi
 CMD=$1
 shift
 if [ "$CMD" == "services" ]; then
-    export PROJECT_NAME=hqservice
+    export COMPOSE_FILE=tocker/hq-compose-services.yml
+    export COMPOSE_PROJECT_NAME=hqservice
     CMD=$1
     shift
     if [ -z "$CMD" ]; then
@@ -47,8 +48,9 @@ if [ "$CMD" == "services" ]; then
     fi
     export VOLUME_PREFIX="$DOCKER_DATA_HOME/"
 else
-    export PROJECT_NAME=hqtest
-    export VOLUME_PREFIX="${PROJECT_NAME}-"
+    export COMPOSE_FILE=tocker/hq-compose.yml
+    export COMPOSE_PROJECT_NAME=hqtest
+    export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
 fi
 
 if [ "$CMD" == "teardown" ]; then
@@ -62,21 +64,19 @@ if [ "$DOCKER_BETA" == "true" ]; then
     # created by docker, instead of $DOCKER_DATA_HOME/elasticsearch.
     # https://forums.docker.com/t/elasticsearch-1-7-0-fails-to-start-on-docker4mac-1-11-1-beta10/11692/3
     # The commit that introduced this can be reverted when the issue is resolved.
-    export ES_DATA_VOLUME=$PROJECT_NAME-elasticsearch
+    export ES_DATA_VOLUME=$COMPOSE_PROJECT_NAME-elasticsearch
 else
     export ES_DATA_VOLUME=$DOCKER_DATA_HOME/elasticsearch
 fi
 
-COMPOSE="docker-compose -f tocker/hq-compose.yml -p $PROJECT_NAME"
-
 if [ "$CMD" == "test" ]; then
-    $COMPOSE run --rm -T hq run_tests "${TEST:-python}" "$@"
+    docker-compose run -T --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
-    $COMPOSE run --rm --service-ports hq ./manage.py $CMD "$@"
+    docker-compose run --rm web ./manage.py $CMD "$@"
 elif [ "$CMD" == "bash" ]; then
-    $COMPOSE run --rm --service-ports hq $CMD "$@"
+    docker-compose run --rm web $CMD "$@"
 else
-    $COMPOSE $CMD "$@"
+    docker-compose $CMD "$@"
     if [ "$TEARDOWN" == "yes" -a "$PROJECT_NAME" == "hqtest" ]; then
         docker volume rm \
             ${VOLUME_PREFIX}couchdb \
