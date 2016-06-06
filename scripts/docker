@@ -58,6 +58,12 @@ function usage() {
 CMD=$1
 shift
 if [ "$CMD" == "services" ]; then
+    CMD=$1
+    shift
+    if [ -z "$CMD" ]; then
+        CMD="up -d"
+    fi
+
     XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
     if [ "$DOCKER_BETA" == "true" ]; then
         DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
@@ -73,13 +79,9 @@ if [ "$CMD" == "services" ]; then
         mkdir -p $DOCKER_DATA_HOME
     fi
 
+    export ES_CLUSTER_NAME="${ES_CLUSTER_NAME:-$(hostname)}"
     export COMPOSE_FILE=tocker/hq-compose-services.yml
     export COMPOSE_PROJECT_NAME=hqservice
-    CMD=$1
-    shift
-    if [ -z "$CMD" ]; then
-        CMD="up -d"
-    fi
     export VOLUME_PREFIX="$DOCKER_DATA_HOME/"
 else
     export COMPOSE_FILE=tocker/hq-compose.yml
