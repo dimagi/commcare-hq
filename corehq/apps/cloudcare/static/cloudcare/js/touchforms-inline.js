@@ -55,6 +55,7 @@
                 });
                 data.onLoading = onLoading;
                 data.onLoadingComplete = onLoadingComplete;
+                data.uses_sql_backend = options.uses_sql_backend;
                 var sess = new WebFormSession(data);
                 sess.load($target, options.lang);
             }
