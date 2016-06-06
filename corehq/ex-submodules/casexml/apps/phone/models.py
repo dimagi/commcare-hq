@@ -55,7 +55,7 @@ class OTARestoreUser(object):
 
     @property
     def username(self):
-        return self._couch_user.username
+        return self._couch_user.raw_username
 
     @property
     def password(self):
@@ -162,6 +162,9 @@ class OTARestoreCommCareUser(OTARestoreUser):
     @property
     def locations(self):
         return self._couch_user.locations
+
+    def set_location(self, location):
+        return self._couch_user.set_location(location)
 
     def get_fixture_data_items(self):
         from corehq.apps.fixtures.models import FixtureDataItem

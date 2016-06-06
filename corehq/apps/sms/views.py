@@ -45,9 +45,9 @@ from corehq.apps.sms.models import (
     SMS, INCOMING, OUTGOING, ForwardingRule,
     MessagingEvent, SelfRegistrationInvitation,
     SQLMobileBackend, SQLMobileBackendMapping, PhoneLoadBalancingMixin,
-    SQLLastReadMessage
+    SQLLastReadMessage, PhoneNumber
 )
-from corehq.apps.sms.mixin import VerifiedNumber, BadSMSConfigException
+from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    InitiateAddSMSBackendForm, SubscribeSMSForm,
                                    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
@@ -404,7 +404,7 @@ def api_send_sms(request, domain):
     Expected post parameters:
         phone_number - the phone number to send to
         contact_id - the _id of a contact to send to (overrides phone_number)
-        vn_id - the _id of a VerifiedNumber to send to (overrides contact_id)
+        vn_id - the couch_id of a PhoneNumber to send to (overrides contact_id)
         text - the text of the message
         backend_id - the name of the MobileBackend to use while sending
     """
@@ -422,13 +422,12 @@ def api_send_sms(request, domain):
 
         vn = None
         if vn_id:
-            try:
-                vn = VerifiedNumber.get(vn_id)
-            except ResourceNotFound:
-                return HttpResponseBadRequest("VerifiedNumber not found.")
+            vn = PhoneNumber.by_couch_id(vn_id)
+            if not vn:
+                return HttpResponseBadRequest("PhoneNumber not found.")
 
             if vn.domain != domain:
-                return HttpResponseBadRequest("VerifiedNumber not found.")
+                return HttpResponseBadRequest("PhoneNumber not found.")
 
             phone_number = vn.phone_number
             contact = vn.owner
@@ -730,30 +729,28 @@ def get_contact_info(domain):
     except:
         pass
 
-    verified_number_ids = VerifiedNumber.by_domain(domain, ids_only=True)
     domain_obj = Domain.get_by_name(domain, strict=True)
     case_ids = []
     mobile_worker_ids = []
     data = []
-    for doc in iter_docs(VerifiedNumber.get_db(), verified_number_ids):
-        owner_id = doc['owner_id']
-        if doc['owner_doc_type'] == 'CommCareCase':
-            case_ids.append(owner_id)
+    for p in PhoneNumber.by_domain(domain):
+        if p.owner_doc_type == 'CommCareCase':
+            case_ids.append(p.owner_id)
             data.append([
                 None,
                 'case',
-                doc['phone_number'],
-                owner_id,
-                doc['_id'],
+                p.phone_number,
+                p.owner_id,
+                p.couch_id,
             ])
-        elif doc['owner_doc_type'] == 'CommCareUser':
-            mobile_worker_ids.append(owner_id)
+        elif p.owner_doc_type == 'CommCareUser':
+            mobile_worker_ids.append(p.owner_id)
             data.append([
                 None,
                 'mobile_worker',
-                doc['phone_number'],
-                owner_id,
-                doc['_id'],
+                p.phone_number,
+                p.owner_id,
+                p.couch_id,
             ])
     contact_data = get_case_contact_info(domain_obj, case_ids)
     contact_data.update(get_mobile_worker_contact_info(domain_obj, mobile_worker_ids))

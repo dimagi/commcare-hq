@@ -8,6 +8,7 @@ class CachedCouchDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(CachedCouchDbTest, cls).setUpClass()
         # this will ensure the database is created
         Database(settings.COUCH_DATABASE, create=True)
 

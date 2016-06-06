@@ -620,6 +620,7 @@ class CommtrackUserForm(forms.Form):
 
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -637,35 +638,38 @@ class CommtrackUserForm(forms.Form):
 
 
 class DomainRequestForm(forms.Form):
-    full_name = forms.CharField(label=ugettext_lazy('Full Name'), required=True)
+    full_name = forms.CharField(label=ugettext_lazy('Full Name'), required=True,
+                                widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.CharField(
         label=ugettext_lazy('Email Address'),
         required=True,
         help_text=ugettext_lazy('You will use this email to log in.'),
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
     )
     domain = forms.CharField(widget=forms.HiddenInput(), required=True)
 
     @property
     def form_actions(self):
-        return FormActions(
-            crispy.ButtonHolder(
-                crispy.Submit(
-                    'submit',
-                    ugettext_lazy('Request Access')
-                )
+        return hqcrispy.FormActions(
+            twbscrispy.StrictButton(
+                ugettext_lazy('Request Access'),
+                type='submit',
+                css_class='btn-primary',
             )
         )
 
     def __init__(self, *args, **kwargs):
         super(DomainRequestForm, self).__init__(*args, **kwargs)
 
-        self.helper = FormHelper()
+        self.helper = cb3_helper.FormHelper()
         self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
+        self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
         self.helper.show_form_errors = True
-        self.helper.layout = crispy.Layout(
-            crispy.Field('full_name'),
-            crispy.Field('email'),
-            crispy.Field('domain'),
+        self.helper.layout = cb3_layout.Layout(
+            hqcrispy.Field('full_name'),
+            hqcrispy.Field('email'),
+            hqcrispy.Field('domain'),
             self.form_actions,
         )
 

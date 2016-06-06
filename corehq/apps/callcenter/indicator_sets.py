@@ -124,7 +124,6 @@ class CallCenterIndicators(object):
         return {
             case.hq_user_id: case.case_id
             for case in self.call_center_cases
-            if hasattr(case, 'hq_user_id') and case.hq_user_id
         }
 
     @property

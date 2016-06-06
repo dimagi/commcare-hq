@@ -470,7 +470,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "style/bootstrap3/base.html"  # should eventually be bootstrap3
+BASE_TEMPLATE = "style/base.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -841,8 +841,8 @@ COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
 'compressor.filters.cssmin.rCSSMinFilter']
 
 LESS_B3_PATHS = {
-    'variables': '../../../style/less/bootstrap3/includes/variables',
-    'mixins': '../../../style/less/bootstrap3/includes/mixins',
+    'variables': '../../../style/less/_hq/includes/variables',
+    'mixins': '../../../style/less/_hq/includes/mixins',
 }
 
 LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'

@@ -6,6 +6,7 @@ from elasticsearch.exceptions import ConnectionError
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed.document_types import change_meta_from_doc, GROUP
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.tests.utils import get_current_kafka_seq
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests import delete_all_groups
 from corehq.apps.users.models import CommCareUser
@@ -16,7 +17,6 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
-from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
 class GroupToUserPillowTest(SimpleTestCase):

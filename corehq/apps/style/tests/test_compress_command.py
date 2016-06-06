@@ -8,7 +8,7 @@ from django.core.management import call_command
 from django.test import SimpleTestCase
 from nose.plugins.attrib import attr
 
-B3_BASE = 'style/bootstrap3/base.html'
+B3_BASE = 'style/base.html'
 
 BLOCK_JS = ' block js '
 BLOCK_CSS = ' block stylesheets '
