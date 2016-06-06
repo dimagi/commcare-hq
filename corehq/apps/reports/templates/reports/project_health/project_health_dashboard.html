@@ -13,7 +13,15 @@
         }
     </style>
 {% endblock %}
+{% block js %}{{ block.super }}
+    <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
+    <script src="{% new_static 'reports/javascripts/reports.util.js' %}"></script>
+    <script src="{% new_static 'reports/javascripts/reports.async.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}
+<script src="{% new_static 'appstore/js/facet_sidebar.js' %}"></script>
+{% include "reports/standard/partials/report_loader.html" %}
 <script type="text/javascript">
     function setupCharts() {
         // setup chart
@@ -87,6 +95,9 @@
         A summary of the overall health of your project based on how your users are doing over time.
         {% endblocktrans %}
     </p>
+    {% block filter_panel %}
+        {% include "reports/standard/partials/filter_panel.html" %}
+    {% endblock %}
     <h2>{% trans "Last Month Stats" %}</h2>
 <table class="table lead">
     <thead>
