@@ -37,14 +37,14 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
             for deprecated_transaction in deprecated_helper.transactions
         }
 
-        updated_ledgers = []
+        updated_ledgers = {}
         for helper in stock_report_helpers:
             for stock_trans in helper.transactions:
                 ledger_value = self._process_transaction(helper, stock_trans, ledger_db)
-                updated_ledgers.append(ledger_value)
+                updated_ledgers[ledger_value.ledger_reference] = ledger_value
 
-        for ledger_value in updated_ledgers:
-            if ledger_value.ledger_reference in ledgers_needing_rebuild:
+        for ledger_reference, ledger_value in updated_ledgers.items():
+            if ledger_reference in ledgers_needing_rebuild:
                 rebuilt_ledger_value = self._rebuild_ledger(form_id, ledger_value)
                 result.to_save.append(rebuilt_ledger_value)
             else:
