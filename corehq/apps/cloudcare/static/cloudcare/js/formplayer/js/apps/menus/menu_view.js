@@ -81,7 +81,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             this.styles = options.styles;
         },
 
-        childViewOptions: function (model, index) {
+        childViewOptions: function () {
             return {
                 styles: this.options.styles,
             };
