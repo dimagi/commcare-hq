@@ -10,7 +10,7 @@
 {% block page_content %}
     {% block report_alerts %}
     <div id="report-error" class="alert alert-danger">
-        <p>{{ error_message }}</p>
+        <p>{{ error_message|safe }}</p>
         {% if details %}
         <p>{% trans "Technical Details:" %}</p>
         {{ details }}
@@ -18,8 +18,8 @@
         <div id="error-message"></div>
     </div>
     {% endblock report_alerts %}
-    {% if not report.is_static %}
-        <form method='post' action="{% url 'delete_configurable_report' domain report.report_config_id %}?redirect={% url 'reports_home' domain %}" >
+    {% if not is_static %}
+        <form method='post' action="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}" >
             {% csrf_token %}
             <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">
         </form>

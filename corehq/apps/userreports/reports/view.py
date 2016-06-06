@@ -214,7 +214,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                     details = unicode(e)
                 self.template_name = 'userreports/report_error.html'
                 context = {
-                    'report': self,
+                    'report_id': self.report_config_id,
+                    'is_static': self.is_static,
                     'error_message': error_message,
                     'details': details,
                 }
