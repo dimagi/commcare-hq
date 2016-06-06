@@ -195,14 +195,6 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
-APP_AWARE_SYNC = PredictablyRandomToggle(
-    'app_aware_sync',
-    'App-aware Sync',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=0.6
-)
-
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
