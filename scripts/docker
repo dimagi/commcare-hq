@@ -115,7 +115,7 @@ if [ "$DOCKER_BETA" == "true" ]; then
     # The commit that introduced this can be reverted when the issue is resolved.
     export ES_DATA_VOLUME=$COMPOSE_PROJECT_NAME-elasticsearch
 else
-    export ES_DATA_VOLUME=$DOCKER_DATA_HOME/elasticsearch
+    export ES_DATA_VOLUME=${VOLUME_PREFIX}elasticsearch
 fi
 
 if [ "$CMD" == "test" ]; then
