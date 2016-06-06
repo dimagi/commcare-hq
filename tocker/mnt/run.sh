@@ -9,7 +9,7 @@ fi
 function test_setup() {
     [ -n "$1" ] && TEST="$1"
 
-    if [ "$TEST" = "python" -o "$TEST" = "python-sharded" ]; then
+    if [[ "$TEST" =~ ^python ]]; then
 
         scripts/uninstall-requirements.sh
         pip install \
@@ -38,6 +38,10 @@ function test_setup() {
     fi
 
     /mnt/wait.sh
+
+    if [[ "$TEST" =~ ^python ]]; then
+        ./manage.py create_kafka_topics
+    fi
 }
 
 function run_tests() {
