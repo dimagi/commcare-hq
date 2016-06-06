@@ -126,7 +126,16 @@ elif [ "$CMD" == "bash" ]; then
     docker-compose run --rm web $CMD "$@"
 else
     docker-compose $CMD "$@"
-    if [ "$TEARDOWN" == "yes" -a "$PROJECT_NAME" == "hqtest" ]; then
+    if [ "$TEARDOWN" == "yes" ]; then
+        if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
+            echo "THIS WILL DELETE ALL SERVICE DATA"
+            read -p "Delete volumes? [yN] " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                echo "Volumes not deleted."
+                exit
+            fi
+        fi
         docker volume rm \
             ${VOLUME_PREFIX}couchdb \
             ${VOLUME_PREFIX}elasticsearch \
