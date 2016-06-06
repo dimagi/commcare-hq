@@ -13,11 +13,10 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    InvalidFormatException, VerifiedNumber,
+    InvalidFormatException,
     apply_leniency, BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
@@ -480,7 +479,7 @@ class PhoneBlacklist(models.Model):
         return False
 
 
-class PhoneNumber(SyncSQLToCouchMixin, models.Model):
+class PhoneNumber(models.Model):
     couch_id = models.CharField(max_length=126, db_index=True, null=True)
     domain = models.CharField(max_length=126, db_index=True, null=True)
     owner_doc_type = models.CharField(max_length=126, null=True)
@@ -671,23 +670,6 @@ class PhoneNumber(SyncSQLToCouchMixin, models.Model):
     def delete(self, *args, **kwargs):
         self._clear_caches()
         return super(PhoneNumber, self).delete(*args, **kwargs)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            'domain',
-            'owner_doc_type',
-            'owner_id',
-            'phone_number',
-            'backend_id',
-            'ivr_backend_id',
-            'verified',
-            'contact_last_modified'
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return VerifiedNumber
 
 
 class MessagingStatusMixin(object):
