@@ -12,10 +12,6 @@ from django.test import TestCase
 
 class TestExtensionCaseIds(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestExtensionCaseIds, cls).setUpClass()
-
     def setUp(self):
         super(TestExtensionCaseIds, self).setUp()
         self.domain = 'domain'
@@ -149,10 +145,6 @@ class TestExtensionCaseIds(TestCase):
 
 class TestIndexedCaseIds(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestIndexedCaseIds, cls).setUpClass()
-
     def setUp(self):
         super(TestIndexedCaseIds, self).setUp()
         self.domain = 'domain'
@@ -182,10 +174,6 @@ class TestIndexedCaseIds(TestCase):
 
 
 class TestReverseIndexedCases(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestReverseIndexedCases, cls).setUpClass()
 
     def setUp(self):
         super(TestReverseIndexedCases, self).setUp()
