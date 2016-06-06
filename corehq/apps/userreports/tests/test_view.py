@@ -185,7 +185,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
         with patch(
             'corehq.apps.userreports.reports.data_source.ConfigurableReportDataSource.get_total_records',
-            return_value=UCR_EXPORT_TO_EXCEL_ROW_LIMIT+1
+            return_value=UCR_EXPORT_TO_EXCEL_ROW_LIMIT + 1
         ):
             response = json.loads(view.export_size_check_response.content)
         self.assertEqual(response['export_allowed'], False)
