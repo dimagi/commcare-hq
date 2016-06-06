@@ -45,7 +45,11 @@
 </script>
 
 <script type="text/template" id="case-view-item-template">
-    <% _.each(data, function(datum) { %>
-    <td> <%= datum %></td>
+    <% _.each(data, function(datum, index) { %>
+        <% if (styles[index].displayFormat === 'Image') { %>
+            <td><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
+        <% } else { %>
+            <td><%= datum %></td>
+        <% } %>
     <% }); %>
 </script>
