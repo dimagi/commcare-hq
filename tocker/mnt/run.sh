@@ -76,10 +76,9 @@ function run_tests() {
 # commcare-hq source overlay prevents modifications in this container
 # from leaking to the host; allows safe overwrite of localsettings.py
 rm -rf /mnt/lib/overlay  # clear source overlay
-mkdir -p commcare-hq lib/overlay lib/node_modules
+mkdir -p commcare-hq lib/overlay
 mount -t aufs -o br=lib/overlay:commcare-hq-ro none /mnt/commcare-hq
 
 cd commcare-hq
-ln -sf /mnt/lib/node_modules node_modules
 
 "$@"
