@@ -176,6 +176,10 @@ class ProjectHealthDashboard(ProjectReport):
     name = ugettext_noop("Project Performance")
     base_template = "reports/project_health/project_health_dashboard.html"
 
+    fields = [
+        'corehq.apps.reports.filters.select.MultiGroupFilter',
+    ]
+
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return PROJECT_HEALTH_DASHBOARD.enabled(domain)
