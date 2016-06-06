@@ -781,15 +781,15 @@ def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.
-    data_source, __ = get_datasource_config_or_404(config.config_id, domain)
-    if data_source.get_report_count() <= 1:
-        # No other reports reference this data source.
-        try:
+    try:
+        data_source, __ = get_datasource_config(config.config_id, domain)
+    except DataSourceConfigurationNotFoundError:
+        # It's possible the data source has already been deleted, but that's fine with us.
+        pass
+    else:
+        if data_source.get_report_count() <= 1:
+            # No other reports reference this data source.
             data_source.deactivate()
-        except Http404:
-            # It's possible the data source has already been deleted, but
-            # that's fine with us.
-            pass
 
     config.delete()
     did_purge_something = purge_report_from_mobile_ucr(config)
