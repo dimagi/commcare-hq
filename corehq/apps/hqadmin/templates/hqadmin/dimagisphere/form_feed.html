@@ -173,7 +173,11 @@ jQuery(document).ready(function($) {
         var values = $.map(data, function (count, domain) { return {'domain': domain, 'count': count}; });
         if (filter.country) {
             values = values.filter(function(obj) {
-                return dimagisphere.formData.domainToCountry[obj.domain] === filter.country;
+                if (tvmode) {
+                    return obj.domain === filter.country;
+                } else {
+                    return dimagisphere.formData.domainToCountry[obj.domain] === filter.country;
+                }
             });
         }
         // can uncomment the below line to sort by descending count (this causes colors to change over time)
