@@ -46,7 +46,7 @@ def reset_demo_user_restore(commcare_user, domain):
     # get latest restore
     restore = RestoreConfig(
         project=Domain.get_by_name(domain),
-        user=commcare_user.to_casexml_user(),
+        restore_user=commcare_user.to_ota_restore_user(),
         params=RestoreParams(version=V2),
     ).get_payload().as_file()
     demo_restore = DemoUserRestore.create(commcare_user._id, restore)
