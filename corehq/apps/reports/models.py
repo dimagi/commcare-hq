@@ -775,7 +775,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 send_html_email_async.delay(title, email, body.content,
                                             email_from=settings.DEFAULT_FROM_EMAIL,
                                             file_attachments=excel_files, ga_track=True,
-                                            ga_tracking_info={'project_space_id': self.domain})
+                                            ga_tracking_info={'cd4': self.domain})
 
     def remove_recipient(self, email):
         try:
