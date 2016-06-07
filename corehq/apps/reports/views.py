@@ -1211,7 +1211,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
     def case_instance(self):
         try:
             case = CaseAccessors(self.domain).get_case(self.case_id)
-            if case.domain != self.domain:
+            if case.domain != self.domain or case.is_deleted:
                 return None
             return case
         except CaseNotFound:
