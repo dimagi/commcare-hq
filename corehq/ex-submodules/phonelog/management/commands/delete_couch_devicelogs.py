@@ -3,7 +3,7 @@ from optparse import make_option
 from corehq.util.couch import IterDB
 from corehq.util.log import with_progress_bar
 from couchforms.const import DEVICE_LOG_XMLNS
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs_with_retry
 from django.core.management import BaseCommand
 from couchforms.models import XFormInstance
 
@@ -42,7 +42,7 @@ class Command(BaseCommand):
         )]
 
         with open(self.filename, 'w') as f:
-            device_log_docs = iter_docs(XFormInstance.get_db(), device_log_ids)
+            device_log_docs = iter_docs_with_retry(XFormInstance.get_db(), device_log_ids)
             for doc in with_progress_bar(device_log_docs, length=doc_count):
                 f.write(json.dumps(doc) + '\n')
 
@@ -50,10 +50,11 @@ class Command(BaseCommand):
         with open(self.filename) as f:
             doc_count = sum(1 for line in f)
         with open(self.filename) as f:
-            with IterDB(XFormInstance.get_db(), throttle_secs=1) as iter_db:
+            with IterDB(XFormInstance.get_db(), throttle_secs=2, chunksize=100) as iter_db:
                 for line in with_progress_bar(f, length=doc_count):
                     doc = json.loads(line)
                     assert doc['xmlns'] == DEVICE_LOG_XMLNS
+                    assert doc['doc_type'] == 'XFormInstance'
                     iter_db.delete(doc)
         if iter_db.errors_by_type:
             print 'There were some errors', iter_db.errors_by_type
