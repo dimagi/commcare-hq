@@ -76,6 +76,5 @@ riakcs:
     commcare.name: "riakcs"
   expose:
     - "9980"
-    - "8098"
   volumes:
     - ${VOLUME_PREFIX}riakcs:/var/lib/riak-data

@@ -43,4 +43,3 @@ riakcs:
     service: riakcs
   ports:
     - "9980:9980"
-    - "8098:8098"
