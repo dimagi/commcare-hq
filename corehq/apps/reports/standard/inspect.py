@@ -2,6 +2,7 @@ import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
@@ -125,7 +126,11 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
             }
 
     def _es_xform_filter(self):
-        return ADD_TO_ES_FILTER['forms']
+        filters = ADD_TO_ES_FILTER['forms']
+        filters.append(
+            {'not': {'term': {'xmlns': SYSTEM_FORM_XMLNS}}}
+        )
+        return filters
 
     def filters_as_es_query(self):
         return {
