@@ -160,6 +160,13 @@ requires imports/proptable.html to be included in the main template
             Submitted as {{ user }}
             {% endblocktrans %}
         {% endif %}
+        <br/>
+        <ul class="list-inline">
+            {% if instance.app_id %}<li><a href="{% url "view_app" domain instance.app_id %}">{% trans "View app" %}</a></li>{% endif %}
+            {% if instance.build_id and request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
+                <a href="{% url "download_index" domain instance.build_id %}">{% trans "View build" %}</a>
+            {% endif %}
+        </ul>
     </div>
 </div>
 <ul class="nav nav-tabs">
