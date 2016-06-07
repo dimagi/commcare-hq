@@ -1,6 +1,5 @@
 import uuid
 
-from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
