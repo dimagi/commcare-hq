@@ -207,6 +207,7 @@ class FormProcessorSQL(object):
         if case.is_deleted and not found:
             return None
         CaseAccessorSQL.save_case(case)
+        publish_case_saved(case)
         return case
 
     @staticmethod
