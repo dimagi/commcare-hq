@@ -58,6 +58,7 @@ _invoicing_complete_soft_assert = soft_assert(
     exponential_backoff=False,
 )
 
+
 @transaction.atomic
 def _activate_subscription(subscription):
     subscription.is_active = True
@@ -268,9 +269,9 @@ def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
     """
-    send_subscription_reminder_emails(30, exclude_trials=True)
-    send_subscription_reminder_emails(10, exclude_trials=True)
-    send_subscription_reminder_emails(1, exclude_trials=True)
+    send_subscription_reminder_emails(30)
+    send_subscription_reminder_emails(10)
+    send_subscription_reminder_emails(1)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
@@ -281,12 +282,12 @@ def remind_dimagi_contact_subscription_ending_40_days():
     send_subscription_reminder_emails_dimagi_contact(40)
 
 
-def send_subscription_reminder_emails(num_days, exclude_trials=True):
+def send_subscription_reminder_emails(num_days):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.objects.filter(date_end=date_in_n_days, do_not_email=False)
-    if exclude_trials:
-        ending_subscriptions = ending_subscriptions.filter(is_trial=False)
+    ending_subscriptions = Subscription.objects.filter(
+        date_end=date_in_n_days, do_not_email_reminder=False, is_trial=False
+    )
     for subscription in ending_subscriptions:
         try:
             # only send reminder emails if the subscription isn't renewed
@@ -302,7 +303,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
     ending_subscriptions = (Subscription.objects
                             .filter(is_active=True)
                             .filter(date_end=date_in_n_days)
-                            .filter(do_not_email=False)
+                            .filter(do_not_email_reminder=False)
                             .filter(account__dimagi_contact__isnull=False))
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed

@@ -1,7 +1,6 @@
 from django.test import TestCase
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.mock import CaseFactory
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.processing import rebuild_stock_state
 from corehq.apps.commtrack.tests.util import get_single_balance_block
@@ -34,6 +33,7 @@ LEDGER_BLOCKS_INFERRED = """
 
 
 class RebuildStockStateTest(TestCase):
+
     def setUp(self):
         self.domain = 'asldkjf-domain'
         self.case = CaseFactory(domain=self.domain).create_case()
@@ -59,7 +59,7 @@ class RebuildStockStateTest(TestCase):
 
     def _submit_ledgers(self, ledger_blocks):
         return submit_case_blocks(
-            ledger_blocks.format(**self._stock_state_key), self.domain)
+            ledger_blocks.format(**self._stock_state_key), self.domain).form_id
 
     @run_with_all_backends
     def test_simple(self):
@@ -103,7 +103,7 @@ class RebuildStockStateTest(TestCase):
     @run_with_all_backends
     def test_edit_submissions_simple(self):
         initial_quantity = 100
-        form_id = submit_case_blocks(
+        form = submit_case_blocks(
             case_blocks=get_single_balance_block(quantity=initial_quantity, **self._stock_state_key),
             domain=self.domain,
         )
@@ -112,16 +112,16 @@ class RebuildStockStateTest(TestCase):
         case_accessors = CaseAccessors(self.domain)
         case = case_accessors.get_case(self.case.case_id)
         self.assertEqual(2, len(case.actions))
-        self.assertEqual([form_id], case.xform_ids[1:])
+        self.assertEqual([form.form_id], case.xform_ids[1:])
 
         # change the value to 50
         edit_quantity = 50
         submit_case_blocks(
             case_blocks=get_single_balance_block(quantity=edit_quantity, **self._stock_state_key),
             domain=self.domain,
-            form_id=form_id,
+            form_id=form.form_id,
         )
         case = case_accessors.get_case(self.case.case_id)
         self.assertEqual(2, len(case.actions))
         self._assert_stats(1, edit_quantity, edit_quantity)
-        self.assertEqual([form_id], case.xform_ids[1:])
+        self.assertEqual([form.form_id], case.xform_ids[1:])

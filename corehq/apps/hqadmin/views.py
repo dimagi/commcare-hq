@@ -2,7 +2,7 @@ import HTMLParser
 import json
 import socket
 from datetime import timedelta, date
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
@@ -13,9 +13,8 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
-from django.core.urlresolvers import reverse
 from django.shortcuts import render
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.http import (
@@ -30,51 +29,53 @@ from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.es import CaseES, aggregations
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
-    use_bootstrap3, use_nvd3, use_nvd3_v3
+    use_bootstrap3, use_nvd3_v3
 from corehq.apps.style.utils import set_bootstrap_version3
 from corehq.apps.style.views import BaseB3SectionPageView
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
+from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
+    CommCareCaseSQLRawDocSerializer
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
-from corehq.util.supervisord.api import PillowtopSupervisorApi, SupervisorException, all_pillows_supervisor_status, \
+from corehq.util.supervisord.api import (
+    PillowtopSupervisorApi,
+    SupervisorException,
+    all_pillows_supervisor_status,
     pillow_supervisor_status
-from couchforms.models import XFormInstance
-from pillowtop.exceptions import PillowNotFoundError
-from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
+)
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.hqadmin.history import get_recent_changes, download_changes
-from corehq.apps.hqadmin.models import HqDeploy
-from corehq.apps.hqadmin.forms import BrokenBuildsForm
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqadmin.escheck import (
-    check_es_cluster_health,
-    check_xform_es_index,
-    check_reportcase_es_index,
-    check_case_es_index,
-    check_reportxform_es_index
-)
-from corehq.apps.hqadmin.system_info.checks import check_redis, check_rabbitmq, check_celery_health
-from corehq.apps.hqadmin.reporting.reports import (
-    get_project_spaces,
-    get_stats_data,
-)
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
+from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
+from pillowtop.exceptions import PillowNotFoundError
+from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
+
+from . import service_checks, escheck
+from .forms import AuthenticateAsForm, BrokenBuildsForm
+from .history import get_recent_changes, download_changes
+from .models import HqDeploy
 from .multimech import GlobalConfig
-from .forms import AuthenticateAsForm
+from .reporting.reports import get_project_spaces, get_stats_data
+from .utils import get_celery_stats
 
 
 @require_superuser
@@ -182,8 +183,6 @@ class RecentCouchChangesView(BaseAdminSectionView):
         }
 
 
-
-
 @require_superuser_or_developer
 def download_recent_changes(request):
     count = int(request.GET.get('changes', 10000))
@@ -240,10 +239,10 @@ def system_ajax(request):
         return json_response(sorted(pillow_meta, key=lambda m: m['name']))
     elif type == 'stale_pillows':
         es_index_status = [
-            check_case_es_index(interval=3),
-            check_xform_es_index(interval=3),
-            check_reportcase_es_index(interval=3),
-            check_reportxform_es_index(interval=3)
+            escheck.check_case_es_index(interval=3),
+            escheck.check_xform_es_index(interval=3),
+            escheck.check_reportcase_es_index(interval=3),
+            escheck.check_reportxform_es_index(interval=3)
         ]
         return json_response(es_index_status)
 
@@ -269,6 +268,23 @@ def system_ajax(request):
     return HttpResponse('{}', content_type='application/json')
 
 
+@require_superuser_or_developer
+def check_services(request):
+
+    def run_test(test):
+        try:
+            result = test()
+        except Exception as e:
+            status = "EXCEPTION"
+            msg = repr(e)
+        else:
+            status = "SUCCESS" if result.success else "FAILURE"
+            msg = result.msg
+        return "{} {}: {}<br/>".format(status, test.__name__, msg)
+
+    return HttpResponse("<pre>" + "".join(map(run_test, service_checks.checks)) + "</pre>")
+
+
 class SystemInfoView(BaseAdminSectionView):
     page_title = ugettext_lazy("System Info")
     urlname = 'system_info'
@@ -278,7 +294,7 @@ class SystemInfoView(BaseAdminSectionView):
     @use_jquery_ui
     @method_decorator(require_superuser_or_developer)
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseAdminSectionView, self).dispatch(request, *args, **kwargs)
+        return super(SystemInfoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -298,10 +314,12 @@ class SystemInfoView(BaseAdminSectionView):
 
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
-        context.update(check_redis())
-        context.update(check_rabbitmq())
-        context.update(check_celery_health())
-        context.update(check_es_cluster_health())
+        context['redis'] = service_checks.check_redis()
+        context['rabbitmq'] = service_checks.check_rabbitmq()
+        context['celery_stats'] = get_celery_stats()
+        context['heartbeat'] = service_checks.check_heartbeat()
+
+        context['elastic'] = escheck.check_es_cluster_health()
 
         return context
 
@@ -578,7 +596,38 @@ class LoadtestReportView(BaseAdminSectionView):
         return context
 
 
-def _lookup_id_in_couch(doc_id, db_name=None):
+class _Db(object):
+    """
+    Light wrapper for providing interface like Couchdbkit's Database objects.
+    """
+
+    def __init__(self, dbname, getter, doc_type):
+        self.dbname = dbname
+        self._getter = getter
+        self.doc_type = doc_type
+
+    def get(self, record_id):
+        try:
+            return self._getter(record_id)
+        except (XFormNotFound, CaseNotFound):
+            raise ResourceNotFound("missing")
+
+
+_SQL_DBS = OrderedDict((db.dbname, db) for db in [
+    _Db(
+        XFormInstanceSQL._meta.db_table,
+        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data,
+        XFormInstanceSQL.__name__
+    ),
+    _Db(
+        CommCareCaseSQL._meta.db_table,
+        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data,
+        CommCareCaseSQL.__name__
+    ),
+])
+
+
+def _lookup_id_in_database(doc_id, db_name=None):
     db_result = namedtuple('db_result', 'dbname result status')
     STATUSES = defaultdict(lambda: 'warning', {
         'missing': 'default',
@@ -586,9 +635,15 @@ def _lookup_id_in_couch(doc_id, db_name=None):
     })
 
     if db_name:
-        dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
+        db = _SQL_DBS.get(db_name, None)
+        if db:
+            dbs = [db]
+        else:
+            dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
     else:
-        dbs = couch_config.all_dbs_by_slug.values()
+        couch_dbs = couch_config.all_dbs_by_slug.values()
+        sql_dbs = _SQL_DBS.values()
+        dbs = couch_dbs + sql_dbs
 
     db_results = []
     response = {"doc_id": doc_id}
@@ -601,7 +656,7 @@ def _lookup_id_in_couch(doc_id, db_name=None):
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({
                 "doc": json.dumps(doc, indent=4, sort_keys=True),
-                "doc_type": doc.get('doc_type', 'Unknown'),
+                "doc_type": doc.get('doc_type', getattr(db, 'doc_type', 'Unknown')),
                 "dbname": db.dbname,
             })
 
@@ -653,20 +708,26 @@ def doc_in_es(request):
             "doc_type": es_doc_type,
             "found_indices": found_indices,
         },
-        "couch_info": _lookup_id_in_couch(doc_id),
+        "couch_info": _lookup_id_in_database(doc_id),
     }
     return render(request, "hqadmin/doc_in_es.html", context)
 
 
 @require_superuser
 def raw_couch(request):
+    get_params = dict(request.GET.iteritems())
+    return HttpResponseRedirect(reverse("raw_doc", params=get_params))
+
+
+@require_superuser
+def raw_doc(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
     if db_name and "__" in db_name:
         db_name = db_name.split("__")[-1]
-    context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
-    other_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
-    context['all_databases'] = ['commcarehq'] + other_dbs
+    context = _lookup_id_in_database(doc_id, db_name) if doc_id else {}
+    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
+    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
     return render(request, "hqadmin/raw_couch.html", context)
 
 
@@ -697,7 +758,7 @@ def callcenter_test(request):
             doc_type = doc.get('doc_type', None)
             if doc_type == 'CommCareUser':
                 case_type = domain.call_center_config.case_type
-                user_case = get_case_by_domain_hq_user_id(doc['domain'], doc['_id'], case_type)
+                user_case = CaseAccessors(doc['domain']).get_case_by_domain_hq_user_id(doc['_id'], case_type)
             elif doc_type == 'CommCareCase':
                 if doc.get('hq_user_id'):
                     user_case = CommCareCase.wrap(doc)
@@ -724,6 +785,7 @@ def callcenter_test(request):
 
     if user or user_case:
         custom_cache = None if enable_caching else cache.caches['dummy']
+        override_case = CallCenterCase.from_case(user_case)
         cci = CallCenterIndicators(
             domain.name,
             domain.default_timezone,
@@ -731,7 +793,7 @@ def callcenter_test(request):
             user,
             custom_cache=custom_cache,
             override_date=query_date,
-            override_cases=[user_case] if user_case else None
+            override_cases=[override_case] if override_case else None
         )
         data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
     else:
@@ -831,3 +893,45 @@ def _get_submodules():
         line.strip()[1:].split()[1]
         for line in git.submodule()
     ]
+
+
+class CallcenterUCRCheck(BaseAdminSectionView):
+    urlname = 'callcenter_ucr_check'
+    page_title = ugettext_lazy("Check Callcenter UCR tables")
+    template_name = "hqadmin/call_center_ucr_check.html"
+
+    @method_decorator(require_superuser)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(CallcenterUCRCheck, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        from corehq.apps.callcenter.data_source import get_call_center_domains
+        from corehq.apps.callcenter.checks import get_call_center_data_source_stats
+
+        if 'domain' not in self.request.GET:
+            return {}
+
+        domain = self.request.GET.get('domain', None)
+        if domain:
+            domains = [domain]
+        else:
+            domains = [dom.name for dom in get_call_center_domains() if dom.use_fixtures]
+
+        domain_stats = get_call_center_data_source_stats(domains)
+
+        context = {
+            'data': sorted(domain_stats.values(), key=lambda s: s.name),
+            'domain': domain
+        }
+
+        return context
+
+
+class DimagisphereView(TemplateView):
+
+    def get_context_data(self, **kwargs):
+        context = super(DimagisphereView, self).get_context_data(**kwargs)
+        context['tvmode'] = 'tvmode' in self.request.GET
+        return context

@@ -34,6 +34,7 @@ def get_url_with_location(view_name, text, location_id, domain):
         text
     )
 
+
 class EWSLineChart(LineChart):
     template_partial = 'ewsghana/partials/ews_line_chart.html'
 
@@ -167,8 +168,6 @@ class MultiReport(DatespanMixin, CustomProjectReport, ProjectReportParametersMix
     base_template = 'ewsghana/base_template.html'
     is_rendered_as_email = False
     is_rendered_as_print = False
-
-    is_bootstrap3 = True
 
     @use_nvd3
     def bootstrap3_dispatcher(self, request, *args, **kwargs):

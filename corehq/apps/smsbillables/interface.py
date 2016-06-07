@@ -47,7 +47,6 @@ class SMSBillablesInterface(GenericTabularReport):
         'corehq.apps.smsbillables.interface.HasGatewayFeeFilter',
         'corehq.apps.smsbillables.interface.GatewayTypeFilter',
     ]
-    is_bootstrap3 = True
 
     @property
     def headers(self):
@@ -57,8 +56,9 @@ class SMSBillablesInterface(GenericTabularReport):
             DataTablesColumn("Direction"),
             DataTablesColumn("SMS parts"),
             DataTablesColumn("Gateway", sortable=False),
-            DataTablesColumn("Gateway Fee", sortable=False),
-            DataTablesColumn("Usage Fee", sortable=False),
+            DataTablesColumn("Gateway Charge", sortable=False),
+            DataTablesColumn("Usage Charge", sortable=False),
+            DataTablesColumn("Total Charge", sortable=False),
             DataTablesColumn("Message Log ID", sortable=False),
             DataTablesColumn("Is Valid?", sortable=False),
             DataTablesColumn("Date Created"),
@@ -141,6 +141,7 @@ class SMSBillablesInterface(GenericTabularReport):
                 sms_billable.gateway_fee.criteria.backend_api_id if sms_billable.gateway_fee else "",
                 sms_billable.gateway_charge,
                 sms_billable.usage_charge,
+                sms_billable.gateway_charge + sms_billable.usage_charge,
                 sms_billable.log_id,
                 sms_billable.is_valid,
                 sms_billable.date_created,
@@ -206,7 +207,6 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
         'corehq.apps.smsbillables.interface.DirectionFilter',
         'corehq.apps.smsbillables.interface.CountryCodeFilter',
     ]
-    is_bootstrap3 = True
 
     @property
     def headers(self):

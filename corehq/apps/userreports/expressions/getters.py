@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
 from six import string_types
 from corehq.util.dates import iso_string_to_date, iso_string_to_datetime
@@ -10,6 +10,7 @@ class TransformedGetter(object):
 
     Returns the result of calling the transform function on result of the getter.
     """
+
     def __init__(self, getter, transform=None):
         self.getter = getter
         self.transform = transform
@@ -100,9 +101,16 @@ def transform_datetime(item):
             try:
                 return iso_string_to_datetime(item, strict=True)
             except ValueError:
-                pass
+                try:
+                    parsed_item = iso_string_to_date(item)
+                    return datetime.combine(parsed_item, time(0, 0, 0))
+                except ValueError:
+                    pass
         elif isinstance(item, datetime):
             return item
+        elif isinstance(item, date):
+            return datetime.combine(item, time(0, 0, 0))
+
     return None
 
 
@@ -132,6 +140,12 @@ def transform_unicode(item):
         return None
 
 
+def transform_array(item):
+    if isinstance(item, list):
+        return item
+    return [item]
+
+
 def transform_from_datatype(datatype):
     """
     Given a datatype, return a transform for that type.
@@ -143,6 +157,7 @@ def transform_from_datatype(datatype):
         'decimal': transform_decimal,
         'integer': transform_int,
         'string': transform_unicode,
+        'array': transform_array,
     }.get(datatype) or identity
 
 

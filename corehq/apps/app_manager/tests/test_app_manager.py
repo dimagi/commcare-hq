@@ -31,6 +31,7 @@ class AppManagerTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AppManagerTest, cls).setUpClass()
         cls.build1 = {'version': '1.2.dev', 'build_number': 7106}
         cls.build2 = {'version': '2.7.0', 'build_number': 20655}
 
@@ -44,6 +45,7 @@ class AppManagerTest(TestCase):
             cls.xform_str = f.read()
 
     def setUp(self):
+        super(AppManagerTest, self).setUp()
         self.app = Application.new_app(self.domain, "TestApp", application_version=APP_V1)
 
         for i in range(3):
@@ -67,6 +69,7 @@ class AppManagerTest(TestCase):
 
     def tearDown(self):
         self.app.delete()
+        super(AppManagerTest, self).tearDown()
 
     def testSetUp(self):
         self.assertEqual(len(self.app.modules), 3)
@@ -105,7 +108,7 @@ class AppManagerTest(TestCase):
     @patch_default_builds
     def _test_import_app(self, app_id_or_source):
         new_app = import_app(app_id_or_source, self.domain)
-        self.assertEqual(set(new_app._attachments.keys()).intersection(self.app._attachments.keys()), set())
+        self.assertEqual(set(new_app.blobs.keys()).intersection(self.app.blobs.keys()), set())
         new_forms = list(new_app.get_forms())
         old_forms = list(self.app.get_forms())
         for new_form, old_form in zip(new_forms, old_forms):
@@ -113,7 +116,7 @@ class AppManagerTest(TestCase):
             self.assertNotEqual(new_form.unique_id, old_form.unique_id)
 
     def testImportApp_from_id(self):
-        self.assertTrue(self.app._attachments)
+        self.assertTrue(self.app.blobs)
         self._test_import_app(self.app.id)
 
     def testImportApp_from_source(self):
@@ -205,20 +208,6 @@ class AppManagerTest(TestCase):
 
 
 class TestReportModule(SimpleTestCase):
-    def test_report_module_uuid_updates(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-
-        report_module = app.add_module(ReportModule.new_module('Reports', None))
-        report_module.unique_id = 'report_module'
-
-        report_app_config = ReportAppConfig(report_id='123',
-                                            header={'en': 'CommBugz'})
-        report_module.report_configs = [report_app_config]
-        report_module._loaded = True
-
-        app_source = app.export_json(dump_json=False)
-        new_uuid = app_source['modules'][0]['report_configs'][0]['uuid']
-        self.assertNotEqual(report_app_config.uuid, new_uuid)
 
     @flag_enabled('MOBILE_UCR')
     @patch('dimagi.ext.couchdbkit.Document.get_db')

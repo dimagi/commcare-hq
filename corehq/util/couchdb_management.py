@@ -13,6 +13,7 @@ class CouchConfig(object):
     from the one specified by COUCH_DATABASE
 
     """
+
     def __init__(self, db_uri=None):
         if db_uri:
             self._settings_helper = (
@@ -62,9 +63,6 @@ class CouchConfig(object):
 
     def get_db_uri_for_doc_type(self, doc_type):
         return self.get_db_uri_for_class(get_document_class_by_doc_type(doc_type))
-
-    def get_db_for_app_label(self, app_label):
-        return Database(self.get_db_uri_for_app_label(app_label))
 
     def get_db_for_class(self, klass):
         return Database(self.get_db_uri_for_class(klass))

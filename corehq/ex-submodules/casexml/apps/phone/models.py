@@ -8,6 +8,8 @@ from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
+from corehq.toggles import ENABLE_LOADTEST_USERS
+from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
@@ -22,54 +24,182 @@ import logging
 logger = logging.getLogger('phone.models')
 
 
-class User(object):
+class OTARestoreUser(object):
     """
-    This is a basic user model that's used for OTA restore to properly
-    find cases and generate the user XML.
-    """
-    # todo: this model is now useless since casexml and HQ are no longer separate repos.
-    # we should remove this abstraction layer and switch all the restore code to just
-    # work off CouchUser objects
+    This is the OTA restore user's interface that's used for OTA restore to properly
+    find cases and generate the user XML for both a web user and mobile user.
 
-    def __init__(self, user_id, username, password, date_joined, first_name=None,
-                 last_name=None, phone_number=None, user_data=None,
-                 additional_owner_ids=None, domain=None, loadtest_factor=1):
-        self.user_id = user_id
-        self.username = username
-        self.first_name = first_name
-        self.last_name = last_name
-        self.phone_number = phone_number
-        self.password = password
-        self.date_joined = date_joined
-        self.user_data = user_data or {}
-        self.additional_owner_ids = additional_owner_ids or []
+    Note: When adding methods to this user, you'll need to ensure that it is
+    functional with both a CommCareUser and WebUser.
+    """
+
+    def __init__(self, domain, couch_user, loadtest_factor=1):
         self.domain = domain
-        self.loadtest_factor = loadtest_factor
+        self._loadtest_factor = loadtest_factor
+        self._couch_user = couch_user
+
+    @property
+    def user_id(self):
+        return self._couch_user.user_id
+
+    @property
+    def loadtest_factor(self):
+        """
+        Gets the loadtest factor for a domain and user. Is always 1 unless
+        both the toggle is enabled for the domain, and the user has a non-zero,
+        non-null factor set.
+        """
+        if ENABLE_LOADTEST_USERS.enabled(self.domain):
+            return self._loadtest_factor or 1
+        return 1
+
+    @property
+    def username(self):
+        return self._couch_user.raw_username
+
+    @property
+    def password(self):
+        return self._couch_user.password
 
     @property
     def user_session_data(self):
-        # todo: this is redundant with the implementation in CouchUser.
-        # this will go away when the two are reconciled
-        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+        return self._couch_user.user_session_data
 
-        session_data = copy(self.user_data)
-        session_data.update({
-            '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
-            '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
-            '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
-        })
-        return session_data
+    @property
+    def date_joined(self):
+        return self._couch_user.date_joined
+
+    @property
+    @memoized
+    def project(self):
+        return Domain.get_by_name(self.domain)
+
+    @property
+    def locations(self):
+        raise NotImplementedError()
+
+    @property
+    def sql_location(self):
+        raise NotImplementedError()
+
+    def get_fixture_data_items(self):
+        raise NotImplementedError()
+
+    def get_groups(self):
+        raise NotImplementedError()
+
+    def get_commtrack_location_id(self):
+        raise NotImplementedError()
 
     def get_owner_ids(self):
-        ret = [self.user_id]
-        ret.extend(self.additional_owner_ids)
-        return list(set(ret))
+        raise NotImplementedError()
 
-    @classmethod
-    def from_django_user(cls, django_user):
-        return cls(user_id=str(django_user.pk), username=django_user.username,
-                   password=django_user.password, date_joined=django_user.date_joined,
-                   user_data={})
+    def get_call_center_indicators(self):
+        raise NotImplementedError()
+
+    def get_case_sharing_groups(self):
+        raise NotImplementedError()
+
+    def get_fixture_last_modified(self):
+        raise NotImplementedError()
+
+    def get_ucr_filter_value(self, ucr_filter, ui_filter):
+        return ucr_filter.get_filter_value(self._couch_user, ui_filter)
+
+
+class OTARestoreWebUser(OTARestoreUser):
+
+    def __init__(self, domain, couch_user, **kwargs):
+        from corehq.apps.users.models import WebUser
+
+        assert isinstance(couch_user, WebUser)
+        super(OTARestoreWebUser, self).__init__(domain, couch_user, **kwargs)
+
+    @property
+    def sql_location(self):
+        return None
+
+    @property
+    def locations(self):
+        return []
+
+    def get_fixture_data_items(self):
+        return []
+
+    def get_groups(self):
+        return []
+
+    def get_commtrack_location_id(self):
+        return None
+
+    def get_owner_ids(self):
+        return [self.user_id]
+
+    def get_call_center_indicators(self, config):
+        return None
+
+    def get_case_sharing_groups(self):
+        return []
+
+    def get_fixture_last_modified(self):
+        from corehq.apps.fixtures.models import UserFixtureStatus
+
+        return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+
+
+class OTARestoreCommCareUser(OTARestoreUser):
+
+    def __init__(self, domain, couch_user, **kwargs):
+        from corehq.apps.users.models import CommCareUser
+
+        assert isinstance(couch_user, CommCareUser)
+        super(OTARestoreCommCareUser, self).__init__(domain, couch_user, **kwargs)
+
+    @property
+    def sql_location(self):
+        return self._couch_user.sql_location
+
+    @property
+    def locations(self):
+        return self._couch_user.locations
+
+    def set_location(self, location):
+        return self._couch_user.set_location(location)
+
+    def get_fixture_data_items(self):
+        from corehq.apps.fixtures.models import FixtureDataItem
+
+        return FixtureDataItem.by_user(self._couch_user)
+
+    def get_groups(self):
+        return Group.by_user(self._couch_user)
+
+    def get_commtrack_location_id(self):
+        from corehq.apps.commtrack.util import get_commtrack_location_id
+
+        return get_commtrack_location_id(self._couch_user, domain)
+
+    def get_owner_ids(self):
+        return self._couch_user.get_owner_ids(self.domain)
+
+    def get_call_center_indicators(self, config):
+        from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
+
+        return CallCenterIndicators(
+            self.project.name,
+            self.project.default_timezone,
+            self.project.call_center_config.case_type,
+            self._couch_user,
+            indicator_config=config
+        )
+
+    def get_case_sharing_groups(self):
+        return self._couch_user.get_case_sharing_groups()
+
+    def get_fixture_last_modified(self):
+        from corehq.apps.fixtures.models import UserFixtureType
+
+        return self._couch_user.fixture_status(UserFixtureType.LOCATION)
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
@@ -101,6 +231,7 @@ class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
 
 
 class SyncLogAssertionError(AssertionError):
+
     def __init__(self, case_id, *args, **kwargs):
         self.case_id = case_id
         super(SyncLogAssertionError, self).__init__(*args, **kwargs)
@@ -860,6 +991,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         logger.debug('index tree before update: {}'.format(self.index_tree))
 
         class CaseUpdate(object):
+
             def __init__(self, case_id, owner_ids_on_phone):
                 self.case_id = case_id
                 self.owner_ids_on_phone = owner_ids_on_phone
@@ -900,7 +1032,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 if owner_id_from_action is not None:
                     owner_id_map[case_id] = owner_id_from_action
             return owner_id_map.get(case_id, None)
-
 
         all_updates = {}
         for case in case_list:

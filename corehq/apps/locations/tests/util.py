@@ -1,4 +1,5 @@
 from django.test import TestCase
+from collections import namedtuple
 from dimagi.utils.couch.database import iter_bulk_delete
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.commtrack.models import SupplyPointCase
@@ -47,6 +48,29 @@ def setup_location_types(domain, location_types):
     return location_types_dict
 
 
+LocationTypeStructure = namedtuple('LocationTypeStructure', ['name', 'children'])
+
+
+def setup_location_types_with_structure(domain, location_types):
+    created_location_types = {}
+
+    def create_location_type(location_type, parent):
+        created_location_type = LocationType.objects.create(
+            domain=domain,
+            name=location_type.name,
+            parent_type=parent,
+            administrative=True,
+        )
+        created_location_types[created_location_type.name] = created_location_type
+        for child in location_type.children:
+            create_location_type(child, created_location_type)
+
+    for location_type in location_types:
+        create_location_type(location_type, None)
+
+    return created_location_types
+
+
 def setup_locations(domain, locations, location_types):
     locations_dict = {}
 
@@ -60,6 +84,28 @@ def setup_locations(domain, locations, location_types):
 
     create_locations(locations, location_types, None)
     return locations_dict
+
+
+LocationStructure = namedtuple('LocationStructure', ['name', 'type', 'children'])
+
+
+def setup_locations_with_structure(domain, locations):
+    """
+    Creates a hierarchy of locations given a recursive list of LocationStructure namedtuples
+    This allows you to set complex (e.g. forked) location structures within tests
+    """
+    created_locations = {}
+
+    def create_locations(locations, parent):
+        for location in locations:
+            created_location = Location(domain=domain, name=location.name, parent=parent,
+                                        location_type=location.type)
+            created_location.save()
+            created_locations[location.name] = created_location.sql_location
+            create_locations(location.children, created_location)
+
+    create_locations(locations, None)
+    return created_locations
 
 
 def setup_locations_and_types(domain, location_types, stock_tracking_types, locations):
@@ -103,4 +149,28 @@ class LocationHierarchyTestCase(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        delete_all_locations()
+
+
+class LocationHierarchyPerTest(TestCase):
+    """
+    Sets up and tears down a hierarchy for you based on the class attrs
+    Does it per test instead of LocationHierarchyTestCase which does it once per class
+    """
+    location_type_names = []
+    stock_tracking_types = []
+    location_structure = []
+    domain = 'test-domain'
+
+    def setUp(self):
+        self.domain_obj = bootstrap_domain(self.domain)
+        self.location_types, self.locations = setup_locations_and_types(
+            self.domain,
+            self.location_type_names,
+            self.stock_tracking_types,
+            self.location_structure,
+        )
+
+    def tearDown(self):
+        self.domain_obj.delete()
         delete_all_locations()

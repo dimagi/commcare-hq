@@ -12,6 +12,8 @@ from contextlib import contextmanager
 
 from functools import wraps
 from django.conf import settings
+from django.test.utils import override_settings
+
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
 
@@ -165,6 +167,7 @@ def mock_out_couch(views=None, docs=None):
     """
     from fakecouch import FakeCouchDb
     db = FakeCouchDb(views=views, docs=docs)
+
     def _get_db(*args):
         return db
 
@@ -184,6 +187,7 @@ class RunConfig(object):
 
 
 class RunWithMultipleConfigs(object):
+
     def __init__(self, fn, run_configs):
         self.fn = fn
         self.run_configs = run_configs
@@ -230,10 +234,45 @@ def run_with_multiple_configs(fn, run_configs):
     return inner
 
 
+class OverridableSettingsTestMixin(object):
+    """Backport of core Django functionality to 1.7. Can be removed
+    once Django >= 1.8
+    https://github.com/django/django/commit/d89f56dc4d03f6bf6602536b8b62602ec0d46d2f
+
+    Usage:
+
+      @override_settings(A_SETTING=True)
+      class SomeTests(TestCase, OverridableSettingsTestMixin):
+
+          @classmethod
+          def setUpClass(cls):
+              super(SomeTests, cls).setUpClass()
+              # settings.A_SETTING is True here
+
+          @classmethod
+          def tearDownClass(cls):
+              # teardown stuff
+              # don't forget to call super to undo override_settings
+              super(SomeTests, cls).tearDownClass()
+    """
+    @classmethod
+    def setUpClass(cls):
+        if cls._overridden_settings:
+            cls._cls_overridden_context = override_settings(**cls._overridden_settings)
+            cls._cls_overridden_context.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        if hasattr(cls, '_cls_overridden_context'):
+            cls._cls_overridden_context.disable()
+            delattr(cls, '_cls_overridden_context')
+
+
 class log_sql_output(ContextDecorator):
     """
     Can be used as either a context manager or decorator.
     """
+
     def __init__(self):
         self.logger = logging.getLogger('django.db.backends')
         self.new_level = logging.DEBUG
@@ -357,20 +396,119 @@ def create_and_save_a_form(domain):
     return form
 
 
-def create_and_save_a_case(domain, case_id, case_name, case_properties=None):
+def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
-    from casexml.apps.case.signals import case_post_save
     from casexml.apps.case.util import post_case_blocks
-    # this avoids having to deal with all the reminders code bootstrap
-    with drop_connected_signals(case_post_save):
-        form, cases = post_case_blocks(
-            [
-                CaseBlock(
-                    create=True,
-                    case_id=case_id,
-                    case_name=case_name,
-                    update=case_properties,
-                ).as_xml()
-            ], domain=domain
-        )
+    return post_case_blocks(
+        [CaseBlock(**kwargs).as_xml()], domain=domain
+    )
+
+
+def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
+        drop_signals=True, owner_id=None, user_id=None):
+    from casexml.apps.case.signals import case_post_save
+    from corehq.form_processor.signals import sql_case_post_save
+
+    kwargs = {
+        'create': True,
+        'case_id': case_id,
+        'case_name': case_name,
+        'update': case_properties,
+    }
+
+    if case_type:
+        kwargs['case_type'] = case_type
+
+    if owner_id:
+        kwargs['owner_id'] = owner_id
+
+    if user_id:
+        kwargs['user_id'] = user_id
+
+    if drop_signals:
+        # this avoids having to deal with all the reminders code bootstrap
+        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+            form, cases = _create_case(domain, **kwargs)
+    else:
+        form, cases = _create_case(domain, **kwargs)
+
     return cases[0]
+
+
+@contextmanager
+def create_test_case(domain, case_type, case_name, case_properties=None, drop_signals=True,
+        case_id=None, owner_id=None, user_id=None):
+    from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
+    from corehq.apps.reminders.tasks import delete_reminders_for_cases
+    from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+    from corehq.form_processor.utils.general import should_use_sql_backend
+
+    case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
+        case_properties=case_properties, case_type=case_type, drop_signals=drop_signals,
+        owner_id=owner_id, user_id=user_id)
+    try:
+        yield case
+    finally:
+        delete_phone_numbers_for_owners([case.case_id])
+        delete_reminders_for_cases(domain, [case.case_id])
+        if should_use_sql_backend(domain):
+            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+        else:
+            case.delete()
+
+create_test_case.__test__ = False
+
+
+def teardown(do_teardown):
+    """A decorator that adds teardown logic to a test function/method
+
+    NOTE this will not work for nose test generator functions.
+    """
+    def decorate(func):
+        @wraps(func)
+        def wrapper(*args, **kw):
+            try:
+                res = func(*args, **kw)
+                assert res is None, "{} returned value {!r}".format(func, res)
+            finally:
+                do_teardown(*args, **kw)
+        return wrapper
+    return decorate
+
+
+def set_parent_case(domain, child_case, parent_case):
+    """
+    Creates a parent-child relationship between child_case and parent_case.
+    """
+    from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+    from casexml.apps.case.models import INDEX_RELATIONSHIP_CHILD
+    from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+
+    parent = CaseStructure(case_id=parent_case.case_id)
+    CaseFactory(domain).create_or_update_case(
+        CaseStructure(
+            case_id=child_case.case_id,
+            indices=[CaseIndex(
+                related_structure=parent,
+                identifier=DEFAULT_PARENT_IDENTIFIER,
+                relationship=INDEX_RELATIONSHIP_CHILD
+            )],
+        )
+    )
+
+
+def update_case(domain, case_id, case_properties, user_id=None):
+    from casexml.apps.case.mock import CaseBlock
+    from casexml.apps.case.util import post_case_blocks
+
+    kwargs = {
+        'case_id': case_id,
+        'update': case_properties,
+    }
+
+    if user_id:
+        kwargs['user_id'] = user_id
+
+    post_case_blocks(
+        [CaseBlock(**kwargs).as_xml()], domain=domain
+    )

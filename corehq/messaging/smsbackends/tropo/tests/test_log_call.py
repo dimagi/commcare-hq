@@ -4,6 +4,7 @@ import json
 
 
 class TropoLogCallTestCase(util.LogCallTestCase):
+
     def simulate_inbound_call(self, phone_number):
         return Client().post(
             '/tropo/ivr/',

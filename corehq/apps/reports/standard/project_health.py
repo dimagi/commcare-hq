@@ -2,6 +2,7 @@ from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext_noop
 from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.users.util import raw_username
@@ -11,7 +12,8 @@ from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
 
 
-USE_THRESHOLD = 15
+def get_performance_threshold(domain_name):
+    return Domain.get_by_name(domain_name).internal.performance_threshold or 15
 
 
 class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms_submitted',
@@ -42,10 +44,11 @@ class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms
 class MonthlyPerformanceSummary(jsonobject.JsonObject):
     month = jsonobject.DateProperty()
     domain = jsonobject.StringProperty()
+    performance_threshold = jsonobject.IntegerProperty()
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, previous_summary=None):
+    def __init__(self, domain, month, performance_threshold, previous_summary=None):
         self._previous_summary = previous_summary
         self._next_summary = None
         self._base_queryset = MALTRow.objects.filter(
@@ -54,11 +57,12 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
         self._performing_queryset = self._base_queryset.filter(
-            num_of_forms__gte=USE_THRESHOLD,
+            num_of_forms__gte=performance_threshold,
         )
         super(MonthlyPerformanceSummary, self).__init__(
             month=month,
             domain=domain,
+            performance_threshold=performance_threshold,
             active=self._base_queryset.distinct('user_id').count(),
             performing=self._performing_queryset.distinct('user_id').count(),
         )
@@ -96,7 +100,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 user_id=row.user_id,
                 username=raw_username(row.username),
                 num_forms_submitted=row.num_of_forms,
-                is_performing=row.num_of_forms >= USE_THRESHOLD,
+                is_performing=row.num_of_forms >= self.performance_threshold,
                 previous_stub=None,
                 next_stub=None,
             ) for row in self._base_queryset.distinct('user_id')
@@ -170,7 +174,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
     name = ugettext_noop("Project Performance")
-    is_bootstrap3 = True
     base_template = "reports/project_health/project_health_dashboard.html"
 
     @classmethod
@@ -186,11 +189,13 @@ class ProjectHealthDashboard(ProjectReport):
         now = datetime.datetime.utcnow()
         rows = []
         last_month_summary = None
+        performance_threshold = get_performance_threshold(self.domain)
         for i in range(-5, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
             this_month_summary = MonthlyPerformanceSummary(
                 domain=self.domain,
+                performance_threshold=performance_threshold,
                 month=month_as_date,
                 previous_summary=last_month_summary,
             )
@@ -203,5 +208,5 @@ class ProjectHealthDashboard(ProjectReport):
             'rows': rows,
             'this_month': rows[-1],
             'last_month': rows[-2],
-            'threshold': USE_THRESHOLD,
+            'threshold': performance_threshold,
         }

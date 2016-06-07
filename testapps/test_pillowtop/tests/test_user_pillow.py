@@ -4,6 +4,7 @@ from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import document_types
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.tests.utils import get_current_kafka_seq
 from corehq.apps.change_feed.topics import FORM_SQL
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES, ESQuery
@@ -21,7 +22,6 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from corehq.util.test_utils import get_form_ready_to_save
 from pillowtop.es_utils import initialize_index
-from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
 TEST_DOMAIN = 'user-pillow-test'

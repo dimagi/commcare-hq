@@ -1,16 +1,23 @@
 from collections import defaultdict
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
-from custom.openclinica.const import AUDIT_LOGS, SINGLE_EVENT_FORM_EVENT_INDEX
+from custom.openclinica.const import (
+    AUDIT_LOGS,
+    CC_DOB,
+    CC_ENROLLMENT_DATE,
+    CC_SEX,
+    CC_STUDY_SUBJECT_ID,
+    CC_SUBJECT_KEY,
+    SINGLE_EVENT_FORM_EVENT_INDEX,
+)
 from custom.openclinica.utils import (
     OpenClinicaIntegrationError,
-    is_item_group_repeating,
-    is_study_event_repeating,
     get_item_measurement_unit,
     get_question_item,
     get_oc_user,
     get_study_event_name,
     oc_format_date,
+    originals_first,
 )
 
 
@@ -23,6 +30,7 @@ class ItemGroup(object):
     complete one item group. When a second instance of a form type (identified by xmlns) is added to an
     item group, then the item group is closed and a new one opened.
     """
+
     def __init__(self, domain, oid):
         self.oid = oid
         self.completed_cc_forms = set([])
@@ -39,6 +47,7 @@ class StudyEvent(object):
     StudyEvent. In subsequent projects we should us a study_event subcase of
     the subject case type.
     """
+
     def __init__(self, domain, oid):
         self.oid = oid
         # Unused. We use SINGLE_EVENT_FORM_EVENT_INDEX in this project.
@@ -79,6 +88,7 @@ class Subject(object):
     """
     Manages data for a subject case
     """
+
     def __init__(self, subject_key, study_subject_id, domain):
         self.subject_key = subject_key
         self.study_subject_id = study_subject_id
@@ -310,3 +320,14 @@ class Subject(object):
             return eventslist
 
         return mkeventslist(self.data)
+
+    @classmethod
+    def wrap(cls, case, audit_log_id_ref):
+        subject = cls(getattr(case, CC_SUBJECT_KEY), getattr(case, CC_STUDY_SUBJECT_ID), case.domain)
+        subject.enrollment_date = getattr(case, CC_ENROLLMENT_DATE, None)
+        subject.sex = getattr(case, CC_SEX, None)
+        subject.dob = getattr(case, CC_DOB, None)
+        for form in originals_first(case.get_forms()):
+            # Pass audit log ID by reference to increment it for each audit log
+            subject.add_data(form.form, form, audit_log_id_ref)
+        return subject

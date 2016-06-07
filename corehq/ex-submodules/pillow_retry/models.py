@@ -10,6 +10,7 @@ from pillowtop.feed.couch import change_from_couch_row, force_to_change
 
 ERROR_MESSAGE_LENGTH = 512
 
+
 def _get_extra_args(limit, reduce, skip):
     extra_args = dict()
     if not reduce and limit is not None:
@@ -18,6 +19,7 @@ def _get_extra_args(limit, reduce, skip):
                 skip=skip
             )
     return extra_args
+
 
 def path_from_object(obj):
     path = "{0}.{1}".format(obj.__class__.__module__, obj.__class__.__name__)
@@ -75,7 +77,6 @@ class PillowError(models.Model):
     @classmethod
     def get_or_create(cls, change, pillow, change_meta=None):
         change = force_to_change(change)
-        change.document
         doc_id = change.id
         try:
             error = cls.objects.get(doc_id=doc_id, pillow=pillow.pillow_id)
@@ -92,7 +93,11 @@ class PillowError(models.Model):
 
             if change_meta:
                 date_string = change_meta.get('date')
-                date = parse(date_string) if date_string is not None else None
+                try:
+                    date = parse(date_string) if date_string is not None else None
+                except ValueError:
+                    # date is not mission critical and can be messy data so just blank it out
+                    date = None
                 domains = ','.join(change_meta.get('domains'))
                 error.domains = (domains[:252] + '...') if len(domains) > 255 else domains
                 error.doc_type = change_meta.get('doc_type')

@@ -1,4 +1,3 @@
-import datetime
 import uuid
 
 from django.test import TestCase
@@ -10,6 +9,7 @@ from corehq.apps.userreports.sql import ErrorRaisingIndicatorSqlAdapter
 
 
 class SaveErrorsTest(TestCase):
+
     def setUp(self):
         self.config = DataSourceConfiguration(
             domain='domain',

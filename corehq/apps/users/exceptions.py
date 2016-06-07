@@ -4,5 +4,6 @@ class NoAccountException(Exception):
     """
     pass
 
+
 class InvalidLocationConfig(Exception):
     pass

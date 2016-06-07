@@ -46,6 +46,7 @@ class AppFilter(ExportFilter):
     """
     Filter on app_id
     """
+
     def __init__(self, app_id):
         self.app_id = app_id
 
@@ -66,6 +67,7 @@ class OwnerFilter(ExportFilter):
     """
     Filter on owner_id
     """
+
     def __init__(self, owner_id):
         self.owner_id = owner_id
 
@@ -74,6 +76,7 @@ class OwnerFilter(ExportFilter):
 
 
 class OwnerTypeFilter(ExportFilter):
+
     def __init__(self, owner_type):
         _assert_user_types(owner_type)
         self.owner_types = owner_type
@@ -86,6 +89,7 @@ class IsClosedFilter(ExportFilter):
     """
     Filter on case closed property
     """
+
     def __init__(self, is_closed):
         self.is_closed = is_closed
 
@@ -171,11 +175,13 @@ class GroupClosedByFilter(GroupFilter):
 
 
 class ReceivedOnRangeFilter(RangeExportFilter):
+
     def to_es_filter(self):
         return submitted(self.gt, self.gte, self.lt, self.lte)
 
 
 class FormSubmittedByFilter(ExportFilter):
+
     def __init__(self, submitted_by):
         self.submitted_by = submitted_by
 
@@ -184,6 +190,7 @@ class FormSubmittedByFilter(ExportFilter):
 
 
 class UserTypeFilter(ExportFilter):
+
     def __init__(self, user_types):
         _assert_user_types(user_types)
         self.user_types = user_types

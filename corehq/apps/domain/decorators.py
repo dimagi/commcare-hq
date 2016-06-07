@@ -20,7 +20,6 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth,
     BASIC, DIGEST, API_KEY
 )
-from django_prbac.utils import has_privilege
 from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
@@ -33,7 +32,6 @@ from django_otp import match_token
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
-from corehq import privileges
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
@@ -43,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 REDIRECT_FIELD_NAME = 'next'
 
+
 def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
     domain = Domain.get_by_name(domain_name)
@@ -51,10 +50,18 @@ def load_domain(req, domain):
 
 ########################################################################################################
 
+
 def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
     path = urlquote(request.get_full_path())
     nextURL = '%s?%s=%s' % (login_url, redirect_field_name, path)
     return HttpResponseRedirect(nextURL)
+
+
+def _page_is_whitelist(path, domain):
+    pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
+    return bool([
+        x for x in pages_not_restricted_for_dimagi if x % {'domain': domain} == path
+    ])
 
 
 def domain_specific_login_redirect(request, domain):
@@ -64,6 +71,7 @@ def domain_specific_login_redirect(request, domain):
 
 
 def login_and_domain_required(view_func):
+
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
         user = req.user
@@ -82,7 +90,7 @@ def login_and_domain_required(view_func):
                 else:
                     # some views might not have this set
                     couch_user = CouchUser.from_django_user(user)
-                if couch_user.is_member_of(domain) or domain.is_public:
+                if couch_user.is_member_of(domain):
                     if domain.two_factor_auth and not user.is_verified():
                         return TemplateResponse(
                             request=req,
@@ -92,7 +100,10 @@ def login_and_domain_required(view_func):
                     else:
                         return view_func(req, domain_name, *args, **kwargs)
 
-                elif user.is_superuser and not domain.restrict_superusers:
+                elif (
+                    _page_is_whitelist(req.path, domain_name) or
+                    not domain.restrict_superusers
+                ) and user.is_superuser:
                     # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)
                 elif domain.is_snapshot:
@@ -113,6 +124,7 @@ def login_and_domain_required(view_func):
 
 
 class LoginAndDomainMixin(object):
+
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
@@ -213,6 +225,7 @@ def two_factor_check(api_key):
         return _inner
     return _outer
 
+
 def cls_to_view(additional_decorator=None):
     def decorator(func):
         def __outer__(cls, request, *args, **kwargs):
@@ -235,6 +248,23 @@ def cls_to_view(additional_decorator=None):
                 return __inner__(request, domain, *args, **new_kwargs)
         return __outer__
     return decorator
+
+
+def api_domain_view(view):
+    """
+    Decorate this with any domain view that should be accessed via api only
+    """
+    @wraps(view)
+    @api_key()
+    @login_and_domain_required
+    def _inner(request, domain, *args, **kwargs):
+        if request.user.is_authenticated():
+            request.couch_user = CouchUser.from_django_user(request.user)
+            return view(request, domain, *args, **kwargs)
+        else:
+            return HttpResponseForbidden()
+    return _inner
+
 
 def login_required(view_func):
     @wraps(view_func)
@@ -281,6 +311,7 @@ def _get_username_from_request(request):
 # is not defined - people may forget to do this, because it's not a standard, defined Django
 # config setting
 
+
 def domain_admin_required_ex(redirect_page_name=None):
     # todo: this is weirdly similar but different to require_permission. they should probably be combined
     if redirect_page_name is None:
@@ -297,7 +328,10 @@ def domain_admin_required_ex(redirect_page_name=None):
             domain_name, domain = load_domain(request, domain)
             if not domain:
                 raise Http404()
-            if not request.couch_user.is_domain_admin(domain_name):
+
+            if not (
+                _page_is_whitelist(request.path, domain_name) and request.user.is_superuser
+            ) and not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
 
@@ -327,6 +361,7 @@ require_superuser = permission_required("is_superuser", login_url='/no_permissio
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
 cls_require_superuser_or_developer = cls_to_view(additional_decorator=require_superuser_or_developer)
+
 
 def require_previewer(view_func):
     def shim(request, *args, **kwargs):

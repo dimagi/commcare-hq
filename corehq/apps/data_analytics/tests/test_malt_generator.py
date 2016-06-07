@@ -9,7 +9,7 @@ from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
-from corehq.apps.sofabed.models import MISSING_APP_ID
+from corehq.const import MISSING_APP_ID
 from corehq.pillows.xform import XFormPillow
 from corehq.util.elastic import ensure_index_deleted
 
@@ -106,7 +106,6 @@ class MaltGeneratorTest(TestCase):
 
         # should be included in MALT
         _save_form_data(cls.non_wam_app_id, device_id=COMMCONNECT_DEVICE_ID)
-
 
     @classmethod
     def run_malt_generation(cls):

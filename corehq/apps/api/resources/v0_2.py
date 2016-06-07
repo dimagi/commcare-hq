@@ -3,7 +3,6 @@ from tastypie import fields
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.api.resources import (
-    CouchResourceMixin,
     dict_object,
     DomainSpecificResourceMixin,
     HqBaseResource,
@@ -36,10 +35,12 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     xform_ids = fields.ListField(attribute='xform_ids')
 
     properties = fields.DictField()
+
     def dehydrate_properties(self, bundle):
         return bundle.obj.properties
 
     indices = fields.DictField()
+
     def dehydrate_indices(self, bundle):
         return bundle.obj.indices
 

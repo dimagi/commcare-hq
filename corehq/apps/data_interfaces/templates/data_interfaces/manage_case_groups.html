@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_paginated_crud.html' %}
+{% extends 'style/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -149,7 +149,7 @@
         <td data-bind="text: phoneNumber"></td>
         <td data-bind="text: externalId"></td>
         <td>
-            <span class="label label-important">{% trans 'Case Removed' %}</span>
+            <span class="label label-danger">{% trans 'Case Removed' %}</span>
         </td>
     </script>
 {% endblock %}
@@ -163,7 +163,7 @@
         </div>
         <div id="bulk-upload-accordion" class="accordion-body collapse">
             <div class="accordion-inner">
-                {% include "style/bootstrap3/partials/bulk_upload.html" %}
+                {% include "style/partials/bulk_upload.html" %}
             </div>
         </div>
     </div>

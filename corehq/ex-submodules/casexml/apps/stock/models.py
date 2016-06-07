@@ -9,8 +9,7 @@ class StockReport(models.Model):
     date = models.DateTimeField(db_index=True)
     type = models.CharField(max_length=20)  # currently "balance" or "transfer"
     domain = models.CharField(max_length=255, null=True)
-    # should always equal
-    # FormData.objects.get(instance_id=self.form_id).received_on
+    # should always equal the associated form's received_on property
     server_date = models.DateTimeField(null=True)
 
     # todo: there are properties like these that could be really useful for queries
@@ -28,6 +27,7 @@ class StockReport(models.Model):
 
 
 class ConsumptionMixin(object):
+
     @property
     def is_stockout(self):
         return (
@@ -97,6 +97,13 @@ class StockTransaction(models.Model, ConsumptionMixin):
     @property
     def received_on(self):
         return self.report.date
+
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.product_id
+        )
 
     @classmethod
     def latest(cls, case_id, section_id, product_id):

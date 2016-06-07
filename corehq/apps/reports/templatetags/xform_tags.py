@@ -4,10 +4,8 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
 from django import template
-import pytz
 from django.utils.datastructures import SortedDict
 from django.utils.html import escape
-from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 from corehq import privileges
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
@@ -19,15 +17,14 @@ from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq import toggles
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from corehq.util.xml_utils import indent_xml
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case import const
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_tables_as_columns, get_default_definition)
+from dimagi.utils.parsing import json_format_datetime
 from django_prbac.utils import has_privilege
 
 
@@ -125,6 +122,7 @@ def render_form(form, domain, options):
 
     # Form Metadata tab
     meta = _top_level_tags(form).get('meta', None) or {}
+    meta['received_on'] = json_format_datetime(form.received_on)
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
@@ -173,6 +171,7 @@ def render_form(form, domain, options):
     show_resave = (
         user_can_edit and support_enabled
     )
+
     def _get_edit_info(instance):
         info = {
             'was_edited': False,

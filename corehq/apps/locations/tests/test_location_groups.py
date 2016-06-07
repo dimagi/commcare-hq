@@ -9,6 +9,7 @@ from corehq.apps.users.models import CommCareUser
 
 
 class LocationGroupTest(LocationTestBase):
+
     def setUp(self):
         super(LocationGroupTest, self).setUp()
         self.test_state = make_loc(
@@ -213,7 +214,7 @@ class LocationGroupTest(LocationTestBase):
         self.user.add_location_delegate(outlet3)
         self.user.add_location_delegate(state)
         self.user.save()
-        fixture = location_fixture_generator(self.user, '2.0')
+        fixture = location_fixture_generator(self.user.to_ota_restore_user(), '2.0')
         self.assertEquals(len(fixture[0].findall('.//state')), 1)
         self.assertEquals(len(fixture[0].findall('.//outlet')), 3)
 
@@ -226,7 +227,7 @@ class LocationGroupTest(LocationTestBase):
         self.domain.save()
         self.loc.delete()
 
-        fixture = location_fixture_generator(self.user, '2.0')
+        fixture = location_fixture_generator(self.user.to_ota_restore_user(), '2.0')
         self.assertEqual(len(fixture), 1)
         self.assertEquals(len(fixture[0].findall('.//state')), 0)
 
@@ -238,5 +239,5 @@ class LocationGroupTest(LocationTestBase):
         self.domain.save()
         self.loc.delete()
 
-        fixture = location_fixture_generator(self.user, '2.0')
+        fixture = location_fixture_generator(self.user.to_ota_restore_user(), '2.0')
         self.assertEqual(len(fixture), 0)

@@ -11,11 +11,11 @@ from datetime import timedelta, datetime
 from dateutil import rrule
 from dateutil.rrule import MO
 from django.utils import html
-from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
+from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import set_domain_default_backend_to_test_backend
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
 from custom.ewsghana.models import EWSGhanaConfig, EWSExtension
@@ -448,7 +448,7 @@ def report_status(sql_location, days_until_late=DAYS_UNTIL_LATE):
 
 
 def send_sms(domain, recipient, phone_number, message):
-    if isinstance(phone_number, VerifiedNumber):
+    if isinstance(phone_number, PhoneNumber):
         send_sms_to_verified_number(phone_number, message)
     else:
         core_send_sms(domain, recipient, phone_number, message)

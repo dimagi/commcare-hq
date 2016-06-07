@@ -5,6 +5,7 @@ class Axis(object):
     :param dateFormat: Modify values to JS Date objects and set d3.time.format 
                        refer to https://github.com/mbostock/d3/wiki/Time-Formatting
     """
+
     def __init__(self, label=None, format=None, dateFormat=None):
         self.label = label
         self.format = format
@@ -97,6 +98,7 @@ class MultiBarChart(Chart):
                     staggerLabels=self.staggerLabels,
                     forceY=self.forceY,
                     groupSpacing=self.groupSpacing)
+
 
 class LineChart(Chart):
     """

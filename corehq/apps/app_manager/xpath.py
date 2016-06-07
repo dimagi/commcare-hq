@@ -7,7 +7,6 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_TERMINATED,
     SCHEDULE_MAX_DATE,
     SCHEDULE_DATE_CASE_OPENED,
-    SCHEDULE_NEXT_DUE,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
 from corehq.apps.app_manager.exceptions import (
@@ -48,7 +47,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
     ]):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
-        raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR, module=module, form=form)
+        raise CaseXPathValidationError(_(CASE_REFERENCE_VALIDATION_ERROR), module=module, form=form)
     replacements = {
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),
@@ -185,6 +184,7 @@ class CaseTypeXpath(CaseSelectionXPath):
 
 
 class UserCaseXPath(XPath):
+
     def case(self):
         user_id = session_var(var='userid', path='context')
         return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id).select_raw(1)
@@ -321,6 +321,7 @@ class SessionInstanceXpath(InstanceXpath):
 
 
 class ItemListFixtureXpath(InstanceXpath):
+
     @property
     def id(self):
         return u'item-list:{}'.format(self)
@@ -367,6 +368,7 @@ class ScheduleFormXPath(object):
     """
     XPath queries for scheduled forms
     """
+
     def __init__(self, form, phase, module):
         self.form = form
         self.phase = phase
@@ -683,6 +685,7 @@ class QualifiedScheduleFormXPath(ScheduleFormXPath):
 
     Instead of raw case properties, this fetches the properties from the casedb
     """
+
     def __init__(self, form, phase, module, case_xpath):
         super(QualifiedScheduleFormXPath, self).__init__(form, phase, module)
         self.case_xpath = case_xpath

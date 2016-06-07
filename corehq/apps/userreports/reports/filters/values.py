@@ -88,7 +88,6 @@ class DateFilterValue(FilterValue):
         return sql_values
 
 
-
 class NumericFilterValue(FilterValue):
     operators_to_filters = {
         '=': EQFilter,

@@ -1,4 +1,4 @@
-{% extends 'settings/bootstrap3/base_template.html' %}
+{% extends 'settings/base_template.html' %}
 {% load i18n %}
 {% block page_content %}
     {% if is_commtrack_enabled %}
@@ -86,19 +86,19 @@
                 </div>
             </div>
         {% endif %}
-            <div class="row-fluid">
-                <div class="span12">
+            <div class="row">
+                <div class="col-sm-12">
                     <div class="btn-toolbar">
-                        <button class="btn" id="recalculate_moshi_rural">
+                        <button class="btn btn-default" id="recalculate_moshi_rural">
                             {% trans "Recalculate Moshi Rural" %}
                         </button>
                     </div>
                 </div>
             </div>
-            <div class="row-fluid">
-                <div class="span12">
+            <div class="row">
+                <div class="col-sm-12">
                     <div class="btn-toolbar">
-                        <button class="btn" id="recalculate_non_facilities">
+                        <button class="btn btn-default" id="recalculate_non_facilities">
                             {% trans "Recalculate non facilities" %}
                         </button>
                     </div>

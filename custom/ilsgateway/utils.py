@@ -74,13 +74,15 @@ def make_loc(code, name, domain, type, metadata=None, parent=None):
     return loc
 
 
-def create_stock_report(location, products_quantities, date=datetime.utcnow()):
+def create_stock_report(location, products_quantities, date=None):
     sql_location = location.sql_location
+    date = date or datetime.utcnow()
     report = StockReport.objects.create(
         form_id='test-form-id',
         domain=sql_location.domain,
         type='balance',
-        date=date
+        date=date,
+        server_date=date,
     )
     for product_code, quantity in products_quantities.iteritems():
         StockTransaction(

@@ -1,19 +1,19 @@
-import logging
 from urllib import urlencode, quote
 from urllib2 import urlopen
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.sms.models import SQLSMSBackend
-from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.megamobile.forms import MegamobileBackendForm
 from django.conf import settings
 
 DEFAULT_PID = "0"
+
 
 class MegamobileException(Exception):
     pass
 
 
 class SQLMegamobileBackend(SQLSMSBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True

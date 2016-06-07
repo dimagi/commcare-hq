@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_page.html' %}
+{% extends 'style/base_page.html' %}
 {% load hqstyle_tags %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
@@ -9,7 +9,13 @@
 {% block js-inline %}
     <script>
     $(function () {
-        $("#id_indicator_ids").width(770).height(200).multiselect();
+        var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+        multiselect_utils.createFullMultiselectWidget(
+            'id_indicator_ids',
+            django.gettext("Available Indicators"),
+            django.gettext("Indicators to Copy"),
+            django.gettext("Search Indicators...")
+        );
     });
     </script>
 {% endblock %}

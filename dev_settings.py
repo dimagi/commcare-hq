@@ -9,14 +9,19 @@ import os
 
 LOCAL_APPS = (
     'django_extensions',
-    # for tests
-    'testapps.test_elasticsearch',
-    'testapps.test_pillowtop',
+    'kombu.transport.django',
 )
 
+# TEST_RUNNER is overridden in testsettings, which is the default settings
+# module for the test command (see manage.py); this has no effect by default.
+# Use ./manage.py test --settings=settings to use this setting.
 TEST_RUNNER = 'testrunner.DevTestRunner'
 
 SKIP_TESTS_REQUIRING_EXTRA_SETUP = True
+
+# touchforms must be running when this is false or not set
+# see also corehq.apps.sms.tests.util.TouchformsTestCase
+SKIP_TOUCHFORMS_TESTS = True
 
 # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-TEST_NON_SERIALIZED_APPS
 # https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
@@ -36,7 +41,6 @@ SHELL_PLUS_POST_IMPORTS = (
 
     # Data querying utils
     ('dimagi.utils.couch.database', 'get_db'),
-    ('corehq.apps.sofabed.models', ('FormData', 'CaseData')),
     ('corehq.apps.es', '*'),
 )
 
@@ -82,3 +86,5 @@ if not os.path.exists(shared_dirname):
 SHARED_DRIVE_ROOT = shared_dirname
 
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
+
+NEW_DOMAINS_USE_SQL_BACKEND = True

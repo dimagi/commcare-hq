@@ -1,17 +1,17 @@
-{% extends "style/bootstrap2/two_column.html" %}
+{% extends "style/base_section.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'codemirror/lib/codemirror.js' %}"></script>
-    <script src="{% new_static 'codemirror/mode/javascript/javascript.js' %}"></script>
-    <script src="{% new_static 'codemirror/addon/fold/foldcode.js' %}"></script>
-    <script src="{% new_static 'codemirror/addon/fold/foldgutter.js' %}"></script>
-    <script src="{% new_static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+    <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+    <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
+    <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
+    <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
+    <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
 {% endblock %}
 {% block stylesheets %}{{ block.super }}
-    <link rel="stylesheet" href="{% new_static 'codemirror/lib/codemirror.css' %}" />
-    <link rel="stylesheet" href="{% new_static 'codemirror/addon/fold/foldgutter.css' %}"/>
+    <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
+    <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
 <style>
@@ -55,56 +55,50 @@
     });
 </script>
 {% endblock %}
-{% block page-title %}
-    <ul class="breadcrumb">
-        <li>
-            <strong>{% trans "Configurable Reports" %}</strong>
-        </li>
-        {% block breadcrumbs %}
-        {% endblock %}
-    </ul>
-{% endblock %}
-{% block sidebar %}
-<nav class="user-reports">
-    <ul class="nav nav-list">
-        <li class="nav-header">{% trans "Edit Reports" %}</li>
-{% with report as selected_report %}
-{% for report in reports %}
+
+{% block page_navigation %}
+
+    <h2 class="text-hq-nav-header">{% trans "Edit Reports" %}</h2>
+    <ul class="nav nav-hq-sidebar">
+        {% with report as selected_report %}
+        {% for report in reports %}
         <li {% if report.get_id == selected_report.get_id %} class="active"{% endif %}>
             <a href="{% url 'edit_configurable_report' domain report.get_id %}">{{ report.title }}</a>
         </li>
-{% endfor %}
-{% endwith %}
+        {% endfor %}
+        {% endwith %}
         <li>
             <a href="{% url 'create_configurable_report' domain %}">
-                <i class="icon-plus icon-blue"></i>
+                <i class="fa fa-plus"></i>
                 <span class="muted">{% trans "Add report" %}</span>
             </a>
             <a href="{% url 'import_configurable_report' domain %}">
-                <i class="icon-plus icon-blue"></i>
+                <i class="fa fa-upload"></i>
                 <span class="muted">{% trans "Import report" %}</span>
             </a>
         </li>
-        <li class="nav-header">{% trans "Edit Data Sources" %}</li>
-{% with data_source as selected_data_source %}
-{% for data_source in data_sources %}
+    </ul>
+
+    <h2 class="text-hq-nav-header">{% trans "Edit Data Sources" %}</h2>
+    <ul class="nav nav-hq-sidebar">
+        {% with data_source as selected_data_source %}
+        {% for data_source in data_sources %}
         <li{% if data_source.get_id == selected_data_source.get_id %} class="active"{% endif %}>
             <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">{{ data_source.display_name }}</a>
         </li>
-{% endfor %}
-{% endwith %}
+        {% endfor %}
+        {% endwith %}
         <li>
             <a href="{% url 'create_configurable_data_source' domain %}">
-                <i class="icon-plus icon-blue"></i>
+                <i class="fa fa-plus"></i>
                 <span class="muted">{% trans "Add data source" %}</span>
             </a>
         </li>
         <li>
             <a href="{% url 'create_configurable_data_source_from_app' domain %}">
-                <i class="icon-plus icon-blue"></i>
+                <i class="fa fa-copy"></i>
                 <span class="muted">{% trans "Data source from application" %}</span>
             </a>
         </li>
-</ul>
-</nav>
+    </ul>
 {% endblock %}

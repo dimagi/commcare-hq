@@ -6,16 +6,9 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 
-{% block head %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.css' %}" />
-{% endblock %}
-
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-1.9.2.multiselect-deps.custom.min.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/jquery-ui/multiselect/ui.multiselect.js' %}"></script>
+    <script src="{% static 'style/js/ui-element.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -38,19 +31,16 @@
                     expires: 1});
         });
 
-        $('.reset-password-form').submit(function(){
+        $('#reset-password-form').submit(function(){
             $(this).ajaxSubmit({
                 url: $(this).attr('action'),
                 type: 'POST',
                 dataType: 'json',
                 success: function (response, status, xhr, form) {
-                    form.find('.reset-password-body').html(response.formHTML);
+                    form.find('#user-password').html(response.formHTML);
                     if (response.status == "OK") {
-                        var $alert = $('<p />')
-                                .addClass('alert alert-success')
-                                .text("{% trans 'Password changed successfully' %}");
-                        form.find('.reset-password-body').prepend($alert);
-                        form.find('input').val('');
+
+                        alert_user("{% trans 'Password changed successfully' %}", 'success');
                         ga_track_event("Edit Mobile Worker", "Reset password", "{{couch_user_id|escapejs}}");
                     }
                 },
@@ -95,8 +85,14 @@
         });
         {% endif %}
 
-        // groups form
-        $("#id_selected_ids").width(800).height(400).multiselect();
+        // Groups form
+        var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+            multiselect_utils.createFullMultiselectWidget(
+                'id_selected_ids',
+                django.gettext("Available Groups"),
+                django.gettext("Groups with this User"),
+                django.gettext("Search Group...")
+            );
 
         // "are you sure?" stuff
         var unsavedChanges = false;
@@ -116,8 +112,8 @@
 </script>
 {% endblock %}
 
-{% block main_column %}
-    <ul class="nav nav-tabs" id="user-settings-tabs">
+{% block page_content %}
+    <ul class="nav nav-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
         <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
         {% if commtrack_enabled %}
@@ -146,8 +142,7 @@
                 </p>
             </div>
         {% else %}
-            <form class="form" action="{% url "update_user_groups" domain couch_user.user_id %}" method='post'>
-                <legend>{% trans 'Edit Groups' %}</legend>
+            <form class="form-horizontal" action="{% url "update_user_groups" domain couch_user.user_id %}" method='post'>
                 {% if not are_groups %}
                 <p>{% blocktrans %}
                     No groups created yet. Go to <a href="{{ groups_url }}">groups configuration</a> to create them.
@@ -164,31 +159,18 @@
         </div>
         {% endif %}
         <div class="tab-pane" id="user-password">
-            <form class="form form-horizontal reset-password-form"
-                  action="{% url "change_password" domain couch_user.user_id %}"
-                  method="post">
-                {% csrf_token %}
-                <fieldset>
-                    <legend>{% trans 'Reset Password' %}</legend>
-                    <div class="reset-password-body">
-                        {% include 'users/partial/reset_password.html' %}
-                    </div>
-                </fieldset>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">{% trans 'Reset Password' %}</button>
-                </div>
-            </form>
+            {% include 'users/partial/reset_password.html' %}
         </div>
         {% if not is_currently_logged_in_user %}
         <div class="tab-pane" id="user-permanent">
             <div class="form form-horizontal">
                 <fieldset>
                     <legend>{% trans 'Delete Mobile Worker' %}</legend>
-                    <div class="alert alert-error">
-                        <p><i class="icon-warning-sign"></i> {% trans 'The following action is permanent!' %}</p>
+                    <div class="alert alert-danger">
+                        <p><i class="fa fa-exclamation-triangle"></i> {% trans 'The following action is permanent!' %}</p>
                         <p>
                             <a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal">
-                                <i class="icon-white icon-trash"></i> {% trans "Delete Mobile Worker" %}
+                                <i class="fa fa-trash"></i> {% trans "Delete Mobile Worker" %}
                             </a>
                         </p>
                     </div>
@@ -202,71 +184,75 @@
 {% block modals %} {{ block.super }}
     {% include 'users/partial/basic_info_modals.html' with user_type='mobile' %}
     {% if not is_currently_logged_in_user %}
-    <div id="delete_user_{{ couch_user.user_id }}" class="modal hide fade">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h3>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Delete Mobile Worker {{ friendly_name }}?{% endblocktrans %}
-                <small>{% trans "Permanent Action" %}</small>
-            </h3>
-        </div>
-        <form class="form form-horizontal"
-              style="margin: 0; padding: 0"
-              action="{% url "delete_commcare_user" domain couch_user.user_id %}"
-              method="post"
-              data-bind="submit: submit">
-            {% csrf_token %}
-            <div class="modal-body">
-                <p class="alert">
-                    <i class="icon-white icon-warning-sign"></i>
-                    {% trans "Bad things will happen if you don't read this" %}
-                </p>
-                <p>
-                    {% blocktrans with couch_user.human_friendly_name as friendly_name %}
-                    Are you sure you want to permanently delete <strong>{{ friendly_name }}</strong>?
-                    {% endblocktrans %}
-                </p>
-                <p>{% trans "This action:" %}</p>
-                <ul>
-                    <li>
-                        {% blocktrans with couch_user.human_friendly_name as friendly_name %}Will delete {{ friendly_name }}.{% endblocktrans %}
-                    </li>
-                    <li>{% blocktrans with couch_user.human_friendly_name as friendly_name %}
-                        Will delete <strong>all</strong> of {{ friendly_name }}'s form submissions.
-                    {% endblocktrans %}</li>
-                    <li>{% trans "Is permanent." %}</li>
-                </ul>
-                <p>
-                    {% blocktrans with couch_user.human_friendly_name as friendly_name %}
-                    If you ever want to use {{ friendly_name }}'s data in the future, we suggest that you use the <strong>Deactivate User</strong> option
-                    <a href="{{ archive_url }}">here</a>.
-                    {% endblocktrans %}
-                </p>
-                <p>
-                    {% blocktrans with couch_user.username as username %}
-                    If even after reading this you decide that you really want
-                    to delete this user and all of their data, type <strong>{{ username }}</strong> into the box below.
-                    {% endblocktrans %}
-                </p>
+    <div id="delete_user_{{ couch_user.user_id }}" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{% blocktrans with couch_user.human_friendly_name as friendly_name %}Delete Mobile Worker {{ friendly_name }}?{% endblocktrans %}
+                        <small>{% trans "Permanent Action" %}</small>
+                    </h4>
+                </div>
+                <form class="form-horizontal"
+                      style="margin: 0; padding: 0"
+                      action="{% url "delete_commcare_user" domain couch_user.user_id %}"
+                      method="post"
+                      data-bind="submit: submit">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <p class="alert alert-warning">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            {% trans "Bad things will happen if you don't read this" %}
+                        </p>
+                        <p>
+                            {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                            Are you sure you want to permanently delete <strong>{{ friendly_name }}</strong>?
+                            {% endblocktrans %}
+                        </p>
+                        <p>{% trans "This action:" %}</p>
+                        <ul>
+                            <li>
+                                {% blocktrans with couch_user.human_friendly_name as friendly_name %}Will delete {{ friendly_name }}. They will no longer be able to sync or submit any data from their mobile devices.{% endblocktrans %}
+                            </li>
+                            <li>{% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                                Will delete <strong>all</strong> of {{ friendly_name }}'s form submissions.
+                            {% endblocktrans %}</li>
+                            <li>{% trans "Is permanent." %}</li>
+                        </ul>
+                        <p>
+                            {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                            If you ever want to use {{ friendly_name }}'s data in the future, we suggest that you use the <strong>Deactivate User</strong> option
+                            <a href="{{ archive_url }}">here</a>.
+                            {% endblocktrans %}
+                        </p>
+                        <p>
+                            {% blocktrans with couch_user.username as username %}
+                            If even after reading this you decide that you really want
+                            to delete this user and all of their data, type <strong>{{ username }}</strong> into the box below.
+                            {% endblocktrans %}
+                        </p>
 
-                <input data-bind="value: signOff, valueUpdate: 'textchange'" />
+                        <input class="form-control" data-bind="value: signOff, valueUpdate: 'textchange'" />
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
+                        <button type="submit" class="btn btn-danger" data-bind="
+                             css: {disabled: disabled()},
+                             attr: {disabled: disabled()}
+                         ">
+                             <i id="delete-user-icon" class="fa fa-trash" data-bind="
+                                 css: {
+                                     'fa-trash': !formDeleteUserSent(),
+                                     'fa-refresh': formDeleteUserSent,
+                                     'fa-spin': formDeleteUserSent
+                                 }
+                             "></i>
+                             {% trans "Delete Mobile Worker" %}
+                         </button>
+                    </div>
+                </form>
             </div>
-            <div class="modal-footer">
-                <a href="#" data-dismiss="modal" class="btn">{% trans 'Cancel' %}</a>
-                <button type="submit" class="btn btn-danger" data-bind="
-                     css: {disabled: disabled()},
-                     attr: {disabled: disabled()}
-                 ">
-                     <i id="delete-user-icon" class="icon-trash" data-bind="
-                         css: {
-                             'icon-trash': !formDeleteUserSent(),
-                             'icon-refresh': formDeleteUserSent,
-                             'icon-spin': formDeleteUserSent
-                         }
-                     "></i>
-                     {% trans "Delete Mobile Worker" %}
-                 </button>
-            </div>
-        </form>
+        </div>
     </div>
     {% endif %}
 {% endblock %}

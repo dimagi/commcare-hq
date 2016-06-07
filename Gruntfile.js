@@ -18,7 +18,9 @@ module.exports = function(grunt) {
         'export',
         'export#ko',
         'notifications',
-        'reports_core#choiceListUtils'
+        'reports_core#choiceListUtils',
+        'locations',
+        'userreports',
     ];
 
     var mochaConfig = {},
@@ -41,6 +43,7 @@ module.exports = function(grunt) {
         watchConfig[app] = {
             files: [
                 'corehq/apps/' + appName + '/static/' + appName + '/js/**/*.js',
+                'corehq/apps/' + appName + '/static/' + appName + '/ko/**/*.js',
                 'corehq/apps/' + appName + '/static/' + appName + '/spec/**/*.js',
             ],
             tasks: ['mocha:' + app]

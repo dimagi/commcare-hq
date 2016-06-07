@@ -1,6 +1,7 @@
 import uuid
 from django.http import HttpRequest
 from django.test import TestCase
+from django.test.utils import override_settings
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.users.models import WebUser
@@ -8,7 +9,6 @@ from corehq.apps.users.models import WebUser
 
 class MockReport(object):
     is_cacheable = False
-    is_bootstrap3 = False
 
     def __init__(self, request, is_cacheable=True):
         self.request = request
@@ -24,6 +24,8 @@ class MockReport(object):
 
 
 BLANK = '__blank__'
+
+
 def _make_request(path=BLANK, domain=BLANK, user=BLANK):
     request = HttpRequest()
     request.META['SERVER_NAME'] = 'example.com'
@@ -36,6 +38,8 @@ def _make_request(path=BLANK, domain=BLANK, user=BLANK):
         request.couch_user = user
     return request
 
+
+@override_settings(CACHE_REPORTS=True)
 class ReportCacheTest(TestCase):
     # note: this is pretty tightly coupled with the internals of the cache
     # but this is probably ok since that's what it's designed to test
@@ -129,7 +133,6 @@ class ReportCacheTest(TestCase):
         self.assertEqual(alt_v2, alternate.v2())
         self.assertNotEqual(alt_v1, v1)
         self.assertNotEqual(alt_v2, v2)
-
 
         # invalid users shouldn't even be caching themselves
         for invalid in ['not a user object', None, BLANK]:

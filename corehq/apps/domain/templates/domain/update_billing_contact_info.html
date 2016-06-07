@@ -1,4 +1,4 @@
-{% extends "settings/bootstrap3/base_template.html" %}
+{% extends "settings/base_template.html" %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -21,6 +21,12 @@
          url: '{{ card_base_url }}',
      });
      $("#card-manager").koApplyBindings(cardManager);
+
+     $("#show_emails").click(function() {
+        $('#emails-text').show();
+        $(this).parent().hide();
+     });
+
     </script>
 {% endblock %}
 

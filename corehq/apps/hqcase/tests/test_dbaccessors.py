@@ -1,6 +1,5 @@
 from django.test import TestCase
-from casexml.apps.case.dbaccessors import get_open_case_docs_in_domain, \
-    get_open_case_ids_in_domain
+from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import create_real_cases_from_dummy_cases
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
@@ -11,6 +10,7 @@ from couchforms.models import XFormInstance
 
 
 class DBAccessorsTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.domain = 'lalksdjflakjsdf'
@@ -101,26 +101,6 @@ class DBAccessorsTest(TestCase):
             {case.get_id for case in self.cases
              if case.domain == self.domain
                 and not case.closed and case.user_id == 'XXX'},
-        )
-
-    def test_get_open_case_docs_by_type(self):
-        # this is actually in the 'case' app, but testing here
-        self.assert_doc_list_equal(
-            get_open_case_docs_in_domain(self.domain, 'type1'),
-            [case.to_json() for case in self.cases
-             if case.domain == self.domain and case.type == 'type1'
-                and not case.closed],
-            raw_json=True
-        )
-
-    def test_get_open_case_docs_by_type__owner_id(self):
-        # this is actually in the 'case' app, but testing here
-        self.assert_doc_list_equal(
-            get_open_case_docs_in_domain(self.domain, 'type1', owner_id='XXX'),
-            [case.to_json() for case in self.cases
-             if case.domain == self.domain and case.type == 'type1'
-                and not case.closed and case.user_id == 'XXX'],
-            raw_json=True
         )
 
     def test_get_case_types_for_domain(self):

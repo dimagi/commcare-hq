@@ -1,4 +1,4 @@
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, FORM
 from corehq.apps.change_feed.topics import FORM_SQL
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -17,8 +17,10 @@ from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
 def update_unknown_user_from_form_if_necessary(es, doc_dict):
-    doc = doc_dict
-    user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc)
+    if doc_dict is None:
+        return
+
+    user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc_dict)
 
     if user_id in WEIRD_USER_IDS:
         user_id = None
@@ -53,10 +55,11 @@ def _get_user_fields_from_form_doc(form_doc):
 
 
 class UnknownUsersProcessor(PillowProcessor):
+
     def __init__(self):
         self._es = get_es_new()
 
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
+    def process_change(self, pillow_instance, change):
         update_unknown_user_from_form_if_necessary(self._es, change.get_document())
 
 
@@ -68,13 +71,14 @@ def get_unknown_users_pillow(pillow_id='unknown-users-pillow'):
         pillow_id,
     )
     processor = UnknownUsersProcessor()
+    change_feed = KafkaChangeFeed(topics=[FORM, FORM_SQL], group_id='unknown-users')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[FORM, FORM_SQL], group_id='unknown-users'),
+        change_feed=change_feed,
         processor=processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 
@@ -94,13 +98,14 @@ def get_user_pillow(pillow_id='UserPillow'):
         elasticsearch=get_es_new(),
         index_info=USER_INDEX_INFO,
     )
+    change_feed = KafkaChangeFeed(topics=[COMMCARE_USER, WEB_USER], group_id='users-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[COMMCARE_USER, WEB_USER], group_id='users-to-es'),
+        change_feed=change_feed,
         processor=domain_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 

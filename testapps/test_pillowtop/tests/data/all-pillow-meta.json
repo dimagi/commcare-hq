@@ -48,6 +48,13 @@
         "name": "AppPillow",
         "unique_id": "test_hqapps_2016-03-01_2128"
     },
+    "ApplicationBlobDeletionPillow": {
+        "advertised_name": "ApplicationBlobDeletionPillow",
+        "change_feed_type": "CouchChangeFeed",
+        "checkpoint_id": "ApplicationBlobDeletionPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "ApplicationBlobDeletionPillow"
+    },
     "BlobDeletionPillow": {
         "advertised_name": "BlobDeletionPillow",
         "change_feed_type": "KafkaChangeFeed",
@@ -83,19 +90,6 @@
         "full_class_name": "custom.bihar.models.CareBiharFluffPillow",
         "include_docs": false,
         "name": "CareBiharFluffPillow"
-    },
-    "CaseDataPillow": {
-        "advertised_name": "corehq.pillows.sofabed.CaseDataPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.sofabed.CaseDataPillow.testhq",
-        "couch_filter": "case/casedocs",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.sofabed.CaseDataPillow",
-        "include_docs": false,
-        "name": "CaseDataPillow"
     },
     "CasePillow": {
         "advertised_name": "corehq.pillows.case.CasePillow.85e1a25ff57c5892b6fa95caf949ae4c.testhq",
@@ -166,19 +160,6 @@
         "full_class_name": "custom.care_pathways.models.FarmerRecordFluffPillow",
         "include_docs": false,
         "name": "FarmerRecordFluffPillow"
-    },
-    "FormDataPillow": {
-        "advertised_name": "corehq.pillows.sofabed.FormDataPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.sofabed.FormDataPillow.testhq",
-        "couch_filter": "couchforms/xforms",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.sofabed.FormDataPillow",
-        "include_docs": false,
-        "name": "FormDataPillow"
     },
     "GeographyFluffPillow": {
         "advertised_name": "fluff.GeographyFluffPillow.testhq",
@@ -264,6 +245,13 @@
         "full_class_name": "custom.m4change.models.LdHmisCaseFluffPillow",
         "include_docs": false,
         "name": "LdHmisCaseFluffPillow"
+    },
+    "LedgerToElasticsearchPillow": {
+        "advertised_name": "LedgerToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "ledger-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "LedgerToElasticsearchPillow"
     },
     "LivraisonFluffPillow": {
         "advertised_name": "fluff.LivraisonFluffPillow.testhq",

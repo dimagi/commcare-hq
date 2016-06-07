@@ -33,6 +33,7 @@ CTSIMS_ID = 'ff6c662bfc2a448dadc9084056a4abdf'
 
 
 class dotsOrderingTests(TestCase):
+
     @override_settings(TIME_ZONE='UTC')
     def setUp(self):
 

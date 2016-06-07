@@ -1,6 +1,7 @@
 from corehq.apps.domain.decorators import cls_require_superusers
 from corehq.apps.reports.dispatcher import ReportDispatcher
 
+
 class BaseCRUDAdminInterfaceDispatcher(ReportDispatcher):
     """
         All CRUD Admin Interfaces should require superuser level access to see.

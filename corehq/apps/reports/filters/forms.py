@@ -14,7 +14,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     guess_form_name_from_submissions_using_xmlns,
 )
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
-from corehq.util.soft_assert import soft_assert
+from corehq.const import MISSING_APP_ID
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.decorators.memoized import memoized
 
@@ -22,7 +22,6 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
-MISSING_APP_ID = "_MISSING_APP_ID"
 
 PARAM_SLUG_STATUS = 'status'
 PARAM_SLUG_APP_ID = 'app_id'
@@ -62,6 +61,7 @@ class FormsByApplicationFilterParams(object):
         except ValueError:
             return None
 
+
 class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     """
         Use this filter to drill down by
@@ -79,7 +79,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     css_class = "span5"
     drilldown_empty_text = ugettext_lazy("You don't have any applications set up, so there are no forms "
                                          "to choose from. Please create an application!")
-    template = "reports/filters/bootstrap2/form_app_module_drilldown.html"
+    template = "reports/filters/form_app_module_drilldown.html"
     unknown_slug = "unknown"
     fuzzy_slug = "@@FUZZY"
     show_global_hide_fuzzy_checkbox = True
@@ -355,7 +355,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @memoized
     def get_unknown_form_name(self, xmlns, app_id=None, none_if_not_found=False):
-        if app_id is not None and app_id != '_MISSING_APP_ID':
+        if app_id is not None and app_id != MISSING_APP_ID:
             try:
                 app = Application.get_db().get(app_id)
             except ResourceNotFound:

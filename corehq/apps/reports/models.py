@@ -46,7 +46,7 @@ from corehq.apps.reports.exportfilters import (
 )
 from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
-from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.quickcache import quickcache
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
@@ -228,7 +228,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         kwargs = {}
         if stale:
             kwargs['stale'] = settings.COUCH_STALE_QUERY
-            pass
 
         if report_slug is not None:
             key = ["name slug", domain, owner_id, report_slug]
@@ -389,8 +388,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @memoized
     def url(self):
         try:
-            from corehq.apps.userreports.reports.view import ConfigurableReport
-
             if self.is_configurable_report:
                 url_base = absolute_reverse(self.report_slug, args=[self.domain, self.subreport_slug])
             else:
@@ -620,7 +617,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["daily", "weekly", "monthly"])
 
-
     @property
     def is_editable(self):
         try:
@@ -698,6 +694,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             # create a new ReportConfig object, useful for its methods and
             # calculated properties, but don't save it
             class ReadonlyReportConfig(ReportConfig):
+
                 def save(self, *args, **kwargs):
                     pass
 
@@ -779,6 +776,15 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                                             email_from=settings.DEFAULT_FROM_EMAIL,
                                             file_attachments=excel_files, ga_track=True,
                                             ga_tracking_info={'project_space_id': self.domain})
+
+    def remove_recipient(self, email):
+        try:
+            if email == self.owner.get_email():
+                self.send_to_owner = False
+            else:
+                self.recipient_emails.remove(email)
+        except ValueError:
+            pass
 
 
 class AppNotFound(Exception):

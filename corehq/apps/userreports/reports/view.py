@@ -3,9 +3,12 @@ import os
 import tempfile
 from StringIO import StringIO
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.reports.util import \
+    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
 from corehq.apps.style.decorators import use_bootstrap3, \
     use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from couchexport.shortcuts import export_response
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
@@ -23,7 +26,7 @@ from corehq.apps.userreports.exceptions import (
     UserReportsError,
     TableNotFoundWarning,
     UserReportsFilterError,
-)
+    DataSourceConfigurationNotFoundError)
 from corehq.apps.userreports.models import (
     STATIC_PREFIX,
     CUSTOM_REPORT_PREFIX,
@@ -34,7 +37,11 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
 )
-from corehq.apps.userreports.util import default_language, localize
+from corehq.apps.userreports.util import (
+    default_language,
+    has_report_builder_trial,
+    can_edit_report,
+)
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from couchexport.export import export_from_tables
@@ -54,6 +61,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     slug = "configurable"
     prefix = slug
     emailable = True
+    is_exportable = True
+    show_filters = True
 
     _domain = None
 
@@ -180,18 +189,35 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 return self.email_response
             elif kwargs.get('render_as') == 'excel':
                 return self.excel_response
+            elif request.GET.get('format', None) == "export":
+                return self.export_response
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request)
             self.content_type = None
             try:
                 self.add_warnings(self.request)
             except UserReportsError as e:
+                details = ''
+                if isinstance(e, DataSourceConfigurationNotFoundError):
+                    error_message = _(
+                        'Sorry! There was a problem viewing your report. '
+                        'This likely occurred because the application associated with the report was deleted. '
+                        'In order to view this data using the Report Builder you will have to delete this report '
+                        'and then build it again. Click below to delete it.'
+                    )
+                else:
+                    error_message = _(
+                        'It looks like there is a problem with your report. '
+                        'You may need to delete and recreate the report. '
+                        'If you believe you are seeing this message in error, please report an issue.'
+                    )
+                    details = unicode(e)
                 self.template_name = 'userreports/report_error.html'
                 context = {
-                    'report': self,
-                    'error_message': _('It looks like there may be a problem with your report. '
-                                       'Please edit the report to fix this problem or report an issue. '),
-                    'details': unicode(e)
+                    'report_id': self.report_config_id,
+                    'is_static': self.is_static,
+                    'error_message': error_message,
+                    'details': details,
                 }
                 context.update(self.main_context)
                 return self.render_to_response(context)
@@ -213,7 +239,10 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             'report_table': {'default_rows': 25},
             'filter_context': self.filter_context,
             'url': self.url,
-            'headers': self.headers
+            'headers': self.headers,
+            'can_edit_report': can_edit_report(self.request, self),
+            'has_report_builder_trial': has_report_builder_trial(self.request),
+            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
         }
         context.update(self.saved_report_context_data)
         context.update(self.pop_report_builder_context_data())
@@ -405,6 +434,13 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         file = StringIO()
         export_from_tables(self.export_table, file, Format.XLS_2007)
         return file
+
+    @property
+    @memoized
+    def export_response(self):
+        temp = StringIO()
+        export_from_tables(self.export_table, temp, Format.XLS_2007)
+        return export_response(temp, Format.XLS_2007, self.title)
 
 
 # Base class for classes that provide custom rendering for UCRs

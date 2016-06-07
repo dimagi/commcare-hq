@@ -85,6 +85,7 @@ class SoftwareProductRateAsyncHandler(BaseRateAsyncHandler):
 
 
 class BaseSelect2AsyncHandler(BaseAsyncHandler):
+
     @property
     def search_string(self):
         return self.data.get('searchString')

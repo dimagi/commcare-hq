@@ -21,6 +21,7 @@ from dimagi.utils.couch.cache import cache_core
 class DocumentNotInDomainError(Exception):
     pass
 
+
 class DocumentMismatchError(Exception):
     pass
 

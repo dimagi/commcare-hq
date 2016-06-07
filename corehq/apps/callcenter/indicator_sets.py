@@ -1,19 +1,20 @@
+import logging
 from collections import defaultdict
 from datetime import timedelta, datetime
-import functools
-from django.core.cache import cache
-from django.db.models.aggregates import Count, Avg
-from django.db.models.query_utils import Q
-from corehq.apps.callcenter.models import CallCenterIndicatorConfig
-from corehq.apps.hqcase.dbaccessors import get_case_types_for_domain
-from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
+
 import pytz
+from django.core.cache import cache
+
+from corehq.apps.callcenter.const import *
+from corehq.apps.callcenter.models import CallCenterIndicatorConfig
+from corehq.apps.callcenter.queries import CaseQueryTotalLegacy, StandardFormQuery, CaseQueryTotal, \
+    CaseQueryOpenedClosed, CaseQueryActive
+from corehq.apps.callcenter.queries import CustomFormQuery
 from corehq.apps.callcenter.utils import get_call_center_cases
 from corehq.apps.groups.models import Group
-from corehq.apps.sofabed.models import FormData, CaseData, CaseActionData
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 from dimagi.utils.decorators.memoized import memoized
-import logging
-from corehq.apps.callcenter.const import *
 
 logger = logging.getLogger('callcenter')
 
@@ -33,14 +34,6 @@ class CachedIndicators(JsonObject):
     case_id = StringProperty()
     domain = StringProperty()
     indicators = DictProperty()
-
-
-class FakeQuerySet(object):
-    def __init__(self, results):
-        self.results = results
-
-    def iterator(self):
-        return (r for r in self.results)
 
 
 class CallCenterIndicators(object):
@@ -85,7 +78,7 @@ class CallCenterIndicators(object):
         self.override_cases = override_cases
         self.override_cache = override_cache
 
-        self.config = indicator_config or CallCenterIndicatorConfig.for_domain(domain_name)
+        self.config = indicator_config or CallCenterIndicatorConfig.default_config()
 
         try:
             self.timezone = pytz.timezone(domain_timezone)
@@ -99,6 +92,12 @@ class CallCenterIndicators(object):
 
     @property
     @memoized
+    def data_sources(self):
+        from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain
+        return get_sql_adapters_for_domain(self.domain)
+
+    @property
+    @memoized
     def date_ranges(self):
         weekago = self.reference_date - timedelta(days=7)
         weekago2 = self.reference_date - timedelta(days=14)
@@ -109,12 +108,6 @@ class CallCenterIndicators(object):
             WEEK1: (weekago2, weekago),
             MONTH0: (daysago30, self.reference_date),
             MONTH1: (daysago60, daysago30),
-        }
-
-    def _date_filters(self, date_field, lower, upper):
-        return {
-            '{}__gte'.format(date_field): lower,
-            '{}__lt'.format(date_field): upper,
         }
 
     @property
@@ -131,7 +124,6 @@ class CallCenterIndicators(object):
         return {
             case.hq_user_id: case.case_id
             for case in self.call_center_cases
-            if hasattr(case, 'hq_user_id') and case.hq_user_id
         }
 
     @property
@@ -177,7 +169,7 @@ class CallCenterIndicators(object):
         """
         :return: Set of all case types for the domain excluding the CallCenter case type.
         """
-        case_types = get_case_types_for_domain(self.domain)
+        case_types = CaseAccessors(self.domain).get_case_types()
         case_types.remove(self.cc_case_type)
         return case_types
 
@@ -216,7 +208,7 @@ class CallCenterIndicators(object):
         """
         seen_users = set()
 
-        for row in queryset.iterator():
+        for row in queryset:
             user_id = row['user_id']
             val = transformer(row['count']) if transformer else row['count']
             self.data[user_id][indicator_name] = val
@@ -243,9 +235,9 @@ class CallCenterIndicators(object):
 
     def _reformat_and_add(self, data_dict, indicator_name, legacy_name=None):
         rows = [dict(user_id=user, count=cnt) for user, cnt in data_dict.items()]
-        self._add_data(FakeQuerySet(rows), indicator_name)
+        self._add_data(rows, indicator_name)
         if legacy_name:
-            self._add_data(FakeQuerySet(rows), legacy_name)
+            self._add_data(rows, legacy_name)
 
     def _add_case_data_total(self, queryset, indicator_prefix, range_name, legacy_prefix=None):
         """
@@ -258,15 +250,13 @@ class CallCenterIndicators(object):
         """
         total_data = defaultdict(lambda: 0)
         for result in queryset:
-            owner = result['case_owner']
+            owner = result['owner_id']
             count = result['count']
             self._update_dataset(total_data, owner, count)
 
-        self._reformat_and_add(
-            total_data,
-            '{}_{}'.format(indicator_prefix, range_name),
-            legacy_name='{}{}'.format(legacy_prefix, range_name.title()) if legacy_prefix else None
-        )
+        formatted_name = '{}_{}'.format(indicator_prefix, range_name)
+        legacy_name = '{}{}'.format(legacy_prefix, range_name.title()) if legacy_prefix else None
+        self._reformat_and_add(total_data, formatted_name, legacy_name=legacy_name)
 
     def _add_case_data_by_type(self, queryset, indicator_prefix, range_name, all_types=None):
         """
@@ -282,7 +272,7 @@ class CallCenterIndicators(object):
         """
         type_data = defaultdict(lambda: defaultdict(lambda: 0))
         for result in queryset:
-            owner = result['case_owner']
+            owner = result['owner_id']
             count = result['count']
             case_type = result['type']
             self._update_dataset(type_data[case_type], owner, count)
@@ -296,158 +286,66 @@ class CallCenterIndicators(object):
         # add data for case types with no data
         unseen_cases = all_types - seen_types
         for case_type in unseen_cases:
-            self._add_data(FakeQuerySet([]), '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
+            self._add_data([], '{}_{}_{}'.format(indicator_prefix, case_type, range_name))
 
-    def _case_query_opened_closed(self, opened_or_closed, values, filters, lower, upper):
-        """
-        Count of cases where lower <= opened_on < upper
-            cases_opened_{period}
-            cases_opened_{case_type}_{period}
+    def add_case_data(self, query, slug, indicator_config, legacy_prefix=None):
+        include_types = indicator_config.all_types or indicator_config.enabled_types
+        include_total = indicator_config.totals.enabled
+        limit_types = indicator_config.enabled_types
 
-        Count of cases where lower <= closed_on < upper
-            cases_closed_{period}
-            cases_closed_{case_type}_{period}
-        """
-        return CaseData.objects \
-            .extra(select={'case_owner': '{}_by'.format(opened_or_closed)}) \
-            .values(*values) \
-            .filter(filters) \
-            .filter(
-                domain=self.domain) \
-            .filter(**self._date_filters('{}_on'.format(opened_or_closed), lower, upper)) \
-            .filter(**{
-                '{}_by__in'.format(opened_or_closed): self.users_needing_data
-            }).annotate(count=Count('case_id'))
-
-    def _case_query_active(self, values, filters, lower, upper):
-        """
-        Count of cases where lower <= case_action.date < upper
-
-        cases_active_{period}
-        cases_active_{case_type}_{period}
-        """
-        return CaseActionData.objects \
-            .extra(select={'type': 'case_type'}) \
-            .values(*values) \
-            .filter(filters) \
-            .filter(
-                domain=self.domain,
-                case_owner__in=self.owners_needing_data,
-                date__gte=lower,
-                date__lt=upper
-            ).annotate(count=Count('case', distinct=True))
-
-    def _cases_total_query(self, values, filters, lower, upper):
-        """
-        Count of cases where opened_on < upper and (closed == False or closed_on >= lower)
-
-        cases_total_{period}
-        cases_total_{case_type}_{period}
-        """
-        return CaseData.objects \
-            .values(*values) \
-            .filter(filters) \
-            .filter(
-                case_owner__in=self.owners_needing_data,
-                domain=self.domain,
-                opened_on__lt=upper) \
-            .filter(Q(closed=False) | Q(closed_on__gte=lower)) \
-            .annotate(count=Count('case_id'))
-
-    def add_case_data(self, query_fn, slug, indicator_config, type_column='type', legacy_prefix=None):
-        include_types = indicator_config.all_types or indicator_config.types
-        include_total = indicator_config.total.active
-        limit_types = indicator_config.types
-
-        q_type_exclude = {type_column: self.cc_case_type}
         if include_total and include_types and not limit_types:
-            logger.debug('Adding case_data %s: totals and all types: %s', slug, indicator_config.total.date_ranges)
-            for range_name in indicator_config.total.date_ranges:
+            logger.debug('Adding case_data %s: totals and all types: %s', slug, indicator_config.totals.date_ranges)
+            for range_name in indicator_config.totals.date_ranges:
                 lower, upper = self.date_ranges[range_name]
-                results = query_fn(['case_owner', 'type'], ~Q(**q_type_exclude), lower, upper)
+                results = query.get_results(
+                    include_type_in_result=True, limit_types=None, start_date=lower, end_date=upper
+                )
                 self._add_case_data_total(results, slug, range_name, legacy_prefix=legacy_prefix)
                 self._add_case_data_by_type(results, slug, range_name)
         else:
             if include_total:
-                logger.debug('Adding case_data %s: totals: %s', slug, indicator_config.total.date_ranges)
-                for range_name in indicator_config.total.date_ranges:
+                logger.debug('Adding case_data %s: totals: %s', slug, indicator_config.totals.date_ranges)
+                for range_name in indicator_config.totals.date_ranges:
                     lower, upper = self.date_ranges[range_name]
-                    total_results = query_fn(['case_owner'], ~Q(**q_type_exclude), lower, upper)
+                    total_results = query.get_results(
+                        include_type_in_result=False, limit_types=None, start_date=lower, end_date=upper
+                    )
                     self._add_case_data_total(total_results, slug, range_name, legacy_prefix=legacy_prefix)
 
             if include_types:
                 for range_name, types in indicator_config.types_by_date_range().items():
                     logger.debug('Adding case_data %s: types: %s, %s', slug, range_name, types)
-                    q_type_in = {'{}__in'.format(type_column): types}
                     lower, upper = self.date_ranges[range_name]
-                    type_results = query_fn(['case_owner', 'type'], Q(**q_type_in), lower, upper)
+                    type_results = query.get_results(
+                        include_type_in_result=True, limit_types=types, start_date=lower, end_date=upper
+                    )
                     self._add_case_data_by_type(type_results, slug, range_name, all_types=types)
 
     def add_case_total_legacy(self):
-        """
-        Count of cases per user that are currently open (legacy indicator).
-        """
         logger.debug('Adding legacy totals')
-        results = CaseData.objects \
-            .values('user_id') \
-            .exclude(type=self.cc_case_type) \
-            .filter(
-                domain=self.domain,
-                closed=False,
-                user_id__in=self.users_needing_data) \
-            .annotate(count=Count('case_id'))
-
+        query = CaseQueryTotalLegacy(self.domain, self.cc_case_type, self.users_needing_data)
+        results = query.get_results()
         self._add_data(results, LEGACY_TOTAL_CASES)
 
     def add_custom_form_data(self, indicator_name, range_name, xmlns, indicator_type, lower, upper):
-        """
-        For specific forms add the number of forms completed during the time period (lower to upper)
-        In some cases also add the average duration of the forms.
-        """
-        aggregation = Avg('duration') if indicator_type == TYPE_DURATION else Count('instance_id')
-
-        def millis_to_secs(x):
-            return round(x / 1000)
-
-        transformer = millis_to_secs if indicator_type == TYPE_DURATION else None
-
-        results = FormData.objects \
-            .values('user_id') \
-            .filter(
-                xmlns=xmlns,
-                domain=self.domain,
-                user_id__in=self.users_needing_data) \
-            .filter(**self._date_filters('time_end', lower, upper)) \
-            .annotate(count=aggregation)
-
-        self._add_data(
-            results,
-            '{}{}'.format(indicator_name, range_name.title()),
-            transformer=transformer)
+        query = CustomFormQuery(self.domain, self.users_needing_data)
+        results = query.get_results(xmlns, indicator_type, lower, upper)
+        formatted_name = '{}{}'.format(indicator_name, range_name.title())
+        self._add_data(results, formatted_name, transformer=round)
 
     def add_form_data(self, indicator_config):
-        """
-        Count of forms submitted by each user during the period (upper to lower)
-        """
         logger.debug('Adding forms submitted stats: %s', indicator_config.date_ranges)
-        if indicator_config.include_legacy:
-            logger.debug('Adding legacy forms submitted stats: %s', indicator_config.date_ranges)
 
         for range_name in indicator_config.date_ranges:
             lower, upper = self.date_ranges[range_name]
-            results = FormData.objects \
-                .values('user_id') \
-                .filter(**self._date_filters('time_end', lower, upper)) \
-                .filter(
-                    domain=self.domain,
-                    user_id__in=self.users_needing_data
-                )\
-                .annotate(count=Count('instance_id'))
+
+            results = StandardFormQuery(self.domain, self.users_needing_data).get_results(lower, upper)
 
             self._add_data(results, '{}_{}'.format(FORMS_SUBMITTED, range_name))
 
-            if indicator_config.include_legacy:
+            if self.config.legacy_forms_submitted:
                 #  maintained for backwards compatibility
+                logger.debug('Adding legacy forms submitted stats: %s', indicator_config.date_ranges)
                 self._add_data(results, '{}{}'.format(LEGACY_FORMS_SUBMITTED, range_name.title()))
 
             if self.domain in PER_DOMAIN_FORM_INDICATORS:
@@ -464,33 +362,7 @@ class CallCenterIndicators(object):
     def get_data(self):
         final_data = {}
         if self.users_needing_data:
-            logger.debug('Adding data for users: %s', self.users_needing_data)
-            if self.config.cases_total.active and self.config.cases_total.include_legacy:
-                self.add_case_total_legacy()
-
-            if self.config.forms_submitted.active:
-                self.add_form_data(self.config.forms_submitted)
-
-            if self.config.cases_total.active:
-                self.add_case_data(self._cases_total_query, CASES_TOTAL, self.config.cases_total)
-
-            if self.config.cases_opened.active:
-                query_fn = functools.partial(self._case_query_opened_closed, 'opened')
-                self.add_case_data(query_fn, CASES_OPENED, self.config.cases_opened)
-
-            if self.config.cases_closed.active:
-                query_fn = functools.partial(self._case_query_opened_closed, 'closed')
-                self.add_case_data(query_fn, CASES_CLOSED, self.config.cases_closed)
-
-            if self.config.cases_active.active:
-                legacy_prefix = LEGACY_CASES_UPDATED if self.config.cases_active.include_legacy else None
-                self.add_case_data(
-                    self._case_query_active,
-                    CASES_ACTIVE,
-                    self.config.cases_total,
-                    type_column='case_type',
-                    legacy_prefix=legacy_prefix
-                )
+            self._populate_dataset()
 
             cache_timeout = seconds_till_midnight(self.timezone)
             user_to_case_map = self.user_to_case_map
@@ -517,3 +389,28 @@ class CallCenterIndicators(object):
             final_data[cache_data.case_id] = cache_data.indicators
 
         return final_data
+
+    def _populate_dataset(self):
+        logger.debug('Adding data for users: %s', self.users_needing_data)
+        if self.config.legacy_cases_total:
+            self.add_case_total_legacy()
+
+        if self.config.forms_submitted.enabled:
+            self.add_form_data(self.config.forms_submitted)
+
+        if self.config.cases_total.enabled:
+            query = CaseQueryTotal(self.domain, self.cc_case_type, self.owners_needing_data)
+            self.add_case_data(query, CASES_TOTAL, self.config.cases_total)
+
+        if self.config.cases_opened.enabled:
+            query = CaseQueryOpenedClosed(self.domain, self.cc_case_type, self.owners_needing_data, opened=True)
+            self.add_case_data(query, CASES_OPENED, self.config.cases_opened)
+
+        if self.config.cases_closed.enabled:
+            query = CaseQueryOpenedClosed(self.domain, self.cc_case_type, self.owners_needing_data, opened=False)
+            self.add_case_data(query, CASES_CLOSED, self.config.cases_closed)
+
+        if self.config.cases_active.enabled:
+            legacy_prefix = LEGACY_CASES_UPDATED if self.config.legacy_cases_active else None
+            query = CaseQueryActive(self.domain, self.cc_case_type, self.owners_needing_data)
+            self.add_case_data(query, CASES_ACTIVE, self.config.cases_total, legacy_prefix=legacy_prefix)

@@ -10,6 +10,7 @@ def deid_ID(val, doc):
 
 @memoized
 class JSONPath(object):
+
     def __init__(self, paths):
         self.paths = [path.split('/') for path in paths.split('|')]
 

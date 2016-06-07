@@ -21,6 +21,7 @@ class CommtrackUtilsTest(TestCase):
 
 
 class GenerateCodeTest(unittest.TestCase):
+
     def test_no_change_needed(self):
         name = 'turtle'
         existing = []

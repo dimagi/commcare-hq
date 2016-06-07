@@ -1,5 +1,4 @@
 from django.conf.urls import *
-from django.views.generic import TemplateView
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -9,7 +8,8 @@ from .views import (
     RecentCouchChangesView,
     LoadtestReportView,
     ManagementCommandsView,
-)
+    CallcenterUCRCheck,
+    DimagisphereView)
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -20,6 +20,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
         name=RecentCouchChangesView.urlname),
     url(r'^system/recent_changes/download/$', 'download_recent_changes', name="download_recent_changes"),
     url(r'^system/system_ajax$', 'system_ajax', name="system_ajax"),
+    url(r'^system/check_services$', 'check_services', name="check_services"),
     url(r'^system/autostaging/$', 'branches_on_staging', name="branches_on_staging"),
     url(r'^auth_as/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^auth_as/(?P<username>[^/]*)/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
@@ -39,12 +40,15 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^web_user_lookup/$', 'web_user_lookup', name='web_user_lookup'),
     url(r'^doc_in_es/$', 'doc_in_es', name='doc_in_es'),
     url(r'^raw_couch/$', 'raw_couch', name='raw_couch'),
+    url(r'^raw_doc/$', 'raw_doc', name='raw_doc'),
     url(r'^callcenter_test/$', 'callcenter_test', name='callcenter_test'),
+    (r'^api/', include(admin_api_urlpatterns)),
+    url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),
     (r'^api/', include(admin_api_urlpatterns)),
     url(r'^download_malt/$',
         DownloadMALTView.as_view(), name=DownloadMALTView.urlname),
     url(r'^dimagisphere/$',
-        require_superuser(TemplateView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
+        require_superuser(DimagisphereView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
         name='dimagisphere'),
     AdminReportDispatcher.url_pattern(),
 )

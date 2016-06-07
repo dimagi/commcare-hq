@@ -110,7 +110,10 @@ class PropertyExpressionTest(SimpleTestCase):
             (None, "datetime", "2015-09-30 19:04:27Z"),
             (date(2015, 9, 30), "date", "2015-09-30T19:04:27Z"),
             (date(2015, 9, 30), "date", datetime(2015, 9, 30)),
-            (None, "datetime", "2015-09-30"),
+            (datetime(2015, 9, 30, 0, 0, 0), "datetime", "2015-09-30"),
+            ([None], "array", None),
+            ([3], "array", 3),
+            ([3, 4, 9], "array", [3, 4, 9]),
         ]:
             getter = ExpressionFactory.from_spec({
                 'type': 'property_name',
@@ -784,7 +787,7 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
         },
         30 * 60
     ),
-    # supports string manupulation
+    # supports string manipulation
     ({}, "str(a)+'text'", {"a": 3}, "3text"),
     # context can contain expressions
     (
@@ -847,9 +850,12 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("a+b+c+9", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8 + 9),
     ("a*b", {"a": 2, "b": 23}, 2 * 23),
     ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
-    ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1')
+    ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1'),
+    ("range(1, a)", {"a": 5}, [1, 2, 3, 4]),
+    # ranges > 100 items aren't supported
+    ("range(200)", {}, None),
 ])
-def test_supported_evluator_statements(self, eq, context, expected_value):
+def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
 
 
@@ -861,9 +867,9 @@ def test_supported_evluator_statements(self, eq, context, expected_value):
     ("a**b", {"a": 2, "b": 23}),
     ("lambda x: x*x", {"a": 2}),
     ("int(10 in range(1,20))", {"a": 2}),
-    ("max(a, b)", {"a": 3, "b": 5})
+    ("max(a, b)", {"a": 3, "b": 5}),
 ])
-def test_unsupported_evluator_statements(self, eq, context):
+def test_unsupported_evaluator_statements(self, eq, context):
     with self.assertRaises(InvalidExpression):
         eval_statements(eq, context)
     expression = ExpressionFactory.from_spec({

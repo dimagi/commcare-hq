@@ -265,6 +265,7 @@ TASK_ACTIVITY = {
     "visit_preparation": "Visit Preparation"
 }
 
+
 class DrilldownReportMixin(object):
 
     report_template_path = ""

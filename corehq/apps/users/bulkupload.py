@@ -36,17 +36,30 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'is_active', 'location-sms-code',
+    'uncategorized_data', 'user_id', 'is_active', 'location_code',
 ]) | required_headers
+old_headers = {
+    # 'old_header_name': 'new_header_name'
+    'location-sms-code': 'location_code'
+}
 
 
 def check_headers(user_specs):
+    messages = []
     headers = set(user_specs.fieldnames)
+
+    # Backwards warnings
+    for (old_name, new_name) in old_headers.iteritems():
+        if old_name in headers:
+            messages.append(
+                _("'The column header '{old_name}' is deprecated, please use '{new_name}' instead.").format(
+                    old_name=old_name, new_name=new_name
+                ))
+            headers.discard(old_name)
 
     illegal_headers = headers - allowed_headers
     missing_headers = required_headers - headers
 
-    messages = []
     for header_set, label in (missing_headers, 'required'), (illegal_headers, 'illegal'):
         if header_set:
             messages.append(_('The following are {label} column headers: {headers}.').format(
@@ -61,6 +74,7 @@ class GroupMemoizer(object):
     If you use this to get a group, do not set group.name directly;
     use group_memoizer.rename_group(group, name) instead.
     """
+
     def __init__(self, domain):
         self.groups_by_name = {}
         self.groups_by_id = {}
@@ -125,6 +139,7 @@ def _fmt_phone(phone_number):
 
 
 class BulkCacheBase(object):
+
     def __init__(self, domain):
         self.domain = domain
         self.cache = {}
@@ -156,6 +171,7 @@ class SiteCodeToSupplyPointCache(BulkCacheBase):
 
 
 class SiteCodeToLocationCache(BulkCacheBase):
+
     def __init__(self, domain):
         self.non_admin_types = [
             loc_type.name for loc_type in Domain.get_by_name(domain).location_types
@@ -171,6 +187,7 @@ class SiteCodeToLocationCache(BulkCacheBase):
 
 
 class LocationIdToSiteCodeCache(BulkCacheBase):
+
     def lookup(self, location_id):
         return SQLLocation.objects.get(
             domain=self.domain,  # this is only for safety
@@ -179,6 +196,7 @@ class LocationIdToSiteCodeCache(BulkCacheBase):
 
 
 class UserLocMapping(object):
+
     def __init__(self, username, domain, location_cache):
         self.username = username
         self.domain = domain
@@ -248,7 +266,7 @@ def create_or_update_locations(domain, location_specs, log):
                 _("Username must be a valid email address: %s") % username
             )
         else:
-            location_code = unicode(row.get('location-sms-code'))
+            location_code = unicode(row.get('location_code'))
             if username in users:
                 user_mapping = users[username]
             else:
@@ -321,6 +339,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     custom_data_validator = UserFieldsView.get_validator(domain)
     ret = {"errors": [], "rows": []}
     total = len(user_specs) + len(group_specs) + len(location_specs)
+
     def _set_progress(progress):
         if task is not None:
             DownloadBase.set_progress(task, progress, total)
@@ -350,7 +369,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             uncategorized_data = row.get('uncategorized_data')
             user_id = row.get('user_id')
             username = row.get('username')
-            location_code = row.get('location-sms-code', '')
+            location_code = row.get('location_code', '')
 
             if password:
                 password = unicode(password)
@@ -506,6 +525,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
 
 
 class GroupNameError(Exception):
+
     def __init__(self, blank_groups):
         self.blank_groups = blank_groups
 
@@ -567,7 +587,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             'language': user.language,
             'user_id': user._id,
             'is_active': str(user.is_active),
-            'location-sms-code': location_cache.get(user.location_id),
+            'location_code': location_cache.get(user.location_id),
         }
 
     unrecognized_user_data_keys = set()
@@ -585,7 +605,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
         'language', 'user_id', 'is_active',
     ]
     if domain_has_privilege(domain, privileges.LOCATIONS):
-        user_headers.append('location-sms-code')
+        user_headers.append('location_code')
     user_data_fields = [f.slug for f in user_data_model.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
     user_headers.extend(build_data_headers(
@@ -635,6 +655,7 @@ def parse_groups(groups):
 
 def dump_users_and_groups(response, domain):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()
@@ -681,7 +702,7 @@ def dump_users_and_groups(response, domain):
     # This is only for domains using the multiple locations feature flag
     if domain_obj.commtrack_enabled and domain_obj.supports_multiple_locations_per_user:
         headers.append(
-            ('locations', [['username', 'location-sms-code', 'location name (optional)']])
+            ('locations', [['username', 'location_code', 'location name (optional)']])
         )
         rows.append(
             ('locations', get_location_rows(domain))

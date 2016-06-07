@@ -3,7 +3,9 @@ from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
+
 class SyncWebUserTestCase(TestCase):
+
     def setUp(self):
         domain = 'test'
         username = "mr-danny@dimagi.com"
@@ -41,7 +43,9 @@ class SyncWebUserTestCase(TestCase):
         WebUser.get_by_user_id(self.web_user.user_id).delete()
         self.domain_obj.delete()
 
+
 class SyncCommCareUserTestCase(TestCase):
+
     def setUp(self):
         self.domain = 'test'
         self.username = "mr-danny@test.commcarehq.org"

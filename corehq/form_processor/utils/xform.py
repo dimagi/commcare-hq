@@ -62,6 +62,7 @@ def get_simple_form_xml(form_id, case_id=None, metadata=None):
 def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
+    metadata = metadata or TestFormMetadata()
     xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
     form_json = convert_xform_to_json(xml)
     interface = FormProcessorInterface(domain=metadata.domain)
@@ -125,6 +126,14 @@ def adjust_datetimes(data, parent=None, key=None):
     find all datetime-like strings within data (deserialized json)
     and format them uniformly, in place.
 
+    this only processes timezones correctly if the call comes from a request with domain information
+    otherwise it will default to not processing timezones.
+
+    to force timezone processing, it can be called as follows
+
+    >>> from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
+    >>> with force_phone_timezones_should_be_processed():
+    >>>     adjust_datetimes(form_json)
     """
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC

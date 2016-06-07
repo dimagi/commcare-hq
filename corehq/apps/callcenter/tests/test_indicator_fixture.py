@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime, date, time, timedelta
 from xml.etree import ElementTree
-import pytz
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.models import SyncLog
 from corehq.apps.callcenter.fixturegenerators import gen_fixture, should_sync
@@ -11,6 +10,7 @@ from django.test import SimpleTestCase
 
 
 class MockIndicatorSet(object):
+
     def __init__(self, name, indicators):
         self.name = name
         self.indicators = indicators
@@ -24,6 +24,7 @@ class MockIndicatorSet(object):
 
 
 class CallcenterFixtureTests(SimpleTestCase):
+
     def test_callcenter_fixture_format(self):
         user = CommCareUser(_id='123')
         indicator_set = MockIndicatorSet(name='test', indicators=OrderedDict([

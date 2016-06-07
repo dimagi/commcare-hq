@@ -478,7 +478,6 @@ DOMAIN_FACETS = [
     "internal.commtrack_domain",
 
     "is_approved",
-    "is_public",
     "is_shared",
     "is_sms_billable",
     "is_snapshot",
@@ -542,10 +541,9 @@ FACET_MAPPING = [
 
 class AdminReport(GenericTabularReport):
     dispatcher = AdminReportDispatcher
-    is_bootstrap3 = True
 
     base_template = "hqadmin/faceted_report.html"
-    report_template_path = "reports/async/bootstrap3/tabular.html"
+    report_template_path = "reports/async/tabular.html"
     section_name = ugettext_noop("ADMINREPORT")
     default_params = {}
     is_admin_report = True
@@ -702,6 +700,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("# Form Submissions in last 30 days"), sort_type=DTSortType.NUMERIC,
                              prop_name="cp_n_forms_30_d"),
             DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
+            DataTablesColumn(_("300th Form Submission"), prop_name="cp_300th_form"),
             DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
             DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC,
                              prop_name="cp_n_web_users",
@@ -753,13 +752,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             11: "cp_n_cases",
             12: "cp_n_forms",
             13: "cp_n_forms_30_d",
-            16: "cp_n_web_users",
-            29: "cp_n_out_sms",
-            30: "cp_n_in_sms",
-            31: "cp_n_sms_ever",
-            32: "cp_n_sms_in_30_d",
-            33: "cp_n_sms_out_30_d",
-            36: "cp_j2me_90_d_bool",
+            17: "cp_n_web_users",
+            30: "cp_n_out_sms",
+            31: "cp_n_in_sms",
+            32: "cp_n_sms_ever",
+            33: "cp_n_sms_in_30_d",
+            34: "cp_n_sms_out_30_d",
+            35: "cp_j2me_90_d_bool",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -809,6 +808,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get("cp_n_forms", _("Not yet calculated")),
                     dom.get("cp_n_forms_30_d", _("Not yet calculated")),
                     format_date(dom.get("cp_first_form"), first_form_default_message),
+                    format_date(dom.get('cp_300th_form'), _('No 300th form')),
                     format_date(dom.get("cp_last_form"), _("No forms")),
                     dom.get("cp_n_web_users", _("Not yet calculated")),
                     dom.get('internal', {}).get('notes') or _('No notes'),
@@ -1108,7 +1108,7 @@ class CommTrackProjectSpacesReport(GlobalAdminReports):
 
 
 class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
-    base_template = 'reports/bootstrap3/base_template.html'
+    base_template = 'reports/base_template.html'
 
     slug = 'device_log_soft_asserts'
     name = ugettext_lazy("Global Device Logs Soft Asserts")
@@ -1116,6 +1116,7 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.reports.filters.devicelog.DeviceLogDomainFilter',
+        'corehq.apps.reports.filters.devicelog.DeviceLogCommCareVersionFilter',
     ]
     emailable = False
     default_rows = 10
@@ -1129,6 +1130,11 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
     def selected_domain(self):
         selected_domain = self.request.GET.get('domain', None)
         return selected_domain if selected_domain != u'' else None
+
+    @property
+    def selected_commcare_version(self):
+        commcare_version = self.request.GET.get('commcare_version', None)
+        return commcare_version if commcare_version != u'' else None
 
     @property
     def headers(self):
@@ -1152,6 +1158,9 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
 
         if self.selected_domain is not None:
             logs = logs.filter(domain__exact=self.selected_domain)
+
+        if self.selected_commcare_version is not None:
+            logs = logs.filter(app_version__contains='"{}"'.format(self.selected_commcare_version))
 
         return logs
 

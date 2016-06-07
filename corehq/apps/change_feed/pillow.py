@@ -19,13 +19,14 @@ class KafkaProcessor(PillowProcessor):
     """
     Processor that pushes changes to Kafka
     """
+
     def __init__(self, kafka, data_source_type, data_source_name):
         self._kafka = kafka
         self._producer = ChangeProducer(self._kafka)
         self._data_source_type = data_source_type
         self._data_source_name = data_source_name
 
-    def process_change(self, pillow_instance, change, do_set_checkpoint=False):
+    def process_change(self, pillow_instance, change):
         try:
             document = change.get_document()
             doc_meta = get_doc_meta_object_from_document(document)

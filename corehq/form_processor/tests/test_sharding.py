@@ -2,12 +2,12 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.test import TestCase
+from django.test.utils import override_settings
 from unittest import skipUnless, SkipTest
 
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.tests import create_form_for_test, FormProcessorTestUtils
 from corehq.sql_db.config import PartitionConfig
-from crispy_forms.tests.utils import override_settings
 
 DOMAIN = 'sharding-test'
 
@@ -19,6 +19,7 @@ class ShardingTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ShardingTests, cls).setUpClass()
         if not settings.USE_PARTITIONED_DATABASE:
             # https://github.com/nose-devs/nose/issues/946
             raise SkipTest('Only applicable if sharding is setup')
@@ -28,6 +29,7 @@ class ShardingTests(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
         FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
+        super(ShardingTests, self).tearDown()
 
     def test_objects_only_in_one_db(self):
         case_id = uuid4().hex

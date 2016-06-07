@@ -21,7 +21,9 @@ from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
 
 class TestGatewayFee(TestCase):
+
     def setUp(self):
+        super(TestGatewayFee, self).setUp()
         self.currency_usd = init_default_currency()
 
         self.backend_ids = generator.arbitrary_backend_ids()
@@ -320,3 +322,5 @@ class TestGatewayFee(TestCase):
             SQLMobileBackend.load(backend_id, is_couch_id=True).delete()
 
         FakeTwilioMessageFactory.backend_message_id_to_price = {}
+
+        super(TestGatewayFee, self).tearDown()

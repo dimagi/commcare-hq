@@ -65,6 +65,7 @@ class SoftAssertTest(SimpleTestCase):
 
 
 class SoftAssertHelpersTest(SimpleTestCase):
+
     def test_number_is_power_of_two(self):
         powers_of_two = [2**i for i in range(10)]
         for n in range(100):
@@ -82,7 +83,7 @@ class SoftAssertHelpersTest(SimpleTestCase):
         santized_request = get_sanitized_request_repr(raw_request)
 
         # raw request exposes password
-        self.assertTrue('mypass' in str(raw_request))
+        self.assertTrue('mypass' in str(raw_request.POST))
 
         # sanitized_request should't expose password
         self.assertFalse('mypass' in santized_request)

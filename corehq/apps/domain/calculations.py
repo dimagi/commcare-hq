@@ -1,14 +1,14 @@
 from collections import defaultdict
+from corehq.util.dates import iso_string_to_datetime
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_number_of_cases_per_domain
-from corehq.util.dates import iso_string_to_datetime
-from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.forms import FormES
@@ -21,7 +21,6 @@ from couchforms.analytics import get_number_of_forms_per_domain, \
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
-from corehq.apps.reports.util import make_form_couch_key
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from dimagi.utils.parsing import json_format_datetime
@@ -32,11 +31,13 @@ def num_web_users(domain, *args):
     row = CouchUser.get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
     return row["value"] if row else 0
 
+
 def num_mobile_users(domain, *args):
     row = CouchUser.get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
     return row["value"] if row else 0
 
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
+
 
 def active_mobile_users(domain, *args):
     """
@@ -94,6 +95,7 @@ def cases_in_last(domain, days):
                 "to": now}}}}
     data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_index='cases', size=1)
     return data['hits']['total'] if data.get('hits') else 0
+
 
 def inactive_cases_in_last(domain, days):
     """
@@ -197,6 +199,14 @@ def last_form_submission(domain, display=True):
     return display_time(submission_time, display) if submission_time else None
 
 
+def get_300th_form_submission_received(domain):
+    result = FormES().domain(domain).start(300).size(1).sort('received_on').fields(['received_on']).run().hits
+    if not result:
+        return
+
+    return iso_string_to_datetime(result[0]['received_on'])
+
+
 def has_app(domain, *args):
     return domain_has_apps(domain)
 
@@ -206,9 +216,11 @@ def app_list(domain, *args):
     apps = domain.applications()
     return render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})
 
+
 def uses_reminders(domain, *args):
     handlers = CaseReminderHandler.get_handlers(domain)
     return len(handlers) > 0
+
 
 def not_implemented(domain, *args):
     return '<p class="text-danger">not implemented</p>'
@@ -281,7 +293,8 @@ CALC_FNS = {
     "active_apps": app_list,
     'uses_reminders': uses_reminders,
     'j2me_forms_in_last': j2me_forms_in_last,
-    'j2me_forms_in_last_bool': j2me_forms_in_last_bool
+    'j2me_forms_in_last_bool': j2me_forms_in_last_bool,
+    '300th_form_submission': get_300th_form_submission_received
 }
 
 
@@ -314,6 +327,7 @@ def _all_domain_stats():
             "commcare_users": commcare_counts,
             "forms": form_counts,
             "cases": case_counts}
+
 
 def total_distinct_users(domains=None):
     """

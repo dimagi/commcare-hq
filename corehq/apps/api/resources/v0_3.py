@@ -1,18 +1,13 @@
-from couchdbkit import ResourceNotFound
 from corehq.apps.cloudcare.api import es_filter_cases
 from tastypie import fields
 
-from casexml.apps.case.models import CommCareCase
 
-from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import v0_2, v0_1
 from corehq.apps.api.resources import DomainSpecificResourceMixin
 from corehq.apps.api.util import object_does_not_exist
-import couchforms
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, \
     FormAccessors
-from couchforms.models import XFormArchived
 
 
 class CaseListFilters(object):
@@ -39,6 +34,7 @@ class CaseListFilters(object):
 
         if 'order_by' in self.filters:
             del self.filters['order_by']
+
 
 class CommCareCaseResource(v0_2.CommCareCaseResource, DomainSpecificResourceMixin):
     

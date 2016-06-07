@@ -23,8 +23,6 @@ class MixedTTCReport(TTCReport):
     exportable = True
     is_mixed_report = True
 
-    is_bootstrap3 = True
-
     @property
     @memoized
     def data_providers(self):

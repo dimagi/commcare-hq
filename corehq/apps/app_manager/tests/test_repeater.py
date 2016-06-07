@@ -8,8 +8,10 @@ from corehq.apps.app_manager.models import Application
 
 
 class TestAppStructureRepeater(TestCase):
+
     @classmethod
     def setUpClass(cls):
+        super(TestAppStructureRepeater, cls).setUpClass()
         cls.client = Client()
         cls.domain = 'bedazzled'
         cls.forwarding_url = 'http://not-a-real-url-at-all'

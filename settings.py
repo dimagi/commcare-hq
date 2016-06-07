@@ -30,7 +30,7 @@ LESS_WATCH = False
 VELLUM_DEBUG = None
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
@@ -75,7 +75,7 @@ MEDIA_URL = '/media/'
 STATIC_URL = '/static/'
 STATIC_CDN = ''
 
-FILEPATH = os.path.abspath(os.path.dirname(__file__))
+FILEPATH = BASE_DIR
 SERVICE_DIR = os.path.join(FILEPATH, 'deployment', 'commcare-hq-deploy', 'fab', 'services', 'templates')
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
@@ -141,7 +141,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
-    'corehq.apps.hqwebapp.middleware.HQCsrfViewMiddleWare',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
@@ -389,6 +389,7 @@ HQ_APPS = (
     'custom.icds_reports',
 )
 
+# DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
 TEST_APPS = ()
 
 # also excludes any app starting with 'django.'
@@ -396,11 +397,9 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'a5288',
     'captcha',
     'couchdbkit.ext.django',
-    'corehq.apps.data_interfaces',
     'corehq.apps.ivr',
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
-    'corehq.apps.ota',
     'corehq.apps.settings',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
@@ -454,6 +453,12 @@ LOGIN_URL = "/accounts/login/"
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
+PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
+    '/a/%(domain)s/settings/project/internal_subscription_management/',
+    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/internal/calculations/',
+    '/a/%(domain)s/settings/project/flags/'
+)
 
 ####### Release Manager App settings  #######
 RELEASE_FILE_PATH = os.path.join("data", "builds")
@@ -465,8 +470,8 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "style/bootstrap2/base.html"  # should eventually be bootstrap3
-BASE_ASYNC_TEMPLATE = "reports/async/bootstrap2/basic.html"
+BASE_TEMPLATE = "style/base.html"
+BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
@@ -502,6 +507,7 @@ INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
 BILLING_EMAIL = 'billing-comm@dimagi.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
 MASTER_LIST_EMAIL = 'master-list@dimagi.com'
+REPORT_BUILDER_ADD_ON_EMAIL = 'updates@dimagi.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
@@ -510,6 +516,7 @@ EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
 BASE_ADDRESS = 'localhost:8000'
+J2ME_ADDRESS = ''
 
 # Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
 # Should include the protocol.
@@ -599,8 +606,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
-FORMPLAYER_URL = 'http://localhost:8080'
-OFFLINE_TOUCHFORMS_PORT = 4444
+FORMPLAYER_URL = 'http://localhost:8090'
 
 ####### Couchlog config #######
 
@@ -835,8 +841,8 @@ COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
 'compressor.filters.cssmin.rCSSMinFilter']
 
 LESS_B3_PATHS = {
-    'variables': '../../../style/less/bootstrap3/includes/variables',
-    'mixins': '../../../style/less/bootstrap3/includes/mixins',
+    'variables': '../../../style/less/_hq/includes/variables',
+    'mixins': '../../../style/less/_hq/includes/mixins',
 }
 
 LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
@@ -1022,10 +1028,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'couchlog': {
-            'level': 'WARNING',
-            'class': 'couchlog.handlers.CouchHandler',
-        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
@@ -1040,7 +1042,7 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -1064,7 +1066,7 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': True
         },
@@ -1079,7 +1081,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
+            'handlers': ['accountinglog', 'console', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -1127,19 +1129,15 @@ else:
         ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
     ]
 
+if helper.is_testing():
+    helper.assign_test_db_names(DATABASES)
+
 ### Reporting database - use same DB as main database
 
 db_settings = DATABASES["default"].copy()
 db_settings['PORT'] = db_settings.get('PORT', '5432')
 options = db_settings.get('OPTIONS')
 db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
-# Use test database name, but only if running the test command.
-# Django uses different database names than the ones in DATABASES
-# when setting up for tests. However, UNIT_TESTING may be true in
-# some cases where django is not running tests (js tests on travis),
-# and therefore does not change the database name.
-db_settings['NAME'] = helper.get_db_name(db_settings['NAME'],
-                                         UNIT_TESTING and helper.is_testing())
 
 if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
     SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
@@ -1447,8 +1445,6 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
         },
-        'corehq.pillows.sofabed.FormDataPillow',
-        'corehq.pillows.sofabed.CaseDataPillow',
         {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1548,12 +1544,22 @@ PILLOWTOPS = {
         {
             'name': 'BlobDeletionPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
+            'instance': 'corehq.blobs.pillow.get_main_blob_deletion_pillow',
+        },
+        {
+            'name': 'ApplicationBlobDeletionPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.blobs.pillow.get_application_blob_deletion_pillow',
         },
         {
             'name': 'CaseSearchToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case_search.get_case_search_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'LedgerToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.ledger.get_ledger_to_elasticsearch_pillow',
         },
     ]
 }
@@ -1724,7 +1730,7 @@ TRAVIS_TEST_GROUPS = (
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
         'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'common', 'compressor',
+        'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway'
     ),
 )
 

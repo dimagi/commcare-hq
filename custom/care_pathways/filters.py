@@ -10,7 +10,12 @@ from custom.care_pathways.utils import get_domain_configuration, ByTypeHierarchy
 from dimagi.utils.decorators.memoized import memoized
 
 
+class CareBaseSingleOptionFilter(BaseSingleOptionFilter):
+    filter_css_class = ''
+
+
 class CareBaseDrilldownOptionFilter(BaseDrilldownOptionFilter):
+    filter_css_class = ''
     single_option_select = -1
     single_option_select_without_default_text = -1
 
@@ -91,46 +96,59 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
         }
 
 
-class GenderFilter(BaseSingleOptionFilter):
+class GenderFilter(CareBaseSingleOptionFilter):
     slug = "gender"
-    label = "Gender"
+    label = "Group Gender"
     default_text = "Any"
     template = "care_pathways/filters/single_option_with_helper.html"
     help_text = "Group composition of members"
+    filter_css_class = 'col-md-2'
 
     @property
     def options(self):
-        return [('2', 'All Women'), ('1', 'Some Women'), ('0', 'No Women')]
+        return [('2', 'All Female Groups'), ('1', 'Mixed Groups'), ('0', 'All Male Groups')]
 
     @property
     @memoized
     def selected(self):
-        return self.get_value(self.request, self.domain) or "2" if self.domain == 'pathways-india-mis' else ''
+        return self.get_value(self.request, self.domain) or ("2" if self.domain == 'pathways-india-mis' else '')
 
 
-class GroupLeadershipFilter(BaseSingleOptionFilter):
+class GroupLeadershipFilter(CareBaseSingleOptionFilter):
     slug = "group_leadership"
     label = "Group Leadership"
     default_text = "Any"
     template = "care_pathways/filters/single_option_with_helper.html"
     help_text = "Group leaders gender composition"
+    filter_css_class = 'col-md-2'
 
     @property
     def options(self):
-        return [('2', 'All Women'), ('1', 'Some Women'), ('0', 'No Women')]
+        return [
+            ('2', 'All Female Leadership'),
+            ('1', 'Mixed Leadership'),
+            ('0', 'All Male Leadership')
+        ]
 
     @property
     @memoized
     def selected(self):
-        return self.get_value(self.request, self.domain) or "2" if self.domain == 'pathways-india-mis' else ''
+        return self.get_value(self.request, self.domain) or ("2" if self.domain == 'pathways-india-mis' else '')
 
 
-class CBTNameFilter(BaseSingleOptionFilter):
+class CBTNameFilter(CareBaseSingleOptionFilter):
     slug = 'cbt_name'
-    label = ugettext_noop('CBT Name')
     default_text = "All"
     template = "care_pathways/filters/single_option_with_helper.html"
     help_text = "Community Based Trainer"
+    filter_css_class = 'col-md-2'
+
+    @property
+    def label(self):
+        if self.domain == 'care-macf-malawi':
+            return 'FFT Name'
+        else:
+            return 'CBT NAME'
 
     @property
     def options(self):
@@ -165,6 +183,7 @@ class ScheduleFilter(CareBaseDrilldownOptionFilter):
 
 class PPTYearFilter(YearFilter):
     label = "PPT Year"
+    filter_css_class = 'col-md-2 col-md-offset-2'
 
 
 class MalawiPPTYearFilter(PPTYearFilter):
@@ -177,10 +196,11 @@ class MalawiPPTYearFilter(PPTYearFilter):
         return years
 
 
-class RealOrTestFilter(BaseSingleOptionFilter):
+class RealOrTestFilter(CareBaseSingleOptionFilter):
     slug = 'real_or_test'
     default_text = None
     label = ugettext_noop("Real or Test Data?")
+    filter_css_class = 'col-md-2'
 
     @property
     def options(self):
@@ -225,7 +245,7 @@ class TypeFilter(CareBaseDrilldownOptionFilter):
         }
 
 
-class GroupByFilter(BaseSingleOptionFilter):
+class GroupByFilter(CareBaseSingleOptionFilter):
     slug = "group_by"
     label = "Group By"
     default_text = ''
@@ -235,15 +255,14 @@ class GroupByFilter(BaseSingleOptionFilter):
         return [('value_chain', 'Value Chain'), ('domain', 'Domain'), ('practice', 'Practice')]
 
 
-class DisaggregateByFilter(BaseSingleOptionFilter):
+class DisaggregateByFilter(CareBaseSingleOptionFilter):
     slug = "disaggregate_by"
     label = "Disaggregate By"
     default_text = ''
 
     @property
     def options(self):
-        return [('group', 'Group Leadership'), ('sex', 'Sex of Members')]
-
+        return [('group', 'Group Leadership'), ('sex', 'Group Gender')]
 
     @property
     @memoized
@@ -251,7 +270,7 @@ class DisaggregateByFilter(BaseSingleOptionFilter):
         return self.get_value(self.request, self.domain) or "sex"
 
 
-class TableCardGroupByFilter(BaseSingleOptionFilter):
+class TableCardGroupByFilter(CareBaseSingleOptionFilter):
     slug = "group_by"
     label = "Group By"
     default_text = ''
@@ -259,12 +278,13 @@ class TableCardGroupByFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [('group_name', 'Group Name'), ('group_leadership', 'Group Leadership'),
-                ('gender', 'Sex of Members')]
+                ('gender', 'Group Gender')]
 
     @property
     @memoized
     def selected(self):
         return self.get_value(self.request, self.domain) or "group_name"
+
 
 class TableCardTypeFilter(TypeFilter):
     single_option_select_without_default_text = 1

@@ -148,9 +148,14 @@ class ExportsPermissionsMixin(object):
 
 
 class BaseExportView(BaseProjectDataView):
-    template_name = 'export/bootstrap2/customize_export.html'
+    template_name = 'export/customize_export_old.html'
     export_type = None
     is_async = True
+
+    @use_bootstrap3
+    @use_jquery_ui
+    def dispatch(self, *args, **kwargs):
+        return super(BaseExportView, self).dispatch(*args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -785,7 +790,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """Checks to see if this form export has multimedia available to export
         """
         try:
-            export_object = self.get_export_schema(self.domain, self.export_id)
+            export_object = self._get_export(self.domain, self.export_id)
             has_multimedia = FormAccessors(self.domain).forms_have_multimedia(
                 export_object.app_id,
                 getattr(export_object, 'xmlns', '')
@@ -804,7 +809,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """
         try:
             filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-            filter_form = FilterFormCouchExportDownloadForm(
+            filter_form = self.filter_form_class(
                 self.domain_object, self.timezone, filter_form_data
             )
             if not filter_form.is_valid():
@@ -812,7 +817,7 @@ class DownloadFormExportView(BaseDownloadExportView):
                     _("Please check that you've submitted all required filters.")
                 )
             download = DownloadBase()
-            export_object = self.get_export_schema(self.domain, export_specs[0]['export_id'])
+            export_object = self._get_export(self.domain, export_specs[0]['export_id'])
             task_kwargs = filter_form.get_multimedia_task_kwargs(
                 export_object, download.download_id
             )
@@ -914,9 +919,9 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         return {
             'create_export_form': self.create_export_form if not self.is_deid else None,
             'create_export_form_title': self.create_export_form_title if not self.is_deid else None,
-            'legacy_bulk_download_url': self.legacy_bulk_download_url if not self.is_deid else None,
-            'bulk_download_url': self.bulk_download_url if not self.is_deid else None,
-            'allow_bulk_export': self.allow_bulk_export if not self.is_deid else False,
+            'legacy_bulk_download_url': self.legacy_bulk_download_url,
+            'bulk_download_url': self.bulk_download_url,
+            'allow_bulk_export': self.allow_bulk_export,
             'has_edit_permissions': self.has_edit_permissions,
             'is_deid': self.is_deid,
         }
@@ -1260,13 +1265,12 @@ class FormExportListView(BaseExportListView):
             view_cls = DownloadNewFormExportView
         return reverse(view_cls.urlname, args=(self.domain, export_id))
 
-
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
         if self.is_deid:
             raise Http404()
         try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain)
+            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_form_rmi_response()
         except Exception as e:
             return format_angular_error(
@@ -1380,7 +1384,7 @@ class CaseExportListView(BaseExportListView):
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
         try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain)
+            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_case_rmi_response()
         except Exception as e:
             return format_angular_error(
@@ -1408,7 +1412,7 @@ class CaseExportListView(BaseExportListView):
 
 
 class BaseNewExportView(BaseExportView):
-    template_name = 'export/bootstrap3/customize_export.html'
+    template_name = 'export/customize_export_new.html'
 
     @use_bootstrap3
     @use_jquery_ui

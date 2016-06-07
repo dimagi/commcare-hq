@@ -6,6 +6,7 @@ from corehq.apps.reports.tests import SetupSimpleAppMixin
 
 
 class TestEmwfPagination(SimpleTestCase):
+
     def make_data_source(self, options):
         def matching_objects(query):
             if not query:
@@ -60,6 +61,11 @@ class TestEmwfPagination(SimpleTestCase):
 
 class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
     dependent_apps = ['corehq.couchapps']
+
+    @classmethod
+    def setUpClass(cls):
+        super(FormsByApplicationFilterDbTest, cls).setUpClass()
+        cls.class_setup()
 
     def test_get_filtered_data_by_app_id_missing(self):
         params = FormsByApplicationFilterParams([

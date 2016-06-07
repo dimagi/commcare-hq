@@ -6,6 +6,7 @@ from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, Dict
 from corehq.apps.reports.sqlreport import DataFormatter
 from dimagi.utils.decorators.memoized import memoized
 
+
 @memoized
 def get_domain_configuration(domain):
     with open(os.path.join(os.path.dirname(__file__), 'resources/%s.json' % (domain))) as f:
@@ -15,18 +16,23 @@ def get_domain_configuration(domain):
             by_type_hierarchy=[ByTypeHierarchyRecord(d) for d in _loaded_configuration['by_type_hierarchy']]
         )
 
+
 def is_mapping(prop, domain):
     return any(d['val'] == prop for d in get_mapping(domain))
+
 
 def is_domain(prop, domain):
     return any(d['val'] == prop for d in get_domains(domain))
 
+
 def is_practice(prop, domain):
     return any(d['val'] == prop for d in get_pracices(domain))
+
 
 def get_mapping(domain_name):
     value_chains = get_domain_configuration(domain_name).by_type_hierarchy
     return list({'val': vc.val, "text": vc.text} for vc in value_chains)
+
 
 def get_domains_with_next(domain_name):
     configuration = get_domain_configuration(domain_name).by_type_hierarchy
@@ -110,17 +116,21 @@ class CareDataFormatter(DataFormatter):
 
                 disp_name = find_name(value_chains, 0)
             row = self._format.format_row(group_row)
-            sum = row[1]['html'] + row[2]['html'] + row[3]['html']
-            sum = (100.0 / sum) if sum else 0
-            yield [disp_name, unicode(round(row[1]['html'] * sum
-                                            )) + '%',
-                   unicode(round(row[2]['html'] * sum)) + '%',
-                   unicode(round(row[3]['html'] * sum)) + '%']
+            sum_of_elements = sum([element['html'] for element in row[1:]])
+            sum_of_elements = (100.0 / sum_of_elements) if sum_of_elements else 0
+
+            result = [disp_name]
+
+            for element in row[1:]:
+                result.append(unicode(round(element['html'] * sum_of_elements)) + '%')
+            yield result
+
             for value in chunk:
                 formatted_row = self._format.format_row(value[1])
                 if self.filter_row(value[0], formatted_row):
-                    yield [formatted_row[0]['html'], formatted_row[1]['html'], formatted_row[2]['html'],
-                           formatted_row[3]['html']]
+                    result = [formatted_row[0]['html']]
+                    result.extend([element['html'] for element in formatted_row[1:]])
+                    yield result
 
 
 class TableCardDataGroupsFormatter(DataFormatter):
@@ -140,7 +150,6 @@ class TableCardDataGroupsFormatter(DataFormatter):
             return 2
         else:
             return 3
-
 
     def format(self, data, keys=None, group_by=None):
         range_groups = [
@@ -167,6 +176,7 @@ class TableCardDataGroupsFormatter(DataFormatter):
                 percent = 100 * float(group[idx]) / float(len(data))
                 group[idx] = "%.2f%%" % percent
         return range_groups
+
 
 class TableCardDataIndividualFormatter(DataFormatter):
 

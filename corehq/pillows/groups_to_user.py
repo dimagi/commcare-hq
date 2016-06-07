@@ -12,10 +12,11 @@ from pillowtop.reindexer.reindexer import PillowReindexer
 
 
 class GroupsToUsersProcessor(PillowProcessor):
+
     def __init__(self):
         self._es = get_es_new()
 
-    def process_change(self, pillow_instance, change, do_set_checkpoint):
+    def process_change(self, pillow_instance, change):
         if change.deleted:
             remove_group_from_users(change.get_document(), self._es)
         else:
@@ -39,6 +40,9 @@ def get_group_to_user_pillow(pillow_id='GroupToUserPillow'):
 
 
 def remove_group_from_users(group_doc, es_client):
+    if group_doc is None:
+        return
+
     for user_source in stream_user_sources(group_doc.get("users", [])):
         made_changes = False
         if group_doc["name"] in user_source.group_names:

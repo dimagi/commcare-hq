@@ -419,7 +419,7 @@ Only the following functions are permitted:
 * `str(value)`: convert `value` to a string
 * `timedelta_to_seconds(time_delta)`: convert a TimeDelta object into seconds. This is useful for getting the number of seconds between two dates.
   * e.g. `timedelta_to_seconds(time_end - time_start)`
-
+* `range(start, [stop], [skip])`: the same as the python [`range` function](https://docs.python.org/2/library/functions.html#range). Note that for performance reasons this is limited to 100 items or less.
 
 #### "Month Start Date" and "Month End Date" expressions
 
@@ -1069,7 +1069,7 @@ Field columns have a type of `"field"`. Here's an example field column that show
     "type": "field",
     "field": "owner_id",
     "column_id": "owner_id",
-    "display": "Owner Name"
+    "display": "Owner Name",
     "format": "default",
     "transform": {
         "type": "custom",

@@ -3,28 +3,13 @@
     <head>
         <title>
         {% block title %}
-            Chat - 
-            {% if contact.doc_type == "CommCareCase" %}
-                {% if custom_case_username %}
-                    {{ contact|getattr:custom_case_username }}
-                {% else %}
-                    {{ contact.name }}
-                {% endif %}
-            {% else %}
-                {% if contact.first_name %}
-                    {{ contact.first_name }}
-                {% else %}
-                    {{ contact.raw_username }}
-                {% endif %}
-            {% endif %}
+            Chat - {{ contact_name }}
         {% endblock %}
         </title>
         {% compress css %}
-        <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/hqstyle-core.less' %}"/>
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'style/less/style.less' %}"/>
         {% endcompress %}
-        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script src="{% static 'jquery-migrate/jquery-migrate.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'knockout-2.3.0-legacy/knockout.js' %}"></script>
+        {% include 'style/includes/core_libraries.html' %}
         <style>
             html, body {
                 height: 100%;

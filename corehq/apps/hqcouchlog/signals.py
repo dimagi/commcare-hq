@@ -1,5 +1,6 @@
 from couchlog.signals import couchlog_created
 
+
 def add_hq_extras(record, **kwargs):
     """
     Adds the domain to the couchlog item so that it can be later analyzed.

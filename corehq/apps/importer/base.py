@@ -9,5 +9,3 @@ class ImportCases(DataInterface):
     report_template_path = "importer/import_cases.html"
     gide_filters = True
     asynchronous = False
-
-    is_bootstrap3 = True

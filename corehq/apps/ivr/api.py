@@ -1,8 +1,8 @@
 from datetime import datetime
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (INCOMING, OUTGOING,
-    MessagingSubEvent, MessagingEvent, SQLMobileBackend)
-from corehq.apps.sms.mixin import VerifiedNumber
+    MessagingSubEvent, MessagingEvent, SQLMobileBackend,
+    PhoneNumber)
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session, _get_responses
 from corehq.apps.smsforms.models import XFORMS_SESSION_IVR, get_session_by_session_id
@@ -26,6 +26,7 @@ class GatewayConnectionError(Exception):
 
 
 class IVRResponseData(object):
+
     def __init__(self, ivr_responses, input_length, session):
         self.ivr_responses = ivr_responses
         self.input_length = input_length
@@ -39,6 +40,7 @@ def convert_media_path_to_hq_url(path, app):
     else:
         url_base = get_url_base()
         return url_base + media.url + "foo.wav"
+
 
 def validate_answer(answer, question):
     """
@@ -61,6 +63,7 @@ def validate_answer(answer, question):
             return True
         except AssertionError:
             return False
+
 
 def format_ivr_response(text, app):
     return {
@@ -200,7 +203,7 @@ def answer_question(call_log_entry, recipient, input_data, logged_subevent=None)
     if validate_answer(input_data, current_q):
         answer_is_valid = True
         try:
-            responses = _get_responses(recipient.domain, recipient._id,
+            responses = _get_responses(recipient.domain, recipient.get_id,
                 input_data, yield_responses=True,
                 session_id=call_log_entry.xforms_session_id)
         except TouchformsError as e:
@@ -285,7 +288,7 @@ def handle_known_call_session(call_log_entry, backend, ivr_event,
 
 def log_call(phone_number, gateway_session_id, backend=None):
     cleaned_number = strip_plus(phone_number)
-    v = VerifiedNumber.by_extensive_search(cleaned_number)
+    v = PhoneNumber.by_extensive_search(cleaned_number)
 
     call = Call(
         phone_number=cleaned_number,

@@ -2,8 +2,6 @@ import uuid
 from django.conf import settings
 from django.test import TestCase
 from mock import patch
-from sqlalchemy import create_engine
-from sqlalchemy.exc import ProgrammingError
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.reports.factory import ReportFactory
@@ -12,6 +10,7 @@ from corehq.apps.userreports.tests.utils import get_sample_data_source, get_samp
     get_sample_report_config, doc_to_change
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.sql_db import connections
+from corehq.sql_db.tests.utils import temporary_database
 
 
 class UCRMultiDBTest(TestCase):
@@ -44,16 +43,8 @@ class UCRMultiDBTest(TestCase):
         cls.ds_2.engine_id = 'engine-2'
         cls.ds_2.save()
 
-        # use db1 engine to create db2 http://stackoverflow.com/a/8977109/8207
-        cls.root_engine = create_engine(settings.SQL_REPORTING_DATABASE_URL)
-        conn = cls.root_engine.connect()
-        conn.execute('commit')
-        try:
-            conn.execute('CREATE DATABASE {}'.format(cls.db2_name))
-        except ProgrammingError:
-            # optimistically assume it failed because was already created.
-            pass
-        conn.close()
+        cls.db_context = temporary_database(cls.db2_name)
+        cls.db_context.__enter__()
 
         cls.ds1_adapter = IndicatorSqlAdapter(cls.ds_1)
         cls.ds2_adapter = IndicatorSqlAdapter(cls.ds_2)
@@ -78,13 +69,7 @@ class UCRMultiDBTest(TestCase):
         cls.ds2_adapter.session_helper.engine.dispose()
 
         # drop the secondary database
-        conn = cls.root_engine.connect()
-        conn.execute('rollback')
-        try:
-            conn.execute('DROP DATABASE {}'.format(cls.db2_name))
-        finally:
-            conn.close()
-            cls.root_engine.dispose()
+        cls.db_context.__exit__(None, None, None)
 
     def tearDown(self):
         self.ds1_adapter.session_helper.Session.remove()
@@ -111,7 +96,7 @@ class UCRMultiDBTest(TestCase):
         pillow.bootstrap(configs=[self.ds_1, self.ds_2])
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
         sample_doc, _ = get_sample_doc_and_indicators()
-        pillow.processor(doc_to_change(sample_doc))
+        pillow.process_change(doc_to_change(sample_doc))
         self.assertNotEqual(self.ds1_adapter.engine.url, self.ds2_adapter.engine.url)
         self.assertEqual(1, self.ds1_adapter.get_query_object().count())
         self.assertEqual(1, self.ds2_adapter.get_query_object().count())
@@ -121,7 +106,7 @@ class UCRMultiDBTest(TestCase):
         pillow.bootstrap(configs=[self.ds_1])
 
         sample_doc, _ = get_sample_doc_and_indicators()
-        pillow.processor(doc_to_change(sample_doc))
+        pillow.process_change(doc_to_change(sample_doc))
 
         self.assertEqual(1, self.ds1_adapter.get_query_object().count())
         self.assertEqual(0, self.ds2_adapter.get_query_object().count())
@@ -130,7 +115,7 @@ class UCRMultiDBTest(TestCase):
         pillow.bootstrap(configs=[self.ds_2])
         orig_id = sample_doc['_id']
         sample_doc['_id'] = uuid.uuid4().hex
-        pillow.processor(doc_to_change(sample_doc))
+        pillow.process_change(doc_to_change(sample_doc))
         self.assertEqual(1, self.ds1_adapter.get_query_object().count())
         self.assertEqual(1, self.ds2_adapter.get_query_object().count())
         self.assertEqual(1, self.ds1_adapter.get_query_object().filter_by(doc_id=orig_id).count())

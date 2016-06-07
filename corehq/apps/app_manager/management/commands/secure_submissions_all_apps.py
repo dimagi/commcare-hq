@@ -20,6 +20,7 @@ def turn_on_secure_submissions_for_all_apps(domain):
 
 
 class Command(BaseCommand):
+
     def handle(self, *args, **options):
         domains = list(args)
         for domain in domains:

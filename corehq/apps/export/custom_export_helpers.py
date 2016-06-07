@@ -23,6 +23,7 @@ FORM_CASE_ID_PATH = 'form.case.@case_id'
 
 
 class AbstractProperty(object):
+
     def __get__(self, instance, owner):
         raise NotImplementedError()
 
@@ -349,7 +350,6 @@ class FormCustomExportHelper(CustomExportHelper):
                 for col in conf.get("column_configuration", []):
                     col["show"] = True
 
-
         table_conf[0]["column_configuration"] = column_conf
         return table_conf
 
@@ -357,6 +357,7 @@ class FormCustomExportHelper(CustomExportHelper):
         ctxt = super(FormCustomExportHelper, self).get_context()
         self.update_table_conf_with_questions(ctxt["table_configuration"])
         return ctxt
+
 
 class CustomColumn(object):
 

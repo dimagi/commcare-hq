@@ -158,7 +158,6 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
     # transform docs onto output and save
     writer = get_writer(format)
 
-
     # format the headers the way the export likes them
     headers = FormattedRow.wrap_all_rows(headers)
     writer.open(headers, file, max_column_size=max_column_size)
@@ -184,7 +183,6 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
     if not config.potentially_relevant_ids:
         return None, None, None
 
-
     # get and checkpoint the latest schema
     updated_schema = config.get_latest_schema()
     export_schema_checkpoint = config.create_new_checkpoint()
@@ -193,8 +191,10 @@ def get_export_components(schema_index, previous_export_id=None, filter=None):
 
 
 class Constant(UnicodeMixIn):
+
     def __init__(self, message):
         self.message = message
+
     def __unicode__(self):
         return self.message
 
@@ -210,6 +210,7 @@ scalar_never_was = Constant(SCALAR_NEVER_WAS)
 list_never_was = Constant(LIST_NEVER_WAS)
 transform_error_constant = Constant("---ERR---")
 
+
 def render_never_was(schema):
     if isinstance(schema, dict):
         answ = {}
@@ -223,6 +224,8 @@ def render_never_was(schema):
         return scalar_never_was
 
 unknown_type = None
+
+
 def fit_to_schema(doc, schema):
 
     def log(msg):
@@ -351,6 +354,7 @@ class FormattedRow(object):
 
     The id should be an iterable (compound ids are supported).
     """
+
     def __init__(self, data, id=None, separator=".", id_index=0,
                  is_header_row=False):
         self.data = data

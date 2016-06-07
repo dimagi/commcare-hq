@@ -3,6 +3,7 @@ from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import document_types
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.tests.utils import get_current_kafka_seq
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
@@ -14,7 +15,6 @@ from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index
-from testapps.test_pillowtop.utils import get_current_kafka_seq
 
 
 class DomainPillowTest(TestCase):

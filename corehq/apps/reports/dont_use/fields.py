@@ -6,17 +6,12 @@ from django.template.context import Context
 from django.template.loader import render_to_string
 import pytz
 import warnings
-from corehq.apps.programs.models import Program
-from corehq.apps.groups.models import Group
-from corehq.apps.reports.models import HQUserType
 from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
 import uuid
 from corehq.apps.reports.util import (
     DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER,
     DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER,
 )
-from corehq.apps.users.models import WebUser
 
 
 class ReportField(object):
@@ -25,7 +20,7 @@ class ReportField(object):
     is_cacheable = False
 
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
-                 is_bootstrap3=False, css_label=None, css_field=None):
+                 css_label=None, css_field=None):
         warnings.warn(
             "ReportField (%s) is deprecated. Use ReportFilter instead." % (
                 self.__class__.__name__
@@ -37,7 +32,6 @@ class ReportField(object):
         self.domain = domain
         self.timezone = timezone
         self.parent_report = parent_report
-        self.is_bootstrap3 = is_bootstrap3
         self.css_label = css_label or DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER
         self.css_field = css_field or DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER
 
@@ -47,7 +41,7 @@ class ReportField(object):
         self.context['css_label_class'] = self.css_label
         self.context['css_field_class'] = self.css_field
         self.update_context()
-        return render_to_string(self.get_bootstrap_template(), self.context)
+        return render_to_string(self.template, self.context)
 
     def update_context(self):
         """
@@ -55,16 +49,11 @@ class ReportField(object):
         """
         pass
 
-    def get_bootstrap_template(self):
-        if self.is_bootstrap3:
-            return self.template.replace('/bootstrap2/', '/bootstrap3/')
-        return self.template
-
 
 class ReportSelectField(ReportField):
     slug = "generic_select"
     name = ugettext_noop("Generic Select")
-    template = "reports/dont_use_fields/bootstrap2/select_generic.html"
+    template = "reports/dont_use_fields/select_generic.html"
     default_option = ugettext_noop("Select Something...")
     options = [dict(val="val", text="text")]
     cssId = "generic_select_box"

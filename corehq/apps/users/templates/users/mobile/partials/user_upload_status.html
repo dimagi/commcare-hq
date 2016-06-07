@@ -1,4 +1,4 @@
-{% extends "style/bootstrap2/partials/download_status.html" %}
+{% extends "style/partials/download_status.html" %}
 {% load i18n %}
 {% block results %}
     <div class="alert alert-success">
@@ -6,7 +6,7 @@
         <p>{% blocktrans with count=result.success_count %}Successfully uploaded {{ count }} mobile workers.{% endblocktrans %}</p>
     </div>
 {% if result.has_errors %}
-    <div class="alert alert-error">
+    <div class="alert alert-danger">
     <h3>{% trans "However, we ran into problems with the following users:" %}</h3>
         {% for e in result.errors %}
         <p>{{ e }}</p>

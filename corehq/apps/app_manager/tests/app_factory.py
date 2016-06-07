@@ -20,6 +20,7 @@ class AppFactory(object):
     >>> factory.form_requires_case(form3, case_type='person', parent_case_type='house')
     >>> factory.form_opens_case(form3, case_type='child', is_subcase=True)
     """
+
     def __init__(self, domain='test', name='Untitled Application', version=APP_V2, build_version=None):
         self.app = Application.new_app(domain, name, application_version=version)
         if build_version:

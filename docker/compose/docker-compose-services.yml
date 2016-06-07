@@ -33,7 +33,7 @@ elasticsearch:
   ports:
     - "9200:9200"
   volumes:
-    - ${DOCKER_DATA_HOME}/elasticsearch:/usr/share/elasticsearch/data
+    - ${ES_DATA_VOLUME}:/usr/share/elasticsearch/data
 
 kafka:
   extends:

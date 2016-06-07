@@ -111,6 +111,7 @@ class CommTrackSettingsForm(forms.Form):
 
 
 class ConsumptionForm(forms.Form):
+
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
         super(ConsumptionForm, self).__init__(*args, **kwargs)
@@ -191,7 +192,6 @@ class StockLevelsForm(FormListForm):
     """
     Form for specifying stock levels per location type
     """
-    template = "style/bootstrap3/partials/form_list_form.html"
 
     child_form_class = LocationTypeStockLevels
     columns = [

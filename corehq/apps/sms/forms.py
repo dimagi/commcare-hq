@@ -1,6 +1,6 @@
 import re
 import json
-from crispy_forms.bootstrap import StrictButton, InlineField, FormActions
+from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div
 from django import forms
@@ -10,14 +10,14 @@ from django.forms.fields import *
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from django.utils.safestring import mark_safe
-from corehq.apps.hqwebapp.crispy import (BootstrapMultiField, HiddenFieldWithErrors, FieldsetAccordionGroup)
+from corehq.apps.hqwebapp.crispy import HiddenFieldWithErrors
 from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD, SQLMobileBackend
 from django.core.exceptions import ValidationError
-from corehq.apps.reminders.forms import RecordListField, validate_time
+from corehq.apps.reminders.forms import validate_time
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.sms.util import (validate_phone_number, strip_plus,
     get_sms_backend_classes)
@@ -748,6 +748,7 @@ class SettingsForm(Form):
     def clean_sms_conversation_length(self):
         # Just cast to int, the ChoiceField will validate that it is an integer
         return int(self.cleaned_data.get("sms_conversation_length"))
+
 
 class BackendForm(Form):
     _cchq_domain = None

@@ -4,6 +4,7 @@ from corehq.apps.locations.fixtures import LocationSet
 
 
 class LocationSetTest(SimpleTestCase):
+
     def test_duplicate_locations(self):
         parent = LocationType(
             domain="test-domain",

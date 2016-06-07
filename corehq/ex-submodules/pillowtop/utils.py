@@ -17,6 +17,8 @@ from pillowtop.exceptions import PillowNotFoundError
 
 def get_pillow_instance(full_class_str):
     pillow_class = _import_class_or_function(full_class_str)
+    if pillow_class is None:
+        raise ValueError('No pillow class found for {}'.format(full_class_str))
     return pillow_class()
 
 
@@ -49,6 +51,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
     """
     Helper object for getting pillow classes/instances from settings
     """
+
     def get_class(self):
         return _import_class_or_function(self.class_name)
 

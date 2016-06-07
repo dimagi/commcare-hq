@@ -4,6 +4,7 @@ from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
+    Instance,
     PushFrame,
     QueryData,
     QueryPrompt,
@@ -17,12 +18,21 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath
+from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath
 from corehq.apps.case_search.models import CALCULATED_DATA, MARK_AS_CLAIMED
 from corehq.util.view_utils import absolute_reverse
 
 
 RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
+SESSION_INSTANCE = 'querysession'
+
+
+class QuerySessionXPath(InstanceXpath):
+    id = SESSION_INSTANCE
+
+    @property
+    def path(self):
+        return 'session/data/{}'.format(self)
 
 
 class SyncRequestContributor(SuiteContributorByModule):
@@ -38,6 +48,7 @@ class SyncRequestContributor(SuiteContributorByModule):
     .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#sync-request
 
     """
+
     def get_module_contributions(self, module):
         if module_offers_search(module):
             domain = self.app.domain
@@ -50,28 +61,8 @@ class SyncRequestContributor(SuiteContributorByModule):
                     data=[
                         QueryData(
                             key='case_id',
-                            ref=(CaseTypeXpath(module.case_type)
-                                 .case(instance_name=RESULTS_INSTANCE)
-                                 .select(u'@status', u'open', quote=True)
-                                 .select_raw(0)
-                                 .slash(u'@case_id')),
-                            # e.g. instance('results')/results/case[@case_type='foo'][@status='open'][0]/@case_id
-                        ),
-                        QueryData(
-                            key='case_type',
-                            ref=(CaseTypeXpath(module.case_type)
-                                 .case(instance_name=RESULTS_INSTANCE)
-                                 .select(u'@status', u'open', quote=True)
-                                 .select_raw(0)
-                                 .slash(u'@case_type')),
-                        ),
-                        QueryData(
-                            key='case_name',
-                            ref=(CaseTypeXpath(module.case_type)
-                                 .case(instance_name=RESULTS_INSTANCE)
-                                 .select(u'@status', u'open', quote=True)
-                                 .select_raw(0)
-                                 .slash(u'name')),
+                            ref=QuerySessionXPath('case_id').instance(),
+                            # e.g. instance('querysession')/session/data/case_id
                         ),
                     ]
                 ),
@@ -82,6 +73,11 @@ class SyncRequestContributor(SuiteContributorByModule):
                         text=Text(locale_id=id_strings.case_search_locale(module)),
                     ),
                 ),
+
+                instances=[Instance(
+                    id=SESSION_INSTANCE,
+                    src='jr://instance/session'
+                )],
 
                 session=SyncRequestSession(
                     queries=[
@@ -120,7 +116,7 @@ class SyncRequestContributor(SuiteContributorByModule):
 
             frame = PushFrame()
             # Open first form in module
-            frame.add_command(XPath.string(id_strings.form_command(module, module.forms[0])))
+            frame.add_command(XPath.string(id_strings.menu_id(module)))
             frame.add_datum(StackDatum(id=CALCULATED_DATA, value=XPath.string(MARK_AS_CLAIMED)))
             sync_request.stack.add_frame(frame)
 

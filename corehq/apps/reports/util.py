@@ -11,11 +11,7 @@ from django.utils import html, safestring
 from corehq.apps.users.permissions import get_extra_permissions
 
 from couchexport.util import SerializableFunction
-from couchforms.analytics import (
-    get_all_user_ids_submitted,
-    get_first_form_submission_received,
-    get_username_in_last_form_user_id_submitted,
-)
+from couchforms.analytics import get_first_form_submission_received
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
@@ -28,6 +24,10 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 
 from .models import HQUserType, TempCommCareUser
+from .analytics.esaccessors import (
+    get_all_user_ids_submitted,
+    get_username_in_last_form_user_id_submitted,
+)
 
 DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
 DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
@@ -88,6 +88,13 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         Returns a list of CommCare Users based on domain, group, and user 
         filter (demo_user, admin, registered, unknown)
     """
+    def _create_temp_user(user_id):
+        username = get_username_from_forms(domain, user_id).lower()
+        temp_user = TempCommCareUser(domain, username, user_id)
+        if user_filter[temp_user.filter_flag].show:
+            return temp_user
+        return None
+
     user_ids = user_ids if user_ids and user_ids[0] else None
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
@@ -99,7 +106,15 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         users = group.get_users(is_active=(not include_inactive), only_commcare=True)
     elif user_ids is not None:
         try:
-            users = [CommCareUser.get_by_user_id(id) for id in user_ids]
+            users = []
+            for id in user_ids:
+                user = CommCareUser.get_by_user_id(id)
+                if not user and (user_filter[HQUserType.ADMIN].show or
+                      user_filter[HQUserType.DEMO_USER].show or
+                      user_filter[HQUserType.UNKNOWN].show):
+                    user = _create_temp_user(id)
+                if user:
+                    users.append(user)
         except Exception:
             users = []
         if users and users[0] is None:
@@ -116,21 +131,20 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
                 user = registered_user_ids[user_id]
                 users.append(user)
-            elif not user_id in registered_user_ids and \
+            elif (user_id not in registered_user_ids and
                  (user_filter[HQUserType.ADMIN].show or
                   user_filter[HQUserType.DEMO_USER].show or
-                  user_filter[HQUserType.UNKNOWN].show):
-                username = get_username_from_forms(domain, user_id).lower()
-                temp_user = TempCommCareUser(domain, username, user_id)
-                if user_filter[temp_user.filter_flag].show:
-                    users.append(temp_user)
+                  user_filter[HQUserType.UNKNOWN].show)):
+                user = _create_temp_user(user_id)
+                if user:
+                    users.append(user)
         if user_filter[HQUserType.UNKNOWN].show:
             users.append(TempCommCareUser(domain, '*', None))
 
         if user_filter[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
             for user_id in registered_user_ids:
-                if not user_id in submitted_user_ids:
+                if user_id not in submitted_user_ids:
                     user = CommCareUser.get_by_user_id(user_id)
                     users.append(user)
 
@@ -190,6 +204,11 @@ class SimplifiedUserInfo(
     def group_ids(self):
         return Group.by_user(self.user_id, False)
 
+    @property
+    @memoized
+    def location_id(self):
+        return CommCareUser.get_by_user_id(self.user_id).location_id
+
 
 def _report_user_dict(user):
     """
@@ -210,6 +229,7 @@ def _report_user_dict(user):
         first = user.get('first_name', '')
         last = user.get('last_name', '')
         full_name = (u"%s %s" % (first, last)).strip()
+
         def parts():
             yield u'%s' % html.escape(raw_username)
             if full_name:
@@ -230,6 +250,7 @@ def format_datatables_data(text, sort_key, raw=None):
     if raw is not None:
         data['raw'] = raw
     return data
+
 
 def app_export_filter(doc, app_id):
     if app_id:
@@ -393,10 +414,12 @@ def batch_qs(qs, batch_size=1000):
         end = min(start + batch_size, total)
         yield (start, end, total, qs[start:end])
 
+
 def stream_qs(qs, batch_size=1000):
     for _, _, _, qs in batch_qs(qs, batch_size):
         for item in qs:
             yield item
+
 
 def numcell(text, value=None, convert='int', raw=None):
     if value is None:

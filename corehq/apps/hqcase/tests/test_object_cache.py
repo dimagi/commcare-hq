@@ -8,8 +8,7 @@ from corehq.apps.domain.models import Domain
 
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.test_multimedia import BaseCaseMultimediaTest, TEST_CASE_ID
+from casexml.apps.case.tests.test_multimedia import BaseCaseMultimediaTest
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 
@@ -17,6 +16,7 @@ from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
 TEST_USER = 'case_attachment@hqtesting.com'
 
 TEST_PASSWORD = 'testing'
+
 
 def hack_local_url(url):
     #hack, in tests, this is the in built sites which is not useful externally

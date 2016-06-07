@@ -1,0 +1,10 @@
+{% extends 'mocha/base.html' %}
+{% load hq_shared_tags %}
+
+{% block dependencies %}
+<script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
+{% endblock %}
+
+{% block mocha_tests %}
+<script src="{% static 'userreports/spec/PropertyListItem.spec.js' %}"></script>
+{% endblock %}

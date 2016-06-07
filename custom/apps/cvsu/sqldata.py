@@ -208,6 +208,7 @@ class BaseSqlData(SqlData):
 
 
 class AgeGenderFilteredReport(BaseSqlData):
+
     @property
     def filters(self):
         filters = super(AgeGenderFilteredReport, self).filters
@@ -516,6 +517,7 @@ class ChildrenInHouseholdDataTrend(DateColumnMixin, make_trend(ChildrenInHouseho
 
 
 class CVSUServicesDataTrend(DateColumnMixin, CVSUSqlDataMixin, make_trend(CVSUServicesData)):
+
     @property
     def columns(self):
         cols = [
@@ -566,6 +568,7 @@ class CVSUServicesDataTrend(DateColumnMixin, CVSUSqlDataMixin, make_trend(CVSUSe
 
 
 class CVSUActivityDataTrend(DateColumnMixin, CVSUSqlDataMixin, make_trend(CVSUActivityData)):
+
     @property
     def columns(self):
         cols = [

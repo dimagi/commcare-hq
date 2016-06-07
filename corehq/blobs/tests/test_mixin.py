@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import os
 import uuid
 from base64 import b64encode
+from copy import deepcopy
 from hashlib import md5
 from os.path import join
 from unittest import TestCase
@@ -28,11 +29,13 @@ class BaseTestCase(TestCase):
     def tearDownClass(cls):
         cls.db.close()
 
-    def make_doc(self, type_):
+    def make_doc(self, type_=None):
+        if type_ is None:
+            type_ = FakeCouchDocument
         return type_({"_id": uuid.uuid4().hex})
 
     def setUp(self):
-        self.obj = self.make_doc(FakeCouchDocument)
+        self.obj = self.make_doc()
 
 
 class TestBlobMixin(BaseTestCase):
@@ -89,6 +92,52 @@ class TestBlobMixin(BaseTestCase):
         self.obj.put_attachment(content, name, content_type="text/plain")
         self.assertEqual(self.obj.blobs[name].content_type, "text/plain")
         self.assertEqual(self.obj.blobs[name].content_length, 7)
+
+    def test_deferred_put_attachment(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        content = StringIO(b"content")
+        obj.deferred_put_attachment(content, name, content_type="text/plain")
+        self.assertEqual(obj.blobs[name].id, None)
+        self.assertEqual(obj.blobs[name].content_type, "text/plain")
+        self.assertEqual(obj.blobs[name].content_length, 7)
+        self.assertFalse(obj.saved)
+
+    def test_put_attachment_overwrites_unsaved_blob(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        obj.deferred_put_attachment(b"<xml />", name, content_type="text/xml")
+        obj.put_attachment(b"new", name, content_type="text/plain")
+        self.assertTrue(obj.blobs[name].id is not None)
+        self.assertEqual(obj.blobs[name].content_type, "text/plain")
+        self.assertEqual(obj.blobs[name].content_length, 3)
+
+    def test_fetch_attachment_returns_unsaved_blob(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        content = b"<xml />"
+        obj.deferred_put_attachment(content, name, content_type="text/xml")
+        self.assertEqual(obj.fetch_attachment(name), content)
+
+    def test_delete_attachment_deletes_unsaved_blob(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        content = b"<xml />"
+        obj.deferred_put_attachment(content, name, content_type="text/xml")
+        self.assertTrue(obj.delete_attachment(name))
+        with self.assertRaises(mod.ResourceNotFound):
+            self.obj.fetch_attachment(name)
+
+    def test_save_persists_unsaved_blob(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        content = StringIO(b"content")
+        obj.deferred_put_attachment(content, name, content_type="text/plain")
+        obj.save()
+        self.assertTrue(obj.saved)
+        self.assertTrue(obj.blobs[name].id is not None)
+        self.assertEqual(obj.blobs[name].content_type, "text/plain")
+        self.assertEqual(obj.blobs[name].content_length, 7)
 
     def test_blob_directory(self):
         name = "test.1"
@@ -327,6 +376,38 @@ class TestBlobMixin(BaseTestCase):
         blob = self.get_blob(bucket=doc._blobdb_bucket())
         self.assertTrue(not blob.exists() or len(blob.listdir()) == 0)
 
+    def test_atomic_blobs_bug_deleting_existing_blob(self):
+        self.obj.put_attachment("file content", "file")
+        old_meta = self.obj.blobs["file"]
+        saved = []
+
+        def save():
+            self.obj.save()
+            assert self.obj.blobs["file"] is not old_meta
+            saved.append(1)
+
+        with self.obj.atomic_blobs(save):
+            self.obj.put_attachment("new content", "new")
+        self.assertTrue(saved)
+        # bug caused old blobs (not modifed in atomic context) to be deleted
+        self.assertEqual(self.obj.fetch_attachment("file"), "file content")
+
+    def test_atomic_blobs_bug_deleting_existing_blob_on_save_failure(self):
+        self.obj.put_attachment("file content", "file")
+        old_meta = self.obj.blobs["file"]
+
+        def save():
+            self.obj.save()
+            assert self.obj.blobs["file"] is not old_meta
+            raise BlowUp("boom!")
+
+        with self.assertRaises(BlowUp):
+            with self.obj.atomic_blobs(save):
+                self.obj.put_attachment("new content", "new")
+        self.assertNotIn("new", self.obj.blobs)
+        # bug caused old blobs (not modifed in atomic context) to be deleted
+        self.assertEqual(self.obj.fetch_attachment("file"), "file content")
+
     def get_blob(self, name=None, bucket=None):
         return self.TestBlob(self.db, name, bucket)
 
@@ -419,6 +500,239 @@ class TestBlobMixinWithMigratingDbAfterCopyToNew(TestBlobMixinWithMigratingDbBef
         cls.db = PutInOldCopyToNewBlobDB(cls.db, TemporaryFilesystemBlobDB())
 
 
+class TestBlobHelper(BaseTestCase):
+
+    def setUp(self):
+        self.couch = FakeCouchDatabase()
+
+    def make_doc(self, type_=mod.BlobHelper, doc=None):
+        if doc is None:
+            doc = {}
+        doc["_id"] = uuid.uuid4().hex
+        if doc.get("_attachments"):
+            for name, attach in doc["_attachments"].iteritems():
+                self.couch.put_attachment(doc, name=name, **attach)
+        obj = type_(doc, self.couch)
+        if "external_blobs" in doc:
+            save_log = list(self.couch.save_log)
+            for name, attach in list(doc["external_blobs"].iteritems()):
+                obj.put_attachment(name=name, **attach)
+            self.couch.save_log = save_log
+        return obj
+
+    def test_put_and_fetch_attachment_from_couch(self):
+        obj = self.make_doc(doc={"_attachments": {}})
+        content = "test couch"
+        self.assertFalse(self.couch.data)
+        obj.put_attachment(content, "file.txt", content_type="text/plain")
+        self.assertEqual(obj.fetch_attachment("file.txt"), content)
+        self.assertTrue(self.couch.data)
+        self.assertFalse(self.couch.save_log)
+
+    def test_put_attachment_error_on_ambiguous_backend(self):
+        obj = self.make_doc()
+        with self.assertRaises(mod.AmbiguousBlobStorageError):
+            obj.put_attachment("test", "file.txt", content_type="text/plain")
+
+    def test_fetch_attachment_do_not_hit_couch_when_not_migrating(self):
+        def fetch_fail(*args, **kw):
+            raise Exception("fail!")
+        couch = FakeCouchDatabase()
+        couch.fetch_attachment = fetch_fail
+        obj = mod.BlobHelper({
+            "_id": "fetch-fail",
+            "external_blobs": {"not-found.txt": {"id": "hahaha"}},
+        }, couch)
+        self.assertFalse(obj.migrating_blobs_from_couch)
+        with self.assertRaises(mod.ResourceNotFound):
+            obj.fetch_attachment("not-found.txt")
+
+    def test_fetch_attachment_not_found_while_migrating(self):
+        obj = mod.BlobHelper({
+            "_id": "fetch-fail",
+            "_attachments": {"migrating...": {}},
+            "external_blobs": {"not-found.txt": {"id": "nope"}},
+        }, self.couch)
+        self.assertTrue(obj.migrating_blobs_from_couch)
+        with self.assertRaises(mod.ResourceNotFound):
+            obj.fetch_attachment("not-found.txt")
+
+    def test_put_and_fetch_attachment_from_blob_db(self):
+        obj = self.make_doc(doc={"external_blobs": {}})
+        content = "test blob"
+        self.assertFalse(self.couch.data)
+        obj.put_attachment(content, "file.txt", content_type="text/plain")
+        self.assertEqual(obj.fetch_attachment("file.txt"), content)
+        self.assertFalse(self.couch.data)
+        self.assertEqual(self.couch.save_log, [{
+            "_id": obj._id,
+            "external_blobs": {
+                "file.txt": {
+                    "id": obj.blobs["file.txt"].id,
+                    "content_type": "text/plain",
+                    "content_length": 9,
+                    "digest": "md5-PKF0bQ5Vl99sgbsjAnyNQA==",
+                    "doc_type": "BlobMeta",
+                },
+            },
+        }])
+
+    def test_fetch_attachment_from_multi_backend_doc(self):
+        obj = self.make_doc(doc={
+            "_attachments": {
+                "couch.txt": {
+                    "content_type": "text/plain",
+                    "content": "couch",
+                },
+            },
+            "external_blobs": {
+                "blob.txt": {
+                    "content_type": "text/plain",
+                    "content": "blob",
+                }
+            },
+        })
+        self.assertTrue(obj.migrating_blobs_from_couch)
+        self.assertEqual(obj.fetch_attachment("couch.txt"), "couch")
+        self.assertEqual(obj.fetch_attachment("blob.txt"), "blob")
+        self.assertFalse(self.couch.save_log)
+
+    def test_atomic_blobs_with_couch_attachments(self):
+        obj = self.make_doc(doc={"_attachments": {}})
+        self.assertFalse(self.couch.data)
+        self.assertFalse(obj.migrating_blobs_from_couch)
+        with obj.atomic_blobs():
+            # save before put
+            self.assertEqual(self.couch.save_log, [{
+                "_id": obj._id,
+                "_attachments": {},
+            }])
+            obj.put_attachment("test", "file.txt", content_type="text/plain")
+        self.assertEqual(len(self.couch.save_log), 1)  # no new save
+        self.assertEqual(obj.fetch_attachment("file.txt"), "test")
+        self.assertTrue(self.couch.data)
+
+    def test_atomic_blobs_with_external_blobs(self):
+        obj = self.make_doc(doc={"_attachments": {}, "external_blobs": {}})
+        self.assertFalse(self.couch.data)
+        self.assertFalse(obj.migrating_blobs_from_couch)
+        with obj.atomic_blobs():
+            # no save before put
+            self.assertEqual(self.couch.save_log, [])
+            obj.put_attachment("test", "file.txt", content_type="text/plain")
+        self.assertEqual(self.couch.save_log, [{
+            "_id": obj._id,
+            "_attachments": {},
+            "external_blobs": {
+                "file.txt": {
+                    "id": obj.blobs["file.txt"].id,
+                    "content_type": "text/plain",
+                    "content_length": 4,
+                    "digest": "md5-CY9rzUYh03PK3k6DJie09g==",
+                    "doc_type": "BlobMeta",
+                },
+            },
+        }])
+        self.assertEqual(obj.fetch_attachment("file.txt"), "test")
+        self.assertFalse(self.couch.data)
+
+    def test_atomic_blobs_with_migrating_couch_attachments(self):
+        obj = self.make_doc(doc={
+            "_attachments": {
+                "doc.txt": {
+                    "content_type": "text/plain",
+                    "content": "doc",
+                },
+            },
+            "external_blobs": {},
+        })
+        self.assertEqual(len(self.couch.data), 1)
+        self.assertTrue(obj.migrating_blobs_from_couch)
+        with obj.atomic_blobs():
+            # no save before put
+            self.assertEqual(self.couch.save_log, [])
+            # fetch from couch
+            content = obj.fetch_attachment("doc.txt")
+            # put in blob db
+            obj.put_attachment(content, "doc.txt", content_type="text/plain")
+        # couch attachment removed
+        self.assertNotIn("doc.txt", obj.doc["_attachments"])
+        self.assertEqual(self.couch.meta, {})
+        # fetch from blob db
+        self.assertEqual(obj.fetch_attachment("doc.txt"), "doc")
+        self.assertEqual(self.couch.save_log, [{
+            "_id": obj._id,
+            "_attachments": {},
+            "external_blobs": {
+                "doc.txt": {
+                    "id": obj.blobs["doc.txt"].id,
+                    "content_type": "text/plain",
+                    "content_length": 3,
+                    "digest": "md5-mgm039qC4+Zl4xCS0cPsjQ==",
+                    "doc_type": "BlobMeta",
+                },
+            },
+        }])
+
+    def test_atomic_blobs_maintains_attachments_on_error(self):
+        obj = self.make_doc(doc={
+            "_attachments": {
+                "doc.txt": {
+                    "content_type": "text/plain",
+                    "content": "doc",
+                },
+            },
+            "external_blobs": {},
+        })
+        self.assertEqual(len(self.couch.data), 1)
+        self.assertTrue(obj.migrating_blobs_from_couch)
+        with self.assertRaises(Exception), obj.atomic_blobs():
+            # no save before put
+            self.assertEqual(self.couch.save_log, [])
+            # fetch from couch
+            content = obj.fetch_attachment("doc.txt")
+            # put in blob db
+            obj.put_attachment(content, "doc.txt", content_type="text/plain")
+            # should restore state to how it was before atomic_blobs()
+            raise Exception("fail!")
+        # couch attachment preserved
+        self.assertEqual(obj.external_blobs, obj.doc["external_blobs"])
+        self.assertEqual(obj._attachments, obj.doc["_attachments"])
+        self.assertIn("doc.txt", obj.doc["_attachments"])
+        self.assertFalse(obj.doc["external_blobs"])
+        self.assertTrue(self.couch.meta)
+
+
+class FakeCouchDatabase(object):
+
+    def __init__(self, name="couch"):
+        self.dbname = name
+        self.meta = {}
+        self.data = {}
+        self.save_log = []
+
+    def put_attachment(self, doc, content, name, **meta):
+        key = (doc["_id"], name)
+        self.meta[key] = meta
+        self.data[key] = content or ""
+        if doc.get("_attachments") is None:
+            doc["_attachments"] = {}
+        doc["_attachments"][name] = meta
+
+    def fetch_attachment(self, doc_id, name, stream=False):
+        assert not stream, 'not implemented'
+        return self.data[(doc_id, name)]
+
+    def save_doc(self, doc):
+        attachments = doc.get("_attachments") or {}
+        for key in list(self.data):
+            if key[0] == doc["_id"] and key[1] not in attachments:
+                # remove deleted attachment
+                del self.data[key]
+                del self.meta[key]
+        self.save_log.append(deepcopy(doc))
+
+
 class PutInOldBlobDB(TemporaryMigratingBlobDB):
 
     def put(self, *args, **kw):
@@ -434,13 +748,18 @@ class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
         return info
 
 
-class FakeCouchDocument(mod.BlobMixin, Document):
+class BaseFakeDocument(Document):
 
     class Meta:
         app_label = "couch"
 
-    doc_type = "FakeCouchDocument"
     saved = False
+
+    def save(self):
+        # couchdbkit does this (essentially)
+        # it creates new BlobMeta instances in self.external_blobs
+        self._doc.update(deepcopy(self._doc))
+        self.saved = True
 
     @classmethod
     def get_db(cls):
@@ -448,13 +767,25 @@ class FakeCouchDocument(mod.BlobMixin, Document):
             dbname = "commcarehq_test"
 
             class server:
+
                 @staticmethod
                 def next_uuid():
                     return uuid.uuid4().hex
         return fake_db
 
-    def save(self):
-        self.saved = True
+
+class FakeCouchDocument(mod.BlobMixin, BaseFakeDocument):
+
+    class Meta:
+        app_label = "couch"
+
+    doc_type = "FakeCouchDocument"
+
+
+class DeferredPutBlobDocument(mod.DeferredBlobMixin, BaseFakeDocument):
+
+    class Meta:
+        app_label = "couch"
 
 
 class FailingSaveCouchDocument(FakeCouchDocument):
@@ -463,7 +794,7 @@ class FailingSaveCouchDocument(FakeCouchDocument):
 
     def save(self):
         if self.allow_saves:
-            self.saved = True
+            super(FailingSaveCouchDocument, self).save()
             self.allow_saves -= 1
         else:
             raise BlowUp("save failed")

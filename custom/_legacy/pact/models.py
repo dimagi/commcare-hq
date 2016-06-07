@@ -37,6 +37,7 @@ dp = parser()
 
 
 class DOTSubmission(XFormInstance):
+
     @property
     def has_pillbox_check(self):
         pillbox_check_str = self.form['pillbox_check'].get('check', '')
@@ -70,6 +71,7 @@ class DOTSubmission(XFormInstance):
 
 
 class PactPatientCase(CommCareCase):
+
     class Meta:
         app_label = 'pact'
 

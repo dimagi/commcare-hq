@@ -1,4 +1,4 @@
-{% extends "style/bootstrap3/base_section.html" %}
+{% extends "style/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -28,14 +28,12 @@
 <script>
     $(function () {
         var langs = {{ sms_langs|JSON }};
-        var buildLangs = {{ sms_langs|JSON }};
         var saveURL = "{% url "edit_sms_languages" domain %}";
         var edit = true;
         var validate = true;
         var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
         var sl = new SupportedLanguages({
             langs: langs,
-            buildLangs: buildLangs,
             saveURL: saveURL,
             edit: edit,
             validate: validate
@@ -60,7 +58,7 @@
             <div id="translations-tab" class="tab-pane">
                 <div>
                     <section>
-                        {% include "style/bootstrap3/partials/bulk_upload.html" %}
+                        {% include "style/partials/bulk_upload.html" %}
                     </section>
                 </div>
             </div>

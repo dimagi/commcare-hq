@@ -31,6 +31,7 @@ def demo(request):
     demo_sleep.delay(download_id, howlong)
     return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
 
+
 @login_required
 def heartbeat_status(request):
     return HttpResponse(json.dumps({"last_timestamp": str(last_heartbeat()),
@@ -39,10 +40,8 @@ def heartbeat_status(request):
     
 
 @login_required
-def ajax_job_poll(request, download_id, template="soil/partials/bootstrap2/dl_status.html"):
+def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
     message = request.GET['message'] if 'message' in request.GET else None
-    is_bootstrap3 = request.GET.get('is_bootstrap3', 'false') == 'true'
-    template = 'soil/partials/bootstrap3/dl_status.html' if is_bootstrap3 else template
     try:
         context = get_download_context(download_id, check_state=True, message=message)
     except TaskFailedError as e:

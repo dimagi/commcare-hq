@@ -31,6 +31,7 @@ from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import Permissions
 from corehq.util.files import file_extention_from_filename
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
@@ -208,7 +209,6 @@ def update_items(fields_patches, domain, data_type_id, transaction):
     data_items = FixtureDataItem.by_data_type(domain, data_type_id)
 
 
-
 def create_types(fields_patches, domain, data_tag, is_global, transaction):
     data_type = FixtureDataType(
         domain=domain,
@@ -219,6 +219,7 @@ def create_types(fields_patches, domain, data_tag, is_global, transaction):
     )
     transaction.save(data_type)
     return data_type
+
 
 @require_can_edit_fixtures
 def data_table(request, domain):
@@ -346,6 +347,10 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
     urlname = 'fixture_upload_status'
     page_title = ugettext_noop('Lookup Table Upload Status')
 
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(FixtureUploadStatusView, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         context = super(FixtureUploadStatusView, self).main_context
         context.update({
@@ -358,7 +363,7 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
             'next_url': reverse('edit_lookup_tables', args=[self.domain]),
             'next_url_text': _("Return to manage lookup tables"),
         })
-        return render(request, 'style/bootstrap2/soil_status_full.html', context)
+        return render(request, 'style/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

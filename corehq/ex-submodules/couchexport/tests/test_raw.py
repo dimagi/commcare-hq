@@ -5,6 +5,7 @@ import itertools
 from couchexport.export import export_raw, export_from_tables
 from couchexport.models import Format
 
+
 class ExportRawTest(TestCase):
 
     def test_export_raw(self):
@@ -16,10 +17,13 @@ class ExportRawTest(TestCase):
         EXPECTED = {"offices": {"headers": ["location", "name"], "rows": [["Delhi, India", "DSI"], ["Boston, USA", "Dimagi, Inc"], ["Capetown, South Africa", "DSA"]]}, "people": {"headers": ["name", "gender"], "rows": [["danny", "male"], ["amelia", "female"], ["carter", "various"]]}}
 
         that = self
+
         class Tester(object):
+
             def __enter__(self):
                 self.buffer = StringIO()
                 return self.buffer
+
             def __exit__(self, exc_type, exc_val, exc_tb):
                 if exc_type is None:
                     that.assertDictEqual(json.loads(self.buffer.getvalue()), EXPECTED)

@@ -69,9 +69,6 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         Note: Use upload_raw_excel_translations() instead. It allows easy modifications
         and diffs of xlsx data.
 
-        ToDo: Refactor tests using do_upload to use upload_raw_excel_translations(), use
-        WorkbookJSONReader.work_book_headers_as_tuples(), and
-        WorkbookJSONReader.work_book_data_as_tuples(), for making tuples from excel files
         """
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]
@@ -202,6 +199,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '', '', '', ''),
         ))
      )
+
     def test_set_up(self):
         self._shared_test_initial_set_up()
 
@@ -271,7 +269,6 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         )
 
 
-
 class MismatchedItextReferenceTest(BulkAppTranslationTestBase):
     """
     Test the bulk app translation upload when the itext reference in a question
@@ -323,7 +320,6 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
           ('no_media-label', 'No media', '', '', ''),
           ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')))
     )
-
 
     @classmethod
     def setUpClass(cls):
@@ -437,7 +433,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
         self.app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
-        self.app.build_langs = self.app.langs = ['en', 'afr', 'fra']
+        self.app.langs = ['en', 'afr', 'fra']
         module1 = self.app.add_module(Module.new_module('module', None))
         form1 = self.app.new_form(module1.id, "Untitled Form", None)
         form1.source = self.get_xml('initial_xform')

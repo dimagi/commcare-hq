@@ -10,25 +10,6 @@
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
     <script src="{% static 'registration/js/password.js' %}"></script>
     {% endif %}
-    <script>
-        // A/B test for displaying background photo on this page
-        $(document).ready(function() {
-            var $element = $(".hq-container");
-
-            // Make sure .hide gets removed, even if something goes wrong with KISSmetrics
-            _.delay(function() {
-                $element.removeClass("hide");
-            }, 1000);
-
-            _kmq.push(function () {
-                // When KISSmetrics is loaded, get the variant for this user.
-                if (KM.ab('Account creation photo', ["photo", "plain"]) === "photo") {
-                    $element.addClass("molly");
-                }
-                $element.removeClass("hide");
-            });
-        });
-    </script>
 {% endblock %}
 
 {% block registration-content %}

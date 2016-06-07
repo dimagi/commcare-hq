@@ -70,13 +70,13 @@
             <h1>Incoming Forms <small>This should update in real time.</small></h1>
             <div>
                 <div class="chart-wrapper">
-                    <h3>By Domain</h3>
+                    {% if not tvmode %}<h3>By Domain</h3>{% endif %}
                     <div id="chart">
                         <svg style='height:500px'></svg>
                     </div>
                 </div>
                 <div class="map-wrapper">
-                    <h3>By Country</h3>
+                    {% if not tvmode %}<h3>By Country</h3>{% endif %}
                     <div id="map"></div>
                 </div>
             </div>
@@ -105,21 +105,22 @@ jQuery(document).ready(function($) {
     // courtesy of http://colorbrewer2.org/
     var COUNTRY_COLORS = ['#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'];
     var COUNTRY_ACTIVE_COLORS = ['#fef0d9','#fdcc8a','#fc8d59','#e34a33','#b30000'];
-
     var ws4redis = WS4Redis({
         uri: '{{ WEBSOCKET_URI }}form-feed?subscribe-broadcast',
         receive_message: receiveMessage,
         heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
     });
 
+    // in tv mode we don't show domains in the graph but just countries
+    var tvmode = {{ tvmode|JSON }};
+    var chartSourceData = tvmode ? dimagisphere.formData.totalFormsByCountry : dimagisphere.formData.totalFormsByDomain;
+
     function addDataToMap(msgObj) {
-        if (dimagisphere.addData(msgObj)) {
-            colorAll();
-            // this removes from active after a bit of time
-            window.setTimeout(function () {
-                dimagisphere.formData.recentFormsByCountry[msgObj.country] -= 1;
-            }, 1000);
-        }
+        colorAll();
+        // this removes from active after a bit of time
+        window.setTimeout(function () {
+            dimagisphere.formData.recentFormsByCountry[msgObj.country] -= 1;
+        }, 1000);
     }
 
     // receive a message though the Websocket from the server
@@ -127,16 +128,13 @@ jQuery(document).ready(function($) {
         var msgObj = JSON.parse(msg);
         // var renderedMsg = '<strong>' + msgObj.username + '</strong>: ' + msgObj.message;
 
-        dimagisphere.formData.domainToCountry[msgObj.domain] = msgObj.country;
-
-        addDataToMap(msgObj);
-
+        dimagisphere.addData(msgObj);
+        if (msgObj.country) {
+            addDataToMap(msgObj);
+        }
         // add data to chart
-        var currentCount = dimagisphere.formData.totalFormsByDomain[msgObj.domain] || 0;
-        currentCount += 1;
-        dimagisphere.formData.totalFormsByDomain[msgObj.domain] = currentCount;
         if (chart !== undefined) {
-            chartData.datum(formatChartData(dimagisphere.formData.totalFormsByDomain)).call(chart);
+            chartData.datum(formatChartData(chartSourceData)).call(chart);
 
             // when the bar for a domain is clicked on, we can filter on that domain
             // isn't in use with just this one chart and the map, but maybe if there are other charts added
@@ -166,7 +164,7 @@ jQuery(document).ready(function($) {
           .showValues(true)
           .transitionDuration(350)
         ;
-        chartData = d3.select('#chart svg').datum(formatChartData(dimagisphere.formData.totalFormsByDomain));
+        chartData = d3.select('#chart svg').datum(formatChartData(chartSourceData));
         chartData.call(chart);
         nv.utils.windowResize(chart.update);
         return chart;
@@ -175,7 +173,11 @@ jQuery(document).ready(function($) {
         var values = $.map(data, function (count, domain) { return {'domain': domain, 'count': count}; });
         if (filter.country) {
             values = values.filter(function(obj) {
-                return dimagisphere.formData.domainToCountry[obj.domain] === filter.country;
+                if (tvmode) {
+                    return obj.domain === filter.country;
+                } else {
+                    return dimagisphere.formData.domainToCountry[obj.domain] === filter.country;
+                }
             });
         }
         // can uncomment the below line to sort by descending count (this causes colors to change over time)
@@ -272,7 +274,7 @@ jQuery(document).ready(function($) {
                     filter.country = layer.feature.properties.name;
                     // show the name in text somewhere to avoid scanning the map? maybe in the top right?
                 }
-                chartData.datum(formatChartData(dimagisphere.formData.totalFormsByDomain)).call(chart);
+                chartData.datum(formatChartData(chartSourceData)).call(chart);
                 countriesGeo.setStyle(style);
             }
         });

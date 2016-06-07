@@ -35,6 +35,7 @@ def get_facilities(location, domain):
         locations = SQLLocation.objects.filter(domain=domain, is_archived=False)
     return locations
 
+
 def product_format(ret, srs, month):
     NO_DATA = -1
     STOCKOUT = 0.00
@@ -420,6 +421,7 @@ class ProductSelectionPane(ILSData):
 class StockOnHandReport(DetailsReport):
     slug = "stock_on_hand"
     name = 'Stock On Hand'
+    exportable = True
 
     @property
     def title(self):

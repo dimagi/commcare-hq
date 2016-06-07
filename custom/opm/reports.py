@@ -19,6 +19,7 @@ from couchforms.models import XFormInstance
 from custom.opm.utils import numeric_fn
 from custom.utils.utils import clean_IN_filter_value
 
+from casexml.apps.case.models import CommCareCase
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import SimpleColumn
@@ -35,7 +36,7 @@ from corehq.apps.reports.util import (
     get_INFilter_bindparams,
     make_form_couch_key,
 )
-from corehq.apps.users.models import CommCareCase, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
 
@@ -167,8 +168,6 @@ class BaseReport(BaseMixin, GetParamsMixin, MonthYearMixin, CustomProjectReport,
     include_out_of_range_cases = False
 
     _debug_data = []
-
-    is_bootstrap3 = True
 
     @property
     def debug(self):
@@ -772,6 +771,7 @@ class NewHealthStatusReport(CaseReportMixin, BaseReport):
     @property
     def rows(self):
         totals = [[None, None] for i in range(len(self.model.method_map))]
+
         def add_to_totals(col, val, denom):
             for i, num in enumerate([val, denom]):
                 if isinstance(num, int):

@@ -86,10 +86,12 @@ DUE_LIST_CONFIG = [
     # test - to ignore: ["hep_b_0", "je", "vit_a_1"]
 ]
 
+
 def get_config_item_by_slug(slug):
     for i in DUE_LIST_CONFIG:
         if i['slug'] == slug:
             return i
+
 
 class DueListNav(GroupReferenceMixIn, BiharNavReport):
     slug = "duelistnav"
@@ -99,6 +101,7 @@ class DueListNav(GroupReferenceMixIn, BiharNavReport):
     report_template_path = "bihar/team_listing_tabular.html"
 
     extra_context_providers = [shared_bihar_context, summary_context, team_member_context]
+
     @property
     def reports(self):
         return [VaccinationSummaryToday, VaccinationSummaryTomorrow,
@@ -107,6 +110,7 @@ class DueListNav(GroupReferenceMixIn, BiharNavReport):
     @property
     def rendered_report_title(self):
         return self.group_display
+
 
 class VaccinationSummary(GroupReferenceMixIn, BiharSummaryReport):
     name = ugettext_noop("Care Due")
@@ -147,6 +151,7 @@ class VaccinationSummary(GroupReferenceMixIn, BiharSummaryReport):
         owner_id = self.group_id
         by_task_name = get_due_list_by_task_name(target_date, owner_id)
         return list(format_results(by_task_name))
+
 
 class VaccinationClientList(ClientListBase):
     name = ugettext_noop("Vaccination Client List")
@@ -213,10 +218,12 @@ class VaccinationClientList(ClientListBase):
 
         return [_to_row(case) for case in primary_cases.values()]
 
+
 def format_results(results):
     results_dict = dict(results)
     for item in DUE_LIST_CONFIG:
         yield (item, sum(results_dict.get(t, 0) for t in item['tasks']))
+
 
 def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, case_type='task'):
     case_es = case_es or ReportCaseES(BIHAR_DOMAIN)
@@ -251,6 +258,7 @@ def get_due_list_by_task_name(target_date, owner_id=None, case_es=None, size=0, 
     es_result = case_es.run_query(base_query, es_type=es_type)
     return ((facet['term'], facet['count']) for facet in es_result['facets'][facet_name]['terms'])
 
+
 def get_due_list_records(target_date, owner_id=None, task_types=None, case_es=None, size=MAX_ES_RESULTS, case_type='task'):
     '''
     A drill-down of the get_due_list_by_task_name, this returns the records for a particular
@@ -283,33 +291,44 @@ def get_due_list_records(target_date, owner_id=None, task_types=None, case_es=No
     return (result['_source'] for result in es_result['hits']['hits'])
 
 # TODO: this is pretty silly but doing this without classes would be a bit of extra work
+
+
 class VaccinationSummaryToday(VaccinationSummary):
     name = ugettext_noop("Care Due Today")
     slug = "vacstoday"
+
     def get_date(self):
         return datetime.today()
 
-class VaccinationSummaryTomorrow(VaccinationSummary):
-    name = ugettext_noop("Care Due Tomorrow")
-    slug = "vacstomorrow"
-    def get_date(self):
-        return datetime.today() + timedelta(days=1)
 
 class VaccinationSummaryTomorrow(VaccinationSummary):
     name = ugettext_noop("Care Due Tomorrow")
     slug = "vacstomorrow"
+
     def get_date(self):
         return datetime.today() + timedelta(days=1)
+
+
+class VaccinationSummaryTomorrow(VaccinationSummary):
+    name = ugettext_noop("Care Due Tomorrow")
+    slug = "vacstomorrow"
+
+    def get_date(self):
+        return datetime.today() + timedelta(days=1)
+
 
 class VaccinationSummary2Days(VaccinationSummary):
     name = ugettext_noop("Care Due In 2 Days")
     slug = "vacs2days"
+
     def get_date(self):
         return datetime.today() + timedelta(days=2)
+
 
 class VaccinationSummary3Days(VaccinationSummary):
     name = ugettext_noop("Care Due In 3 Days")
     slug = "vacs3days"
+
     def get_date(self):
         return datetime.today() + timedelta(days=3)
 

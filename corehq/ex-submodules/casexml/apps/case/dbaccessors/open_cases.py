@@ -1,4 +1,3 @@
-from dimagi.utils.couch.database import iter_docs
 
 
 def get_open_case_ids_in_domain(domain, type=None, owner_id=None):
@@ -20,10 +19,3 @@ def get_open_case_ids_in_domain(domain, type=None, owner_id=None):
         include_docs=False
     )]
     return case_ids
-
-
-def get_open_case_docs_in_domain(domain, type=None, owner_id=None):
-    from casexml.apps.case.models import CommCareCase
-    case_ids = get_open_case_ids_in_domain(domain, type, owner_id)
-    for doc in iter_docs(CommCareCase.get_db(), case_ids):
-        yield doc

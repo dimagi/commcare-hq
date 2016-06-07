@@ -6,7 +6,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.data_analytics.esaccessors import get_app_submission_breakdown_es
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
-from corehq.apps.sofabed.models import MISSING_APP_ID
+from corehq.const import MISSING_APP_ID
 from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
 from corehq.util.quickcache import quickcache
 
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 MaltAppData = namedtuple('MaltAppData', 'wam pam use_threshold experienced_threshold is_app_deleted')
+
 
 class MALTTableGenerator(object):
     """

@@ -1,4 +1,4 @@
-{% extends 'reports/async/bootstrap3/tabular.html' %}
+{% extends 'reports/async/tabular.html' %}
 {% load url from future %}
 {% load hq_shared_tags %}
 {% load report_tags %}
@@ -96,7 +96,6 @@
                     </select>
                 {% endblock %}
                 <span class="hq-help-template"
-                      data-bootstrap3="true"
                       data-placement="top"
                       data-title="{% trans 'Help' %}"
                       data-content="{% block help_content %}{% endblock %}"

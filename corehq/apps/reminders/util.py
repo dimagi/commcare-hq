@@ -10,8 +10,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, InvalidFormatException
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.form_processor.utils import is_commcarecase
 from corehq.util.quickcache import quickcache
-from casexml.apps.case.models import CommCareCase
 from django_prbac.utils import has_privilege
 
 
@@ -40,6 +40,7 @@ class DotExpandedDict(dict):
     >>> DotExpandedDict({'c.1': 2, 'c.2': 3, 'c': 1})
     {'c': 1}
     """
+
     def __init__(self, key_to_list_mapping):
         for k, v in key_to_list_mapping.items():
             current = self
@@ -92,7 +93,7 @@ def get_recipient_name(recipient, include_desc=True):
     elif isinstance(recipient, CouchUser):
         name = recipient.raw_username
         desc = "User"
-    elif isinstance(recipient, CommCareCase):
+    elif is_commcarecase(recipient):
         name = recipient.name
         desc = "Case"
     elif isinstance(recipient, Group):
@@ -146,7 +147,7 @@ def create_immediate_reminder(contact, content_type, reminder_type=None,
         RECIPIENT_SURVEY_SAMPLE,
         RECIPIENT_USER_GROUP,
     )
-    if isinstance(contact, CommCareCase):
+    if is_commcarecase(contact):
         recipient = RECIPIENT_CASE
     elif isinstance(contact, CommCareCaseGroup):
         recipient = RECIPIENT_SURVEY_SAMPLE
@@ -159,36 +160,36 @@ def create_immediate_reminder(contact, content_type, reminder_type=None,
 
     reminder_type = reminder_type or REMINDER_TYPE_DEFAULT
     if recipient == RECIPIENT_CASE:
-        case_id = contact._id
+        case_id = contact.case_id
     elif case is not None:
-        case_id = case._id
+        case_id = case.case_id
     else:
         case_id = None
 
     handler = CaseReminderHandler(
-        domain = contact.domain,
-        reminder_type = reminder_type,
-        nickname = "One-time Reminder",
-        default_lang = "xx",
-        method = content_type,
-        recipient = recipient,
-        start_condition_type = ON_DATETIME,
-        start_datetime = datetime.utcnow(),
-        start_offset = 0,
+        domain=contact.domain,
+        reminder_type=reminder_type,
+        nickname="One-time Reminder",
+        default_lang="xx",
+        method=content_type,
+        recipient=recipient,
+        start_condition_type=ON_DATETIME,
+        start_datetime=datetime.utcnow(),
+        start_offset=0,
         events = [CaseReminderEvent(
-            day_num = 0,
-            fire_time = time(0,0),
-            form_unique_id = form_unique_id if content_type == METHOD_SMS_SURVEY else None,
-            message = {"xx" : message} if content_type == METHOD_SMS else {},
+            day_num=0,
+            fire_time=time(0, 0),
+            form_unique_id=form_unique_id if content_type == METHOD_SMS_SURVEY else None,
+            message={'xx': message} if content_type == METHOD_SMS else {},
             callback_timeout_intervals = [],
         )],
-        schedule_length = 1,
-        event_interpretation = EVENT_AS_OFFSET,
-        max_iteration_count = 1,
-        case_id = case_id,
-        user_id = contact._id if recipient == RECIPIENT_USER else None,
-        sample_id = contact._id if recipient == RECIPIENT_SURVEY_SAMPLE else None,
-        user_group_id = contact._id if recipient == RECIPIENT_USER_GROUP else None,
+        schedule_length=1,
+        event_interpretation=EVENT_AS_OFFSET,
+        max_iteration_count=1,
+        case_id=case_id,
+        user_id=contact.get_id if recipient == RECIPIENT_USER else None,
+        sample_id=contact.get_id if recipient == RECIPIENT_SURVEY_SAMPLE else None,
+        user_group_id=contact.get_id if recipient == RECIPIENT_USER_GROUP else None,
         messaging_event_id=logged_event.pk if logged_event else None,
     )
     handler.save(send_immediately=True)
@@ -196,22 +197,6 @@ def create_immediate_reminder(contact, content_type, reminder_type=None,
 
 def can_use_survey_reminders(request):
     return has_privilege(request, privileges.INBOUND_SMS)
-
-
-def get_verified_number_for_recipient_old(recipient):
-    """
-    The old methodology: return the first verified number,
-                         sorted by number
-    The new methodology: return the verified number that's
-                         first in the user's list of numbers
-    This is the old methodology so that we can fix the small number
-    of users that are using the old one.
-    """
-    if hasattr(recipient, "get_verified_numbers"):
-        contact_verified_numbers = recipient.get_verified_numbers(False)
-        if len(contact_verified_numbers) > 0:
-            return sorted(contact_verified_numbers.iteritems())[0][1]
-    return None
 
 
 def get_verified_number_for_recipient(recipient):
@@ -224,8 +209,8 @@ def get_verified_number_for_recipient(recipient):
                 for phone in recipient.phone_numbers:
                     if phone in contact_verified_numbers:
                         return contact_verified_numbers[phone]
-                raise Exception("Phone numbers and VerifiedNumbers are out "
-                    "of sync for user %s" % recipient._id)
+                raise Exception("Phone number list and PhoneNumber entries are out "
+                    "of sync for user %s" % recipient.get_id)
             else:
                 raise Exception("Expected a CouchUser")
     return None
@@ -238,7 +223,7 @@ def get_unverified_number_for_recipient(recipient):
         except Exception:
             # todo: catch more specific error
             return None
-    elif isinstance(recipient, CommCareCase):
+    elif is_commcarecase(recipient):
         unverified_number = recipient.get_case_property("contact_phone_number")
         unverified_number = apply_leniency(unverified_number)
         if unverified_number:

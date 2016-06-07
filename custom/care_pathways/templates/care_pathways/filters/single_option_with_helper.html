@@ -1,4 +1,4 @@
-{% extends 'reports/filters/bootstrap3/single_option.html' %}
+{% extends 'reports/filters/single_option.html' %}
 
 {% block filter_js %}
     {{ block.super }}
@@ -6,7 +6,7 @@
     <script type="text/javascript">
     $(function () {
         $("fieldset .help-block").each( function (index, data) {
-            $(this).parents('.form-group').find("label:first").append('<span class="hq-help-template" data-placement="top" data-bootstrap3="true" data-content="' + data.textContent + '"></span>');
+            $(this).parents('.form-group').find("label:first").append('<span class="hq-help-template" data-placement="top" data-content="' + data.textContent + '"></span>');
             $(this).parent().prev().removeClass('col-xs-6');
             $(this).parent().remove();
         });

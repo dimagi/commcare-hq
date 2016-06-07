@@ -6,7 +6,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 
 
@@ -49,7 +49,7 @@ class OtaRestoreBugTest(TestCase):
 
         restore_config = RestoreConfig(
             project=domain,
-            user=user.to_casexml_user(),
+            restore_user=user.to_ota_restore_user(),
             params=RestoreParams(version=V2),
         )
         payload = restore_config.get_payload().as_string()

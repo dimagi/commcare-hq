@@ -2,7 +2,6 @@ from collections import namedtuple
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from corehq.apps.accounting import models as accounting
@@ -75,27 +74,27 @@ class SmsGatewayFeeCriteria(models.Model):
             for criteria in criteria_list:
                 if national_number.startswith(criteria.prefix):
                     return criteria
-            raise ObjectDoesNotExist
+            raise cls.DoesNotExist
 
         try:
             return get_criteria_with_longest_matching_prefix(
                 list(all_possible_criteria.filter(country_code=country_code, backend_instance=backend_instance))
             )
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=backend_instance)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return get_criteria_with_longest_matching_prefix(
                 list(all_possible_criteria.filter(country_code=country_code, backend_instance=None))
             )
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(country_code=None, backend_instance=None)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
 
         return None
@@ -199,11 +198,11 @@ class SmsUsageFeeCriteria(models.Model):
 
         try:
             return all_possible_criteria.get(domain=domain)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
         try:
             return all_possible_criteria.get(domain=None)
-        except ObjectDoesNotExist:
+        except cls.DoesNotExist:
             pass
 
         return None
@@ -276,8 +275,8 @@ class SmsBillable(models.Model):
     is_valid = models.BooleanField(default=True, db_index=True)
     domain = models.CharField(max_length=25, db_index=True)
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
-    date_sent = models.DateField()
-    date_created = models.DateField(auto_now_add=True)
+    date_sent = models.DateTimeField()
+    date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label = 'smsbillables'

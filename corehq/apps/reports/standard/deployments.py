@@ -1,38 +1,44 @@
 # coding=utf-8
 from datetime import date, datetime, timedelta
-from casexml.apps.phone.analytics import get_sync_logs_for_user
-from corehq import toggles
+
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log, SyncLogAssertionError
-from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
+from django.utils.translation import ugettext_noop, ugettext as _
+
+from casexml.apps.phone.analytics import get_sync_logs_for_user
+from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.reports.filters.select import SelectApplicationFilter
-from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.util import format_datatables_data
+from dimagi.utils.dates import safe_strftime
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import string_to_utc_datetime
+from phonelog.models import UserErrorEntry
+
+from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
+from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
 from corehq.apps.users.models import CommCareUser
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
-from corehq.apps.reports.analytics.esaccessors import get_last_form_submissions_by_user
-from django.utils.translation import ugettext_noop
-from django.utils.translation import ugettext as _
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.dates import safe_strftime
-from dimagi.utils.parsing import string_to_utc_datetime
+
+from corehq.apps.reports.analytics.esaccessors import (
+    get_last_form_submissions_by_user,
+    get_all_user_ids_submitted,
+)
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.reports.filters.select import SelectApplicationFilter, GroupFilter
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
+from corehq.apps.reports.util import format_datatables_data
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
     """
     Base class for all deployments reports
     """
-    is_bootstrap3 = True
-   
+
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         # for commtrack projects - only show if the user can view apps
@@ -92,6 +98,21 @@ class ApplicationStatusReport(DeploymentsReport):
         )
         headers.custom_sort = [[1, 'desc']]
         return headers
+
+    @property
+    @memoized
+    def override_user_ids(self):
+        # attempt to speed up finding users when app is selected
+        app_id = self.request_params.get(SelectApplicationFilter.slug, None)
+        group_id = self.request_params.get(GroupFilter.slug, None)
+
+        if group_id:
+            # this is fast enough
+            return None
+        elif app_id:
+            return get_all_user_ids_submitted(self.domain, app_id)
+
+        return None
 
     @property
     def rows(self):
@@ -256,7 +277,6 @@ class SyncHistoryReport(DeploymentsReport):
                 except SyncLogAssertionError as e:
                     return _(u'Error computing hash! {}').format(e)
 
-
             num_cases = sync_log.case_count()
             columns = [
                 _fmt_date(sync_log.date),
@@ -321,3 +341,82 @@ def _bootstrap_class(obj, severe, warn):
         return "label label-warning"
     else:
         return "label label-success"
+
+
+class ApplicationErrorReport(GenericTabularReport, ProjectReport):
+    name = ugettext_noop("Application Error Report")
+    slug = "application_error"
+    ajax_pagination = True
+    sortable = False
+    fields = ['corehq.apps.reports.filters.select.SelectApplicationFilter']
+
+    # Filter parameters to pull from the URL
+    model_fields_to_url_params = [
+        ('app_id', SelectApplicationFilter.slug),
+        ('version_number', 'version_number'),
+    ]
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return user and toggles.APPLICATION_ERROR_REPORT.enabled(user.username)
+
+    @property
+    def shared_pagination_GET_params(self):
+        shared_params = super(ApplicationErrorReport, self).shared_pagination_GET_params
+        shared_params.extend([
+            {'name': param, 'value': self.request.GET.get(param, None)}
+            for model_field, param in self.model_fields_to_url_params
+        ])
+        return shared_params
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("Expression")),
+            DataTablesColumn(_("Message")),
+            DataTablesColumn(_("Session")),
+            DataTablesColumn(_("Application")),
+            DataTablesColumn(_("App version")),
+            DataTablesColumn(_("Date")),
+        )
+
+    @property
+    @memoized
+    def _queryset(self):
+        qs = UserErrorEntry.objects.filter(domain=self.domain)
+        for model_field, url_param in self.model_fields_to_url_params:
+            value = self.request.GET.get(url_param, None)
+            if value:
+                qs = qs.filter(**{model_field: value})
+        return qs
+
+    @property
+    def total_records(self):
+        return self._queryset.count()
+
+    @property
+    @memoized
+    def _apps_by_id(self):
+        def link(app):
+            return u'<a href="{}">{}</a>'.format(
+                reverse('view_app', args=[self.domain, app.get_id]),
+                app.name,
+            )
+        return {
+            app.get_id: link(app)
+            for app in get_brief_apps_in_domain(self.domain)
+        }
+
+    @property
+    def rows(self):
+        start = self.pagination.start
+        end = start + self.pagination.count
+        for error in self._queryset.order_by('-date')[start:end]:
+            yield [
+                error.expr,
+                error.msg,
+                error.session,
+                self._apps_by_id.get(error.app_id, error.app_id),
+                error.version_number,
+                str(error.date),
+            ]

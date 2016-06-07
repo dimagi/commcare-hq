@@ -1,11 +1,15 @@
+import collections
 import logging
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 import six as six
 from couchdbkit import ResourceNotFound
 
 from dimagi.utils.decorators.memoized import memoized
 from couchforms import const
+
+
+DEFAULT_PARENT_IDENTIFIER = 'parent'
 
 
 class AbstractXFormInstance(object):
@@ -117,6 +121,10 @@ class AbstractXFormInstance(object):
     def type(self):
         return self.form_data.get(const.TAG_TYPE, "")
 
+    @property
+    def name(self):
+        return self.form_data.get(const.TAG_NAME, "")
+
     @memoized
     def get_sync_token(self):
         from casexml.apps.phone.models import get_properly_wrapped_sync_log
@@ -167,7 +175,10 @@ class AbstractCommCareCase(object):
     def modified_since_sync(self, sync_log):
         raise NotImplementedError
 
-    def get_subcases(self):
+    def get_subcases(self, index_identifier=None):
+        raise NotImplementedError
+
+    def get_parent(self, identifier=None, relationship=None):
         raise NotImplementedError
 
     def get_case_property(self, property):
@@ -178,6 +189,40 @@ class AbstractCommCareCase(object):
 
     def to_api_json(self):
         raise NotImplementedError()
+
+    def set_case_id(self, case_id):
+        raise NotImplementedError()
+
+    def _resolve_case_property(self, property_name, result):
+        CasePropertyResult = collections.namedtuple('CasePropertyResult', 'case value')
+
+        if property_name.lower().startswith('parent/'):
+            parents = self.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+            for parent in parents:
+                parent._resolve_case_property(property_name[7:], result)
+            return
+
+        result.append(CasePropertyResult(
+            self,
+            self.to_json().get(property_name)
+        ))
+
+    def resolve_case_property(self, property_name):
+        """
+        Takes a case property expression and resolves the necessary references
+        to get the case property value(s).
+
+        property_name - The case property expression. Examples: name, parent/name,
+                        parent/parent/name
+
+        Returns a list of named tuples of (case, value), where value is the
+        resolved case property value and case is the case that yielded that value.
+        There can be more than one tuple in the returned result if a case has more
+        than one parent or grandparent.
+        """
+        result = []
+        self._resolve_case_property(property_name, result)
+        return result
 
     @memoized
     def get_index_map(self, reversed=False):
@@ -242,6 +287,7 @@ class AbstractCommCareCase(object):
 
 
 class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
+
     @classmethod
     @abstractmethod
     def get_by_location(cls, location):
@@ -254,6 +300,7 @@ class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
 
 
 class IsImageMixin(object):
+
     @property
     def is_image(self):
         if self.content_type is None:
@@ -262,6 +309,7 @@ class IsImageMixin(object):
 
 
 class CaseAttachmentMixin(IsImageMixin):
+
     @property
     def is_present(self):
         """

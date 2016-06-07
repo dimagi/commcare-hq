@@ -1,9 +1,11 @@
 import os
 from xml.etree import ElementTree
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 import mock
+from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.fixtures import report_fixture_generator
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
     ReportGraphConfig, MobileSelectFilter
@@ -16,8 +18,6 @@ from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvi
 from corehq.apps.userreports.reports.filters.specs import DynamicChoiceListFilterSpec
 from corehq.apps.userreports.reports.specs import FieldColumn, MultibarChartSpec, \
     GraphDisplayColumn
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import normalize_username
 from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
@@ -70,13 +70,14 @@ MAKE_REPORT_CONFIG = lambda domain, report_id: ReportConfiguration(
 )
 
 
-class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
+class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
     file_path = 'data', 'mobile_ucr'
     root = os.path.dirname(__file__)
 
     @staticmethod
     def make_report_config(domain, report_id):
         class MockChoiceProvider(ChoiceProvider):
+
             def query(self, query_context):
                 pass
 
@@ -91,13 +92,13 @@ class ReportFiltersSuiteTest(SimpleTestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_users()
         cls.report_id = '7b97e8b53d00d43ca126b10093215a9d'
         cls.report_config_uuid = 'a98c812873986df34fd1b4ceb45e6164ae9cc664'
         cls.domain = 'report-filter-test-domain'
-        cls.user = CommCareUser(
-            username=normalize_username('ralph', cls.domain),
+        cls.user = create_restore_user(
             domain=cls.domain,
-            language='en',
+            username='ralph',
         )
         update_toggle_cache(MOBILE_UCR.slug, cls.domain, True, NAMESPACE_DOMAIN)
 

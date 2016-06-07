@@ -8,6 +8,7 @@ from corehq.apps.users.util import cc_user_domain
 
 
 class AutoSetVersions(WrappedNode):
+
     def auto_set_versions(self, version):
 
         if self.attrib.get('version') == 'auto':
@@ -19,6 +20,7 @@ class AutoSetVersions(WrappedNode):
 
 
 class ProfileXML(AutoSetVersions):
+
     def set_property(self, key, value):
         node = self.find('property[@key="%s"]' % key)
 
@@ -52,18 +54,18 @@ def strip_location(profile_url, location):
     return strip_left('./') or strip_left(base) or strip_left('jr://resource/') or location
 
 
-def make_remote_profile(app):
+def make_remote_profile(app, langs=None):
     try:
         profile = urllib2.urlopen(app.profile_url).read()
     except Exception:
         raise AppEditingError('Unable to access profile url: "%s"' % app.profile_url)
 
-    if app.manage_urls or app.build_langs:
+    if app.manage_urls:
         profile_xml = ProfileXML(profile)
 
         if app.manage_urls:
             profile_xml.auto_set_versions(app.version)
-            profile_xml.set_attribute('update', app.profile_url)
+            profile_xml.set_attribute('update', app.hq_profile_url)
             profile_xml.set_property("ota-restore-url", app.ota_restore_url)
             profile_xml.set_property("PostURL", app.post_url)
             profile_xml.set_property("cc_user_domain", cc_user_domain(app.domain))
@@ -81,8 +83,8 @@ def make_remote_profile(app):
                     download_index_url=download_index_url
                 )
 
-        if app.build_langs:
-            profile_xml.set_property("cur_locale", app.build_langs[0])
+            if langs:
+                profile_xml.set_property("cur_locale", langs[0])
 
         profile = profile_xml.render()
     return profile

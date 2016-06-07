@@ -1,4 +1,4 @@
-{% extends 'settings/bootstrap3/base_template.html' %}
+{% extends 'settings/base_template.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -118,13 +118,13 @@
     {% block enabled_section %}
         {% if settings.source_config.enabled %}
         <header>
-            <div class="row-fluid">
+            <div class="row">
                 <div class="col-sm-8">
                     <h2>{% trans "Sync with" %} {{ current_page.page_name }}</h2>
                 </div>
             </div>
         </header>
-        <div class="row-fluid">
+        <div class="row">
             <div class="col-sm-12">
                 <div class="btn-toolbar">
                     <button class="btn btn-default" id="sync">

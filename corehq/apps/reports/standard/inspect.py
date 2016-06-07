@@ -10,12 +10,13 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import FormDisplay
-from corehq.apps.reports.filters.forms import MISSING_APP_ID, FormsByApplicationFilter
+from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.apps.reports.generic import (GenericTabularReport,
                                          ProjectInspectionReportParamsMixin,
                                          ElasticProjectInspectionReport)
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
+from corehq.const import MISSING_APP_ID
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.toggles import SUPPORT
 from dimagi.utils.decorators.memoized import memoized
@@ -30,7 +31,6 @@ class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabular
     ajax_pagination = True
     fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
               'corehq.apps.reports.filters.users.SelectMobileWorkerFilter']
-    is_bootstrap3 = True
 
     def get_user_link(self, user):
         user_link = self.get_raw_user_link(user)
@@ -173,7 +173,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
 
 class SubmitHistory(SubmitHistoryMixin, ProjectReport):
-    is_bootstrap3 = True
 
     @property
     def show_extra_columns(self):

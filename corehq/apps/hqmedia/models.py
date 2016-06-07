@@ -1,21 +1,24 @@
-from StringIO import StringIO
+import hashlib
 import logging
 import mimetypes
-from PIL import Image
 from datetime import datetime
-import hashlib
+from StringIO import StringIO
+
+import magic
 from couchdbkit.exceptions import ResourceConflict
 from dimagi.ext.couchdbkit import *
-from corehq.apps.app_manager.exceptions import XFormException
+from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
+from dimagi.utils.decorators.memoized import memoized
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-import magic
-from corehq.apps.app_manager.xform import XFormValidationError
-from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
-from dimagi.utils.couch.database import get_db, get_safe_read_kwargs, iter_docs
 from django.utils.translation import ugettext as _
+from PIL import Image
+
+from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.xform import XFormValidationError
+from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
+from corehq.blobs.mixin import BlobMixin
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -24,13 +27,13 @@ LOGO_ARCHIVE_KEY = 'logos'
 class AuxMedia(DocumentSchema):
     """
     Additional metadata companion for couch models
-    that you want to supply add arbitrary attachments to
+    that you want to add arbitrary attachments to
     """
     uploaded_date = DateTimeProperty()
     uploaded_by = StringProperty()
     uploaded_filename = StringProperty()  # the uploaded filename info
     checksum = StringProperty()
-    attachment_id = StringProperty()  # the actual attachment id in _attachments
+    attachment_id = StringProperty()  # the actual attachment id in blobs
     media_meta = DictProperty()
     notes = StringProperty()
 
@@ -57,7 +60,7 @@ class HQMediaLicense(DocumentSchema):
         return LICENSE_LINKS.get(self.type)
 
 
-class CommCareMultimedia(SafeSaveDocument):
+class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     """
     The base object of all CommCare Multimedia
     """
@@ -70,6 +73,8 @@ class CommCareMultimedia(SafeSaveDocument):
     licenses = SchemaListProperty(HQMediaLicense, default=[])
     shared_by = StringListProperty(default=[])  # list of domains that can share this file
     tags = DictProperty(default={})  # dict of string lists
+
+    migrating_blobs_from_couch = True
 
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
@@ -120,7 +125,7 @@ class CommCareMultimedia(SafeSaveDocument):
         if not attachment_id:
             attachment_id = self.file_hash
 
-        if not self._attachments or attachment_id not in self._attachments:
+        if not self.blobs or attachment_id not in self.blobs:
             if not getattr(self, '_id'):
                 # put attchment blows away existing data, so make sure an id has been
                 # assigned to this guy before we do it. this is the expected path
@@ -170,9 +175,9 @@ class CommCareMultimedia(SafeSaveDocument):
 
     def get_display_file(self, return_type=True):
         if self.attachment_id:
-            data = self.fetch_attachment(self.attachment_id, True).read()
+            data = self.fetch_attachment(self.attachment_id, stream=True).read()
             if return_type:
-                content_type = self._attachments[self.attachment_id]['content_type']
+                content_type = self.blobs[self.attachment_id].content_type
                 return data, content_type
             else:
                 return data
@@ -291,7 +296,7 @@ class CommCareMultimedia(SafeSaveDocument):
 
     @classmethod
     def get_icon_class(cls):
-        return "icon-desktop"
+        return "fa fa-desktop"
 
 
 class ImageThumbnailError(Exception):
@@ -352,7 +357,7 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_icon_class(cls):
-        return "icon-picture"
+        return "fa fa-picture-o"
 
         
 class CommCareAudio(CommCareMultimedia):
@@ -366,7 +371,7 @@ class CommCareAudio(CommCareMultimedia):
 
     @classmethod
     def get_icon_class(cls):
-        return "icon-volume-up"
+        return "fa fa-volume-up"
 
 
 class CommCareVideo(CommCareMultimedia):
@@ -377,7 +382,7 @@ class CommCareVideo(CommCareMultimedia):
 
     @classmethod
     def get_icon_class(cls):
-        return "icon-facetime-video"
+        return "fa fa-video-camera"
 
 
 class HQMediaMapItem(DocumentSchema):
@@ -387,6 +392,7 @@ class HQMediaMapItem(DocumentSchema):
     output_size = DictProperty()
     version = IntegerProperty()
     unique_id = StringProperty()
+    form_media = BooleanProperty(default=False)
 
     @property
     def url(self):
@@ -685,24 +691,33 @@ class HQMediaMixin(Document):
                 updated_doc = self.get(self._id)
                 updated_doc.create_mapping(multimedia, form_path)
 
-    def get_media_objects(self):
+    def get_media_objects(self, languages=None):
         """
             Gets all the media objects stored in the multimedia map.
+            If passed a profile, will only get those that are used
+            in a language in the profile.
         """
         found_missing_mm = False
+        filter_multimedia = languages and self.media_language_map
+        if filter_multimedia:
+            media_list = []
+            for lang in languages:
+                media_list += self.media_language_map[lang].media_refs
+            requested_media = set(media_list)
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
         for path, map_item in self.multimedia_map.items():
-            media_item = raw_docs.get(map_item.multimedia_id)
-            if media_item:
-                media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
-                yield path, media_cls.wrap(media_item)
-            else:
-                # delete media reference from multimedia map so this doesn't pop up again!
-                del self.multimedia_map[path]
-                found_missing_mm = True
+            if not filter_multimedia or not map_item.form_media or path in requested_media:
+                media_item = raw_docs.get(map_item.multimedia_id)
+                if media_item:
+                    media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
+                    yield path, media_cls.wrap(media_item)
+                else:
+                    # delete media reference from multimedia map so this doesn't pop up again!
+                    del self.multimedia_map[path]
+                    found_missing_mm = True
         if found_missing_mm:
             self.save()
 

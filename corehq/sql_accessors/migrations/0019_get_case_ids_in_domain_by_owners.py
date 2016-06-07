@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations
 
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, CaseTransaction, \
-    CommCareCaseIndexSQL
-from corehq.sql_db.operations import HqRunSQL, RawSQLMigration
-
-migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
+from corehq.sql_db.operations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -17,5 +13,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('get_case_ids_in_domain_by_owners.sql'),
+        noop_migration()
     ]

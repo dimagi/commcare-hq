@@ -1,0 +1,55 @@
+{% extends "userreports/base_report_builder.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'style/js/main.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+    <script src="{% static 'userreports/js/constants.js' %}"></script>
+    <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
+{% endblock %}
+
+{% block page_title %}
+    {% if not editing_existing_report %}
+    {% trans "Step 2 of 2" %} -
+    {% endif %}
+    {% trans "Configure Report Settings" %}
+{% endblock page_title %}
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+
+    var ReportBuilder = {
+        Constants: hqImport('userreports/js/constants.js')
+    };
+
+    (function () {
+
+        var reportType = {{ report_type|JSON }};
+        var initialFilters = {{ initial_filters|JSON }};
+        var initialColumns = {{ initial_columns|JSON }};
+        var sourceType = {{ form.source_type|JSON }};
+        var propertyOptions = {{ property_options|JSON }};
+        ReportBuilder.IS_NON_NUMERIC_MAP = propertyOptions.reduce(function(map, option) {
+            map[option.id] = option.is_non_numeric;
+            return map
+        }, {});
+
+
+        var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
+        $("#report-config-form").koApplyBindings(
+            new ConfigForm(reportType, sourceType, initialColumns, initialFilters, propertyOptions)
+        );
+
+
+        $(function () {
+            {% for event in report_builder_events %}
+                {# Track a usage events that were produced on the server #}
+                window.analytics.usage.apply(this, {{event|JSON}});
+            {% endfor %}
+            window.analytics.trackUsageLink(
+                "#delete-report-button", "Report Builder", "Delete a Repot", reportType
+            );
+        });
+    })();
+</script>
+{% endblock %}

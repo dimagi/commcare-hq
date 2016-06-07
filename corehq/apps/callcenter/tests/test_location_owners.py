@@ -1,9 +1,8 @@
 from django.test import TestCase
-from casexml.apps.case.tests import delete_all_cases
+from casexml.apps.case.tests import delete_all_cases, CaseAccessors
 from corehq.apps.callcenter.utils import sync_call_center_user_case
 from corehq.apps.domain.models import CallCenterProperties
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests import make_loc
 from corehq.apps.users.models import CommCareUser
@@ -82,7 +81,6 @@ class CallCenterLocationOwnerTest(TestCase):
         self.user.save()
         self.assertCallCenterCaseOwner("")
 
-
     def test_ancestor_location_sync(self):
         # Alter config
         original_setting = self.domain.call_center_config.user_location_ancestor_level
@@ -108,5 +106,5 @@ class CallCenterLocationOwnerTest(TestCase):
         self.domain.save()
 
     def assertCallCenterCaseOwner(self, owner_id):
-        case = get_case_by_domain_hq_user_id(TEST_DOMAIN, self.user._id, CASE_TYPE)
+        case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, CASE_TYPE)
         self.assertEqual(case.owner_id, owner_id)

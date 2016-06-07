@@ -129,6 +129,7 @@ hqDefine('reports_core/js/charts.js', function() {
                     });
                 }
             }
+
             var chart = nv.models.multiBarChart()
                 .transitionDuration(350)
                 .reduceXTicks(true)
@@ -136,6 +137,7 @@ hqDefine('reports_core/js/charts.js', function() {
                 .showControls(true)
                 .groupSpacing(0.1)
                 .stacked(config.is_stacked || false)
+                .staggerLabels(shouldStaggerXAxis(record))
             ;
 
             d3.select(svgSelector)
@@ -176,5 +178,12 @@ hqDefine('reports_core/js/charts.js', function() {
         chartContainer.empty();
     };
     return fn;
+
+    function shouldStaggerXAxis(record){
+        // If any label is of more than 18 char length stagger
+        return _.some(record.values, function(value){
+            return value.x.length > 18;
+        });
+    }
 
 });

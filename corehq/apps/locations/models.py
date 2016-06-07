@@ -9,7 +9,7 @@ from dimagi.utils.couch.migration import SyncSQLToCouchMixin, SyncCouchToSQLMixi
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
 from django.db import models, transaction
-import json_field
+import jsonfield
 from casexml.apps.case.cleanup import close_case
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
@@ -24,6 +24,7 @@ LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
 
 
 class LocationTypeManager(models.Manager):
+
     def full_hierarchy(self, domain):
         """
         Returns a graph of the form
@@ -59,6 +60,7 @@ class LocationTypeManager(models.Manager):
         Sorts location types by hierarchy
         """
         ordered_loc_types = []
+
         def step_through_graph(hierarchy):
             for _, (loc_type, children) in hierarchy.items():
                 ordered_loc_types.append(loc_type)
@@ -79,6 +81,14 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+    _expand_from = models.ForeignKey(
+        'self',
+        null=True,
+        related_name='+',
+        db_column='expand_from',
+    )  # levels below this location type that we start expanding from
+    _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
+    expand_to = models.ForeignKey('self', null=True, related_name='+')  # levels above this type that are synced
     last_modified = models.DateTimeField(auto_now=True)
 
     emergency_level = StockLevelField(default=0.5)
@@ -93,6 +103,26 @@ class LocationType(models.Model):
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
         self._administrative_old = self.administrative
+
+    @property
+    def expand_from(self):
+        return self._expand_from
+
+    @expand_from.setter
+    def expand_from(self, value):
+        if self._expand_from_root is True:
+            self._expand_from_root = False
+        self._expand_from = value
+
+    @property
+    def expand_from_root(self):
+        return self._expand_from_root
+
+    @expand_from_root.setter
+    def expand_from_root(self, value):
+        if self._expand_from_root is False and value is True:
+            self._expand_from = None
+        self._expand_from_root = value
 
     @property
     @memoized
@@ -147,6 +177,7 @@ class LocationType(models.Model):
 
 
 class LocationQueriesMixin(object):
+
     def location_ids(self):
         return self.values_list('location_id', flat=True)
 
@@ -171,6 +202,7 @@ class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
 
 
 class LocationManager(LocationQueriesMixin, TreeManager):
+
     def _get_base_queryset(self):
         return LocationQuerySet(self.model, using=self._db)
 
@@ -210,6 +242,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
 
 
 class OnlyUnarchivedLocationManager(LocationManager):
+
     def get_queryset(self):
         return (super(OnlyUnarchivedLocationManager, self).get_queryset()
                 .filter(is_archived=False))
@@ -223,7 +256,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     location_type = models.ForeignKey(LocationType)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
-    metadata = json_field.JSONField(default={})
+    metadata = jsonfield.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     is_archived = models.BooleanField(default=False)
@@ -543,6 +576,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return self.location_type_object.name
 
     _sql_location_type = None
+
     @location_type.setter
     def location_type(self, value):
         msg = "You can't create a location without a real location type"

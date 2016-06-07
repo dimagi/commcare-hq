@@ -9,6 +9,7 @@ from corehq.util.quickcache import quickcache
 
 
 class SemanticVersionProperty(StringProperty):
+
     def validate(self, value, required=True):
         super(SemanticVersionProperty, self).validate(value, required)
         try:

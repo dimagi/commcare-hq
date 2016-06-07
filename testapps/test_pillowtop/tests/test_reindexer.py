@@ -48,9 +48,9 @@ class PillowtopReindexerTest(TestCase):
         ensure_index_deleted(DOMAIN_INDEX)
         name = 'reindex-test-domain'
         create_domain(name)
-        call_command('ptop_reindexer_v2', **{'index': 'domain', 'cleanup': True, 'noinput': True})
+        call_command('ptop_reindexer_v2', index='domain', cleanup=True, noinput=True)
         results = DomainES().run()
-        self.assertEqual(1, results.total)
+        self.assertEqual(1, results.total, results.hits)
         domain_doc = results.hits[0]
         self.assertEqual(name, domain_doc['name'])
         self.assertEqual('Domain', domain_doc['doc_type'])

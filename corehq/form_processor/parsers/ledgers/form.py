@@ -13,7 +13,8 @@ from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import InvalidDate
-from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper, StockReportHelper
+from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper, StockReportHelper, \
+    UniqueLedgerReference
 from corehq.form_processor.utils import adjust_datetimes
 from couchforms.models import XFormInstance
 from xml2json.lib import convert_xml_to_json
@@ -27,6 +28,7 @@ class LedgerFormat(object):
 
 class CaseActionIntent(namedtuple('CaseActionIntent',
                                   ['case_id', 'form_id', 'is_deprecation', 'action_type', 'form'])):
+
     def get_couch_action(self):
         assert self.action_type == CASE_ACTION_COMMTRACK
         return CommCareCaseAction.from_parsed_action(
@@ -49,7 +51,7 @@ LedgerInstruction = namedtuple(
 
 
 def get_case_ids_from_stock_transactions(xform):
-    stock_report_helpers = list(_get_all_stock_report_helpers_from_form(xform))
+    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
     case_ids = {
         transaction_helper.case_id
         for stock_report_helper in stock_report_helpers
@@ -57,6 +59,14 @@ def get_case_ids_from_stock_transactions(xform):
     }
     return case_ids
 
+
+def get_ledger_references_from_stock_transactions(xform):
+    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
+    return {
+        UniqueLedgerReference(tx_helper.case_id, tx_helper.section_id, tx_helper.product_id)
+        for stock_report_helper in stock_report_helpers
+        for tx_helper in stock_report_helper.transactions
+    }
 
 
 def get_stock_actions(xform):
@@ -74,7 +84,7 @@ def get_stock_actions(xform):
     if is_device_report(xform):
         return _empty_actions()
 
-    stock_report_helpers = list(_get_all_stock_report_helpers_from_form(xform))
+    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
     transaction_helpers = [
         transaction_helper
         for stock_report_helper in stock_report_helpers
@@ -112,7 +122,7 @@ def _get_case_action_intents(xform, transaction_helpers):
     return case_action_intents
 
 
-def _get_all_stock_report_helpers_from_form(xform):
+def get_all_stock_report_helpers_from_form(xform):
     """
     Given an instance of an AbstractXFormInstance, extract the ledger actions and convert
     them to StockReportHelper objects.

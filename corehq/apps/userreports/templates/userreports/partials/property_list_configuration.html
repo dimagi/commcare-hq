@@ -2,7 +2,7 @@
 {% comment %}
 It might not be imediately obvious where this snippet is used because it is
 injected into a template through crispy forms. It's "parent" html is found
-here: apps/userreports/templates/userreports/partials/report_builder_configure_report.html
+here: apps/userreports/templates/reportbuilder/configure_report.html
 {% endcomment %}
 
 {% comment %}
@@ -77,21 +77,21 @@ TODO:
 
                 <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && !isValid()}">
 
-                    <!-- ko ifnot: optionsContainQuestions -->
+                    <!-- ko ifnot: $root.optionsContainQuestions -->
                     <input type="text"
                            class="form-control"
-                           data-bind="select2: propertyOptions, value: property">
+                           data-bind="select2: $root.propertyOptions, value: property">
                     <!-- /ko -->
-                    <!-- ko if: optionsContainQuestions -->
+                    <!-- ko if: $root.optionsContainQuestions -->
                     <input class="form-control" type="hidden" data-bind="
-                        questionsSelect: propertyOptions().concat(
+                        questionsSelect: $root.propertyOptions.concat(
                             existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
                         ),
                         value: existsInCurrentVersion() ? property : dataSourceField,
                         attr: {disabled: !existsInCurrentVersion()}
                     "/>
                     <!-- /ko -->
-                    <label class="help-block" data-bind="if: $parent.showWarnings() && !isNotBlank()">
+                    <label class="help-block" data-bind="if: $parent.showWarnings() && !property()">
                         {% trans "Please select a property." %}</label>
                     {# This is gross and I hate it #}
                     <label class="help-block" style="white-space: pre-wrap;" data-bind="if: !existsInCurrentVersion()">
@@ -102,16 +102,18 @@ TODO:
                     </label>
                 </td>
                 <td class="form-group">
-                    <input type="text" class="form-control" data-bind="
-                        value: displayText,
-                        attr: {disabled: !existsInCurrentVersion()},
-                        event: {keydown: function(){$data.userModifiedDisplayText = true; return true;}}
-                    ">
+                    <div data-bind="css: {'has-error': showDisplayTextError}">
+                        <input type="text" class="form-control" data-bind="
+                            textInput: inputBoundDisplayText,
+                            attr: {disabled: !isEditable},
+                        ">
+                        <span data-bind="if: showDisplayTextError" class="help-block">This field is required</span>
+                    </div>
                 </td>
                 <!--ko if: $parent.hasFormatCol -->
                 <td>
                     <select class="form-control" data-bind="
-                        options: $parent.formatOptions,
+                        options: ReportBuilder.Constants.FORMAT_OPTIONS,
                         value: format,
                         attr: {disabled: !existsInCurrentVersion()}
                     "></select>
@@ -135,7 +137,7 @@ TODO:
             {# there must be no whitespace between <tbody> and <tr> #}
             {# the .hide().fadeIn() will fail badly on FireFox #}
             </tr></tbody>
-            <tbody data-bind="visible: columns().length < 10" class="add-prop">
+            <tbody data-bind="visible: columns().length < 25" class="add-prop">
                 <tr>
                     <td></td>
                     <td colspan="4">
@@ -154,4 +156,6 @@ TODO:
             </label>
         </div>
     </div>
+
 </div>
+

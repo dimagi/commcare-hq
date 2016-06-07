@@ -122,6 +122,7 @@ CONCEPT_XFORM =  {
 
 
 class TestReportXFormProcessing(SimpleTestCase):
+
     def testConvertAndRestoreReportXFormDicts(self):
         pillow = ReportXFormPillow(online=False)
         orig = CONCEPT_XFORM
@@ -248,7 +249,6 @@ class TestReportXFormProcessing(SimpleTestCase):
         self.assertEqual(orig['form']['case'], for_indexing['form']['case'])
         self.assertEqual(orig['form']['subcase_0']['case'], for_indexing['form']['subcase_0']['case'])
         self.assertEqual(orig['form']['really']['nested']['case'], for_indexing['form']['really']['nested']['case'])
-
 
     def testBlanktoNulls(self):
         orig = {

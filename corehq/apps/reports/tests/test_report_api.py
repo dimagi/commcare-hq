@@ -11,6 +11,7 @@ DOMAIN = "test"
 
 unity = lambda x: x
 
+
 class UserDataSource(SqlData):
     table_name = "user_report_data"
 
@@ -62,6 +63,7 @@ class UserDataSource(SqlData):
 
 
 class ReportAPITest(unittest.TestCase):
+
     @classmethod
     def setUpClass(cls):
         load_data()

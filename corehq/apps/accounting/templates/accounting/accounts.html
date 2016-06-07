@@ -16,6 +16,11 @@
             var baForm = new BillingAccountForm({{ basic_form.is_active.value|BOOL }});
             $('#account-form').koApplyBindings(baForm);
         });
+
+        $("#show_emails").click(function() {
+            $('#emails-text').show();
+            $(this).parent().hide();
+        });
     </script>
 {% endblock %}
 

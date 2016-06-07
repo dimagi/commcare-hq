@@ -142,7 +142,7 @@ requires imports/proptable.html to be included in the main template
 <div class="clearfix">
     <div class="pull-right">
         {% if auth_context.authenticated %}
-            <i class="fa fa-lock"></i>
+            <i class="fa fa-lock" title="{% trans "Secure submission" %}"></i>
             {% if user_info.id != auth_user_info.id %}
             {% blocktrans with auth_user=auth_user_info|pretty_doc_info user=user_info|pretty_doc_info %}
                 Submitted by {{ auth_user }} on behalf of {{ user }}
@@ -155,11 +155,18 @@ requires imports/proptable.html to be included in the main template
             {% endif %}
         {% endif %}
         {% if not auth_context.authenticated %}
-            <i class="fa fa-unlock"></i>
+            <i class="fa fa-unlock" title="{% trans "Insecure submission" %}"></i>
             {% blocktrans with user=user_info|pretty_doc_info %}
             Submitted as {{ user }}
             {% endblocktrans %}
         {% endif %}
+        <br/>
+        <ul class="list-inline">
+            {% if instance.app_id %}<li><a href="{% url "view_app" domain instance.app_id %}">{% trans "View app" %}</a></li>{% endif %}
+            {% if instance.build_id and request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
+                <a href="{% url "download_index" domain instance.build_id %}">{% trans "View build" %}</a>
+            {% endif %}
+        </ul>
     </div>
 </div>
 <ul class="nav nav-tabs">
@@ -218,7 +225,6 @@ requires imports/proptable.html to be included in the main template
                         data-title="{% trans "Archiving Forms" %}"
                         data-content="{% trans "Archived forms will no longer show up in reports and they will be removed from any relevant case histories. " %}"
                         data-placement="left"
-                        data-bootstrap3="true"
                     ></span>
                     <button type="submit" class="btn btn-danger" id="archive-form-btn">
                         {% trans "Archive this form" %}
@@ -231,7 +237,6 @@ requires imports/proptable.html to be included in the main template
                         data-title="{% trans "Restoring Edited Forms" %}"
                         data-content="{% trans "Restoring an edited form will undo any later edits made. This operation is reversible." %}"
                         data-placement="left"
-                        data-bootstrap3="true"
                     ></span>
                     <button type="submit" class="btn btn-danger" id="archive-form-btn">
                         {% trans "Restore this version" %}
@@ -261,7 +266,7 @@ requires imports/proptable.html to be included in the main template
                         data-content="{% trans "Resaving a form can manually cause it to be reincluded in reports if something went wrong during initial processing." %}"
                         data-placement="left"
                     ></span>
-                    <button type="submit" class="btn" id="resave-form-btn">
+                    <button type="submit" class="btn btn-default" id="resave-form-btn">
                         {% trans "Resave this form" %}
                         <i class="fa fa-refresh fa-spin" id="resave-spinner" style="display:none"></i>
                     </button>

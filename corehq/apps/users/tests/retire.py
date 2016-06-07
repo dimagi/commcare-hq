@@ -15,6 +15,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class RetireUserTestCase(TestCase):
+
     def setUp(self):
         self.domain = 'test'
         self.username = "fake-person@test.commcarehq.org"

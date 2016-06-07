@@ -87,7 +87,6 @@ def invoice_column_cell(invoice):
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/add_new_item_button.html'
     exportable = True
-    is_bootstrap3 = True
 
     item_name = None
     new_item_view = None
@@ -218,6 +217,7 @@ class SubscriptionInterface(AddItemInterface):
         'corehq.apps.accounting.interface.EndDateFilter',
         'corehq.apps.accounting.interface.DateCreatedFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SalesforceContractIDFilter',
         'corehq.apps.accounting.interface.ActiveStatusFilter',
         'corehq.apps.accounting.interface.DoNotInvoiceFilter',
@@ -312,6 +312,11 @@ class SubscriptionInterface(AddItemInterface):
         if subscriber is not None:
             queryset = queryset.filter(
                 subscriber__domain=subscriber,
+            )
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            queryset = queryset.filter(
+                account__name=account_name,
             )
         salesforce_contract_id = SalesforceContractIDFilter.get_value(self.request, self.domain)
         if salesforce_contract_id is not None:
@@ -447,7 +452,6 @@ class InvoiceInterfaceBase(GenericTabularReport):
     dispatcher = AccountingAdminInterfaceDispatcher
     exportable = True
     export_format_override = Format.CSV
-    is_bootstrap3 = True
 
 
 class WireInvoiceInterface(InvoiceInterfaceBase):
@@ -907,7 +911,6 @@ class PaymentRecordInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
-    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.DateCreatedFilter',
@@ -1003,7 +1006,6 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
-    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.DomainFilter',
@@ -1070,7 +1072,6 @@ class CreditAdjustmentInterface(GenericTabularReport):
     base_template = 'accounting/report_filter_actions.html'
     asynchronous = True
     exportable = True
-    is_bootstrap3 = True
 
     fields = [
         'corehq.apps.accounting.interface.NameFilter',
@@ -1086,7 +1087,8 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 "Credit Line",
                 DataTablesColumn("Account"),
                 DataTablesColumn("Subscription"),
-                DataTablesColumn("Product/Feature Type")
+                DataTablesColumn("Product Type"),
+                DataTablesColumn("Feature Type"),
             ),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Reason"),
@@ -1099,7 +1101,8 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 "Related Credit Line",
                 DataTablesColumn("Account"),
                 DataTablesColumn("Subscription"),
-                DataTablesColumn("Product/Feature Type")
+                DataTablesColumn("Product Type"),
+                DataTablesColumn("Feature Type"),
             ),
         )
 
@@ -1111,6 +1114,22 @@ class CreditAdjustmentInterface(GenericTabularReport):
         )
 
         def _get_credit_line_columns_from_credit_line(credit_line):
+            if credit_line is None:
+                return ['', '', '', '']
+
+            types = [
+                dict(SoftwareProductType.CHOICES).get(
+                    credit_line.product_type,
+                    "Any"
+                ) if credit_line.product_type is not None else '',
+                dict(FeatureType.CHOICES).get(
+                    credit_line.feature_type,
+                    "Any"
+                ) if credit_line.feature_type is not None else '',
+            ]
+            if not any(types):
+                types = ['Any', 'Any']
+
             return [
                 format_datatables_data(
                     text=mark_safe(
@@ -1128,14 +1147,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     )),
                     credit_line.subscription.id,
                 ) if credit_line.subscription else '',
-                dict(FeatureType.CHOICES).get(
-                    credit_line.feature_type,
-                    dict(SoftwareProductType.CHOICES).get(
-                        credit_line.product_type,
-                        "Any"
-                    ),
-                ),
-            ]
+            ] + types
 
         def _credit_adjustment_to_row(credit_adj):
             return map(lambda x: x or '', [
@@ -1157,10 +1169,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     date_created__lte=credit_adj.date_created,
                 ))),
                 credit_adj.web_user,
-            ] + (
-                _get_credit_line_columns_from_credit_line(credit_adj.related_credit)
-                if credit_adj.related_credit else ['', '', '']
-            ))
+            ] + _get_credit_line_columns_from_credit_line(credit_adj.related_credit))
 
         return map(_credit_adjustment_to_row, self._credit_adjustments)
 

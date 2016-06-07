@@ -96,7 +96,7 @@ def register_user(request):
             'form': form,
             'current_page': {'page_name': _('Create an Account')},
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
-            'is_register_user_experiment': True,
+            'is_register_user': True,
         })
         return render(request, 'registration/create_new_user.html', context)
 
@@ -132,7 +132,7 @@ class RegisterDomainView(TemplateView):
     def post(self, request, *args, **kwargs):
         referer_url = request.GET.get('referer', '')
         nextpage = request.POST.get('next')
-        form = DomainRegistrationForm(request.POST)
+        form = DomainRegistrationForm(request.POST, current_user=request.couch_user)
         context = self.get_context_data(form=form)
         if form.is_valid():
             reqs_today = RegistrationRequest.get_requests_today()
@@ -183,7 +183,8 @@ class RegisterDomainView(TemplateView):
         context.update(get_domain_context())
 
         context.update({
-            'form': kwargs.get('form') or DomainRegistrationForm(),
+            'form': kwargs.get('form') or DomainRegistrationForm(current_user=request.couch_user),
+            'force_sql_backend': getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False),
             'is_new_user': self.is_new_user,
         })
         return context

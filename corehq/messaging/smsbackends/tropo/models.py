@@ -2,12 +2,12 @@ from urllib import urlencode
 from urllib2 import urlopen
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.models import SQLSMSBackend
-from dimagi.ext.couchdbkit import *
 from corehq.messaging.smsbackends.tropo.forms import TropoBackendForm
 from django.conf import settings
 
 
 class SQLTropoBackend(SQLSMSBackend):
+
     class Meta:
         app_label = 'sms'
         proxy = True

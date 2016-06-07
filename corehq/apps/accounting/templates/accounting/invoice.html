@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_section.html' %}
+{% extends 'style/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -69,7 +69,7 @@
                 <tbody>
                     {% for billing_record in billing_records %}
                         <tr>
-                            <td>{{ billing_record.date_created }}</td>
+                            <td>{{ billing_record.date_created }} UTC</td>
                             <td>{{ billing_record.email_recipients }}</td>
                             <td>
                                 <a href="{% url 'domain_billing_statement_download' billing_record.invoice.get_domain billing_record.pdf_data_id %}">
@@ -110,7 +110,7 @@
                 <tbody>
                     {% for adjustment in adjustment_list %}
                         <tr>
-                            <td>{{ adjustment.date_created }}</td>
+                            <td>{{ adjustment.date_created }} UTC</td>
                             <td>{{ adjustment.reason }}</td>
                             <td>{{ adjustment.note }}</td>
                             <td>{{ adjustment.web_user }}</td>

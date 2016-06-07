@@ -3,32 +3,23 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.processing import compute_ledger_values, rebuild_stock_state
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
     LedgerDBInterface
-from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 
 class LedgerDBCouch(LedgerDBInterface):
+
     def get_ledgers_for_case(self, case_id):
         from corehq.apps.commtrack.models import StockState
         return StockState.objects.filter(case_id=case_id)
 
     def _get_ledger(self, unique_ledger_reference):
-        from corehq.apps.commtrack.models import StockState
         try:
-            return StockState.objects.get(
+            return StockTransaction.latest(
                 case_id=unique_ledger_reference.case_id,
                 section_id=unique_ledger_reference.section_id,
                 product_id=unique_ledger_reference.entry_id,
             )
-        except StockState.DoesNotExist:
+        except StockTransaction.DoesNotExist:
             return None
-
-    def get_current_ledger_value(self, unique_ledger_reference):
-        latest_txn = StockTransaction.latest(
-            case_id=unique_ledger_reference.case_id,
-            section_id=unique_ledger_reference.section_id,
-            product_id=unique_ledger_reference.entry_id,
-        )
-        return latest_txn.stock_on_hand if latest_txn else 0
 
 
 class LedgerProcessorCouch(LedgerProcessorInterface):
@@ -65,6 +56,19 @@ class LedgerProcessorCouch(LedgerProcessorInterface):
     def rebuild_ledger_state(self, case_id, section_id, entry_id):
         rebuild_stock_state(case_id, section_id, entry_id)
 
+    def process_form_archived(self, form):
+        StockReport.objects.filter(form_id=form.form_id).delete()
+
+    def process_form_unarchived(self, form):
+        from corehq.apps.commtrack.processing import process_stock
+        from casexml.apps.case.models import CommCareCase
+        result = process_stock([form])
+        result.populate_models()
+        result.commit()
+        result.finalize()
+        CommCareCase.get_db().bulk_save(result.relevant_cases)
+
+
 def _get_model_for_stock_report(domain, stock_report_helper):
     return StockReport(
         form_id=stock_report_helper.form_id,
@@ -87,7 +91,7 @@ def _get_model_for_stock_transaction(report, transaction_helper, ledger_db):
     )
 
     def lazy_original_balance():
-        return ledger_db.get_current_balance(_stock_transaction_to_unique_ledger_reference(txn))
+        return ledger_db.get_current_ledger_value(txn.ledger_reference)
 
     new_ledger_values = compute_ledger_values(
         lazy_original_balance, report.type,
@@ -98,12 +102,8 @@ def _get_model_for_stock_transaction(report, transaction_helper, ledger_db):
 
     if report.domain:
         # set this as a shortcut for post save signal receivers
-        txn.domain = report.domain
+        txn.__domain = report.domain
 
     # update the ledger DB in case later transactions reference the same ledger item
-    ledger_db.set_current_balance(_stock_transaction_to_unique_ledger_reference(txn), txn.stock_on_hand)
+    ledger_db.set_ledger(txn)
     return txn
-
-
-def _stock_transaction_to_unique_ledger_reference(txn):
-    return UniqueLedgerReference(case_id=txn.case_id, section_id=txn.section_id, entry_id=txn.product_id)

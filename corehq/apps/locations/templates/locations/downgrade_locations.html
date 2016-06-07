@@ -1,9 +1,9 @@
-{% extends 'settings/bootstrap2/base_template.html' %}
+{% extends 'settings/base_template.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block main_column %}
-<div class="span6">
+{% block page_content %}
+<div class="col-sm-6">
     <h2>{% trans "Organizations" %}</h2>
 
     <p>
@@ -31,7 +31,7 @@
         </form>
     </p>
 
-    <div class="alert alert-error alert-danger">
+    <div class="alert alert-danger">
         {% blocktrans %}
         WARNING: Case Sharing may not work correctly when you discontinue
         organizations. Any organization case sharing settings will be removed

@@ -1,8 +1,11 @@
+from jsonfield import JSONField
 from rest_framework import serializers
+
+from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
-    XFormInstanceSQL, XFormOperationSQL
-)
+    XFormInstanceSQL, XFormOperationSQL,
+    LedgerValue)
 
 
 def get_instance_from_data(SerializerClass, data):
@@ -16,7 +19,8 @@ def get_instance_from_data(SerializerClass, data):
     # you always want to save(). This function does everything ModelSerializer.save() does, just without saving.
     ModelClass = SerializerClass.Meta.model
     serializer = SerializerClass(data=data)
-    assert serializer.is_valid(), 'Unable to deserialize data while creating {}'.format(ModelClass)
+    if not serializer.is_valid():
+        raise ValueError('Unable to deserialize data while creating {}: {}'.format(ModelClass, serializer.errors))
     return ModelClass(**serializer.validated_data)
 
 
@@ -28,13 +32,12 @@ class DeletableModelSerializer(serializers.ModelSerializer):
 
     def __init__(self, instance=None, *args, **kwargs):
         super(DeletableModelSerializer, self).__init__(instance=instance, *args, **kwargs)
-        if not instance.is_deleted:
+        if instance is not None and not instance.is_deleted:
             self.fields.pop('deletion_id')
             self.fields.pop('deleted_on')
 
 
 class XFormOperationSQLSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = XFormOperationSQL
 
@@ -50,19 +53,64 @@ class XFormInstanceSQLSerializer(DeletableModelSerializer):
         exclude = ('id',)
 
 
+class XFormStateField(serializers.ChoiceField):
+    def __init__(self, **kwargs):
+        super(XFormStateField, self).__init__(XFormInstanceSQL.STATES, **kwargs)
+
+    def get_attribute(self, obj):
+        choice = super(serializers.ChoiceField, self).get_attribute(obj)
+        readable_state = []
+        for state, state_slug in self.choices.iteritems():
+            if choice & state:
+                readable_state.append(state_slug)
+        return ' / '.join(readable_state)
+
+
+class JsonFieldSerializerMixin(object):
+    serializer_field_mapping = {}
+    serializer_field_mapping.update(DeletableModelSerializer.serializer_field_mapping)
+    serializer_field_mapping[JSONField] = serializers.JSONField
+
+
+class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
+    state = XFormStateField()
+
+    class Meta:
+        model = XFormInstanceSQL
+
+
 class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
+    case_id = serializers.CharField()
+    relationship = serializers.CharField()
 
     class Meta:
         model = CommCareCaseIndexSQL
+        fields = ('case_id', 'identifier', 'referenced_id', 'referenced_type', 'relationship')
 
 
 class CaseTransactionActionSerializer(serializers.ModelSerializer):
     xform_id = serializers.CharField(source='form_id')
-    date = serializers.CharField(source='server_date')
+    date = serializers.DateTimeField(source='server_date')
 
     class Meta:
         model = CaseTransaction
         fields = ('xform_id', 'server_date', 'date', 'sync_log_id')
+
+
+class CaseTransactionactionRawDocSerializer(JsonFieldSerializerMixin, CaseTransactionActionSerializer):
+    type = serializers.CharField(source='readable_type')
+
+    class Meta:
+        model = CaseTransaction
+        fields = ('form_id', 'server_date', 'date', 'sync_log_id', 'type', 'details')
+
+
+class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
+    indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
+    transactions = CaseTransactionactionRawDocSerializer(many=True, read_only=True, source='non_revoked_transactions')
+
+    class Meta:
+        model = CommCareCaseSQL
 
 
 class CommCareCaseSQLSerializer(DeletableModelSerializer):
@@ -112,4 +160,30 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
             'indices',
             'reverse_indices',
             'attachments',
+        )
+
+
+class LedgerValueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LedgerValue
+        exclude = ('id',)
+
+
+class StockStateSerializer(serializers.ModelSerializer):
+    _id = serializers.IntegerField(source='id')
+    entry_id = serializers.CharField(source='product_id')
+    location_id = serializers.CharField(source='sql_location.location_id')
+    balance = serializers.IntegerField(source='stock_on_hand')
+    last_modified = serializers.DateTimeField(source='last_modified_date')
+    domain = serializers.CharField()
+
+    class Meta:
+        model = StockState
+        exclude = (
+            'id',
+            'product_id',
+            'stock_on_hand',
+            'last_modified_date',
+            'sql_product',
+            'sql_location',
         )

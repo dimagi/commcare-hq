@@ -53,33 +53,64 @@ class ProjectReportsTab(UITab):
 
     @property
     def sidebar_items(self):
+        tools = self._get_tools_items()
+        report_builder_nav = self._get_report_builder_items()
+        project_reports = ProjectReportDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
+        custom_reports = CustomProjectReportDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
+        sidebar_items = tools + report_builder_nav + project_reports + custom_reports
+        return self._filter_sidebar_items(sidebar_items)
 
+    def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
-
-        tools = [(_("Tools"), [
+        return [(_("Tools"), [
             {'title': MySavedReportsView.page_title,
              'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
              'icon': 'icon-tasks fa fa-tasks',
              'show_in_dropdown': True}
         ])]
 
+    def _get_report_builder_items(self):
         user_reports = []
-
-        if has_report_builder_access(self._request):
+        if self.couch_user.can_edit_data():
             user_reports = [(
                 _("Create Reports"),
                 [{
                     "title": _('Create new report'),
-                    "url": reverse("report_builder_select_type", args=[self.domain]),
-                    "icon": "icon-plus fa fa-plus"
+                    "url": self._get_create_report_url(),
+                    "icon": "icon-plus fa fa-plus",
+                    "id": "create-new-report-left-nav",
                 }]
             )]
+        return user_reports
 
-        project_reports = ProjectReportDispatcher.navigation_sections(
-            request=self._request, domain=self.domain)
-        custom_reports = CustomProjectReportDispatcher.navigation_sections(
-            request=self._request, domain=self.domain)
-        return tools + user_reports + project_reports + custom_reports
+    def _get_create_report_url(self):
+        """
+        Return the url for the start of the report builder, or the paywall.
+        """
+        if has_report_builder_access(self._request):
+            url = reverse("report_builder_select_type", args=[self.domain])
+        else:
+            from corehq.apps.userreports.views import paywall_home
+            url = paywall_home(self.domain)
+        return url
+
+    @staticmethod
+    def _filter_sidebar_items(sidebar_items):
+        """
+        Exclude sidebar items where `item["show_in_navigation"] == False`
+        """
+        filtered_sidebar_items = []
+        for section, items in sidebar_items:
+            filtered_items = []
+            for item in items:
+                if not item.get("show_in_navigation", True):
+                    continue
+                filtered_items.append(item)
+            if filtered_items:
+                filtered_sidebar_items.append((section, filtered_items))
+        return filtered_sidebar_items
 
     @property
     def dropdown_items(self):
@@ -211,7 +242,6 @@ class SetupTab(UITab):
         from corehq.apps.products.views import ProductListView
 
         dropdown_items = []
-
 
         if self.project.commtrack_enabled:
             dropdown_items += [(_(view.page_title), view) for view in (
@@ -835,7 +865,6 @@ class MessagingTab(UITab):
                 ]
             })
 
-
         return contacts_urls
 
     @property
@@ -1265,6 +1294,7 @@ class ProjectSettingsTab(UITab):
 class MySettingsTab(UITab):
     title = ugettext_noop("My Settings")
     view = 'default_my_settings'
+    url_prefix_formats = ('/account/',)
 
     @property
     def _is_viewable(self):
@@ -1450,6 +1480,8 @@ class AdminTab(UITab):
                  'url': reverse('web_user_lookup')},
                 {'title': _('View raw couch documents'),
                  'url': reverse('raw_couch')},
+                {'title': _('Check Call Center UCR tables'),
+                 'url': reverse('callcenter_ucr_check')},
             ])
         return [
             (_('Administrative Reports'), [
