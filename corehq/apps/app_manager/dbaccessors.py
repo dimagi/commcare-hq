@@ -109,26 +109,23 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     if not app_id:
         raise Http404()
     try:
-        app = original_app = Application.get_db().get(app_id)
+        app = Application.get_db().get(app_id)
     except ResourceNotFound:
         raise Http404()
 
     if latest:
         if not domain:
-            domain = original_app['domain']
+            domain = app['domain']
 
-        if original_app.get('copy_of'):
+        if app.get('copy_of'):
             # The id passed in corresponds to a build
-            app_id = original_app.get('copy_of')
+            app_id = app.get('copy_of')
 
         if target == 'build':
-            app = get_latest_build_doc(domain, app_id)
+            app = get_latest_build_doc(domain, app_id) or app
         else:
-            app = get_latest_released_app_doc(domain, app_id)
+            app = get_latest_released_app_doc(domain, app_id) or app
 
-        if not app:
-            # If no builds/starred-builds, act as if latest=False
-            app = original_app
     if domain and app['domain'] != domain:
         raise Http404()
     try:
