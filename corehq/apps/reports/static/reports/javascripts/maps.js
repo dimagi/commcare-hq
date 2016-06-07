@@ -1,3 +1,5 @@
+/* global HQReportDataTables:true */
+
 // a map control map that lists the various display metrics for this report
 // and allows you to select and display them
 MetricsControl = L.Control.extend({
