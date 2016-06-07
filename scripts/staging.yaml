@@ -51,6 +51,7 @@ branches:
   - calculatedIcons # Sravan 3/2
   - xform-blobs  # daniel 5/23
   - j2me-toggle # Nick P 6/1
+  - upgrade-django-compressor # nick P 6/7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
