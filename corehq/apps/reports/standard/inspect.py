@@ -125,12 +125,13 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                 'term': {'__props_for_querying': prop}
             }
 
+        if HQUserType.UNKNOWN not in ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs):
+            yield {
+                'not': {'term': {'xmlns': SYSTEM_FORM_XMLNS}}
+            }
+
     def _es_xform_filter(self):
-        filters = ADD_TO_ES_FILTER['forms']
-        filters.append(
-            {'not': {'term': {'xmlns': SYSTEM_FORM_XMLNS}}}
-        )
-        return filters
+        return ADD_TO_ES_FILTER['forms']
 
     def filters_as_es_query(self):
         return {
