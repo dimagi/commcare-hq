@@ -534,6 +534,20 @@ class HQMediaMixin(Document):
                         media_class=CommCareImage,
                         **media_kwargs)
                     )
+                # Icons in case-details
+                for column in details.get_columns():
+                    if column.format == 'enum-image':
+                        for map_item in column.enum:
+                            # iterate over icons of each lang
+                            icons = map_item.value.values()
+                            media.extend([ApplicationMediaReference(
+                                icon,
+                                media_class=CommCareImage,
+                                is_menu_media=True,
+                                **media_kwargs)
+                                for icon in icons
+                                if icon]
+                            )
 
             if module.case_list_form.form_id:
                 _add_menu_media(module.case_list_form, **media_kwargs)
