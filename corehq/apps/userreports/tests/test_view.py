@@ -1,7 +1,6 @@
 import json
 import uuid
 
-from django.http import Http404
 from mock import patch
 
 from django.test import TestCase
