@@ -185,12 +185,18 @@ def _get_basic_module_view_context(app, module, lang=None):
 
 
 def _get_shadow_module_view_context(app, module, lang=None):
-    def is_incl(form):
-        return form.unique_id not in module.excluded_form_ids
+    langs = None if lang is None else [lang]
 
-    forms = (f for f in module.source_module.get_forms()) if module.source_module else []
+    def get_mod_dict(mod):
+        return {
+            'unique_id': mod.unique_id,
+            'name': trans(mod.name, langs),
+            'forms': [{'unique_id': f.unique_id, 'name': trans(f.name, langs)} for f in mod.get_forms()]
+        }
+
     return {
-        'forms': [{'unique_id': f.unique_id, 'name': f.name, 'is_incl': is_incl(f)} for f in forms]
+        'modules': [get_mod_dict(m) for m in app.modules if m.module_type == 'basic'],
+        'excluded_form_ids': module.excluded_form_ids,
     }
 
 
