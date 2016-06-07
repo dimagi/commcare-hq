@@ -153,44 +153,59 @@ class AutoCloseExtensionsTest(SyncBaseTest):
     def test_close_cases_host(self):
         """Closing a host should close all the extensions"""
         self._create_extension_chain()
-        self.assertFalse(CaseAccessors(self.domain).get_case(self.extension_ids[0]).closed)
-        self.assertFalse(CaseAccessors(self.domain).get_case(self.extension_ids[1]).closed)
-        self.assertFalse(CaseAccessors(self.domain).get_case(self.extension_ids[2]).closed)
+        cases = CaseAccessors(self.domain).get_cases(self.extension_ids)
+        self.assertFalse(cases[0].closed)
+        self.assertFalse(cases[1].closed)
+        self.assertFalse(cases[2].closed)
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=self.extension_ids[0],
             attrs={'close': True}
         ))
-        self.assertFalse(CaseAccessors(self.domain).get_case(self.host_id).closed)
-        self.assertTrue(CaseAccessors(self.domain).get_case(self.extension_ids[0]).closed)
-        self.assertFalse(CaseAccessors(self.domain).get_case(self.extension_ids[1]).closed)
-        self.assertFalse(CaseAccessors(self.domain).get_case(self.extension_ids[2]).closed)
+        cases = {
+            case.case_id: case.closed
+            for case in CaseAccessors(self.domain).get_cases([self.host_id] + self.extension_ids)
+        }
+        self.assertFalse(cases[self.host_id])
+        self.assertTrue(cases[self.extension_ids[0]])
+        self.assertFalse(cases[self.extension_ids[1]])
+        self.assertFalse(cases[self.extension_ids[2]])
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=self.host_id,
             attrs={'close': True}
         ))
-        self.assertTrue(CaseAccessors(self.domain).get_case(self.host_id).closed)
-        self.assertTrue(CaseAccessors(self.domain).get_case(self.extension_ids[0]).closed)
-        self.assertTrue(CaseAccessors(self.domain).get_case(self.extension_ids[1]).closed)
-        self.assertTrue(CaseAccessors(self.domain).get_case(self.extension_ids[2]).closed)
+        cases = {
+            case.case_id: case.closed
+            for case in CaseAccessors(self.domain).get_cases([self.host_id] + self.extension_ids)
+        }
+        self.assertTrue(cases[self.host_id])
+        self.assertTrue(cases[self.extension_ids[0]])
+        self.assertTrue(cases[self.extension_ids[1]])
+        self.assertTrue(cases[self.extension_ids[2]])
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     @run_with_all_backends
     def test_close_cases_child(self):
         """Closing a host that is also a child should close all the extensions"""
         self._create_host_is_subcase_chain()
-
-        self.assertFalse(CaseAccessors(self.domain).get_case(self.host_id).closed)
-        self.assertFalse(CaseAccessors(self.domain).get_case(self.extension_ids[0]).closed)
-        self.assertFalse(CaseAccessors(self.domain).get_case(self.extension_ids[1]).closed)
+        cases = {
+            case.case_id: case.closed
+            for case in CaseAccessors(self.domain).get_cases([self.host_id] + self.extension_ids)
+        }
+        self.assertFalse(cases[self.host_id])
+        self.assertFalse(cases[self.extension_ids[0]])
+        self.assertFalse(cases[self.extension_ids[1]])
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=self.host_id,
             attrs={'close': True}
         ))
-
-        self.assertFalse(CaseAccessors(self.domain).get_case('parent').closed)
-        self.assertTrue(CaseAccessors(self.domain).get_case(self.host_id).closed)
-        self.assertTrue(CaseAccessors(self.domain).get_case(self.extension_ids[0]).closed)
-        self.assertTrue(CaseAccessors(self.domain).get_case(self.extension_ids[1]).closed)
+        cases = {
+            case.case_id: case.closed
+            for case in CaseAccessors(self.domain).get_cases(['parent', self.host_id] + self.extension_ids)
+        }
+        self.assertFalse(cases['parent'])
+        self.assertTrue(cases[self.host_id])
+        self.assertTrue(cases[self.extension_ids[0]])
+        self.assertTrue(cases[self.extension_ids[1]])
