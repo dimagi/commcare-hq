@@ -93,7 +93,6 @@ class FormsStyleGuideView(BaseStyleGuideArticleView):
     def sections(self):
         return [
             'forms/intro',
-            'forms/b3_migration',
             'forms/anatomy',
             'forms/controls',
         ]
