@@ -52,6 +52,17 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         )
         return self.factory.create_or_update_cases([extension_3])
 
+    def _create_extension_loop(self):
+        extension_3 = CaseStructure(case_id=self.extension_ids[2])
+        host = CaseStructure(
+            case_id=self.host_id,
+            indices=[CaseIndex(
+                related_structure=extension_3,
+                relationship="extension",
+            )],
+        )
+        return self.factory.create_or_update_cases([host])
+
     def _create_host_is_subcase_chain(self):
         parent = CaseStructure(case_id='parent')
         host = CaseStructure(
@@ -99,6 +110,18 @@ class AutoCloseExtensionsTest(SyncBaseTest):
         self.assertEqual(
             set(self.extension_ids),
             CaseAccessors(self.domain).get_extension_chain([created_cases[-1].case_id])
+        )
+
+    @run_with_all_backends
+    def test_get_extension_chain_circular_ref(self):
+        """If there is a circular reference, this should not hang forever
+        """
+        self._create_extension_chain()
+        self._create_extension_loop()
+
+        self.assertEqual(
+            set([self.host_id] + self.extension_ids),
+            CaseAccessors(self.domain).get_extension_chain([self.extension_ids[2]])
         )
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
