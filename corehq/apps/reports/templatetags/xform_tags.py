@@ -24,6 +24,7 @@ from casexml.apps.case import const
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_tables_as_columns, get_default_definition)
+from dimagi.utils.parsing import json_format_datetime
 from django_prbac.utils import has_privilege
 
 
@@ -121,6 +122,7 @@ def render_form(form, domain, options):
 
     # Form Metadata tab
     meta = _top_level_tags(form).get('meta', None) or {}
+    meta['received_on'] = json_format_datetime(form.received_on)
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
