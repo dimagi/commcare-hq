@@ -15,12 +15,6 @@ from django.test import TestCase
 from testil import replattr, tempdir
 
 from corehq.apps.app_manager.models import Application, RemoteApp
-from corehq.apps.hqmedia.models import (
-    CommCareAudio,
-    CommCareImage,
-    CommCareMultimedia,
-    CommCareVideo,
-)
 from couchexport.models import SavedBasicExport, ExportConfiguration
 
 NOT_SET = object()
@@ -256,10 +250,10 @@ class TestMultimediaMigrations(BaseMigrationTest):
 
     slug = "multimedia"
     test_items = [
-        (CommCareAudio, "audio.mp3"),
-        (CommCareImage, "image.jpg"),
-        (CommCareVideo, "video.3gp"),
-        (CommCareMultimedia, "file.bin"),
+        (mod.hqmedia.CommCareAudio, "audio.mp3"),
+        (mod.hqmedia.CommCareImage, "image.jpg"),
+        (mod.hqmedia.CommCareVideo, "video.3gp"),
+        (mod.hqmedia.CommCareMultimedia, "file.bin"),
     ]
 
     @staticmethod
@@ -313,6 +307,67 @@ class TestMultimediaMigrations(BaseMigrationTest):
             exp = type(item).get(item._id)
             self.assertEqual(exp.fetch_attachment(exp.attachment_id), name + old_data)
             self.assertEqual(exp.fetch_attachment("other"), new_data)
+
+
+class TestXFormInstanceMigrations(BaseMigrationTest):
+
+    slug = "xforms"
+    doc_type_map = {
+        "XFormInstance": mod.xform.XFormInstance,
+        "XFormInstance-Deleted": mod.xform.XFormInstance,
+        "XFormArchived": mod.xform.XFormArchived,
+        "XFormDeprecated": mod.xform.XFormDeprecated,
+        "XFormDuplicate": mod.xform.XFormDuplicate,
+        "XFormError": mod.xform.XFormError,
+        "SubmissionErrorLog": mod.xform.SubmissionErrorLog,
+    }
+
+    def test_migrate_happy_path(self):
+        items = {}
+        form_name = mod.xform.ATTACHMENT_NAME
+        form = u'<fake xform submission>\u2713</fake>'
+        data = b'binary data not valid utf-8 \xe4\x94'
+        for doc_type, model_class in self.doc_type_map.items():
+            item = model_class()
+            item.save()
+            super(BlobMixin, item).put_attachment(form, form_name)
+            super(BlobMixin, item).put_attachment(data, "data.bin")
+            item.doc_type = doc_type
+            item.save()
+            items[doc_type] = item
+
+        self.do_migration(items.values(), num_attachments=2)
+
+        for item in items.values():
+            exp = type(item).get(item._id)
+            self.assertEqual(exp.fetch_attachment(form_name), form)
+            self.assertEqual(exp.fetch_attachment("data.bin"), data)
+
+    def test_migrate_with_concurrent_modification(self):
+        items = {}
+        form_name = mod.xform.ATTACHMENT_NAME
+        new_form = 'something new'
+        old_form = 'something old'
+        for doc_type, model_class in self.doc_type_map.items():
+            item = model_class()
+            item.save()
+            super(BlobMixin, item).put_attachment(old_form, form_name)
+            super(BlobMixin, item).put_attachment(old_form, "other.xml")
+            item.doc_type = doc_type
+            item.save()
+            self.assertEqual(len(item._attachments), 2)
+            items[item] = (1, 1)
+
+        def modify(item):
+            # put_attachment() calls .save()
+            type(item).get(item._id).put_attachment(new_form, form_name)
+
+        self.do_failed_migration(items, modify)
+
+        for item in items:
+            exp = type(item).get(item._id)
+            self.assertEqual(exp.fetch_attachment(form_name), new_form)
+            self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
 
 
 class TestMigrateBackend(TestCase):
