@@ -6,7 +6,7 @@ if [ -z "$1" ]; then
     exit 0
 fi
 
-function test_setup() {
+function setup() {
     [ -n "$1" ] && TEST="$1"
 
     if [[ "$TEST" =~ ^python ]]; then
@@ -34,7 +34,7 @@ function test_setup() {
 
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
         npm install
-        bower install --silent
+        bower install --config.interactive=false
     fi
 
     /mnt/wait.sh
@@ -51,7 +51,7 @@ function run_tests() {
         exit 1
     fi
     shift
-    test_setup $TEST
+    setup $TEST
 
     if [ "$TEST" == "python-sharded" ]; then
         export USE_PARTITIONED_DATABASE=yes
@@ -82,15 +82,25 @@ function run_tests() {
     fi
 }
 
+function bootstrap() {
+    JS_SETUP=yes setup python
+    ./manage.py sync_couch_views
+    ./manage.py migrate --noinput
+    ./manage.py compilejsi18n
+    ./manage.py bootstrap demo admin@example.com password
+}
+
+export -f setup
 export -f run_tests
-export -f test_setup
+export -f bootstrap
 
 # commcare-hq source overlay prevents modifications in this container
 # from leaking to the host; allows safe overwrite of localsettings.py
-rm -rf /mnt/lib/overlay  # clear source overlay
+cd /mnt
+rm -rf lib/overlay  # clear source overlay
 mkdir -p commcare-hq lib/overlay lib/node_modules
 ln -s /mnt/lib/node_modules lib/overlay/node_modules
-mount -t aufs -o br=lib/overlay:commcare-hq-ro none /mnt/commcare-hq
+mount -t aufs -o br=lib/overlay:commcare-hq-ro none commcare-hq
 
 cd commcare-hq
 ln -sf .travis/localsettings.py localsettings.py

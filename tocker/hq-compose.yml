@@ -5,8 +5,6 @@ web:
     NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
     DEPENDENT_SERVICES: "couch postgres redis kafka elasticsearch riakcs"
   privileged: true  # allows mount inside container
-  expose:
-    - "8000"
   links:
     - postgres
     - couch
@@ -57,7 +55,7 @@ elasticsearch:
   expose:
     - "9200"
   volumes:
-    - ${ES_DATA_VOLUME}:/usr/share/elasticsearch/data
+    - ${DATA_VOLUME_PREFIX}elasticsearch:/usr/share/elasticsearch/data
 
 kafka:
   image: spotify/kafka

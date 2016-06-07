@@ -25,14 +25,21 @@ function usage() {
             echo ""
             ;;
         services)
-            echo "Manage CommCare HQ services"
+            echo "Manage CommCare HQ docker services"
             echo ""
-            echo "Start services with ports mapped to the docker"
-            echo "host if no other options are given."
+            echo "Start services with ports mapped to the docker host if no"
+            echo "other options are given. This command uses a different base"
+            echo "container name than other commands so the containers and"
+            echo "volumes it creates will not interfere with other commands."
             echo ""
-            echo "All docker-compose commands are also supported. For example:"
+            echo "$0 services [--bootstrap] [COMMAND]"
             echo ""
-            echo "$0 services ps"
+            echo "Options:"
+            echo ""
+            echo "  --bootstrap         Run Django web server on port 8000"
+            echo ""
+            echo "Commands:"
+            echo "    All docker-compose commands are supported."
             echo ""
             ;;
         teardown)
@@ -60,8 +67,18 @@ shift
 if [ "$CMD" == "services" ]; then
     CMD=$1
     shift
-    if [ -z "$CMD" ]; then
-        CMD="up -d"
+    if [ "$CMD" == "--bootstrap" ]; then
+        SERVICES="bootstrap"
+        CMD=$1
+        shift
+        if [ -z "$CMD" ]; then
+            CMD="run --rm web"
+        fi
+    else
+        SERVICES="services"
+        if [ -z "$CMD" ]; then
+            CMD="up -d"
+        fi
     fi
 
     XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
@@ -80,7 +97,7 @@ if [ "$CMD" == "services" ]; then
     fi
 
     export ES_CLUSTER_NAME="${ES_CLUSTER_NAME:-$(hostname)}"
-    export COMPOSE_FILE=tocker/hq-compose-services.yml
+    export COMPOSE_FILE=tocker/hq-compose-${SERVICES}.yml
     export COMPOSE_PROJECT_NAME=hqservice
     export VOLUME_PREFIX="$DOCKER_DATA_HOME/"
 else
@@ -97,9 +114,9 @@ if [ "$DOCKER_BETA" == "true" ]; then
     # created by docker, instead of $DOCKER_DATA_HOME/elasticsearch.
     # https://forums.docker.com/t/elasticsearch-1-7-0-fails-to-start-on-docker4mac-1-11-1-beta10/11692/3
     # The commit that introduced this can be reverted when the issue is resolved.
-    export ES_DATA_VOLUME=$COMPOSE_PROJECT_NAME-elasticsearch
+    export DATA_VOLUME_PREFIX=${COMPOSE_PROJECT_NAME}-
 else
-    export ES_DATA_VOLUME=${VOLUME_PREFIX}elasticsearch
+    export DATA_VOLUME_PREFIX=${VOLUME_PREFIX}
 fi
 
 case $CMD in

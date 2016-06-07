@@ -188,7 +188,7 @@ ELASTICSEARCH_VERSION = 1.7
 
 CACHE_REPORTS = True
 
-if os.environ.get("COMMCAREHQ_DEMO_MODE"):
+if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     UNIT_TESTING = False
     ADMINS = (('Admin', 'admin@example.com'),)
 
