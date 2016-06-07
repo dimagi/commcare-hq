@@ -111,7 +111,8 @@ def cachebuster(url):
 
 
 @register.simple_tag()
-def static(url, **kwargs):
+def new_satic(url, **kwargs):
+    # todo delete after final merge
     if kwargs:
         warnings.warn('static no longer accepts arguments', PendingDeprecationWarning)
     return static(url)
