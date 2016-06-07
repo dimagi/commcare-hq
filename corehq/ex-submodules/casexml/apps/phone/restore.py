@@ -178,7 +178,7 @@ class FileRestoreResponse(RestoreResponse):
             shutil.copyfileobj(self.response_body, response)
 
             response.write(self.closing_tag)
-        
+
         self.finalized = True
         self.close()
 
@@ -186,6 +186,9 @@ class FileRestoreResponse(RestoreResponse):
         return {
             'data': self.get_filename() if not full else open(self.get_filename(), 'r')
         }
+
+    def as_file(self):
+        return open(self.get_filename(), 'r')
 
     def as_string(self):
         with open(self.get_filename(), 'r') as f:
@@ -260,6 +263,12 @@ class CachedResponse(object):
         if content_length is not None:
             headers['Content-Length'] = content_length
         return stream_response(self.payload.as_file(), headers)
+
+    def as_file(self):
+        if self.payload:
+            return self.payload.as_file()
+        else:
+            return None
 
 
 class RestoreParams(object):
