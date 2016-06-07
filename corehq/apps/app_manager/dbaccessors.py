@@ -121,14 +121,12 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
         if original_app.get('copy_of'):
             # The id passed in corresponds to a build
-            parent_app_id = original_app.get('copy_of')
-        else:
-            parent_app_id = original_app['_id']
+            app_id = original_app.get('copy_of')
 
         if target == 'build':
-            app = get_latest_build_doc(domain, parent_app_id)
+            app = get_latest_build_doc(domain, app_id)
         else:
-            app = get_latest_released_app_doc(domain, parent_app_id)
+            app = get_latest_released_app_doc(domain, app_id)
 
         if not app:
             # If no builds/starred-builds, act as if latest=False
