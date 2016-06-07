@@ -62,6 +62,11 @@ class FormProcessorSQL(object):
         form_ids = [xform.form_id for xform in xforms]
         FormAccessorSQL.hard_delete_forms(domain, form_ids)
         CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+        for form in xforms:
+            form.state |= XFormInstanceSQL.DELETED
+            publish_form_saved(form)
+        case.deleted = True
+        publish_case_saved(case)
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None):

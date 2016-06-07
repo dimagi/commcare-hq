@@ -5,6 +5,7 @@ from datetime import datetime
 import itertools
 from django.db import connections, InternalError, transaction
 
+from corehq.form_processor.change_publishers import publish_form_saved
 from corehq.form_processor.exceptions import (
     XFormNotFound,
     CaseNotFound,
@@ -165,11 +166,13 @@ class FormAccessorSQL(AbstractFormAccessor):
     def archive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, True)
         form.state = XFormInstanceSQL.ARCHIVED
+        publish_form_saved(form)
 
     @staticmethod
     def unarchive_form(form, user_id=None):
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
         form.state = XFormInstanceSQL.NORMAL
+        publish_form_saved(form)
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):

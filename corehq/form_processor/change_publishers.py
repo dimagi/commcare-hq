@@ -31,7 +31,7 @@ def change_meta_from_sql_form(form):
         document_type=form.state,
         document_subtype=form.xmlns,
         domain=form.domain,
-        is_deletion=False,
+        is_deletion=form.is_deleted,
     )
 
 
