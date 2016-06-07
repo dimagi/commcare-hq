@@ -9,7 +9,7 @@ from corehq.sql_db.operations import HqRunSQL
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_proxy_accessors', '0024_get_case_ids_in_domain'),
+        ('sql_proxy_accessors', '0025_index_changes'),
     ]
 
     operations = [
