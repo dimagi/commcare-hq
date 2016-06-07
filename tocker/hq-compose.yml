@@ -71,11 +71,11 @@ kafka:
     - ${VOLUME_PREFIX}zookeeper:/var/lib/zookeeper
 
 riakcs:
-  image: millerdev/riak-cs
+  image: dimagi/riak-cs
   labels:
     commcare.name: "riakcs"
   expose:
-    - "8080"
+    - "9980"
     - "8098"
   volumes:
     - ${VOLUME_PREFIX}riakcs:/var/lib/riak-data

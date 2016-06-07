@@ -42,6 +42,5 @@ riakcs:
     file: hq-compose.yml
     service: riakcs
   ports:
-    # bind to host port 9880 since 8080 is commonly used for other services
-    - "9880:8080"
+    - "9980:9980"
     - "8098:8098"
