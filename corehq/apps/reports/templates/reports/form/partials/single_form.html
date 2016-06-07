@@ -142,7 +142,7 @@ requires imports/proptable.html to be included in the main template
 <div class="clearfix">
     <div class="pull-right">
         {% if auth_context.authenticated %}
-            <i class="fa fa-lock"></i>
+            <i class="fa fa-lock" title="{% trans "Secure submission" %}"></i>
             {% if user_info.id != auth_user_info.id %}
             {% blocktrans with auth_user=auth_user_info|pretty_doc_info user=user_info|pretty_doc_info %}
                 Submitted by {{ auth_user }} on behalf of {{ user }}
@@ -155,7 +155,7 @@ requires imports/proptable.html to be included in the main template
             {% endif %}
         {% endif %}
         {% if not auth_context.authenticated %}
-            <i class="fa fa-unlock"></i>
+            <i class="fa fa-unlock" title="{% trans "Insecure submission" %}"></i>
             {% blocktrans with user=user_info|pretty_doc_info %}
             Submitted as {{ user }}
             {% endblocktrans %}
