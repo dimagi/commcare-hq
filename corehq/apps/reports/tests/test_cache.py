@@ -46,6 +46,14 @@ class ReportCacheTest(TransactionTestCase):
 
     domain = 'cache-test'
 
+    @classmethod
+    def setUpClass(cls):
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
     def setUp(self):
         super(ReportCacheTest, self).setUp()
         self.test_domain = create_domain(self.domain)
