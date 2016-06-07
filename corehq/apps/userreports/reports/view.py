@@ -13,7 +13,7 @@ from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import (
@@ -481,7 +481,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             # Frontend should check size with export_size_check_response()
             # Before hitting this endpoint, but we check the size again here
             # in case the user modifies the url manually.
-            raise Http404
+            return HttpResponseBadRequest()
 
         temp = StringIO()
         export_from_tables(self.export_table, temp, Format.XLS_2007)

@@ -190,8 +190,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             response = json.loads(view.export_size_check_response.content)
         self.assertEqual(response['export_allowed'], False)
 
-        with self.assertRaises(Http404):
-            view.export_response
+        self.assertEqual(view.export_response.status_code, 400)
 
     def test_paginated_build_table(self):
         """
