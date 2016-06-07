@@ -25,7 +25,7 @@ from corehq.apps.export.models import (
     Option,
 )
 
-MockLedgerValue = namedtuple('MockLedgerValue', ['product_id', 'section_id'])
+MockLedgerValue = namedtuple('MockLedgerValue', ['entry_id', 'section_id'])
 
 
 class TestExportColumn(SimpleTestCase):
@@ -118,16 +118,12 @@ class StockExportColumnTest(SimpleTestCase):
             label="Stock",
             item=ExportItem(),
         )
-        get_ledger_path = (
-            'corehq.form_processor.interfaces.dbaccessors.'
-            'LedgerAccessors.get_ledger_values_for_product_ids'
-        )
         with patch(
-                get_ledger_path,
+                'corehq.apps.export.models.new.get_ledger_section_entry_combinations',
                 return_value=[
-                    MockLedgerValue(section_id='abc', product_id='def'),
-                    MockLedgerValue(section_id='abc', product_id='def'),
-                    MockLedgerValue(section_id='123', product_id='456'),
+                    MockLedgerValue(section_id='abc', entry_id='def'),
+                    MockLedgerValue(section_id='abc', entry_id='def'),
+                    MockLedgerValue(section_id='123', entry_id='456'),
                 ]):
 
             headers = list(column.get_headers())

@@ -240,12 +240,6 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         return StockState.objects.filter(case_id=case_id)
 
     @staticmethod
-    def get_ledger_values_for_product_ids(product_ids):
-        from corehq.apps.commtrack.models import StockState
-
-        return StockState.objects.filter(product_id__in=product_ids)
-
-    @staticmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):
         from casexml.apps.stock.utils import get_current_ledger_state
         return get_current_ledger_state(case_ids, ensure_form_id=ensure_form_id)

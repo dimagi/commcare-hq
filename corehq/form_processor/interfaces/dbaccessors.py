@@ -419,9 +419,6 @@ class LedgerAccessors(object):
     def get_ledger_values_for_case(self, case_id):
         return self.db_accessor.get_ledger_values_for_case(case_id)
 
-    def get_ledger_values_for_product_ids(self, product_ids):
-        return self.db_accessor.get_ledger_values_for_product_ids(product_ids)
-
     def get_current_ledger_state(self, case_ids):
         if not case_ids:
             return {}
