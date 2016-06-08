@@ -16,7 +16,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
-from corehq.apps.ota.tasks import prime_restore
+from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
@@ -26,14 +26,14 @@ from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
-from soil import DownloadBase
+from soil import MultipleTaskDownload
 
 
 @json_error
 @login_or_digest_or_basic_or_apikey()
 def restore(request, domain, app_id=None):
     """
-    We override restore because we have to supply our own 
+    We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
     user = request.user
@@ -207,8 +207,7 @@ class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
         return self.get(request, *args, **kwargs)
 
     def form_valid(self):
-        download = DownloadBase()
-        res = prime_restore.delay(
+        res = queue_prime_restore(
             self.domain,
             CommCareUser.ids_by_domain(self.domain),
             version=V2,
@@ -216,7 +215,9 @@ class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
             overwrite_cache=True,
             check_cache_only=False
         )
+        download = MultipleTaskDownload()
         download.set_task(res)
+        download.save()
 
         return redirect('hq_soil_download', self.domain, download.download_id)
 
@@ -238,8 +239,7 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
         else:
             user_ids = self.form.user_ids
 
-        download = DownloadBase()
-        res = prime_restore.delay(
+        res = queue_prime_restore(
             self.domain,
             user_ids,
             version=V2,
@@ -247,6 +247,8 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
             overwrite_cache=self.form.cleaned_data['overwrite_cache'],
             check_cache_only=self.form.cleaned_data['check_cache_only']
         )
+        download = MultipleTaskDownload()
         download.set_task(res)
+        download.save()
 
         return redirect('hq_soil_download', self.domain, download.download_id)
