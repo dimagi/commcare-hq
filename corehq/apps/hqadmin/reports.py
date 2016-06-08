@@ -1,6 +1,8 @@
 import copy
 from datetime import datetime
 import json
+
+from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
     use_nvd3, use_jquery_ui
 from dimagi.utils.decorators.memoized import memoized
@@ -1168,3 +1170,70 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
         row = super(DeviceLogSoftAssertReport, self)._create_row(log, *args, **kwargs)
         row.append(log.domain)
         return row
+
+
+class CommCareVersionReport(AdminReport, ElasticTabularReport):
+    slug = "commcare_version"
+    name = ugettext_lazy("CommCare Version")
+
+    @property
+    def headers(self):
+        versions = get_all_versions()
+        headers = DataTablesHeader(
+            DataTablesColumn(_("Project"))
+        )
+        for version in versions:
+            headers.add_column(DataTablesColumn(version))
+        return headers
+
+    @property
+    def rows(self):
+        versions = get_all_versions()
+
+        def get_query(version):
+            return {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "range": {
+                                    "received_on": {
+                                        "gte": "now-90d",
+                                        "lte": "now"
+                                    }
+                                }
+                            },
+                            {
+                                "query_string": {
+                                    "default_field": "appVersion",
+                                    "query": "*" + version + "*"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "aggs": {
+                    "by_domain": {
+                      "terms": {
+                        "field": "domain"
+                      }
+                    }
+                }
+            }
+
+        rows = {}
+        for domain in es_domain_query(show_stats=False)['hits']['hits']:
+            domain_name = domain['_source']['name']
+            rows.update({domain_name: [domain_name] + [0] * len(versions)})
+
+        for idx, version in enumerate(versions, 2):
+            data_for_domains = es_query(
+                q=get_query(version),
+                es_index="forms",
+                size=0
+            )
+            for for_domain in data_for_domains['aggregations']['by_domain']['buckets']:
+                row = rows.get(for_domain['key'])
+                row[idx] = for_domain['doc_count']
+
+        return rows.values()
