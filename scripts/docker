@@ -110,11 +110,11 @@ if [ "$CMD" == "services" ]; then
     fi
 
     export ES_CLUSTER_NAME="${ES_CLUSTER_NAME:-$(hostname)}"
-    export COMPOSE_FILE=tocker/hq-compose-${SERVICES}.yml
+    export COMPOSE_FILE=docker/hq-compose-${SERVICES}.yml
     export COMPOSE_PROJECT_NAME=hqservice
     export VOLUME_PREFIX="$DOCKER_DATA_HOME/"
 else
-    export COMPOSE_FILE=tocker/hq-compose.yml
+    export COMPOSE_FILE=docker/hq-compose.yml
     export COMPOSE_PROJECT_NAME=hqtest
     export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
 fi
