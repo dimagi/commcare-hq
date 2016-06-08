@@ -1,3 +1,4 @@
+// hqDefine intentionally not used
 (function() {
     var $form = $('#credit-form');
     if ($form.length) {
@@ -12,4 +13,4 @@
         var creditFormModel = new CreditFormModel();
         $form.koApplyBindings(creditFormModel);
     }
-})();
+}());
