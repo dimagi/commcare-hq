@@ -276,8 +276,14 @@
                              data-bind="template: {name: 'module-forms-template',
                                                    foreach: selectedModule().forms()}"></div>
                         <div class="hidden">
-                            {# Ensures that if all forms are excluded, we still hear about it #}
-                            <input name="incl_form_ids" type="checkbox" value="0" checked="">
+                            <select name="excl_form_ids"
+                                    multiple="multiple"
+                                    data-bind="options: selectedModule().forms,
+                                               optionsText: 'name',
+                                               optionsValue: 'uniqueId',
+                                               selectedOptions: excludedFormIds"></select>
+                            {# POST a value, even if no forms are excluded #}
+                            <input name="excl_form_ids" type="checkbox" value="0" checked="">
                         </div>
                     </div>
                 </div>

@@ -9,8 +9,14 @@ hqDefine('app_manager/js/shadow-module-settings.js', function () {
             var self = this;
             self.modules = ko.observableArray();
             self.selectedModuleId = ko.observable(selectedModuleId);
-            self.selectedModule = ko.computed(function () {
+            self.selectedModule = ko.pureComputed(function () {
                 return _.findWhere(self.modules(), {uniqueId: self.selectedModuleId()});
+            });
+            self.excludedFormIds = ko.pureComputed(function () {
+                var exclForms = _.filter(self.selectedModule().forms(), function (form) {
+                    return self.selectedModule().includedFormIds().indexOf(form.uniqueId) === -1;
+                });
+                return _.map(exclForms, function (form) { return form.uniqueId; });
             });
 
             var SourceModule = function (uniqueId, name) {
