@@ -27,6 +27,8 @@ class DownloadBase(object):
     A basic download object.
     """
 
+    has_file = False
+
     def __init__(self, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None,
@@ -191,6 +193,7 @@ class CachedDownload(DownloadBase):
     """
     Download that lives in the cache
     """
+    has_file = True
 
     def __init__(self, cacheindex, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
@@ -224,6 +227,7 @@ class FileDownload(DownloadBase):
     Download that lives on the filesystem
     Uses django-transfer to get files stored on the external drive if use_transfer=True
     """
+    has_file = True
 
     def __init__(self, filename, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
