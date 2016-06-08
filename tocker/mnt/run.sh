@@ -40,7 +40,7 @@ function setup() {
     /mnt/wait.sh
 
     if [[ "$TEST" =~ ^python ]]; then
-        ./manage.py create_kafka_topics
+        su cchq -c "./manage.py create_kafka_topics"
     fi
 }
 
@@ -52,7 +52,12 @@ function run_tests() {
     fi
     shift
     setup $TEST
+    su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
+}
 
+function _run_tests() {
+    TEST=$1
+    shift
     if [ "$TEST" == "python-sharded" ]; then
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
@@ -69,7 +74,7 @@ function run_tests() {
 
     if [ "$TEST" != "javascript" ]; then
         echo "coverage run manage.py test $@ $TESTS"
-        coverage run manage.py test "$@" $TESTS
+        /vendor/bin/coverage run manage.py test "$@" $TESTS
     else
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> /var/log/commcare-hq.log &
@@ -94,13 +99,20 @@ export -f setup
 export -f run_tests
 export -f bootstrap
 
+# put _run_tests body code in a file so it can be run as cchq
+printf "#! /bin/bash\nset -e\n" > /mnt/run_tests
+type _run_tests | tail -n +4 | head -n -1 >> /mnt/run_tests
+chmod +x /mnt/run_tests
+
 # commcare-hq source overlay prevents modifications in this container
 # from leaking to the host; allows safe overwrite of localsettings.py
 cd /mnt
 rm -rf lib/overlay  # clear source overlay
-mkdir -p commcare-hq lib/overlay lib/node_modules
+mkdir -p commcare-hq lib/overlay lib/node_modules lib/sharedfiles
 ln -s /mnt/lib/node_modules lib/overlay/node_modules
+ln -s /mnt/lib/sharedfiles /sharedfiles
 mount -t aufs -o br=lib/overlay:commcare-hq-ro none commcare-hq
+chown -R cchq:cchq lib/overlay lib/sharedfiles
 
 cd commcare-hq
 ln -sf .travis/localsettings.py localsettings.py
