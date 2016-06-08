@@ -17,11 +17,11 @@ hqDefine('accounting/ko/accounting.credits.js', function () {
             _.each(features, function (feature) {
                 self.features.push(new CreditItem('feature', feature, paymentHandler, can_purchase_credits));
             });
-            self.prepayments(new Prepayments(self.products, self.features, paymentHandler, can_purchase_credits));
-        }
+            self.prepayments(new Prepayments(self.products, self.features, paymentHandler));
+        };
     };
 
-    var Prepayments = function(products, features, paymentHandler, can_purchase_credits) {
+    var Prepayments = function(products, features, paymentHandler) {
         'use strict';
         var self = this;
         var PrepaymentItems = hqImport('accounting/ko/accounting.payment_method_handler.js').PrepaymentItems;
@@ -75,7 +75,7 @@ hqDefine('accounting/ko/accounting.credits.js', function () {
             self.paymentHandler.costItem(new CreditCostItem({
                 creditType: self.creditType(),
                 category: self.category(),
-                creditItem: self
+                creditItem: self,
             }));
         };
 

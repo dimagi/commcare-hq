@@ -34,7 +34,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
         self.submitForm = function () {
             $('#' + self.formId).ajaxSubmit({
                 success: self.handleSuccess,
-                error: self.handleGeneralError
+                error: self.handleGeneralError,
             });
         };
     };
@@ -53,10 +53,10 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
         };
 
         self.handleSuccess = function(response) {
-              if (response.success) {
-                  self.costItem().reset();
-                  self.paymentIsComplete(true);
-              }
+            if (response.success) {
+                self.costItem().reset();
+                self.paymentIsComplete(true);
+            }
         };
 
         self.isSubmitDisabled = ko.computed(function () {
@@ -173,7 +173,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
             self.showConfirmRemoveCard(false);
             $('#' + self.formId).ajaxSubmit({
                 data: {
-                    removeCard: true
+                    removeCard: true,
                 },
                 success: function (response) {
                     self.handleProcessingErrors(response);
@@ -191,7 +191,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
                 error: function () {
                     self.handleGeneralError();
                     self.isRemovingCard(false);
-                }
+                },
             });
         };
 
@@ -215,21 +215,21 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
         };
 
         self.handleSuccess = function(response) {
-              if (response.success) {
-                  self.costItem().reset(response);
-                  if (response.wasSaved) {
-                      for (var i = 0; i < self.handlers.length; i++) {
-                          var handler = self.handlers[i];
-                          var stripe_card = new StripeCard();
-                          stripe_card.loadSavedData(response.card);
-                          handler.savedCards.push(stripe_card);
-                          handler.selectedCardType('saved');
-                      }
-                  }
-                  self.paymentIsComplete(true);
-                  self.paymentProcessing(false);
-              }
-              self.handleProcessingErrors(response);
+            if (response.success) {
+                self.costItem().reset(response);
+                if (response.wasSaved) {
+                    for (var i = 0; i < self.handlers.length; i++) {
+                        var handler = self.handlers[i];
+                        var stripe_card = new StripeCard();
+                        stripe_card.loadSavedData(response.card);
+                        handler.savedCards.push(stripe_card);
+                        handler.selectedCardType('saved');
+                    }
+                }
+                self.paymentIsComplete(true);
+                self.paymentProcessing(false);
+            }
+            self.handleProcessingErrors(response);
         };
 
     };
@@ -407,7 +407,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
     };
 
     var CreditCostItem = function (initData) {
-       'use strict';
+        'use strict';
         BaseCostItem.call(this, initData);
         var self = this;
 
@@ -462,7 +462,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
         });
 
         self.showCardData = ko.computed(function () {
-           return ! self.isProcessing();
+            return ! self.isProcessing();
         });
         self.cardType = ko.observable();
         self.isSaved = ko.observable(false);
@@ -504,7 +504,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
                 number: self.number(),
                 cvc: self.cvc(),
                 exp_month: self.expMonth(),
-                exp_year: self.expYear()
+                exp_year: self.expYear(),
             }, function (status, response) {
                 if (response.error) {
                     self.errorMsg(response.error.message);
