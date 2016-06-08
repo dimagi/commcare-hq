@@ -1732,7 +1732,7 @@ def edit_sms_languages(request, domain):
         create=True) as tdoc:
         try:
             from corehq.apps.app_manager.views.utils import validate_langs
-            langs, rename, build = validate_langs(request, tdoc.langs,
+            langs, rename = validate_langs(request, tdoc.langs,
                 validate_build=False)
         except AssertionError:
             return HttpResponse(status=400)
