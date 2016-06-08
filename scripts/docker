@@ -110,7 +110,7 @@ export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
 
 if [ "$DOCKER_BETA" == "true" ]; then
-    # Put elasticsearch data in a named data volume, automatically
+    # Put elasticsearch (and other) data in a named data volume, automatically
     # created by docker, instead of $DOCKER_DATA_HOME/elasticsearch.
     # https://forums.docker.com/t/elasticsearch-1-7-0-fails-to-start-on-docker4mac-1-11-1-beta10/11692/3
     # The commit that introduced this can be reverted when the issue is resolved.

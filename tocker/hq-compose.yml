@@ -77,4 +77,4 @@ riakcs:
   expose:
     - "9980"
   volumes:
-    - ${VOLUME_PREFIX}riakcs:/var/lib/riak-data
+    - ${DATA_VOLUME_PREFIX}riakcs:/var/lib/riak-data
