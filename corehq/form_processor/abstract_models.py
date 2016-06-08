@@ -184,6 +184,12 @@ class AbstractCommCareCase(object):
     def get_case_property(self, property):
         raise NotImplementedError
 
+    def get_closing_transactions(self):
+        raise NotImplementedError
+
+    def get_opening_transactions(self):
+        raise NotImplementedError
+
     def to_json(self):
         raise NotImplementedError()
 
