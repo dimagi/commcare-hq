@@ -810,13 +810,13 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     if form.cleaned_data['send_to_owner']:
         send_html_email_async.delay(subject, request.couch_user.get_email(), body,
                                     email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                                    ga_tracking_info={'project_space_id': request.domain})
+                                    ga_tracking_info={'cd4': request.domain})
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
             send_html_email_async.delay(subject, recipient, body,
                                         email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                                        ga_tracking_info={'project_space_id': request.domain})
+                                        ga_tracking_info={'cd4': request.domain})
 
     return HttpResponse()
 
