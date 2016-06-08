@@ -1,5 +1,6 @@
 from collections import namedtuple
 from jsonobject import DefaultProperty
+from casexml.apps.stock.models import StockTransaction
 from corehq.apps.app_manager.models import Application
 from corehq.util.couch import stale_ok
 from dimagi.ext import jsonobject
@@ -122,3 +123,25 @@ def get_form_details_for_app_and_xmlns(domain, app_id, xmlns, deleted=False):
 
 def _row_to_form_details(row):
     return FormDetails.wrap(row['value'])
+
+
+def get_ledger_values_for_case_as_of(case_id, section_id, as_of, program_id=None):
+    transactions = StockTransaction.objects.filter(
+        case_id=case_id,
+        section_id=section_id,
+    )
+
+    if program_id:
+        transactions = transactions.filter(
+            sql_product__program_id=program_id
+        )
+
+    return transactions.exclude(
+        report__date__gt=as_of
+    ).order_by(
+        'product_id', '-report__date'
+    ).values_list(
+        'product_id', 'stock_on_hand'
+    ).distinct(
+        'product_id'
+    )
