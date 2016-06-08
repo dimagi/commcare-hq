@@ -315,20 +315,18 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
         """
         # the actions and _attachment must be added before the first saves can happen
         # todo attach cached attachment info
-        def fetch_attachment(name):
-            if xform and 'data' in xform._attachments[name]:
-                assert xform.form_id == attachment_action.xform_id
-                return base64.b64decode(xform._attachments[name]['data'])
-            else:
-                return XFormInstance.get_db().fetch_attachment(attachment_action.xform_id, name)
+        def fetch_attachment(name, _form=[]):
+            if not _form:
+                _form.append(XFormInstance.get(attachment_action.xform_id))
+            return _form[0].fetch_attachment(name)
 
-        stream_dict = {}
+        attach_dict = {}
         # cache all attachment streams from xform
         for k, v in attachment_action.attachments.items():
             if v.is_present:
                 # fetch attachment, update metadata, get the stream
                 attach_data = fetch_attachment(v.attachment_src)
-                stream_dict[k] = attach_data
+                attach_dict[k] = attach_data
                 v.attachment_size = len(attach_data)
 
                 if v.is_image:
@@ -355,7 +353,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             if v.is_present:
                 #fetch attachment from xform
                 identifier = v.identifier
-                attach = stream_dict[identifier]
+                attach = attach_dict[identifier]
                 attachment_builder.add(name=k, content=attach,
                                        content_type=v.server_mime)
             else:
