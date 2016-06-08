@@ -3880,7 +3880,7 @@ class LazyBlobDoc(BlobMixin):
                 # preserve stubs so couch attachments don't get deleted on save
                 stubs = {}
                 for name, value in list(attachments.items()):
-                    if "stub" in value:
+                    if isinstance(value, dict) and "stub" in value:
                         stubs[name] = attachments.pop(name)
                 if stubs:
                     data["_attachments"] = stubs
