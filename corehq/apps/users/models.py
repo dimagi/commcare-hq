@@ -869,9 +869,19 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def user_session_data(self):
-        from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
+        from corehq.apps.custom_data_fields.models import (
+            SYSTEM_PREFIX,
+            COMMCARE_USER_TYPE_KEY,
+            COMMCARE_USER_TYPE_DEMO
+        )
 
-        session_data = copy.copy(self.user_data)
+        session_data = copy.deepcopy(dict(self.user_data))
+
+        if self.is_demo_user:
+            session_data.update({
+                COMMCARE_USER_TYPE_KEY: COMMCARE_USER_TYPE_DEMO
+            })
+
         session_data.update({
             '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
             '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
@@ -1317,6 +1327,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     registering_device_id = StringProperty()
     # used by loadtesting framework - should typically be empty
     loadtest_factor = IntegerProperty()
+    is_demo_user = BooleanProperty(default=False)
+    demo_restore_id = IntegerProperty()
 
     @classmethod
     def wrap(cls, data):
