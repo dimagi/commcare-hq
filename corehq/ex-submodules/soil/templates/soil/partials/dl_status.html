@@ -6,7 +6,8 @@
             {{ error|unordered_list}}
         </ul>
     </div>
-{% elif is_ready %}
+{% endif %}
+{% if is_ready %}
     <div id="ready_{{ download_id }}">
     {% if has_file %}
         <p class="lead">
