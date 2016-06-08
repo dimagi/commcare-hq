@@ -3739,6 +3739,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     module_type = 'shadow'
     source_module_id = StringProperty()
     forms = []
+    excluded_form_ids = SchemaListProperty()
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
@@ -3784,7 +3785,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def get_suite_forms(self):
         if not self.source_module:
             return []
-        return self.source_module.get_forms()
+        return [f for f in self.source_module.get_forms() if f.unique_id not in self.excluded_form_ids]
 
     @parse_int([1])
     def get_form(self, i):
