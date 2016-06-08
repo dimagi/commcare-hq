@@ -1742,8 +1742,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 caseblock.as_xml()
             ),
             self.domain,
-            self.username,
-            self._id
         )
 
     def remove_location_delegate(self, location):
