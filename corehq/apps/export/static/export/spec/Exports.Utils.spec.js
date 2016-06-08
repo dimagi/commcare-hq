@@ -1,5 +1,5 @@
 describe('Export Utility functions', function() {
-
+    var constants = hqImport('export/js/const.js');
     describe('#getTagCSSClass', function() {
         it('Should get regular tag class', function() {
             var cls = Exports.Utils.getTagCSSClass('random-tag');
@@ -7,7 +7,7 @@ describe('Export Utility functions', function() {
         });
 
         it('Should get warning tag class', function() {
-            var cls = Exports.Utils.getTagCSSClass(Exports.Constants.TAG_DELETED);
+            var cls = Exports.Utils.getTagCSSClass(constants.TAG_DELETED);
             assert.equal(cls, 'label label-warning');
         });
     });

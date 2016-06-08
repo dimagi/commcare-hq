@@ -1,12 +1,13 @@
-/* globals Exports, hqDefine */
+/* globals Exports, hqDefine, hqImport */
 
 hqDefine('export/js/models.js', function () {
+    var constants = hqImport('export/js/const.js');
 
     var ExportInstance = function(instanceJSON, options) {
         options = options || {};
         var self = this;
         ko.mapping.fromJS(instanceJSON, ExportInstance.mapping, self);
-        self.saveState = ko.observable(Exports.Constants.SAVE_STATES.READY);
+        self.saveState = ko.observable(constants.SAVE_STATES.READY);
         self.saveUrl = options.saveUrl;
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
@@ -17,17 +18,17 @@ hqDefine('export/js/models.js', function () {
     };
 
     ExportInstance.prototype.getFormatOptionValues = function() {
-        return _.map(Exports.Constants.EXPORT_FORMATS, function(value, key) { return value; });
+        return _.map(constants.EXPORT_FORMATS, function(value, key) { return value; });
     };
 
     ExportInstance.prototype.getFormatOptionText = function(format) {
-        if (format === Exports.Constants.EXPORT_FORMATS.HTML) {
+        if (format === constants.EXPORT_FORMATS.HTML) {
             return gettext('Web Page (Excel Dashboards)');
-        } else if (format === Exports.Constants.EXPORT_FORMATS.CSV) {
+        } else if (format === constants.EXPORT_FORMATS.CSV) {
             return gettext('CSV (Zip file)');
-        } else if (format === Exports.Constants.EXPORT_FORMATS.XLS) {
+        } else if (format === constants.EXPORT_FORMATS.XLS) {
             return gettext('Excel (older versions)');
-        } else if (format === Exports.Constants.EXPORT_FORMATS.XLSX) {
+        } else if (format === constants.EXPORT_FORMATS.XLSX) {
             return gettext('Excel 2007');
         }
     };
@@ -44,17 +45,17 @@ hqDefine('export/js/models.js', function () {
         var self = this,
             serialized;
 
-        self.saveState(Exports.Constants.SAVE_STATES.SAVING);
+        self.saveState(constants.SAVE_STATES.SAVING);
         serialized = self.toJS();
         $.post(self.saveUrl, JSON.stringify(serialized))
             .success(function(data) {
                 self.recordSaveAnalytics(function() {
-                    self.saveState(Exports.Constants.SAVE_STATES.SUCCESS);
+                    self.saveState(constants.SAVE_STATES.SUCCESS);
                     Exports.Utils.redirect(data.redirect);
                 });
             })
             .fail(function(response) {
-                self.saveState(Exports.Constants.SAVE_STATES.ERROR);
+                self.saveState(constants.SAVE_STATES.ERROR);
             });
     };
 
@@ -65,7 +66,7 @@ hqDefine('export/js/models.js', function () {
             eventCategory;
 
         analytics.usage("Create Export", analyticsExportType, analyticsAction);
-        if (this.export_format === Exports.Constants.EXPORT_FORMATS.HTML) {
+        if (this.export_format === constants.EXPORT_FORMATS.HTML) {
             args = ["Create Export", analyticsExportType, 'Excel Dashboard'];
             // If it's not new then we have to add the callback in to redirect
             if (!this.isNew()) {
@@ -74,10 +75,10 @@ hqDefine('export/js/models.js', function () {
             analytics.usage.apply(null, args);
         }
         if (this.isNew()) {
-            eventCategory = Exports.Constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
+            eventCategory = constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
             analytics.usage(eventCategory, 'Custom export creation', '');
             analytics.workflow("Clicked 'Create' in export edit page", callback);
-        } else if (this.export_format !== Exports.Constants.EXPORT_FORMATS.HTML) {
+        } else if (this.export_format !== constants.EXPORT_FORMATS.HTML) {
             callback();
         }
     };
@@ -205,15 +206,15 @@ hqDefine('export/js/models.js', function () {
     };
 
     ExportColumn.prototype.getDeidOptions = function() {
-        return _.map(Exports.Constants.DEID_OPTIONS, function(value, key) { return value; });
+        return _.map(constants.DEID_OPTIONS, function(value, key) { return value; });
     };
 
     ExportColumn.prototype.getDeidOptionText = function(deidOption) {
-        if (deidOption === Exports.Constants.DEID_OPTIONS.ID) {
+        if (deidOption === constants.DEID_OPTIONS.ID) {
             return gettext('Sensitive ID');
-        } else if (deidOption === Exports.Constants.DEID_OPTIONS.DATE) {
+        } else if (deidOption === constants.DEID_OPTIONS.DATE) {
             return gettext('Sensitive Date');
-        } else if (deidOption === Exports.Constants.DEID_OPTIONS.NONE) {
+        } else if (deidOption === constants.DEID_OPTIONS.NONE) {
             return gettext('None');
         }
     };

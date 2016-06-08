@@ -1,6 +1,7 @@
 Exports.Utils.getTagCSSClass = function(tag) {
+    var constants = hqImport('export/js/const.js');
     var cls = 'label';
-    if (tag === Exports.Constants.TAG_DELETED) {
+    if (tag === constants.TAG_DELETED) {
         return cls + ' label-warning';
     } else {
         return cls + ' label-default';

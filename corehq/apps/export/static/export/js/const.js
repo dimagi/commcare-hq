@@ -1,40 +1,61 @@
-/* globals Exports
+/* globals hqDefine
  *
  * Some of these constants need correspond to constants set in corehq/apps/exports/const.py
  * so if changing a value, ensure that both places reflect the change
  */
-Exports.Constants.TAG_DELETED = 'deleted';
-Exports.Constants.MULTISELECT_SPLIT_TYPE = 'multi-select';
-Exports.Constants.PLAIN_SPLIT_TYPE = 'plain';
-Exports.Constants.USER_DEFINED_SPLIT_TYPES = [
-    Exports.Constants.PLAIN_SPLIT_TYPE,
-    Exports.Constants.MULTISELECT_SPLIT_TYPE,
+
+hqDefine('export/js/const.js', function () {
+
+var TAG_DELETED = 'deleted';
+var MULTISELECT_SPLIT_TYPE = 'multi-select';
+var PLAIN_SPLIT_TYPE = 'plain';
+var USER_DEFINED_SPLIT_TYPES = [
+    PLAIN_SPLIT_TYPE,
+    MULTISELECT_SPLIT_TYPE,
 ];
-Exports.Constants.SAVE_STATES = {
+var SAVE_STATES = {
     SAVING: 'saving',
     ERROR: 'error',
     READY: 'ready',
     SUCCESS: 'done'
 };
-Exports.Constants.EXPORT_FORMATS = {
+var EXPORT_FORMATS = {
     HTML: 'html',
     CSV: 'csv',
     XLS: 'xls',
     XLSX: 'xlsx'
 };
-Exports.Constants.DEID_OPTIONS = {
+var DEID_OPTIONS = {
     NONE: null,
     ID: 'deid_id',
     DATE: 'deid_date'
 };
-Exports.Constants.ANALYTICS_EVENT_CATEGORIES = {
+var ANALYTICS_EVENT_CATEGORIES = {
     'form': 'Form Exports',
     'case': 'Case Exports'
 };
-Exports.Constants.FORM_EXPORT = 'form';
-Exports.Constants.CASE_EXPORT = 'case';
+var FORM_EXPORT = 'form';
+var CASE_EXPORT = 'case';
 
 // These must match the constants in corehq/apps/export/models/new.py
-Exports.Constants.MAIN_TABLE = [];
-Exports.Constants.CASE_HISTORY_TABLE = [{'name': 'actions', 'is_repeat': true, 'doc_type': 'PathNode'}];
-Exports.Constants.PARENT_CASE_TABLE = [{'name': 'indices', 'is_repeat': true, 'doc_type': 'PathNode'}];
+var MAIN_TABLE = [];
+var CASE_HISTORY_TABLE = [{'name': 'actions', 'is_repeat': true, 'doc_type': 'PathNode'}];
+var PARENT_CASE_TABLE = [{'name': 'indices', 'is_repeat': true, 'doc_type': 'PathNode'}];
+
+return {
+    TAG_DELETED: TAG_DELETED,
+    MULTISELECT_SPLIT_TYPE: MULTISELECT_SPLIT_TYPE,
+    PLAIN_SPLIT_TYPE: PLAIN_SPLIT_TYPE,
+    USER_DEFINED_SPLIT_TYPES: USER_DEFINED_SPLIT_TYPES,
+    SAVE_STATES: SAVE_STATES,
+    EXPORT_FORMATS: EXPORT_FORMATS,
+    DEID_OPTIONS: DEID_OPTIONS,
+    ANALYTICS_EVENT_CATEGORIES: ANALYTICS_EVENT_CATEGORIES,
+    FORM_EXPORT: FORM_EXPORT,
+    CASE_EXPORT: CASE_EXPORT,
+    MAIN_TABLE: MAIN_TABLE,
+    CASE_HISTORY_TABLE: CASE_HISTORY_TABLE,
+    PARENT_CASE_TABLE: PARENT_CASE_TABLE,
+};
+
+});

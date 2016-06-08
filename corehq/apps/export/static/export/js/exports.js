@@ -1,4 +1,3 @@
 var Exports = {
-    Constants: {},
     Utils: {},
 };

@@ -1,4 +1,5 @@
 describe('ExportInstance model', function() {
+    var constants = hqImport('export/js/const.js');
     var viewModels = hqImport('export/js/models.js');
     var basicFormExport;
     beforeEach(function() {
@@ -99,10 +100,10 @@ describe('ExportInstance model', function() {
                 ]
             );
 
-            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.READY);
+            assert.equal(instance.saveState(), constants.SAVE_STATES.READY);
             instance.save();
 
-            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.SAVING);
+            assert.equal(instance.saveState(), constants.SAVE_STATES.SAVING);
             server.respond();
 
             assert.isTrue(recordSaveAnalyticsSpy.called);
@@ -120,10 +121,10 @@ describe('ExportInstance model', function() {
             );
             instance.save();
 
-            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.SAVING);
+            assert.equal(instance.saveState(), constants.SAVE_STATES.SAVING);
             server.respond();
 
-            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.ERROR);
+            assert.equal(instance.saveState(), constants.SAVE_STATES.ERROR);
             assert.isFalse(recordSaveAnalyticsSpy.called);
         });
 
