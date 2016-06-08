@@ -229,6 +229,7 @@ corehq.apps.userreports:
   - corehq.apps.sms
   - corehq.apps.smsforms
   - pillowtop
+  - corehq.apps.tzmigration
 couchforms:
   - casexml.apps.case
   - casexml.apps.phone

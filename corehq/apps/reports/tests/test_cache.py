@@ -1,6 +1,6 @@
 import uuid
 from django.http import HttpRequest
-from django.test import TestCase
+from django.test import TransactionTestCase
 from django.test.utils import override_settings
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.cache import request_cache
@@ -40,13 +40,22 @@ def _make_request(path=BLANK, domain=BLANK, user=BLANK):
 
 
 @override_settings(CACHE_REPORTS=True)
-class ReportCacheTest(TestCase):
+class ReportCacheTest(TransactionTestCase):
     # note: this is pretty tightly coupled with the internals of the cache
     # but this is probably ok since that's what it's designed to test
 
     domain = 'cache-test'
 
+    @classmethod
+    def setUpClass(cls):
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
     def setUp(self):
+        super(ReportCacheTest, self).setUp()
         self.test_domain = create_domain(self.domain)
         self.web_user1 = WebUser.create(self.domain, 'w1', 'secret')
         self.web_user2 = WebUser.create(self.domain, 'w2', 'secret')
@@ -55,6 +64,7 @@ class ReportCacheTest(TestCase):
         self.web_user1.delete()
         self.web_user2.delete()
         self.test_domain.delete()
+        super(ReportCacheTest, self).tearDown()
 
     def testBasicFunctionality(self):
         report = MockReport(_make_request('/a/{domain}/reports/foobar'.format(domain=self.domain),
