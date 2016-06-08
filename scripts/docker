@@ -57,6 +57,19 @@ function usage() {
             echo ""
             echo "All other commands are passed directly to docker-compose."
             echo ""
+            echo "Examples:"
+            echo ""
+            echo "  # list test containers"
+            echo "  $0 ps"
+            echo ""
+            echo "  # list service containers"
+            echo "  $0 services ps"
+            echo ""
+            echo "  # run bash in riakcs service container"
+            echo "  $0 services exec riakcs bash"
+            echo ""
+            echo "  # run bash in bootstrapped web conatiner"
+            echo "  $0 services --bootstrap bash"
             ;;
     esac
     exit

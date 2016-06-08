@@ -105,4 +105,5 @@ mount -t aufs -o br=lib/overlay:commcare-hq-ro none commcare-hq
 cd commcare-hq
 ln -sf .travis/localsettings.py localsettings.py
 
+echo "running: $@"
 "$@"
