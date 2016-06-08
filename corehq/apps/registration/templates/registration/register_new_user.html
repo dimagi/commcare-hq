@@ -1,0 +1,48 @@
+{% extends "registration/base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "Create an Account" %}{% endblock title %}
+
+{% block js-inline  %}{{ block.super }}
+{#    {% url "eula_basic" as eula_url %}#}
+{#    {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}#}
+{#    {% if not hide_password_feedback %}#}
+{#    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>#}
+{#    <script src="{% static 'registration/js/password.js' %}"></script>#}
+{#    {% endif %}#}
+  <script type="text/javascript">
+    $(function () {
+      $(window).on('resize load', function () {
+        console.log('resize');
+        $('.reg-form-holder').css('min-height', $('.hq-container').height() - 170 + 'px');
+      });
+    });
+  </script>
+{% endblock %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+  <link type="text/less" rel="stylesheet" media="screen" href="{% static 'registration/less/registration.less' %}"/>
+  {% endcompress %}
+{% endblock %}
+
+{% block background_content %}
+<div class="bg-full-cover-fixed bg-registration b-lazy" data-src="{% static 'hqwebapp/img/molly.jpg' %}"></div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-xs-8 col-xs-offset-4 col-md-7 col-md-offset-5">
+      {% crispy reg_form   %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% include 'registration/partials/eula_modal.html' %}
+{% endblock %}
