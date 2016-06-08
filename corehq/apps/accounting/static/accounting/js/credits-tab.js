@@ -6,7 +6,7 @@
             var self = this;
             self.rateType = ko.observable("");
             self.showFeature = ko.computed(function() {
-                return self.rateType() == 'Feature';
+                return self.rateType() === 'Feature';
             }, self);
         };
 

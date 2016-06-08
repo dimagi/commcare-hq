@@ -8,7 +8,7 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
         self.country.initSelection = function (element, callback) {
             var data = {
                 text: element.data('countryname'),
-                id: element.val()
+                id: element.val(),
             };
             callback(data);
         };
@@ -52,15 +52,15 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
                                     action: self.fieldName,
                                     searchString: term,
                                     existing: $('form [name="' + self.fieldName + '"]').val().split(','),
-                                    additionalData: self.getAdditionalData()
+                                    additionalData: self.getAdditionalData(),
                                 };
                             },
                             results: function (data) {
                                 return data;
-                            }
+                            },
                         },
                         multiple: self.multiple,
-                        initSelection: self.initSelection
+                        initSelection: self.initSelection,
                     });
                 }
             });
@@ -105,7 +105,7 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
                     },
                     initSelection: function (element, callback) {
                         callback(billingInfoUtils.getMultiResultsFromElement(element));
-                    }
+                    },
                 });
             });
         };
@@ -115,7 +115,7 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
                 // from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
                 var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
                 return re.test(email);
-            }
+            },
         };
     };
 
@@ -129,7 +129,7 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
         getSingleResultFromElement: function (element) {
             var value = $(element).val();
             return {id: value, text: value};
-        }
+        },
     };
 
     return {

@@ -14,8 +14,8 @@ hqDefine('accounting/js/accounting.subscription_info_handler.js', function () {
             self.plan_version.getAdditionalData = function () {
                 return {
                     'product': $('#id_plan_product').val(),
-                    'edition': $('#id_plan_edition').val()
-                }
+                    'edition': $('#id_plan_edition').val(),
+                };
             };
             $(function () {
                 var deselectPlanVersion = function () {
@@ -25,7 +25,7 @@ hqDefine('accounting/js/accounting.subscription_info_handler.js', function () {
                 };
                 $('#id_plan_product').change(deselectPlanVersion);
                 $('#id_plan_edition').change(deselectPlanVersion);
-            })
+            });
         };
     };
 
@@ -34,5 +34,5 @@ hqDefine('accounting/js/accounting.subscription_info_handler.js', function () {
             var subscriptionInfoHandler = new SubscriptionInfoHandler();
             subscriptionInfoHandler.init();
         },
-    }
+    };
 });
