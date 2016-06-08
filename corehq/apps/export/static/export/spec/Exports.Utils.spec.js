@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 describe('Export Utility functions', function() {
     var constants = hqImport('export/js/const.js');
     var utils = hqImport('export/js/utils.js');

@@ -1,7 +1,10 @@
+/* eslint-env mocha */
+/* globals SampleExportInstances */
+
 describe('ExportInstance model', function() {
     var constants = hqImport('export/js/const.js');
     var viewModels = hqImport('export/js/models.js');
-    var basicFormExport;
+    var basicFormExport, savedFormExport;
     beforeEach(function() {
         basicFormExport = _.clone(SampleExportInstances.basic, { saveUrl: 'http://saveurl/' });
         savedFormExport = _.clone(SampleExportInstances.saved, { saveUrl: 'http://saveurl/' });
@@ -53,7 +56,7 @@ describe('ExportInstance model', function() {
         });
     });
     describe('#isNew', function() {
-        var instance;
+        var instance, instanceSaved;
         beforeEach(function() {
             instance = new viewModels.ExportInstance(basicFormExport);
             instanceSaved = new viewModels.ExportInstance(savedFormExport);
@@ -96,7 +99,7 @@ describe('ExportInstance model', function() {
                 [
                     200,
                     { "Content-Type": "application/json" },
-                    '{ "redirect": "http://dummy/"}'
+                    '{ "redirect": "http://dummy/"}',
                 ]
             );
 
@@ -116,7 +119,7 @@ describe('ExportInstance model', function() {
                 [
                     500,
                     { "Content-Type": "application/json" },
-                    '{ "status": "fail" }'
+                    '{ "status": "fail" }',
                 ]
             );
             instance.save();

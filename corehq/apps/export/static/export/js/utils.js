@@ -15,7 +15,7 @@ hqDefine('export/js/utils.js', function () {
 
     var animateToEl = function(toElementSelector, callback) {
         $('html, body').animate({
-            scrollTop: $(toElementSelector).offset().top + 'px'
+            scrollTop: $(toElementSelector).offset().top + 'px',
         }, 'slow', undefined, callback);
     };
 

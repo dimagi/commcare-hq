@@ -1,5 +1,4 @@
-/* globals hqDefine
- *
+/*
  * Some of these constants need correspond to constants set in corehq/apps/exports/const.py
  * so if changing a value, ensure that both places reflect the change
  */
@@ -16,22 +15,22 @@ hqDefine('export/js/const.js', function () {
         SAVING: 'saving',
         ERROR: 'error',
         READY: 'ready',
-        SUCCESS: 'done'
+        SUCCESS: 'done',
     };
     var EXPORT_FORMATS = {
         HTML: 'html',
         CSV: 'csv',
         XLS: 'xls',
-        XLSX: 'xlsx'
+        XLSX: 'xlsx',
     };
     var DEID_OPTIONS = {
         NONE: null,
         ID: 'deid_id',
-        DATE: 'deid_date'
+        DATE: 'deid_date',
     };
     var ANALYTICS_EVENT_CATEGORIES = {
         'form': 'Form Exports',
-        'case': 'Case Exports'
+        'case': 'Case Exports',
     };
     var FORM_EXPORT = 'form';
     var CASE_EXPORT = 'case';

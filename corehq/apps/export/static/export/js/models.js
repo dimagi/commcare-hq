@@ -1,4 +1,4 @@
-/* globals Exports, hqDefine, hqImport */
+/* globals analytics */
 
 hqDefine('export/js/models.js', function () {
     var constants = hqImport('export/js/const.js');
@@ -19,7 +19,7 @@ hqDefine('export/js/models.js', function () {
     };
 
     ExportInstance.prototype.getFormatOptionValues = function() {
-        return _.map(constants.EXPORT_FORMATS, function(value, key) { return value; });
+        return _.map(constants.EXPORT_FORMATS, function(value) { return value; });
     };
 
     ExportInstance.prototype.getFormatOptionText = function(format) {
@@ -55,7 +55,7 @@ hqDefine('export/js/models.js', function () {
                     utils.redirect(data.redirect);
                 });
             })
-            .fail(function(response) {
+            .fail(function() {
                 self.saveState(constants.SAVE_STATES.ERROR);
             });
     };
@@ -110,8 +110,8 @@ hqDefine('export/js/models.js', function () {
         tables: {
             create: function(options) {
                 return new TableConfiguration(options.data);
-            }
-        }
+            },
+        },
     };
 
     var TableConfiguration = function(tableJSON) {
@@ -164,13 +164,13 @@ hqDefine('export/js/models.js', function () {
         columns: {
             create: function(options) {
                 return new ExportColumn(options.data);
-            }
+            },
         },
         path: {
             create: function(options) {
                 return new PathNode(options.data);
-            }
-        }
+            },
+        },
     };
 
     var ExportColumn = function(columnJSON) {
@@ -207,7 +207,7 @@ hqDefine('export/js/models.js', function () {
     };
 
     ExportColumn.prototype.getDeidOptions = function() {
-        return _.map(constants.DEID_OPTIONS, function(value, key) { return value; });
+        return _.map(constants.DEID_OPTIONS, function(value) { return value; });
     };
 
     ExportColumn.prototype.getDeidOptionText = function(deidOption) {
@@ -247,8 +247,8 @@ hqDefine('export/js/models.js', function () {
         item: {
             create: function(options) {
                 return new ExportItem(options.data);
-            }
-        }
+            },
+        },
     };
 
     var ExportItem = function(itemJSON) {
@@ -271,8 +271,8 @@ hqDefine('export/js/models.js', function () {
         path: {
             create: function(options) {
                 return new PathNode(options.data);
-            }
-        }
+            },
+        },
     };
 
     var PathNode = function(pathNodeJSON) {
@@ -280,7 +280,7 @@ hqDefine('export/js/models.js', function () {
     };
 
     PathNode.mapping = {
-        include: ['name', 'is_repeat']
+        include: ['name', 'is_repeat'],
     };
 
     return {
