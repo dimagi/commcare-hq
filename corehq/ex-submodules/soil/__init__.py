@@ -152,14 +152,39 @@ class DownloadBase(object):
         except IntegrityError:
             # Not called in task context just pass
             pass
-    
+
     @classmethod
     def create(cls, payload, **kwargs):
         """
-        Create a Download object from a payload, plus any additional arguments 
+        Create a Download object from a payload, plus any additional arguments
         to pass through to the constructor.
         """
         raise NotImplementedError("This should be overridden by subclasses!")
+
+
+class MultipleTaskDownload(DownloadBase):
+    """Download object for groups of tasks
+    """
+
+    @property
+    def task(self):
+        from celery.result import GroupResult
+        result = GroupResult.restore(self.task_id)
+        return result
+
+    def set_task(self, task_group, timeout=60 * 60 * 24):
+        task_group.save()
+        self.get_cache().set(self._task_key(), task_group.id, timeout)
+
+    def get_progress(self):
+        current = sum(int(result.ready()) for result in self.task.results)
+        total = len(self.task.subtasks)
+        percent = current * 100 // total if total and current is not None else 0
+        return {
+            'current': current,
+            'total': total,
+            'percent': percent,
+        }
 
 
 class CachedDownload(DownloadBase):
