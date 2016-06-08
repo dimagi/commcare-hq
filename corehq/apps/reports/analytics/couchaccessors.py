@@ -136,7 +136,7 @@ def get_ledger_values_for_case_as_of(case_id, section_id, as_of, program_id=None
             sql_product__program_id=program_id
         )
 
-    return transactions.exclude(
+    results = transactions.exclude(
         report__date__gt=as_of
     ).order_by(
         'product_id', '-report__date'
@@ -145,3 +145,4 @@ def get_ledger_values_for_case_as_of(case_id, section_id, as_of, program_id=None
     ).distinct(
         'product_id'
     )
+    return dict(results)

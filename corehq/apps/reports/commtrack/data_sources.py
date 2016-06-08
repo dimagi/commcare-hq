@@ -121,7 +121,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 as_of=self.datetime,
                 program_id=self.program_id,
             )
-            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results})
+            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results.items()})
 
     def locations(self):
         if self.active_location:
