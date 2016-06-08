@@ -1,9 +1,11 @@
-/* globals Exports */
+/* globals Exports, hqDefine */
 
-Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
+hqDefine('export/js/models.js', function () {
+
+var ExportInstance = function(instanceJSON, options) {
     options = options || {};
     var self = this;
-    ko.mapping.fromJS(instanceJSON, Exports.ViewModels.ExportInstance.mapping, self);
+    ko.mapping.fromJS(instanceJSON, ExportInstance.mapping, self);
     self.saveState = ko.observable(Exports.Constants.SAVE_STATES.READY);
     self.saveUrl = options.saveUrl;
     // If any column has a deid transform, show deid column
@@ -14,11 +16,11 @@ Exports.ViewModels.ExportInstance = function(instanceJSON, options) {
     }));
 };
 
-Exports.ViewModels.ExportInstance.prototype.getFormatOptionValues = function() {
+ExportInstance.prototype.getFormatOptionValues = function() {
     return _.map(Exports.Constants.EXPORT_FORMATS, function(value, key) { return value; });
 };
 
-Exports.ViewModels.ExportInstance.prototype.getFormatOptionText = function(format) {
+ExportInstance.prototype.getFormatOptionText = function(format) {
     if (format === Exports.Constants.EXPORT_FORMATS.HTML) {
         return gettext('Web Page (Excel Dashboards)');
     } else if (format === Exports.Constants.EXPORT_FORMATS.CSV) {
@@ -30,15 +32,15 @@ Exports.ViewModels.ExportInstance.prototype.getFormatOptionText = function(forma
     }
 };
 
-Exports.ViewModels.ExportInstance.prototype.isNew = function() {
+ExportInstance.prototype.isNew = function() {
     return !ko.utils.unwrapObservable(this._id);
 };
 
-Exports.ViewModels.ExportInstance.prototype.getSaveText = function() {
+ExportInstance.prototype.getSaveText = function() {
     return this.isNew() ? gettext('Create') : gettext('Save');
 };
 
-Exports.ViewModels.ExportInstance.prototype.save = function() {
+ExportInstance.prototype.save = function() {
     var self = this,
         serialized;
 
@@ -56,7 +58,7 @@ Exports.ViewModels.ExportInstance.prototype.save = function() {
         });
 };
 
-Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function(callback) {
+ExportInstance.prototype.recordSaveAnalytics = function(callback) {
     var analyticsAction = this.is_daily_saved_export() ? 'Saved' : 'Regular',
         analyticsExportType = _.capitalize(this.type()),
         args,
@@ -80,17 +82,17 @@ Exports.ViewModels.ExportInstance.prototype.recordSaveAnalytics = function(callb
     }
 };
 
-Exports.ViewModels.ExportInstance.prototype.showDeidColumn = function() {
+ExportInstance.prototype.showDeidColumn = function() {
     Exports.Utils.animateToEl('#field-select', function() {
         this.isDeidColumnVisible(true);
     }.bind(this));
 };
 
-Exports.ViewModels.ExportInstance.prototype.toJS = function() {
-    return ko.mapping.toJS(this, Exports.ViewModels.ExportInstance.mapping);
+ExportInstance.prototype.toJS = function() {
+    return ko.mapping.toJS(this, ExportInstance.mapping);
 };
 
-Exports.ViewModels.ExportInstance.mapping = {
+ExportInstance.mapping = {
     include: [
         '_id',
         'name',
@@ -105,41 +107,41 @@ Exports.ViewModels.ExportInstance.mapping = {
     ],
     tables: {
         create: function(options) {
-            return new Exports.ViewModels.TableConfiguration(options.data);
+            return new TableConfiguration(options.data);
         }
     }
 };
 
-Exports.ViewModels.TableConfiguration = function(tableJSON) {
+var TableConfiguration = function(tableJSON) {
     var self = this;
     self.showAdvanced = ko.observable(false);
-    ko.mapping.fromJS(tableJSON, Exports.ViewModels.TableConfiguration.mapping, self);
+    ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
 };
 
-Exports.ViewModels.TableConfiguration.prototype.isVisible = function() {
+TableConfiguration.prototype.isVisible = function() {
     // Not implemented
     return true;
 };
 
-Exports.ViewModels.TableConfiguration.prototype.toggleShowAdvanced = function(table) {
+TableConfiguration.prototype.toggleShowAdvanced = function(table) {
     table.showAdvanced(!table.showAdvanced());
 };
 
-Exports.ViewModels.TableConfiguration.prototype._select = function(select) {
+TableConfiguration.prototype._select = function(select) {
     _.each(this.columns(), function(column) {
         column.selected(select && column.isVisible(this));
     }.bind(this));
 };
 
-Exports.ViewModels.TableConfiguration.prototype.selectAll = function(table) {
+TableConfiguration.prototype.selectAll = function(table) {
     table._select(true);
 };
 
-Exports.ViewModels.TableConfiguration.prototype.selectNone = function(table) {
+TableConfiguration.prototype.selectNone = function(table) {
     table._select(false);
 };
 
-Exports.ViewModels.TableConfiguration.prototype.useLabels = function(table) {
+TableConfiguration.prototype.useLabels = function(table) {
     _.each(table.columns(), function(column) {
         if (column.isQuestion()) {
             column.label(column.item.label() || column.label());
@@ -147,7 +149,7 @@ Exports.ViewModels.TableConfiguration.prototype.useLabels = function(table) {
     });
 };
 
-Exports.ViewModels.TableConfiguration.prototype.useIds = function(table) {
+TableConfiguration.prototype.useIds = function(table) {
     _.each(table.columns(), function(column) {
         if (column.isQuestion()) {
             column.label(column.item.readablePath() || column.label());
@@ -155,34 +157,34 @@ Exports.ViewModels.TableConfiguration.prototype.useIds = function(table) {
     });
 };
 
-Exports.ViewModels.TableConfiguration.mapping = {
+TableConfiguration.mapping = {
     include: ['name', 'path', 'columns', 'selected', 'label', 'is_deleted'],
     columns: {
         create: function(options) {
-            return new Exports.ViewModels.ExportColumn(options.data);
+            return new ExportColumn(options.data);
         }
     },
     path: {
         create: function(options) {
-            return new Exports.ViewModels.PathNode(options.data);
+            return new PathNode(options.data);
         }
     }
 };
 
-Exports.ViewModels.ExportColumn = function(columnJSON) {
+var ExportColumn = function(columnJSON) {
     var self = this;
-    ko.mapping.fromJS(columnJSON, Exports.ViewModels.ExportColumn.mapping, self);
+    ko.mapping.fromJS(columnJSON, ExportColumn.mapping, self);
     self.showOptions = ko.observable(false);
     self.userDefinedOptionToAdd = ko.observable('');
 };
 
-Exports.ViewModels.ExportColumn.prototype.isQuestion = function() {
+ExportColumn.prototype.isQuestion = function() {
     var disallowedTags = ['info', 'case', 'server', 'row', 'app', 'stock'],
         self = this;
     return !_.any(disallowedTags, function(tag) { return _.include(self.tags(), tag); });
 };
 
-Exports.ViewModels.ExportColumn.prototype.addUserDefinedOption = function() {
+ExportColumn.prototype.addUserDefinedOption = function() {
     var option = this.userDefinedOptionToAdd();
     if (option) {
         this.user_defined_options.push(option);
@@ -190,11 +192,11 @@ Exports.ViewModels.ExportColumn.prototype.addUserDefinedOption = function() {
     this.userDefinedOptionToAdd('');
 };
 
-Exports.ViewModels.ExportColumn.prototype.removeUserDefinedOption = function(option) {
+ExportColumn.prototype.removeUserDefinedOption = function(option) {
     this.user_defined_options.remove(option);
 };
 
-Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
+ExportColumn.prototype.formatProperty = function() {
     if (this.tags().length !== 0){
         return this.label();
     } else {
@@ -202,11 +204,11 @@ Exports.ViewModels.ExportColumn.prototype.formatProperty = function() {
     }
 };
 
-Exports.ViewModels.ExportColumn.prototype.getDeidOptions = function() {
+ExportColumn.prototype.getDeidOptions = function() {
     return _.map(Exports.Constants.DEID_OPTIONS, function(value, key) { return value; });
 };
 
-Exports.ViewModels.ExportColumn.prototype.getDeidOptionText = function(deidOption) {
+ExportColumn.prototype.getDeidOptionText = function(deidOption) {
     if (deidOption === Exports.Constants.DEID_OPTIONS.ID) {
         return gettext('Sensitive ID');
     } else if (deidOption === Exports.Constants.DEID_OPTIONS.DATE) {
@@ -216,19 +218,19 @@ Exports.ViewModels.ExportColumn.prototype.getDeidOptionText = function(deidOptio
     }
 };
 
-Exports.ViewModels.ExportColumn.prototype.isVisible = function(table) {
+ExportColumn.prototype.isVisible = function(table) {
     return table.showAdvanced() || (!this.is_advanced() || this.selected());
 };
 
-Exports.ViewModels.ExportColumn.prototype.isCaseName = function() {
+ExportColumn.prototype.isCaseName = function() {
     return this.item.isCaseName();
 };
 
-Exports.ViewModels.ExportColumn.prototype.translatedHelp = function() {
+ExportColumn.prototype.translatedHelp = function() {
     return gettext(this.help_text);
 };
 
-Exports.ViewModels.ExportColumn.mapping = {
+ExportColumn.mapping = {
     include: [
         'item',
         'label',
@@ -242,39 +244,47 @@ Exports.ViewModels.ExportColumn.mapping = {
     ],
     item: {
         create: function(options) {
-            return new Exports.ViewModels.ExportItem(options.data);
+            return new ExportItem(options.data);
         }
     }
 };
 
-Exports.ViewModels.ExportItem = function(itemJSON) {
+var ExportItem = function(itemJSON) {
     var self = this;
-    ko.mapping.fromJS(itemJSON, Exports.ViewModels.ExportItem.mapping, self);
+    ko.mapping.fromJS(itemJSON, ExportItem.mapping, self);
 };
 
-Exports.ViewModels.ExportItem.prototype.isCaseName = function() {
+ExportItem.prototype.isCaseName = function() {
     return this.path()[this.path().length - 1].name === 'name';
 };
 
-Exports.ViewModels.ExportItem.prototype.readablePath = function() {
+ExportItem.prototype.readablePath = function() {
     return _.map(this.path(), function(pathNode) {
         return pathNode.name();
     }).join('.');
 };
 
-Exports.ViewModels.ExportItem.mapping = {
+ExportItem.mapping = {
     include: ['path', 'label', 'tag'],
     path: {
         create: function(options) {
-            return new Exports.ViewModels.PathNode(options.data);
+            return new PathNode(options.data);
         }
     }
 };
 
-Exports.ViewModels.PathNode = function(pathNodeJSON) {
-    ko.mapping.fromJS(pathNodeJSON, Exports.ViewModels.PathNode.mapping, this);
+var PathNode = function(pathNodeJSON) {
+    ko.mapping.fromJS(pathNodeJSON, PathNode.mapping, this);
 };
 
-Exports.ViewModels.PathNode.mapping = {
+PathNode.mapping = {
     include: ['name', 'is_repeat']
 };
+
+return {
+    ExportInstance: ExportInstance,
+    ExportColumn: ExportColumn,
+    ExportItem: ExportItem,
+};
+
+});

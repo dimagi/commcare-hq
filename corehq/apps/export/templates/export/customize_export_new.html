@@ -15,7 +15,7 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
-            var customExportView = new Exports.ViewModels.ExportInstance(
+            var customExportView = new hqImport('export/js/models.js').ExportInstance(
                 {{ export_instance|JSON }},
                 {
                     saveUrl: {{ request.get_full_path|safe|JSON }}

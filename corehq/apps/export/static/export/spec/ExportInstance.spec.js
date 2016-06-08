@@ -1,5 +1,5 @@
 describe('ExportInstance model', function() {
-
+    var viewModels = hqImport('export/js/models.js');
     var basicFormExport;
     beforeEach(function() {
         basicFormExport = _.clone(SampleExportInstances.basic, { saveUrl: 'http://saveurl/' });
@@ -7,7 +7,7 @@ describe('ExportInstance model', function() {
     });
 
     it('Should create an instance from JSON', function() {
-        var instance = new Exports.ViewModels.ExportInstance(basicFormExport);
+        var instance = new viewModels.ExportInstance(basicFormExport);
 
         assert.equal(instance.tables().length, 1);
 
@@ -16,13 +16,13 @@ describe('ExportInstance model', function() {
 
         _.each(table.columns(), function(column) {
             assert.ok(column.item);
-            assert.isTrue(column instanceof Exports.ViewModels.ExportColumn);
+            assert.isTrue(column instanceof viewModels.ExportColumn);
             assert.isDefined(column.show());
             assert.isDefined(column.selected());
             assert.isDefined(column.label());
 
             var item = column.item;
-            assert.isTrue(item instanceof Exports.ViewModels.ExportItem);
+            assert.isTrue(item instanceof viewModels.ExportItem);
             assert.isDefined(item.label);
             assert.isDefined(item.path);
             assert.isDefined(item.tag);
@@ -30,7 +30,7 @@ describe('ExportInstance model', function() {
     });
 
     it('Should serialize an instance into JS object', function() {
-        var instance = new Exports.ViewModels.ExportInstance(basicFormExport);
+        var instance = new viewModels.ExportInstance(basicFormExport);
         var obj = instance.toJS();
         assert.equal(obj.tables.length, 1);
 
@@ -39,13 +39,13 @@ describe('ExportInstance model', function() {
 
         _.each(table.columns, function(column) {
             assert.ok(column.item);
-            assert.isFalse(column instanceof Exports.ViewModels.ExportColumn);
+            assert.isFalse(column instanceof viewModels.ExportColumn);
             assert.isDefined(column.show);
             assert.isDefined(column.selected);
             assert.isDefined(column.label);
 
             var item = column.item;
-            assert.isFalse(item instanceof Exports.ViewModels.ExportItem);
+            assert.isFalse(item instanceof viewModels.ExportItem);
             assert.isDefined(item.label);
             assert.isDefined(item.path);
             assert.isDefined(item.tag);
@@ -54,8 +54,8 @@ describe('ExportInstance model', function() {
     describe('#isNew', function() {
         var instance;
         beforeEach(function() {
-            instance = new Exports.ViewModels.ExportInstance(basicFormExport);
-            instanceSaved = new Exports.ViewModels.ExportInstance(savedFormExport);
+            instance = new viewModels.ExportInstance(basicFormExport);
+            instanceSaved = new viewModels.ExportInstance(savedFormExport);
         });
 
         it('should correctly determine if instance is new', function() {
@@ -74,7 +74,7 @@ describe('ExportInstance model', function() {
             instance;
 
         beforeEach(function() {
-            instance = new Exports.ViewModels.ExportInstance(basicFormExport);
+            instance = new viewModels.ExportInstance(basicFormExport);
             recordSaveAnalyticsSpy = sinon.spy();
             server = sinon.fakeServer.create();
 
