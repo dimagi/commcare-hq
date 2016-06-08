@@ -302,7 +302,7 @@ class InvoiceTemplate(object):
         origin_y = inches(6.2)
         self.canvas.translate(origin_x, origin_y)
 
-        height = inches(3.5)
+        height = inches(2.9)
         description_x = inches(2.4)
         quantity_x = inches(3.15)
         rate_x = inches(3.9)
@@ -387,29 +387,29 @@ class InvoiceTemplate(object):
 
     def draw_footer(self):
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
-        self.canvas.rect(inches(5), inches(1.05), inches(3), inches(0.5),
+        self.canvas.rect(inches(5), inches(1.65), inches(3), inches(0.5),
                          fill=1)
         self.canvas.setFillColorRGB(*BLACK)
 
-        self.canvas.drawString(inches(5.6), inches(2.45), "Subtotal:")
-        self.canvas.drawString(inches(5.6), inches(2.15),
+        self.canvas.drawString(inches(5.6), inches(3.05), "Subtotal:")
+        self.canvas.drawString(inches(5.6), inches(2.75),
                                "Tax (%s%%):" % get_money_str(self.tax_rate))
-        self.canvas.drawString(inches(5.6), inches(1.85), "Credit:")
-        self.canvas.drawString(inches(5.2), inches(1.25), "Total:")
+        self.canvas.drawString(inches(5.6), inches(2.45), "Credit:")
+        self.canvas.drawString(inches(5.2), inches(1.85), "Total:")
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
-                                      inches(2.45),
+                                      inches(3.05),
                                       get_money_str(self.subtotal))
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
-                                      inches(2.15),
+                                      inches(2.75),
                                       get_money_str(self.applied_tax))
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
-                                      inches(1.85),
+                                      inches(2.45),
                                       get_money_str(self.applied_credit))
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
-                                      inches(1.25),
+                                      inches(1.85),
                                       get_money_str(self.total))
 
-        self.canvas.drawString(inches(5), inches(0.8),
+        self.canvas.drawString(inches(5), inches(1.4),
                                "Thank you for using CommCare HQ.")
 
         payment_description = """Payable by credit card, check, wire or ACH transfer.<br />
