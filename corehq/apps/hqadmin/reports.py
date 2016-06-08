@@ -1214,9 +1214,9 @@ class CommCareVersionReport(AdminReport, ElasticTabularReport):
                 },
                 "aggs": {
                     "by_domain": {
-                      "terms": {
-                        "field": "domain"
-                      }
+                        "terms": {
+                            "field": "domain"
+                        }
                     }
                 }
             }
