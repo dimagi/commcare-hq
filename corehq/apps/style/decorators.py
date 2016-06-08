@@ -1,6 +1,6 @@
 from functools import wraps
 from corehq.apps.style.utils import set_bootstrap_version3
-from crispy_forms.utils import set_template_pack
+from crispy_forms import utils
 
 
 def use_bootstrap3(view_func):
@@ -19,7 +19,7 @@ def use_bootstrap3(view_func):
         # set bootstrap version in thread local
         set_bootstrap_version3()
         # set crispy forms template in thread local
-        set_template_pack('bootstrap3')
+        utils.TEMPLATE_PACK = 'bootstrap3'
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
 

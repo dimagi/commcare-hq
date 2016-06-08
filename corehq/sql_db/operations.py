@@ -6,7 +6,7 @@ from django.db import connection
 from django.db.migrations import RunPython
 from django.db.migrations.operations.special import RunSQL
 from django.template import Context
-from django.template.loader import get_template_from_string
+from django.template import engines
 
 from corehq.sql_db.routers import allow_migrate
 
@@ -85,7 +85,8 @@ class RunSqlLazy(RunSQL):
         with open(self.sql) as f:
             template_string = f.read()
 
-        template = get_template_from_string(template_string)
+        template = engines['django'].from_string(template_string)
+
         return template.render(Context(self.template_context))
 
 
