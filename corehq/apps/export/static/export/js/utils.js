@@ -1,4 +1,6 @@
-Exports.Utils.getTagCSSClass = function(tag) {
+hqDefine('export/js/utils.js', function () {
+
+var getTagCSSClass = function(tag) {
     var constants = hqImport('export/js/const.js');
     var cls = 'label';
     if (tag === constants.TAG_DELETED) {
@@ -8,12 +10,20 @@ Exports.Utils.getTagCSSClass = function(tag) {
     }
 };
 
-Exports.Utils.redirect = function(url) {
+var redirect = function(url) {
     window.location.href = url;
 };
 
-Exports.Utils.animateToEl = function(toElementSelector, callback) {
+var animateToEl = function(toElementSelector, callback) {
     $('html, body').animate({
         scrollTop: $(toElementSelector).offset().top + 'px'
     }, 'slow', undefined, callback);
 };
+
+return {
+    getTagCSSClass: getTagCSSClass,
+    redirect: redirect,
+    animateToEl: animateToEl,
+};
+
+});

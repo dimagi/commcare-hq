@@ -2,6 +2,7 @@
 
 hqDefine('export/js/models.js', function () {
     var constants = hqImport('export/js/const.js');
+    var utils = hqImport('export/js/utils.js');
 
     var ExportInstance = function(instanceJSON, options) {
         options = options || {};
@@ -51,7 +52,7 @@ hqDefine('export/js/models.js', function () {
             .success(function(data) {
                 self.recordSaveAnalytics(function() {
                     self.saveState(constants.SAVE_STATES.SUCCESS);
-                    Exports.Utils.redirect(data.redirect);
+                    utils.redirect(data.redirect);
                 });
             })
             .fail(function(response) {
@@ -84,7 +85,7 @@ hqDefine('export/js/models.js', function () {
     };
 
     ExportInstance.prototype.showDeidColumn = function() {
-        Exports.Utils.animateToEl('#field-select', function() {
+        utils.animateToEl('#field-select', function() {
             this.isDeidColumnVisible(true);
         }.bind(this));
     };
