@@ -17,7 +17,7 @@ class NOTFilter(Filter):
         self._filter = filter
 
     def __call__(self, item, context=None):
-        return not self._filter(item)
+        return not self._filter(item, context)
 
 
 class ANDFilter(Filter):
