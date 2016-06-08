@@ -9,7 +9,7 @@ from reportlab.platypus import Paragraph
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.utils import get_money_str
 from corehq.const import USER_DATE_FORMAT
-
+from corehq.util.view_utils import absolute_reverse
 
 LOGO_FILENAME = \
     'corehq/apps/accounting/static/accounting/media/Dimagi-Logo-RGB.jpg'
@@ -386,6 +386,8 @@ class InvoiceTemplate(object):
         self.canvas.translate(-origin_x, -origin_y)
 
     def draw_footer(self):
+        from corehq.apps.domain.views import DomainBillingStatementsView
+
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
         self.canvas.rect(inches(5), inches(1.65), inches(3), inches(0.5),
                          fill=1)
@@ -412,10 +414,26 @@ class InvoiceTemplate(object):
         self.canvas.drawString(inches(5), inches(1.4),
                                "Thank you for using CommCare HQ.")
 
-        payment_description = """Payable by credit card, check, wire or ACH transfer.<br />
-For all payments, include "Invoice #" (displayed in top right corner).<br />
-<strong>Credit card payments</strong> are preferred and can be made online.<br />
-"""
+        payment_description = (
+            "Payment Options:<br />"
+            "<br />"
+            "<strong>Credit card payments</strong> are preferred and can be made online here: "
+            "<link href='%(payment_page)s' color='blue'>%(payment_page)s</link><br />"
+            "<br />"
+            "<strong>ACH or Wire:</strong> If you make payment via ACH or Wire, please make sure to email "
+            "<font color='blue'>%(invoicing_contact_email)s</font> "
+            "so that we can match your payment to the correct invoice.  Please include: "
+            "Invoice #, Project Space, and payment date in the email. <br />"
+        ) % {
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+            'payment_page': absolute_reverse(DomainBillingStatementsView.urlname, args=[self.project_name]),
+        }
+        payment_info = Paragraph('\n'.join([
+            payment_description,
+        ]), ParagraphStyle(''))
+        payment_info.wrapOn(self.canvas, inches(4.25), inches(0.9))
+        payment_info.drawOn(self.canvas, inches(0.5), inches(1.8))
+
         ach_payment_text = (
             "<strong>ACH payment</strong> (preferred over wire payment for transfer in the US):<br />"
             "Bank: %(bank_name)s "
@@ -442,11 +460,9 @@ For all payments, include "Invoice #" (displayed in top right corner).<br />
             'routing_number_wire': self.routing_number_wire,
             'swift_code': self.swift_code,
         }
-
-        payment_info = Paragraph('\n'.join([
-            payment_description,
+        payment_info2 = Paragraph('\n'.join([
             ach_payment_text,
             wire_payment_text,
         ]), ParagraphStyle(''))
-        payment_info.wrapOn(self.canvas, inches(4.25), inches(0.9))
-        payment_info.drawOn(self.canvas, inches(0.5), inches(0.6))
+        payment_info2.wrapOn(self.canvas, inches(4.25), inches(0.9))
+        payment_info2.drawOn(self.canvas, inches(0.7), inches(0.4))
