@@ -41,7 +41,7 @@ class AppManagerTest(TestCase):
         cls.domain = 'test-domain'
         create_domain(cls.domain)
 
-        with codecs.open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml"), encoding='utf-8') as f:
+        with codecs.open(os.path.join(os.path.dirname(__file__), "data", "very_simple_form.xml"), encoding='utf-8') as f:
             cls.xform_str = f.read()
 
     def setUp(self):
@@ -120,7 +120,7 @@ class AppManagerTest(TestCase):
         self._test_import_app(self.app.id)
 
     def testImportApp_from_source(self):
-        app_source = Application.get_db().get(self.app.id)
+        app_source = self.app.export_json(dump_json=False)
         self._test_import_app(app_source)
 
     def testAppsBrief(self):
