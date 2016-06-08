@@ -21,10 +21,13 @@ from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
+from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.models import RegistrationRequest
-from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm
+from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm, \
+    RegisterNewWebUserForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
+from corehq.apps.style.decorators import use_blazy
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.decorators.memoized import memoized
@@ -38,6 +41,39 @@ def get_domain_context():
 
 def registration_default(request):
     return redirect(register_user)
+
+
+class NewUserRegistrationView(BasePageView):
+    urlname = 'register_new_user'
+    template_name = 'registration/register_new_user.html'
+
+    @use_blazy
+    @method_decorator(transaction.atomic)
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewUserRegistrationView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def prefilled_email(self):
+        return self.request.GET.get('e', '')
+
+    @property
+    @memoized
+    def reg_form(self):
+        if self.request.method == 'POST':
+            return RegisterNewWebUserForm(self.request.POST)
+        return RegisterNewWebUserForm(
+            initial={'account_email': self.prefilled_email}
+        )
+
+    @property
+    def page_context(self):
+        return {
+            'reg_form': self.reg_form,
+        }
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
 
 
 @transaction.atomic
