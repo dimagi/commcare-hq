@@ -62,7 +62,7 @@ def get_download_context(download_id, check_state=False, message=None):
 
     def progress_complete():
         return (
-            getattr(settings, 'CELERY_ALWAYS_EAGER', False) and
+            getattr(settings, 'CELERY_ALWAYS_EAGER', False) or
             progress.get('percent', 0) == 100 and
             not progress.get('error', False)
         )
