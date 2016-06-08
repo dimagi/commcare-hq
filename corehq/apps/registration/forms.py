@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ugettext
 
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import CouchUser
@@ -24,6 +24,57 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)
+
+
+class RegisterNewWebUserForm(forms.Form):
+    # Use: NewUserRegistrationView
+    # Not inheriting from other forms to de-obfuscate the role of this form.
+
+    full_name = forms.CharField(label=_("Full Name"))
+    account_email = forms.CharField(label=_("Email"))
+    new_password = forms.CharField(label=_("Create Password"))
+    project_name = forms.CharField(label=_("Project Name"))
+    phone_number = forms.CharField(label=_("Phone Number (Optional)"))
+    eula_confirmed = forms.BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(RegisterNewWebUserForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form"
+        self.helper.form_id = "register-new-user"
+
+        def _make_form_step(step_name):
+            return '<h3 class="form-step">{}</h3>'.format(step_name)
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Create Your Account'),
+                crispy.HTML(_make_form_step(ugettext("Step 1 of 4"))),
+                hqcrispy.InlineField('full_name'),
+                hqcrispy.InlineField('account_email'),
+                hqcrispy.InlineField('new_password'),
+                twbscrispy.StrictButton(ugettext("Next"))
+            ),
+            crispy.Fieldset(
+                _('Name Your First Project'),
+                crispy.HTML(_make_form_step(ugettext("Step 2 of 4"))),
+                hqcrispy.InlineField('project_name'),
+                twbscrispy.StrictButton(ugettext("Next"))
+            ),
+            crispy.Fieldset(
+                _('Get Help'),
+                crispy.HTML(_make_form_step(ugettext("Step 3 of 4"))),
+                hqcrispy.InlineField('phone_number'),
+                twbscrispy.StrictButton(ugettext("Skip"))
+            ),
+            crispy.Fieldset(
+                _('Confirm & Create'),
+                crispy.HTML(_make_form_step(ugettext("Step 4 of 4"))),
+                hqcrispy.InlineField('eula_confirmed'),
+                twbscrispy.StrictButton(ugettext("Finish"))
+            )
+        )
 
 
 class DomainRegistrationForm(forms.Form):
