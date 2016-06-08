@@ -497,5 +497,7 @@ def get_all_user_ids_submitted(domain, app_ids=None):
 
 
 def get_username_in_last_form_user_id_submitted(domain, user_id):
-    last_sub = get_last_form_submissions_by_user(domain, [user_id])[user_id][0]
-    return last_sub['form']['meta'].get('username', None)
+    submissions = get_last_form_submissions_by_user(domain, [user_id])
+    user_submissions = submissions.get(user_id, None)
+    if user_submissions:
+        return user_submissions[0]['form']['meta'].get('username', None)
