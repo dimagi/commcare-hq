@@ -1,3 +1,4 @@
+/* globals django */
 hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
     var BillingContactInfoHandler = function () {
         'use strict';
@@ -106,7 +107,7 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
                         callback(billingInfoUtils.getMultiResultsFromElement(element));
                     }
                 });
-            })
+            });
         };
 
         self.utils = {
