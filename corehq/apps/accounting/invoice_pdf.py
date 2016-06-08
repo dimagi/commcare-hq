@@ -395,7 +395,7 @@ class InvoiceTemplate(object):
 
         self.canvas.drawString(inches(5.6), inches(3.05), "Subtotal:")
         self.canvas.drawString(inches(5.6), inches(2.75),
-                               "Tax (%s%%):" % get_money_str(self.tax_rate))
+                               "Tax (%0.2f%%):" % self.tax_rate)
         self.canvas.drawString(inches(5.6), inches(2.45), "Credit:")
         self.canvas.drawString(inches(5.2), inches(1.85), "Total:")
         self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
