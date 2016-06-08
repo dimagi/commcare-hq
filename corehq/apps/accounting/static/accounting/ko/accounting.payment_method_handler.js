@@ -1,3 +1,4 @@
+/* global Stripe */
 hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
     var BillingHandler = function (formId, opts) {
         'use strict';
@@ -120,7 +121,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
         }
 
         self.mustCreateNewCard = ko.computed(function () {
-            return self.paymentIsNotComplete() && self.savedCards().length == 0;
+            return self.paymentIsNotComplete() && self.savedCards().length === 0;
         });
         self.canSelectCard = ko.computed(function () {
             return self.paymentIsNotComplete() && self.savedCards().length > 0;
@@ -238,11 +239,11 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
     WireInvoiceHandler.prototype = Object.create( BillingHandler.prototype );
     WireInvoiceHandler.prototype.constructor = WireInvoiceHandler;
 
-    var BaseCostItem = function (initData) {
+    var BaseCostItem = function () {
         'use strict';
         var self = this;
 
-        self.reset = function (response) {
+        self.reset = function () {
             throw new Error("Missing implementation for reset");
         };
 
@@ -294,7 +295,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
                 var balance = parseFloat(self.balance()),
                     maxPartial = parseFloat(self.maxPartialAmount()),
                     customAmount = parseFloat(self.customPaymentAmount());
-                return customAmount == balance || customAmount <= maxPartial;
+                return customAmount === balance || customAmount <= maxPartial;
             } catch (e) {
                 return false;
             }
@@ -350,6 +351,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
     Invoice.protoptye = Object.create( ChargedCostItem.prototype );
     Invoice.prototype.constructor = Invoice;
 
+    /* initData contains totalBalance and paginatedListModel */
     var TotalCostItem = function (initData) {
         'use strict';
         ChargedCostItem.call(this, initData);
@@ -360,8 +362,8 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
 
         self.id = null; // TODO remove once cost-item-template does not need this
 
-        self.reset =  function (response) {
-            paginatedListModel.refreshList();
+        self.reset =  function () {
+            initData.paginatedListModel.refreshList();
         };
     };
 
@@ -415,15 +417,15 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
         self.amount = ko.observable(0.5);
 
         self.isPlanCredit = ko.computed(function () {
-            return self.category() == 'product';
+            return self.category() === 'product';
         });
 
         self.isSMSCredit = ko.computed(function () {
-            return self.category() == 'feature' && self.creditType() == 'SMS';
+            return self.category() === 'feature' && self.creditType() === 'SMS';
         });
 
         self.isUserCredit = ko.computed(function () {
-            return self.category() == 'feature' && self.creditType() == 'User';
+            return self.category() === 'feature' && self.creditType() === 'User';
         });
 
         self.reset = function (response) {

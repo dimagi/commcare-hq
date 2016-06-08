@@ -91,13 +91,15 @@
 
         $('#bulkPaymentBtn').click(function () {
             bulkPaymentHandler.costItem(new TotalCostItem({
-                totalBalance: paginatedListModel.totalDue()
+                totalBalance: paginatedListModel.totalDue(),
+                paginatedListModel: paginatedListModel,
             }));
             bulkPaymentHandler.reset();
         });
         $('#bulkWirePaymentBtn').click(function () {
             bulkWirePaymentHandler.costItem(new TotalCostItem({
-                totalBalance: paginatedListModel.totalDue()
+                totalBalance: paginatedListModel.totalDue(),
+                paginatedListModel: paginatedListModel,
             }));
         });
 
