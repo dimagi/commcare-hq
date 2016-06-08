@@ -1,9 +1,9 @@
+/* globals jQuery */
 // http://stackoverflow.com/a/987376
 jQuery.fn.selectText = function(){
-    var doc = document
-        , element = this[0]
-        , range, selection
-    ;
+    var doc = document,
+        element = this[0],
+        range, selection;
     if (doc.body.createTextRange) {
         range = document.body.createTextRange();
         range.moveToElementText(element);
