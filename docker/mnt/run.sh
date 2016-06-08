@@ -115,7 +115,7 @@ mount -t aufs -o br=lib/overlay:commcare-hq-ro none commcare-hq
 chown -R cchq:cchq lib/overlay lib/sharedfiles
 
 cd commcare-hq
-ln -sf .travis/localsettings.py localsettings.py
+ln -sf docker/localsettings.py localsettings.py
 
 echo "running: $@"
 "$@"
