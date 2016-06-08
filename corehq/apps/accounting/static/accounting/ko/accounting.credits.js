@@ -3,6 +3,7 @@ hqDefine('accounting/ko/accounting.credits.js', function () {
         'use strict';
         var self = this;
 
+        self.paymentHandler = paymentHandler;
         self.products = ko.observableArray();
         self.features = ko.observableArray();
         self.prepayments = ko.observable();
