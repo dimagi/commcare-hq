@@ -98,7 +98,8 @@ XFORM_MAPPING = {
                         "instanceID": {"type": "string", "index": "not_analyzed"},
                         "username": {"type": "string", "index": "not_analyzed"},
                         "appVersion": {"type": "string", "index": "not_analyzed"},
-                        "CommCareVersion": {"type": "string", "index": "not_analyzed"},
+                        "commcare_version": {"type": "string", "index": "not_analyzed"},
+                        "app_build_version": {"type": "string", "index": "not_analyzed"},
                     }
                 },
             },

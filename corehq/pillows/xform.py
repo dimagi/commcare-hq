@@ -5,6 +5,7 @@ import datetime
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
@@ -98,6 +99,14 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
             user_id = None
         doc_ret['user_type'] = get_user_type(user_id)
         doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
+        app_version_info = get_app_version_info(
+            doc_ret['domain'],
+            doc_ret.get('build_id'),
+            doc_ret.get('version'),
+            doc_ret['form']['meta'],
+        )
+        doc_ret['form']['meta']['commcare_version'] = app_version_info.commcare_version
+        doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
 
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:
