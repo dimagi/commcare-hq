@@ -1,15 +1,15 @@
+from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from casexml.apps.case.xform import get_extensions_to_close
 from casexml.apps.phone.tests.utils import create_restore_user
-from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 
-class AutoCloseExtensionsTest(SyncBaseTest):
+class AutoCloseExtensionsTest(TestCase):
 
     def setUp(self):
         FormProcessorTestUtils.delete_all_cases()
