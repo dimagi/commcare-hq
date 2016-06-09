@@ -124,10 +124,8 @@ class UnknownUserPillowTest(UserPillowTestBase):
 
         # the default query doesn't include unknown users so should have no results
         self.assertEqual(0, UserES().run().total)
-        user_es = UserES()
-        # hack: clear the default filters which hide unknown users
-        # todo: find a better way to do this.
-        user_es._default_filters = ESQuery.default_filters
+        # clear the default filters which hide unknown users
+        user_es = UserES().remove_default_filters()
         results = user_es.run()
         self.assertEqual(1, results.total)
         user_doc = results.hits[0]
