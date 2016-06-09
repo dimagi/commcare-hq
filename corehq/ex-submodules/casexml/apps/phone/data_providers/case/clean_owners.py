@@ -71,9 +71,9 @@ class CleanOwnerSyncPayload(object):
     def _add_commtrack_elements_to_response(self, updates):
         # commtrack ledger sections for this batch
         commtrack_elements = get_stock_payload(
-                self.restore_state.project, self.restore_state.stock_settings,
-                [CaseStub(update.case.case_id, update.case.type) for update in updates]
-            )
+            self.restore_state.project, self.restore_state.stock_settings,
+            [CaseStub(update.case.case_id, update.case.type) for update in updates]
+        )
         self.response.extend(commtrack_elements)
 
     def _process_case_update(self, case):
