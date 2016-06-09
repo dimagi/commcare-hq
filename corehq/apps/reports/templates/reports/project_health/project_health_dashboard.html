@@ -26,7 +26,6 @@
     // "Performing / Active User Trends" Chart
     function setupCharts() {
         var data = {{ rows|JSON }};
-        console.log(data);
         var performingSeries = {
             'key': 'performing',
             values: _.map(data, function(item) {
