@@ -1,6 +1,5 @@
 from collections import defaultdict
 from copy import copy
-from functools import partial
 from datetime import datetime
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
@@ -9,7 +8,7 @@ from casexml.apps.phone.cleanliness import get_case_footprint_info
 from casexml.apps.phone.data_providers.case.load_testing import get_elements_for_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
-from casexml.apps.phone.models import OwnershipCleanlinessFlag, LOG_FORMAT_SIMPLIFIED, IndexTree, SimplifiedSyncLog
+from casexml.apps.phone.models import OwnershipCleanlinessFlag, IndexTree
 from corehq.apps.users.cases import get_owner_id
 from dimagi.utils.decorators.memoized import memoized
 
