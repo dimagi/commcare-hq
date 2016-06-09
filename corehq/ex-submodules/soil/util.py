@@ -1,4 +1,4 @@
-from soil import DownloadBase, CachedDownload, FileDownload
+from soil import DownloadBase, CachedDownload, FileDownload, MultipleTaskDownload
 from soil.exceptions import TaskFailedError
 from soil.heartbeat import heartbeat_enabled, is_alive
 from django.conf import settings
@@ -31,25 +31,28 @@ def get_download_context(download_id, check_state=False, message=None):
     is_ready = False
     context = {}
     download_data = DownloadBase.get(download_id)
-    context['has_file'] = bool(download_data)
+    context['has_file'] = download_data is not None and download_data.has_file
     if download_data is None:
         download_data = DownloadBase(download_id=download_id)
 
-    try:
-        if download_data.task.failed():
-            raise TaskFailedError()
-    except (TypeError, NotImplementedError):
-        # no result backend / improperly configured
-        pass
+    if isinstance(download_data, MultipleTaskDownload):
+        if download_data.task.ready():
+            context['result'], context['error'] = _get_download_context_multiple_tasks(download_data)
     else:
-        if not check_state:
-            is_ready = True
-        elif download_data.task.state == 'SUCCESS':
-            is_ready = True
-            result = download_data.task.result
-            context['result'] = result and result.get('messages')
-            if result and result.get('errors'):
-                raise TaskFailedError(result.get('errors'))
+        try:
+            if download_data.task.failed():
+                raise TaskFailedError()
+        except (TypeError, NotImplementedError):
+            # no result backend / improperly configured
+            pass
+        else:
+            if not check_state:
+                is_ready = True
+            elif download_data.task.successful():
+                result = download_data.task.result
+                context['result'] = result and result.get('messages')
+                if result and result.get('errors'):
+                    raise TaskFailedError(result.get('errors'))
 
     alive = True
     if heartbeat_enabled():
@@ -59,7 +62,7 @@ def get_download_context(download_id, check_state=False, message=None):
 
     def progress_complete():
         return (
-            getattr(settings, 'CELERY_ALWAYS_EAGER', False) and
+            getattr(settings, 'CELERY_ALWAYS_EAGER', False) or
             progress.get('percent', 0) == 100 and
             not progress.get('error', False)
         )
@@ -71,3 +74,21 @@ def get_download_context(download_id, check_state=False, message=None):
     context['allow_dropbox_sync'] = isinstance(download_data, FileDownload) and download_data.use_transfer
     context['custom_message'] = message
     return context
+
+
+def _get_download_context_multiple_tasks(download_data):
+    """for grouped celery tasks, append all results to the context
+    """
+    results = download_data.task.results
+    messages = []
+    errors = []
+    for result in results:
+        try:
+            task_result = result.get()
+        except Exception as e:  # Celery raises whatever exception was thrown
+                                # in the task when accessing the result
+            errors.append(e)
+        else:
+            messages.append(task_result.get("messages"))
+
+    return messages, errors
