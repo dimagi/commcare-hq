@@ -15,6 +15,10 @@ class ReportCasePillow(CasePillow):
     es_index = REPORT_CASE_INDEX
     default_mapping = REPORT_CASE_MAPPING
 
+    @classmethod
+    def get_unique_id(cls):
+        return '8c10a7564b6af5052f8b86693bf6ac07'
+
     def change_transform(self, doc_dict):
         if doc_dict.get('domain', None) not in getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', []):
             # full indexing is only enabled for select domains on an opt-in basis

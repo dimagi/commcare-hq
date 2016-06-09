@@ -1,6 +1,10 @@
 from corehq.util.elastic import es_index
 
-REPORT_CASE_INDEX = es_index("report_cases_2016-06-09")
+##################
+# NOTE to the next person who updates this name:
+#    You should also remove the ReportCasePillow.get_unique_id method
+REPORT_CASE_INDEX = es_index("report_cases_czei39du507m9mmpqk3y01x72a3ux4p0")
+##################
 
 REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
            'created': None},

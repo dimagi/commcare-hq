@@ -65,7 +65,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "report_cases",
-        "index": "test_report_cases_2016-06-09",
+        "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
         "type": "report_case"
     },
     {
