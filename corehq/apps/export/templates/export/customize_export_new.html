@@ -14,7 +14,8 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
-            var customExportView = new hqImport('export/js/models.js').ExportInstance(
+            var ExportInstance = hqImport('export/js/models.js').ExportInstance;
+            var customExportView = new ExportInstance(
                 {{ export_instance|JSON }},
                 {
                     saveUrl: {{ request.get_full_path|safe|JSON }}
