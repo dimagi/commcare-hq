@@ -17,6 +17,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_cases_in_domain_by_external_id,
 )
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
+from corehq.blobs.mixin import BlobMixin
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
@@ -252,7 +253,10 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
     try:
-        resp = doc_class.get_db().fetch_attachment(doc_id, attachment_id, stream=True)
+        if issubclass(doc_class, BlobMixin):
+            resp = doc_class.get(doc_id).fetch_attachment(attachment_id, stream=True)
+        else:
+            resp = doc_class.get_db().fetch_attachment(doc_id, attachment_id, stream=True)
     except ResourceNotFound:
         raise AttachmentNotFound(attachment_id)
 

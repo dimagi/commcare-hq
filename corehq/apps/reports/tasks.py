@@ -388,6 +388,13 @@ def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
     Return a list of form ids.
     Each form has a multimedia attachment and meets the given filters.
     """
+    def iter_attachments(form):
+        if form.get('_attachments'):
+            for value in form['_attachments'].values():
+                yield value
+        if form.get('external_blobs'):
+            for value in form['external_blobs'].values():
+                yield value
     if not export_is_legacy:
         query = (FormES()
                  .domain(domain)
@@ -395,16 +402,12 @@ def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
                  .xmlns(xmlns)
                  .submitted(gte=parse(startdate), lte=parse(enddate))
                  .remove_default_filter("has_user")
-                 .source(['_attachments', '_id']))
+                 .source(['_attachments', 'external_blobs', '_id']))
         form_ids = set()
         for form in query.scroll():
-            try:
-                for attachment in form['_attachments'].values():
-                    if attachment['content_type'] != "text/xml":
-                        form_ids.add(form['_id'])
-                        continue
-            except AttributeError:
-                pass
+            for attachment in iter_attachments(form):
+                if attachment['content_type'] != "text/xml":
+                    form_ids.add(form['_id'])
     else:
         key = [domain, app_id, xmlns]
         form_ids = {
