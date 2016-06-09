@@ -26,6 +26,7 @@ class CleanOwnerSyncPayload(object):
     def __init__(self, case_ids_to_sync, restore_state):
         self.restore_state = restore_state
         self.case_accessor = CaseAccessors(self.restore_state.domain)
+        self.response = self.restore_state.restore_class()
 
         self.case_ids_to_sync = case_ids_to_sync
         self.all_maybe_syncing = copy(case_ids_to_sync)
@@ -36,39 +37,35 @@ class CleanOwnerSyncPayload(object):
         self.closed_cases = set()
         self.potential_elements_to_sync = {}
 
-    def compute_potential_elements_to_sync(self, response):
+    def get_payload(self):
         while self.case_ids_to_sync:
-            ids = pop_ids(self.case_ids_to_sync, chunk_size)
-            # todo: see if we can avoid wrapping - serialization depends on it heavily for now
-            case_batch = [
-                case
-                for case in self.case_accessor.get_cases(ids)
-                if not case.is_deleted and case_needs_to_sync(case, last_sync_log=self.restore_state.last_sync_log)
-            ]
-            updates = get_case_sync_updates(
-                self.restore_state.domain, case_batch, self.restore_state.last_sync_log
-            )
-            for update in updates:
-                self._process_update(update)
-            self._add_commtrack_elements_to_response(updates, response)
+            self.process_case_batch(self.get_next_case_batch())
+        self.update_index_trees()
+        self.update_case_ids_on_phone()
+        self.move_no_longer_owned_cases_to_dependent_list_if_necessary()
+        irrelevant_cases = self.purge_and_get_irrelevant_cases()
+        self.compile_response(irrelevant_cases)
 
-            # add any new values to all_syncing
-            self.all_maybe_syncing = self.all_maybe_syncing | self.case_ids_to_sync
+        return self.response
 
-        return self.potential_elements_to_sync
+    def get_next_case_batch(self):
+        ids = pop_ids(self.case_ids_to_sync, chunk_size)
+        # TODO: see if we can avoid wrapping - serialization depends on it heavily for now
+        return [
+            case for case in self.case_accessor.get_cases(ids)
+            if not case.is_deleted and case_needs_to_sync(case, last_sync_log=self.restore_state.last_sync_log)
+        ]
 
-    def move_no_longer_owned_cases_to_dependent_list_if_necessary(self):
-        if not self.restore_state.is_initial:
-            removed_owners = (
-                set(self.restore_state.last_sync_log.owner_ids_on_phone) - set(self.restore_state.owner_ids)
-            )
-            if removed_owners:
-                # if we removed any owner ids, then any cases that belonged to those owners need
-                # to be moved to the dependent list
-                case_ids_to_try_purging = self.case_accessor.get_case_ids_by_owners(list(removed_owners))
-                for to_purge in case_ids_to_try_purging:
-                    if to_purge in self.restore_state.current_sync_log.case_ids_on_phone:
-                        self.restore_state.current_sync_log.dependent_case_ids_on_phone.add(to_purge)
+    def process_case_batch(self, case_batch):
+        updates = get_case_sync_updates(
+            self.restore_state.domain, case_batch, self.restore_state.last_sync_log
+        )
+        for update in updates:
+            self._process_update(update)
+        # add any new values to all_syncing
+        self.all_maybe_syncing = self.all_maybe_syncing | self.case_ids_to_sync
+
+        self._add_commtrack_elements_to_response(updates, self.response)
 
     def _add_commtrack_elements_to_response(self, updates, response):
         # commtrack ledger sections for this batch
@@ -103,6 +100,19 @@ class CleanOwnerSyncPayload(object):
             self.all_dependencies_syncing.add(case.case_id)
             if case.closed:
                 self.closed_cases.add(case.case_id)
+
+    def move_no_longer_owned_cases_to_dependent_list_if_necessary(self):
+        if not self.restore_state.is_initial:
+            removed_owners = (
+                set(self.restore_state.last_sync_log.owner_ids_on_phone) - set(self.restore_state.owner_ids)
+            )
+            if removed_owners:
+                # if we removed any owner ids, then any cases that belonged to those owners need
+                # to be moved to the dependent list
+                case_ids_to_try_purging = self.case_accessor.get_case_ids_by_owners(list(removed_owners))
+                for to_purge in case_ids_to_try_purging:
+                    if to_purge in self.restore_state.current_sync_log.case_ids_on_phone:
+                        self.restore_state.current_sync_log.dependent_case_ids_on_phone.add(to_purge)
 
     def update_index_trees(self):
         index_tree = IndexTree(indices=self.child_indices)
@@ -141,11 +151,11 @@ class CleanOwnerSyncPayload(object):
             irrelevant_cases = purged_cases - self.restore_state.last_sync_log.case_ids_on_phone
         return irrelevant_cases
 
-    def compile_response(self, irrelevant_cases, response):
+    def compile_response(self, irrelevant_cases):
         for element_case_id, elements in self.potential_elements_to_sync.iteritems():
             if element_case_id not in irrelevant_cases:
                 for element in elements:
-                    response.append(element)
+                    self.response.append(element)
 
 
 class CleanOwnerCaseSyncOperation(object):
@@ -168,7 +178,11 @@ class CleanOwnerCaseSyncOperation(object):
         return self.cleanliness_flags.get(owner_id, False)
 
     def get_payload(self):
-        response = self.restore_state.restore_class()
+        self.restore_state.mark_as_new_format()
+        sync_payload = CleanOwnerSyncPayload(self.get_case_ids_to_sync(), self.restore_state)
+        return sync_payload.get_payload()
+
+    def get_case_ids_to_sync(self):
         case_ids_to_sync = set()
         for owner_id in self.restore_state.owner_ids:
             case_ids_to_sync = case_ids_to_sync | set(self.get_case_ids_for_owner(owner_id))
@@ -184,15 +198,7 @@ class CleanOwnerCaseSyncOperation(object):
             case_ids_to_sync = case_ids_to_sync | set(filter_cases_modified_since(
                 self.case_accessor, list(other_ids_to_check), self.restore_state.last_sync_log.date
             ))
-        self.restore_state.mark_as_new_format()
-        sync_payload = CleanOwnerSyncPayload(case_ids_to_sync, self.restore_state)
-        sync_payload.compute_potential_elements_to_sync(response)
-        sync_payload.update_index_trees()
-        sync_payload.update_case_ids_on_phone()
-        sync_payload.move_no_longer_owned_cases_to_dependent_list_if_necessary()
-        irrelevant_cases = sync_payload.purge_and_get_irrelevant_cases()
-        sync_payload.compile_response(irrelevant_cases, response)
-        return response
+        return case_ids_to_sync
 
     def get_case_ids_for_owner(self, owner_id):
         if EXTENSION_CASES_SYNC_ENABLED.enabled(self.restore_state.domain):
