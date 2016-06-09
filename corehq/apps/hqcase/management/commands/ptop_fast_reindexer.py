@@ -1,4 +1,5 @@
 from datetime import datetime
+import subprocess
 import time
 from optparse import make_option
 import sys
@@ -80,6 +81,7 @@ class PtopReindexer(NoArgsCommand):
     indexing_pillow_class = None
     file_prefix = "ptop_fast_reindex_"
     default_chunk_size = CHUNK_SIZE
+    sort_key = None
 
     def __init__(self):
         super(PtopReindexer, self).__init__()
@@ -159,13 +161,32 @@ class PtopReindexer(NoArgsCommand):
             fout.write(str(current_db_seq))
 
         # Load entire view to disk
+        if self.sort_key:
+            self._load_from_view_and_sort()
+        else:
+            self._load_from_view()
+        self.log("View and sequence written to disk: %s" % datetime.utcnow().isoformat())
+
+    def _load_from_view_and_sort(self):
+        dump_filename = self.get_dump_filename()
+        dump_presort_filename = dump_filename + '.presort.tmp'
+        self.log('Writing dump file to disk: {}, starting at {}'.format(
+            dump_presort_filename, datetime.utcnow().isoformat()))
+        with open(dump_presort_filename, 'w') as fout:
+            for row in self.full_couch_view_iter():
+                fout.write('{}\t{}\n'.format(self.sort_key(row), json.dumps(row)))
+        self.log('Sorting dump file and writing to: {}, starting at {}'.format(
+            dump_filename, datetime.utcnow().isoformat()))
+        with open(dump_filename, 'w') as fout, open(dump_presort_filename, 'r') as fin:
+            subprocess.check_call('sort -r | cut -f2', stdin=fin, stdout=fout, shell=True)
+
+    def _load_from_view(self):
         dump_filename = self.get_dump_filename()
         self.log('Writing dump file to disk: {}, starting at {}'.format(
             dump_filename, datetime.utcnow().isoformat()))
         with open(dump_filename, 'w') as fout:
             for row in self.full_couch_view_iter():
                 fout.write('{}\n'.format(json.dumps(row)))
-        self.log("View and sequence written to disk: %s" % datetime.utcnow().isoformat())
 
     def _load_seq_from_disk(self):
         self.log("Loading from disk: %s" % datetime.utcnow().isoformat())
