@@ -53,18 +53,6 @@ class CasePillow(HQPillow):
         else:
             return LockManager(doc_dict, lock)
 
-    @classmethod
-    @memoized
-    def calc_meta(cls):
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determined md5
-        """
-        return cls.calc_mapping_hash({
-            'es_meta': cls.es_meta,
-            'mapping': cls.default_mapping,
-        })
-
     def change_transform(self, doc_dict):
         return transform_case_for_elasticsearch(doc_dict)
 

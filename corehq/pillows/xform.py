@@ -67,10 +67,6 @@ class XFormPillow(HQPillow):
     handler_domain_map = {}
     default_mapping = XFORM_MAPPING
 
-    @classmethod
-    def get_unique_id(self):
-        return XFORM_INDEX
-
     def change_transform(self, doc_dict, include_props=True):
         return transform_xform_for_elasticsearch(doc_dict, include_props)
 

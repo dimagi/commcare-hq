@@ -40,7 +40,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqcases",
-        "index": "test_hqcases_2016-03-04",
+        "index": "test_hqcases_2016-06-09",
         "type": "case"
     },
     {
@@ -65,7 +65,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "report_cases",
-        "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
+        "index": "test_report_cases_2016-06-09",
         "type": "report_case"
     },
     {
@@ -80,7 +80,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "xforms",
-        "index": "test_xforms_2016-03-02",
+        "index": "test_xforms_2016-06-09",
         "type": "xform"
     }
 ]
