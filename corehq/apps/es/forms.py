@@ -26,6 +26,7 @@ class FormES(HQESQuery):
             user_type,
             user_ids_handle_unknown,
             j2me_submissions,
+            app_version,
         ] + super(FormES, self).builtin_filters
 
     def user_aggregation(self):
@@ -92,3 +93,7 @@ def j2me_submissions(gt=None, gte=None, lt=None, lte=None):
         filters.regexp("form.meta.appVersion", "v2+.[0-9]+.*"),
         submitted(gt, gte, lt, lte)
     )
+
+
+def app_version(version):
+    return filters.regexp("form.meta.appVersion", ".*" + version + ".*")

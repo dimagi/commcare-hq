@@ -1,8 +1,9 @@
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 from corehq.apps.builds.utils import get_all_versions
+from corehq.apps.es import FormES
 from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
     use_nvd3, use_jquery_ui
 from dimagi.utils.decorators.memoized import memoized
@@ -1189,51 +1190,20 @@ class CommCareVersionReport(AdminReport, ElasticTabularReport):
     @property
     def rows(self):
         versions = get_all_versions()
+        now = datetime.utcnow()
+        days = now - timedelta(days=90)
 
-        def get_query(version):
-            return {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "range": {
-                                    "received_on": {
-                                        "gte": "now-90d",
-                                        "lte": "now"
-                                    }
-                                }
-                            },
-                            {
-                                "query_string": {
-                                    "default_field": "appVersion",
-                                    "query": "*" + version + "*"
-                                }
-                            }
-                        ]
-                    }
-                },
-                "aggs": {
-                    "by_domain": {
-                        "terms": {
-                            "field": "domain"
-                        }
-                    }
-                }
-            }
-
+        def get_data_for(v):
+            data = FormES().submitted(gte=days, lte=now).app_version(v).domain_aggregation().size(0).run()
+            return data.aggregations.domain.buckets_list
         rows = {}
         for domain in es_domain_query(show_stats=False)['hits']['hits']:
             domain_name = domain['_source']['name']
             rows.update({domain_name: [domain_name] + [0] * len(versions)})
 
-        for idx, version in enumerate(versions, 2):
-            data_for_domains = es_query(
-                q=get_query(version),
-                es_index="forms",
-                size=0
-            )
-            for for_domain in data_for_domains['aggregations']['by_domain']['buckets']:
-                row = rows.get(for_domain['key'])
-                row[idx] = for_domain['doc_count']
+        for idx, version in enumerate(versions, 1):
+            for for_domain in get_data_for(version):
+                row = rows.get(for_domain.key)
+                row[idx] = for_domain.doc_count
 
         return rows.values()
