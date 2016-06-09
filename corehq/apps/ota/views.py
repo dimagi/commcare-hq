@@ -28,6 +28,8 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
 
+from .utils import demo_user_restore_response
+
 
 @json_error
 @login_or_digest_or_basic_or_apikey()
@@ -126,6 +128,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         restore_user = couch_user.to_ota_restore_user()
     elif couch_user.is_web_user():
         restore_user = couch_user.to_ota_restore_user(domain)
+
+    if couch_user.is_demo_user:
+        # if user is in demo-mode, return demo restore
+        return demo_user_restore_response(couch_user)
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None

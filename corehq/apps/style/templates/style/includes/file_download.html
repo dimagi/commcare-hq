@@ -13,6 +13,6 @@
 {% block content %}
     <div class="col-sm-12">
         {{ block.super }}
-        <a href="{% url 'my_project_settings' domain %}" class="btn btn-primary">{% trans 'Return to Project Settings' %}</a>
+        <a href="{{ next_url }}" class="btn btn-primary">{% trans 'Go back' %}</a>
     </div>
 {% endblock %}

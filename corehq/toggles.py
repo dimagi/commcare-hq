@@ -831,6 +831,13 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MOBILE_USER_DEMO_MODE = StaticToggle(
+    'mobile_user_demo_mode',
+    'Ability to make a mobile worker into Demo only mobile worker',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 
 def enable_toggles_for_scale_beta(domain):
     USE_SQL_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
