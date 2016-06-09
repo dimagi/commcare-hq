@@ -70,11 +70,11 @@ class CleanOwnerCaseSyncOperation(object):
         while case_ids_to_sync:
             ids = pop_ids(case_ids_to_sync, chunk_size)
             # todo: see if we can avoid wrapping - serialization depends on it heavily for now
-            case_batch = filter(
-                partial(case_needs_to_sync, last_sync_log=self.restore_state.last_sync_log),
-                [case for case in self.case_accessor.get_cases(ids)
-                 if not case.is_deleted]
-            )
+            case_batch = [
+                case
+                for case in self.case_accessor.get_cases(ids)
+                if not case.is_deleted and case_needs_to_sync(case, last_sync_log=self.restore_state.last_sync_log)
+            ]
             updates = get_case_sync_updates(
                 self.restore_state.domain, case_batch, self.restore_state.last_sync_log
             )
