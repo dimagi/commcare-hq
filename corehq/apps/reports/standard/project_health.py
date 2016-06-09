@@ -45,6 +45,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     domain = jsonobject.StringProperty()
     performance_threshold = jsonobject.IntegerProperty()
     active = jsonobject.IntegerProperty()
+    performing = jsonobject.IntegerProperty()
 
     def __init__(self, domain, month, users_filtered_by_group, performance_threshold, previous_summary=None):
         self._previous_summary = previous_summary
@@ -122,7 +123,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @memoized
     def get_all_user_stubs(self):
-        # row is MALTRow object
         return {
             row.user_id: UserActivityStub(
                 user_id=row.user_id,
@@ -208,10 +208,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         Get a list of "newly performing" users - defined as those who are "performing" this month
         after not performing last month.
         """
-        users_list = self.get_all_user_stubs_with_extra_data()
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: stub.is_newly_performing, users_list
+                lambda stub: stub.is_newly_performing,
+                self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
 
@@ -271,8 +271,7 @@ class ProjectHealthDashboard(ProjectReport):
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
             last_month_summary = this_month_summary
-        # returns monthly performance summary for the past 6 months
-        # to be used in rendering "Performing / Active User Trends" Chart
+
         return {
             'rows': rows,
             'this_month': rows[-1],
