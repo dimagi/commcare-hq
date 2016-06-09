@@ -73,18 +73,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             performing=0,
         )
 
-    def number_of_performing_users(self):
-        if self._users_filtered_by_group:
-            return self._performing_queryset_group_filtered.distinct('user_id').count()
-        else:
-            return self._performing_queryset.distinct('user_id').count()
-
-    def number_of_active_users(self):
-        if self._users_filtered_by_group:
-            return self._apply_group_filter.distinct('user_id').count()
-        else:
-            return self._base_queryset.distinct('user_id').count()
-
     def set_performing(self, num_performing_users):
         self.performing = num_performing_users
 
@@ -93,6 +81,20 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     def set_next_month_summary(self, next_month_summary):
         self._next_summary = next_month_summary
+
+    @property
+    def number_of_performing_users(self):
+        if self._users_filtered_by_group:
+            return self._performing_queryset_group_filtered.distinct('user_id').count()
+        else:
+            return self._performing_queryset.distinct('user_id').count()
+
+    @property
+    def number_of_active_users(self):
+        if self._users_filtered_by_group:
+            return self._apply_group_filter.distinct('user_id').count()
+        else:
+            return self._base_queryset.distinct('user_id').count()
 
     @property
     def has_group_filter(self):
@@ -109,8 +111,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def delta_performing_pct(self):
-        if self.delta_performing and self._previous_summary and self._previous_summary.number_of_performing_users:
-            return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
+        return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
 
     @property
     def delta_active(self):
@@ -118,8 +119,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def delta_active_pct(self):
-        if self.delta_active and self._previous_summary and self._previous_summary.active:
-            return float(self.delta_active / float(self._previous_summary.active)) * 100.
+        return float(self.delta_active / float(self._previous_summary.active)) * 100.
 
     @memoized
     def get_all_user_stubs(self):
@@ -265,8 +265,8 @@ class ProjectHealthDashboard(ProjectReport):
                 previous_summary=last_month_summary,
                 users_filtered_by_group=users_in_group,
             )
-            this_month_summary.set_performing(this_month_summary.number_of_performing_users())
-            this_month_summary.set_active_users(this_month_summary.number_of_active_users())
+            this_month_summary.set_performing(this_month_summary.number_of_performing_users)
+            this_month_summary.set_active_users(this_month_summary.number_of_active_users)
             rows.append(this_month_summary)
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
