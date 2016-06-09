@@ -23,6 +23,132 @@ def get_case_payload(restore_state):
 chunk_size = 1000
 
 
+class CleanOwnerSyncPayload(object):
+    def __init__(self, case_ids_to_sync, restore_state):
+        self.restore_state = restore_state
+        self.case_accessor = CaseAccessors(self.restore_state.domain)
+
+        self.case_ids_to_sync = case_ids_to_sync
+        self.all_maybe_syncing = copy(case_ids_to_sync)
+        self.all_synced = set()
+        self.child_indices = defaultdict(set)
+        self.extension_indices = defaultdict(set)
+        self.all_dependencies_syncing = set()
+        self.closed_cases = set()
+        self.potential_elements_to_sync = {}
+
+    def compute_potential_elements_to_sync(self, response):
+        while self.case_ids_to_sync:
+            ids = pop_ids(self.case_ids_to_sync, chunk_size)
+            # todo: see if we can avoid wrapping - serialization depends on it heavily for now
+            case_batch = [
+                case
+                for case in self.case_accessor.get_cases(ids)
+                if not case.is_deleted and case_needs_to_sync(case, last_sync_log=self.restore_state.last_sync_log)
+            ]
+            updates = get_case_sync_updates(
+                self.restore_state.domain, case_batch, self.restore_state.last_sync_log
+            )
+            for update in updates:
+                self._process_update(update)
+            self._add_commtrack_elements_to_response(updates, response)
+
+            # add any new values to all_syncing
+            self.all_maybe_syncing = self.all_maybe_syncing | self.case_ids_to_sync
+
+        return self.potential_elements_to_sync
+
+    def move_no_longer_owned_cases_to_dependent_list_if_necessary(self):
+        if not self.restore_state.is_initial:
+            removed_owners = (
+                set(self.restore_state.last_sync_log.owner_ids_on_phone) - set(self.restore_state.owner_ids)
+            )
+            if removed_owners:
+                # if we removed any owner ids, then any cases that belonged to those owners need
+                # to be moved to the dependent list
+                case_ids_to_try_purging = self.case_accessor.get_case_ids_by_owners(list(removed_owners))
+                for to_purge in case_ids_to_try_purging:
+                    if to_purge in self.restore_state.current_sync_log.case_ids_on_phone:
+                        self.restore_state.current_sync_log.dependent_case_ids_on_phone.add(to_purge)
+
+    def _add_commtrack_elements_to_response(self, updates, response):
+        # commtrack ledger sections for this batch
+        commtrack_elements = get_stock_payload(
+                self.restore_state.project, self.restore_state.stock_settings,
+                [CaseStub(update.case.case_id, update.case.type) for update in updates]
+            )
+        response.extend(commtrack_elements)
+
+    def _process_update(self, update):
+        case = update.case
+        self.all_synced.add(case.case_id)
+        self.potential_elements_to_sync[case.case_id] = get_elements_for_response(update, self.restore_state)
+        # update the indices in the new sync log
+        if case.indices:
+            self.extension_indices[case.case_id] = {
+                index.identifier: index.referenced_id
+                for index in case.indices
+                if index.relationship == CASE_INDEX_EXTENSION
+            }
+            self.child_indices[case.case_id] = {
+                index.identifier: index.referenced_id
+                for index in case.indices
+                if index.relationship == CASE_INDEX_CHILD
+            }
+            for index in case.indices:
+                if index.referenced_id not in self.all_maybe_syncing:
+                    self.case_ids_to_sync.add(index.referenced_id)
+
+        # and double check footprint for non-live cases
+        if not _is_live(case, self.restore_state):
+            self.all_dependencies_syncing.add(case.case_id)
+            if case.closed:
+                self.closed_cases.add(case.case_id)
+
+    def update_index_trees(self):
+        index_tree = IndexTree(indices=self.child_indices)
+        extension_index_tree = IndexTree(indices=self.extension_indices)
+        if not self.restore_state.is_initial:
+            index_tree = self.restore_state.last_sync_log.index_tree.apply_updates(index_tree)
+            extension_index_tree = self.restore_state.last_sync_log.extension_index_tree.apply_updates(
+                extension_index_tree
+            )
+
+        self.restore_state.current_sync_log.index_tree = index_tree
+        self.restore_state.current_sync_log.extension_index_tree = extension_index_tree
+
+    def update_case_ids_on_phone(self):
+        case_ids_on_phone = self.all_synced
+        primary_cases_syncing = self.all_synced - self.all_dependencies_syncing
+        if not self.restore_state.is_initial:
+            case_ids_on_phone = case_ids_on_phone | self.restore_state.last_sync_log.case_ids_on_phone
+            # subtract primary cases from dependencies since they must be newly primary
+            self.all_dependencies_syncing = self.all_dependencies_syncing | (
+                self.restore_state.last_sync_log.dependent_case_ids_on_phone -
+                primary_cases_syncing
+            )
+        self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
+        self.restore_state.current_sync_log.dependent_case_ids_on_phone = self.all_dependencies_syncing
+        self.restore_state.current_sync_log.closed_cases = self.closed_cases
+
+    def purge_and_get_irrelevant_cases(self):
+        original_case_ids_on_phone = self.restore_state.current_sync_log.case_ids_on_phone
+        self.restore_state.current_sync_log.purge_dependent_cases()
+        purged_cases = original_case_ids_on_phone - self.restore_state.current_sync_log.case_ids_on_phone
+        # don't sync purged cases that were never on the phone
+        if self.restore_state.is_initial:
+            irrelevant_cases = purged_cases
+        else:
+            irrelevant_cases = purged_cases - self.restore_state.last_sync_log.case_ids_on_phone
+        return irrelevant_cases
+
+    def compile_response(self, irrelevant_cases, response):
+        for element_case_id, elements in self.potential_elements_to_sync.iteritems():
+            if element_case_id not in irrelevant_cases:
+                for element in elements:
+                    response.append(element)
+
+
 class CleanOwnerCaseSyncOperation(object):
 
     def __init__(self, restore_state):
@@ -59,106 +185,14 @@ class CleanOwnerCaseSyncOperation(object):
             case_ids_to_sync = case_ids_to_sync | set(filter_cases_modified_since(
                 self.case_accessor, list(other_ids_to_check), self.restore_state.last_sync_log.date
             ))
-
-        all_maybe_syncing = copy(case_ids_to_sync)
-        all_synced = set()
-        child_indices = defaultdict(set)
-        extension_indices = defaultdict(set)
-        all_dependencies_syncing = set()
-        closed_cases = set()
-        potential_elements_to_sync = {}
-        while case_ids_to_sync:
-            ids = pop_ids(case_ids_to_sync, chunk_size)
-            # todo: see if we can avoid wrapping - serialization depends on it heavily for now
-            case_batch = [
-                case
-                for case in self.case_accessor.get_cases(ids)
-                if not case.is_deleted and case_needs_to_sync(case, last_sync_log=self.restore_state.last_sync_log)
-            ]
-            updates = get_case_sync_updates(
-                self.restore_state.domain, case_batch, self.restore_state.last_sync_log
-            )
-            for update in updates:
-                case = update.case
-                all_synced.add(case.case_id)
-                potential_elements_to_sync[case.case_id] = get_elements_for_response(update, self.restore_state)
-                # update the indices in the new sync log
-                if case.indices:
-                    extension_indices[case.case_id] = {
-                        index.identifier: index.referenced_id
-                        for index in case.indices
-                        if index.relationship == CASE_INDEX_EXTENSION
-                    }
-                    child_indices[case.case_id] = {
-                        index.identifier: index.referenced_id
-                        for index in case.indices
-                        if index.relationship == CASE_INDEX_CHILD
-                    }
-                    for index in case.indices:
-                        if index.referenced_id not in all_maybe_syncing:
-                            case_ids_to_sync.add(index.referenced_id)
-
-                # and double check footprint for non-live cases
-                if not _is_live(case, self.restore_state):
-                    all_dependencies_syncing.add(case.case_id)
-                    if case.closed:
-                        closed_cases.add(case.case_id)
-
-            # commtrack ledger sections for this batch
-            commtrack_elements = get_stock_payload(
-                self.restore_state.project, self.restore_state.stock_settings,
-                [CaseStub(update.case.case_id, update.case.type) for update in updates]
-            )
-            response.extend(commtrack_elements)
-
-            # add any new values to all_syncing
-            all_maybe_syncing = all_maybe_syncing | case_ids_to_sync
-
-        # update sync token - marking it as the new format
-        self.restore_state.current_sync_log = SimplifiedSyncLog.wrap(
-            self.restore_state.current_sync_log.to_json()
-        )
-        self.restore_state.current_sync_log.log_format = LOG_FORMAT_SIMPLIFIED
-        self.restore_state.current_sync_log.extensions_checked = True
-
-        index_tree = IndexTree(indices=child_indices)
-        extension_index_tree = IndexTree(indices=extension_indices)
-        case_ids_on_phone = all_synced
-        primary_cases_syncing = all_synced - all_dependencies_syncing
-        if not self.restore_state.is_initial:
-            case_ids_on_phone = case_ids_on_phone | self.restore_state.last_sync_log.case_ids_on_phone
-            # subtract primary cases from dependencies since they must be newly primary
-            all_dependencies_syncing = all_dependencies_syncing | (
-                self.restore_state.last_sync_log.dependent_case_ids_on_phone -
-                primary_cases_syncing
-            )
-            index_tree = self.restore_state.last_sync_log.index_tree.apply_updates(index_tree)
-            extension_index_tree = self.restore_state.last_sync_log.extension_index_tree.apply_updates(
-                extension_index_tree
-            )
-
-        self.restore_state.current_sync_log.case_ids_on_phone = case_ids_on_phone
-        self.restore_state.current_sync_log.dependent_case_ids_on_phone = all_dependencies_syncing
-        self.restore_state.current_sync_log.index_tree = index_tree
-        self.restore_state.current_sync_log.extension_index_tree = extension_index_tree
-        self.restore_state.current_sync_log.closed_cases = closed_cases
-
-        _move_no_longer_owned_cases_to_dependent_list_if_necessary(self.restore_state, self.case_accessor)
-        self.restore_state.current_sync_log.purge_dependent_cases()
-
-        purged_cases = case_ids_on_phone - self.restore_state.current_sync_log.case_ids_on_phone
-
-        # don't sync purged cases that were never on the phone
-        if self.restore_state.is_initial:
-            irrelevant_cases = purged_cases
-        else:
-            irrelevant_cases = purged_cases - self.restore_state.last_sync_log.case_ids_on_phone
-
-        for element_case_id, elements in potential_elements_to_sync.iteritems():
-            if element_case_id not in irrelevant_cases:
-                for element in elements:
-                    response.append(element)
-
+        self.restore_state.mark_as_new_format()
+        sync_payload = CleanOwnerSyncPayload(case_ids_to_sync, self.restore_state)
+        sync_payload.compute_potential_elements_to_sync(response)
+        sync_payload.update_index_trees()
+        sync_payload.update_case_ids_on_phone()
+        sync_payload.move_no_longer_owned_cases_to_dependent_list_if_necessary()
+        irrelevant_cases = sync_payload.purge_and_get_irrelevant_cases()
+        sync_payload.compile_response(irrelevant_cases, response)
         return response
 
     def get_case_ids_for_owner(self, owner_id):
@@ -257,17 +291,3 @@ def pop_ids(set_, how_many):
         except KeyError:
             pass
     return result
-
-
-def _move_no_longer_owned_cases_to_dependent_list_if_necessary(restore_state, case_accessor):
-    if not restore_state.is_initial:
-        removed_owners = (
-            set(restore_state.last_sync_log.owner_ids_on_phone) - set(restore_state.owner_ids)
-        )
-        if removed_owners:
-            # if we removed any owner ids, then any cases that belonged to those owners need
-            # to be moved to the dependent list
-            case_ids_to_try_purging = case_accessor.get_case_ids_by_owners(list(removed_owners))
-            for to_purge in case_ids_to_try_purging:
-                if to_purge in restore_state.current_sync_log.case_ids_on_phone:
-                    restore_state.current_sync_log.dependent_case_ids_on_phone.add(to_purge)
