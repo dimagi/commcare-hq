@@ -173,6 +173,21 @@ class PtopReindexer(NoArgsCommand):
         self.log("View and sequence written to disk: %s" % datetime.utcnow().isoformat())
 
     def _load_from_view_and_sort(self):
+        """
+        load view rows, sorted as specified by sort_key, into a file
+        via a temporary file with the '.presort.tmp' suffix
+
+        implementation walkthrough:
+            - dumps sort-key-prefixed rows into  *.presort.tmp using the line format:
+                <sort key> <TAB> <row json>
+            - uses POSIX sort the lines in descending order (by sort key since that begins lines)
+            - uses POSIX cut to remove the sort key column (and the <TAB>)
+            - writes the result to the file
+
+            this has the result of producing a file with the same format as _load_from_view
+            but with the rows sorted by sort_key
+
+        """
         dump_filename = self.get_dump_filename()
         dump_presort_filename = dump_filename + '.presort.tmp'
         self.log('Writing dump file to disk: {}, starting at {}'.format(
