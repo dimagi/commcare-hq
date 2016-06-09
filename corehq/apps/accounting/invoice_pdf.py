@@ -428,9 +428,7 @@ class InvoiceTemplate(object):
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
             'payment_page': absolute_reverse(DomainBillingStatementsView.urlname, args=[self.project_name]),
         }
-        payment_info = Paragraph('\n'.join([
-            payment_description,
-        ]), ParagraphStyle(''))
+        payment_info = Paragraph(payment_description, ParagraphStyle(''))
         payment_info.wrapOn(self.canvas, inches(4.25), inches(0.9))
         payment_info.drawOn(self.canvas, inches(0.5), inches(1.8))
 
