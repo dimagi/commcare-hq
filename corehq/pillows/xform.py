@@ -103,7 +103,7 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
 
             try:
                 geo_point = GeoPointProperty().wrap(doc_ret['form']['meta']['location'])
-                doc_ret['form']['meta']['geo_point'] = geo_point.lat_long
+                doc_ret['form']['meta']['geo_point'] = geo_point.lat_lon
             except (KeyError, BadValueError):
                 doc_ret['form']['meta']['geo_point'] = None
                 pass
