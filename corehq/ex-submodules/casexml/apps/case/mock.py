@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import copy
+import numbers
 from collections import namedtuple
 from datetime import datetime, date
 import uuid
@@ -191,7 +192,7 @@ class CaseBlock(dict):
                 return ''
             if isinstance(value, datetime):
                 return unicode(format_datetime(value))
-            elif isinstance(value, (basestring, int, date)):
+            elif isinstance(value, (basestring, numbers.Number, date)):
                 return unicode(value)
             else:
                 raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(value, type(value)))
