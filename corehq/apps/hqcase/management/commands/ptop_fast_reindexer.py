@@ -81,7 +81,11 @@ class PtopReindexer(NoArgsCommand):
     indexing_pillow_class = None
     file_prefix = "ptop_fast_reindex_"
     default_chunk_size = CHUNK_SIZE
+    # a function to sort view rows by before running reindex
     sort_key = None
+    # set to true if sort_key function requires row['docs']
+    # (but pillow_class.include_docs is False)
+    sort_key_include_docs = False
 
     def __init__(self):
         super(PtopReindexer, self).__init__()
@@ -129,7 +133,8 @@ class PtopReindexer(NoArgsCommand):
         return paginate_view(*args, **kwargs)
 
     def full_couch_view_iter(self):
-        view_kwargs = {"include_docs": self.pillow.include_docs}
+        view_kwargs = {
+            "include_docs": self.pillow.include_docs or self.sort_key_include_docs}
         if self.couch_key is not None:
             view_kwargs["key"] = self.couch_key
 
@@ -174,7 +179,10 @@ class PtopReindexer(NoArgsCommand):
             dump_presort_filename, datetime.utcnow().isoformat()))
         with open(dump_presort_filename, 'w') as fout:
             for row in self.full_couch_view_iter():
-                fout.write('{}\t{}\n'.format(self.sort_key(row), json.dumps(row)))
+                sort_key = self.sort_key(row)
+                if self.sort_key_include_docs and not self.pillow_class.include_docs:
+                    del row['doc']
+                fout.write('{}\t{}\n'.format(sort_key, json.dumps(row)))
         self.log('Sorting dump file and writing to: {}, starting at {}'.format(
             dump_filename, datetime.utcnow().isoformat()))
         with open(dump_filename, 'w') as fout, open(dump_presort_filename, 'r') as fin:
