@@ -11,8 +11,6 @@ try:
     from .test_form_export import *
     from .test_generic import *
     from .test_filters import *
-    from .test_pillows_cases import *
-    from .test_pillows_xforms import *
     from .test_readable_formdata import *
     from .test_report_api import *
     from .test_scheduled_reports import *
