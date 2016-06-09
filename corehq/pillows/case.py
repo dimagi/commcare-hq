@@ -42,6 +42,11 @@ class CasePillow(HQPillow):
     es_index = CASE_INDEX
     default_mapping = CASE_MAPPING
 
+    @classmethod
+    def get_unique_id(cls):
+        # TODO: remove this next time the index name changes
+        return '85e1a25ff57c5892b6fa95caf949ae4c'
+
     def change_trigger(self, changes_dict):
         doc_dict, lock = lock_manager(
             super(CasePillow, self).change_trigger(changes_dict)

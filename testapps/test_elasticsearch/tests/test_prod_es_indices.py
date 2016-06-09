@@ -40,7 +40,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqcases",
-        "index": "test_hqcases_2016-06-09",
+        "index": "test_hqcases_2016-03-04",
         "type": "case"
     },
     {

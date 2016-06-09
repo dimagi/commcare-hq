@@ -92,21 +92,21 @@
         "name": "CareBiharFluffPillow"
     },
     "CasePillow": {
-        "advertised_name": "corehq.pillows.case.CasePillow.test_hqcases_2016-06-09.testhq",
+        "advertised_name": "corehq.pillows.case.CasePillow.85e1a25ff57c5892b6fa95caf949ae4c.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.case.CasePillow.test_hqcases_2016-06-09.testhq",
+        "checkpoint_id": "corehq.pillows.case.CasePillow.85e1a25ff57c5892b6fa95caf949ae4c.testhq",
         "couch_filter": "case/casedocs",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
         "document_class": "CommCareCase",
         "es_alias": "hqcases",
-        "es_index": "test_hqcases_2016-06-09",
+        "es_index": "test_hqcases_2016-03-04",
         "es_type": "case",
         "extra_args": {},
         "full_class_name": "corehq.pillows.case.CasePillow",
         "include_docs": true,
         "name": "CasePillow",
-        "unique_id": "test_hqcases_2016-06-09"
+        "unique_id": "85e1a25ff57c5892b6fa95caf949ae4c"
     },
     "CaseSearchToElasticsearchPillow": {
         "advertised_name": "CaseSearchToElasticsearchPillow",
