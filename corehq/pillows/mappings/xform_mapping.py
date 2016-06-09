@@ -3,7 +3,7 @@ from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
 
 
-XFORM_INDEX = es_index("xforms_2016-03-02")
+XFORM_INDEX = es_index("xforms_2016-06-09")
 
 
 XFORM_MAPPING = {
