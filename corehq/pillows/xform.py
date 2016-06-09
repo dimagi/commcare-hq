@@ -92,27 +92,28 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
             if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
                 doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
 
+            app_version_info = get_app_version_info(
+                doc_ret['domain'],
+                doc_ret.get('build_id'),
+                doc_ret.get('version'),
+                doc_ret['form']['meta'],
+            )
+            doc_ret['form']['meta']['commcare_version'] = app_version_info.commcare_version
+            doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
+
+            try:
+                geo_point = GeoPointProperty().wrap(doc_ret['form']['meta']['location'])
+                doc_ret['form']['meta']['geo_point'] = geo_point.lat_long
+            except (KeyError, BadValueError):
+                doc_ret['form']['meta']['geo_point'] = None
+                pass
+
         try:
             user_id = doc_ret['form']['meta']['userID']
         except KeyError:
             user_id = None
         doc_ret['user_type'] = get_user_type(user_id)
         doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
-        app_version_info = get_app_version_info(
-            doc_ret['domain'],
-            doc_ret.get('build_id'),
-            doc_ret.get('version'),
-            doc_ret['form']['meta'],
-        )
-        doc_ret['form']['meta']['commcare_version'] = app_version_info.commcare_version
-        doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
-
-        try:
-            geo_point = GeoPointProperty().wrap(doc_ret['form']['meta']['location'])
-            doc_ret['form']['meta']['geo_point'] = geo_point.lat_long
-        except (KeyError, BadValueError):
-            doc_ret['form']['meta']['geo_point'] = None
-            pass
 
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:
