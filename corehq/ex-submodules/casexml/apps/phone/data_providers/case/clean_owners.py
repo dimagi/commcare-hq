@@ -30,7 +30,7 @@ class CleanOwnerSyncPayload(object):
 
         self.case_ids_to_sync = case_ids_to_sync
         self.all_maybe_syncing = copy(case_ids_to_sync)
-        self.all_synced = set()
+        self.checked_cases = set()
         self.child_indices = defaultdict(set)
         self.extension_indices = defaultdict(set)
         self.all_dependencies_syncing = set()
@@ -60,12 +60,13 @@ class CleanOwnerSyncPayload(object):
         updates = get_case_sync_updates(
             self.restore_state.domain, case_batch, self.restore_state.last_sync_log
         )
-        for update in updates:
-            self._process_update(update)
-        # add any new values to all_syncing
-        self.all_maybe_syncing = self.all_maybe_syncing | self.case_ids_to_sync
-
         self._add_commtrack_elements_to_response(updates, self.response)
+
+        for update in updates:
+            case = update.case
+            self.potential_elements_to_sync[case.case_id] = get_elements_for_response(update, self.restore_state)
+            self._process_case_update(case)
+            self.checked_cases.add(case.case_id)  # mark case as checked
 
     def _add_commtrack_elements_to_response(self, updates, response):
         # commtrack ledger sections for this batch
@@ -75,31 +76,33 @@ class CleanOwnerSyncPayload(object):
             )
         response.extend(commtrack_elements)
 
-    def _process_update(self, update):
-        case = update.case
-        self.all_synced.add(case.case_id)
-        self.potential_elements_to_sync[case.case_id] = get_elements_for_response(update, self.restore_state)
-        # update the indices in the new sync log
+    def _process_case_update(self, case):
         if case.indices:
-            self.extension_indices[case.case_id] = {
-                index.identifier: index.referenced_id
-                for index in case.indices
-                if index.relationship == CASE_INDEX_EXTENSION
-            }
-            self.child_indices[case.case_id] = {
-                index.identifier: index.referenced_id
-                for index in case.indices
-                if index.relationship == CASE_INDEX_CHILD
-            }
-            for index in case.indices:
-                if index.referenced_id not in self.all_maybe_syncing:
-                    self.case_ids_to_sync.add(index.referenced_id)
+            self._update_indices_in_new_synclog(case)
+            self._add_unchecked_indices_to_be_checked(case)
 
-        # and double check footprint for non-live cases
         if not _is_live(case, self.restore_state):
             self.all_dependencies_syncing.add(case.case_id)
             if case.closed:
                 self.closed_cases.add(case.case_id)
+
+    def _update_indices_in_new_synclog(self, case):
+        self.extension_indices[case.case_id] = {
+            index.identifier: index.referenced_id
+            for index in case.indices
+            if index.relationship == CASE_INDEX_EXTENSION
+        }
+        self.child_indices[case.case_id] = {
+            index.identifier: index.referenced_id
+            for index in case.indices
+            if index.relationship == CASE_INDEX_CHILD
+        }
+
+    def _add_unchecked_indices_to_be_checked(self, case):
+        for index in case.indices:
+            if index.referenced_id not in self.all_maybe_syncing:
+                self.case_ids_to_sync.add(index.referenced_id)
+        self.all_maybe_syncing |= self.case_ids_to_sync
 
     def move_no_longer_owned_cases_to_dependent_list_if_necessary(self):
         if not self.restore_state.is_initial:
@@ -127,8 +130,8 @@ class CleanOwnerSyncPayload(object):
         self.restore_state.current_sync_log.extension_index_tree = extension_index_tree
 
     def update_case_ids_on_phone(self):
-        case_ids_on_phone = self.all_synced
-        primary_cases_syncing = self.all_synced - self.all_dependencies_syncing
+        case_ids_on_phone = self.checked_cases
+        primary_cases_syncing = self.checked_cases - self.all_dependencies_syncing
         if not self.restore_state.is_initial:
             case_ids_on_phone = case_ids_on_phone | self.restore_state.last_sync_log.case_ids_on_phone
             # subtract primary cases from dependencies since they must be newly primary
