@@ -2,6 +2,8 @@ from functools import wraps
 import hotshot
 import resource
 import os
+import gc
+
 from datetime import datetime
 from django.conf import settings
 from corehq.util.decorators import ContextDecorator
@@ -132,6 +134,7 @@ class resident_set_size(ContextDecorator):
         print 'Resident Set Size before: {}kb'.format(self.initial_size)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        gc.collect()
         final_size = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         print 'Resident Set Size after: {}kb'.format(final_size)
         print 'Resident Set Size total: {}kb'.format(final_size - self.initial_size)
