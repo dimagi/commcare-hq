@@ -9,7 +9,6 @@ import mock
 from django.conf import settings
 from django.core.management import call_command
 
-from corehq.apps.smsbillables.generator import DIRECTIONS
 from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (
@@ -30,11 +29,15 @@ from corehq.apps.accounting.models import (
     SoftwareProduct,
     SoftwareProductRate,
 )
-from corehq.apps.smsbillables.models import (
-    SmsGatewayFee, SmsGatewayFeeCriteria, SmsUsageFee, SmsUsageFeeCriteria,
-    SmsBillable,
-)
 from corehq.apps.domain.models import Domain
+from corehq.apps.smsbillables.generator import DIRECTIONS
+from corehq.apps.smsbillables.models import (
+    SmsBillable,
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+    SmsUsageFee,
+    SmsUsageFeeCriteria,
+)
 from corehq.apps.users.models import WebUser, CommCareUser
 
 
