@@ -39,7 +39,7 @@ class CleanOwnerSyncPayload(object):
 
     def get_payload(self):
         while self.case_ids_to_sync:
-            self.process_case_batch(self.get_next_case_batch())
+            self.process_case_batch(self._get_next_case_batch())
         self.update_index_trees()
         self.update_case_ids_on_phone()
         self.move_no_longer_owned_cases_to_dependent_list_if_necessary()
@@ -48,7 +48,7 @@ class CleanOwnerSyncPayload(object):
 
         return self.response
 
-    def get_next_case_batch(self):
+    def _get_next_case_batch(self):
         ids = pop_ids(self.case_ids_to_sync, chunk_size)
         # TODO: see if we can avoid wrapping - serialization depends on it heavily for now
         return [
@@ -60,7 +60,7 @@ class CleanOwnerSyncPayload(object):
         updates = get_case_sync_updates(
             self.restore_state.domain, case_batch, self.restore_state.last_sync_log
         )
-        self._add_commtrack_elements_to_response(updates, self.response)
+        self._add_commtrack_elements_to_response(updates)
 
         for update in updates:
             case = update.case
@@ -68,13 +68,13 @@ class CleanOwnerSyncPayload(object):
             self._process_case_update(case)
             self.checked_cases.add(case.case_id)  # mark case as checked
 
-    def _add_commtrack_elements_to_response(self, updates, response):
+    def _add_commtrack_elements_to_response(self, updates):
         # commtrack ledger sections for this batch
         commtrack_elements = get_stock_payload(
                 self.restore_state.project, self.restore_state.stock_settings,
                 [CaseStub(update.case.case_id, update.case.type) for update in updates]
             )
-        response.extend(commtrack_elements)
+        self.response.extend(commtrack_elements)
 
     def _process_case_update(self, case):
         if case.indices:
@@ -133,9 +133,9 @@ class CleanOwnerSyncPayload(object):
         case_ids_on_phone = self.checked_cases
         primary_cases_syncing = self.checked_cases - self.all_dependencies_syncing
         if not self.restore_state.is_initial:
-            case_ids_on_phone = case_ids_on_phone | self.restore_state.last_sync_log.case_ids_on_phone
+            case_ids_on_phone |= self.restore_state.last_sync_log.case_ids_on_phone
             # subtract primary cases from dependencies since they must be newly primary
-            self.all_dependencies_syncing = self.all_dependencies_syncing | (
+            self.all_dependencies_syncing |= (
                 self.restore_state.last_sync_log.dependent_case_ids_on_phone -
                 primary_cases_syncing
             )
