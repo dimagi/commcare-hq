@@ -1,12 +1,12 @@
-{% extends "style/bootstrap3/base_section.html" %}
+{% extends "style/base_section.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% new_static 'style/js/bootstrap2/ui-element.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% static 'style/js/ui-element.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}

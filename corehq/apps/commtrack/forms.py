@@ -192,7 +192,6 @@ class StockLevelsForm(FormListForm):
     """
     Form for specifying stock levels per location type
     """
-    template = "style/bootstrap3/partials/form_list_form.html"
 
     child_form_class = LocationTypeStockLevels
     columns = [

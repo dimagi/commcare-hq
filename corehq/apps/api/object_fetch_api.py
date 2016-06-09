@@ -1,6 +1,7 @@
 import urllib
 
 from django.core.urlresolvers import reverse
+from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.generic import View
@@ -108,7 +109,8 @@ class CaseAttachmentAPI(View):
         else:
             mime_type = "plain/text"
 
-        return StreamingHttpResponse(streaming_content=attachment_stream, content_type=mime_type)
+        return StreamingHttpResponse(streaming_content=FileWrapper(attachment_stream),
+                                     content_type=mime_type)
 
 
 class FormAttachmentAPI(View):
@@ -123,7 +125,8 @@ class FormAttachmentAPI(View):
         except AttachmentNotFound as e:
             raise Http404
         
-        return StreamingHttpResponse(streaming_content=content.content_stream, content_type=content.content_type)
+        return StreamingHttpResponse(streaming_content=FileWrapper(content.content_stream),
+                                     content_type=content.content_type)
 
 
 def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):

@@ -433,7 +433,11 @@ class AutoPayInvoicePaymentHandler(object):
                 continue
 
             try:
-                payment_record = payment_method.create_charge(autopay_card, amount_in_dollars=amount)
+                payment_record = payment_method.create_charge(
+                    autopay_card,
+                    amount_in_dollars=amount,
+                    description='Auto-payment for Invoice %s' % invoice.invoice_number,
+                )
             except stripe.error.CardError:
                 self._handle_card_declined(invoice, payment_method)
                 continue

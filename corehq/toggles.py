@@ -62,6 +62,8 @@ def deterministic_random(input_string):
     Returns a deterministically random number between 0 and 1 based on the
     value of the string. The same input should always produce the same output.
     """
+    if isinstance(input_string, unicode):
+        input_string = input_string.encode('utf-8')
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
 
@@ -193,14 +195,6 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
-APP_AWARE_SYNC = PredictablyRandomToggle(
-    'app_aware_sync',
-    'App-aware Sync',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=0.6
-)
-
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
@@ -241,13 +235,6 @@ DEMO_REPORTS = StaticToggle(
     'Access to map-based demo reports',
     TAG_PREVIEW,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-SUPPLY_REPORTS = StaticToggle(
-    'supply_reports',
-    "Early stages reports for CommCare Supply",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TABS = StaticToggle(
@@ -763,8 +750,8 @@ VIEW_BUILD_SOURCE = StaticToggle(
 
 USE_SQL_BACKEND = StaticToggle(
     'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing (testing only)',
-    TAG_EXPERIMENTAL,
+    'Uses a sql backend instead of a couch backend for form processing (beta)',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -843,3 +830,9 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+
+def enable_toggles_for_scale_beta(domain):
+    USE_SQL_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
+    NEW_EXPORTS.set(domain, True, namespace=NAMESPACE_DOMAIN)
+    TF_USES_SQLITE_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)

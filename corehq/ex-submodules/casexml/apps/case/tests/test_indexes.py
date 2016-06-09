@@ -1,4 +1,3 @@
-from collections import namedtuple
 import re
 from xml.etree import ElementTree
 import datetime
@@ -8,11 +7,11 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.phone.models import User
+from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-
-USER_ID = 'test-index-user'
 
 
 class IndexSimpleTest(SimpleTestCase):
@@ -61,76 +60,81 @@ class IndexTest(TestCase):
     MOTHER_CASE_ID = 'text-index-mother-case'
     FATHER_CASE_ID = 'text-index-father-case'
 
+    def setUp(self):
+        self.project = Domain(name='index-test')
+        self.project.save()
+        self.user = create_restore_user(domain=self.project.name)
+
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
+        delete_all_users()
 
     def testIndexes(self):
-        user = User(user_id=USER_ID, username="", password="", date_joined="")
-
         # Step 0. Create mother and father cases
         for prereq in [self.MOTHER_CASE_ID, self.FATHER_CASE_ID]:
-            post_case_blocks([
-                CaseBlock(create=True, case_id=prereq, user_id=USER_ID).as_xml()
-            ])
+            post_case_blocks(
+                [CaseBlock(create=True, case_id=prereq, user_id=self.user.user_id).as_xml()],
+                domain=self.project.name
+            )
 
         # Step 1. Create a case with index <mom>
         create_index = CaseBlock(
             create=True,
             case_id=self.CASE_ID,
-            user_id=USER_ID,
-            owner_id=USER_ID,
+            user_id=self.user.user_id,
+            owner_id=self.user.user_id,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
         ).as_xml()
 
-        post_case_blocks([create_index])
-        check_user_has_case(self, user, create_index)
+        post_case_blocks([create_index], domain=self.project.name)
+        check_user_has_case(self, self.user, create_index)
 
         # Step 2. Update the case to delete <mom> and create <dad>
 
         now = datetime.datetime.utcnow()
         update_index = CaseBlock(
             case_id=self.CASE_ID,
-            user_id=USER_ID,
+            user_id=self.user.user_id,
             index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
         ).as_xml()
 
         update_index_expected = CaseBlock(
             case_id=self.CASE_ID,
-            user_id=USER_ID,
-            owner_id=USER_ID,
+            user_id=self.user.user_id,
+            owner_id=self.user.user_id,
             create=True,
             index={'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
         ).as_xml()
 
-        post_case_blocks([update_index])
+        post_case_blocks([update_index], domain=self.project.name)
 
-        check_user_has_case(self, user, update_index_expected)
+        check_user_has_case(self, self.user, update_index_expected)
 
         # Step 3. Put <mom> back
 
         now = datetime.datetime.utcnow()
         update_index = CaseBlock(
             case_id=self.CASE_ID,
-            user_id=USER_ID,
+            user_id=self.user.user_id,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
             date_modified=now,
         ).as_xml()
 
         update_index_expected = CaseBlock(
             case_id=self.CASE_ID,
-            user_id=USER_ID,
-            owner_id=USER_ID,
+            user_id=self.user.user_id,
+            owner_id=self.user.user_id,
             create=True,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID),
                    'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
         ).as_xml()
 
-        post_case_blocks([update_index])
+        post_case_blocks([update_index], domain=self.project.name)
 
-        check_user_has_case(self, user, update_index_expected)
+        check_user_has_case(self, self.user, update_index_expected)
 
     def testBadIndexReferenceDomain(self):
         case_in_other_domain = self.MOTHER_CASE_ID
@@ -138,10 +142,10 @@ class IndexTest(TestCase):
         child_domain = 'child'
 
         post_case_blocks([
-            CaseBlock(create=True, case_id=case_in_other_domain, user_id=USER_ID).as_xml()
+            CaseBlock(create=True, case_id=case_in_other_domain, user_id=self.user.user_id).as_xml()
         ], form_extras={'domain': parent_domain})
 
-        block = CaseBlock(create=True, case_id='child-case-id', user_id=USER_ID,
+        block = CaseBlock(create=True, case_id='child-case-id', user_id=self.user.user_id,
                           index={'bad': ('bad-case', case_in_other_domain)})
 
         xform, _ = post_case_blocks([block.as_xml()],
@@ -153,17 +157,16 @@ class IndexTest(TestCase):
         self.assertIn('Bad case id', xform.problem)
 
     def testRelationshipGetsSet(self):
-        user = User(user_id=USER_ID, username="", password="", date_joined="")
         create_index = CaseBlock(
             create=True,
             case_id=self.CASE_ID,
-            user_id=USER_ID,
-            owner_id=USER_ID,
+            user_id=self.user.user_id,
+            owner_id=self.user.user_id,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID, 'extension')},
         ).as_xml()
 
-        post_case_blocks([create_index])
-        check_user_has_case(self, user, create_index)
+        post_case_blocks([create_index], domain=self.project.name)
+        check_user_has_case(self, self.user, create_index)
 
 
 class CaseBlockIndexRelationshipTests(SimpleTestCase):

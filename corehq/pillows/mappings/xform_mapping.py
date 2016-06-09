@@ -3,7 +3,7 @@ from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
 
 
-XFORM_INDEX = es_index("xforms_2016-03-02")
+XFORM_INDEX = es_index("xforms_2016-06-09")
 
 
 XFORM_MAPPING = {
@@ -98,7 +98,15 @@ XFORM_MAPPING = {
                         "instanceID": {"type": "string", "index": "not_analyzed"},
                         "username": {"type": "string", "index": "not_analyzed"},
                         "appVersion": {"type": "string", "index": "not_analyzed"},
-                        "CommCareVersion": {"type": "string", "index": "not_analyzed"},
+                        "commcare_version": {"type": "string", "index": "not_analyzed"},
+                        "app_build_version": {"type": "string", "index": "not_analyzed"},
+                        "geo_point": {
+                            "type": "geo_point",
+                            "lat_lon": True,
+                            "geohash": True,
+                            "geohash_prefix": True,
+                            "geohash_precision": '10m'
+                        },
                     }
                 },
             },

@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_section.html' %}
+{% extends 'style/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -89,7 +89,7 @@
         });
 
         var $userRolesTable = $('#user-roles-table');
-        $userRolesTable.userRoles({
+        hqImport('users/js/roles.js').initUserRoles($userRolesTable, {
             userRoles: {{ user_roles|JSON }},
             defaultRole: {{ default_role|JSON }},
             saveUrl: '{% url "post_user_role" domain %}',
