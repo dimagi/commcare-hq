@@ -46,87 +46,18 @@ class Command(BaseCommand):
                     help='Do not actually modify the database, just verbosely log what happen'),
         make_option('--verbose', action='store_true',  default=False,
                     help='Enable debug output'),
-        make_option('--fresh-start', action='store_true',  default=False,
-                    help='Wipe all plans and start over. USE CAUTION. Also instantiate plans.'),
-        make_option('--flush', action='store_true',  default=False,
-                    help='Wipe all plans and start over. USE CAUTION.'),
-        make_option('--force-reset', action='store_true',  default=False,
-                    help='Assign latest version of all DefaultProductPlans to current '
-                         'subscriptions and delete older versions.'),
         make_option('--testing', action='store_true',  default=False,
                     help='Run this command for testing purposes.'),
     )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, flush=False, force_reset=False,
-               testing=False, *args, **options):
+    def handle(self, dry_run=False, verbose=False, testing=False, *args, **options):
         logger.info('Bootstrapping standard plans. Enterprise plans will have to be created via the admin UIs.')
 
         for_tests = testing
         if for_tests:
             logger.info("Initializing Plans and Roles for Testing")
 
-        if force_reset:
-            confirm_force_reset = raw_input("Are you sure you want to assign the latest default plan version to all"
-                                            "current subscriptions and remove the older versions? Type 'yes' to "
-                                            "continue.")
-            if confirm_force_reset == 'yes':
-                _force_reset_subscription_versions(verbose=verbose, apps=default_apps)
-            return
-
-        if fresh_start or flush:
-            confirm_fresh_start = raw_input(
-                "Are you sure you want to delete all SoftwarePlans and start over? "
-                "You can't do this if there are any active Subscriptions."
-                " Type 'yes' to continue.\n"
-            ) if not for_tests else 'yes'
-            if confirm_fresh_start == 'yes' or True:
-                _flush_plans(verbose=verbose, apps=default_apps)
-
-        if not flush:
-            ensure_plans(dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps)
-
-
-def _flush_plans(verbose, apps):
-    DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
-    Feature = apps.get_model('accounting', 'Feature')
-    FeatureRate = apps.get_model('accounting', 'FeatureRate')
-    SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
-    SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
-    SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
-    SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
-
-    if verbose:
-        logger.info("Flushing ALL SoftwarePlans...")
-    DefaultProductPlan.objects.all().delete()
-    SoftwarePlanVersion.objects.all().delete()
-    SoftwarePlan.objects.all().delete()
-    SoftwareProductRate.objects.all().delete()
-    SoftwareProduct.objects.all().delete()
-    FeatureRate.objects.all().delete()
-    Feature.objects.all().delete()
-
-
-def _force_reset_subscription_versions(verbose, apps):
-    DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
-    Subscription = apps.get_model('accounting', 'Subscription')
-
-    for default_plan in DefaultProductPlan.objects.all():
-        software_plan = default_plan.plan
-        latest_version = software_plan.get_version()
-        subscriptions_to_update = Subscription.objects.filter(plan_version__plan__pk=software_plan.pk).exclude(
-            plan_version=latest_version).all()
-        # assign latest version of software plan to all subscriptions referencing that software plan
-        if verbose:
-            logger.info('Updating %d subscriptions to latest version of %s.' %
-                        (len(subscriptions_to_update), software_plan.name))
-        for subscription in subscriptions_to_update:
-            subscription.plan_version = latest_version
-            subscription.save()
-        # delete all old versions of that software plan
-        versions_to_remove = software_plan.softwareplanversion_set.exclude(pk=latest_version.pk).all()
-        if verbose:
-            logger.info("Removing %d old versions." % len(versions_to_remove))
-        versions_to_remove.delete()
+        ensure_plans(dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps)
 
 
 def ensure_plans(dry_run, verbose, for_tests, apps):
