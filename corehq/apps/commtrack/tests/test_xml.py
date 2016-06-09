@@ -10,7 +10,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
 from corehq.apps.change_feed import topics
-from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig, StockState
+from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -18,7 +18,6 @@ from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, FormAc
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils.general import should_use_sql_backend
-from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -104,6 +103,7 @@ class CommTrackOTATest(CommTrackTest):
 
     @run_with_all_backends
     def test_ota_consumption(self):
+        self.ct_settings.sync_consumption_fixtures = True
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
             min_window=0,
@@ -146,6 +146,7 @@ class CommTrackOTATest(CommTrackTest):
 
     @run_with_all_backends
     def test_force_consumption(self):
+        self.ct_settings.sync_consumption_fixtures = True
         self.ct_settings.consumption_config = ConsumptionConfig(
             min_transactions=0,
             min_window=0,
@@ -426,23 +427,23 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
     @run_with_all_backends
     def test_blank_case_id_in_balance(self):
-        instance_id = submit_case_blocks(
+        form = submit_case_blocks(
             case_blocks=get_single_balance_block(case_id='', product_id=self.products[0]._id, quantity=100),
             domain=self.domain.name,
         )
-        instance = FormAccessors(self.domain.name).get_form(instance_id)
+        instance = FormAccessors(self.domain.name).get_form(form.form_id)
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
 
     @run_with_all_backends
     def test_blank_case_id_in_transfer(self):
-        instance_id = submit_case_blocks(
+        form = submit_case_blocks(
             case_blocks=get_single_transfer_block(
                 src_id='', dest_id='', product_id=self.products[0]._id, quantity=100,
             ),
             domain=self.domain.name,
         )
-        instance = FormAccessors(self.domain.name).get_form(instance_id)
+        instance = FormAccessors(self.domain.name).get_form(form.form_id)
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
 
@@ -539,7 +540,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
     def setUp(self):
         super(CommTrackSyncTest, self).setUp()
         # reused stuff
-        self.casexml_user = self.user.to_casexml_user()
+        self.restore_user = self.user.to_ota_restore_user()
         self.sp_block = CaseBlock(
             case_id=self.sp.case_id,
         ).as_xml()
@@ -559,7 +560,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         # get initial restore token
         restore_config = RestoreConfig(
             project=self.domain,
-            user=self.casexml_user,
+            restore_user=self.restore_user,
             params=RestoreParams(version=V2),
         )
         self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload().as_string())
@@ -567,19 +568,24 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
     @run_with_all_backends
     def testStockSyncToken(self):
         # first restore should not have the updated case
-        check_user_has_case(self, self.casexml_user, self.sp_block, should_have=False,
+        check_user_has_case(self, self.restore_user, self.sp_block, should_have=False,
                             restore_id=self.sync_log_id, version=V2)
 
         # submit with token
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id)
         # now restore should have the case
-        check_user_has_case(self, self.casexml_user, self.sp_block, should_have=True,
+        check_user_has_case(self, self.restore_user, self.sp_block, should_have=True,
                             restore_id=self.sync_log_id, version=V2, line_by_line=False)
 
 
 @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
 class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
+
+    def setUp(self):
+        super(CommTrackArchiveSubmissionTest, self).setUp()
+        self.ct_settings.use_auto_consumption = True
+        self.ct_settings.save()
 
     @run_with_all_backends
     def test_archive_last_form(self):
@@ -689,14 +695,14 @@ def _report_soh(soh_reports, case_id, domain):
         )
         for report in soh_reports
     ]
-    form_id = submit_case_blocks(balance_blocks, domain)
-    return json_format_datetime(FormAccessors(domain).get_form(form_id).received_on)
+    form = submit_case_blocks(balance_blocks, domain)
+    return json_format_datetime(FormAccessors(domain).get_form(form.form_id).received_on)
 
 
 def _get_ota_balance_blocks(project, user):
     restore_config = RestoreConfig(
         project=project,
-        user=user.to_casexml_user(),
+        restore_user=user.to_ota_restore_user(),
         params=RestoreParams(version=V2),
     )
     return extract_balance_xml(restore_config.get_payload().as_string())

@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_section.html' %}
+{% extends 'style/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -368,7 +368,7 @@
                                     {{ invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil }} remaining
                                 </span>
                                 {% else %}
-                                <span class="label label-important">
+                                <span class="label label-danger">
                                      {% trans "Expired" %}
                                 </span>
                                 {% endif %}

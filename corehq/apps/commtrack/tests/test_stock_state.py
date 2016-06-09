@@ -27,6 +27,11 @@ class StockStateTest(CommTrackTest):
 
 class StockStateBehaviorTest(StockStateTest):
 
+    def setUp(self):
+        super(StockStateBehaviorTest, self).setUp()
+        self.ct_settings.use_auto_consumption = True
+        self.ct_settings.save()
+
     def test_stock_state(self):
         with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
             self.report(25, 5)

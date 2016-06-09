@@ -139,6 +139,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 # no id, no index
                 if index_update.referenced_id:
                     index = CommCareCaseIndexSQL(
+                        domain=self.case.domain,
                         case=self.case,
                         identifier=index_update.identifier,
                         referenced_type=index_update.referenced_type,
@@ -235,10 +236,5 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             assert form.domain == self.case.domain
             case_updates = get_case_updates(form)
             filtered_updates = [u for u in case_updates if u.id == self.case.case_id]
-            # TODO: stock
-            # stock_actions = get_stock_actions(form)
-            # case_actions.extend([intent.action
-            #                      for intent in stock_actions.case_action_intents
-            #                      if not intent.is_deprecation])
             for case_update in filtered_updates:
                 self._apply_case_update(case_update, form)

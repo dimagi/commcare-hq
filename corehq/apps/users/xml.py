@@ -19,5 +19,5 @@ def get_response(user, created):
     nature = ResponseNature.SUBMIT_USER_REGISTERED if created else \
              ResponseNature.SUBMIT_USER_UPDATED
     response = get_response_element(text, nature=nature)
-    response.append(phone_xml.get_registration_element(user.to_casexml_user()))
+    response.append(phone_xml.get_registration_element(user.to_ota_restore_user()))
     return phone_xml.tostring(response)

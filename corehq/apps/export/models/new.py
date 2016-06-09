@@ -6,6 +6,8 @@ from collections import defaultdict, OrderedDict, namedtuple
 
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
+
+from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -23,6 +25,7 @@ from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.toggles import USE_SQL_BACKEND
 from corehq.util.global_request import get_request
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
@@ -916,6 +919,10 @@ class FormExportDataSchema(ExportDataSchema):
         )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            # TODO: Remove this when we mark applications that have been submitted
+            if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
+                continue
+
             app = Application.wrap(app_doc)
             xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
             if not xform:
@@ -1042,6 +1049,9 @@ class CaseExportDataSchema(ExportDataSchema):
         )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            # TODO: Remove this when we mark applications that have been submitted
+            if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
+                continue
             app = Application.wrap(app_doc)
             case_property_mapping = get_case_properties(
                 app,
@@ -1493,9 +1503,8 @@ class StockExportColumn(ExportColumn):
     @property
     @memoized
     def _column_tuples(self):
-        product_ids = [p.get_id for p in Product.by_domain(self.domain)]
-        ledger_values = self.accessor.get_ledger_values_for_product_ids(product_ids)
-        section_and_product_ids = sorted(set(map(lambda v: (v.product_id, v.section_id), ledger_values)))
+        combos = get_ledger_section_entry_combinations(self.domain)
+        section_and_product_ids = sorted(set(map(lambda combo: (combo.entry_id, combo.section_id), combos)))
         return section_and_product_ids
 
     def _get_product_name(self, product_id):

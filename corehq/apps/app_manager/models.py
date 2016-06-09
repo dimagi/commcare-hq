@@ -38,6 +38,7 @@ import uuid
 from collections import defaultdict, namedtuple
 from functools import wraps
 from copy import deepcopy
+from mimetypes import guess_type
 from urllib2 import urlopen
 from urlparse import urljoin
 
@@ -58,12 +59,12 @@ from django.template.loader import render_to_string
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
+from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -76,7 +77,6 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.builds import get_default_build_spec
 from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
-from dimagi.utils.couch.lazy_attachment_doc import LazyAttachmentDoc
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
@@ -109,7 +109,6 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     update_unique_ids,
     app_callout_templates,
-    use_app_aware_sync,
     xpath_references_case,
     xpath_references_user_case,
 )
@@ -2324,7 +2323,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 pass
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
-        super(AdvancedForm, self).add_stuff_to_xform(xform)
+        super(AdvancedForm, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta_advanced(self)
 
     def requires_case(self):
@@ -3032,7 +3031,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
             return super(CareplanForm, cls).wrap(data)
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
-        super(CareplanForm, self).add_stuff_to_xform(xform)
+        super(CareplanForm, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_care_plan(self)
 
     def get_case_updates(self, case_type):
@@ -3707,8 +3706,8 @@ class ReportModule(ModuleBase):
         valid_report_configs is a list of all report configs that refer to existing reports
 
         """
-        all_report_ids = [report._id for report in self.reports]
         try:
+            all_report_ids = [report._id for report in self.reports]
             valid_report_configs = [report_config for report_config in self.report_configs
                                     if report_config.report_id in all_report_ids]
             is_valid = (len(valid_report_configs) == len(self.report_configs))
@@ -3740,6 +3739,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     module_type = 'shadow'
     source_module_id = StringProperty()
     forms = []
+    excluded_form_ids = SchemaListProperty()
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
@@ -3785,7 +3785,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def get_suite_forms(self):
         if not self.source_module:
             return []
-        return self.source_module.get_forms()
+        return [f for f in self.source_module.get_forms() if f.unique_id not in self.excluded_form_ids]
 
     @parse_int([1])
     def get_form(self, i):
@@ -3845,7 +3845,146 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return errors
 
 
-class VersionedDoc(LazyAttachmentDoc):
+class LazyBlobDoc(BlobMixin):
+    """LazyAttachmentDoc for blob db
+
+    Cache blobs in local memory (for this request)
+    and in django cache (for the next few requests)
+    and commit to couchdb.
+
+    See also `dimagi.utils.couch.lazy_attachment_doc.LazyAttachmentDoc`
+
+    Cache strategy:
+    - on fetch, check in local memory, then cache
+      - if both are a miss, fetch from couchdb and store in both
+    - before an attachment is committed to couchdb, clear cache
+      (allowing the next fetch to go all the way through).
+      Clear rather than write new value, in case something
+      goes wrong with the save.
+    """
+
+    migrating_blobs_from_couch = True
+
+    def __init__(self, *args, **kwargs):
+        super(LazyBlobDoc, self).__init__(*args, **kwargs)
+        self._LAZY_ATTACHMENTS = {}
+        # to cache fetched attachments
+        # these we do *not* send back down upon save
+        self._LAZY_ATTACHMENTS_CACHE = {}
+
+    @classmethod
+    def wrap(cls, data):
+        if "_attachments" in data:
+            data = data.copy()
+            attachments = data.pop("_attachments").copy()
+            if cls.migrating_blobs_from_couch:
+                # preserve stubs so couch attachments don't get deleted on save
+                stubs = {}
+                for name, value in list(attachments.items()):
+                    if isinstance(value, dict) and "stub" in value:
+                        stubs[name] = attachments.pop(name)
+                if stubs:
+                    data["_attachments"] = stubs
+        else:
+            attachments = None
+        self = super(LazyBlobDoc, cls).wrap(data)
+        if attachments:
+            for name, attachment in attachments.items():
+                if isinstance(attachment, basestring):
+                    info = {"content": attachment}
+                else:
+                    raise ValueError("Unknown attachment format: {!r}"
+                                     .format(attachment))
+                self.lazy_put_attachment(name=name, **info)
+        return self
+
+    def __attachment_cache_key(self, name):
+        return u'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
+
+    def __set_cached_attachment(self, name, content):
+        cache.set(self.__attachment_cache_key(name), content, timeout=60 * 60 * 24)
+
+    def __get_cached_attachment(self, name):
+        return cache.get(self.__attachment_cache_key(name))
+
+    def __remove_cached_attachment(self, name):
+        cache.delete(self.__attachment_cache_key(name))
+
+    def __store_lazy_attachment(self, content, name=None, content_type=None,
+                                content_length=None):
+        info = {
+            'content': content,
+            'content_type': content_type,
+            'content_length': content_length,
+        }
+        self._LAZY_ATTACHMENTS[name] = info
+        return info
+
+    def put_attachment(self, content, name=None, *args, **kw):
+        self.__remove_cached_attachment(name)
+        return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
+
+    def lazy_put_attachment(self, content, name=None, content_type=None,
+                            content_length=None):
+        """
+        Ensure the attachment is available through lazy_fetch_attachment
+        and that upon self.save(), the attachments are put to the doc as well
+
+        """
+        self.__store_lazy_attachment(content, name, content_type, content_length)
+
+    def lazy_fetch_attachment(self, name):
+        # it has been put/lazy-put already during this request
+        if name in self._LAZY_ATTACHMENTS and 'content' in self._LAZY_ATTACHMENTS[name]:
+            content = self._LAZY_ATTACHMENTS[name]['content']
+        # it has been fetched already during this request
+        elif name in self._LAZY_ATTACHMENTS_CACHE:
+            content = self._LAZY_ATTACHMENTS_CACHE[name]
+        else:
+            content = self.__get_cached_attachment(name)
+
+            if not content:
+                try:
+                    content = self.fetch_attachment(name)
+                except ResourceNotFound as e:
+                    # django cache will pickle this exception for you
+                    # but e.response isn't picklable
+                    if hasattr(e, 'response'):
+                        del e.response
+                    content = e
+                    raise
+                finally:
+                    self.__set_cached_attachment(name, content)
+                    self._LAZY_ATTACHMENTS_CACHE[name] = content
+            else:
+                self._LAZY_ATTACHMENTS_CACHE[name] = content
+
+        if isinstance(content, ResourceNotFound):
+            raise content
+
+        return content
+
+    def lazy_list_attachments(self):
+        keys = set()
+        keys.update(getattr(self, '_LAZY_ATTACHMENTS', None) or {})
+        keys.update(self.blobs or {})
+        return keys
+
+    def save(self, **params):
+        def super_save():
+            super(LazyBlobDoc, self).save(**params)
+        if self._LAZY_ATTACHMENTS:
+            with self.atomic_blobs(super_save):
+                for name, info in self._LAZY_ATTACHMENTS.items():
+                    if not info['content_type']:
+                        info['content_type'] = ';'.join(filter(None, guess_type(name)))
+                    self.__remove_cached_attachment(name)
+                    super(LazyBlobDoc, self).put_attachment(name=name, **info)
+        else:
+            super_save()
+
+
+class VersionedDoc(LazyBlobDoc):
     """
     A document that keeps an auto-incrementing version number, knows how to make copies of itself,
     delete a copy of itself, and revert back to an earlier copy of itself.
@@ -3884,7 +4023,7 @@ class VersionedDoc(LazyAttachmentDoc):
             copy = copies[0]
         else:
             copy = deepcopy(self.to_json())
-            bad_keys = ('_id', '_rev', '_attachments',
+            bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
                         'short_url', 'short_odk_url', 'short_odk_media_url', 'recipients')
 
             for bad_key in bad_keys:
@@ -3918,8 +4057,8 @@ class VersionedDoc(LazyAttachmentDoc):
         app['_id'] = self._id
         app['version'] = self.version
         app['copy_of'] = None
-        if '_attachments' in app:
-            del app['_attachments']
+        app.pop('_attachments', None)
+        app.pop('external_blobs', None)
         cls = self.__class__
         app = cls.wrap(app)
         app.copy_attachments(copy)
@@ -3950,9 +4089,13 @@ class VersionedDoc(LazyAttachmentDoc):
         _attachments = {}
         for name in self.lazy_list_attachments():
             if re.match(ATTACHMENT_REGEX, name):
+                # FIXME loss of metadata (content type, etc.)
                 _attachments[name] = self.lazy_fetch_attachment(name)
 
+        # the '_attachments' value is a dict of `name: blob_content`
+        # pairs, and is part of the exported (serialized) app interface
         source['_attachments'] = _attachments
+        source.pop("external_blobs", None)
         source = self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
@@ -4092,6 +4235,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
+    vellum_case_management = BooleanProperty(default=False)
 
     build_profiles = SchemaDictProperty(BuildProfile)
 
@@ -4122,7 +4266,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if 'build_langs' in data:
             if data['build_langs'] != data['langs'] and 'build_profiles' not in data:
                 data['build_profiles'] = {
-                    uuid.uuid4().hex: BuildProfile(
+                    uuid.uuid4().hex: dict(
                         name=', '.join(data['build_langs']),
                         langs=data['build_langs']
                     )
@@ -4242,16 +4386,17 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def ota_restore_url(self):
-        if use_app_aware_sync(self):
-            return reverse('app_aware_restore', args=[self.domain, self._id])
-        return reverse('ota_restore', args=[self.domain])
+        return reverse('app_aware_restore', args=[self.domain, self._id])
 
     @absolute_url_property
     def form_record_url(self):
         return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
 
     @absolute_url_property
-    def profile_url(self):
+    def hq_profile_url(self):
+        # RemoteApp already has a property called "profile_url",
+        # Application.profile_url just points here to stop the conflict
+        # http://manage.dimagi.com/default.asp?227088#1149422
         return "%s?latest=true" % (
             reverse('download_profile', args=[self.domain, self._id])
         )
@@ -4387,7 +4532,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             except (ResourceError, KeyError):
                 all_files = {
                     filename[len('files/'):]: self.lazy_fetch_attachment(filename)
-                    for filename in self._attachments if filename.startswith('files/')
+                    for filename in self.blobs if filename.startswith('files/')
                 }
                 all_files = {
                     name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
@@ -4544,13 +4689,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         copy.set_media_versions(previous_version)
         copy.create_build_files(save=True)
 
-        try:
-            # since this hard to put in a test
-            # I'm putting this assert here if copy._id is ever None
-            # which makes tests error
-            assert copy._id
-        except AssertionError:
-            raise
+        # since this hard to put in a test
+        # I'm putting this assert here if copy._id is ever None
+        # which makes tests error
+        assert copy._id
 
         copy.build_comment = comment
         copy.comment_from = user_id
@@ -4594,7 +4736,15 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             for form in self.get_forms(bare=False):
                 xml = XForm(form['form'].source)
                 for lang in self.langs:
-                    self.media_language_map[lang].media_refs.extend(xml.all_references(lang))
+                    media = []
+                    for path in xml.all_references(lang):
+                        if path is not None:
+                            media.append(path)
+                            map_item = self.multimedia_map.get(path)
+                            #dont break if multimedia is missing
+                            if map_item:
+                                map_item.form_media = True
+                    self.media_language_map[lang].media_refs.extend(media)
         else:
             self.media_language_map = {}
 
@@ -4637,7 +4787,7 @@ class SavedAppBuild(ApplicationBase):
 
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
-        for key in ('modules', 'user_registration',
+        for key in ('modules', 'user_registration', 'external_blobs',
                     '_attachments', 'profile', 'translations'
                     'description', 'short_description'):
             data.pop(key, None)
@@ -4735,6 +4885,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         app.build_broken = False
 
         return app
+
+    @property
+    def profile_url(self):
+        return self.hq_profile_url
 
     @absolute_url_property
     def suite_url(self):
@@ -5548,17 +5702,16 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     app = cls.from_source(source, domain)
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
-    app.save()
+    with app.atomic_blobs():
+        for name, attachment in attachments.items():
+            if re.match(ATTACHMENT_REGEX, name):
+                app.put_attachment(attachment, name)
 
     if not app.is_remote_app():
         for _, m in app.get_media_objects():
             if domain not in m.valid_domains:
                 m.valid_domains.append(domain)
                 m.save()
-
-    for name, attachment in attachments.items():
-        if re.match(ATTACHMENT_REGEX, name):
-            app.put_attachment(attachment, name)
 
     if not app.is_remote_app() and any(module.uses_usercase() for module in app.get_modules()):
         from corehq.apps.app_manager.util import enable_usercase

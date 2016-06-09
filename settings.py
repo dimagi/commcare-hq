@@ -400,7 +400,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'corehq.apps.ivr',
     'corehq.messaging.smsbackends.mach',
     'corehq.messaging.smsbackends.http',
-    'corehq.apps.ota',
     'corehq.apps.settings',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.smsbackends.yo',
@@ -454,6 +453,12 @@ LOGIN_URL = "/accounts/login/"
 # administrator, here's where he/she is redirected
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
+PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
+    '/a/%(domain)s/settings/project/internal_subscription_management/',
+    '/a/%(domain)s/settings/project/internal/info/',
+    '/a/%(domain)s/settings/project/internal/calculations/',
+    '/a/%(domain)s/settings/project/flags/'
+)
 
 ####### Release Manager App settings  #######
 RELEASE_FILE_PATH = os.path.join("data", "builds")
@@ -465,7 +470,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "style/bootstrap3/base.html"  # should eventually be bootstrap3
+BASE_TEMPLATE = "style/base.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -601,8 +606,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
-FORMPLAYER_URL = 'http://localhost:8080'
-OFFLINE_TOUCHFORMS_PORT = 4444
+FORMPLAYER_URL = 'http://localhost:8090'
 
 ####### Couchlog config #######
 
@@ -837,8 +841,8 @@ COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
 'compressor.filters.cssmin.rCSSMinFilter']
 
 LESS_B3_PATHS = {
-    'variables': '../../../style/less/bootstrap3/includes/variables',
-    'mixins': '../../../style/less/bootstrap3/includes/mixins',
+    'variables': '../../../style/less/_hq/includes/variables',
+    'mixins': '../../../style/less/_hq/includes/mixins',
 }
 
 LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
@@ -1024,10 +1028,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'couchlog': {
-            'level': 'WARNING',
-            'class': 'couchlog.handlers.CouchHandler',
-        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
@@ -1042,7 +1042,7 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -1066,7 +1066,7 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': True
         },
@@ -1081,7 +1081,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
+            'handlers': ['accountinglog', 'console', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -1445,8 +1445,6 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.groups_to_user.get_group_to_user_pillow',
         },
-        'corehq.pillows.sofabed.FormDataPillow',
-        'corehq.pillows.sofabed.CaseDataPillow',
         {
             'name': 'SqlSMSPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1546,7 +1544,12 @@ PILLOWTOPS = {
         {
             'name': 'BlobDeletionPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_blob_deletion_pillow',
+            'instance': 'corehq.blobs.pillow.get_main_blob_deletion_pillow',
+        },
+        {
+            'name': 'ApplicationBlobDeletionPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.blobs.pillow.get_application_blob_deletion_pillow',
         },
         {
             'name': 'CaseSearchToElasticsearchPillow',

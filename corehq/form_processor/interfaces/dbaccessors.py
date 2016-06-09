@@ -122,13 +122,10 @@ class FormAccessors(object):
                 yield form
 
     def form_exists(self, form_id):
-        return self.db_accessor.form_exists(form_id)
+        return self.db_accessor.form_exists(form_id, domain=self.domain)
 
     def get_all_form_ids_in_domain(self):
-        return self.get_form_ids_in_domain_by_type('XFormInstance')
-
-    def get_form_ids_in_domain_by_type(self, type_):
-        return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, type_)
+        return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, 'XFormInstance')
 
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
@@ -184,11 +181,15 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_open_case_ids(domain, owner_id):
+    def get_open_case_ids_for_owner(domain, owner_id):
         raise NotImplementedError
 
     @abstractmethod
-    def get_closed_case_ids(domain, owner_id):
+    def get_closed_case_ids_for_owner(domain, owner_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
         raise NotImplementedError
 
     @abstractmethod
@@ -201,6 +202,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_indexed_case_ids(domain, case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_reverse_indexed_cases(domain, case_ids):
         raise NotImplementedError
 
     @abstractmethod
@@ -285,8 +290,11 @@ class CaseAccessors(object):
         """
         return self.db_accessor.get_case_ids_in_domain_by_owners(self.domain, owner_ids)
 
-    def get_open_case_ids(self, owner_id):
-        return self.db_accessor.get_open_case_ids(self.domain, owner_id)
+    def get_open_case_ids_for_owner(self, owner_id):
+        return self.db_accessor.get_open_case_ids_for_owner(self.domain, owner_id)
+
+    def get_open_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
+        return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
 
     def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
         return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
@@ -300,8 +308,8 @@ class CaseAccessors(object):
     def get_last_modified_dates(self, case_ids):
         return self.db_accessor.get_last_modified_dates(self.domain, case_ids)
 
-    def get_closed_case_ids(self, owner_id):
-        return self.db_accessor.get_closed_case_ids(self.domain, owner_id)
+    def get_closed_case_ids_for_owner(self, owner_id):
+        return self.db_accessor.get_closed_case_ids_for_owner(self.domain, owner_id)
 
     def get_all_reverse_indices_info(self, case_ids):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
@@ -317,6 +325,21 @@ class CaseAccessors(object):
 
     def soft_delete_cases(self, case_ids, deletion_date=None, deletion_id=None):
         return self.db_accessor.soft_delete_cases(self.domain, case_ids, deletion_date, deletion_id)
+
+    def get_extension_chain(self, case_ids):
+        assert isinstance(case_ids, list)
+        get_extension_case_ids = self.db_accessor.get_extension_case_ids
+
+        incoming_extensions = set(get_extension_case_ids(self.domain, case_ids))
+        all_extension_ids = set(incoming_extensions)
+        new_extensions = set(incoming_extensions)
+        while new_extensions:
+            new_extensions = (
+                set(get_extension_case_ids(self.domain, list(new_extensions))) -
+                all_extension_ids
+            )
+            all_extension_ids = all_extension_ids | new_extensions
+        return all_extension_ids
 
     @quickcache(['self.domain'], timeout=30 * 60)
     def get_case_types(self):
@@ -414,9 +437,6 @@ class LedgerAccessors(object):
 
     def get_ledger_values_for_case(self, case_id):
         return self.db_accessor.get_ledger_values_for_case(case_id)
-
-    def get_ledger_values_for_product_ids(self, product_ids):
-        return self.db_accessor.get_ledger_values_for_product_ids(product_ids)
 
     def get_current_ledger_state(self, case_ids):
         if not case_ids:

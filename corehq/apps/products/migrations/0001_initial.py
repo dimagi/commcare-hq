@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import json_field.fields
+import jsonfield.fields
 
 
 class Migration(migrations.Migration):
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('program_id', models.CharField(default=b'', max_length=100, null=True)),
                 ('cost', models.DecimalField(null=True, max_digits=20, decimal_places=5)),
                 ('units', models.CharField(default=b'', max_length=100, null=True)),
-                ('product_data', json_field.fields.JSONField(default={}, help_text='Enter a valid JSON object')),
+                ('product_data', jsonfield.fields.JSONField(default=dict)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
             ],

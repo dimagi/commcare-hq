@@ -5,7 +5,7 @@ in the table DSL
 import json
 from collections import namedtuple
 
-from json_field.fields import JSONEncoder
+from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (
@@ -16,9 +16,9 @@ from corehq.form_processor.models import (
 
 
 def fetchall_as_namedtuple(cursor):
-    "Return all rows from a cursor as a namedtuple"
+    "Return all rows from a cursor as a namedtuple generator"
     Result = _namedtuple_from_cursor(cursor)
-    return [Result(*row) for row in cursor.fetchall()]
+    return (Result(*row) for row in cursor)
 
 
 def fetchone_as_namedtuple(cursor):

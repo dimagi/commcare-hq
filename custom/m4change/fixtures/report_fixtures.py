@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 from lxml import etree as ElementTree
 from django.utils.translation import ugettext as _
 
+from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.util import get_commtrack_location_id
 from corehq.apps.locations.models import Location
@@ -36,12 +37,13 @@ def get_last_day_of_month(month_start, today):
 class ReportFixtureProvider(object):
     id = 'reports:m4change-mobile'
 
-    def __call__(self, user, version, last_sync=None, app=None):
-        if user.domain in M4CHANGE_DOMAINS:
-            domain = Domain.get_by_name(user.domain)
-            location_id = get_commtrack_location_id(user, domain)
+    def __call__(self, restore_user, version, last_sync=None, app=None):
+        assert isinstance(restore_user, OTARestoreUser)
+
+        if restore_user.domain in M4CHANGE_DOMAINS:
+            location_id = restore_user.get_commtrack_location_id()
             if location_id is not None:
-                fixture = self.get_fixture(user, domain, location_id)
+                fixture = self.get_fixture(restore_user, location_id)
                 if fixture is None:
                     return []
                 return [fixture]
@@ -50,7 +52,7 @@ class ReportFixtureProvider(object):
         else:
             return []
 
-    def get_fixture(self, user, domain, location_id):
+    def get_fixture(self, restore_user, location_id):
         """
         Generate a fixture representation of the indicator set. Something like the following:
         <fixture id="indicators:m4change-mobile" user_id="4ce8b1611c38e953d3b3b84dd3a7ac18">
@@ -130,12 +132,12 @@ class ReportFixtureProvider(object):
             reports = dict((report.slug, report) for report in m4change_data_source.get_reports())
             for report_slug in report_slugs:
                 report_data[report_slug] = FixtureReportResult.by_composite_key(
-                    domain.name, facility_id, json_format_date(startdate),
+                    restore_user.domain, facility_id, json_format_date(startdate),
                     json_format_date(enddate), report_slug)
                 if report_data[report_slug] is None:
                     name = reports[report_slug].name
                     rows = reports[report_slug].get_initial_row_data()
-                    fixture_result = FixtureReportResult(domain=domain.name, location_id=facility_id,
+                    fixture_result = FixtureReportResult(domain=restore_user.domain, location_id=facility_id,
                                                          start_date=startdate, end_date=enddate, report_slug=report_slug,
                                                          rows=rows, name=name)
                     report_data[report_slug] = fixture_result
@@ -159,7 +161,7 @@ class ReportFixtureProvider(object):
 
         root = ElementTree.Element('fixture', attrib={
             'id': self.id,
-            'user_id': user._id
+            'user_id': restore_user.user_id
         })
 
         months_element = ElementTree.Element('monthly-reports')

@@ -203,7 +203,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
 
-    sync_consumption_fixtures = BooleanProperty(default=True)
+    sync_consumption_fixtures = BooleanProperty(default=False)
     use_auto_consumption = BooleanProperty(default=False)
     consumption_config = SchemaProperty(ConsumptionConfig)
     stock_levels_config = SchemaProperty(StockLevelsConfig)
@@ -279,6 +279,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
             consumption_config=self.get_consumption_config(),
             default_product_list=default_product_ids,
             force_consumption_case_filter=case_filter,
+            sync_consumption_ledger=self.sync_consumption_fixtures
         )
 
     @property
@@ -528,7 +529,7 @@ def _reopen_or_create_supply_point(location):
     )
     if supply_point:
         if supply_point and supply_point.closed:
-            transactions = supply_point.closed_transactions
+            transactions = supply_point.get_closing_transactions()
             for transaction in transactions:
                 transaction.form.archive(user_id=const.COMMTRACK_USERNAME)
 

@@ -10,8 +10,8 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.change_publishers import (
-    publish_form_saved, publish_case_saved, publish_ledger_v2_saved
-)
+    publish_form_saved, publish_case_saved, publish_ledger_v2_saved,
+    republish_all_changes_for_form)
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from couchforms.const import ATTACHMENT_NAME
@@ -86,6 +86,13 @@ class FormProcessorSQL(object):
     def _publish_changes(processed_forms, cases, stock_result):
         # todo: form deprecations?
         publish_form_saved(processed_forms.submitted)
+        if processed_forms.submitted.is_duplicate:
+            # for duplicate forms, also publish changes for the original form since the fact that
+            # we're getting a duplicate indicates that we may not have fully processd/published it
+            # the first time
+            republish_all_changes_for_form(
+                processed_forms.submitted.domain, processed_forms.submitted.orig_id)
+
         cases = cases or []
         for case in cases:
             publish_case_saved(case)
@@ -102,6 +109,7 @@ class FormProcessorSQL(object):
     @classmethod
     def deduplicate_xform(cls, xform):
         xform.state = XFormInstanceSQL.DUPLICATE
+        xform.orig_id = xform.form_id
         xform.problem = "Form is a duplicate of another! (%s)" % xform.form_id
         return cls.assign_new_id(xform)
 

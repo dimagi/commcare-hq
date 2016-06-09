@@ -1,6 +1,6 @@
 import json
 import logging
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.utils import html
 from corehq.apps.receiverwrapper.util import (
     get_version_from_appversion_text,
@@ -19,21 +19,18 @@ from corehq.apps.reports.datatables import (
     DataTablesColumn,
     DataTablesHeader,
     DTSortDirection,
-    DTSortType,
 )
-from corehq.apps.reports.util import _report_user_dict, SimplifiedUserInfo
-from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
 from urllib import urlencode
 
 logger = logging.getLogger(__name__)
 
-DATA_NOTICE = ugettext_noop(
+DATA_NOTICE = ugettext_lazy(
     "This report will only show data for the past 60 days. Furthermore the report may not "
     "always show the latest log data but will be updated over time",
 )
@@ -45,7 +42,7 @@ TAGS = {
 
 
 class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
-    name = ugettext_noop("Device Log Details")
+    name = ugettext_lazy("Device Log Details")
     slug = "log_details"
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter',
               'corehq.apps.reports.filters.devicelog.DeviceLogTagFilter',
@@ -73,17 +70,20 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn("Date", span=1, sort_type=DATE, prop_name='date',
+            DataTablesColumn(ugettext_lazy("Log Date"), span=1, sort_type=DATE, prop_name='date',
                              sort_direction=[DTSortDirection.DSC,
                                              DTSortDirection.ASC]),
-            DataTablesColumn("Log Type", span=1, prop_name='type'),
-            DataTablesColumn("Logged in Username", span=2,
+            DataTablesColumn(ugettext_lazy("Log Submission Date"), span=1, sort_type=DATE, prop_name='server_date',
+                             sort_direction=[DTSortDirection.DSC,
+                                             DTSortDirection.ASC]),
+            DataTablesColumn(ugettext_lazy("Log Type"), span=1, prop_name='type'),
+            DataTablesColumn(ugettext_lazy("Logged in Username"), span=2,
                              prop_name='username'),
-            DataTablesColumn("Device Users", span=2),
-            DataTablesColumn("Device ID", span=2, prop_name='device_id'),
-            DataTablesColumn("Message", span=5, prop_name='msg'),
-            DataTablesColumn("App Version", span=1, prop_name='app_version'),
-            DataTablesColumn("CommCare Version", span=1, prop_name='commcare_version'),
+            DataTablesColumn(ugettext_lazy("Device Users"), span=2),
+            DataTablesColumn(ugettext_lazy("Device ID"), span=2, prop_name='device_id'),
+            DataTablesColumn(ugettext_lazy("Message"), span=5, prop_name='msg'),
+            DataTablesColumn(ugettext_lazy("App Version"), span=1, prop_name='app_version'),
+            DataTablesColumn(ugettext_lazy("CommCare Version"), span=1, prop_name='commcare_version', sortable=False),
         )
 
     @property
@@ -167,6 +167,8 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
 
     @property
     def rows(self):
+        range = slice(self.pagination.start,
+                      self.pagination.start + self.pagination.count + 1)
         if self.goto_key:
             log = self.goto_log
             assert log.domain == self.domain
@@ -175,11 +177,9 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
                 domain__exact=self.domain,
                 device_id__exact=log.device_id,
             )
-            return self._create_rows(logs, matching_id=log.id)
+            return self._create_rows(logs, matching_id=log.id, range=range)
         else:
             logs = self._filter_logs()
-            range = slice(self.pagination.start,
-                          self.pagination.start + self.pagination.count + 1)
             return self._create_rows(logs, range=range)
 
     @property
@@ -200,66 +200,69 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
                     'data-datatable-tooltip-text="%(tooltip)s">%(text)s</a>')
 
     def _create_row(self, log, matching_id, _device_users_by_xform, user_query, device_query):
-            ui_date = (ServerTime(log.date)
+        log_date = (ServerTime(log.date)
+                    .user_time(self.timezone).ui_string())
+
+        server_date = (ServerTime(log.server_date)
                        .user_time(self.timezone).ui_string())
 
-            username = log.username
-            username_fmt = self._username_fmt % {
-                "url": "%s?%s=%s&%s" % (
-                    self.get_url(domain=self.domain),
-                    DeviceLogUsersFilter.slug,
-                    DeviceLogUsersFilter.value_to_param(username),
-                    user_query,
-                ),
-                "username": (
-                    username if username
-                    else '<span class="label label-info">Unknown</span>'
-                )
-            }
+        username = log.username
+        username_fmt = self._username_fmt % {
+            "url": "%s?%s=%s&%s" % (
+                self.get_url(domain=self.domain),
+                DeviceLogUsersFilter.slug,
+                DeviceLogUsersFilter.value_to_param(username),
+                user_query,
+            ),
+            "username": (
+                username if username
+                else '<span class="label label-info">Unknown</span>'
+            )
+        }
 
-            device_users = _device_users_by_xform(log.xform_id)
-            device_users_fmt = ', '.join([
-                self._device_users_fmt % {
-                    "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
-                                            DeviceLogUsersFilter.slug,
-                                            username,
-                                            user_query),
-                    "username": username,
-                }
-                for username in device_users
-            ])
-
-            log_tag = log.type or 'unknown'
-            tag_classes = ["label"]
-            if log_tag in self.tag_labels:
-                tag_classes.append(self.tag_labels[log_tag])
-
-            if len(tag_classes) == 1:
-                tag_classes.append('label-info')
-
-            log_tag_format = self._log_tag_fmt % {
-                "url": "%s?goto=%s" % (self.get_url(domain=self.domain),
-                                       html.escape(json.dumps(log.id))),
-                "classes": " ".join(tag_classes),
-                "text": log_tag,
-                "extra_params": (' data-datatable-highlight-closest="tr"'
-                                 if log.id == matching_id else ''),
-                "tooltip": "Show the surrounding 100 logs."
-            }
-
-            device = log.device_id
-            device_fmt = self._device_id_fmt % {
+        device_users = _device_users_by_xform(log.xform_id)
+        device_users_fmt = ', '.join([
+            self._device_users_fmt % {
                 "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
-                                        DeviceLogDevicesFilter.slug,
-                                        device,
-                                        device_query),
-                "device": device
+                                        DeviceLogUsersFilter.slug,
+                                        device_username,
+                                        user_query),
+                "username": device_username,
             }
+            for device_username in device_users
+        ])
 
-            app_version = get_version_from_appversion_text(log.app_version) or "unknown"
-            commcare_version = get_commcare_version_from_appversion_text(log.app_version) or "unknown"
-            return [ui_date, log_tag_format, username_fmt,
-                    device_users_fmt, device_fmt, log.msg, app_version, commcare_version]
+        log_tag = log.type or 'unknown'
+        tag_classes = ["label"]
+        if log_tag in self.tag_labels:
+            tag_classes.append(self.tag_labels[log_tag])
+
+        if len(tag_classes) == 1:
+            tag_classes.append('label-info')
+
+        log_tag_format = self._log_tag_fmt % {
+            "url": "%s?goto=%s" % (self.get_url(domain=self.domain),
+                                   html.escape(json.dumps(log.id))),
+            "classes": " ".join(tag_classes),
+            "text": log_tag,
+            "extra_params": (' data-datatable-highlight-closest="tr"'
+                             if log.id == matching_id else ''),
+            "tooltip": "Show the surrounding 100 logs."
+        }
+
+        device = log.device_id
+        device_fmt = self._device_id_fmt % {
+            "url": "%s?%s=%s&%s" % (self.get_url(domain=self.domain),
+                                    DeviceLogDevicesFilter.slug,
+                                    device,
+                                    device_query),
+            "device": device
+        }
+
+        app_version = get_version_from_appversion_text(log.app_version) or "unknown"
+        commcare_version = get_commcare_version_from_appversion_text(log.app_version) or "unknown"
+        return [log_date, server_date, log_tag_format, username_fmt,
+                device_users_fmt, device_fmt, log.msg, app_version, commcare_version]
 
     def _create_rows(self, logs, matching_id=None, range=None):
         _device_users_by_xform = memoized(device_users_by_xform)

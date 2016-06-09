@@ -6,11 +6,8 @@ from contextlib import contextmanager
 from copy import copy
 
 from django.apps import apps
-from django.test.simple import build_test
 from django.conf import settings
 from nose.tools import nottest
-
-build_test = nottest(build_test)
 
 
 class DependenciesNotFound(Exception):
@@ -122,6 +119,8 @@ class AppAndTestMap(object):
 @nottest
 @contextmanager
 def optimize_apps_for_test_labels(test_labels):
+    # TODO make this work on Django 1.8 (django.test.simple has been removed)
+    from django.test.simple import build_test
     test_map = AppAndTestMap()
     for label in test_labels:
         if isinstance(label, tuple):

@@ -2,6 +2,9 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% new_static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% new_static 'hqwebapp/js/key-value-mapping.js' %}"></script>
@@ -13,6 +16,7 @@
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
     <script src="{% new_static 'app_manager/js/detail-screen-config.js' %}"></script>
+    <script src="{% new_static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
         {% for detail in details %}
@@ -27,7 +31,7 @@
     {% if case_list_form_options %}
         {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
     {% endif %}
-    {% include 'style/bootstrap3/partials/key_value_mapping.html' %}
+    {% include 'style/partials/key_value_mapping.html' %}
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
 
     <script>
@@ -175,11 +179,33 @@
                     $button = $form.find('.save-button-holder').data('button');
                 $button.setStateWhenReady('saved');
             }
+
+            if (moduleType == 'shadow') {
+                var ShadowModule = hqImport('app_manager/js/shadow-module-settings.js').ShadowModule;
+                var shadowModule = new ShadowModule(
+                    {{ modules|JSON }},
+                    {{ module.source_module_id|JSON }},
+                    {{ excluded_form_ids|JSON }}
+                );
+                $('#sourceModuleForms').koApplyBindings(shadowModule);
+            }
+
         });
         $(function () {
             var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
             setupValidation('{% url "validate_module_for_build" domain app.id module.id %}');
         });
+    </script>
+
+    <script type="text/html" id="module-forms-template">
+        <div class="checkbox">
+            <label>
+                <input name="incl_form_ids"
+                       type="checkbox"
+                       data-bind="value: uniqueId, checked: $parent.selectedModule().includedFormIds"/>
+                <span data-bind="text: name"></span>
+            </label>
+        </div>
     </script>
 {% endblock %}
 
@@ -189,6 +215,7 @@
     <inline-edit params="
         name: 'comment',
         id:'comment-id',
+        readOnlyClass: 'app-comment',
         value: '{{ module.comment|escapejs }}',
         placeholder: '{% trans "Enter module description here"|escapejs %}',
         url: '{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'comment' %}',
@@ -224,29 +251,43 @@
 <div class="tab-content">
     {% block tab-content %}
     <div class="tab-pane active" id="module-settings">
-        <form class="form-horizontal save-button-form" action="{% url "corehq.apps.app_manager.views.edit_module_attr" domain app.id module.id 'all' %}">
+        <form class="form-horizontal save-button-form"
+              action="{% url 'corehq.apps.app_manager.views.edit_module_attr' domain app.id module.id 'all' %}">
             {% csrf_token %}
             <div class="save-button-holder clearfix"></div>
             <fieldset>
                 {% block settings_fields %}
                 {% if module.module_type == 'shadow' %}
-                <div class="form-group">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Source Module" %}
-                    </label>
-                    <div class="col-sm-4">
-                        <select type="text" name="source_module_id" class="form-control">
-                        <option value="">{% trans "None" %}</option>
-                        {% for mod in app.modules %}
-                            {% if mod.module_type == 'basic' %}
-                                {% if mod.id != module.id %}
-                                    <option value="{{mod.unique_id}}"{% if module.source_module_id == mod.unique_id %} selected{% endif %}>
-                                        {{ mod.name|trans:langs }}
-                                    </option>
-                                {% endif %}
-                            {% endif %}
-                        {% endfor %}
-                        </select>
+                <div id="sourceModuleForms">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">
+                            {% trans "Source Module" %}
+                        </label>
+                        <div class="col-sm-4">
+                            <select name="source_module_id" class="form-control"
+                                    data-bind="options: modules,
+                                               optionsText: 'name',
+                                               optionsValue: 'uniqueId',
+                                               value: selectedModuleId"></select>
+                        </div>
+                    </div>
+                    <div class="form-group" data-bind="visible: selectedModule().forms().length">
+                        <label class="col-sm-2 control-label">
+                            {% trans "Include Forms" %}
+                        </label>
+                        <div class="col-sm-4"
+                             data-bind="template: {name: 'module-forms-template',
+                                                   foreach: selectedModule().forms()}"></div>
+                        <div class="hidden">
+                            <select name="excl_form_ids"
+                                    multiple="multiple"
+                                    data-bind="options: selectedModule().forms,
+                                               optionsText: 'name',
+                                               optionsValue: 'uniqueId',
+                                               selectedOptions: excludedFormIds"></select>
+                            {# POST a value, even if no forms are excluded #}
+                            <input name="excl_form_ids" type="checkbox" value="0" checked="">
+                        </div>
                     </div>
                 </div>
                 {% endif %}

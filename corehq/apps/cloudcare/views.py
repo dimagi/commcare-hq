@@ -66,6 +66,8 @@ from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.xml_utils import indent_xml
+from corehq.apps.analytics.tasks import track_clicked_preview_on_hubspot
+from corehq.apps.analytics.utils import get_meta
 
 
 @require_cloudcare_access
@@ -120,6 +122,8 @@ class CloudcareMain(View):
         else:
             apps = get_brief_apps_in_domain(domain)
             apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
+            meta = get_meta(request)
+            track_clicked_preview_on_hubspot(request.couch_user, request.COOKIES, meta)
 
         # trim out empty apps
         apps = filter(lambda app: app, apps)
@@ -202,9 +206,13 @@ class CloudcareMain(View):
             "sessions_enabled": request.couch_user.is_commcare_user(),
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
             "username": request.user.username,
+            "formplayer_url": settings.FORMPLAYER_URL,
         }
         context.update(_url_context())
-        return render(request, "cloudcare/cloudcare_home.html", context)
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+            return render(request, "cloudcare/formplayer_home.html", context)
+        else:
+            return render(request, "cloudcare/cloudcare_home.html", context)
 
 
 @login_and_domain_required
@@ -434,14 +442,14 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
         raise Http404
 
     assert user.is_member_of(domain)
-    casexml_user = user.to_casexml_user()
+    restore_user = user.to_ota_restore_user()
     if not fixture_id:
         ret = ElementTree.Element("fixtures")
-        for fixture in generator.get_fixtures(casexml_user, version=V2):
+        for fixture in generator.get_fixtures(restore_user, version=V2):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        fixture = generator.get_fixture_by_id(fixture_id, casexml_user, version=V2)
+        fixture = generator.get_fixture_by_id(fixture_id, restore_user, version=V2)
         if not fixture:
             raise Http404
         assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(

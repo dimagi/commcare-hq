@@ -2,7 +2,8 @@ from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
 from casexml.apps.case.dbaccessors import get_extension_case_ids, \
-    get_indexed_case_ids, get_all_reverse_indices_info
+    get_indexed_case_ids, get_all_reverse_indices_info, get_open_case_ids_in_domain, \
+    get_reverse_indexed_case_ids
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.stock.models import StockTransaction
@@ -29,7 +30,7 @@ from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
     get_form_ids_for_user,
-    get_forms_by_id)
+    get_forms_by_id, get_form_ids_by_type)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
@@ -59,7 +60,7 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
-        pass
+        return get_form_ids_by_type(domain, type_)
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
@@ -127,12 +128,21 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids, closed=closed)
 
     @staticmethod
-    def get_open_case_ids(domain, owner_id):
+    def get_open_case_ids_for_owner(domain, owner_id):
         return get_open_case_ids(domain, owner_id)
 
     @staticmethod
-    def get_closed_case_ids(domain, owner_id):
+    def get_closed_case_ids_for_owner(domain, owner_id):
         return get_closed_case_ids(domain, owner_id)
+
+    @staticmethod
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
+        owner_ids = owner_ids if owner_ids else [None]
+        return [
+            case_id
+            for owner_id in owner_ids
+            for case_id in get_open_case_ids_in_domain(domain, type=case_type, owner_id=owner_id)
+        ]
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
@@ -145,6 +155,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_indexed_case_ids(domain, case_ids):
         return get_indexed_case_ids(domain, case_ids)
+
+    @staticmethod
+    def get_reverse_indexed_cases(domain, case_ids):
+        return get_reverse_indexed_case_ids(domain, case_ids)
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
@@ -229,12 +243,6 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         from corehq.apps.commtrack.models import StockState
 
         return StockState.objects.filter(case_id=case_id)
-
-    @staticmethod
-    def get_ledger_values_for_product_ids(product_ids):
-        from corehq.apps.commtrack.models import StockState
-
-        return StockState.objects.filter(product_id__in=product_ids)
 
     @staticmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):

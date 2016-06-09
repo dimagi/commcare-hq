@@ -30,7 +30,6 @@ from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import \
     bootstrap_usage_fees
 from corehq.apps.smsbillables.management.commands.bootstrap_yo_gateway import \
     bootstrap_yo_gateway
-from corehq.preindex import get_preindex_plugin
 from corehq.sql_db.operations import HqRunPython
 
 
@@ -49,7 +48,6 @@ def bootstrap_currency(apps, schema_editor):
 
 
 def bootstrap_sms(apps, schema_editor):
-    get_preindex_plugin('sms').sync_design_docs()
     bootstrap_grapevine_gateway(apps)
     bootstrap_mach_gateway(apps)
     bootstrap_tropo_gateway(apps)

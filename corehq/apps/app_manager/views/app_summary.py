@@ -2,7 +2,6 @@ from copy import copy
 
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 

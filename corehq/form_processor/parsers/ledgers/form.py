@@ -51,7 +51,7 @@ LedgerInstruction = namedtuple(
 
 
 def get_case_ids_from_stock_transactions(xform):
-    stock_report_helpers = list(_get_all_stock_report_helpers_from_form(xform))
+    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
     case_ids = {
         transaction_helper.case_id
         for stock_report_helper in stock_report_helpers
@@ -61,7 +61,7 @@ def get_case_ids_from_stock_transactions(xform):
 
 
 def get_ledger_references_from_stock_transactions(xform):
-    stock_report_helpers = list(_get_all_stock_report_helpers_from_form(xform))
+    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
     return {
         UniqueLedgerReference(tx_helper.case_id, tx_helper.section_id, tx_helper.product_id)
         for stock_report_helper in stock_report_helpers
@@ -84,7 +84,7 @@ def get_stock_actions(xform):
     if is_device_report(xform):
         return _empty_actions()
 
-    stock_report_helpers = list(_get_all_stock_report_helpers_from_form(xform))
+    stock_report_helpers = list(get_all_stock_report_helpers_from_form(xform))
     transaction_helpers = [
         transaction_helper
         for stock_report_helper in stock_report_helpers
@@ -122,7 +122,7 @@ def _get_case_action_intents(xform, transaction_helpers):
     return case_action_intents
 
 
-def _get_all_stock_report_helpers_from_form(xform):
+def get_all_stock_report_helpers_from_form(xform):
     """
     Given an instance of an AbstractXFormInstance, extract the ledger actions and convert
     them to StockReportHelper objects.

@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="{% new_static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
 {% endblock %}
 
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
+
 {% block js %}{{ block.super }}
     {% compress js %}
     <script src="{% new_static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
@@ -255,6 +259,7 @@
     <inline-edit params="
         name: 'comment',
         id:'comment-id',
+        readOnlyClass: 'app-comment',
         value: '{{ form.comment|escapejs }}',
         placeholder: '{% trans "Enter form description here"|escapejs %}',
         url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',

@@ -107,7 +107,7 @@ class MediaSuiteGenerator(object):
                 media_list += self.app.media_language_map[lang].media_refs
             requested_media = set(media_list)
         for path, m in self.app.multimedia_map.items():
-            if filter_multimedia and path not in requested_media:
+            if filter_multimedia and m.form_media and path not in requested_media:
                 continue
             unchanged_path = path
             if path.startswith(PREFIX):

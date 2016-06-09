@@ -7,7 +7,6 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_TERMINATED,
     SCHEDULE_MAX_DATE,
     SCHEDULE_DATE_CASE_OPENED,
-    SCHEDULE_NEXT_DUE,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
 from corehq.apps.app_manager.exceptions import (
@@ -48,7 +47,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
     ]):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
-        raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR, module=module, form=form)
+        raise CaseXPathValidationError(_(CASE_REFERENCE_VALIDATION_ERROR), module=module, form=form)
     replacements = {
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),

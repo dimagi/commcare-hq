@@ -28,7 +28,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     BlankXFormError,
     ConflictingCaseTypeError,
-)
+    FormNotFoundException)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.const import (
@@ -227,12 +227,19 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
     """
 
-    app = get_app(domain, app_id)
-    form = app.get_form(unique_form_id)
-    lang = request.COOKIES.get('lang', app.langs[0])
     ajax = json.loads(request.POST.get('ajax', 'true'))
-
     resp = {}
+
+    app = get_app(domain, app_id)
+    try:
+        form = app.get_form(unique_form_id)
+    except FormNotFoundException as e:
+        if ajax:
+            return HttpResponseBadRequest(unicode(e))
+        else:
+            messages.error(request, _("There was an error saving, please try again!"))
+            return back_to_main(request, domain, app_id=app_id)
+    lang = request.COOKIES.get('lang', app.langs[0])
 
     def should_edit(attribute):
         if attribute in request.POST:
@@ -406,7 +413,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
         try:
             form.validate_form()
-            xform_questions = xform.get_questions(langs, include_triggers=True)
+            xform_questions = xform.get_questions(langs, include_triggers=True, form=form)
         except etree.XMLSyntaxError as e:
             form_errors.append(u"Syntax Error: %s" % e)
         except AppEditingError as e:

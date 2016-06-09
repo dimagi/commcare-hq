@@ -8,6 +8,7 @@ from django.views.generic.base import TemplateView
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.views import BaseDomainView, LoginAndDomainMixin
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
     REPORT_BUILDER_ACCESS
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
@@ -42,7 +43,7 @@ from django.http.response import (
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy, get_language
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import (
     require_GET,
@@ -53,7 +54,6 @@ from django.views.generic import View
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
-from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -162,11 +162,10 @@ from .util import (
 )
 from corehq.apps.style.decorators import (
     use_bootstrap3,
-    use_datatables,
     use_jquery_ui,
-    use_jquery_ui_multiselect,
     use_select2,
     use_datatables,
+    use_multiselect,
 )
 
 
@@ -551,9 +550,9 @@ def hq_deid_download_saved_export(req, domain, export_id):
 
 
 def _download_saved_export(req, domain, saved_export):
-    # quasi-security hack: the first key of the index is always assumed
-    # to be the domain
-    assert domain == saved_export.configuration.index[0]
+    if domain != saved_export.configuration.index[0]:
+        raise Http404()
+
     if should_update_export(saved_export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
@@ -793,7 +792,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     config.filters = filters
 
     report_id = None
-    if config.report:
+    if config.report and hasattr(config.report, '_id'):
         report_id = config.report._id
 
     body = _render_report_configs(request, [config],
@@ -810,13 +809,13 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     if form.cleaned_data['send_to_owner']:
         send_html_email_async.delay(subject, request.couch_user.get_email(), body,
                                     email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                                    ga_tracking_info={'project_space_id': request.domain})
+                                    ga_tracking_info={'cd4': request.domain})
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
             send_html_email_async.delay(subject, recipient, body,
                                         email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                                        ga_tracking_info={'project_space_id': request.domain})
+                                        ga_tracking_info={'cd4': request.domain})
 
     return HttpResponse()
 
@@ -880,8 +879,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     page_title = _("Scheduled Report")
     template_name = 'reports/edit_scheduled_report.html'
 
-    @use_jquery_ui
-    @use_jquery_ui_multiselect
+    @use_multiselect
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
@@ -1038,12 +1036,14 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class ReportNotificationUnsubscribeView(TemplateView, LoginAndDomainMixin):
+class ReportNotificationUnsubscribeView(LoginAndDomainMixin, TemplateView):
     template_name = 'reports/notification_unsubscribe.html'
     urlname = 'notification_unsubscribe'
     report = None
 
+    @use_bootstrap3
     def get(self, request, *args, **kwargs):
+        self.domain = request.domain
         try:
             self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
             user_email = request.couch_user.get_email()
@@ -1057,10 +1057,10 @@ class ReportNotificationUnsubscribeView(TemplateView, LoginAndDomainMixin):
 
     def get_context_data(self, **kwargs):
         context = super(ReportNotificationUnsubscribeView, self).get_context_data(**kwargs)
-        context.update({'report': self.report})
+        context.update({'domain': self.domain, 'report': self.report})
         return context
 
-    def post(self, request, **kwargs):
+    def post(self, request, *args, **kwargs):
         try:
             report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
             report.remove_recipient(request.couch_user.get_email())
@@ -1210,7 +1210,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
     def case_instance(self):
         try:
             case = CaseAccessors(self.domain).get_case(self.case_id)
-            if case.domain != self.domain:
+            if case.domain != self.domain or case.is_deleted:
                 return None
             return case
         except CaseNotFound:
@@ -1226,17 +1226,14 @@ class CaseDetailsView(BaseProjectReportSectionView):
 
     @property
     def page_context(self):
-        if not should_use_sql_backend(self.domain):
-            # TODO: make this work for SQL
-            create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE,
-                                    self.case_instance.actions)
-            if not create_actions:
-                messages.error(self.request, _(
-                    "The case creation form could not be found. "
-                    "Usually this happens if the form that created the case is archived "
-                    "but there are other forms that updated the case. "
-                    "To fix this you can archive the other forms listed here."
-                ))
+        opening_transactions = self.case_instance.get_opening_transactions()
+        if not opening_transactions:
+            messages.error(self.request, _(
+                "The case creation form could not be found. "
+                "Usually this happens if the form that created the case is archived "
+                "but there are other forms that updated the case. "
+                "To fix this you can archive the other forms listed here."
+            ))
         return {
             "case_id": self.case_id,
             "case": self.case_instance,
@@ -1265,6 +1262,12 @@ def case_forms(request, domain, case_id):
         return HttpResponseBadRequest()
 
     def form_to_json(form):
+        form_name = xmlns_to_name(
+            domain,
+            form.xmlns,
+            app_id=form.app_id,
+            lang=get_language(),
+        )
         return {
             'id': form.form_id,
             'received_on': json_format_datetime(form.received_on),
@@ -1272,7 +1275,7 @@ def case_forms(request, domain, case_id):
                 "id": form.user_id or '',
                 "username": form.metadata.username if form.metadata else '',
             },
-            'readable_name': form.form_data.get('@name') or _('unknown'),
+            'readable_name': form_name,
         }
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
@@ -1792,7 +1795,8 @@ def download_attachment(request, domain, instance_id):
     except AttachmentNotFound:
         raise Http404()
 
-    return StreamingHttpResponse(streaming_content=attach.content_stream, content_type=attach.content_type)
+    return StreamingHttpResponse(streaming_content=FileWrapper(attach.content_stream),
+                                 content_type=attach.content_type)
 
 
 @require_form_view_permission

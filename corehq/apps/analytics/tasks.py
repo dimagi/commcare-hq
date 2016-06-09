@@ -37,6 +37,7 @@ HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
 HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
 HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
 HUBSPOT_CLICKED_SIGNUP_FORM = "06b39b74-62b3-4387-b323-fe256dc92720"
+HUBSPOT_CLICKED_PREVIEW_FORM_ID = "43124a42-972b-479e-a01a-6b92a484f7bc"
 HUBSPOT_COOKIE = 'hubspotutk'
 
 
@@ -251,6 +252,11 @@ def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
 @analytics_task()
 def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_NEW_USER_INVITE_FORM, webuser, cookies, meta)
+
+
+@analytics_task()
+def track_clicked_preview_on_hubspot(webuser, cookies, meta):
+    _send_form_to_hubspot(HUBSPOT_CLICKED_PREVIEW_FORM_ID, webuser, cookies, meta)
 
 
 @analytics_task()

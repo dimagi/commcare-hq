@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
-import json_field
-import logging
+import jsonfield
 import uuid
-import uuidfield
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
@@ -15,11 +13,10 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    PhoneNumberInUseException, InvalidFormatException, VerifiedNumber,
+    InvalidFormatException,
     apply_leniency, BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
@@ -27,10 +24,8 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     get_message)
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.load_balance import load_balance
-from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 
@@ -56,209 +51,6 @@ WORKFLOW_DEFAULT = 'default'
 DIRECTION_CHOICES = (
     (INCOMING, "Incoming"),
     (OUTGOING, "Outgoing"))
-
-
-class MessageLog(SafeSaveDocument, UnicodeMixIn):
-    base_doc                    = "MessageLog"
-    couch_recipient_doc_type    = StringProperty() # "CommCareCase", "CommCareUser", "WebUser"
-    couch_recipient             = StringProperty() # _id of the contact who this sms was sent to/from
-    phone_number                = StringProperty()
-    direction                   = StringProperty()
-    date                        = DateTimeProperty()
-    domain                      = StringProperty()
-    backend_api                 = StringProperty() # This must be set to <backend module>.API_ID in order to process billing correctly
-    backend_id                  = StringProperty()
-    billed                      = BooleanProperty(default=False)
-    billing_errors              = ListProperty()
-    chat_user_id = StringProperty() # For outgoing sms only: if this sms was sent from a chat window, the _id of the CouchUser who sent this sms; otherwise None
-    workflow = StringProperty() # One of the WORKFLOW_* constants above describing what kind of workflow this sms was a part of
-    # Points to the couch_id of an instance of SQLXFormsSession
-    # that this message is tied to
-    xforms_session_couch_id = StringProperty()
-    reminder_id = StringProperty() # Points to the _id of an instance of corehq.apps.reminders.models.CaseReminder that this sms is tied to
-    processed = BooleanProperty(default=True)
-    datetime_to_process = DateTimeProperty()
-    num_processing_attempts = IntegerProperty(default=0)
-    error = BooleanProperty(default=False)
-    system_error_message = StringProperty()
-    # If the message was simulated from a domain, this is the domain
-    domain_scope = StringProperty()
-    queued_timestamp = DateTimeProperty()
-    processed_timestamp = DateTimeProperty()
-    # If this outgoing message is a reply to an inbound message, then this is
-    # the _id of the inbound message
-    # TODO: For now this is a placeholder and needs to be implemented
-    in_reply_to = StringProperty()
-    system_phone_number = StringProperty()
-    # Set to True to send the message regardless of whether the destination
-    # phone number has opted-out. Should only be used to send opt-out
-    # replies or other info-related queries while opted-out.
-    ignore_opt_out = BooleanProperty(default=False)
-    location_id = StringProperty()
-
-    def __unicode__(self):
-        to_from = (self.direction == INCOMING) and "from" or "to"
-        return "Message %s %s" % (to_from, self.phone_number)
-
-    def set_system_error(self, message=None):
-        self.error = True
-        self.system_error_message = message
-        self.save()
-
-    @property
-    def username(self):
-        name = self.phone_number
-        if self.couch_recipient:
-            try:
-                if self.couch_recipient_doc_type == "CommCareCase":
-                    name = CommCareCase.get(self.couch_recipient).name
-                else:
-                    # Must be a user
-                    name = CouchUser.get_by_user_id(self.couch_recipient).username
-            except Exception as e:
-                pass
-        return name
-    
-    @property
-    def recipient(self):
-        if self.couch_recipient_doc_type == "CommCareCase":
-            return CommCareCase.get(self.couch_recipient)
-        else:
-            return CouchUser.get_by_user_id(self.couch_recipient)
-    
-    @classmethod
-    def by_domain_asc(cls, domain):
-        if cls.__name__ == "MessageLog":
-            raise NotImplementedError("Log queries not yet implemented for base class")
-        return cls.view("sms/by_domain",
-                    reduce=False,
-                    startkey=[domain, cls.__name__],
-                    endkey=[domain, cls.__name__] + [{}],
-                    include_docs=True,
-                    descending=False)
-
-    @classmethod
-    def by_domain_dsc(cls, domain):
-        if cls.__name__ == "MessageLog":
-            raise NotImplementedError("Log queries not yet implemented for base class")
-        return cls.view("sms/by_domain",
-                    reduce=False,
-                    startkey=[domain, cls.__name__] + [{}],
-                    endkey=[domain, cls.__name__],
-                    include_docs=True,
-                    descending=True)
-
-    @classmethod
-    def count_by_domain(cls, domain, start_date = None, end_date = {}):
-        if cls.__name__ == "MessageLog":
-            raise NotImplementedError("Log queries not yet implemented for base class")
-        if not end_date:
-            end_date = {}
-        reduced = cls.view("sms/by_domain",
-                            startkey=[domain, cls.__name__] + [start_date],
-                            endkey=[domain, cls.__name__] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-
-    @classmethod
-    def count_incoming_by_domain(cls, domain, start_date = None, end_date = {}):
-        if cls.__name__ == "MessageLog":
-            raise NotImplementedError("Log queries not yet implemented for base class")
-        if not end_date:
-            end_date = {}
-        reduced = cls.view("sms/direction_by_domain",
-                            startkey=[domain, cls.__name__, "I"] + [start_date],
-                            endkey=[domain, cls.__name__, "I"] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-
-    @classmethod
-    def count_outgoing_by_domain(cls, domain, start_date = None, end_date = {}):
-        if cls.__name__ == "MessageLog":
-            raise NotImplementedError("Log queries not yet implemented for base class")
-        if not end_date:
-            end_date = {}
-        reduced = cls.view("sms/direction_by_domain",
-                            startkey=[domain, cls.__name__, "O"] + [start_date],
-                            endkey=[domain, cls.__name__, "O"] + [end_date],
-                            reduce=True).all()
-        if reduced:
-            return reduced[0]['value']
-        return 0
-    
-    @classmethod
-    def by_domain_date(cls, domain, start_date = None, end_date = {}):
-        if cls.__name__ == "MessageLog":
-            raise NotImplementedError("Log queries not yet implemented for base class")
-        return cls.view("sms/by_domain",
-                    reduce=False,
-                    startkey=[domain, cls.__name__] + [start_date],
-                    endkey=[domain, cls.__name__] + [end_date],
-                    include_docs=True)
-
-    @classmethod
-    def inbound_entry_exists(cls, contact_doc_type, contact_id, from_timestamp, to_timestamp=None):
-        """
-        Checks to see if an inbound sms or call exists for the given caller.
-
-        contact_doc_type - The doc_type of the contact (e.g., "CommCareCase")
-        contact_id - The _id of the contact
-        after_timestamp - The datetime after which to check for the existence of an entry
-
-        return          True if an sms/call exists in the log, False if not.
-        """
-        if cls.__name__ == "MessageLog":
-            raise NotImplementedError("Not implemented for base class")
-        from_timestamp_str = json_format_datetime(from_timestamp)
-        to_timestamp_str = json_format_datetime(to_timestamp or datetime.utcnow())
-        reduced = cls.view("sms/by_recipient",
-            startkey=[contact_doc_type, contact_id, cls.__name__, INCOMING, from_timestamp_str],
-            endkey=[contact_doc_type, contact_id, cls.__name__, INCOMING, to_timestamp_str],
-            reduce=True).all()
-        if reduced:
-            return (reduced[0]['value'] > 0)
-        else:
-            return False
-
-
-class SMSLog(MessageLog):
-    text = StringProperty()
-    # In cases where decoding must occur, this is the raw text received
-    # from the gateway
-    raw_text = StringProperty()
-    # This is the unique message id that the gateway uses to track this
-    # message, if applicable.
-    backend_message_id = StringProperty()
-    # True if this was an inbound message that was an
-    # invalid response to a survey question
-    invalid_survey_response = BooleanProperty(default=False)
-
-    messaging_subevent_id = IntegerProperty()
-
-    @property
-    def outbound_backend(self):
-        """appropriate outbound sms backend"""
-        if self.backend_id:
-            return SQLMobileBackend.load(self.backend_id, is_couch_id=True)
-        else:
-            return SQLMobileBackend.load_default_by_phone_and_domain(
-                SQLMobileBackend.SMS,
-                smsutil.clean_phone_number(self.phone_number),
-                domain=self.domain
-            )
-
-    def __unicode__(self):
-
-        # crop the text (to avoid exploding the admin)
-        if len(self.text) < 60: str = self.text
-        else: str = "%s..." % (self.text[0:57])
-
-        to_from = (self.direction == INCOMING) and "from" or "to"
-        return "%s (%s %s)" % (str, to_from, self.phone_number)
 
 
 class Log(models.Model):
@@ -471,51 +263,6 @@ class QueuedSMS(SMSBase):
         )
 
 
-class LastReadMessage(Document, CouchDocLockableMixIn):
-    domain = StringProperty()
-    # _id of CouchUser who read it
-    read_by = StringProperty()
-    # _id of the CouchUser or CommCareCase who the message was sent to
-    # or from
-    contact_id = StringProperty()
-    # _id of the SMSLog entry
-    message_id = StringProperty()
-    # date of the SMSLog entry, stored here redundantly to prevent a lookup
-    message_timestamp = DateTimeProperty()
-
-    @classmethod
-    def get_obj(cls, domain, read_by, contact_id, *args, **kwargs):
-        return LastReadMessage.view(
-            "sms/last_read_message",
-            key=["by_user", domain, read_by, contact_id],
-            include_docs=True
-        ).one()
-
-    @classmethod
-    def create_obj(cls, domain, read_by, contact_id, *args, **kwargs):
-        obj = LastReadMessage(
-            domain=domain,
-            read_by=read_by,
-            contact_id=contact_id
-        )
-        obj.save()
-        return obj
-
-    @classmethod
-    def by_user(cls, domain, user_id, contact_id):
-        return cls.get_obj(domain, user_id, contact_id)
-
-    @classmethod
-    def by_anyone(cls, domain, contact_id):
-        return LastReadMessage.view(
-            "sms/last_read_message",
-            startkey=["by_anyone", domain, contact_id, {}],
-            endkey=["by_anyone", domain, contact_id],
-            descending=True,
-            include_docs=True
-        ).first()
-
-
 class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
 
     class Meta:
@@ -579,89 +326,6 @@ class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
             )
         except cls.DoesNotExist:
             return None
-
-
-class CallLog(MessageLog):
-    form_unique_id = StringProperty()
-    answered = BooleanProperty(default=False)
-    duration = IntegerProperty() # Length of the call in seconds
-    gateway_session_id = StringProperty() # This is the session id returned from the backend
-    xforms_session_id = StringProperty()
-    error_message = StringProperty() # Error message from the gateway, if any
-    submit_partial_form = BooleanProperty(default=False) # True to submit a partial form on hangup if it's not completed yet
-    include_case_side_effects = BooleanProperty(default=False)
-    max_question_retries = IntegerProperty() # Max number of times to retry a question with an invalid response before hanging up
-    current_question_retry_count = IntegerProperty(default=0) # A counter of the number of invalid responses for the current question
-    use_precached_first_response = BooleanProperty(default=False)
-    first_response = StringProperty()
-    # The id of the case to submit the form against
-    case_id = StringProperty()
-    case_for_case_submission = BooleanProperty(default=False)
-    messaging_subevent_id = IntegerProperty()
-
-    def __unicode__(self):
-        to_from = (self.direction == INCOMING) and "from" or "to"
-        return "Call %s %s" % (to_from, self.phone_number)
-
-    @classmethod
-    def answered_call_exists(cls, caller_doc_type, caller_id, after_timestamp,
-        end_timestamp=None):
-        """
-        Checks to see if an outbound call exists for the given caller that was successfully answered.
-        
-        caller_doc_type The doc_type of the caller (e.g., "CommCareCase").
-        caller_id       The _id of the caller's document.
-        after_timestamp The datetime after which to check for the existence of a call.
-        
-        return          True if a call exists in the CallLog, False if not.
-        """
-        start_timestamp = json_format_datetime(after_timestamp)
-        end_timestamp = json_format_datetime(end_timestamp or datetime.utcnow())
-        calls = cls.view("sms/by_recipient",
-                    startkey=[caller_doc_type, caller_id, "CallLog", OUTGOING, start_timestamp],
-                    endkey=[caller_doc_type, caller_id, "CallLog", OUTGOING, end_timestamp],
-                    reduce=False,
-                    include_docs=True).all()
-        result = False
-        for call in calls:
-            if call.answered:
-                result = True
-                break
-        return result
-
-    @classmethod
-    def get_call_by_gateway_session_id(cls, gateway_session_id):
-        """
-        Returns the CallLog object, or None if not found.
-        """
-        return CallLog.view('sms/call_by_session',
-            startkey=[gateway_session_id, {}],
-            endkey=[gateway_session_id],
-            descending=True,
-            include_docs=True,
-            limit=1).one()
-
-
-class EventLog(SafeSaveDocument):
-    base_doc                    = "EventLog"
-    domain                      = StringProperty()
-    date                        = DateTimeProperty()
-    couch_recipient_doc_type    = StringProperty()
-    couch_recipient             = StringProperty()
-
-
-class ExpectedCallbackEventLog(EventLog):
-    status = StringProperty(choices=[CALLBACK_PENDING,CALLBACK_RECEIVED,CALLBACK_MISSED])
-    
-    @classmethod
-    def by_domain(cls, domain, start_date=None, end_date={}):
-        """
-        Note that start_date and end_date are expected in JSON format.
-        """
-        return cls.view("sms/expected_callback_event",
-                        startkey=[domain, start_date],
-                        endkey=[domain, end_date],
-                        include_docs=True).all()
 
 
 class ExpectedCallback(UUIDGeneratorMixin, models.Model):
@@ -815,7 +479,7 @@ class PhoneBlacklist(models.Model):
         return False
 
 
-class PhoneNumber(SyncSQLToCouchMixin, models.Model):
+class PhoneNumber(models.Model):
     couch_id = models.CharField(max_length=126, db_index=True, null=True)
     domain = models.CharField(max_length=126, db_index=True, null=True)
     owner_doc_type = models.CharField(max_length=126, null=True)
@@ -836,22 +500,176 @@ class PhoneNumber(SyncSQLToCouchMixin, models.Model):
     verified = models.NullBooleanField(default=False)
     contact_last_modified = models.DateTimeField(null=True)
 
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            'domain',
-            'owner_doc_type',
-            'owner_id',
-            'phone_number',
-            'backend_id',
-            'ivr_backend_id',
-            'verified',
-            'contact_last_modified'
-        ]
+    def __init__(self, *args, **kwargs):
+        super(PhoneNumber, self).__init__(*args, **kwargs)
+        self._old_phone_number = self.phone_number
+        self._old_owner_id = self.owner_id
+
+    def __repr__(self):
+        return '{phone} in {domain} (owned by {owner})'.format(
+            phone=self.phone_number, domain=self.domain,
+            owner=self.owner_id
+        )
+
+    @property
+    def backend(self):
+        from corehq.apps.sms.util import clean_phone_number
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, basestring) else None
+        if backend_id:
+            return SQLMobileBackend.load_by_name(
+                SQLMobileBackend.SMS,
+                self.domain,
+                backend_id
+            )
+        else:
+            return SQLMobileBackend.load_default_by_phone_and_domain(
+                SQLMobileBackend.SMS,
+                clean_phone_number(self.phone_number),
+                domain=self.domain
+            )
+
+    @property
+    def owner(self):
+        if self.owner_doc_type == 'CommCareCase':
+            from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+            return CaseAccessors(self.domain).get_case(self.owner_id)
+        elif self.owner_doc_type == 'CommCareUser':
+            from corehq.apps.users.models import CommCareUser
+            return CommCareUser.get(self.owner_id)
+        elif self.owner_doc_type == 'WebUser':
+            from corehq.apps.users.models import WebUser
+            return WebUser.get(self.owner_id)
+        else:
+            return None
+
+    def retire(self):
+        self.delete()
 
     @classmethod
-    def _migration_get_couch_model_class(cls):
-        return VerifiedNumber
+    def by_extensive_search(cls, phone_number):
+        # Try to look up the verified number entry directly
+        v = cls.by_phone(phone_number)
+
+        # If not found, try to see if any number in the database is a substring
+        # of the number given to us. This can happen if the telco prepends some
+        # international digits, such as 011...
+        if v is None:
+            v = cls.by_phone(phone_number[1:])
+        if v is None:
+            v = cls.by_phone(phone_number[2:])
+        if v is None:
+            v = cls.by_phone(phone_number[3:])
+
+        # If still not found, try to match only the last digits of numbers in
+        # the database. This can happen if the telco removes the country code
+        # in the caller id.
+        if v is None:
+            v = cls.by_suffix(phone_number)
+
+        return v
+
+    @classmethod
+    def by_couch_id(cls, couch_id):
+        try:
+            return cls.objects.get(couch_id=couch_id)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def by_phone(cls, phone_number, include_pending=False):
+        result = cls._by_phone(apply_leniency(phone_number))
+        return cls._filter_pending(result, include_pending)
+
+    @classmethod
+    def by_suffix(cls, phone_number, include_pending=False):
+        """
+        Used to lookup a PhoneNumber, trying to exclude country code digits.
+        """
+        result = cls._by_suffix(apply_leniency(phone_number))
+        return cls._filter_pending(result, include_pending)
+
+    @classmethod
+    @quickcache(['phone_number'], timeout=60 * 60)
+    def _by_phone(cls, phone_number):
+        try:
+            return cls.objects.get(phone_number=phone_number)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def _by_suffix(cls, phone_number):
+        # Decided not to cache this method since in order to clear the cache
+        # we'd have to clear using all suffixes of a number (which would involve
+        # up to ~10 cache clear calls on each save). Since this method is used so
+        # infrequently, it's better to not cache vs. clear so many keys on each
+        # save. Once all of our IVR gateways provide reliable caller id info,
+        # we can also remove this method.
+        try:
+            return cls.objects.get(phone_number__endswith=phone_number)
+        except cls.DoesNotExist:
+            return None
+        except cls.MultipleObjectsReturned:
+            return None
+
+    @classmethod
+    def _filter_pending(cls, v, include_pending):
+        if v:
+            if include_pending:
+                return v
+            elif v.verified:
+                return v
+
+        return None
+
+    @classmethod
+    def by_domain(cls, domain, ids_only=False):
+        qs = cls.objects.filter(domain=domain)
+        if ids_only:
+            return qs.values_list('couch_id', flat=True)
+        else:
+            return qs
+
+    @classmethod
+    def count_by_domain(cls, domain):
+        return cls.by_domain(domain).count()
+
+    @classmethod
+    @quickcache(['owner_id'], timeout=60 * 60)
+    def by_owner_id(cls, owner_id):
+        """
+        Returns all phone numbers belonging to the given contact.
+        """
+        return cls.objects.filter(owner_id=owner_id)
+
+    @classmethod
+    def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
+        cls.by_owner_id.clear(cls, owner_id)
+
+        if old_owner_id and old_owner_id != owner_id:
+            cls.by_owner_id.clear(cls, old_owner_id)
+
+        cls._by_phone.clear(cls, phone_number)
+
+        if old_phone_number and old_phone_number != phone_number:
+            cls._by_phone.clear(cls, old_phone_number)
+
+    def _clear_caches(self):
+        self._clear_quickcaches(
+            self.owner_id,
+            self.phone_number,
+            old_owner_id=self._old_owner_id,
+            old_phone_number=self._old_phone_number
+        )
+
+    def save(self, *args, **kwargs):
+        self._clear_caches()
+        self._old_phone_number = self.phone_number
+        self._old_owner_id = self.owner_id
+        return super(PhoneNumber, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self._clear_caches()
+        return super(PhoneNumber, self).delete(*args, **kwargs)
 
 
 class MessagingStatusMixin(object):
@@ -1464,7 +1282,6 @@ class SelfRegistrationInvitation(models.Model):
 
     def send_step2_android_sms(self):
         from corehq.apps.sms.api import send_sms
-        from corehq.apps.sms.views import InvitationAppInfoView
         from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
 
         registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
@@ -1588,7 +1405,7 @@ class SelfRegistrationInvitation(models.Model):
                 invalid_format_numbers.append(phone_number)
                 continue
 
-            if VerifiedNumber.by_phone(phone_number, include_pending=True):
+            if PhoneNumber.by_phone(phone_number, include_pending=True):
                 numbers_in_use.append(phone_number)
                 continue
 
@@ -1668,7 +1485,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # This information is displayed in the gateway list UI.
     # If this backend represents an international gateway,
     # set this to: ["*"]
-    supported_countries = json_field.JSONField(default=[])
+    supported_countries = jsonfield.JSONField(default=list)
 
     # To avoid having many tables with so few records in them, all
     # SMS backends are stored in this same table. This field is a
@@ -1676,7 +1493,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # backend subclasses need.
     # NOTE: Do not access this field directly, instead use get_extra_fields()
     # and set_extra_fields()
-    extra_fields = json_field.JSONField(default={})
+    extra_fields = jsonfield.JSONField(default=dict)
 
     # For a historical view of sms data, we can't delete backends.
     # Instead, set a deleted flag when a backend should no longer be used.
@@ -1684,7 +1501,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
 
     # If the backend uses load balancing, this is a JSON list of the
     # phone numbers to load balance over.
-    load_balancing_numbers = json_field.JSONField(default=[])
+    load_balancing_numbers = jsonfield.JSONField(default=list)
 
     # The phone number which you can text to or call in order to reply
     # to this backend

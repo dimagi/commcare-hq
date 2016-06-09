@@ -3,7 +3,7 @@ from django.dispatch import receiver
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation, Location
-from corehq.apps.sms.mixin import VerifiedNumber
+from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.views import EditWebUserView
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
@@ -106,7 +106,7 @@ class EWSExtension(models.Model):
 
     @property
     def verified_number(self):
-        return VerifiedNumber.by_phone(self.phone_number)
+        return PhoneNumber.by_phone(self.phone_number)
 
     @property
     def domain_object(self):

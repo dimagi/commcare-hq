@@ -31,6 +31,7 @@ class AppManagerTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AppManagerTest, cls).setUpClass()
         cls.build1 = {'version': '1.2.dev', 'build_number': 7106}
         cls.build2 = {'version': '2.7.0', 'build_number': 20655}
 
@@ -40,10 +41,11 @@ class AppManagerTest(TestCase):
         cls.domain = 'test-domain'
         create_domain(cls.domain)
 
-        with codecs.open(os.path.join(os.path.dirname(__file__), "data", "itext_form.xml"), encoding='utf-8') as f:
+        with codecs.open(os.path.join(os.path.dirname(__file__), "data", "very_simple_form.xml"), encoding='utf-8') as f:
             cls.xform_str = f.read()
 
     def setUp(self):
+        super(AppManagerTest, self).setUp()
         self.app = Application.new_app(self.domain, "TestApp", application_version=APP_V1)
 
         for i in range(3):
@@ -67,6 +69,7 @@ class AppManagerTest(TestCase):
 
     def tearDown(self):
         self.app.delete()
+        super(AppManagerTest, self).tearDown()
 
     def testSetUp(self):
         self.assertEqual(len(self.app.modules), 3)
@@ -105,7 +108,7 @@ class AppManagerTest(TestCase):
     @patch_default_builds
     def _test_import_app(self, app_id_or_source):
         new_app = import_app(app_id_or_source, self.domain)
-        self.assertEqual(set(new_app._attachments.keys()).intersection(self.app._attachments.keys()), set())
+        self.assertEqual(set(new_app.blobs.keys()).intersection(self.app.blobs.keys()), set())
         new_forms = list(new_app.get_forms())
         old_forms = list(self.app.get_forms())
         for new_form, old_form in zip(new_forms, old_forms):
@@ -113,11 +116,11 @@ class AppManagerTest(TestCase):
             self.assertNotEqual(new_form.unique_id, old_form.unique_id)
 
     def testImportApp_from_id(self):
-        self.assertTrue(self.app._attachments)
+        self.assertTrue(self.app.blobs)
         self._test_import_app(self.app.id)
 
     def testImportApp_from_source(self):
-        app_source = Application.get_db().get(self.app.id)
+        app_source = self.app.export_json(dump_json=False)
         self._test_import_app(app_source)
 
     def testAppsBrief(self):

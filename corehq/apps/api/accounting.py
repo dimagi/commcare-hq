@@ -167,10 +167,10 @@ class SubscriptionResource(ModelResource):
     subscriber = fields.IntegerField('subscriber_id', null=True)
 
     class Meta(AccountingResourceMeta):
-        queryset = Subscription.objects.all().order_by('pk')
+        queryset = Subscription.api_objects.all().order_by('pk')
         fields = ['id', 'salesforce_contract_id', 'date_start', 'date_end', 'date_delay_invoicing',
                   'date_created', 'is_active', 'do_not_invoice', 'auto_generate_credits', 'is_trial',
-                  'service_type', 'pro_bono_status', 'last_modified', 'funding_source']
+                  'service_type', 'pro_bono_status', 'last_modified', 'funding_source', 'is_hidden_to_ops']
         resource_name = 'subscription'
 
 
@@ -181,7 +181,7 @@ class InvoiceResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = Invoice.api_objects.all().order_by('pk')
-        fields = ['id', 'tax_rate', 'balance', 'date_due', 'date_paid', 'date_created', 'date_received',
+        fields = ['id', 'tax_rate', 'balance', 'date_due', 'date_paid', 'date_created',
                   'date_start', 'date_end', 'is_hidden', 'is_hidden_to_ops', 'last_modified']
         resource_name = 'invoice'
 
