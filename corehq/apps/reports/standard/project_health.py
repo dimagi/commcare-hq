@@ -97,21 +97,23 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             return self._base_queryset.distinct('user_id').count()
 
     @property
-    def has_group_filter(self):
-        if self._users_filtered_by_group: return True; return False
-
-    @property
     def previous_month(self):
         prev_year, prev_month = add_months(self.month.year, self.month.month, -1)
         return datetime.datetime(prev_year, prev_month, 1)
 
     @property
     def delta_performing(self):
-        return self.number_of_performing_users - self._previous_summary.number_of_performing_users if self._previous_summary else self.number_of_performing_users
+        if self._previous_summary:
+            return self.number_of_performing_users - self._previous_summary.number_of_performing_users
+        else:
+            return self.number_of_performing_users
 
     @property
     def delta_performing_pct(self):
-        return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
+        if self._previous_summary.number_of_performing_users:
+            return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
+        else:
+            return 100
 
     @property
     def delta_active(self):
@@ -119,7 +121,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def delta_active_pct(self):
-        return float(self.delta_active / float(self._previous_summary.active)) * 100.
+        if self._previous_summary.active:
+            return float(self.delta_active / float(self._previous_summary.active)) * 100.
+        else:
+            return 100
 
     @memoized
     def get_all_user_stubs(self):
@@ -149,7 +154,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     @memoized
     def get_all_user_stubs_with_extra_data(self):
         if self._previous_summary:
-            if self.has_group_filter:
+            if self._users_filtered_by_group:
                 previous_stubs = self._previous_summary.get_all_user_stubs_by_filtered_group()
                 next_stubs = self._next_summary.get_all_user_stubs_by_filtered_group() if self._next_summary else {}
                 user_stubs = self.get_all_user_stubs_by_filtered_group()
