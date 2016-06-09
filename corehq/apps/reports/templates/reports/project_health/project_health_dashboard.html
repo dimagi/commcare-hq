@@ -100,13 +100,6 @@
     {% block filter_panel %}
         {% include "reports/standard/partials/filter_panel.html" %}
     {% endblock %}
-    {% with last_month.get_all_user_stubs_with_extra_data as user_list %}
-    <ul>
-        {% for user in user_list %}
-        <li>{{user.username}}</li>
-        {% endfor %}
-    </ul>
-    {% endwith %}
     <h2>{% trans "Last Month Stats" %}</h2>
 <table class="table lead">
     <thead>
