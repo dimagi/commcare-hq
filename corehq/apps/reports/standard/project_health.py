@@ -12,8 +12,10 @@ from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es.groups import GroupES
 
+
 def get_performance_threshold(domain_name):
     return Domain.get_by_name(domain_name).internal.performance_threshold or 15
+
 
 class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms_submitted',
                                                'is_performing', 'previous_stub', 'next_stub'])):
@@ -123,8 +125,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_active_pct(self):
         if self._previous_summary.active:
             return float(self.delta_active / float(self._previous_summary.active)) * 100.
-        else:
-            return 100
 
     @memoized
     def get_all_user_stubs(self):
@@ -156,7 +156,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self._previous_summary:
             if self._users_filtered_by_group:
                 previous_stubs = self._previous_summary.get_all_user_stubs_by_filtered_group()
-                next_stubs = self._next_summary.get_all_user_stubs_by_filtered_group() if self._next_summary else {}
+                if self._next_summary:
+                    next_stubs = self._next_summary.get_all_user_stubs_by_filtered_group()
+                else:
+                    next_stubs = {}
                 user_stubs = self.get_all_user_stubs_by_filtered_group()
             else:
                 previous_stubs = self._previous_summary.get_all_user_stubs()
