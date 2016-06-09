@@ -100,6 +100,13 @@ XFORM_MAPPING = {
                         "appVersion": {"type": "string", "index": "not_analyzed"},
                         "commcare_version": {"type": "string", "index": "not_analyzed"},
                         "app_build_version": {"type": "string", "index": "not_analyzed"},
+                        "geo_point": {
+                            "type": "geo_point",
+                            "lat_lon": True,
+                            "geohash": True,
+                            "geohash_prefix": True,
+                            "geohash_precision": '10m'
+                        },
                     }
                 },
             },

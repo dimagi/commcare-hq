@@ -2,6 +2,8 @@ import collections
 import copy
 import datetime
 
+from jsonobject.exceptions import BadValueError
+
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
@@ -11,6 +13,7 @@ from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from corehq.pillows.utils import get_user_type
+from couchforms.jsonobject_extensions import GeoPointProperty
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
@@ -107,6 +110,13 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
         )
         doc_ret['form']['meta']['commcare_version'] = app_version_info.commcare_version
         doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
+
+        try:
+            geo_point = GeoPointProperty().wrap(doc_ret['form']['meta']['location'])
+            doc_ret['form']['meta']['geo_point'] = geo_point.lat_long
+        except (KeyError, BadValueError):
+            doc_ret['form']['meta']['geo_point'] = None
+            pass
 
         case_blocks = extract_case_blocks(doc_ret)
         for case_dict in case_blocks:

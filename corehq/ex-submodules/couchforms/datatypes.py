@@ -1,4 +1,10 @@
 from collections import namedtuple
 
 
-GeoPoint = namedtuple('GeoPoint', 'latitude longitude altitude accuracy')
+class GeoPoint(namedtuple('GeoPoint', 'latitude longitude altitude accuracy')):
+    @property
+    def lat_long(self):
+        return {
+            'lat': self.latitude,
+            'lon': self.longitude
+        }
