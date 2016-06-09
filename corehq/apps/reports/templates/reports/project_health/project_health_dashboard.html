@@ -23,9 +23,10 @@
 <script src="{% new_static 'appstore/js/facet_sidebar.js' %}"></script>
 {% include "reports/standard/partials/report_loader.html" %}
 <script type="text/javascript">
+    // "Performing / Active User Trends" Chart
     function setupCharts() {
-        // setup chart
         var data = {{ rows|JSON }};
+        console.log(data);
         var performingSeries = {
             'key': 'performing',
             values: _.map(data, function(item) {
@@ -58,6 +59,7 @@
         });
     }
 
+    // User Information PopOver, when clicked on username
     function setupPopovers() {
         // ajax popover: http://stackoverflow.com/a/14560039/8207
         $('a.user-popover').popover({
@@ -98,6 +100,13 @@
     {% block filter_panel %}
         {% include "reports/standard/partials/filter_panel.html" %}
     {% endblock %}
+    {% with last_month.get_all_user_stubs_with_extra_data as user_list %}
+    <ul>
+        {% for user in user_list %}
+        <li>{{user.username}}</li>
+        {% endfor %}
+    </ul>
+    {% endwith %}
     <h2>{% trans "Last Month Stats" %}</h2>
 <table class="table lead">
     <thead>
@@ -114,7 +123,7 @@
         <td>{% trans "Performing users" %}
             <p class="text-muted"><small>{% blocktrans %}Users who submitted {{ threshold }} or more forms last month.{% endblocktrans %}</small></p>
         </td>
-        <td>{{ last_month.performing }}</td>
+        <td>{{ last_month.number_of_performing_users }}</td>
         <td>
             {% chevron last_month.delta_performing_pct %}
             {{ last_month.delta_performing_pct|floatformat }} %
