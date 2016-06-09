@@ -173,7 +173,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
             var self = this,
                 text = self.lookupField(col),
                 td = $("<td/>");
-            if (text) {
+            if (text || text == 0) {
                 return td.text(text);
             } else {
                 return td.append(
