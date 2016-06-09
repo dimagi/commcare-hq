@@ -100,6 +100,7 @@
         {% include "reports/standard/partials/filter_panel.html" %}
     {% endblock %}
     <h2>{% trans "Last Month Stats" %}</h2>
+    <h3>Performing Delt {{last_month.delta_performing_pct|floatformat}}</h3>
 <table class="table lead">
     <thead>
         <tr>
