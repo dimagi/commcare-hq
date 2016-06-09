@@ -11,15 +11,23 @@
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
-        var new_plan_version = new AsyncSelect2Handler('new_plan_version');
-        new_plan_version.init();
-        new_plan_version.getAdditionalData = function () {
-            return {
-                'product': $('#id_new_plan_product').val(),
-                'edition': $('#id_new_plan_edition').val(),
-                'current_version': '{{ subscription.plan_version.id }}'
-            }
-        };
+        (function () {
+            var AsyncSelect2Handler = hqImport('accounting/js/accounting.billing_info_handler.js').AsyncSelect2Handler;
+            var AdjustBalanceFormModel = hqImport('accounting/js/adjust-balance-modal.js').AdjustBalanceFormModel;
+            var new_plan_version = new AsyncSelect2Handler('new_plan_version');
+            new_plan_version.init();
+            new_plan_version.getAdditionalData = function () {
+                return {
+                    'product': $('#id_new_plan_product').val(),
+                    'edition': $('#id_new_plan_edition').val(),
+                    'current_version': '{{ subscription.plan_version.id }}'
+                }
+            };
+            hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
+            {% for adjust_balance_form in adjust_balance_forms %}
+            $('#adjust-balance-form-{{ adjust_balance_form.invoice.id }}').koApplyBindings(new AdjustBalanceFormModel());
+            {% endfor %}
+        }());
         $(function () {
             var deselectPlanVersion = function () {
                 var $planVer = $('#id_new_plan_version');
@@ -29,15 +37,6 @@
             $('#id_new_plan_product').change(deselectPlanVersion);
             $('#id_new_plan_edition').change(deselectPlanVersion);
         });
-        var billingInfoHandler = new BillingContactInfoHandler(
-            "{% trans "Please enter a valid email." %}"
-        );
-        billingInfoHandler.init();
-
-    {% for adjust_balance_form in adjust_balance_forms %}
-        $('#adjust-balance-form-{{ adjust_balance_form.invoice.id }}').koApplyBindings(new AdjustBalanceFormModel());
-    {% endfor %}
-
     </script>
 {% endblock %}
 
