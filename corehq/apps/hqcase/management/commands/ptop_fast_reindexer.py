@@ -180,6 +180,8 @@ class PtopReindexer(NoArgsCommand):
         with open(dump_presort_filename, 'w') as fout:
             for row in self.full_couch_view_iter():
                 sort_key = self.sort_key(row)
+                assert (isinstance(sort_key, basestring)
+                        and not any(c in sort_key for c in '\t\n\r')), repr(sort_key)
                 if self.sort_key_include_docs and not self.pillow_class.include_docs:
                     del row['doc']
                 fout.write('{}\t{}\n'.format(sort_key, json.dumps(row)))
