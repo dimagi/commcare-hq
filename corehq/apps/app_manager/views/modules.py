@@ -661,7 +661,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
     if short is not None:
-        detail.short.columns = map(DetailColumn.wrap, short)
+        detail.short.columns = map(DetailColumn.from_json, short)
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
         if use_case_tiles is not None:
@@ -674,7 +674,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             _save_case_list_lookup_params(detail.short, case_list_lookup)
 
     if long is not None:
-        detail.long.columns = map(DetailColumn.wrap, long)
+        detail.long.columns = map(DetailColumn.from_json, long)
         if tabs is not None:
             detail.long.tabs = map(DetailTab.wrap, tabs)
     if filter != ():
