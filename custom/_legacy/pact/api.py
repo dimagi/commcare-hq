@@ -1,10 +1,8 @@
 from datetime import datetime, time
 import logging
 import uuid
-import tempfile
 
 from lxml import etree
-from django.core.servers.basehttp import FileWrapper
 from django.utils.decorators import method_decorator
 from casexml.apps.phone.middleware import LAST_SYNCTOKEN_HEADER
 from dimagi.utils.parsing import json_format_date
