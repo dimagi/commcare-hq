@@ -68,8 +68,8 @@ submodules:
     # just so we always get latest master
     branches: []
   submodules/ctable-src:
-    branches: []
-#      - b3-remove-use-bootstrap3  # biyeun 6/7
+    branches:
+      - b3-remove-use-bootstrap3  # biyeun 6/7
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
@@ -78,7 +78,7 @@ submodules:
     branches: []
   corehq/apps/prelogin:
     branches:
-#      - new-static-rename  # biyeun 6/7
-      - revert-84-async-bgs # Nick P 6/10
+      - new-static-rename  # biyeun 6/7
+#      - revert-84-async-bgs # Nick P 6/10
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
