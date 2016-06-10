@@ -56,7 +56,7 @@ branches:
 #  - j2me-toggle # Nick P 6/1
   - fix-j2me # Nick P 6/9
 #  - upgrade-django-compressor # nick P 6/7
-#  - b3-final-cleanup  # biyeun 6/7
+  - b3-final-cleanup  # biyeun 6/7
   - app-profile-update
 submodules:
   submodules/touchforms-src:
