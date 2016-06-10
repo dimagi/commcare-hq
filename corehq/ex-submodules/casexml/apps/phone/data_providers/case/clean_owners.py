@@ -50,7 +50,6 @@ class CleanOwnerSyncPayload(object):
 
     def _get_next_case_batch(self):
         ids = pop_ids(self.case_ids_to_sync, chunk_size)
-        # TODO: see if we can avoid wrapping - serialization depends on it heavily for now
         return [
             case for case in self.case_accessor.get_cases(ids)
             if not case.is_deleted and case_needs_to_sync(case, last_sync_log=self.restore_state.last_sync_log)
