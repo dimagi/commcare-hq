@@ -64,9 +64,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         self._performing_queryset = self._base_queryset.filter(
             num_of_forms__gte=performance_threshold,
         )
-        self._performing_queryset_group_filtered = self._apply_group_filter.filter(
-            num_of_forms__gte=performance_threshold,
-        )
         super(MonthlyPerformanceSummary, self).__init__(
             month=month,
             domain=domain,
@@ -86,10 +83,11 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def number_of_performing_users(self):
+        malt_rows = self._performing_queryset
         if self._users_filtered_by_group:
-            return self._performing_queryset_group_filtered.distinct('user_id').count()
+            return malt_rows.filter(user_id__in=self._users_filtered_by_group).distinct('user_id').count()
         else:
-            return self._performing_queryset.distinct('user_id').count()
+            return malt_rows.distinct('user_id').count()
 
     @property
     def number_of_active_users(self):
@@ -246,7 +244,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     def get_users_by_filtered_groupids(self):
         groupids_param = self.get_filtered_group_ids()
-        users_list = GroupES().domain('ccdt').group_ids(groupids_param).fields(["users"]).values()
+        users_list = GroupES().domain(self.domain).group_ids(groupids_param).fields(["users"]).values()
         user_id_list = []
         for user in users_list:
             usersid = user.values()[0]
@@ -256,10 +254,9 @@ class ProjectHealthDashboard(ProjectReport):
                 user_id_list.append(usersid)
         return user_id_list
 
-    @property
-    def template_context(self):
+    def previous_six_months(self):
         now = datetime.datetime.utcnow()
-        rows = []
+        six_month_summary = []
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
         users_in_group = self.get_users_by_filtered_groupids()
@@ -275,14 +272,19 @@ class ProjectHealthDashboard(ProjectReport):
             )
             this_month_summary.set_performing(this_month_summary.number_of_performing_users)
             this_month_summary.set_active_users(this_month_summary.number_of_active_users)
-            rows.append(this_month_summary)
+            six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
             last_month_summary = this_month_summary
+        return six_month_summary
 
+    @property
+    def template_context(self):
+        six_months_reports = self.previous_six_months()
+        performance_threshold = get_performance_threshold(self.domain)
         return {
-            'rows': rows,
-            'this_month': rows[-1],
-            'last_month': rows[-2],
+            'six_months_reports': six_months_reports,
+            'this_month': six_months_reports[-1],
+            'last_month': six_months_reports[-2],
             'threshold': performance_threshold,
         }
