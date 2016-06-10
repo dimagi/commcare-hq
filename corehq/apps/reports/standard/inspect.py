@@ -127,7 +127,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
         if HQUserType.UNKNOWN not in ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs):
             yield {
-                'not': {'term': {'xmlns': SYSTEM_FORM_XMLNS}}
+                'not': {'term': {'xmlns.exact': SYSTEM_FORM_XMLNS}}
             }
 
     def _es_xform_filter(self):
