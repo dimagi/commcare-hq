@@ -2866,7 +2866,7 @@ class StripePaymentMethod(PaymentMethod):
             'exp_year': card.exp_year,
             'token': card.id,
             'is_autopay': card.metadata.get('auto_pay_{}'.format(billing_account.id), False),
-        } for card in self.all_cards]
+        } for card in self.all_cards if card is not None]
 
     def get_card(self, card_token):
         return self.customer.cards.retrieve(card_token)
