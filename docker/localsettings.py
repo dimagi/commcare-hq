@@ -128,13 +128,13 @@ BITLY_LOGIN = None
 ####### Jar signing config ########
 
 _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-JAR_SIGN = dict(
-    jad_tool = os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
-    key_store = os.path.join(_ROOT_DIR, "InsecureTestingKeyStore"),
-    key_alias = "javarosakey",
-    store_pass = "onetwothreefourfive",
-    key_pass = "onetwothreefourfive",
-)
+JAR_SIGN = {
+    "jad_tool": os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
+    "key_store": os.path.join(_ROOT_DIR, "InsecureTestingKeyStore"),
+    "key_alias": "javarosakey",
+    "store_pass": "onetwothreefourfive",
+    "key_pass": "onetwothreefourfive",
+}
 
 AUDIT_MODEL_SAVE = ['django.contrib.auth.models.User']
 
