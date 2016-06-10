@@ -616,6 +616,15 @@ class ConfigureChartReport(ReportBuilderView):
         try:
             report_form = self.report_form
         except Exception as e:
+            self.template_name = 'userreports/report_error.html'
+            response = {
+                'report_id': self.existing_report.get_id,
+                'is_static': self.existing_report.is_static,
+                'error_message': '',
+                'details': unicode(e)
+            }
+            recreate_message = _('You can delete and recreate this report using the button below, or ' \
+                                 'report an issue if you believe you are seeing this page in error.')
             if self.existing_report and self.existing_report.report_meta.edited_manually:
                 error_message_base = _(
                     'It looks like this report was edited by hand and is no longer editable in report builder.'
@@ -625,17 +634,15 @@ class ConfigureChartReport(ReportBuilderView):
                         'You can edit the report manually using the <a href="{}">advanced UI</a>.'
                     ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
                 else:
-                    error_message = '{} {}'.format(error_message_base, _(
-                        'You can delete and recreate this report using the button below, or '
-                        'report an issue if you believe you are seeing this page in error.'
-                    ))
-                self.template_name = 'userreports/report_error.html'
-                return {
-                    'report_id': self.existing_report.get_id,
-                    'is_static': self.existing_report.is_static,
-                    'error_message': error_message,
-                    'details': unicode(e)
-                }
+                    error_message = '{} {}'.format(error_message_base, recreate_message)
+                response['error_message'] = error_message
+                return response
+            elif isinstance(e, DataSourceConfigurationNotFoundError):
+                response['error_message'] = '{} {}'.format(
+                    str(e),
+                    recreate_message
+                )
+                return response
             else:
                 raise
 
