@@ -113,6 +113,9 @@
 {% endblock %}
 
 {% block page_content %}
+    <p class="alert alert-warning">
+        {% trans "This is marked as demo user. All forms submitted by this user will be ignored  and will not appear in reports or data exports." %}
+    </p>
     <ul class="nav nav-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
         <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
@@ -176,6 +179,43 @@
                     </div>
                 </fieldset>
             </div>
+            {% if request|toggle_enabled:"MOBILE_USER_DEMO_MODE" or couch_user.is_demo_user %}
+            <div class="alert alert-info">
+                <p>
+                    <i class="icon-question-sign"></i>
+                    {% if couch_user.is_demo_user %}
+                        {% trans "Turn off demo mode to allow this mobile worker to start sending data to CommCareHQ again." %}
+                    {% else %}
+                        {% trans "This will mark the mobile worker as a demo user and CommCareHQ will ignore future form submissions from the user." %}
+                    {% endif %}
+                </p>
+                {% if couch_user.is_demo_user %}
+                <form class="form form-horizontal"
+                      action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
+                      method="post">
+                      {% csrf_token %}
+                    <button type="submit" class="btn btn-default">
+                        <i class="icon-refresh"></i>
+                        {% trans 'Refresh Demo Mode data' %}
+                    </button>
+                </form>
+                {% endif %}
+                <form class="form form-horizontal"
+                      action="{% url "toggle_demo_mode" domain couch_user.user_id %}"
+                      method="post">
+                    <input type="hidden" name="demo_mode" value="{{ couch_user.is_demo_user|yesno:"no,yes" }}" />
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-info">
+                        {% if couch_user.is_demo_user %}
+                            <i class="icon-trash"></i>
+                            {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
+                        {% else %}
+                            {% trans 'Turn On Demo Mode for this Mobile Worker' %}
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+            {% endif %}
         </div>
         {% endif %}
     </div>

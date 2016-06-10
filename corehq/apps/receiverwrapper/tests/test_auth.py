@@ -1,9 +1,12 @@
 import uuid
 from django.core.urlresolvers import reverse
+from urllib import urlencode
+
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.submission_post import SubmissionPost
 import django_digest.test
 from django.test import TestCase
 import os
@@ -69,12 +72,22 @@ class _AuthTest(TestCase):
         self.user.delete()
 
     def _test_post(self, file_path, authtype=None, client=None,
-                   expected_status=201, expected_auth_context=None):
+                   expected_status=201, expected_auth_context=None,
+                   submit_mode=None, expected_response=None):
         if not client:
             client = django_digest.test.Client()
-        url = self.url
-        if authtype:
-            url += '?authtype={0}'.format(authtype)
+
+        def _make_url():
+            url = self.url
+            url_params = {}
+            if authtype:
+                url_params['authtype'] = authtype
+            if submit_mode:
+                url_params['submit_mode'] = submit_mode
+            url = '%s?%s' % (url, urlencode(url_params))
+            return url
+
+        url = _make_url()
         with open(file_path, "rb") as f:
             fileobj = FakeFile(
                 f.read().format(
@@ -86,6 +99,10 @@ class _AuthTest(TestCase):
             )
             response = client.post(url, {"xml_submission_file": fileobj})
         self.assertEqual(response.status_code, expected_status)
+
+        if expected_response:
+            self.assertEqual(response.content, expected_response)
+
         if expected_auth_context is not None:
             xform_id = response['X-CommCareHQ-FormID']
             xform = FormAccessors(self.domain).get_form(xform_id)
@@ -108,6 +125,39 @@ class _AuthTest(TestCase):
             client=client,
             expected_auth_context=expected_auth_context,
             authtype='digest',
+        )
+
+    def test_submit_mode(self):
+        # test 'submit_mode=demo' request param
+
+        accepted_response = SubmissionPost.get_success_response(None, None).content
+        ignored_response = SubmissionPost.submission_ignored_response().content
+
+        # submissions with 'submit_mode=demo' param should be ignored
+        self._test_post(
+            file_path=self.bare_form,
+            authtype='noauth',
+            submit_mode='demo',
+            expected_response=ignored_response
+        )
+        # submissions with 'submit_mode=demo' param by real users should be ignored
+        client = django_digest.test.Client()
+        client.set_authorization(self.user.username, '1234',
+                                 method='Digest')
+        self._test_post(
+            file_path=self.bare_form,
+            client=client,
+            authtype='digest',
+            submit_mode='demo',
+            expected_response=ignored_response
+        )
+
+        # submissions by 'demo_user' should not be ignored even with 'submit_mode=demo' param
+        self._test_post(
+            file_path=self.form_with_demo_case,
+            authtype='noauth',
+            submit_mode='demo',
+            expected_response=accepted_response
         )
 
     @run_with_all_backends
