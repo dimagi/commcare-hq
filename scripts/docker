@@ -116,7 +116,11 @@ if [ "$CMD" == "services" ]; then
 else
     export COMPOSE_FILE=docker/hq-compose.yml
     export COMPOSE_PROJECT_NAME=hqtest
-    export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
+    if [ -n "$TRAVIS_BUILD_DIR" ]; then
+        export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
+    else
+        export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
+    fi
 fi
 # export variables for compose file (they must be set or it complains)
 export JS_SETUP="${JS_SETUP:-no}"
