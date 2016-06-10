@@ -38,4 +38,4 @@ class Command(ElasticReindexer):
 
     @staticmethod
     def sort_key(row):
-        return row['doc'].get('received_on', 'None')
+        return row['doc'].get('received_on') or 'None'
