@@ -70,7 +70,6 @@ submodules:
   submodules/ctable-src:
     branches:
       - b3-remove-use-bootstrap3  # biyeun 6/7
-      - fix-compress  # biyeun 6/10
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
@@ -80,6 +79,7 @@ submodules:
   corehq/apps/prelogin:
     branches:
       - new-static-rename  # biyeun 6/7
+      - fix-compress  # biyeun 6/10
 #      - revert-84-async-bgs # Nick P 6/10
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
