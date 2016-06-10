@@ -143,7 +143,7 @@ class CleanOwnerSyncPayload(object):
         self.restore_state.current_sync_log.closed_cases = self.closed_cases
 
     def purge_and_get_irrelevant_cases(self):
-        original_case_ids_on_phone = self.restore_state.current_sync_log.case_ids_on_phone
+        original_case_ids_on_phone = self.restore_state.current_sync_log.case_ids_on_phone.copy()
         self.restore_state.current_sync_log.purge_dependent_cases()
         purged_cases = original_case_ids_on_phone - self.restore_state.current_sync_log.case_ids_on_phone
         # don't sync purged cases that were never on the phone
