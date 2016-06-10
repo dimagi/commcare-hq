@@ -25,7 +25,7 @@
 <script type="text/javascript">
     // "Performing / Active User Trends" Chart
     function setupCharts() {
-        var data = {{ rows|JSON }};
+        var data = {{ six_months_reports|JSON }};
         var performingSeries = {
             'key': 'performing',
             values: _.map(data, function(item) {
