@@ -77,7 +77,8 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: []
+    branches:
 #      - new-static-rename  # biyeun 6/7
+      - revert-84-async-bgs # Nick P 6/10
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
