@@ -2,11 +2,13 @@ import datetime
 
 from celery.task import task
 from couchdbkit import ResourceConflict
-
+from django.utils.translation import ugettext as _
+from corehq import toggles
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.sql import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration, id_is_static
+from corehq.util.context_managers import notify_someone
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
 
@@ -31,34 +33,40 @@ def _build_indicators(config, document_store, relevant_ids, resume_helper):
         resume_helper.add_id(last_id)
 
 
-
 @task(queue='ucr_queue', ignore_result=True)
-def rebuild_indicators(indicator_config_id):
+def rebuild_indicators(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
-    adapter = IndicatorSqlAdapter(config)
+    success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
+    failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
+    send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
+    with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
+        adapter = IndicatorSqlAdapter(config)
+        if not id_is_static(indicator_config_id):
+            # Save the start time now in case anything goes wrong. This way we'll be
+            # able to see if the rebuild started a long time ago without finishing.
+            config.meta.build.initiated = datetime.datetime.utcnow()
+            config.meta.build.finished = False
+            config.save()
 
-    if not id_is_static(indicator_config_id):
-        # Save the start time now in case anything goes wrong. This way we'll be
-        # able to see if the rebuild started a long time ago without finishing.
-        config.meta.build.initiated = datetime.datetime.utcnow()
-        config.meta.build.finished = False
-        config.save()
-
-    adapter.rebuild_table()
-    _iteratively_build_table(config)
+        adapter.rebuild_table()
+        _iteratively_build_table(config)
 
 
 @task(queue='ucr_queue', ignore_result=True, acks_late=True)
-def resume_building_indicators(indicator_config_id):
+def resume_building_indicators(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
-    resume_helper = DataSourceResumeHelper(config)
+    success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
+    failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
+    send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
+    with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
+        resume_helper = DataSourceResumeHelper(config)
 
-    relevant_ids = resume_helper.get_ids_to_resume_from()
-    if len(relevant_ids) > 0:
-        _build_indicators(config, get_document_store(config.domain, config.referenced_doc_type), relevant_ids,
-                          resume_helper)
-        last_id = relevant_ids[-1]
-        _iteratively_build_table(config, last_id, resume_helper)
+        relevant_ids = resume_helper.get_ids_to_resume_from()
+        if len(relevant_ids) > 0:
+            _build_indicators(config, get_document_store(config.domain, config.referenced_doc_type), relevant_ids,
+                              resume_helper)
+            last_id = relevant_ids[-1]
+            _iteratively_build_table(config, last_id, resume_helper)
 
 
 def _iteratively_build_table(config, last_id=None, resume_helper=None):

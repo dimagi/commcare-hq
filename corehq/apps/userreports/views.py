@@ -1033,7 +1033,7 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id)
+    rebuild_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1063,7 +1063,7 @@ def resume_building_data_source(request, domain, config_id):
             request,
             _(u'Resuming rebuilding table "{}".').format(config.display_name)
         )
-        resume_building_indicators.delay(config_id)
+        resume_building_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
