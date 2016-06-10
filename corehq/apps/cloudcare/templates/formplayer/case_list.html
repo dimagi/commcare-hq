@@ -3,6 +3,11 @@
 <script type="text/template" id="case-view-list-template">
     <h2 id="title"><%= title %></h2>
     <table class="table table-hover table-striped table-bordered">
+
+        <% if (tiles) { %>
+        <div class="wrapper"></div>
+        <% } else { %>
+
         <thead>
         <tr>
             <% _.each(headers, function(header) { %>
@@ -12,6 +17,8 @@
         </thead>
         <tbody>
         </tbody>
+
+        <% } %>
     </table>
     <% if (action) { %>
     <div>
@@ -52,4 +59,15 @@
             <td><%= datum %></td>
         <% } %>
     <% }); %>
+</script>
+
+<script type="text/template" id="case-tile-view-item-template">
+    <div style="display: grid;
+                grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+                grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr">
+        <% _.each(data, function(datum, index) {
+            console.log("GRID: " + getGridStyle(index) + " datum: " + datum)%>
+            <div style="<%= getGridStyle(index) %>"><%= datum %></div>
+        <% }); %>
+    </div>
 </script>

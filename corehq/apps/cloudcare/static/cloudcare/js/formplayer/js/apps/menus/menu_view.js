@@ -46,9 +46,36 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
+    var getGridAttributes = function (tile) {
+        if(!tile){
+            return null;
+        }
+        var gridX = tile.gridX + 1;
+        var gridY = tile.gridY + 1;
+        var gridWidth = tile.gridWidth;
+        var gridHeight = tile.gridHeight;
+
+        return "grid-column: col " + gridX + " / span " + gridWidth + "; " +
+                "grid-row: row " + gridY + " / span " + gridHeight +";";
+    };
+
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         template: "#case-view-item-template",
+
+        getTemplate: function () {
+            if (this.options.tiles) {
+                return "#case-tile-view-item-template";
+            } else {
+                return "#case-view-item-template";
+            }
+        },
+
+        initialize: function (options) {
+            this.tiles = options.tiles;
+            this.styles = options.styles;
+        },
+
 
         events: {
             "click": "rowClick",
@@ -64,9 +91,16 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
-                resolveUri: function(uri) {
+                tiles: this.options.tiles,
+                resolveUri: function (uri) {
                     return FormplayerFrontend.request('resourceMap', uri, appId);
                 },
+                getGridStyle: function (index) {
+                    var tile = this.tiles[index];
+                    var styleString = getGridAttributes(tile);
+                    console.log("returning style: " + styleString);
+                    return styleString;
+                }
             };
         },
     });
@@ -75,15 +109,17 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         tagName: "div",
         template: "#case-view-list-template",
         childView: MenuList.CaseView,
-        childViewContainer: "tbody",
+        childViewContainer: "div",
 
         initialize: function (options) {
+            this.tiles = options.tiles;
             this.styles = options.styles;
         },
 
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
+                tiles: this.options.tiles,
             };
         },
 
@@ -115,6 +151,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 currentPage: this.options.currentPage,
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
+                tiles: this.options.tiles,
             };
         },
     });
