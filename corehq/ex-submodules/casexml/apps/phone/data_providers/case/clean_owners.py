@@ -1,16 +1,19 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.phone.cleanliness import get_case_footprint_info
-from casexml.apps.phone.data_providers.case.load_testing import get_elements_for_response
+from casexml.apps.phone.data_providers.case.load_testing import get_xml_for_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, IndexTree
 from corehq.apps.users.cases import get_owner_id
 from dimagi.utils.decorators.memoized import memoized
+
+
+PotentialSyncElement = namedtuple("PotentialSyncElement", ['case_stub', 'sync_xml_items'])
 
 
 def get_case_payload(restore_state):
@@ -59,21 +62,15 @@ class CleanOwnerSyncPayload(object):
         updates = get_case_sync_updates(
             self.restore_state.domain, case_batch, self.restore_state.last_sync_log
         )
-        self._add_commtrack_elements_to_response(updates)
 
         for update in updates:
             case = update.case
-            self.potential_elements_to_sync[case.case_id] = get_elements_for_response(update, self.restore_state)
+            self.potential_elements_to_sync[case.case_id] = PotentialSyncElement(
+                case_stub=CaseStub(case.case_id, case.type),
+                sync_xml_items=get_xml_for_response(update, self.restore_state)
+            )
             self._process_case_update(case)
             self.checked_cases.add(case.case_id)  # mark case as checked
-
-    def _add_commtrack_elements_to_response(self, updates):
-        # commtrack ledger sections for this batch
-        commtrack_elements = get_stock_payload(
-            self.restore_state.project, self.restore_state.stock_settings,
-            [CaseStub(update.case.case_id, update.case.type) for update in updates]
-        )
-        self.response.extend(commtrack_elements)
 
     def _process_case_update(self, case):
         if case.indices:
@@ -154,10 +151,29 @@ class CleanOwnerSyncPayload(object):
         return irrelevant_cases
 
     def compile_response(self, irrelevant_cases):
-        for element_case_id, elements in self.potential_elements_to_sync.iteritems():
-            if element_case_id not in irrelevant_cases:
-                for element in elements:
-                    self.response.append(element)
+        relevant_sync_elements = [
+            potential_sync_element
+            for syncable_case_id, potential_sync_element in self.potential_elements_to_sync.iteritems()
+            if syncable_case_id not in irrelevant_cases
+        ]
+
+        self._add_commtrack_elements_to_response(relevant_sync_elements)
+        self._add_case_elements_to_response(relevant_sync_elements)
+
+    def _add_commtrack_elements_to_response(self, relevant_sync_elements):
+        commtrack_elements = get_stock_payload(
+            self.restore_state.project, self.restore_state.stock_settings,
+            [
+                potential_sync_element.case_stub
+                for potential_sync_element in relevant_sync_elements
+            ]
+        )
+        self.response.extend(commtrack_elements)
+
+    def _add_case_elements_to_response(self, relevant_sync_elements):
+        for relevant_case in relevant_sync_elements:
+            for xml_item in relevant_case.sync_xml_items:
+                self.response.append(xml_item)
 
 
 class CleanOwnerCaseSyncOperation(object):
