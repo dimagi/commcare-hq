@@ -1935,7 +1935,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             privileges = get_privileges(plan_version)
             if (
                 REPORT_BUILDER_5 in privileges
-                and not (REPORT_BUILDER_ADD_ON_PRIVS - REPORT_BUILDER_5 - REPORT_BUILDER_TRIAL) & privileges
+                and not (REPORT_BUILDER_ADD_ON_PRIVS - {REPORT_BUILDER_5, REPORT_BUILDER_TRIAL}) & privileges
             ):
                 new_plan_version = plan_version
                 break

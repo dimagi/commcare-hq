@@ -1028,10 +1028,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'couchlog': {
-            'level': 'WARNING',
-            'class': 'couchlog.handlers.CouchHandler',
-        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
@@ -1046,7 +1042,7 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -1070,7 +1066,7 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': True
         },
@@ -1085,7 +1081,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
+            'handlers': ['accountinglog', 'console', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -1579,6 +1575,31 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_3_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_household_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_pregnancies.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_4_6_infrastructure.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10a_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10b_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_11_visitor_book_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2ci_child_birth_list.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_3i_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_3ii_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_4a_6_pse.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_4b_infra_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_7_growth_monitoring_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_8_tasks_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_9_vhnd_forms.json'),
 ]
 
 
@@ -1594,7 +1615,26 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
-    os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json')
+    os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
