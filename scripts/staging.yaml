@@ -49,7 +49,7 @@ branches:
   - hqDefine-users  # danny 6/7
   - demo-user # sravan 6/3
   - vellum-staging # J$ 11/13
-#  - b3-final-cleanup+notifications-perms-change  # biyeun 6/7
+  - b3-final-cleanup+notifications-perms-change  # biyeun 6/7
   - notifications-perms-change # j$ 5/11
   - calculatedIcons # Sravan 3/2
   - xform-blobs  # daniel 5/23
