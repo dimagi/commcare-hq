@@ -12,6 +12,7 @@ types = [
     'ucr',
     'apps',
     'user_fields',
+    'user_roles',
     'reminders',
     'keywords',
     'auto_case_updates',
@@ -59,6 +60,10 @@ class Command(BaseCommand):
         if self._clone_type(options, 'user_fields'):
             from corehq.apps.users.views.mobile import UserFieldsView
             self._copy_custom_data(UserFieldsView.field_type)
+
+        if self._clone_type(options, 'user_roles'):
+            from corehq.apps.users.models import UserRole
+            self._copy_all_docs_of_type(UserRole)
 
         if self._clone_type(options, 'reminders'):
             from corehq.apps.reminders.models import CaseReminderHandler
