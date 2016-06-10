@@ -14,12 +14,11 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
 
-from couchdbkit import ResourceConflict, ResourceNotFound
+from couchdbkit import ResourceConflict
 
 from casexml.apps.case.models import CASE_STATUS_OPEN
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
-from casexml.apps.stock.models import StockTransaction
 from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
@@ -63,7 +62,6 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.xml_utils import indent_xml
 from corehq.apps.analytics.tasks import track_clicked_preview_on_hubspot

@@ -1,7 +1,6 @@
 from collections import defaultdict
 from datetime import datetime
 import logging
-from couchdbkit import ResourceNotFound
 from lxml.builder import E
 from django.conf import settings
 

@@ -8,7 +8,6 @@ import re
 from restkit.errors import NoMoreData
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.loader import render_to_string

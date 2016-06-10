@@ -11,7 +11,6 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template.loader import render_to_string
-from django.shortcuts import render
 from django.contrib import messages
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception

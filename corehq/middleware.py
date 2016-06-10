@@ -9,7 +9,6 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.views import logout as django_logout
 
 from corehq.apps.domain.models import Domain
-from corehq.util.quickcache import quickcache
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
