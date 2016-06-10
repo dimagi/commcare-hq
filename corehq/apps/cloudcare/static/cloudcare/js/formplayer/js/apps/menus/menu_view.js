@@ -50,13 +50,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         if(!tile){
             return null;
         }
-        var gridX = tile.gridX + 1;
-        var gridY = tile.gridY + 1;
-        var gridWidth = tile.gridWidth;
-        var gridHeight = tile.gridHeight;
+        var rowStart = tile.gridX + 1;
+        var colStart = tile.gridY + 1;
+        var rowEnd = rowStart + tile.gridWidth;
+        var colEnd = colStart + tile.gridHeight;
 
-        return "grid-column: col " + gridX + " / span " + gridWidth + "; " +
-                "grid-row: row " + gridY + " / span " + gridHeight +";";
+        return "grid-area: " + colStart + " / " + rowStart + " / " +
+                colEnd + " / " + rowEnd +";";
     };
 
     MenuList.CaseView = Marionette.ItemView.extend({

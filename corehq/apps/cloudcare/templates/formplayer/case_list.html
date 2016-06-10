@@ -48,26 +48,31 @@
         </nav>
     </div>
     <% } %>
-
 </script>
 
 <script type="text/template" id="case-view-item-template">
     <% _.each(data, function(datum, index) { %>
-        <% if (styles[index].displayFormat === 'Image') { %>
-            <td><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
-        <% } else { %>
-            <td><%= datum %></td>
-        <% } %>
+    <% if (styles[index].displayFormat === 'Image') { %>
+    <td><img class="module-icon" src="<%= resolveUri(datum) %>"/></td>
+    <% } else { %>
+    <td><%= datum %></td>
+    <% } %>
     <% }); %>
 </script>
 
 <script type="text/template" id="case-tile-view-item-template">
-    <div style="display: grid;
-                grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-                grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr">
+    <div class="grid-wrapper">
         <% _.each(data, function(datum, index) {
-            console.log("GRID: " + getGridStyle(index) + " datum: " + datum)%>
-            <div style="<%= getGridStyle(index) %>"><%= datum %></div>
+        console.log("GRID: " + getGridStyle(index) + " datum: " + datum)%>
+        <div class="box" style="'<%= getGridStyle(index) %>'">
+            <% if (styles[index].displayFormat === 'Image') {
+                if(resolveUri(datum)) { %>
+                    <img class="module-icon" style="max-width:50%; max-height:50%;" src="<%= resolveUri(datum) %>"/>
+                <% } %>
+            <% } else { %>
+            <div><%= datum %></div>
+            <% } %>
+        </div>
         <% }); %>
     </div>
 </script>
