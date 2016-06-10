@@ -27,7 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.tour import tours
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
@@ -617,34 +617,13 @@ class ConfigureChartReport(ReportBuilderView):
             report_form = self.report_form
         except Exception as e:
             self.template_name = 'userreports/report_error.html'
-            response = {
+            error_response = {
                 'report_id': self.existing_report.get_id,
                 'is_static': self.existing_report.is_static,
                 'error_message': '',
                 'details': unicode(e)
             }
-            recreate_message = _('You can delete and recreate this report using the button below, or ' \
-                                 'report an issue if you believe you are seeing this page in error.')
-            if self.existing_report and self.existing_report.report_meta.edited_manually:
-                error_message_base = _(
-                    'It looks like this report was edited by hand and is no longer editable in report builder.'
-                )
-                if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
-                    error_message = '{} {}'.format(error_message_base, _(
-                        'You can edit the report manually using the <a href="{}">advanced UI</a>.'
-                    ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
-                else:
-                    error_message = '{} {}'.format(error_message_base, recreate_message)
-                response['error_message'] = error_message
-                return response
-            elif isinstance(e, DataSourceConfigurationNotFoundError):
-                response['error_message'] = '{} {}'.format(
-                    str(e),
-                    recreate_message
-                )
-                return response
-            else:
-                raise
+            return self._handle_exception(error_response, e)
 
         return {
             'report': {
@@ -660,6 +639,33 @@ class ConfigureChartReport(ReportBuilderView):
             ],
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
+
+    def _handle_exception(self, response, exception):
+        if self.existing_report and self.existing_report.report_meta.edited_manually:
+            error_message_base = _(
+                'It looks like this report was edited by hand and is no longer editable in report builder.'
+            )
+            if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
+                error_message = '{} {}'.format(error_message_base, _(
+                    'You can edit the report manually using the <a href="{}">advanced UI</a>.'
+                ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
+            else:
+                error_message = '{} {}'.format(
+                    error_message_base,
+                    _('You can delete and recreate this report using the button below, or '
+                      'report an issue if you believe you are seeing this page in error.')
+                )
+            response['error_message'] = error_message
+            return response
+        elif isinstance(exception, DataSourceConfigurationNotFoundError):
+            response['details'] = None
+            response['error_message'] = '{} {}'.format(
+                str(exception),
+                DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+            )
+            return response
+        else:
+            raise
 
     @property
     @memoized
