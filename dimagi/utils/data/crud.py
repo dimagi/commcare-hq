@@ -1,5 +1,5 @@
 from django import forms
-from django.forms.util import ErrorList
+from django.forms.utils import ErrorList
 from django.template.loader import render_to_string
 import json
 from dimagi.utils.decorators.memoized import memoized
