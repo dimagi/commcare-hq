@@ -78,6 +78,5 @@ submodules:
   corehq/apps/prelogin:
     branches:
       - new-static-rename  # biyeun 6/7
-      - fix-compress  # biyeun 6/10
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
