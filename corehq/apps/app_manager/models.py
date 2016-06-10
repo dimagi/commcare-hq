@@ -72,6 +72,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.xpath import (
+    dot_interpolate,
     interpolate_xpath,
     LocationXpath,
 )
@@ -1547,18 +1548,48 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
     @property
+    def treat_as_expression(self):
+        """
+        Returns if whether the key can be treated as a valid expression that can be included in
+        condition-predicate of an if-clause for e.g. if(<expression>, value, ...)
+        """
+        special_chars = '{}()[]=<>."\'/'
+        return any(special_char in self.key for special_char in special_chars)
+
+    @property
     def key_as_variable(self):
         """
         Return an xml variable name to represent this key.
-        If the key has no spaces, return the key with "k" prepended.
-        If the key does contain spaces, return a hash of the key with "h" prepended.
+
+        If the key contains spaces or a condition-predicate of an if-clause,
+        return a hash of the key with "h" prepended.
+        If not, return the key with "k" prepended.
+
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        if " " not in self.key:
-            return 'k{key}'.format(key=self.key)
-        else:
+        if ' ' in self.key or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+        else:
+            return 'k{key}'.format(key=self.key)
+
+    def key_as_condition(self, property):
+        if self.treat_as_expression:
+            condition = dot_interpolate(self.key, property)
+            return u"{condition}".format(condition=condition)
+        else:
+            return u"{property} = '{key}'".format(
+                property=property,
+                key=self.key
+            )
+
+    def ref_to_key_variable(self, index, sort_or_display):
+        if sort_or_display == "sort":
+            key_as_var = "{}, ".format(index)
+        elif sort_or_display == "display":
+            key_as_var = "${var_name}, ".format(var_name=self.key_as_variable)
+
+        return key_as_var
 
 
 class GraphAnnotations(IndexedSchema):
@@ -1684,6 +1715,18 @@ class DetailColumn(IndexedSchema):
                                   for key, value in data['enum'].items())
 
         return super(DetailColumn, cls).wrap(data)
+
+    @classmethod
+    def from_json(cls, data):
+        from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+
+        to_ret = cls.wrap(data)
+        if to_ret.format == 'enum-image':
+            # interpolate icons-paths
+            for item in to_ret.enum:
+                for lang, path in item.value.iteritems():
+                    item.value[lang] = interpolate_media_path(path)
+        return to_ret
 
 
 class SortElement(IndexedSchema):
@@ -1947,20 +1990,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         from corehq.apps.locations.util import parent_child
         hierarchy = None
         for column in columns:
-            if column.format in ('enum', 'enum-image'):
-                for item in column.enum:
-                    key = item.key
-                    # key cannot contain certain characters because it is used
-                    # to generate an xpath variable name within suite.xml
-                    # (names with spaces will be hashed to form the xpath
-                    # variable name)
-                    if not re.match('^([\w_ -]*)$', key):
-                        yield {
-                            'type': 'invalid id key',
-                            'key': key,
-                            'module': self.get_module_info(),
-                        }
-            elif column.field_type == FIELD_TYPE_LOCATION:
+            if column.field_type == FIELD_TYPE_LOCATION:
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
                     LocationXpath('').validate(column.field_property, hierarchy)
