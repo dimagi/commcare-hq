@@ -54,6 +54,7 @@ from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
@@ -75,7 +76,6 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
 )
 from corehq.apps.builds import get_default_build_spec
-from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
