@@ -674,13 +674,6 @@ def _app_callout_templates():
 app_callout_templates = _app_callout_templates()
 
 
-def use_app_aware_sync(app):
-    """
-    Determines whether OTA restore should sync only cases/ledgers/fixtures of the given app where possible
-    """
-    return toggles.APP_AWARE_SYNC.enabled(app.domain)
-
-
 def purge_report_from_mobile_ucr(report_config):
     """
     Called when a report is deleted, this will remove any references to it in

@@ -6,6 +6,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.tests import run_with_all_backends
 from corehq.toggles import ENABLE_LOADTEST_USERS
 
 
@@ -29,6 +30,7 @@ class LoadtestUserTest(TestCase):
         cls.user.delete()
         cls.domain.delete()
 
+    @run_with_all_backends
     def test_no_factor_set(self):
         self.user.loadtest_factor = None
         self.user.save()
@@ -43,6 +45,7 @@ class LoadtestUserTest(TestCase):
         self.assertEqual(1, len(caseblocks))
         self.assertEqual(caseblocks[0].get_case_id(), case.case_id)
 
+    @run_with_all_backends
     def test_simple_factor(self):
         self.user.loadtest_factor = 3
         self.user.save()
@@ -61,6 +64,7 @@ class LoadtestUserTest(TestCase):
         self.assertEqual(3, len(filter(lambda cb: case1.name in cb.get_case_name(), caseblocks)))
         self.assertEqual(3, len(filter(lambda cb: case2.name in cb.get_case_name(), caseblocks)))
 
+    @run_with_all_backends
     def test_parent_child(self):
         self.user.loadtest_factor = 3
         self.user.save()

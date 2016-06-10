@@ -87,6 +87,8 @@ def get_module_view_context(app, module, lang=None):
         context.update(_get_report_module_context(app, module))
     else:
         context.update(_get_basic_module_view_context(app, module, lang))
+    if isinstance(module, ShadowModule):
+        context.update(_get_shadow_module_view_context(app, module, lang))
     return context
 
 
@@ -179,6 +181,22 @@ def _get_basic_module_view_context(app, module, lang=None):
         ),
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
+    }
+
+
+def _get_shadow_module_view_context(app, module, lang=None):
+    langs = None if lang is None else [lang]
+
+    def get_mod_dict(mod):
+        return {
+            'unique_id': mod.unique_id,
+            'name': trans(mod.name, langs),
+            'forms': [{'unique_id': f.unique_id, 'name': trans(f.name, langs)} for f in mod.get_forms()]
+        }
+
+    return {
+        'modules': [get_mod_dict(m) for m in app.modules if m.module_type == 'basic'],
+        'excluded_form_ids': module.excluded_form_ids,
     }
 
 
@@ -362,6 +380,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "root_module_id": None,
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
+        "excl_form_ids": None,
     }
 
     if attr not in attributes:
@@ -487,6 +506,11 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 module["root_module_id"] = request.POST.get("root_module_id")
             except ModuleNotFoundException:
                 messages.error(_("Unknown Module"))
+
+    if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
+        excl = request.POST.getlist('excl_form_ids')
+        excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
+        module.excluded_form_ids = excl
 
     handle_media_edits(request, module, should_edit, resp, lang)
 

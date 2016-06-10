@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
-import json_field
+import jsonfield
 import uuid
 from dimagi.ext.couchdbkit import *
 
@@ -13,11 +13,10 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    InvalidFormatException, VerifiedNumber,
+    InvalidFormatException,
     apply_leniency, BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
@@ -480,7 +479,7 @@ class PhoneBlacklist(models.Model):
         return False
 
 
-class PhoneNumber(SyncSQLToCouchMixin, models.Model):
+class PhoneNumber(models.Model):
     couch_id = models.CharField(max_length=126, db_index=True, null=True)
     domain = models.CharField(max_length=126, db_index=True, null=True)
     owner_doc_type = models.CharField(max_length=126, null=True)
@@ -671,23 +670,6 @@ class PhoneNumber(SyncSQLToCouchMixin, models.Model):
     def delete(self, *args, **kwargs):
         self._clear_caches()
         return super(PhoneNumber, self).delete(*args, **kwargs)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            'domain',
-            'owner_doc_type',
-            'owner_id',
-            'phone_number',
-            'backend_id',
-            'ivr_backend_id',
-            'verified',
-            'contact_last_modified'
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return VerifiedNumber
 
 
 class MessagingStatusMixin(object):
@@ -1503,7 +1485,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # This information is displayed in the gateway list UI.
     # If this backend represents an international gateway,
     # set this to: ["*"]
-    supported_countries = json_field.JSONField(default=[])
+    supported_countries = jsonfield.JSONField(default=list)
 
     # To avoid having many tables with so few records in them, all
     # SMS backends are stored in this same table. This field is a
@@ -1511,7 +1493,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # backend subclasses need.
     # NOTE: Do not access this field directly, instead use get_extra_fields()
     # and set_extra_fields()
-    extra_fields = json_field.JSONField(default={})
+    extra_fields = jsonfield.JSONField(default=dict)
 
     # For a historical view of sms data, we can't delete backends.
     # Instead, set a deleted flag when a backend should no longer be used.
@@ -1519,7 +1501,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
 
     # If the backend uses load balancing, this is a JSON list of the
     # phone numbers to load balance over.
-    load_balancing_numbers = json_field.JSONField(default=[])
+    load_balancing_numbers = jsonfield.JSONField(default=list)
 
     # The phone number which you can text to or call in order to reply
     # to this backend

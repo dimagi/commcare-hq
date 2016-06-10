@@ -46,6 +46,7 @@ class CaseRebuildTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(CaseRebuildTest, cls).setUpClass()
         delete_all_cases()
 
     def _assertListEqual(self, l1, l2, include_ordering=True):

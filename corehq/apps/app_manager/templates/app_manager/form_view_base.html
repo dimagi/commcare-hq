@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="{% new_static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
 {% endblock %}
 
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
+
 {% block js %}{{ block.super }}
     {% compress js %}
     <script src="{% new_static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>

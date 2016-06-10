@@ -1,5 +1,4 @@
 from copy import deepcopy
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
 from casexml.apps.phone.xml import get_case_element
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -13,8 +12,8 @@ def transform_loadtest_update(update, factor):
     """
     def _map_id(id, count):
         return u'{}-{}'.format(id, count)
-    case = CommCareCase.wrap(deepcopy(update.case._doc))
-    case._id = _map_id(case._id, factor)
+    case = deepcopy(update.case)
+    case.set_case_id(_map_id(case.case_id, factor))
     for index in case.indices:
         index.referenced_id = _map_id(index.referenced_id, factor)
     case.name = u'{} ({})'.format(case.name, factor)

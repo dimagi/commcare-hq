@@ -58,6 +58,8 @@ function CustomDataField () {
 function CustomDataFieldsModel () {
     var self = this;
     self.data_fields = ko.observableArray();
+    // The data field that the "remove field modal" currently refers to.
+    self.modalField = ko.observable();
 
     self.addField = function () {
         self.data_fields.push(new CustomDataField());
@@ -67,11 +69,13 @@ function CustomDataFieldsModel () {
         self.data_fields.remove(field);
     };
 
-    // Manually remove modal backrop because it is not part of the div
-    // we delete otherwise
-    self.removeFieldAndModal = function (field) {
-        self.removeField(field);
-        $(".modal-backdrop").remove();
+    self.setModalField = function (field) {
+        self.modalField(field);
+    };
+
+    self.confirmRemoveField = function () {
+        // Remove the field that the "remove field modal" currently refers to.
+        self.removeField(self.modalField());
     };
 
     self.init = function (initialFields) {

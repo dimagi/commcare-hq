@@ -15,6 +15,8 @@ class Command(ElasticReindexer):
 
     view_name = 'all_docs/by_doc_type'
 
+    sort_key_include_docs = True
+
     def get_extra_view_kwargs(self):
         return {
             'startkey': ['XFormInstance'],
@@ -33,3 +35,7 @@ class Command(ElasticReindexer):
         else:
             logging.warning('Unexpected input to custom_filter: {}'.format(view_row))
             return False
+
+    @staticmethod
+    def sort_key(row):
+        return row['doc'].get('received_on', 'None')

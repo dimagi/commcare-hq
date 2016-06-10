@@ -1,6 +1,6 @@
 import collections
 import logging
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 import six as six
 from couchdbkit import ResourceNotFound
@@ -184,10 +184,19 @@ class AbstractCommCareCase(object):
     def get_case_property(self, property):
         raise NotImplementedError
 
+    def get_closing_transactions(self):
+        raise NotImplementedError
+
+    def get_opening_transactions(self):
+        raise NotImplementedError
+
     def to_json(self):
         raise NotImplementedError()
 
     def to_api_json(self):
+        raise NotImplementedError()
+
+    def set_case_id(self, case_id):
         raise NotImplementedError()
 
     def _resolve_case_property(self, property_name, result):
