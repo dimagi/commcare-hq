@@ -121,6 +121,7 @@ fi
 # export variables for compose file (they must be set or it complains)
 export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
+export REUSE_DB="$REUSE_DB"
 
 if [ "$DOCKER_BETA" == "true" ]; then
     # Put elasticsearch (and other) data in a named data volume, automatically
