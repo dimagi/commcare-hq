@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
-import django.core.validators
+from django.db import migrations
 
 from corehq.sql_db.operations import HqRunPython
 
