@@ -4,8 +4,8 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% new_static 'commtrack/ko/sms.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'commtrack/ko/sms.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}

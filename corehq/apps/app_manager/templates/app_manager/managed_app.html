@@ -8,9 +8,9 @@
 
 {% block js %}
     {{ block.super }}
-    <script src="{% new_static 'app_manager/js/app_manager.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}

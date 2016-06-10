@@ -73,7 +73,6 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.reports.tasks import rebuild_export_task
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_select2,
     use_daterangepicker,
     use_jquery_ui,
@@ -152,7 +151,6 @@ class BaseExportView(BaseProjectDataView):
     export_type = None
     is_async = True
 
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, *args, **kwargs):
         return super(BaseExportView, self).dispatch(*args, **kwargs)
@@ -447,7 +445,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     filter_form_class = None
 
     @use_daterangepicker
-    @use_bootstrap3
     @use_select2
     @use_angular_js
     @method_decorator(login_and_domain_required)
@@ -904,7 +901,6 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     allow_bulk_export = True
     is_deid = False
 
-    @use_bootstrap3
     @use_select2
     @use_angular_js
     @method_decorator(login_and_domain_required)
@@ -1414,7 +1410,6 @@ class CaseExportListView(BaseExportListView):
 class BaseNewExportView(BaseExportView):
     template_name = 'export/customize_export_new.html'
 
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)

@@ -56,7 +56,6 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
 )
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_angular_js,
 )
 from corehq.apps.translations.models import StandaloneTranslationDoc
@@ -145,10 +144,6 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 
 class BaseEditUserView(BaseUserSettingsView):
     user_update_form_class = None
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -348,7 +343,6 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
-    @use_bootstrap3
     @use_angular_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
@@ -734,7 +728,6 @@ def delete_request(request, domain):
 
 class BaseManageWebUserView(BaseUserSettingsView):
 
-    @use_bootstrap3
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseManageWebUserView, self).dispatch(request, *args, **kwargs)
@@ -751,10 +744,6 @@ class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
     page_title = ugettext_lazy("Add Web User to Project")
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(InviteWebUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

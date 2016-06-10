@@ -5,8 +5,13 @@ from StringIO import StringIO
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
-from corehq.apps.style.decorators import use_bootstrap3, \
-    use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
+from corehq.apps.style.decorators import (
+    use_select2,
+    use_daterangepicker,
+    use_jquery_ui,
+    use_nvd3,
+    use_datatables,
+)
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from couchexport.shortcuts import export_response
 from dimagi.utils.modules import to_function
@@ -75,7 +80,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             return self._domain
         return super(ConfigurableReport, self).domain
 
-    @use_bootstrap3
     @use_select2
     @use_daterangepicker
     @use_jquery_ui

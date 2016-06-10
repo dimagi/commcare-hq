@@ -4,17 +4,17 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/lib/require.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     {% if not vellum_debug %}
-        <link href="{% new_static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
+        <link href="{% static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
     {% elif vellum_debug == "dev-min" %}
-        <link href="{% new_static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
+        <link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
     {% endif %}
     <script>
-        var CKEDITOR_BASEPATH = "{% new_static "app_manager/js/vellum/lib/ckeditor/" %}";
+        var CKEDITOR_BASEPATH = "{% static "app_manager/js/vellum/lib/ckeditor/" %}";
 
         var VELLUM_OPTIONS = {
             plugins: {{ plugins|JSON }},
@@ -114,11 +114,11 @@
                 * set settings.VELLUM_DEBUG to "dev" or "dev-min"
             {% endcomment %}
             {% if not vellum_debug %}
-            baseUrl: "{% new_static "app_manager/js/vellum/src" %}",
+            baseUrl: "{% static "app_manager/js/vellum/src" %}",
             {% elif vellum_debug == "dev-min" %}
-            baseUrl: "{% new_static 'formdesigner/_build/src' %}",
+            baseUrl: "{% static 'formdesigner/_build/src' %}",
             {% else %}
-            baseUrl: "{% new_static 'formdesigner/src' %}",
+            baseUrl: "{% static 'formdesigner/src' %}",
             {% endif %}
             // handle very bad connections
             waitSeconds: 60,
