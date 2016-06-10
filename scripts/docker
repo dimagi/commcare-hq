@@ -126,6 +126,15 @@ fi
 export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"
+export TRAVIS="$TRAVIS"
+
+if [ "$TRAVIS" == "true" ]; then
+    # don't mount /mnt/commcare-hq-ro volume read-only on travis
+    # overwrite of localsettings.py, etc. doesn't matter here
+    export RO=""
+else
+    export RO=":ro"
+fi
 
 if [ "$DOCKER_BETA" == "true" ]; then
     # Put elasticsearch (and other) data in a named data volume, automatically

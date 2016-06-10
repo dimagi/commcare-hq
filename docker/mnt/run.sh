@@ -104,15 +104,22 @@ printf "#! /bin/bash\nset -e\n" > /mnt/run_tests
 type _run_tests | tail -n +4 | head -n -1 >> /mnt/run_tests
 chmod +x /mnt/run_tests
 
-# commcare-hq source overlay prevents modifications in this container
-# from leaking to the host; allows safe overwrite of localsettings.py
 cd /mnt
-rm -rf lib/overlay  # clear source overlay
-mkdir -p commcare-hq lib/overlay lib/node_modules lib/sharedfiles
-ln -s /mnt/lib/node_modules lib/overlay/node_modules
+if [ "$TRAVIS" == "true" ]; then
+    ln -s commcare-hq-ro commcare-hq
+else
+    # commcare-hq source overlay prevents modifications in this container
+    # from leaking to the host; allows safe overwrite of localsettings.py
+    rm -rf lib/overlay  # clear source overlay
+    mkdir -p commcare-hq lib/overlay lib/node_modules
+    ln -s /mnt/lib/node_modules lib/overlay/node_modules
+    mount -t aufs -o br=lib/overlay:commcare-hq-ro none commcare-hq
+    chown cchq:cchq lib/overlay
+fi
+
+mkdir -p lib/sharedfiles
 ln -s /mnt/lib/sharedfiles /sharedfiles
-mount -t aufs -o br=lib/overlay:commcare-hq-ro none commcare-hq
-chown -R cchq:cchq lib/overlay lib/sharedfiles
+chown cchq:cchq lib/sharedfiles
 
 cd commcare-hq
 ln -sf docker/localsettings.py localsettings.py

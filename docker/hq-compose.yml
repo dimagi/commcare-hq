@@ -5,6 +5,7 @@ web:
     JS_SETUP: "${JS_SETUP}"
     NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
     REUSE_DB: "${REUSE_DB}"
+    TRAVIS: "${TRAVIS}"
   privileged: true  # allows mount inside container
   links:
     - postgres
@@ -14,7 +15,7 @@ web:
     - kafka
     - riakcs
   volumes:
-    - ..:/mnt/commcare-hq-ro:ro
+    - ..:/mnt/commcare-hq-ro${RO}
     - ${VOLUME_PREFIX}lib:/mnt/lib
 
 postgres:
