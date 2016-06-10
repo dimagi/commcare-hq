@@ -1198,7 +1198,6 @@ class CommCareVersionReport(AdminReport, ElasticTabularReport):
             terms = [
                 AggregationTerm('domain', 'domain'),
                 AggregationTerm('commcare_version', 'form.meta.commcare_version')
-
             ]
             query = FormES().submitted(gte=days, lte=now)
             return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
