@@ -950,7 +950,8 @@ class AdminAppReport(AdminFacetedReport):
     default_sort = {'name.exact': 'asc'}
     es_index = 'apps'
 
-    excluded_properties = ["_id", "_rev", "_attachments", "admin_password_charset", "short_odk_url", "version",
+    excluded_properties = ["_id", "_rev", "_attachments", "external_blobs",
+                           "admin_password_charset", "short_odk_url", "version",
                            "admin_password", "built_on", ]
 
     @property

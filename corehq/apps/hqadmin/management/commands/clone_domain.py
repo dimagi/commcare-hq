@@ -3,6 +3,7 @@ from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
+from corehq.blobs.mixin import BlobMixin
 
 types = [
     "feature_flags",
@@ -261,16 +262,25 @@ class Command(BaseCommand):
 
     def save_couch_copy(self, doc, new_domain=None):
         old_id = doc._id
+
+        attachments = {}
+        attachemnt_stubs = None
+        if isinstance(doc, BlobMixin) and doc.blobs:
+            attachemnt_stubs = {k: v.to_json() for k, v in doc.blobs.iteritems()}
+            doc['external_blobs'] = {}
+            if doc._attachments:
+                del doc['_attachments']
+        elif "_attachments" in doc and doc['_attachments']:
+            attachemnt_stubs = doc["_attachments"]
+            del doc['_attachments']
+        if attachemnt_stubs:
+            # fetch attachments before assigning new _id
+            attachments = {k: doc.fetch_attachment(k) for k in attachemnt_stubs}
+
         doc._id = doc.get_db().server.next_uuid()
         del doc['_rev']
         if new_domain:
             doc.domain = new_domain
-
-        attachments = {}
-        if "_attachments" in doc and doc['_attachments']:
-            attachemnt_stubs = doc["_attachments"]
-            del doc['_attachments']
-            attachments = {k: doc.get_db().fetch_attachment(old_id, k) for k in attachemnt_stubs}
 
         doc.save()
 
