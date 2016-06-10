@@ -79,6 +79,5 @@ submodules:
     branches:
       - new-static-rename  # biyeun 6/7
       - fix-compress  # biyeun 6/10
-#      - revert-84-async-bgs # Nick P 6/10
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
