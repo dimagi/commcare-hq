@@ -49,6 +49,7 @@ def get_download_context(download_id, check_state=False, message=None):
             if not check_state:
                 is_ready = True
             elif download_data.task.successful():
+                is_ready = True
                 result = download_data.task.result
                 context['result'] = result and result.get('messages')
                 if result and result.get('errors'):
