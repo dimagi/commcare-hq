@@ -58,9 +58,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
-        self._apply_group_filter = self._base_queryset.filter(
-            user_id__in=users_filtered_by_group,
-        )
         self._performing_queryset = self._base_queryset.filter(
             num_of_forms__gte=performance_threshold,
         )
@@ -83,18 +80,17 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def number_of_performing_users(self):
-        malt_rows = self._performing_queryset
+        malt_performing = self._performing_queryset
         if self._users_filtered_by_group:
-            return malt_rows.filter(user_id__in=self._users_filtered_by_group).distinct('user_id').count()
-        else:
-            return malt_rows.distinct('user_id').count()
+            malt_performing = malt_performing.filter(user_id__in=self._users_filtered_by_group)
+        return malt_performing.distinct('user_id').count()
 
     @property
     def number_of_active_users(self):
+        malt_all = self._base_queryset
         if self._users_filtered_by_group:
-            return self._apply_group_filter.distinct('user_id').count()
-        else:
-            return self._base_queryset.distinct('user_id').count()
+            malt_all = malt_all.filter(user_id__in=self._users_filtered_by_group)
+        return malt_all.distinct('user_id').count()
 
     @property
     def previous_month(self):
@@ -110,10 +106,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def delta_performing_pct(self):
-        if self._previous_summary.number_of_performing_users:
+        if self.delta_performing and self._previous_summary and self._previous_summary.number_of_performing_users:
             return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
-        else:
-            return 100
 
     @property
     def delta_active(self):
@@ -121,11 +115,14 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def delta_active_pct(self):
-        if self._previous_summary.active:
+        if self.delta_active and self._previous_summary and self._previous_summary.active:
             return float(self.delta_active / float(self._previous_summary.active)) * 100.
 
     @memoized
     def get_all_user_stubs(self):
+        malt_all = self._base_queryset.distinct('user_id')
+        if self._users_filtered_by_group:
+            malt_all = malt_all.filter(user_id__in=self._users_filtered_by_group)
         return {
             row.user_id: UserActivityStub(
                 user_id=row.user_id,
@@ -134,35 +131,15 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 is_performing=row.num_of_forms >= self.performance_threshold,
                 previous_stub=None,
                 next_stub=None,
-            ) for row in self._base_queryset.distinct('user_id')
-        }
-
-    def get_all_user_stubs_by_filtered_group(self):
-        return {
-            row.user_id: UserActivityStub(
-                user_id=row.user_id,
-                username=raw_username(row.username),
-                num_forms_submitted=row.num_of_forms,
-                is_performing=row.num_of_forms >= self.performance_threshold,
-                previous_stub=None,
-                next_stub=None,
-            ) for row in self._apply_group_filter.distinct('user_id')
+            ) for row in malt_all
         }
 
     @memoized
     def get_all_user_stubs_with_extra_data(self):
         if self._previous_summary:
-            if self._users_filtered_by_group:
-                previous_stubs = self._previous_summary.get_all_user_stubs_by_filtered_group()
-                if self._next_summary:
-                    next_stubs = self._next_summary.get_all_user_stubs_by_filtered_group()
-                else:
-                    next_stubs = {}
-                user_stubs = self.get_all_user_stubs_by_filtered_group()
-            else:
-                previous_stubs = self._previous_summary.get_all_user_stubs()
-                next_stubs = self._next_summary.get_all_user_stubs() if self._next_summary else {}
-                user_stubs = self.get_all_user_stubs()
+            previous_stubs = self._previous_summary.get_all_user_stubs()
+            next_stubs = self._next_summary.get_all_user_stubs() if self._next_summary else {}
+            user_stubs = self.get_all_user_stubs()
             ret = []
             for user_stub in user_stubs.values():
                 ret.append(UserActivityStub(
@@ -248,7 +225,7 @@ class ProjectHealthDashboard(ProjectReport):
         user_id_list = []
         for user in users_list:
             usersid = user.values()[0]
-            if type(usersid) is list:
+            if isinstance(usersid, list):
                 user_id_list.extend(usersid)
             else:
                 user_id_list.append(usersid)
