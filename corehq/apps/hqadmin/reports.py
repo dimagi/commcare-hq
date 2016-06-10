@@ -1211,6 +1211,6 @@ class CommCareVersionReport(AdminReport, ElasticTabularReport):
             if data.commcare_version in versions:
                 row = rows.get(data.domain)
                 version_index = versions.index(data.commcare_version)
-                row[version_index+1] = data.doc_count
+                row[version_index + 1] = data.doc_count
 
         return rows.values()
