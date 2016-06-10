@@ -4,6 +4,7 @@ import json
 
 from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.es import FormES
+from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm
 from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
     use_nvd3, use_jquery_ui
 from dimagi.utils.decorators.memoized import memoized
@@ -1193,17 +1194,23 @@ class CommCareVersionReport(AdminReport, ElasticTabularReport):
         now = datetime.utcnow()
         days = now - timedelta(days=90)
 
-        def get_data_for(v):
-            data = FormES().submitted(gte=days, lte=now).app_version(v).domain_aggregation().size(0).run()
-            return data.aggregations.domain.buckets_list
+        def get_data():
+            terms = [
+                AggregationTerm('domain', 'domain'),
+                AggregationTerm('commcare_version', 'form.meta.commcare_version')
+
+            ]
+            query = FormES().submitted(gte=days, lte=now)
+            return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
         rows = {}
         for domain in es_domain_query(show_stats=False)['hits']['hits']:
             domain_name = domain['_source']['name']
             rows.update({domain_name: [domain_name] + [0] * len(versions)})
 
-        for idx, version in enumerate(versions, 1):
-            for for_domain in get_data_for(version):
-                row = rows.get(for_domain.key)
-                row[idx] = for_domain.doc_count
+        for data in get_data():
+            if data.commcare_version in versions:
+                row = rows.get(data.domain)
+                version_index = versions.index(data.commcare_version)
+                row[version_index+1] = data.doc_count
 
         return rows.values()
