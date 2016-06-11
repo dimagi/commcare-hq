@@ -17,7 +17,7 @@ from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
-from corehq.apps.ota.tasks import prime_restore, queue_prime_restore
+from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
