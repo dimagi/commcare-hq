@@ -58,6 +58,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
+        if users_filtered_by_group:
+            self._base_queryset = self._base_queryset.filter(
+                user_id__in=users_filtered_by_group,
+            )
         self._performing_queryset = self._base_queryset.filter(
             num_of_forms__gte=performance_threshold,
         )
@@ -80,17 +84,11 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def number_of_performing_users(self):
-        malt_performing = self._performing_queryset
-        if self._users_filtered_by_group:
-            malt_performing = malt_performing.filter(user_id__in=self._users_filtered_by_group)
-        return malt_performing.distinct('user_id').count()
+        return self._performing_queryset.distinct('user_id').count()
 
     @property
     def number_of_active_users(self):
-        malt_all = self._base_queryset
-        if self._users_filtered_by_group:
-            malt_all = malt_all.filter(user_id__in=self._users_filtered_by_group)
-        return malt_all.distinct('user_id').count()
+        return self._base_queryset.distinct('user_id').count()
 
     @property
     def previous_month(self):
@@ -108,6 +106,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_performing_pct(self):
         if self.delta_performing and self._previous_summary and self._previous_summary.number_of_performing_users:
             return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
+        elif self.delta_performing == 0:
+            return 0
 
     @property
     def delta_active(self):
@@ -117,12 +117,12 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_active_pct(self):
         if self.delta_active and self._previous_summary and self._previous_summary.active:
             return float(self.delta_active / float(self._previous_summary.active)) * 100.
+        elif self.delta_active == 0:
+            return 0
 
     @memoized
     def get_all_user_stubs(self):
         malt_all = self._base_queryset.distinct('user_id')
-        if self._users_filtered_by_group:
-            malt_all = malt_all.filter(user_id__in=self._users_filtered_by_group)
         return {
             row.user_id: UserActivityStub(
                 user_id=row.user_id,
