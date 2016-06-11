@@ -11,6 +11,11 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded
+before_install:
+  # get newer version of docker-compose for variable substitution in compose files
+  - curl -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv -v docker-compose /usr/local/bin/
 install:
   - mkdir -p $TRAVIS_BUILD_DIR/docker-volumes
 before_script:
