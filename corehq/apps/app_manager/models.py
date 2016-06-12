@@ -4717,7 +4717,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
-        if not self._id and not domain_has_apps(self.domain):
+        if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
