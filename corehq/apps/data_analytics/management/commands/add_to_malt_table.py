@@ -4,6 +4,7 @@ import csv
 
 from corehq.apps.data_analytics.models import MALTRow
 
+
 class Command(BaseCommand):
     """
         Adds csv data to malt table for given files

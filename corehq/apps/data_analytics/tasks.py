@@ -60,8 +60,8 @@ def build_last_month_GIR():
 
     message = 'Global impact report generation for month {} is now ready. To download go to' \
               ' http://www.commcarehq.org/hq/admin/download_gir/'.format(
-        last_month
-    )
+                  last_month
+              )
     send_HTML_email(
         'GIR data is ready',
         settings.DATA_EMAIL,

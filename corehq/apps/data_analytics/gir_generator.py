@@ -7,8 +7,12 @@ from django_countries.data import COUNTRIES
 from dimagi.utils.dates import add_months
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.data_analytics.esaccessors import get_domain_device_breakdown_es, active_mobile_users, get_possibly_experienced
-from corehq.apps.data_analytics.models import MALTRow, GIRRow, TEST_COUCH_TO_SQL_MAP, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET, BU_MAPPING
+from corehq.apps.data_analytics.esaccessors import (
+    get_domain_device_breakdown_es, active_mobile_users, get_possibly_experienced
+)
+from corehq.apps.data_analytics.models import (
+    MALTRow, GIRRow, TEST_COUCH_TO_SQL_MAP, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET, BU_MAPPING
+)
 
 
 UserCategories = namedtuple('UserCategories', 'active performing experienced total sms')
@@ -32,7 +36,8 @@ class GIRTableGenerator(object):
             for user in all_users:
                 if users_dict.get(user, 0) > domain.internal.performance_threshold:
                     perfoming_users.append(user)
-                if len(MALTRow.objects.filter(user_id=user).values('month').distinct()) > domain.internal.experienced_threshold:
+                if len(MALTRow.objects.filter(user_id=user).values('month').distinct()) > \
+                        domain.internal.experienced_threshold:
                     experienced_users.append(user)
             return UserCategories(set(users_dict.keys()), set(perfoming_users),
                                   set(experienced_users), all_users, sms)
@@ -83,7 +88,8 @@ class GIRTableGenerator(object):
                 gir_dict = {
                     'month': monthspan.startdate,
                     'domain_name': domain.name,
-                    'country': ', '.join([unicode(COUNTRIES.get(abbr, abbr)) for abbr in domain.deployment.countries]),
+                    'country':
+                        ', '.join([unicode(COUNTRIES.get(abbr, abbr)) for abbr in domain.deployment.countries]),
                     'sector': domain.internal.area,
                     'subsector': domain.internal.sub_area,
                     'bu': _get_bu(domain),
@@ -97,10 +103,13 @@ class GIRTableGenerator(object):
                     'active_users': len(user_tuple.active | user_tuple.sms),
                     'using_and_performing': len(user_tuple.performing),
                     'not_performing': len(user_tuple.active - user_tuple.performing),
-                    'inactive_experienced': len((user_tuple.total - user_tuple.active) & user_tuple.experienced),
-                    'inactive_not_experienced': len((user_tuple.total - user_tuple.active) - user_tuple.experienced),
+                    'inactive_experienced':
+                        len((user_tuple.total - user_tuple.active) & user_tuple.experienced),
+                    'inactive_not_experienced':
+                        len((user_tuple.total - user_tuple.active) - user_tuple.experienced),
                     'not_experienced': len(user_tuple.performing - user_tuple.experienced),
-                    'not_performing_not_experienced': len(user_tuple.active - user_tuple.performing - user_tuple.experienced),
+                    'not_performing_not_experienced':
+                        len(user_tuple.active - user_tuple.performing - user_tuple.experienced),
                     'active_ever': len(possible_experience | recently_active),
                     'possibly_exp': len(possible_experience),
                     'ever_exp': len(user_tuple.experienced),

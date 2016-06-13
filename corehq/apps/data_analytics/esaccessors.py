@@ -7,7 +7,7 @@ from corehq.apps.hqadmin.reporting.reports import (
     get_mobile_users
 )
 
-from dimagi.utils.dates import DateSpan, add_months
+from dimagi.utils.dates import add_months
 
 
 def get_app_submission_breakdown_es(domain_name, monthspan):
@@ -42,13 +42,13 @@ def active_mobile_users(domain, start, end, *args):
     user_ids = get_mobile_users(domain.name)
 
     form_users = (FormES()
-                    .domain(domain.name)
-                    .user_aggregation()
-                    .submitted(gte=start, lte=end)
-                    .user_id(user_ids)
-                    .size(0)
-                    .run()
-                    .aggregations.user.counts_by_bucket())
+                  .domain(domain.name)
+                  .user_aggregation()
+                  .submitted(gte=start, lte=end)
+                  .user_id(user_ids)
+                  .size(0)
+                  .run()
+                  .aggregations.user.counts_by_bucket())
 
     sms_users = set(
         SMSES()
@@ -63,6 +63,7 @@ def active_mobile_users(domain, start, end, *args):
     )
 
     return set(user_ids), form_users, sms_users
+
 
 def get_possibly_experienced(domain, start):
 

@@ -121,10 +121,11 @@ GIR_FIELDS = [
 ]
 
 girrow = namedtuple('girrow',
-                    'domain country sector subsector bu self_service test start device active_users wam pam wam_current '
-                    'wam_1_prior wam_2_prior active_current active_1_prior active_2_prior using_and_performing '
-                    'not_performing inactive_experienced inactive_not_experienced not_experienced '
-                    'not_performing_not_experienced d1 d2 d3 d4 d5 d6')
+                    'domain country sector subsector bu self_service test start device active_users wam '
+                    'pam wam_current wam_1_prior wam_2_prior active_current active_1_prior active_2_prior '
+                    'using_and_performing not_performing inactive_experienced inactive_not_experienced '
+                    'not_experienced not_performing_not_experienced d1 d2 d3 d4 d5 d6')
+
 
 class MALTRow(models.Model):
     """
