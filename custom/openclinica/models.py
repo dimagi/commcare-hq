@@ -1,5 +1,6 @@
 from collections import defaultdict
 import hashlib
+from lxml import etree
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
 from custom.openclinica.const import (
@@ -98,18 +99,20 @@ class OpenClinicaAPI(object):
 
     """
 
-    def __init__(self, base_url, username, password, prefetch=False):
+    def __init__(self, base_url, username, password, study_id, prefetch=False):
         """
         Initialise OpenClinicaAPI
 
         :param base_url: Protocol, address (and port) of the server, e.g. "https://openclinica.example.com:8080/"
         :param username: Username enabled for API authentication
         :param password: Password
+        :param study_id: Study identifier
         :param prefetch: Fetch WSDLs on init?
         """
         self._base_url = base_url if base_url[-1] == '/' else base_url + '/'
         self._username = username
         self._password = password
+        self._study_id = study_id
         self._clients = {
             'data': None,
             'event': None,
@@ -136,6 +139,21 @@ class OpenClinicaAPI(object):
             client.set_options(wsse=security)
             self._clients[endpoint] = client
         return self._clients[endpoint]
+
+    def get_study_metadata_string(self):
+        """
+        Returns study metadata as an XML string
+        """
+        study_client = self.get_client('study')
+        study_client.set_options(retxml=True)  # Don't parse the study metadata; just give us the raw XML
+        resp = study_client.service.getMetadata({'identifier': self._study_id})
+        soap_env = etree.fromstring(resp)
+        nsmap = {
+            'SOAP-ENV': "http://schemas.xmlsoap.org/soap/envelope/",
+            'OC': "http://openclinica.org/ws/study/v1"
+        }
+        odm = soap_env.xpath('./SOAP-ENV:Body/OC:createResponse/OC:odm', namespaces=nsmap)[0]
+        return odm.text
 
 
 class StudySettings(DocumentSchema):
