@@ -37,7 +37,7 @@ def render_form_xml(form):
     if isinstance(xml, unicode):
         xml.encode('utf-8', errors='replace')
     formatted_xml = indent_xml(xml) if xml else ''
-    return '<pre class="fancy-code prettyprint linenums"><code class="language-xml">%s</code></pre>' \
+    return '<pre class="fancy-code prettyprint linenums"><code class="no-border language-xml">%s</code></pre>' \
            % escape(formatted_xml)
 
 

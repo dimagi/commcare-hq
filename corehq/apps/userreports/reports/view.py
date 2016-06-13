@@ -13,7 +13,7 @@ from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
 from corehq.apps.reports.dispatcher import (
@@ -53,6 +53,9 @@ from dimagi.utils.web import json_request
 from no_exceptions.exceptions import Http403
 
 from corehq.apps.reports.datatables import DataTablesHeader
+
+
+UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 1000
 
 
 class ConfigurableReport(JSONResponseMixin, BaseDomainView):
@@ -191,6 +194,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 return self.excel_response
             elif request.GET.get('format', None) == "export":
                 return self.export_response
+            elif request.GET.get('format', None) == 'export_size_check':
+                return self.export_size_check_response
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request)
             self.content_type = None
@@ -437,7 +442,47 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     @memoized
+    def export_too_large(self):
+        data = self.data_source
+        data.set_filter_values(self.filter_values)
+        total_rows = data.get_total_records()
+        return total_rows > UCR_EXPORT_TO_EXCEL_ROW_LIMIT
+
+    @property
+    @memoized
+    def export_size_check_response(self):
+        try:
+            too_large = self.export_too_large
+        except UserReportsError as e:
+            if settings.DEBUG:
+                raise
+            return self.render_json_response({
+                'export_allowed': False,
+                'message': e.message,
+            })
+
+        if too_large:
+            return self.render_json_response({
+                'export_allowed': False,
+                'message': _(
+                    "Report export is limited to {number} rows. "
+                    "Please filter the data in your report to "
+                    "{number} or fewer rows before exporting"
+                ).format(number=UCR_EXPORT_TO_EXCEL_ROW_LIMIT),
+            })
+        return self.render_json_response({
+            "export_allowed": True,
+        })
+
+    @property
+    @memoized
     def export_response(self):
+        if self.export_too_large:
+            # Frontend should check size with export_size_check_response()
+            # Before hitting this endpoint, but we check the size again here
+            # in case the user modifies the url manually.
+            return HttpResponseBadRequest()
+
         temp = StringIO()
         export_from_tables(self.export_table, temp, Format.XLS_2007)
         return export_response(temp, Format.XLS_2007, self.title)

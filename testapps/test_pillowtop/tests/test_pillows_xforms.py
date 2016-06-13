@@ -146,9 +146,12 @@ class TestReportXFormProcessing(SimpleTestCase):
         del(restored['user_type'])
         del(for_indexing['user_type'])
 
-        # inserted_at is inserted during the transform
+        # inserted during the transform
         del(restored['inserted_at'])
         del(for_indexing['inserted_at'])
+        del(restored['form']['meta']['app_build_version'])
+        del(restored['form']['meta']['commcare_version'])
+        del(restored['form']['meta']['geo_point'])
 
         self.assertNotEqual(for_indexing, orig)
         self.assertNotEqual(for_indexing, restored)
