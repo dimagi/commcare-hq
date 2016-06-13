@@ -1,17 +1,15 @@
 from corehq.apps.reports.commtrack.data_sources import (
-    StockStatusDataSource, ReportingStatusDataSource,
+    StockStatusDataSource,
     SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
 )
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
+from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.filters.commtrack import SelectReportingType
 from corehq.form_processor.utils.general import should_use_sql_backend
-from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
