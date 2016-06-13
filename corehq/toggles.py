@@ -832,6 +832,14 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
 )
 
 
+SEND_UCR_REBUILD_INFO = StaticToggle(
+    'send_ucr_rebuild_info',
+    'Notify when UCR rebuilds finish or error.',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_USER]
+)
+
+
 def enable_toggles_for_scale_beta(domain):
     USE_SQL_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
     NEW_EXPORTS.set(domain, True, namespace=NAMESPACE_DOMAIN)

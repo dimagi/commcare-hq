@@ -9,6 +9,7 @@ TEST_DOMAIN = 'ews-handler-test'
 class HandlerTest(TestCase):
 
     def setUp(self):
+        super(HandlerTest, self).setUp()
         domain = bootstrap_domain(TEST_DOMAIN)
         loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=domain.name)
         self.user = bootstrap_user(username='testuser', phone_number='323232', domain=domain.name, home_loc=loc)
