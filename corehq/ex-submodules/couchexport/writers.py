@@ -1,3 +1,4 @@
+from base64 import b64decode
 from codecs import BOM_UTF8
 import os
 import re
@@ -5,6 +6,7 @@ import tempfile
 import zipfile
 import csv
 import json
+import bz2
 from django.template import Context
 from django.template.loader import render_to_string, get_template
 import xlwt
@@ -539,10 +541,11 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
         # Create the subjects and events that are in the ODM export using the API
         oc_settings = OpenClinicaSettings.for_domain(self.context['domain'])
         if oc_settings.study.is_ws_enabled:
+            password = bz2.decompress(b64decode(oc_settings.study.password))
             api = OpenClinicaAPI(
                 oc_settings.study.url,
                 oc_settings.study.username,
-                oc_settings.study.password,
+                password,
                 oc_settings.study.protocol_id
             )
             subject_keys = api.get_subject_keys()
