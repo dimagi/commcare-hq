@@ -112,7 +112,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 _('Overstocked'),
                 help_text=_("A facility is counted as overstocked when \
                             its current stock is above the overstock level.")),
-            #DataTablesColumn(_('Non-reporting')),
             DataTablesColumn(
                 _('Insufficient Data'),
                 help_text=_("A facility is marked as insufficient data when \
@@ -184,10 +183,9 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             {"key": "under stock", "color": "#ffb100"},
             {"key": "adequate stock", "color": "#4ac925"},
             {"key": "overstocked", "color": "#b536da"},
-#            {"key": "nonreporting", "color": "#363636"},
             {"key": "unknown", "color": "#ABABAB"}
         ]
-        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'no data'] #'nonreporting', 'no data']
+        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'no data']
 
         for r in ret:
             r["values"] = []
@@ -200,7 +198,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def charts(self):
-        if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
+        # only get data if we're loading an actual report - this requires filters
+        if 'location_id' in self.request.GET:
             chart = MultiBarChart(None, Axis(_('Products')), Axis(_('% of Facilities'), ',.1d'))
             chart.data = self.get_data_for_graph()
             return [chart]
