@@ -9,8 +9,8 @@ from custom.openclinica.management.commands.odm_to_app import Command, Item
 
 
 def replace_uuids(string):
-    fake_uuid = 'baseba11-babe-d0es-c0de-affab1ec0b01'
-    return re.sub(r'(resource id="|http://openrosa\.org/formdesigner/)[a-f0-9-]+',
+    fake_uuid = 'ba5eba11-babe-d0e5-c0de-affab1ec0b01'
+    return re.sub(r'(resource id="|http://openrosa\.org/formdesigner/)[a-f0-9-]{12,}',
                   r'\1' + fake_uuid, string)
 
 
@@ -42,7 +42,7 @@ class OdmToAppTest(TestCase, TestXmlMixin):
         def as_utf8(string):
             return string.encode('utf-8') if isinstance(string, unicode) else string
         expected = self.get_xml('xform')
-        actual = self.app.modules[1].forms[0].source
+        actual = self.app.modules[2].forms[0].source
         self.assertXmlEqual(expected, as_utf8(actual))
 
 

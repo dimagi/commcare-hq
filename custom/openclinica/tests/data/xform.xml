@@ -30,11 +30,20 @@
           <text id="ig_visit_ungrouped_3229/i_visit_pt_init_7-label">
             <value>Patient initials</value>
           </text>
+          <text id="ig_visit_ungrouped_3229/i_visit_pt_init_7-hint">
+            <value>Patient initials</value>
+          </text>
           <text id="ig_visit_ungrouped_3229/i_visit_pt_no_1784-label">
+            <value>Patient number</value>
+          </text>
+          <text id="ig_visit_ungrouped_3229/i_visit_pt_no_1784-hint">
             <value>Patient number</value>
           </text>
           <text id="ig_visit_ungrouped_3229/i_visit_assd1_664-label">
             <value>Date of Assessment</value>
+          </text>
+          <text id="ig_visit_ungrouped_3229/i_visit_assd1_664-hint">
+            <value>Date of Assessment (Demography)</value>
           </text>
           <text id="end_date-label">
             <value>End Date</value>
@@ -66,12 +75,15 @@
       <label ref="jr:itext('ig_visit_ungrouped_3229-label')"/>
       <input ref="/data/ig_visit_ungrouped_3229/i_visit_pt_init_7">
         <label ref="jr:itext('ig_visit_ungrouped_3229/i_visit_pt_init_7-label')"/>
+        <hint ref="jr:itext('ig_visit_ungrouped_3229/i_visit_pt_init_7-hint')"/>
       </input>
       <input ref="/data/ig_visit_ungrouped_3229/i_visit_pt_no_1784">
         <label ref="jr:itext('ig_visit_ungrouped_3229/i_visit_pt_no_1784-label')"/>
+        <hint ref="jr:itext('ig_visit_ungrouped_3229/i_visit_pt_no_1784-hint')"/>
       </input>
       <input ref="/data/ig_visit_ungrouped_3229/i_visit_assd1_664">
         <label ref="jr:itext('ig_visit_ungrouped_3229/i_visit_assd1_664-label')"/>
+        <hint ref="jr:itext('ig_visit_ungrouped_3229/i_visit_assd1_664-hint')"/>
       </input>
     </group>
     <input ref="/data/end_date">
