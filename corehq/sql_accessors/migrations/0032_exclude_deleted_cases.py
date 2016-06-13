@@ -16,4 +16,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('get_case_indices_reverse_2.sql'),
+        migrator.get_migration('get_reverse_indexed_cases_1.sql'),
     ]

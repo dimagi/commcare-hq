@@ -132,23 +132,9 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(index, indices[0])
 
     def test_get_reverse_indexed_cases(self):
-        def _create_case_with_index(referenced_case_id):
-            case = _create_case()
-
-            index1 = CommCareCaseIndexSQL(
-                case=case,
-                identifier='parent',
-                referenced_type='mother',
-                referenced_id=referenced_case_id,
-                relationship_id=CommCareCaseIndexSQL.CHILD
-            )
-            case.track_create(index1)
-
-            CaseAccessorSQL.save_case(case)
-            return case.case_id
-
         referenced_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
-        expected_case_ids = [_create_case_with_index(case_id) for case_id in referenced_case_ids]
+        _create_case_with_index(referenced_case_ids[0], case_is_deleted=True)  # case shouldn't be included in results
+        expected_case_ids = [_create_case_with_index(case_id)[0].case_id for case_id in referenced_case_ids]
         cases = CaseAccessorSQL.get_reverse_indexed_cases(DOMAIN, referenced_case_ids)
         self.assertEqual(2, len(cases))
         self.assertEqual(set(expected_case_ids), {c.case_id for c in cases})
@@ -786,6 +772,23 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
 
     FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
     return CaseAccessorSQL.get_case(case_id)
+
+
+def _create_case_with_index(referenced_case_id, case_is_deleted=False):
+    case = _create_case()
+    case.deleted = case_is_deleted
+
+    index = CommCareCaseIndexSQL(
+        case=case,
+        identifier='parent',
+        referenced_type='mother',
+        referenced_id=referenced_case_id,
+        relationship_id=CommCareCaseIndexSQL.CHILD
+    )
+    case.track_create(index)
+
+    CaseAccessorSQL.save_case(case)
+    return case, index
 
 
 def _create_case_transactions(case):
