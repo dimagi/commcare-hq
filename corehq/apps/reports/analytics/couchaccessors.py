@@ -125,8 +125,9 @@ def _row_to_form_details(row):
     return FormDetails.wrap(row['value'])
 
 
-def get_ledger_values_for_case_as_of(case_id, section_id, as_of, program_id=None):
+def get_ledger_values_for_case_as_of(domain, case_id, section_id, as_of, program_id=None):
     transactions = StockTransaction.objects.filter(
+        report__domain=domain,
         case_id=case_id,
         section_id=section_id,
     )

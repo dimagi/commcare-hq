@@ -17,7 +17,8 @@ class TestSupplyAccessors(TestCase):
         cls.product_b = make_product(cls.domain, 'B Product', 'prodcode_b')
 
     def test_get_ledger_values_for_case_as_of_no_data(self):
-        self.assertEqual({}, get_ledger_values_for_case_as_of(case_id='missing', section_id='stock',
+        self.assertEqual({}, get_ledger_values_for_case_as_of(domain=self.domain,
+                                                              case_id='missing', section_id='stock',
                                                               as_of=datetime.utcnow()))
 
     # @run_with_all_backends
@@ -38,7 +39,8 @@ class TestSupplyAccessors(TestCase):
         submit_case_blocks(ledger_blocks, self.domain)
 
         # check results
-        results = get_ledger_values_for_case_as_of(case_id=case_id, section_id='stock', as_of=datetime.utcnow())
+        results = get_ledger_values_for_case_as_of(
+            domain=self.domain, case_id=case_id, section_id='stock', as_of=datetime.utcnow())
         self.assertEqual(2, len(results))
         self.assertEqual(100, results[self.product_a._id])
         self.assertEqual(50, results[self.product_b._id])
@@ -46,4 +48,4 @@ class TestSupplyAccessors(TestCase):
         # check the date filter works
         before_data = datetime.utcnow() - timedelta(days=2)
         self.assertEqual({}, get_ledger_values_for_case_as_of(
-            case_id=case_id, section_id='stock', as_of=before_data))
+            domain=self.domain, case_id=case_id, section_id='stock', as_of=before_data))

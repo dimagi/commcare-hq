@@ -116,6 +116,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         # that have supply points associated
         for loc in locations[:self.config.get('max_rows', 100)]:
             stock_results = get_ledger_values_for_case_as_of(
+                domain=self.domain,
                 case_id=loc.supply_point_id,
                 section_id=SECTION_TYPE_STOCK,
                 as_of=self.datetime,
