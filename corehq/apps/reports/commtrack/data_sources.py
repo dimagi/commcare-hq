@@ -491,7 +491,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                             yield {
                                 'parent_name': loc.parent.name if loc.parent else '',
                                 'loc_id': loc.location_id,
-                                'loc_path': loc.path,
+                                'loc_path': loc.path_including_self,
                                 'name': loc.name,
                                 'type': loc.location_type.name,
                                 'reporting_status': 'reporting',
@@ -514,7 +514,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                     yield {
                         'parent_name': loc.parent.name if loc.parent else '',
                         'loc_id': loc.location_id,
-                        'loc_path': loc.path,
+                        'loc_path': loc.path_including_self,
                         'name': loc.name,
                         'type': loc.location_type.name,
                         'reporting_status': 'nonreporting',
