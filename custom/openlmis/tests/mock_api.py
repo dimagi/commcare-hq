@@ -1,6 +1,4 @@
-import json
-import os
-from custom.openlmis.api import OpenLMISEndpoint, RequisitionDetails
+from custom.openlmis.api import OpenLMISEndpoint
 
 
 class MockOpenLMISEndpoint(OpenLMISEndpoint):

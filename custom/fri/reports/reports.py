@@ -1,4 +1,3 @@
-import pytz
 import cgi
 from datetime import datetime, time, timedelta
 from django.utils.translation import ugettext_noop
@@ -17,13 +16,13 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from custom.fri.models import PROFILE_DESC
-from custom.fri.reports.filters import (InteractiveParticipantFilter,
-    RiskProfileFilter, SurveyDateSelector)
+from custom.fri.reports.filters import (
+    RiskProfileFilter,
+    SurveyDateSelector,
+)
 from custom.fri.api import get_message_bank, add_metadata, get_date
 from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
-from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.users.models import CouchUser, UserCache
+from corehq.apps.users.models import UserCache
 from custom.fri.api import get_interactive_participants, get_valid_date_range
 from django.core.urlresolvers import reverse
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
