@@ -2856,7 +2856,7 @@ class StripePaymentMethod(PaymentMethod):
 
     @property
     def all_cards(self):
-        return self.customer.cards.data
+        return filter(lambda card: card is not None, self.customer.cards.data)
 
     def all_cards_serialized(self, billing_account):
         return [{
@@ -2866,7 +2866,7 @@ class StripePaymentMethod(PaymentMethod):
             'exp_year': card.exp_year,
             'token': card.id,
             'is_autopay': card.metadata.get('auto_pay_{}'.format(billing_account.id), False),
-        } for card in self.all_cards if card is not None]
+        } for card in self.all_cards]
 
     def get_card(self, card_token):
         return self.customer.cards.retrieve(card_token)
@@ -2874,8 +2874,7 @@ class StripePaymentMethod(PaymentMethod):
     def get_autopay_card(self, billing_account):
         return next((
             card for card in self.all_cards
-            if card is not None
-            and card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) == 'True'
+            if card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) == 'True'
         ), None)
 
     def remove_card(self, card_token):
