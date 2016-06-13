@@ -82,9 +82,14 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             this.styles = options.styles;
             for(var i = 0; i < this.tiles.length; i++) {
                 var tile = this.tiles[i];
+                if(tile === null){
+                    continue;
+                }
+                var fontSize = this.tiles[i].fontSize;
+                var fontString = "font-size: " + fontSize + ";"
                 var styleString = getGridAttributes(tile);
                 var tileId = "grid-style-" + i;
-                var formattedString = "." + tileId + " { " + styleString + " } ";
+                var formattedString = "." + tileId + " { " + styleString + " " + fontString + " } ";
                 addStyleString(formattedString);
             }
         },
@@ -107,10 +112,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 tiles: this.options.tiles,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.request('resourceMap', uri, appId);
-                },
-                getGridStyle: function (index) {
-                    var tile = this.tiles[index];
-                    return getGridAttributes(tile);
                 }
             };
         },
