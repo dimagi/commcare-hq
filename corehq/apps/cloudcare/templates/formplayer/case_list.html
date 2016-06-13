@@ -62,9 +62,8 @@
 
 <script type="text/template" id="case-tile-view-item-template">
     <div class="grid-wrapper">
-        <% _.each(data, function(datum, index) {
-        console.log("GRID: " + getGridStyle(index) + " datum: " + datum)%>
-        <div class="box" style="'<%= getGridStyle(index) %>'">
+        <% _.each(data, function(datum, index) { %>
+        <div class="grid-style-<%= index %> box">
             <% if (styles[index].displayFormat === 'Image') {
                 if(resolveUri(datum)) { %>
                     <img class="module-icon" style="max-width:50%; max-height:50%;" src="<%= resolveUri(datum) %>"/>

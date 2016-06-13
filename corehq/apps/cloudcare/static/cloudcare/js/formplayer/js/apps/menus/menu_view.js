@@ -47,17 +47,23 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     });
 
     var getGridAttributes = function (tile) {
-        if(!tile){
+        if (!tile) {
             return null;
         }
-        var rowStart = tile.gridX + 1;
-        var colStart = tile.gridY + 1;
-        var rowEnd = rowStart + tile.gridWidth;
-        var colEnd = colStart + tile.gridHeight;
+        var rowStart = tile.gridY + 1;
+        var colStart = tile.gridX + 1;
+        var rowEnd = rowStart + tile.gridHeight;
+        var colEnd = colStart + tile.gridWidth;
 
-        return "grid-area: " + colStart + " / " + rowStart + " / " +
-                colEnd + " / " + rowEnd +";";
+        return "grid-area: " + rowStart + " / " + colStart + " / " +
+            rowEnd + " / " + colEnd + ";";
     };
+
+    function addStyleString(str) {
+        var node = document.createElement('style');
+        node.innerHTML = str;
+        document.body.appendChild(node);
+    }
 
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
@@ -74,6 +80,13 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         initialize: function (options) {
             this.tiles = options.tiles;
             this.styles = options.styles;
+            for(var i = 0; i < this.tiles.length; i++) {
+                var tile = this.tiles[i];
+                var styleString = getGridAttributes(tile);
+                var tileId = "grid-style-" + i;
+                var formattedString = "." + tileId + " { " + styleString + " } ";
+                addStyleString(formattedString);
+            }
         },
 
 
@@ -97,9 +110,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 },
                 getGridStyle: function (index) {
                     var tile = this.tiles[index];
-                    var styleString = getGridAttributes(tile);
-                    console.log("returning style: " + styleString);
-                    return styleString;
+                    return getGridAttributes(tile);
                 }
             };
         },

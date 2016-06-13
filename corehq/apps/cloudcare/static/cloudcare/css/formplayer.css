@@ -12,17 +12,15 @@ body {
 
 .grid-wrapper {
     display: grid;
-    grid-gap: 10px;
-    grid-template-columns: repeat(12, 75px);
-    grid-template-rows: repeat(5, 75px);
+    grid-template-columns: repeat(12, 60px) min-content 60px;
+    grid-template-rows: repeat(6, 60px) min-content 60px;
     background-color: #fff;
     color: #444;
+    border-color: #444;
 }
 
 .box {
     border-color: #444;
     color: #444;
-    padding: 20px;
-    font-size: 75%;
-    border-radius: 25px;
+    font-size: 100%;
 }
