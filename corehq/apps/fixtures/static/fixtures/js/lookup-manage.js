@@ -1,6 +1,12 @@
 var somethingWentWrong = $("#FailText").text();
 $(function () {
     "use strict";
+    var initialPageData = $.parseJSON($("#initial-page-data").text()),
+        FixtureDownloadUrl = initialPageData.FixtureDownloadUrl,
+        FixtureFileDownloadUrl = initialPageData.FixtureFileDownloadUrl,
+        TableViewUrl = initialPageData.TableViewUrl,
+        DataTypeUrl = initialPageData.DataTypeUrl,
+        UpdateTableUrl = initialPageData.UpdateTableUrl;
     function log (x) {
         return x;
     }

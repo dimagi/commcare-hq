@@ -8,16 +8,6 @@
 <script src="{% static 'fixtures/js/lookup-manage.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}
-    <script>
-        var FixtureDownloadUrl = "{% url 'download_fixtures' domain%}" +"?";
-        var FixtureFileDownloadUrl = "{% url 'download_fixture_file' domain%}" +"?";
-        var TableViewUrl = "{% url 'fixture_interface_dispatcher' domain 'view_lookup_tables'%}";
-        var DataTypeUrl = "{% url 'fixture_data_types' domain %}";
-        var UpdateTableUrl = "{% url 'update_lookup_tables' domain %}";
-    </script>
-{% endblock %}
-
 {% block page_title %}
     {% trans 'Manage Lookup Tables' %}
 {% endblock %}
@@ -194,5 +184,15 @@
             </div>
         </div>
     </div>
+</div>
+
+<div id="initial-page-data" class="hide">
+    {
+        "FixtureDownloadUrl": "{% url 'download_fixtures' domain%}?",
+        "FixtureFileDownloadUrl": "{% url 'download_fixture_file' domain%}?",
+        "TableViewUrl": "{% url 'fixture_interface_dispatcher' domain 'view_lookup_tables'%}",
+        "DataTypeUrl": "{% url 'fixture_data_types' domain %}",
+        "UpdateTableUrl": "{% url 'update_lookup_tables' domain %}"
+    }
 </div>
 {% endblock %}
