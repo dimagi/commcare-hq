@@ -207,6 +207,7 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload"
         )
     })
+    context['is_app_view'] = True
     return context
 
 
