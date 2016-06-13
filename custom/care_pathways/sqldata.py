@@ -4,7 +4,10 @@ import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import *
-from sqlalchemy.sql.expression import join, alias
+from sqlalchemy.sql.expression import join, alias, cast
+from sqlalchemy.sql.functions import func
+from sqlalchemy.sql.sqltypes import Integer, VARCHAR
+
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, TableDataFormat
 from corehq.apps.reports.util import get_INFilter_bindparams
@@ -83,8 +86,11 @@ class CareQueryMeta(QueryMeta):
                           group_by=[table.c.doc_id, table.c.group_id] + filter_cols + external_cols), name='x')
         s2 = alias(
             select(
-                ['group_id', '(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) as gender'] +
-                table_card_group, from_obj='"fluff_FarmerRecordFluff"',
+                [table.c.group_id,
+                 sqlalchemy.cast(
+                     cast(func.max(table.c.gender), Integer) + cast(func.min(table.c.gender), Integer), VARCHAR
+                 ).label('gender')] + table_card_group,
+                from_obj=table,
                 group_by=['group_id'] + table_card_group + having_group_by, having=group_having
             ), name='y'
         )
@@ -282,27 +288,31 @@ class AdoptionDisaggregatedSqlData(CareSqlData):
         if disaggregate_by == 'group':
             disaggregation_type = 'Leadership'
 
-        if value == 0:
+        if value == '0':
             display = {'sort_key': 0, 'html': 'All Male %s' % disaggregation_type}
-        elif value == 1:
+        elif value == '1':
             display = {'sort_key': 0, 'html': 'Mixed %s' % disaggregation_type}
-        elif value == 2:
+        elif value == '2':
             display = {'sort_key': 0, 'html': 'All Female %s' % disaggregation_type}
 
         return display
 
     @property
     def columns(self):
-        return [
+        columns = [
             DatabaseColumn('', AliasColumn('gender'), format_fn=self._to_display),
-            AggregateColumn('Farmers who adopted No practices', lambda x:x,
-                            [CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")])]),
-            AggregateColumn('Farmers who adopted Some practices', lambda x:x,
-                            [CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1")])]),
-            AggregateColumn('Farmers who adopted All practices', lambda x:x,
-                            [CareCustomColumn('all', filters=self.filters + [RawFilter("maxmin = 2")])])
-
+            AggregateColumn('Farmers who adopted No practices', lambda x: x,
+                            [CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")])])
         ]
+
+        if self.config['group'] != 'practice':
+            columns.append(
+                AggregateColumn('Farmers who adopted Some practices', lambda x: x,
+                                [CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1")])]))
+
+        columns.append(AggregateColumn('Farmers who adopted All practices', lambda x: x,
+                       [CareCustomColumn('all', filters=self.filters + [RawFilter("maxmin = 2")])]))
+        return columns
 
 
 class TableCardSqlData(CareSqlData):

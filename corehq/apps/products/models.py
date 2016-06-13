@@ -310,7 +310,7 @@ class SQLProduct(models.Model):
     cost = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     units = models.CharField(max_length=100, null=True, default='')
     product_data = jsonfield.JSONField(
-        default={},
+        default=dict,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)

@@ -1,4 +1,4 @@
-{% extends "style/bootstrap3/base_section.html" %}
+{% extends "style/base_section.html" %}
 {# This is for editing information for the currently logged in WebUser #}
 
 {% load crispy_forms_tags %}
@@ -37,13 +37,13 @@
 b3
 {% block modals %}{{ block.super }}
 {% if user_type == 'web' %}
-    {% include 'users/partial/basic_info_modals.b3.html' %}
+    {% include 'users/partial/basic_info_modals.html' %}
 {% endif %}
 {% endblock %}
 
 {% block page_content %}
     {% crispy form form.new_helper %}
     {% if user_type == 'web' %}
-        {% include 'users/partial/manage_phone_numbers.b3.html' %}
+        {% include 'users/partial/manage_my_numbers.html' %}
     {% endif %}
 {% endblock %}

@@ -3,12 +3,25 @@ import os
 
 from datetime import datetime, timedelta
 
+import operator
+
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.couch import get_document_or_not_found
 from dimagi.utils.dates import DateSpan
+
+
+OPERATORS = {
+    "==": operator.eq,
+    "!=": operator.ne,
+    ">": operator.gt,
+    ">=": operator.ge,
+    "<": operator.lt,
+    "<=": operator.le,
+    "in": operator.contains,
+}
 
 
 class MPRData(object):
@@ -118,16 +131,20 @@ class ICDSMixin(object):
                 column_name = column['column_name']
                 column_data = 0
                 if column_agg_func == 'sum':
-                    column_data = sum([x.get(column_data, 0) for x in report_data])
+                    column_data = sum([x.get(column_name, 0) for x in report_data])
                 elif column_agg_func == 'count':
                     column_data = len(report_data)
                 elif column_agg_func == 'count_if':
-                    statement = 'val.get("{0}", 0) {1} {2}'.format(
-                        column_name,
-                        column['condition']['operator'],
-                        column['condition']['value']
-                    )
-                    column_data = len([val for val in report_data if eval(statement)])
+                    value = column['condition']['value']
+                    op = column['condition']['operator']
+
+                    def check_condition(v):
+                        if op == "in":
+                            return OPERATORS[op](value, v)
+                        else:
+                            return OPERATORS[op](v, value)
+
+                    column_data = len([val for val in report_data if check_condition(val)])
                 elif column_agg_func == 'avg':
                     values = [x.get(column_name, 0) for x in report_data]
                     column_data = sum(values) / (len(values) or 1)

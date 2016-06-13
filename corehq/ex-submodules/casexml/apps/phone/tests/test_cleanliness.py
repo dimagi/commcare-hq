@@ -545,9 +545,11 @@ class GetCaseFootprintInfoTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GetCaseFootprintInfoTest, cls).setUpClass()
         delete_all_cases()
 
     def setUp(self):
+        super(GetCaseFootprintInfoTest, self).setUp()
         self.domain = 'domain'
         self.owner_id = uuid.uuid4().hex
         self.other_owner_id = uuid.uuid4().hex
@@ -694,9 +696,11 @@ class GetDependentCasesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GetDependentCasesTest, cls).setUpClass()
         delete_all_cases()
 
     def setUp(self):
+        super(GetDependentCasesTest, self).setUp()
         self.domain = 'domain'
         self.owner_id = uuid.uuid4().hex
         self.other_owner_id = uuid.uuid4().hex

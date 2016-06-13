@@ -1,10 +1,8 @@
 {% extends "error_base.html" %}
 {% load i18n %}
-{% block title %}403 Forbidden {% endblock %}
+{% block title %}{% trans "Cookies Required for CSRF" %}{% endblock %}
 {% block tabs %}{% endblock tabs %}
-{% block centered-content %}
-    <div class="page-header">
-        <h2>{% trans "Cookies must be enabled to use CommCareHQ" %}</h2>
-    </div>
+{% block page_name %}{% trans "Cookies must be enabled to use CommCareHQ" %}{% endblock %}
+{% block page_content %}
     <p>{% trans "If you believe this is a mistake, please contact commcarehq-support@dimagi.com" %}</p>
 {% endblock %}

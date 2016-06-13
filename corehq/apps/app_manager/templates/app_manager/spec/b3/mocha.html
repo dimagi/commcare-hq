@@ -1,8 +1,8 @@
-{% extends "mocha/bootstrap3/base.html" %}
+{% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
 {% block core_libraries %}{{ block.super }}
-{% include "style/includes/bootstrap3/angular.html" %}
+{% include "style/includes/angular.html" %}
 <script src="{% new_static 'angular-mocks/angular-mocks.js' %}"></script>
 {% endblock %}
 

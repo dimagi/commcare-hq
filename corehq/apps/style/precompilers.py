@@ -14,16 +14,10 @@ class LessFilter(CompilerFilter):
     def input(self, **kwargs):
         if "{lessc}" in self.command:
             options = list(self.options)
-            lessc_path = 'lessc'
-            filename = self.filename.split('/')[-1]
-            # for handling the migration to Bootstrap 3
-            if filename not in [
-                'hqstyle-core.less',
-                'hqstyle-mobile-c2.less',
-                'app_manager.less',
-                'core.less',
-            ]:
-                lessc_path = settings.LESS_FOR_BOOTSTRAP_3_BINARY
+
+            # interim use b3 lessc path until final switchover
+            lessc_path = settings.LESS_FOR_BOOTSTRAP_3_BINARY or 'lessc'
+
             options.append(('lessc', lessc_path))
             self.options = tuple(options)
 

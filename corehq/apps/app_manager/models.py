@@ -109,7 +109,6 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     update_unique_ids,
     app_callout_templates,
-    use_app_aware_sync,
     xpath_references_case,
     xpath_references_user_case,
 )
@@ -3740,6 +3739,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     module_type = 'shadow'
     source_module_id = StringProperty()
     forms = []
+    excluded_form_ids = SchemaListProperty()
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
@@ -3785,7 +3785,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def get_suite_forms(self):
         if not self.source_module:
             return []
-        return self.source_module.get_forms()
+        return [f for f in self.source_module.get_forms() if f.unique_id not in self.excluded_form_ids]
 
     @parse_int([1])
     def get_form(self, i):
@@ -3881,7 +3881,7 @@ class LazyBlobDoc(BlobMixin):
                 # preserve stubs so couch attachments don't get deleted on save
                 stubs = {}
                 for name, value in list(attachments.items()):
-                    if "stub" in value:
+                    if isinstance(value, dict) and "stub" in value:
                         stubs[name] = attachments.pop(name)
                 if stubs:
                     data["_attachments"] = stubs
@@ -4386,9 +4386,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def ota_restore_url(self):
-        if use_app_aware_sync(self):
-            return reverse('app_aware_restore', args=[self.domain, self._id])
-        return reverse('ota_restore', args=[self.domain])
+        return reverse('app_aware_restore', args=[self.domain, self._id])
 
     @absolute_url_property
     def form_record_url(self):

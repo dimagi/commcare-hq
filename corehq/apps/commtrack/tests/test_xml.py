@@ -540,7 +540,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
     def setUp(self):
         super(CommTrackSyncTest, self).setUp()
         # reused stuff
-        self.casexml_user = self.user.to_casexml_user()
+        self.restore_user = self.user.to_ota_restore_user()
         self.sp_block = CaseBlock(
             case_id=self.sp.case_id,
         ).as_xml()
@@ -560,7 +560,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         # get initial restore token
         restore_config = RestoreConfig(
             project=self.domain,
-            user=self.casexml_user,
+            restore_user=self.restore_user,
             params=RestoreParams(version=V2),
         )
         self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload().as_string())
@@ -568,14 +568,14 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
     @run_with_all_backends
     def testStockSyncToken(self):
         # first restore should not have the updated case
-        check_user_has_case(self, self.casexml_user, self.sp_block, should_have=False,
+        check_user_has_case(self, self.restore_user, self.sp_block, should_have=False,
                             restore_id=self.sync_log_id, version=V2)
 
         # submit with token
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id)
         # now restore should have the case
-        check_user_has_case(self, self.casexml_user, self.sp_block, should_have=True,
+        check_user_has_case(self, self.restore_user, self.sp_block, should_have=True,
                             restore_id=self.sync_log_id, version=V2, line_by_line=False)
 
 
@@ -702,7 +702,7 @@ def _report_soh(soh_reports, case_id, domain):
 def _get_ota_balance_blocks(project, user):
     restore_config = RestoreConfig(
         project=project,
-        user=user.to_casexml_user(),
+        restore_user=user.to_ota_restore_user(),
         params=RestoreParams(version=V2),
     )
     return extract_balance_xml(restore_config.get_payload().as_string())

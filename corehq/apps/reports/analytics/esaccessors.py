@@ -12,8 +12,9 @@ from corehq.apps.es.aggregations import (
 from corehq.apps.es.forms import (
     submitted as submitted_filter,
     completed as completed_filter,
-)
+    xmlns)
 from corehq.apps.es.cases import closed_range
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_datetime
 
@@ -239,7 +240,8 @@ def get_completed_counts_by_date(domain, user_ids, datespan, timezone):
 def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission_time):
     form_query = (FormES()
                   .domain(domain)
-                  .user_id(user_ids))
+                  .user_id(user_ids)
+                  .filter(filters.NOT(xmlns(SYSTEM_FORM_XMLNS))))
 
     if is_submission_time:
         form_query = (form_query
@@ -497,5 +499,7 @@ def get_all_user_ids_submitted(domain, app_ids=None):
 
 
 def get_username_in_last_form_user_id_submitted(domain, user_id):
-    last_sub = get_last_form_submissions_by_user(domain, [user_id])[user_id][0]
-    return last_sub['form']['meta'].get('username', None)
+    submissions = get_last_form_submissions_by_user(domain, [user_id])
+    user_submissions = submissions.get(user_id, None)
+    if user_submissions:
+        return user_submissions[0]['form']['meta'].get('username', None)

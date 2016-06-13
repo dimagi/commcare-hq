@@ -512,7 +512,7 @@ class BillingContactInfo(models.Model):
     )
     # TODO - replace with models.ArrayField once django >= 1.9
     email_list = jsonfield.JSONField(
-        default=[],
+        default=list,
         verbose_name=_("Contact Emails"),
         help_text=_("We will email communications regarding your account "
                     "to the emails specified here.")
@@ -1708,7 +1708,6 @@ class InvoiceBaseManager(models.Manager):
 
 class InvoiceBase(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
-    date_received = models.DateField(blank=True, db_index=True, null=True)
     is_hidden = models.BooleanField(default=False)
     tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)

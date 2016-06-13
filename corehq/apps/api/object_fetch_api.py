@@ -1,14 +1,13 @@
 import urllib
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.core.urlresolvers import reverse
+from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 from corehq.apps.reports.views import can_view_attachments
 from corehq.form_processor.exceptions import CaseNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cached_case_attachment, FormAccessors
-from couchforms.models import XFormInstance
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 
@@ -110,7 +109,8 @@ class CaseAttachmentAPI(View):
         else:
             mime_type = "plain/text"
 
-        return StreamingHttpResponse(streaming_content=attachment_stream, content_type=mime_type)
+        return StreamingHttpResponse(streaming_content=FileWrapper(attachment_stream),
+                                     content_type=mime_type)
 
 
 class FormAttachmentAPI(View):
@@ -125,7 +125,8 @@ class FormAttachmentAPI(View):
         except AttachmentNotFound as e:
             raise Http404
         
-        return StreamingHttpResponse(streaming_content=content.content_stream, content_type=content.content_type)
+        return StreamingHttpResponse(streaming_content=FileWrapper(content.content_stream),
+                                     content_type=content.content_type)
 
 
 def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):

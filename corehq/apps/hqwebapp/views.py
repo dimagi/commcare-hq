@@ -575,31 +575,32 @@ def bug_report(req):
     return HttpResponse()
 
 
-def render_static(request, template):
+def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "style/bootstrap2/blank.html", {'tmpl': template})
+    return render(request, "style/blank.html",
+                  {'tmpl': template, 'page_name': page_name})
 
 
 def eula(request):
-    return render_static(request, "eula.html")
+    return render_static(request, "eula.html", _("End User License Agreement"))
 
 
 def cda(request):
-    return render_static(request, "cda.html")
+    return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
 
 def apache_license(request):
-    return render_static(request, "apache_license.html")
+    return render_static(request, "apache_license.html", _("Apache License"))
 
 
 def bsd_license(request):
-    return render_static(request, "bsd_license.html")
+    return render_static(request, "bsd_license.html", _("BSD License"))
 
 
 def product_agreement(request):
-    return render_static(request, "product_agreement.html")
+    return render_static(request, "product_agreement.html", _("Product Subscription Agreement"))
 
 
 def unsubscribe(request, user_id):
@@ -618,7 +619,7 @@ def unsubscribe(request, user_id):
 class BasePageView(TemplateView):
     urlname = None  # name of the view used in urls
     page_title = None  # what shows up in the <title>
-    template_name = 'style/bootstrap2/base_page.html'
+    template_name = 'style/base_page.html'
 
     @property
     def page_name(self):
@@ -679,7 +680,7 @@ class BasePageView(TemplateView):
 
 class BaseSectionPageView(BasePageView):
     section_name = ""
-    template_name = "style/bootstrap2/base_section.html"
+    template_name = "style/base_section.html"
 
     @property
     def section_url(self):
@@ -907,7 +908,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_update_form_response(self, update_form):
         return render_to_string(
-            'style/bootstrap2/partials/update_item_form.html', {
+            'style/partials/update_item_form.html', {
                 'form': update_form
             }
         )
@@ -1008,7 +1009,7 @@ def osdd(request, template='osdd.xml'):
 
 
 @require_superuser
-def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.html'):
+def maintenance_alerts(request, template='style/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
 
     return render(request, template, {

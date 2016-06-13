@@ -2,8 +2,7 @@ from corehq.util.elastic import es_index
 
 ##################
 # NOTE to the next person who updates this name:
-#    You should also update ReportCasePillow.get_unique_id to return `REPORT_CASE_INDEX`
-#    Also remove this comment and the corresponding comment in ReportCasePillow
+#    You should also remove the ReportCasePillow.get_unique_id method
 REPORT_CASE_INDEX = es_index("report_cases_czei39du507m9mmpqk3y01x72a3ux4p0")
 ##################
 
