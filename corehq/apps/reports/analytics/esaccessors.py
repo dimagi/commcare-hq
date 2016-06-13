@@ -16,6 +16,7 @@ from corehq.apps.es.forms import (
 )
 from corehq.apps.es.cases import (
     closed_range as closed_range_filter,
+    case_type as case_type_filter,
 )
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.util.quickcache import quickcache
@@ -74,6 +75,8 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False,
 
     if case_types:
         case_query = case_query.filter({"terms": {"type.exact": case_types}})
+    else:
+        case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
 
     if not is_total:
         case_query = case_query.active_in_range(
@@ -113,6 +116,8 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
 
     if case_types:
         case_query = case_query.case_type(case_types)
+    else:
+        case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
 
     if owner_ids:
         case_query = case_query.filter(filters.term(user_field, owner_ids))
