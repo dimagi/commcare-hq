@@ -27,8 +27,8 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         dup_id = self._submit_form(form_id)._id
         # Test a form with multiple dups
         form_with_multi_dups_id = self._submit_form()._id
-        _ = self._submit_form(form_with_multi_dups_id)._id
-        _ = self._submit_form(form_with_multi_dups_id)._id
+        self._submit_form(form_with_multi_dups_id)
+        self._submit_form(form_with_multi_dups_id)
         # Test a form with no dups
         another_form_id = self._submit_form()._id
 
