@@ -81,7 +81,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.filters.commtrack.ProgramFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
     exportable = True
     emailable = True
@@ -98,23 +97,21 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             DataTablesColumn(
                 _('Stocked Out'),
                 help_text=_("A facility is counted as stocked out when its \
-                            stock is below the emergency level during the date \
-                            range selected.")),
+                            current stock is below the emergency level.")),
             DataTablesColumn(
                 _('Understocked'),
                 help_text=_("A facility is counted as under stocked when its \
-                            stock is above the emergency level but below the \
-                            low stock level during the date range selected.")),
+                            current stock is above the emergency level but below the \
+                            low stock level.")),
             DataTablesColumn(
                 _('Adequate Stock'),
                 help_text=_("A facility is counted as adequately stocked when \
-                            its stock is above the low level but below the \
-                            overstock level during the date range selected.")),
+                            its current stock is above the low level but below the \
+                            overstock level.")),
             DataTablesColumn(
                 _('Overstocked'),
                 help_text=_("A facility is counted as overstocked when \
-                            its stock is above the overstock level \
-                            during the date range selected.")),
+                            its current stock is above the overstock level.")),
             #DataTablesColumn(_('Non-reporting')),
             DataTablesColumn(
                 _('Insufficient Data'),
@@ -138,8 +135,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
         stock_states = StockState.objects.filter(
             case_id__in=sp_ids,
-            last_modified_date__lte=self.datespan.enddate_utc,
-            last_modified_date__gte=self.datespan.startdate_utc,
             section_id=STOCK_SECTION_TYPE
         )
 
