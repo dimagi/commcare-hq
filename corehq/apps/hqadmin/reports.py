@@ -1174,9 +1174,12 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
         return row
 
 
-class CommCareVersionReport(AdminReport, ElasticTabularReport):
+class CommCareVersionReport(AdminFacetedReport):
     slug = "commcare_version"
     name = ugettext_lazy("CommCare Version")
+    es_facet_list = DOMAIN_FACETS
+    es_facet_mapping = FACET_MAPPING
+    facet_title = ugettext_noop("Project Facets")
 
     @property
     def headers(self):
@@ -1187,6 +1190,11 @@ class CommCareVersionReport(AdminReport, ElasticTabularReport):
         for version in versions:
             headers.add_column(DataTablesColumn(version))
         return headers
+
+    def es_query(self, params=None, size=None):
+        size = size if size is not None else self.pagination.count
+        return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
+                               start_at=self.pagination.start, size=size)
 
     @property
     def rows(self):
@@ -1202,7 +1210,7 @@ class CommCareVersionReport(AdminReport, ElasticTabularReport):
             query = FormES().submitted(gte=days, lte=now)
             return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
         rows = {}
-        for domain in es_domain_query(show_stats=False)['hits']['hits']:
+        for domain in self.es_results.get('hits', {}).get('hits', []):
             domain_name = domain['_source']['name']
             rows.update({domain_name: [domain_name] + [0] * len(versions)})
 
