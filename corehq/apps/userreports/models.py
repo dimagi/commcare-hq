@@ -290,6 +290,9 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
     created_by_builder = BooleanProperty(default=False)
+    # `True` if this report was ever edited in the advanced JSON UIs (after June 7, 2016)
+    edited_manually = BooleanProperty(default=False)
+    last_modified = DateTimeProperty()
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
 
 
@@ -311,6 +314,10 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 
     def __unicode__(self):
         return u'{} - {}'.format(self.domain, self.title)
+
+    def save(self, *args, **kwargs):
+        self.report_meta.last_modified = datetime.utcnow()
+        super(ReportConfiguration, self).save(*args, **kwargs)
 
     @property
     @memoized
@@ -595,7 +602,7 @@ def id_is_static(data_source_id):
     return data_source_id.startswith(StaticDataSourceConfiguration._datasource_id_prefix)
 
 
-def _config_id_is_static(config_id):
+def is_report_config_id_static(config_id):
     """
     Return True if the given report configuration id refers to a static report
     configuration.
@@ -615,7 +622,7 @@ def get_report_configs(config_ids, domain):
     static_report_config_ids = []
     dynamic_report_config_ids = []
     for config_id in config_ids:
-        if _config_id_is_static(config_id):
+        if is_report_config_id_static(config_id):
             static_report_config_ids.append(config_id)
         else:
             dynamic_report_config_ids.append(config_id)
@@ -643,4 +650,4 @@ def get_report_config(config_id, domain):
     config_id may be a ReportConfiguration or StaticReportConfiguration id
     """
     config = get_report_configs([config_id], domain)[0]
-    return config, _config_id_is_static(config_id)
+    return config, is_report_config_id_static(config_id)

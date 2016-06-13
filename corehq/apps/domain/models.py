@@ -216,7 +216,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     name = StringProperty()
     is_active = BooleanProperty()
-    is_public = BooleanProperty(default=False)
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
     case_sharing = BooleanProperty(default=False)

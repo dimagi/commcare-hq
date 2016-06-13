@@ -36,7 +36,7 @@ class UnrecognizedBackendException(Exception):
     pass
 
 
-class VerifiedNumber(SyncCouchToSQLMixin, Document):
+class VerifiedNumber(Document):
     """
     There should only be one VerifiedNumber entry per (owner_doc_type, owner_id), and
     each VerifiedNumber.phone_number should be unique across all entries.
@@ -49,216 +49,6 @@ class VerifiedNumber(SyncCouchToSQLMixin, Document):
     ivr_backend_id  = StringProperty() # points to a MobileBackend
     verified        = BooleanProperty()
     contact_last_modified = DateTimeProperty()
-
-    def __init__(self, *args, **kwargs):
-        super(VerifiedNumber, self).__init__(*args, **kwargs)
-        self._old_phone_number = self.phone_number
-        self._old_owner_id = self.owner_id
-
-    def __repr__(self):
-        return '{phone} in {domain} (owned by {owner})'.format(
-            phone=self.phone_number, domain=self.domain,
-            owner=self.owner_id
-        )
-
-    @property
-    def backend(self):
-        from corehq.apps.sms.models import SQLMobileBackend
-        from corehq.apps.sms.util import clean_phone_number
-        if isinstance(self.backend_id, basestring) and self.backend_id.strip() != '':
-            return SQLMobileBackend.load_by_name(
-                SQLMobileBackend.SMS,
-                self.domain,
-                self.backend_id
-            )
-        else:
-            return SQLMobileBackend.load_default_by_phone_and_domain(
-                SQLMobileBackend.SMS,
-                clean_phone_number(self.phone_number),
-                domain=self.domain
-            )
-
-    @property
-    def owner(self):
-        if self.owner_doc_type == "CommCareCase":
-            from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-            return CaseAccessors(self.domain).get_case(self.owner_id)
-        elif self.owner_doc_type == "CommCareUser":
-            from corehq.apps.users.models import CommCareUser
-            return CommCareUser.get(self.owner_id)
-        elif self.owner_doc_type == 'WebUser':
-            from corehq.apps.users.models import WebUser
-            return WebUser.get(self.owner_id)
-        else:
-            return None
-
-    def retire(self, deletion_id=None, deletion_date=None):
-        self.doc_type += DELETED_SUFFIX
-        self['-deletion_id'] = deletion_id
-        self['-deletion_date'] = deletion_date
-        self.save()
-
-    @classmethod
-    def by_extensive_search(cls, phone_number):
-        # Try to look up the verified number entry directly
-        v = cls.by_phone(phone_number)
-
-        # If not found, try to see if any number in the database is a substring
-        # of the number given to us. This can happen if the telco prepends some
-        # international digits, such as 011...
-        if v is None:
-            v = cls.by_phone(phone_number[1:])
-        if v is None:
-            v = cls.by_phone(phone_number[2:])
-        if v is None:
-            v = cls.by_phone(phone_number[3:])
-
-        # If still not found, try to match only the last digits of numbers in 
-        # the database. This can happen if the telco removes the country code
-        # in the caller id.
-        if v is None:
-            v = cls.by_suffix(phone_number)
-
-        return v
-
-    @classmethod
-    def by_phone(cls, phone_number, include_pending=False):
-        result = cls._by_phone(apply_leniency(phone_number))
-        return cls._filter_pending(result, include_pending)
-
-    @classmethod
-    def by_suffix(cls, phone_number, include_pending=False):
-        """
-        Used to lookup a VerifiedNumber, trying to exclude country code digits.
-        """
-        try:
-            result = cls._by_suffix(apply_leniency(phone_number))
-            return cls._filter_pending(result, include_pending)
-        except MultipleResultsFound:
-            # We can't pinpoint who the number belongs to because more than one
-            # suffix matches. So treat it as if the result was not found.
-            return None
-
-    @classmethod
-    @quickcache(['phone_number'], timeout=60 * 60)
-    def _by_phone(cls, phone_number):
-        return cls.phone_lookup('phone_numbers/verified_number_by_number', phone_number)
-
-    @classmethod
-    @quickcache(['phone_number'], timeout=60 * 60)
-    def _by_suffix(cls, phone_number):
-        return cls.phone_lookup('phone_numbers/verified_number_by_suffix', phone_number)
-
-    @classmethod
-    def phone_lookup(cls, view_name, phone_number):
-        # We use .one() here because the framework prevents duplicates
-        # from being entered when a contact saves a number.
-        # See CommCareMobileContactMixin.save_verified_number()
-        return cls.view(
-            view_name,
-            key=phone_number,
-            include_docs=True
-        ).one()
-
-    @classmethod
-    def _filter_pending(cls, v, include_pending):
-        if v:
-            if include_pending:
-                return v
-            elif v.verified:
-                return v
-
-        return None
-
-    @classmethod
-    def by_domain(cls, domain, ids_only=False):
-        result = cls.view("phone_numbers/verified_number_by_domain",
-                          startkey=[domain],
-                          endkey=[domain, {}],
-                          include_docs=(not ids_only),
-                          reduce=False).all()
-        if ids_only:
-            return [row['id'] for row in result]
-        else:
-            return result
-
-    @classmethod
-    def count_by_domain(cls, domain):
-        result = cls.view("phone_numbers/verified_number_by_domain",
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=False,
-            reduce=True).all()
-        if result:
-            return result[0]['value']
-        return 0
-
-    @classmethod
-    @quickcache(['owner_id'], timeout=60 * 60)
-    def by_owner_id(cls, owner_id):
-        """
-        Returns a list of VerifiedNumbers belonging to the given contact.
-        """
-        return cls.view(
-            'phone_numbers/verified_number_by_owner_id',
-            key=owner_id,
-            include_docs=True
-        ).all()
-
-    @classmethod
-    def _clear_suffix_lookup_cache(cls, phone_number):
-        if isinstance(phone_number, basestring):
-            cls._by_suffix.clear(cls, phone_number[1:])
-            cls._by_suffix.clear(cls, phone_number[2:])
-            cls._by_suffix.clear(cls, phone_number[3:])
-
-    @classmethod
-    def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
-        cls.by_owner_id.clear(cls, owner_id)
-
-        if old_owner_id and old_owner_id != owner_id:
-            cls.by_owner_id.clear(cls, old_owner_id)
-
-        cls._by_phone.clear(cls, phone_number)
-        cls._clear_suffix_lookup_cache(phone_number)
-
-        if old_phone_number and old_phone_number != phone_number:
-            cls._by_phone.clear(cls, old_phone_number)
-            cls._clear_suffix_lookup_cache(old_phone_number)
-
-    def _clear_caches(self):
-        self._clear_quickcaches(
-            self.owner_id,
-            self.phone_number,
-            old_owner_id=self._old_owner_id,
-            old_phone_number=self._old_phone_number
-        )
-
-    def save(self, *args, **kwargs):
-        self._clear_caches()
-        self._old_phone_number = self.phone_number
-        self._old_owner_id = self.owner_id
-        return super(VerifiedNumber, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        self._clear_caches()
-        return super(VerifiedNumber, self).delete(*args, **kwargs)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return cls._migration_get_sql_model_class()._migration_get_fields()
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        from corehq.apps.sms.models import PhoneNumber
-        return PhoneNumber
-
-    def _migration_sync_to_sql(self, sql_object):
-        if self.doc_type and self.doc_type.endswith(DELETED_SUFFIX):
-            sql_object.delete(sync_to_couch=False)
-            return
-
-        super(VerifiedNumber, self)._migration_sync_to_sql(sql_object)
 
 
 def add_plus(phone_number):
@@ -314,15 +104,16 @@ class CommCareMobileContactMixin(object):
         raise NotImplementedError('Please implement this method')
 
     def get_verified_numbers(self, include_pending=False):
-        v = VerifiedNumber.by_owner_id(self.get_id)
+        from corehq.apps.sms.models import PhoneNumber
+        v = PhoneNumber.by_owner_id(self.get_id)
         v = filter(lambda c: c.verified or include_pending, v)
         return dict((c.phone_number, c) for c in v)
 
     def get_verified_number(self, phone=None):
         """
-        Retrieves this contact's verified number entry by (self.doc_type, self._id).
+        Retrieves this contact's verified number entry by (self.doc_type, self.get_id).
 
-        return  the VerifiedNumber entry
+        return  the PhoneNumber entry
         """
         from corehq.apps.sms.util import strip_plus
         verified = self.get_verified_numbers(True)
@@ -354,8 +145,9 @@ class CommCareMobileContactMixin(object):
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
+        from corehq.apps.sms.models import PhoneNumber
         self.validate_number_format(phone_number)
-        v = VerifiedNumber.by_phone(phone_number, include_pending=True)
+        v = PhoneNumber.by_phone(phone_number, include_pending=True)
         if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self.get_id):
             raise PhoneNumberInUseException("Phone number is already in use.")
 
@@ -368,10 +160,12 @@ class CommCareMobileContactMixin(object):
             global settings for which backend will be used to send sms to
             this number
 
-        return  The VerifiedNumber
+        return  The PhoneNumber
         raises  InvalidFormatException if the phone number format is invalid
         raises  PhoneNumberInUseException if the phone number is already in use by another contact
         """
+        from corehq.apps.sms.models import PhoneNumber
+
         phone_number = apply_leniency(phone_number)
         self.verify_unique_number(phone_number)
         if only_one_number_allowed:
@@ -379,7 +173,7 @@ class CommCareMobileContactMixin(object):
         else:
             v = self.get_verified_number(phone_number)
         if v is None:
-            v = VerifiedNumber(
+            v = PhoneNumber(
                 owner_doc_type=self.doc_type,
                 owner_id=self.get_id
             )
@@ -388,8 +182,7 @@ class CommCareMobileContactMixin(object):
         v.verified = verified
         v.backend_id = backend_id
         v.ivr_backend_id = ivr_backend_id
-        v.save(**get_safe_write_kwargs())
-        return v
+        v.save()
 
     def delete_verified_number(self, phone_number=None):
         """
@@ -400,7 +193,7 @@ class CommCareMobileContactMixin(object):
         """
         v = self.get_verified_number(phone_number)
         if v is not None:
-            v.retire()
+            v.delete()
 
 
 class MessagingCaseContactMixin(CommCareMobileContactMixin):

@@ -78,7 +78,7 @@
                     <tr>
                         <td>{{ product_name }}</td>
                         <td>{{ stock_state.stock_on_hand }}</td>
-                        {% if stock_state %}
+                        {% if stock_state and stock_state.last_modified_form_id %}
                         <td><a href="{% url 'render_form_data' case.domain stock_state.last_modified_form_id %}">{{ stock_state.last_modified_date }}</a></td>
                         {% else %}
                         <td>{% trans "No transaction found" %}</td>

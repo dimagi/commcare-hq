@@ -7,16 +7,17 @@ from django.conf import settings
 from elasticsearch.exceptions import ElasticsearchException, RequestError
 
 from corehq.apps.es.utils import flatten_field_dict
+from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
+from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX
-from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 
 
@@ -71,15 +72,16 @@ ES_META = {
     "forms": EsMeta(XFORM_INDEX, 'xform'),
     "cases": EsMeta(CASE_INDEX, 'case'),
     "active_cases": EsMeta(CASE_INDEX, 'case'),
-    "users": EsMeta(USER_INDEX, 'user'),
-    "users_all": EsMeta(USER_INDEX, 'user'),
-    "domains": EsMeta(DOMAIN_INDEX, 'hqdomain'),
+    "users": EsMeta(USER_INDEX_INFO.index, USER_INDEX_INFO.type),
+    "users_all": EsMeta(USER_INDEX_INFO.index, USER_INDEX_INFO.type),
+    "domains": EsMeta(DOMAIN_INDEX_INFO.index, DOMAIN_INDEX_INFO.type),
     "apps": EsMeta(APP_INDEX, 'app'),
-    "groups": EsMeta(GROUP_INDEX, 'group'),
-    "sms": EsMeta(SMS_INDEX, 'sms'),
+    "groups": EsMeta(GROUP_INDEX_INFO.index, GROUP_INDEX_INFO.type),
+    "sms": EsMeta(SMS_INDEX_INFO.index, SMS_INDEX_INFO.type),
     "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
     "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
-    "case_search": EsMeta(CASE_SEARCH_INDEX, 'case')
+    "case_search": EsMeta(CASE_SEARCH_INDEX_INFO.index, CASE_SEARCH_INDEX_INFO.type),
+    "ledgers": EsMeta(LEDGER_INDEX_INFO.index, LEDGER_INDEX_INFO.type),
 }
 
 ADD_TO_ES_FILTER = {

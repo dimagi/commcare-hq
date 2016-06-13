@@ -1,11 +1,21 @@
 from StringIO import StringIO
 import json
+import datetime
+
+import mock
 from django.core.urlresolvers import reverse
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.export.models import FormExportInstance, TableConfiguration, ExportColumn, ScalarItem, PathNode
 from corehq.apps.reports.models import FormExportSchema
+from corehq.apps.reports.tasks import (
+    _extract_form_attachment_info,
+    _get_export_properties,
+)
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.models import XFormInstanceSQL, XFormAttachmentSQL
 from couchexport.models import Format
+from couchforms.models import XFormInstance
 from django_digest.test import Client
 
 XMLNS = 'http://www.commcarehq.org/example/hello-world'
@@ -27,6 +37,106 @@ XML_DATA = """<?xml version='1.0' ?>
     </n1:meta>
 </data>
 """
+
+
+class FormMultimediaExportTest(SimpleTestCase):
+
+    def test_get_export_properties(self):
+        export_instance = FormExportInstance(
+            tables=[
+                TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    path=[],
+                    columns=[
+                        ExportColumn(
+                            label="Q3",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='q3')],
+                            ),
+                            selected=True,
+                        ),
+                    ]
+                ),
+                TableConfiguration(
+                    label="My other table",
+                    selected=True,
+                    path=[PathNode(name='form', is_repeat=False), PathNode(name="q2", is_repeat=False)],
+                    columns=[
+                        ExportColumn(
+                            label="Q4",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='q2'), PathNode(name='q4')],
+                            ),
+                            selected=True,
+                        ),
+                    ]
+                )
+            ]
+        )
+        with mock.patch('corehq.apps.export.models.new.FormExportInstance.get', return_value=export_instance):
+            props = _get_export_properties("fake id for my export instance", False)
+            self.assertEqual(props, set(['q2-q4', 'q3']))
+
+    def test_extract_form_attachment_info(self):
+        image_1_name = "1234.jpg"
+        image_2_name = "5678.jpg"
+        form = {
+            "name": "foo",
+            "color": "bar",
+            "image_1": image_1_name,
+            "my_group": {
+                "image_2": image_2_name
+            }
+        }
+        with mock.patch.object(XFormInstanceSQL, 'form_data') as form_data_mock:
+            form_data_mock.__get__ = mock.MagicMock(return_value=form)
+            couch_xform = XFormInstance(
+                received_on=datetime.datetime.now(),
+                form=form,
+                _attachments={
+                    image_1_name: {
+                        "content_type": "image/jpeg",
+                        "length": 1024,
+                    },
+                    image_2_name: {
+                        "content_type": "image/jpeg",
+                        "length": 2048,
+                    },
+                    "form.xml": {
+                        "content_type": "text/xml",
+                        "length": 2048,
+                    }
+                }
+            )
+            sql_xform = XFormInstanceSQL(
+                received_on=datetime.datetime.now(),
+            )
+            sql_xform.unsaved_attachments = [
+                XFormAttachmentSQL(
+                    name=image_1_name,
+                    content_type="image/jpeg",
+                    content_length=1024,
+                ),
+                XFormAttachmentSQL(
+                    name=image_2_name,
+                    content_type="image/jpeg",
+                    content_length=1024,
+                ),
+                XFormAttachmentSQL(
+                    name="form.xml",
+                    content_type="text/xml",
+                    content_length=1024,
+                ),
+            ]
+
+            for xform in (couch_xform, sql_xform):
+                form_info = _extract_form_attachment_info(xform, {"my_group-image_2", "image_1"})
+                attachments = {a['name']: a for a in form_info['attachments']}
+                self.assertTrue(image_1_name in attachments)
+                self.assertTrue(image_2_name in attachments)
+                self.assertEqual(attachments[image_1_name]['question_id'], "image_1")
+                self.assertEqual(attachments[image_2_name]['question_id'], "my_group-image_2")
 
 
 class FormExportTest(TestCase):

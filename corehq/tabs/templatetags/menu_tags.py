@@ -129,10 +129,7 @@ def format_sidebar(context):
                             nav['subpage'] = subpage
                             break
 
-    template = {
-        style_utils.BOOTSTRAP_2: 'style/bootstrap2/partials/navigation_left_sidebar.html',
-        style_utils.BOOTSTRAP_3: 'style/bootstrap3/partials/navigation_left_sidebar.html',
-    }[style_utils.get_bootstrap_version()]
-    return mark_safe(render_to_string(template, {
-        'sections': sections
-    }))
+    return mark_safe(render_to_string(
+        'style/partials/navigation_left_sidebar.html',
+        {'sections': sections}
+    ))

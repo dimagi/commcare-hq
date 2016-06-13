@@ -17,7 +17,11 @@
     </script>
 
     <!-- Core Libraries -->
-    {% block core_libraries %}{% endblock %}
+    {% block core_libraries %}
+    {% include "style/includes/core_libraries.html" %}
+    {% include "style/includes/ko.html" %}
+    <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+    {% endblock %}
 
     <!-- App specific dependencies -->
     {% block dependencies %}{% endblock %}

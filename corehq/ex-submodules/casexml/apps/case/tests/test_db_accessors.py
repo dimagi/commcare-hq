@@ -14,9 +14,11 @@ class TestExtensionCaseIds(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExtensionCaseIds, cls).setUpClass()
         delete_all_cases()
 
     def setUp(self):
+        super(TestExtensionCaseIds, self).setUp()
         self.domain = 'domain'
         self.factory = CaseFactory(self.domain)
 
@@ -140,9 +142,11 @@ class TestIndexedCaseIds(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestIndexedCaseIds, cls).setUpClass()
         delete_all_cases()
 
     def setUp(self):
+        super(TestIndexedCaseIds, self).setUp()
         self.domain = 'domain'
         self.factory = CaseFactory(self.domain)
 
@@ -168,9 +172,11 @@ class TestReverseIndexedCases(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestReverseIndexedCases, cls).setUpClass()
         delete_all_cases()
 
     def setUp(self):
+        super(TestReverseIndexedCases, self).setUp()
         self.domain = 'domain'
         self.factory = CaseFactory(self.domain)
         self.indexed_case_id = uuid.uuid4().hex

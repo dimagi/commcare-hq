@@ -323,8 +323,8 @@
             "agg_fun": "sum"
           },
           {
-            "column_name": "open_fast_count",
-            "column_in_report": "open_fast_count_21",
+            "column_name": "open_bfast_count",
+            "column_in_report": "open_bfast_count_21",
             "agg_fun": "count_if",
             "condition": {
               "operator": ">=",
@@ -348,8 +348,8 @@
             }
           },
           {
-            "column_name": "open_fast_count",
-            "column_in_report": "open_fast_count_9",
+            "column_name": "open_bfast_count",
+            "column_in_report": "open_bfast_count_9",
             "agg_fun": "count_if",
             "condition": {
               "operator": "<=",

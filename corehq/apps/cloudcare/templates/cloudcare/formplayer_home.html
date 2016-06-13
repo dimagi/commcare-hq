@@ -55,7 +55,7 @@
         <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_view.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_view.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_controller.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+        <script src="{% static 'style/js/ui-element.js' %}"></script>
         <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
         <script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
         <script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
@@ -73,11 +73,13 @@
         var language = "{{ language }}";
         var username = "{{ username  }}";
         var domain = "{{ domain }}";
+        var formplayer_url = "{{ formplayer_url }}";
         var options = {
             "apps": apps,
             "language": language,
             "username": username,
-            "domain": domain
+            "domain": domain,
+            "formplayer_url": formplayer_url,
         };
         FormplayerFrontend.start(options);
     </script>

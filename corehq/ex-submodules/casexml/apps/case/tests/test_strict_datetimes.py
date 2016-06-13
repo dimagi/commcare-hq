@@ -29,6 +29,7 @@ class StrictDatetimesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(StrictDatetimesTest, cls).setUpClass()
         cls.domain = 'strict-datetimes-test-domain'
         cls.interface = FormProcessorInterface(cls.domain)
 

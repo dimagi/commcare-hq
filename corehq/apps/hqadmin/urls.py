@@ -1,5 +1,4 @@
 from django.conf.urls import *
-from django.views.generic import TemplateView
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -10,7 +9,7 @@ from .views import (
     LoadtestReportView,
     ManagementCommandsView,
     CallcenterUCRCheck,
-)
+    DimagisphereView)
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -41,6 +40,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^web_user_lookup/$', 'web_user_lookup', name='web_user_lookup'),
     url(r'^doc_in_es/$', 'doc_in_es', name='doc_in_es'),
     url(r'^raw_couch/$', 'raw_couch', name='raw_couch'),
+    url(r'^raw_doc/$', 'raw_doc', name='raw_doc'),
     url(r'^callcenter_test/$', 'callcenter_test', name='callcenter_test'),
     (r'^api/', include(admin_api_urlpatterns)),
     url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),
@@ -48,7 +48,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^download_malt/$',
         DownloadMALTView.as_view(), name=DownloadMALTView.urlname),
     url(r'^dimagisphere/$',
-        require_superuser(TemplateView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
+        require_superuser(DimagisphereView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
         name='dimagisphere'),
     AdminReportDispatcher.url_pattern(),
 )

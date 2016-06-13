@@ -80,7 +80,7 @@
             if (standardHQReport.needsFilters) {
                 standardHQReport.filterSubmitButton.button('reset').addClass('btn-primary');
             }
-            $('#report_export_excel').click(function (e) {
+            $('#export-report-excel').click(function (e) {
                 e.preventDefault();
                 window.location.href = get_export_url('xls');
             });

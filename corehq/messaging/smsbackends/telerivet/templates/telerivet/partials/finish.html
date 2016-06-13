@@ -4,8 +4,9 @@
 {% load crispy_forms_tags %}
 
 <script type="text/ng-template" id="finish.tpl">
-    <h2>{% trans "Finish Setup" %}</h2>
     <div ng-controller="TelerivetSetupController" ng-cloak>
+        <h2 ng-hide="setupComplete">{% trans "Finish Setup" %}</h2>
+        <h2 ng-show="setupComplete">{% trans "Complete" %}</h2>
         <div ng-hide="setupComplete">
             <p class="help-block">
                 <i class="fa fa-info-circle" />
@@ -18,10 +19,10 @@
             {% crispy finalize_gateway_form %}
         </div>
         <div ng-show="setupComplete">
-            <a href="{% url 'list_domain_backends' domain %}" class="btn btn-success">
-                {% trans "Success! Return to gateway list" %}
-                <span class="glyphicon glyphicon-chevron-right" />
-            </a>
+            {% blocktrans %}
+            Success! You are being redirected to the gateway list. If it does not happen automatically,
+            <a href="{{ gateway_list_url }}">click here</a>.
+            {% endblocktrans %}
         </div>
     </div>
 </script>

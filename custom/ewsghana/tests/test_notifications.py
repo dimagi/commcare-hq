@@ -4,8 +4,7 @@ import mock
 from corehq.apps.locations.models import Location
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
-from corehq.apps.sms.mixin import VerifiedNumber
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import WebUser
 
 from custom.ewsghana.alerts.alert import Notification
@@ -54,8 +53,7 @@ class MissingReportNotificationTestCase(EWSTestCase):
         for user in WebUser.by_domain(self.TEST_DOMAIN):
             user.delete()
 
-        for vn in VerifiedNumber.by_domain(self.TEST_DOMAIN):
-            vn.delete()
+        delete_domain_phone_numbers(self.TEST_DOMAIN)
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
@@ -192,8 +190,7 @@ class StockoutReportNotificationTestCase(EWSTestCase):
         for user in WebUser.by_domain(self.TEST_DOMAIN):
             user.delete()
 
-        for vn in VerifiedNumber.by_domain(self.TEST_DOMAIN):
-            vn.delete()
+        delete_domain_phone_numbers(self.TEST_DOMAIN)
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
@@ -317,8 +314,7 @@ class UrgentStockoutNotificationTestCase(EWSTestCase):
         for user in WebUser.by_domain(self.TEST_DOMAIN):
             user.delete()
 
-        for vn in VerifiedNumber.by_domain(self.TEST_DOMAIN):
-            vn.delete()
+        delete_domain_phone_numbers(self.TEST_DOMAIN)
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
@@ -482,8 +478,7 @@ class UrgentNonReportingNotificationTestCase(EWSTestCase):
         for user in WebUser.by_domain(self.TEST_DOMAIN):
             user.delete()
 
-        for vn in VerifiedNumber.by_domain(self.TEST_DOMAIN):
-            vn.delete()
+        delete_domain_phone_numbers(self.TEST_DOMAIN)
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
@@ -606,8 +601,7 @@ class SMSNotificationTestCase(EWSTestCase):
         for user in WebUser.by_domain(self.TEST_DOMAIN):
             user.delete()
 
-        for vn in VerifiedNumber.by_domain(self.TEST_DOMAIN):
-            vn.delete()
+        delete_domain_phone_numbers(self.TEST_DOMAIN)
 
     def test_send_sms(self):
         """Successful SMS sent."""

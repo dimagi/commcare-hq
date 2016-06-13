@@ -191,6 +191,7 @@ var HQReport = function (options) {
         self.subject = ko.observable(hqReport.emailDefaultSubject);
         self.recipient_emails = ko.observable();
         self.notes = ko.observable();
+        self.getReportRenderUrl = hqReport.getReportRenderUrl;
 
         self.unwrap = function () {
             var data = ko.mapping.toJS(self, {

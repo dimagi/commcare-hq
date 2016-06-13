@@ -2,7 +2,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
 from casexml.apps.case.dbaccessors import get_extension_case_ids, \
-    get_indexed_case_ids, get_all_reverse_indices_info
+    get_indexed_case_ids, get_all_reverse_indices_info, get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.stock.models import StockTransaction
@@ -135,6 +135,15 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_closed_case_ids(domain, owner_id)
 
     @staticmethod
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
+        owner_ids = owner_ids if owner_ids else [None]
+        return [
+            case_id
+            for owner_id in owner_ids
+            for case_id in get_open_case_ids_in_domain(domain, type=case_type, owner_id=owner_id)
+        ]
+
+    @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
         return get_case_ids_modified_with_owner_since(domain, owner_id, reference_date)
 
@@ -229,12 +238,6 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
         from corehq.apps.commtrack.models import StockState
 
         return StockState.objects.filter(case_id=case_id)
-
-    @staticmethod
-    def get_ledger_values_for_product_ids(product_ids):
-        from corehq.apps.commtrack.models import StockState
-
-        return StockState.objects.filter(product_id__in=product_ids)
 
     @staticmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):
