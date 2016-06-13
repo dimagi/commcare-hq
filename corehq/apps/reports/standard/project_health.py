@@ -68,12 +68,20 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
-            number_of_active_users=self._base_queryset.distinct('user_id').count(),
-            number_of_performing_users=self._performing_queryset.distinct('user_id').count(),
+            active=self._base_queryset.distinct('user_id').count(),
+            performing=self._performing_queryset.distinct('user_id').count(),
         )
 
     def set_next_month_summary(self, next_month_summary):
         self._next_summary = next_month_summary
+
+    @property
+    def number_of_performing_users(self):
+        return self.performing
+
+    @property
+    def number_of_active_users(self):
+        return self.active
 
     @property
     def previous_month(self):
