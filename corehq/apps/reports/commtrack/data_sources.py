@@ -1,5 +1,6 @@
 import logging
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.reports.analytics.couchaccessors import get_ledger_values_for_case_as_of
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -92,6 +93,7 @@ class CommtrackDataSourceMixin(object):
 class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
     slug = 'location_inventory'
 
+    @property
     def datetime(self):
         """
         Returns a datetime object at the end of the selected
@@ -114,27 +116,14 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
         # locations at this point will only have location objects
         # that have supply points associated
         for loc in locations[:self.config.get('max_rows', 100)]:
-            transactions = StockTransaction.objects.filter(
+            stock_results = get_ledger_values_for_case_as_of(
+                domain=self.domain,
                 case_id=loc.supply_point_id,
                 section_id=SECTION_TYPE_STOCK,
+                as_of=self.datetime,
+                program_id=self.program_id,
             )
-
-            if self.program_id:
-                transactions = transactions.filter(
-                    sql_product__program_id=self.program_id
-                )
-
-            stock_results = transactions.exclude(
-                report__date__gt=self.datetime
-            ).order_by(
-                'product_id', '-report__date'
-            ).values_list(
-                'product_id', 'stock_on_hand'
-            ).distinct(
-                'product_id'
-            )
-
-            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results})
+            yield (loc.name, {p: format_decimal(soh) for p, soh in stock_results.items()})
 
     def locations(self):
         if self.active_location:
@@ -185,7 +174,7 @@ class SimplifiedInventoryDataSourceNew(SimplifiedInventoryDataSource):
                 section_id=SECTION_TYPE_STOCK,
                 entry_id=None,
                 window_start=datetime.min,
-                window_end=self.datetime()
+                window_end=self.datetime,
             )
 
             if self.program_id:
