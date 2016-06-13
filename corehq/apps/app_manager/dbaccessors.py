@@ -123,6 +123,8 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
         if target == 'build':
             app = get_latest_build_doc(domain, app_id) or app
+        elif target == 'save':
+            pass  # just use the working copy of the app
         else:
             app = get_latest_released_app_doc(domain, app_id) or app
 
