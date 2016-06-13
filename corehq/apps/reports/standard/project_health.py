@@ -51,7 +51,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     def __init__(self, domain, month, users_filtered_by_group, performance_threshold, previous_summary=None):
         self._previous_summary = previous_summary
-        self._users_filtered_by_group = users_filtered_by_group
         self._next_summary = None
         self._base_queryset = MALTRow.objects.filter(
             domain_name=domain,
@@ -69,26 +68,12 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
-            active=0,
-            performing=0,
+            number_of_active_users=self._base_queryset.distinct('user_id').count(),
+            number_of_performing_users=self._performing_queryset.distinct('user_id').count(),
         )
-
-    def set_performing(self, num_performing_users):
-        self.performing = num_performing_users
-
-    def set_active_users(self, num_active_users):
-        self.active = num_active_users
 
     def set_next_month_summary(self, next_month_summary):
         self._next_summary = next_month_summary
-
-    @property
-    def number_of_performing_users(self):
-        return self._performing_queryset.distinct('user_id').count()
-
-    @property
-    def number_of_active_users(self):
-        return self._base_queryset.distinct('user_id').count()
 
     @property
     def previous_month(self):
@@ -247,8 +232,6 @@ class ProjectHealthDashboard(ProjectReport):
                 previous_summary=last_month_summary,
                 users_filtered_by_group=users_in_group,
             )
-            this_month_summary.set_performing(this_month_summary.number_of_performing_users)
-            this_month_summary.set_active_users(this_month_summary.number_of_active_users)
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
