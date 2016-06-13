@@ -341,6 +341,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         )
         if self.case_type:
             query = query.filter(case_es.case_type(self.case_type))
+        else:
+            query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
 
         query = query.aggregation(top_level_aggregation)
         missing_users = None in users_by_id.keys()
