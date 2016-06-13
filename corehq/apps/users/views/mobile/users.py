@@ -91,9 +91,7 @@ class EditCommCareUserView(BaseEditUserView):
     user_update_form_class = UpdateCommCareUserInfoForm
     page_title = ugettext_noop("Edit Mobile Worker")
 
-    @use_bootstrap3
     @use_multiselect
-    @use_select2
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
