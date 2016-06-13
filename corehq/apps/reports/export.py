@@ -2,13 +2,16 @@ from datetime import date
 import os
 import tempfile
 import uuid
+
+from django.utils.translation import ugettext
+
 from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import FormExportSchema
 from corehq.elastic import stream_es_query
 import couchexport
 from couchexport.exceptions import SchemaMismatchException
-from couchexport.export import get_headers, get_writer, export_raw, get_formatted_rows
+from couchexport.export import get_headers, get_writer, export_raw, get_formatted_rows, FormattedRow
 from couchexport.models import DefaultExportSchema, Format, SavedExportSchema
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
@@ -72,7 +75,17 @@ class BulkExport(object):
                         writer.write(table)
                 except SchemaMismatchException:
                     # fire off a delayed force update to prevent this from happening again
-                    rebuild_schemas.delay(config.index)
+                    rebuild_schemas.delay(self.export_objects[i].index)
+                    writer.write(
+                        [(self.export_objects[i].table_name, [
+                            FormattedRow([
+                                ugettext(
+                                    'There was an error generating this export. '
+                                    'If the problem persists please report an issue.'
+                                )],
+                                separator=self.separator)
+                        ])]
+                    )
 
             writer.close()
         return path
