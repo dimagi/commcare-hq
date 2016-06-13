@@ -21,12 +21,12 @@ def drop_connected_signals(signal):
 
 @contextmanager
 def notify_someone(email, success_message, error_message='Sorry, your HQ task failed!', send=True):
-    _assert = soft_assert(to=email, notify_admins=False, send_to_ops=False)
+    def send_message_if_needed(message, exception=None):
+        if email and send:
+            soft_assert(to=email, notify_admins=False, send_to_ops=False)(False, message, exception)
     try:
         yield
-        if email and send:
-            _assert(False, success_message)
+        send_message_if_needed(success_message)
     except BaseException as e:
-        if email and send:
-            _assert(False, error_message, e)
+        send_message_if_needed(error_message, e)
         raise
