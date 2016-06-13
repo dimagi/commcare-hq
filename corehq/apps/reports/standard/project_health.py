@@ -49,7 +49,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users_filtered_by_group, performance_threshold, previous_summary=None):
+    def __init__(self, domain, month, users, has_group_filter, performance_threshold, previous_summary=None):
         self._previous_summary = previous_summary
         self._next_summary = None
         self._base_queryset = MALTRow.objects.filter(
@@ -57,9 +57,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
-        if users_filtered_by_group:
+        if has_group_filter:
             self._base_queryset = self._base_queryset.filter(
-                user_id__in=users_filtered_by_group,
+                user_id__in=users,
             )
         self._performing_queryset = self._base_queryset.filter(
             num_of_forms__gte=performance_threshold,
@@ -214,15 +214,15 @@ class ProjectHealthDashboard(ProjectReport):
 
     def get_users_by_filtered_groupids(self):
         groupids_param = self.get_filtered_group_ids()
-        users_list = GroupES().domain(self.domain).group_ids(groupids_param).fields(["users"]).values()
+        users_list = GroupES().domain(self.domain).group_ids(groupids_param).source(["users"]).values()
         user_id_list = []
         for user in users_list:
             usersid = user.values()[0]
-            if isinstance(usersid, list):
-                user_id_list.extend(usersid)
-            else:
-                user_id_list.append(usersid)
+            user_id_list.extend(usersid)
         return user_id_list
+
+    def has_group_filter(self):
+        return True if self.get_users_by_filtered_groupids() else False
 
     def previous_six_months(self):
         now = datetime.datetime.utcnow()
@@ -238,7 +238,8 @@ class ProjectHealthDashboard(ProjectReport):
                 performance_threshold=performance_threshold,
                 month=month_as_date,
                 previous_summary=last_month_summary,
-                users_filtered_by_group=users_in_group,
+                users=users_in_group,
+                has_group_filter=self.has_group_filter(),
             )
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
