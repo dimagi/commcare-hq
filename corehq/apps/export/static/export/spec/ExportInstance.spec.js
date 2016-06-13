@@ -1,13 +1,17 @@
-describe('ExportInstance model', function() {
+/* eslint-env mocha */
+/* globals SampleExportInstances */
 
-    var basicFormExport;
+describe('ExportInstance model', function() {
+    var constants = hqImport('export/js/const.js');
+    var viewModels = hqImport('export/js/models.js');
+    var basicFormExport, savedFormExport;
     beforeEach(function() {
         basicFormExport = _.clone(SampleExportInstances.basic, { saveUrl: 'http://saveurl/' });
         savedFormExport = _.clone(SampleExportInstances.saved, { saveUrl: 'http://saveurl/' });
     });
 
     it('Should create an instance from JSON', function() {
-        var instance = new Exports.ViewModels.ExportInstance(basicFormExport);
+        var instance = new viewModels.ExportInstance(basicFormExport);
 
         assert.equal(instance.tables().length, 1);
 
@@ -16,13 +20,13 @@ describe('ExportInstance model', function() {
 
         _.each(table.columns(), function(column) {
             assert.ok(column.item);
-            assert.isTrue(column instanceof Exports.ViewModels.ExportColumn);
+            assert.isTrue(column instanceof viewModels.ExportColumn);
             assert.isDefined(column.show());
             assert.isDefined(column.selected());
             assert.isDefined(column.label());
 
             var item = column.item;
-            assert.isTrue(item instanceof Exports.ViewModels.ExportItem);
+            assert.isTrue(item instanceof viewModels.ExportItem);
             assert.isDefined(item.label);
             assert.isDefined(item.path);
             assert.isDefined(item.tag);
@@ -30,7 +34,7 @@ describe('ExportInstance model', function() {
     });
 
     it('Should serialize an instance into JS object', function() {
-        var instance = new Exports.ViewModels.ExportInstance(basicFormExport);
+        var instance = new viewModels.ExportInstance(basicFormExport);
         var obj = instance.toJS();
         assert.equal(obj.tables.length, 1);
 
@@ -39,23 +43,23 @@ describe('ExportInstance model', function() {
 
         _.each(table.columns, function(column) {
             assert.ok(column.item);
-            assert.isFalse(column instanceof Exports.ViewModels.ExportColumn);
+            assert.isFalse(column instanceof viewModels.ExportColumn);
             assert.isDefined(column.show);
             assert.isDefined(column.selected);
             assert.isDefined(column.label);
 
             var item = column.item;
-            assert.isFalse(item instanceof Exports.ViewModels.ExportItem);
+            assert.isFalse(item instanceof viewModels.ExportItem);
             assert.isDefined(item.label);
             assert.isDefined(item.path);
             assert.isDefined(item.tag);
         });
     });
     describe('#isNew', function() {
-        var instance;
+        var instance, instanceSaved;
         beforeEach(function() {
-            instance = new Exports.ViewModels.ExportInstance(basicFormExport);
-            instanceSaved = new Exports.ViewModels.ExportInstance(savedFormExport);
+            instance = new viewModels.ExportInstance(basicFormExport);
+            instanceSaved = new viewModels.ExportInstance(savedFormExport);
         });
 
         it('should correctly determine if instance is new', function() {
@@ -74,7 +78,7 @@ describe('ExportInstance model', function() {
             instance;
 
         beforeEach(function() {
-            instance = new Exports.ViewModels.ExportInstance(basicFormExport);
+            instance = new viewModels.ExportInstance(basicFormExport);
             recordSaveAnalyticsSpy = sinon.spy();
             server = sinon.fakeServer.create();
 
@@ -95,14 +99,14 @@ describe('ExportInstance model', function() {
                 [
                     200,
                     { "Content-Type": "application/json" },
-                    '{ "redirect": "http://dummy/"}'
+                    '{ "redirect": "http://dummy/"}',
                 ]
             );
 
-            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.READY);
+            assert.equal(instance.saveState(), constants.SAVE_STATES.READY);
             instance.save();
 
-            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.SAVING);
+            assert.equal(instance.saveState(), constants.SAVE_STATES.SAVING);
             server.respond();
 
             assert.isTrue(recordSaveAnalyticsSpy.called);
@@ -115,15 +119,15 @@ describe('ExportInstance model', function() {
                 [
                     500,
                     { "Content-Type": "application/json" },
-                    '{ "status": "fail" }'
+                    '{ "status": "fail" }',
                 ]
             );
             instance.save();
 
-            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.SAVING);
+            assert.equal(instance.saveState(), constants.SAVE_STATES.SAVING);
             server.respond();
 
-            assert.equal(instance.saveState(), Exports.Constants.SAVE_STATES.ERROR);
+            assert.equal(instance.saveState(), constants.SAVE_STATES.ERROR);
             assert.isFalse(recordSaveAnalyticsSpy.called);
         });
 

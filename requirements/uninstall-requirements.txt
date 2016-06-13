@@ -14,3 +14,4 @@ GitPython
 gitdb
 django-kombu
 rawes
+django-json-field

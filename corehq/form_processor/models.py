@@ -198,7 +198,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     edited_on = models.DateTimeField(null=True)
 
     # The time at which the server has received the form
-    received_on = models.DateTimeField()
+    received_on = models.DateTimeField(db_index=True)
 
     auth_context = JSONField(default=dict)
     openrosa_headers = JSONField(default=dict)
@@ -361,11 +361,14 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     class Meta:
         db_table = XFormInstanceSQL_DB_TABLE
         app_label = "form_processor"
+        index_together = [
+            ('domain', 'state'),
+            ('domain', 'user_id'),
+        ]
 
 
 class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
     attachment_id = UUIDField(unique=True, db_index=True)
-    name = models.CharField(max_length=255, db_index=True, default=None)
     content_type = models.CharField(max_length=255, null=True)
     content_length = models.IntegerField(null=True)
     blob_id = models.CharField(max_length=255, default=None)
@@ -422,14 +425,18 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'form'
 
+    name = models.CharField(max_length=255, default=None)
     form = models.ForeignKey(
-        XFormInstanceSQL, to_field='form_id',
+        XFormInstanceSQL, to_field='form_id', db_index=False,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
 
     class Meta:
         db_table = XFormAttachmentSQL_DB_TABLE
         app_label = "form_processor"
+        index_together = [
+            ["form", "name"],
+        ]
 
 
 class XFormOperationSQL(DisabledDbMixin, models.Model):
@@ -521,7 +528,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     opened_by = models.CharField(max_length=255, null=True)
 
     modified_on = models.DateTimeField(null=False)
-    server_modified_on = models.DateTimeField(null=False)
+    server_modified_on = models.DateTimeField(null=False, db_index=True)
     modified_by = models.CharField(max_length=255)
 
     closed = models.BooleanField(default=False, null=False)
@@ -602,7 +609,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     @memoized
     def reverse_indices(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_reverse_indices(self.case_id)
+        return CaseAccessorSQL.get_reverse_indices(self.domain, self.case_id)
 
     @memoized
     def get_subcases(self, index_identifier=None):
@@ -623,7 +630,7 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         if hasattr(self, cached_indices):
             return getattr(self, cached_indices)
 
-        return CaseAccessorSQL.get_indices(self.case_id) if self.is_saved() else []
+        return CaseAccessorSQL.get_indices(self.domain, self.case_id) if self.is_saved() else []
 
     @property
     def indices(self):
@@ -693,10 +700,13 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     def case_attachments(self):
         return {attachment.identifier: attachment for attachment in self.get_attachments()}
 
-    @property
     @memoized
-    def closed_transactions(self):
+    def get_closing_transactions(self):
         return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CLOSE)
+
+    @memoized
+    def get_opening_transactions(self):
+        return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CREATE)
 
     def _transactions_by_type(self, transaction_type):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -790,11 +800,9 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
         ).format(c=self)
 
     class Meta:
-        # TODO SK 2015-11-05: verify that these are the indexes we want
-        # also consider partial indexes
         index_together = [
-            ["domain", "owner_id"],
-            ["domain", "closed", "server_modified_on"],
+            ["domain", "owner_id", "closed"],
+            ["domain", "external_id", "type"],
         ]
         app_label = "form_processor"
         db_table = CommCareCaseSQL_DB_TABLE
@@ -804,8 +812,9 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'case'
 
+    name = models.CharField(max_length=255, default=None)
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=True,
+        'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment"
     )
     identifier = models.CharField(max_length=255, default=None)
@@ -878,6 +887,9 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     class Meta:
         app_label = "form_processor"
         db_table = CaseAttachmentSQL_DB_TABLE
+        index_together = [
+            ["case", "identifier"],
+        ]
 
 
 class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
@@ -894,7 +906,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=True,
+        'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name="index_set", related_query_name="index"
     )
     domain = models.CharField(max_length=255, default=None)
@@ -946,6 +958,7 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
 
     class Meta:
         index_together = [
+            ["domain", "case"],
             ["domain", "referenced_id"],
         ]
         db_table = CommCareCaseIndexSQL_DB_TABLE
@@ -984,7 +997,7 @@ class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
         TYPE_FORM,
     )
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=True,
+        'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name="transaction_set", related_query_name="transaction"
     )
     form_id = models.CharField(max_length=255, null=True)  # can't be a foreign key due to partitioning
@@ -1162,6 +1175,9 @@ class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
         ordering = ['server_date']
         db_table = CaseTransaction_DB_TABLE
         app_label = "form_processor"
+        index_together = [
+            ('case', 'server_date', 'sync_log_id'),
+        ]
 
 
 class CaseTransactionDetail(JsonObject):
@@ -1211,14 +1227,14 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     objects = RestrictedManager()
 
     domain = models.CharField(max_length=255, null=False, default=None)
-    case_id = models.CharField(max_length=255, db_index=True, default=None)  # remove foreign key until we're sharding this
+    case_id = models.CharField(max_length=255, default=None)  # remove foreign key until we're sharding this
     location_id = models.CharField(max_length=255, null=True, default=None)
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
-    entry_id = models.CharField(max_length=100, db_index=True, default=None)
-    section_id = models.CharField(max_length=100, db_index=True, default=None)
-    balance = models.IntegerField(default=0)  # todo: confirm we aren't ever intending to support decimals
-    last_modified = models.DateTimeField(auto_now=True)
+    entry_id = models.CharField(max_length=100, default=None)
+    section_id = models.CharField(max_length=100, default=None)
+    balance = models.IntegerField(default=0)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
     last_modified_form_id = models.CharField(max_length=100, null=True, default=None)
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
 
@@ -1255,6 +1271,7 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
+        unique_together = ("case_id", "section_id", "entry_id")
 
 
 class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
@@ -1269,7 +1286,7 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     server_date = models.DateTimeField()
     report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
-    case_id = models.CharField(max_length=255, db_index=True, default=None)
+    case_id = models.CharField(max_length=255, default=None)
     entry_id = models.CharField(max_length=100, default=None)
     section_id = models.CharField(max_length=100, default=None)
 
@@ -1347,7 +1364,7 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
         db_table = LedgerTransaction_DB_TABLE
         app_label = "form_processor"
         index_together = [
-            ["case_id", "entry_id", "section_id"],
+            ["case_id", "section_id", "entry_id"],
         ]
 
 

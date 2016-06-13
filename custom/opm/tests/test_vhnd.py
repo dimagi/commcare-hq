@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from couchforms.models import XFormInstance
-from ..constants import CFU2_XMLNS, CHILDREN_FORMS, BIRTH_PREP_XMLNS, CFU1_XMLNS
+from ..constants import CHILDREN_FORMS, BIRTH_PREP_XMLNS, CFU1_XMLNS
 from .case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, \
     get_relative_edd_from_preg_month, MockDataProvider
 from .test_multiple_children import make_child2_form

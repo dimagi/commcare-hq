@@ -6,6 +6,8 @@ from collections import defaultdict, OrderedDict, namedtuple
 
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
+
+from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -1501,9 +1503,8 @@ class StockExportColumn(ExportColumn):
     @property
     @memoized
     def _column_tuples(self):
-        product_ids = [p.get_id for p in Product.by_domain(self.domain)]
-        ledger_values = self.accessor.get_ledger_values_for_product_ids(product_ids)
-        section_and_product_ids = sorted(set(map(lambda v: (v.product_id, v.section_id), ledger_values)))
+        combos = get_ledger_section_entry_combinations(self.domain)
+        section_and_product_ids = sorted(set(map(lambda combo: (combo.entry_id, combo.section_id), combos)))
         return section_and_product_ids
 
     def _get_product_name(self, product_id):

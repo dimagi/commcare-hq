@@ -15,6 +15,7 @@ class IntraHealthTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(IntraHealthTestCase, cls).setUpClass()
         cls.session_helper = connection_manager.get_session_helper(settings.SQL_REPORTING_DATABASE_URL)
         cls.engine = cls.session_helper.engine
 

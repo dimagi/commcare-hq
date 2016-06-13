@@ -1,4 +1,3 @@
-import copy
 import datetime
 import io
 import logging
@@ -8,11 +7,10 @@ import uuid
 from urlparse import urlparse, parse_qs
 
 import dateutil
-import django
 from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import FormActions, StrictButton
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from dateutil.relativedelta import relativedelta
 from django import forms
@@ -1971,7 +1969,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             privileges = get_privileges(plan_version)
             if (
                 REPORT_BUILDER_5 in privileges
-                and not (REPORT_BUILDER_ADD_ON_PRIVS - REPORT_BUILDER_5 - REPORT_BUILDER_TRIAL) & privileges
+                and not (REPORT_BUILDER_ADD_ON_PRIVS - {REPORT_BUILDER_5, REPORT_BUILDER_TRIAL}) & privileges
             ):
                 new_plan_version = plan_version
                 break

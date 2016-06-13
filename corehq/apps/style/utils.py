@@ -38,7 +38,11 @@ def format_angular_error(error_msg, additional_data=None,
         'error': error_msg,
     }
     if log_error:
-        logging.error(exception or error_msg)
+        if exception:
+            logging.exception(exception)
+        else:
+            logging.error(error_msg)
+
     if isinstance(additional_data, dict):
         resp.update(additional_data)
     return resp

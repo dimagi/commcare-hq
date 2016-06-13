@@ -17,6 +17,7 @@ class HQGroupExportConfigurationDbAccessorsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(HQGroupExportConfigurationDbAccessorsTest, cls).setUpClass()
         HQGroupExportConfiguration(domain='domain1').save()
         HQGroupExportConfiguration(domain='domain2').save()
         HQGroupExportConfiguration(domain='domain2').save()
@@ -24,6 +25,7 @@ class HQGroupExportConfigurationDbAccessorsTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_docs_by_doc_type(HQGroupExportConfiguration.get_db(), (HQGroupExportConfiguration.__name__,))
+        super(HQGroupExportConfigurationDbAccessorsTest, cls).tearDownClass()
 
     def test_hq_group_export_configs_by_domain(self):
         self.assertEqual(len(hq_group_export_configs_by_domain('domain1')), 1)
@@ -40,6 +42,7 @@ class SavedExportSchemaDBTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(SavedExportSchemaDBTest, cls).setUpClass()
         SavedExportSchema(domain='domain1', index=["domain1", "blah"]).save()
         SavedExportSchema(domain='domain1', index=["domain2", "blah"]).save()
         SavedExportSchema(domain='domain1', index=["domain2", "blah"]).save()
@@ -47,6 +50,7 @@ class SavedExportSchemaDBTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_docs_by_doc_type(SavedExportSchema.get_db(), (SavedExportSchema.__name__,))
+        super(SavedExportSchemaDBTest, cls).tearDownClass()
 
     def test_stale_get_exports_json(self):
         result = list(stale_get_exports_json('domain2'))

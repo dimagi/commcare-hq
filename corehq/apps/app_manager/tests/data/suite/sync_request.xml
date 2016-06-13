@@ -1,6 +1,7 @@
 <partial>
   <sync-request>
-    <post url="https://www.example.com/a/test_domain/phone/claim-case/">
+    <post url="https://www.example.com/a/test_domain/phone/claim-case/"
+          relevant="count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0">
       <data key="case_id" ref="instance('querysession')/session/data/case_id"/>
     </post>
     <command id="search_command.m0">

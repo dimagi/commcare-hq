@@ -20,6 +20,14 @@
   # the build_spec widget depends on application_version coming before it in
   # this file
 
+- id: use_j2me_endpoint
+  name: "Send Data Over HTTP"
+  description: "When you select this box, your data will no longer be encrypted.  Because of changes regarding Java phone security certificates, it will be necessary to send data over HTTP to continue sending data to CommCare."
+  default: false
+  widget: "bool"
+  force: true
+  toggle: ENABLE_HTTP_FOR_J2ME_WIDGET
+
 - id: platform
   name: "Java Phone Platform"
   values: ['nokia/s40', 'nokia/s60', 'winmo', 'generic']

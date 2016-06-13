@@ -58,7 +58,7 @@ from corehq.apps.sms.verify import (
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_angular_js,
-)
+    use_select2)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
 
@@ -147,6 +147,7 @@ class BaseEditUserView(BaseUserSettingsView):
     user_update_form_class = None
 
     @use_bootstrap3
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
 

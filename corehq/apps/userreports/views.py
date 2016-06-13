@@ -613,17 +613,43 @@ class ConfigureChartReport(ReportBuilderView):
 
     @property
     def page_context(self):
+        try:
+            report_form = self.report_form
+        except Exception as e:
+            if self.existing_report and self.existing_report.report_meta.edited_manually:
+                error_message_base = _(
+                    'It looks like this report was edited by hand and is no longer editable in report builder.'
+                )
+                if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
+                    error_message = '{} {}'.format(error_message_base, _(
+                        'You can edit the report manually using the <a href="{}">advanced UI</a>.'
+                    ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
+                else:
+                    error_message = '{} {}'.format(error_message_base, _(
+                        'You can delete and recreate this report using the button below, or '
+                        'report an issue if you believe you are seeing this page in error.'
+                    ))
+                self.template_name = 'userreports/report_error.html'
+                return {
+                    'report_id': self.existing_report.get_id,
+                    'is_static': self.existing_report.is_static,
+                    'error_message': error_message,
+                    'details': unicode(e)
+                }
+            else:
+                raise
+
         return {
             'report': {
                 "title": self.page_name
             },
             'report_type': self.report_type,
-            'form': self.report_form,
+            'form': report_form,
             'editing_existing_report': bool(self.existing_report),
-            'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
-            'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
+            'property_options': [p._asdict() for p in report_form.data_source_properties.values()],
+            'initial_filters': [f._asdict() for f in report_form.initial_filters],
             'initial_columns': [
-                c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
+                c._asdict() for c in getattr(report_form, 'initial_columns', [])
             ],
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
@@ -781,15 +807,15 @@ def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.
-    data_source, __ = get_datasource_config_or_404(config.config_id, domain)
-    if data_source.get_report_count() <= 1:
-        # No other reports reference this data source.
-        try:
+    try:
+        data_source, __ = get_datasource_config(config.config_id, domain)
+    except DataSourceConfigurationNotFoundError:
+        # It's possible the data source has already been deleted, but that's fine with us.
+        pass
+    else:
+        if data_source.get_report_count() <= 1:
+            # No other reports reference this data source.
             data_source.deactivate()
-        except Http404:
-            # It's possible the data source has already been deleted, but
-            # that's fine with us.
-            pass
 
     config.delete()
     did_purge_something = purge_report_from_mobile_ucr(config)
@@ -1007,7 +1033,7 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id)
+    rebuild_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1037,7 +1063,7 @@ def resume_building_data_source(request, domain, config_id):
             request,
             _(u'Resuming rebuilding table "{}".').format(config.display_name)
         )
-        resume_building_indicators.delay(config_id)
+        resume_building_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

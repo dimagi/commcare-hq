@@ -30,6 +30,7 @@
   id: app-settings-j2me-properties
   collapse: true
   settings:
+    - hq.use_j2me_endpoint  # Use HTTP
     - hq.platform  # J2ME Platform
     - hq.admin_password  # Admin Password
     - properties.cc-send-procedure  # Send Data

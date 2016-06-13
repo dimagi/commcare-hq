@@ -81,7 +81,7 @@ class CareDataFormatter(DataFormatter):
             for row in data:
                 key = tuple(row[:-1])
                 if key not in missing_rows:
-                    missing_rows[key] = {0, 1, 2}.difference({row[-1]})
+                    missing_rows[key] = {'0', '1', '2'}.difference({row[-1]})
                 else:
                     missing_rows[key] = missing_rows[key].difference({row[-1]})
             for k, v in missing_rows.iteritems():
@@ -159,7 +159,7 @@ class TableCardDataGroupsFormatter(DataFormatter):
             ['D'],
         ]
 
-        for i in xrange(0, len(data[0]) - 2):
+        for i in xrange(0, max([len(element) for element in data]) - 2):
             range_groups[0].append(0)
             range_groups[1].append(0)
             range_groups[2].append(0)
@@ -227,5 +227,5 @@ class TableCardDataIndividualFormatter(DataFormatter):
         for key, row in rows_dict.items():
             total_column = self.calculate_total_column(row)
             res = [key, total_column]
-            res.extend(row[0:min_length])
+            res.extend(row)
             yield res
