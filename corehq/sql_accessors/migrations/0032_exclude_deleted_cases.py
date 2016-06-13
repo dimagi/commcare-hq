@@ -18,4 +18,5 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_case_indices_reverse_2.sql'),
         migrator.get_migration('get_reverse_indexed_cases_1.sql'),
         migrator.get_migration('get_all_reverse_indices_1.sql'),
+        migrator.get_migration('get_extension_case_ids_1.sql'),
     ]

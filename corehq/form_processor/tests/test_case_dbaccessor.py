@@ -459,28 +459,13 @@ class CaseAccessorTestsSQL(TestCase):
     def test_get_extension_case_ids(self):
         # Create case and index
         referenced_id = uuid.uuid4().hex
-        case = _create_case()
-        extension_index = CommCareCaseIndexSQL(
-            case=case,
-            identifier="task",
-            referenced_type="task",
-            referenced_id=referenced_id,
-            relationship_id=CommCareCaseIndexSQL.EXTENSION
-        )
-        case.track_create(extension_index)
-        CaseAccessorSQL.save_case(case)
+        case, _ = _create_case_with_index(referenced_id, identifier='task', referenced_type='task',
+                                relationship_id=CommCareCaseIndexSQL.EXTENSION)
 
-        # Create irrelevant case
-        other_case = _create_case()
-        child_index = CommCareCaseIndexSQL(
-            case=other_case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=referenced_id,
-            relationship_id=CommCareCaseIndexSQL.CHILD
-        )
-        case.track_create(child_index)
-        CaseAccessorSQL.save_case(other_case)
+        # Create irrelevant cases
+        _create_case_with_index(referenced_id)
+        _create_case_with_index(referenced_id, identifier='task', referenced_type='task',
+                                relationship_id=CommCareCaseIndexSQL.EXTENSION, case_is_deleted=True)
 
         self.assertEqual(
             CaseAccessorSQL.get_extension_case_ids(DOMAIN, [referenced_id]),
@@ -746,16 +731,17 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
     return CaseAccessorSQL.get_case(case_id)
 
 
-def _create_case_with_index(referenced_case_id, case_is_deleted=False):
+def _create_case_with_index(referenced_case_id, identifier='parent', referenced_type='mother',
+                            relationship_id=CommCareCaseIndexSQL.CHILD, case_is_deleted=False):
     case = _create_case()
     case.deleted = case_is_deleted
 
     index = CommCareCaseIndexSQL(
         case=case,
-        identifier='parent',
-        referenced_type='mother',
+        identifier=identifier,
+        referenced_type=referenced_type,
         referenced_id=referenced_case_id,
-        relationship_id=CommCareCaseIndexSQL.CHILD
+        relationship_id=relationship_id
     )
     case.track_create(index)
 
