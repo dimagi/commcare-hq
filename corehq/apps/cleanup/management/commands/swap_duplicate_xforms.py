@@ -62,8 +62,14 @@ class Command(BaseCommand):
 
         with open(log_path, "w") as log_file:
             with open(ids_file_path, "r") as lines:
+
+                total_lines = 0
+                for _ in lines:
+                    total_lines += 1
+                lines.seek(0)
+
                 for i, (domain, bad_xform_id) in enumerate(l.split() for l in lines):
-                    self._print_progress(i, 1555)
+                    self._print_progress(i, total_lines)
                     duplicates = self.get_duplicates(domain, bad_xform_id)
                     if len(duplicates) == 1:
                         num_with_1_dup += 1
