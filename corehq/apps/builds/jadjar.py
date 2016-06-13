@@ -141,7 +141,7 @@ def convert_XML_To_J2ME(file, path):
         ]
         for prop in properties:
             prop_elem = tree.find("property[@key='" + prop + "']")
-            if prop_elem:
+            if prop_elem is not None:
                 prop_elem.set('value', _make_address_j2me_safe(prop_elem.get('value')))
 
         for remote in tree.findall("suite/resource/location[@authority='remote']"):

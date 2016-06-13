@@ -22,14 +22,14 @@ def domain_has_apps(domain):
     return len(results) > 0
 
 
-def get_latest_released_app_doc(domain, app_id, min_version=None):
+def get_latest_released_app_doc(domain, app_id):
     """Get the latest starred build for the application"""
     from .models import Application
     key = ['^ReleasedApplications', domain, app_id]
     app = Application.get_db().view(
         'app_manager/applications',
         startkey=key + [{}],
-        endkey=(key + [min_version]) if min_version is not None else key,
+        endkey=key,
         descending=True,
         include_docs=True,
         limit=1,
@@ -108,38 +108,24 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     from .models import Application
     if not app_id:
         raise Http404()
-    if latest:
-        try:
-            original_app = Application.get_db().get(app_id)
-        except ResourceNotFound:
-            raise Http404()
-        if not domain:
-            try:
-                domain = original_app['domain']
-            except Exception:
-                raise Http404()
+    try:
+        app = Application.get_db().get(app_id)
+    except ResourceNotFound:
+        raise Http404()
 
-        if original_app.get('copy_of'):
+    if latest:
+        if not domain:
+            domain = app['domain']
+
+        if app.get('copy_of'):
             # The id passed in corresponds to a build
-            parent_app_id = original_app.get('copy_of')
-            min_version = original_app['version'] if original_app.get('is_released') else -1
-        else:
-            parent_app_id = original_app['_id']
-            min_version = -1
+            app_id = app.get('copy_of')
 
         if target == 'build':
-            app = get_latest_build_doc(domain, parent_app_id)
+            app = get_latest_build_doc(domain, app_id) or app
         else:
-            app = get_latest_released_app_doc(domain, parent_app_id, min_version=min_version)
+            app = get_latest_released_app_doc(domain, app_id) or app
 
-        if not app:
-            # If no builds/starred-builds, act as if latest=False
-            app = original_app
-    else:
-        try:
-            app = Application.get_db().get(app_id)
-        except Exception:
-            raise Http404()
     if domain and app['domain'] != domain:
         raise Http404()
     try:
