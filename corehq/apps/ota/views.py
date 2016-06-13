@@ -129,7 +129,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     elif couch_user.is_web_user():
         restore_user = couch_user.to_ota_restore_user(domain)
 
-    if couch_user.is_demo_user:
+    if couch_user.is_commcare_user() and couch_user.is_demo_user:
         # if user is in demo-mode, return demo restore
         return demo_user_restore_response(couch_user)
 
