@@ -11,6 +11,7 @@ from corehq.form_processor.utils import get_simple_form_xml
 
 class TestSupplyAccessors(TestCase):
     domain = 'test-supply-accessors'
+
     @classmethod
     def setUpClass(cls):
         cls.product_a = make_product(cls.domain, 'A Product', 'prodcode_a')
