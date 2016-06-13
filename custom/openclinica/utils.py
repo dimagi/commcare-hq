@@ -1,9 +1,10 @@
 from base64 import b64decode
 from collections import namedtuple
 from datetime import datetime, date, time
-import logging
+import pytz
 import re
 import bz2
+from time import strptime
 from lxml import etree
 from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
@@ -235,9 +236,65 @@ def oc_format_date(answer):
     """
     if isinstance(answer, datetime):
         return answer.isoformat(sep=' ')
-    if isinstance(answer, date) or isinstance(answer, time):
+    if isinstance(answer, (date, time)):
         return answer.isoformat()
     return answer
+
+
+def get_tz_mins(tz_str):
+    """
+    Return the timezone offset in minutes
+
+    >>> def get_tz_mins('Z')
+    0
+    >>> def get_tz_mins('-05')
+    -300
+    >>> def get_tz_mins('+0530')
+    330
+
+    """
+    match = re.match(r'^(Z|(?P<sign>[+-])(?P<hours>\d{2}):?(?P<mins>\d{2})?)$', tz_str)
+    if not match:
+        raise ValueError('Unrecognized timezone offset')
+    if tz_str == 'Z':
+        return 0
+    sign = 1 if match.group('sign') == '+' else -1
+    hours = int(match.group('hours'))
+    mins = int(match.group('mins') or 0)
+    return sign * (hours * 60 + mins)
+
+
+def oc_format_time(time_str, to_timezone, date_=None):
+    """
+    Format time strings for OpenClinica
+
+    .. NOTE:: This uses 1900-01-01 as `date_` if no date is given. This can have implications for daylight savings.
+
+    >>> from pytz import timezone
+    >>> oc_format_time('13:11:12.000Z', timezone('US/Eastern'))
+    '10:11'
+    >>> oc_format_time('15:11:12.000+02', timezone('US/Eastern'))
+    '10:11'
+
+    """
+    match = re.match(r'^\d{2}:\d{2}:\d{2}.\d+([\+-]\d+|Z)$', time_str)
+    if not match:
+        return time_str
+    tz_str = match.group(1)
+    tz_offset = pytz.FixedOffset(get_tz_mins(tz_str))
+
+    time_ = strptime(time_str, '%H:%M:%S.%f{}'.format(tz_str))
+    if date_ is None:
+        year, month, day = time_.tm_year, time_.tm_mon, time_.tm_mday  # Defaults to 1900-01-01
+    else:
+        year, month, day = date_.year, date_.month, date_.day
+    datetime_ = datetime(
+        year, month, day,
+        time_.tm_hour, time_.tm_min, time_.tm_sec,
+        tzinfo=tz_offset
+    )
+    as_timezone = datetime_.astimezone(to_timezone)
+    return as_timezone.strftime('%H:%M')
 
 
 def originals_first(forms):

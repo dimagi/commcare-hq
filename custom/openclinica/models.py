@@ -19,6 +19,7 @@ from custom.openclinica.utils import (
     get_study_event_name,
     is_study_event_repeating,
     oc_format_date,
+    oc_format_time,
     originals_first,
 )
 from dimagi.ext.couchdbkit import (
@@ -334,6 +335,8 @@ class Subject(object):
         return self.mobile_workers[user_id]
 
     def add_item(self, item, form, case_id, question, answer, audit_log_id_ref):
+        answer = oc_format_date(answer)
+        answer = oc_format_time(answer, self._domain.get_default_timezone())
         oc_user = self._get_oc_user(form.auth_context['user_id'])
         if getattr(form, 'deprecated_form_id', None) and question in self.question_items[form.deprecated_form_id]:
             # This form has been edited on HQ. Fetch original item
@@ -385,7 +388,7 @@ class Subject(object):
 
         event_id = getattr(event_case, 'event_type')
         # If a CommCare form is an OpenClinica repeating item group, then we would need to add a new item
-        # group. TODO: More testing
+        # group.
         for key, value in data.iteritems():
             if key in _reserved_keys:
                 continue
@@ -398,7 +401,6 @@ class Subject(object):
                     continue
                 self.add_item_group(item, form)
                 for v in value:
-                    # TODO: More testing
                     if not isinstance(v, dict):
                         raise OpenClinicaIntegrationError(
                             'CommCare question value is an unexpected data type. Form XMLNS: "{}"'.format(
@@ -414,7 +416,7 @@ class Subject(object):
                     # This is a CommCare-only question or form
                     continue
                 case_id = event_case.get_id
-                self.add_item(item, form, case_id, key, oc_format_date(value), audit_log_id_ref)
+                self.add_item(item, form, case_id, key, value, audit_log_id_ref)
 
     def get_report_events(self):
         """
