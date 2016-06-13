@@ -9,6 +9,7 @@ LedgerES
          .domain('testproject')
          .section('stock')
 """
+from corehq.pillows.mappings import NULL_VALUE
 from .es_query import HQESQuery
 from . import filters
 
@@ -46,3 +47,10 @@ def location(location_id):
 
 def modified_range(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('last_modified', gt, gte, lt, lte)
+
+
+def entries(entry_ids):
+    return filters.term(
+        'entry_id',
+        [entry_id if entry_id is not None else NULL_VALUE for entry_id in entry_ids]
+    )
