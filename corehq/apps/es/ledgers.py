@@ -33,7 +33,7 @@ def case(case_id):
 
 
 def section(section_id):
-    return filters.term('section_id', section)
+    return filters.term('section_id', section_id)
 
 
 def entry(entry_id):
