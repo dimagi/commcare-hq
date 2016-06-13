@@ -6,6 +6,7 @@ from datetime import datetime
 from zipfile import BadZipfile
 
 from django.contrib import messages
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
@@ -52,7 +53,7 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import Location
-from corehq.apps.ota.utils import turn_off_demo_mode
+from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.style.decorators import (
@@ -192,6 +193,7 @@ class EditCommCareUserView(BaseEditUserView):
                 users_have_locations(self.domain) and
                 not has_privilege(self.request, privileges.LOCATIONS)
             ),
+            'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
         }
         if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({

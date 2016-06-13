@@ -70,3 +70,12 @@ def demo_user_restore_response(commcare_user):
 
     restore = DemoUserRestore.objects.get(id=commcare_user.demo_restore_id)
     return restore.get_restore_http_response()
+
+
+def demo_restore_date_created(commcare_user):
+    """
+    Returns date of last restore for the demo commcare user
+    """
+    restore = DemoUserRestore.objects.get(id=commcare_user.demo_restore_id)
+    if restore:
+        return restore.timestamp_created

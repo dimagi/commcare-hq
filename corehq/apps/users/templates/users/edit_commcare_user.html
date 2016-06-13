@@ -113,9 +113,11 @@
 {% endblock %}
 
 {% block page_content %}
+    {% if couch_user.is_demo_user %}
     <p class="alert alert-warning">
-        {% trans "This is marked as demo user. All forms submitted by this user will be ignored  and will not appear in reports or data exports." %}
+        {% trans "This user is marked as a demo user.  All forms submitted by this user will be ignored and not appear in reports or data exports" %}
     </p>
+    {% endif %}
     <ul class="nav nav-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
         <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
         <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
@@ -194,10 +196,15 @@
                       action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
                       method="post">
                       {% csrf_token %}
-                    <button type="submit" class="btn btn-default">
-                        <i class="icon-refresh"></i>
-                        {% trans 'Refresh Demo Mode data' %}
-                    </button>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-default">
+                            <i class="icon-refresh"></i>
+                            {% trans 'Refresh Demo Mode data' %}
+                        </button>
+                        {% blocktrans with when=demo_restore_date %}
+                            <span> Last refreshed {{ when }}</span>
+                        {% endblocktrans %}
+                    </div>
                 </form>
                 {% endif %}
                 <form class="form form-horizontal"
@@ -205,14 +212,16 @@
                       method="post">
                     <input type="hidden" name="demo_mode" value="{{ couch_user.is_demo_user|yesno:"no,yes" }}" />
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-info">
-                        {% if couch_user.is_demo_user %}
-                            <i class="icon-trash"></i>
-                            {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
-                        {% else %}
-                            {% trans 'Turn On Demo Mode for this Mobile Worker' %}
-                        {% endif %}
-                    </button>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-info">
+                            {% if couch_user.is_demo_user %}
+                                <i class="icon-trash"></i>
+                                {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
+                            {% else %}
+                                {% trans 'Turn On Demo Mode for this Mobile Worker' %}
+                            {% endif %}
+                        </button>
+                    </div>
                 </form>
             </div>
             {% endif %}
