@@ -149,7 +149,10 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
     def _outer(fn):
         @wraps(fn)
         def safe_fn(request, domain, *args, **kwargs):
-            if not request.user.is_authenticated() or not allow_sessions:
+            if request.user.is_authenticated() and allow_sessions:
+                return login_and_domain_required(fn)(request, domain, *args, **kwargs)
+            else:
+                # if sessions are blocked or user is not already authenticated, check for authentication
                 @check_lockout
                 @challenge_fn
                 @two_factor_check(api_key)
@@ -166,10 +169,6 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
                         return HttpResponseForbidden()
 
                 return _inner(request, domain, *args, **kwargs)
-            elif allow_sessions:
-                return login_and_domain_required(fn)(request, domain, *args, **kwargs)
-            else:
-                return HttpResponseForbidden()
         return safe_fn
     return _outer
 
