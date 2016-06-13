@@ -20,6 +20,7 @@ class LedgerDBAccessorTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(LedgerDBAccessorTest, cls).setUpClass()
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
         cls.product_a = make_product(DOMAIN, 'A Product', 'prodcode_a')
@@ -34,14 +35,17 @@ class LedgerDBAccessorTest(TestCase):
 
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        super(LedgerDBAccessorTest, cls).tearDownClass()
 
     def setUp(self):
+        super(LedgerDBAccessorTest, self).setUp()
         self.factory = CaseFactory(domain=DOMAIN)
         self.case_one = self.factory.create_case()
         self.case_two = self.factory.create_case()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_ledgers(DOMAIN)
+        super(LedgerDBAccessorTest, self).tearDown()
 
     def _submit_ledgers(self, ledger_blocks):
         return submit_case_blocks(ledger_blocks, DOMAIN).form_id
@@ -51,19 +55,6 @@ class LedgerDBAccessorTest(TestCase):
         return self._submit_ledgers([
             get_single_balance_block(case_id, product_id, balance)
         ])
-
-    def test_get_ledger_values_for_product_ids(self):
-        self._set_balance(100, self.case_one.case_id, self.product_a._id)
-        self._set_balance(200, self.case_two.case_id, self.product_b._id)
-
-        values = LedgerAccessorSQL.get_ledger_values_for_product_ids([self.product_a._id])
-        self.assertEqual(len(values), 1)
-        self.assertEqual(values[0].case_id, self.case_one.case_id)
-
-        values = LedgerAccessorSQL.get_ledger_values_for_product_ids(
-            [self.product_a._id, self.product_b._id]
-        )
-        self.assertEqual(len(values), 2)
 
     def test_delete_ledger_transactions_for_form(self):
         from corehq.apps.commtrack.tests import get_single_balance_block

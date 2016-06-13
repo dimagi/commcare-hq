@@ -3,6 +3,7 @@ from functools import wraps
 import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
+from corehq import toggles
 from corehq.apps.app_manager.const import (
     APP_V1, SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
@@ -13,7 +14,9 @@ from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
+import collections
 import formtranslate.api
+import re
 
 
 def parse_xml(string):
@@ -40,6 +43,11 @@ namespaces = dict(
     v="{http://commcarehq.org/xforms/vellum}",
     odk="{http://opendatakit.org/xforms}",
 )
+
+HashtagReplacement = collections.namedtuple('HashtagReplacement', 'hashtag replaces')
+hashtag_replacements = [
+    HashtagReplacement(hashtag='#form/', replaces=r'^/data\/'),
+]
 
 
 def _make_elem(tag, attr=None):
@@ -842,6 +850,11 @@ class XForm(WrappedNode):
         else:
             return "%s/%s" % (path_context, path)
 
+    def hashtag_path(self, path):
+        for hashtag, replaces in hashtag_replacements:
+            path = re.sub(replaces, hashtag, path)
+        return path
+
     @requires_itext(list)
     def get_languages(self):
         if not self.exists():
@@ -850,7 +863,7 @@ class XForm(WrappedNode):
         return self.translations().keys()
 
     def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False):
+                      include_groups=False, include_translations=False, form=None):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -867,6 +880,10 @@ class XForm(WrappedNode):
         excluded_paths = set()
 
         control_nodes = self.get_control_nodes()
+        use_hashtags = False
+        if form:
+            use_hashtags = (form.get_app().vellum_case_management
+                           or toggles.VELLUM_RICH_TEXT.enabled(form.get_app().domain))
 
         for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
             excluded_paths.add(path)
@@ -889,6 +906,8 @@ class XForm(WrappedNode):
                 "relevant": relevant,
                 "required": required == "true()"
             }
+            if use_hashtags:
+                question.update({"hashtagValue": self.hashtag_path(path)})
 
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
@@ -923,7 +942,6 @@ class XForm(WrappedNode):
                 except IndexError:
                     matching_repeat_context = None
                 question = {
-                    "label": path,
                     "tag": "hidden",
                     "value": path,
                     "repeat": matching_repeat_context,
@@ -931,6 +949,16 @@ class XForm(WrappedNode):
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                 }
+                if use_hashtags:
+                    hashtag_path = self.hashtag_path(path)
+                    question.update({
+                        "label": hashtag_path,
+                        "hashtagValue": hashtag_path,
+                    })
+                else:
+                    question.update({
+                        "label": path,
+                    })
                 if include_translations:
                     question["translations"] = {}
 

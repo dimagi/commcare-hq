@@ -30,10 +30,6 @@ class AppPillow(AliasedElasticPillow):
     es_index = APP_INDEX
     default_mapping = APP_MAPPING
 
-    @classmethod
-    def get_unique_id(cls):
-        return APP_INDEX
-
     def change_transform(self, doc_dict):
         # perform any lazy migrations
         doc = get_correct_app_class(doc_dict).wrap(doc_dict)

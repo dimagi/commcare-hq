@@ -1,6 +1,10 @@
 {% extends 'dashboard/base.html' %}
 {% load i18n %}{% load hq_shared_tags %}
 
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
 <script>
     $(function() {

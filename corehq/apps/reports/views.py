@@ -54,7 +54,6 @@ from django.views.generic import View
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
-from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -163,11 +162,10 @@ from .util import (
 )
 from corehq.apps.style.decorators import (
     use_bootstrap3,
-    use_datatables,
     use_jquery_ui,
-    use_jquery_ui_multiselect,
     use_select2,
     use_datatables,
+    use_multiselect,
 )
 
 
@@ -552,9 +550,9 @@ def hq_deid_download_saved_export(req, domain, export_id):
 
 
 def _download_saved_export(req, domain, saved_export):
-    # quasi-security hack: the first key of the index is always assumed
-    # to be the domain
-    assert domain == saved_export.configuration.index[0]
+    if domain != saved_export.configuration.index[0]:
+        raise Http404()
+
     if should_update_export(saved_export.last_accessed):
         group_id = req.GET.get('group_export_id')
         if group_id:
@@ -794,7 +792,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     config.filters = filters
 
     report_id = None
-    if config.report:
+    if config.report and hasattr(config.report, '_id'):
         report_id = config.report._id
 
     body = _render_report_configs(request, [config],
@@ -811,13 +809,13 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
     if form.cleaned_data['send_to_owner']:
         send_html_email_async.delay(subject, request.couch_user.get_email(), body,
                                     email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                                    ga_tracking_info={'project_space_id': request.domain})
+                                    ga_tracking_info={'cd4': request.domain})
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
             send_html_email_async.delay(subject, recipient, body,
                                         email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                                        ga_tracking_info={'project_space_id': request.domain})
+                                        ga_tracking_info={'cd4': request.domain})
 
     return HttpResponse()
 
@@ -881,8 +879,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     page_title = _("Scheduled Report")
     template_name = 'reports/edit_scheduled_report.html'
 
-    @use_jquery_ui
-    @use_jquery_ui_multiselect
+    @use_multiselect
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
@@ -1213,7 +1210,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
     def case_instance(self):
         try:
             case = CaseAccessors(self.domain).get_case(self.case_id)
-            if case.domain != self.domain:
+            if case.domain != self.domain or case.is_deleted:
                 return None
             return case
         except CaseNotFound:
@@ -1229,17 +1226,14 @@ class CaseDetailsView(BaseProjectReportSectionView):
 
     @property
     def page_context(self):
-        if not should_use_sql_backend(self.domain):
-            # TODO: make this work for SQL
-            create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE,
-                                    self.case_instance.actions)
-            if not create_actions:
-                messages.error(self.request, _(
-                    "The case creation form could not be found. "
-                    "Usually this happens if the form that created the case is archived "
-                    "but there are other forms that updated the case. "
-                    "To fix this you can archive the other forms listed here."
-                ))
+        opening_transactions = self.case_instance.get_opening_transactions()
+        if not opening_transactions:
+            messages.error(self.request, _(
+                "The case creation form could not be found. "
+                "Usually this happens if the form that created the case is archived "
+                "but there are other forms that updated the case. "
+                "To fix this you can archive the other forms listed here."
+            ))
         return {
             "case_id": self.case_id,
             "case": self.case_instance,
@@ -1801,7 +1795,8 @@ def download_attachment(request, domain, instance_id):
     except AttachmentNotFound:
         raise Http404()
 
-    return StreamingHttpResponse(streaming_content=attach.content_stream, content_type=attach.content_type)
+    return StreamingHttpResponse(streaming_content=FileWrapper(attach.content_stream),
+                                 content_type=attach.content_type)
 
 
 @require_form_view_permission

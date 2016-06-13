@@ -6,6 +6,7 @@ from django.test import TestCase, Client
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
+from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
@@ -36,6 +37,7 @@ class CaseClaimEndpointTests(TestCase):
         self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
         initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
         CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
+        delete_all_cases()
         self.case_id = uuid4().hex
         _, [self.case] = post_case_blocks([CaseBlock(
             create=True,
@@ -48,6 +50,8 @@ class CaseClaimEndpointTests(TestCase):
             update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
         get_case_search_reindexer(DOMAIN).reindex()
+        es = get_es_new()
+        es.indices.refresh(CASE_SEARCH_INDEX)
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
@@ -85,7 +89,7 @@ class CaseClaimEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200)
         # Dup claim
         response = client.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content, 'You have already claimed that case')
 
     @run_with_all_backends
@@ -103,7 +107,7 @@ class CaseClaimEndpointTests(TestCase):
         client2 = Client()
         client2.login(username=USERNAME, password=PASSWORD)
         response = client2.post(url, {'case_id': self.case_id})
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content, 'You have already claimed that case')
 
     @run_with_all_backends

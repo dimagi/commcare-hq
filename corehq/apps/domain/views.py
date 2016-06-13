@@ -47,8 +47,8 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import (
     use_bootstrap3,
     use_jquery_ui,
-    use_jquery_ui_multiselect,
     use_select2,
+    use_multiselect,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
@@ -170,7 +170,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         if domain and domain.is_active:
             # mirrors logic in login_and_domain_required
             if (
-                request.couch_user.is_member_of(domain) or domain.is_public
+                request.couch_user.is_member_of(domain)
                 or (request.user.is_superuser and not domain.restrict_superusers)
                 or domain.is_snapshot
             ):
@@ -1318,12 +1318,6 @@ class SelectPlanView(DomainAccountingSettings):
             return DESC_BY_EDITION[self.edition]['name']
 
     @property
-    def is_non_ops_superuser(self):
-        if not self.request.couch_user.is_superuser:
-            return False
-        return not has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
-
-    @property
     def parent_pages(self):
         return [
             {
@@ -1362,7 +1356,6 @@ class SelectPlanView(DomainAccountingSettings):
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
                                 else ""),
-            'is_non_ops_superuser': self.is_non_ops_superuser,
         }
 
 
@@ -1566,24 +1559,13 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     @property
     @memoized
     def billing_account_info_form(self):
-        initial = None
-        if self.edition == SoftwarePlanEdition.ENTERPRISE and self.request.couch_user.is_superuser:
-            initial = {
-                'company_name': "Dimagi",
-                'first_line': "585 Massachusetts Ave",
-                'second_line': "Suite 4",
-                'city': "Cambridge",
-                'state_province_region': "MA",
-                'postal_code': "02139",
-                'country': "US",
-            }
         if self.request.method == 'POST' and self.is_form_post:
             return ConfirmNewSubscriptionForm(
                 self.account, self.domain, self.request.couch_user.username,
-                self.selected_plan_version, self.current_subscription, data=self.request.POST, initial=initial
+                self.selected_plan_version, self.current_subscription, data=self.request.POST
             )
         return ConfirmNewSubscriptionForm(self.account, self.domain, self.request.couch_user.username,
-                                          self.selected_plan_version, self.current_subscription, initial=initial)
+                                          self.selected_plan_version, self.current_subscription)
 
     @property
     def page_context(self):
@@ -1596,8 +1578,6 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
-        if self.edition == SoftwarePlanEdition.ENTERPRISE and not self.request.couch_user.is_superuser:
-            return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name'].encode('utf-8')
@@ -1675,8 +1655,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def next_plan_version(self):
-        new_edition = self.request.POST.get('plan_edition').title()
-        plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, new_edition)
+        plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, self.new_edition)
         if plan_version is None:
             log_accounting_error(
                 "Could not find a matching renewable plan "
@@ -1711,9 +1690,15 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             'next_plan': self.next_plan_version.user_facing_description,
         }
 
+    @property
+    def new_edition(self):
+        return self.request.POST.get('plan_edition').title()
+
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
+        if self.new_edition == SoftwarePlanEdition.ENTERPRISE:
+            return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         if self.confirm_form.is_valid():
             is_saved = self.confirm_form.save()
             if not is_saved:
@@ -2430,8 +2415,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
     @use_bootstrap3
-    @use_jquery_ui
-    @use_jquery_ui_multiselect
+    @use_jquery_ui  # datepicker
+    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
 

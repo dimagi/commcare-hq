@@ -3,6 +3,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% new_static 'app_manager/js/commcaresettings.js' %}"></script>
     <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>

@@ -1,4 +1,4 @@
-{% extends "style/bootstrap3/two_column.html" %}
+{% extends "style/two_column.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -6,7 +6,7 @@
 
 {% block js %}
     {{ block.super }}
-    <script src="{% static 'style/js/bootstrap3/main.js' %}"></script>
+    <script src="{% static 'style/js/main.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -166,7 +166,6 @@
                         {% trans "Corresponding Key/Value fields from Excel" %}
                         <span class="hq-help-template"
                             data-title='{% trans "Key/Value Pairs" %}'
-                            data-bootstrap3="true"
                             data-content='{% trans "The Excel file must be formatted with three columns. The first, identified in the Identifying Cases section above, contains the case to update. The second contains names of case properties to update. The last column contains the values to change. " %}'
                         ></span>
                         <script>

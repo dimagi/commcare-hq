@@ -10,7 +10,11 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_POST, require_http_methods
 
 from couchdbkit import ResourceNotFound
-from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
+from corehq.apps.style.decorators import (
+    use_bootstrap3,
+    use_jquery_ui,
+    use_multiselect,
+)
 from corehq.util.files import file_extention_from_filename
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
@@ -52,6 +56,7 @@ def default(request, domain):
 
 
 class BaseLocationView(BaseDomainView):
+    section_name = ugettext_lazy("Locations")
 
     @method_decorator(locations_access_required)
     def dispatch(self, request, *args, **kwargs):
@@ -142,6 +147,9 @@ class LocationTypesView(BaseLocationView):
             'shares_cases': loc_type.shares_cases,
             'view_descendants': loc_type.view_descendants,
             'code': loc_type.code,
+            'expand_from': loc_type.expand_from.pk if loc_type.expand_from else None,
+            'expand_from_root': loc_type.expand_from_root,
+            'expand_to': loc_type.expand_to.pk if loc_type.expand_to else None,
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     def post(self, request, *args, **kwargs):
@@ -152,7 +160,7 @@ class LocationTypesView(BaseLocationView):
             return isinstance(pk, basestring) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative,
-                       shares_cases, view_descendants, pk, code):
+                       shares_cases, view_descendants, pk, code, expand_from, expand_from_root, expand_to):
             parent = sql_loc_types[parent_type] if parent_type else None
 
             loc_type = None
@@ -169,8 +177,8 @@ class LocationTypesView(BaseLocationView):
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
             loc_type.code = unicode_slug(code)
-            loc_type.save()
             sql_loc_types[pk] = loc_type
+            loc_type.save()
 
         loc_types = payload['loc_types']
         pks = []
@@ -188,9 +196,35 @@ class LocationTypesView(BaseLocationView):
             return self.get(request, *args, **kwargs)
 
         for loc_type in hierarchy:
+            # make all locations in order
             mk_loctype(**loc_type)
 
+        for loc_type in hierarchy:
+            # apply sync boundaries (expand_from and expand_to) after the
+            # locations are all created since there are dependencies between them
+            self._attach_sync_boundaries_to_location_type(loc_type, sql_loc_types)
+
         return HttpResponseRedirect(reverse(self.urlname, args=[self.domain]))
+
+    @staticmethod
+    def _attach_sync_boundaries_to_location_type(loc_type_data, loc_type_db):
+        """Store the sync expansion boundaries along with the location type. i.e. where
+        the user's locations start expanding from, and where they expand to
+
+        """
+        loc_type = loc_type_db[loc_type_data['pk']]
+        expand_from_id = loc_type_data['expand_from']
+        expand_to_id = loc_type_data['expand_to']
+        try:
+            loc_type.expand_from = loc_type_db[expand_from_id] if expand_from_id else None
+        except KeyError:        # expand_from location type was deleted
+            loc_type.expand_from = None
+        loc_type.expand_from_root = loc_type_data['expand_from_root']
+        try:
+            loc_type.expand_to = loc_type_db[expand_to_id] if expand_to_id else None
+        except KeyError:        # expand_to location type was deleted
+            loc_type.expand_to = None
+        loc_type.save()
 
     def remove_old_location_types(self, pks):
         existing_pks = (LocationType.objects.filter(domain=self.domain)
@@ -267,7 +301,7 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_bootstrap3
-    @use_jquery_ui
+    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -479,9 +513,11 @@ class EditLocationView(NewLocationView):
         form = MultipleSelectionForm(
             initial={'selected_ids': self.products_at_location},
             submit_label=_("Update Product List"),
+            fieldset_title=_("Specify Products Per Location"),
             prefix="products",
         )
         form.fields['selected_ids'].choices = self.active_products
+        form.fields['selected_ids'].label = _("Products at Location")
         return form
 
     @property
@@ -492,6 +528,7 @@ class EditLocationView(NewLocationView):
             location=self.location,
             data=self.request.POST if self.request.method == "POST" else None,
             submit_label=_("Update Users at this Location"),
+            fieldset_title=_("Specify Workers at this Location"),
             prefix="users",
         )
         return form
@@ -611,7 +648,7 @@ class FacilitySyncView(BaseSyncView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
-    template_name = 'style/bootstrap3/soil_status_full.html'
+    template_name = 'style/soil_status_full.html'
 
     @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):

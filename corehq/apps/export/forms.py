@@ -390,6 +390,11 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
             return SerializableFunction(datespan_export_filter,
                                         datespan=datespan)
 
+    def get_multimedia_task_kwargs(self, export, download_id):
+        kwargs = super(FilterFormCouchExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
+        kwargs['export_is_legacy'] = True
+        return kwargs
+
 
 class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
 
@@ -421,6 +426,10 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         if not group:
             return UserTypeFilter(self._get_es_user_types())
 
+    def get_multimedia_task_kwargs(self, export, download_id):
+        kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
+        kwargs['export_is_legacy'] = False
+        return kwargs
 
 class FilterCaseCouchExportDownloadForm(BaseFilterExportDownloadForm):
     _export_type = 'case'

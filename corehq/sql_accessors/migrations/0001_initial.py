@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations
 
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, CaseTransaction
-from corehq.sql_db.operations import HqRunSQL, RawSQLMigration, noop_migration
+from corehq.sql_db.operations import HqRunSQL, RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
     'FORM_STATE_ARCHIVED': XFormInstanceSQL.ARCHIVED,
@@ -73,9 +73,6 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_case_attachments.sql'),
         migrator.get_migration('get_case_by_id.sql'),
         migrator.get_migration('get_case_by_location_id.sql'),
-        migrator.get_migration('get_case_ids_in_domain.sql'),
-        migrator.get_migration('get_case_indices.sql'),
-        migrator.get_migration('get_case_indices_reverse.sql'),
         migrator.get_migration('get_case_transactions.sql'),
         migrator.get_migration('get_cases_by_id.sql'),
         migrator.get_migration('get_form_attachment_by_name.sql'),
@@ -88,7 +85,6 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_multiple_cases_indices.sql'),
         migrator.get_migration('get_multiple_forms_attachments.sql'),
         migrator.get_migration('get_reverse_indexed_cases.sql'),
-        migrator.get_migration('hard_delete_cases.sql'),
         migrator.get_migration('hard_delete_forms.sql'),
         migrator.get_migration('revoke_restore_case_transactions_for_form.sql'),
         migrator.get_migration('save_case_and_related_models.sql'),

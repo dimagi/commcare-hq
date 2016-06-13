@@ -166,7 +166,7 @@ class CrispyTemplate(object):
 
 
 class FieldWithHelpBubble(Field):
-    template = "field_with_help_bubble.html"
+    template = "style/crispy/field_with_help_bubble.html"
 
     def __init__(self, *args, **kwargs):
         super(FieldWithHelpBubble, self).__init__(*args, **kwargs)
@@ -174,7 +174,6 @@ class FieldWithHelpBubble(Field):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        self.template = "style/crispy/{}/{}".format(template_pack, self.template)
         context.update({
             'help_bubble_text': self.help_bubble_text,
         })
@@ -182,7 +181,7 @@ class FieldWithHelpBubble(Field):
 
 
 class LinkButton(LayoutObject):
-    template = "style/crispy/{template_pack}/link_button.html"
+    template = "style/crispy/link_button.html"
 
     def __init__(self, button_text, button_url, **kwargs):
         self.button_text = button_text
@@ -198,14 +197,12 @@ class LinkButton(LayoutObject):
                 self.attrs['class'] = kwargs.pop('css_class')
 
     def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        template = self.template.format(template_pack=template_pack)
         context.update({
             'button_text': self.button_text,
             'button_url': self.button_url,
             'button_attrs': flatatt(self.attrs if isinstance(self.attrs, dict) else {}),
         })
-        return render_to_string(template, context)
+        return render_to_string(self.template, context)
 
 
 class B3TextField(OldField):
@@ -213,10 +210,9 @@ class B3TextField(OldField):
     def __init__(self, field_name, text, *args, **kwargs):
         self.text = text
         super(B3TextField, self).__init__(field_name, *args, **kwargs)
-        self.template = 'style/crispy/bootstrap3/text_field.html'
+        self.template = 'style/crispy/text_field.html'
 
     def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
         context.update({
             'field_text': self.text,
         })
@@ -232,18 +228,8 @@ class B3TextField(OldField):
 
 
 class FieldsetAccordionGroup(AccordionGroup):
-    template = "style/crispy/{template_pack}/accordion_group.html"
-
-    def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        self.template = self.template.format(template_pack=template_pack)
-        return super(FieldsetAccordionGroup, self).render(form, form_style, context, template_pack)
+    template = "style/crispy/accordion_group.html"
 
 
 class HiddenFieldWithErrors(Field):
-    template = "style/crispy/{template_pack}/hidden_with_errors.html"
-
-    def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        self.template = self.template.format(template_pack=template_pack)
-        return super(HiddenFieldWithErrors, self).render(form, form_style, context, template_pack)
+    template = "style/crispy/hidden_with_errors.html"

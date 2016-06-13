@@ -40,6 +40,9 @@ def get_group_to_user_pillow(pillow_id='GroupToUserPillow'):
 
 
 def remove_group_from_users(group_doc, es_client):
+    if group_doc is None:
+        return
+
     for user_source in stream_user_sources(group_doc.get("users", [])):
         made_changes = False
         if group_doc["name"] in user_source.group_names:

@@ -4,7 +4,10 @@ import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import *
-from sqlalchemy.sql.expression import join, alias
+from sqlalchemy.sql.expression import join, alias, cast
+from sqlalchemy.sql.functions import func
+from sqlalchemy.sql.sqltypes import Integer, VARCHAR
+
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, TableDataFormat
 from corehq.apps.reports.util import get_INFilter_bindparams
@@ -62,11 +65,12 @@ class CareQueryMeta(QueryMeta):
 
         group_having = ''
         having_group_by = []
-        if ('disaggregate_by' in filter_values and filter_values['disaggregate_by'] == 'group') or ('table_card_group_by' in filter_values and filter_values['table_card_group_by']):
-            group_having = "group_leadership=\'Y\'"
+        if ('disaggregate_by' in filter_values and filter_values['disaggregate_by'] == 'group') or \
+                ('table_card_group_by' in filter_values and filter_values['table_card_group_by']):
             having_group_by.append('group_leadership')
         elif 'group_leadership' in filter_values and filter_values['group_leadership']:
-            group_having = "(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) = :group_leadership and group_leadership=\'Y\'"
+            group_having = "(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) " \
+                           "= :group_leadership and group_leadership=\'Y\'"
             having_group_by.append('group_leadership')
             filter_cols.append('group_leadership')
         elif 'gender' in filter_values and filter_values['gender']:
@@ -82,8 +86,11 @@ class CareQueryMeta(QueryMeta):
                           group_by=[table.c.doc_id, table.c.group_id] + filter_cols + external_cols), name='x')
         s2 = alias(
             select(
-                ['group_id', '(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) as gender'] +
-                table_card_group, from_obj='"fluff_FarmerRecordFluff"',
+                [table.c.group_id,
+                 sqlalchemy.cast(
+                     cast(func.max(table.c.gender), Integer) + cast(func.min(table.c.gender), Integer), VARCHAR
+                 ).label('gender')] + table_card_group,
+                from_obj=table,
                 group_by=['group_id'] + table_card_group + having_group_by, having=group_having
             ), name='y'
         )
@@ -222,33 +229,38 @@ class AdoptionBarChartReportSqlData(CareSqlData):
         elif group == 'practice':
             first_columns = 'practices'
 
-        return [
+        columns = [
             DatabaseColumn('', SimpleColumn(first_columns), self.group_name_fn),
             AggregateColumn(
-                'All', self.percent_fn,
+                'Farmers who adopted All practices', self.percent_fn,
                 [
                     CareCustomColumn('all', filters=self.filters + [RawFilter("maxmin = 2")]),
                     AliasColumn('some'),
                     AliasColumn('none')
                 ]
-            ),
-            AggregateColumn(
-                'Some', self.percent_fn,
+            )
+        ]
+
+        if group != 'practice':
+            columns.append(AggregateColumn(
+                'Farmers who adopted Some practices', self.percent_fn,
                 [
                     CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1")]),
                     AliasColumn('all'),
                     AliasColumn('none')
                 ]
-            ),
-            AggregateColumn(
-                'None', self.percent_fn,
-                [
-                    CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")]),
-                    AliasColumn('all'),
-                    AliasColumn('some')
-                ]
-            )
-        ]
+            ))
+
+        columns.append(AggregateColumn(
+            'Farmers who adopted No practices', self.percent_fn,
+            [
+                CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")]),
+                AliasColumn('all'),
+                AliasColumn('some')
+            ]
+        ))
+
+        return columns
 
     @property
     def group_by(self):
@@ -271,27 +283,36 @@ class AdoptionDisaggregatedSqlData(CareSqlData):
 
     def _to_display(self, value):
         display = {'sort_key': 0, 'html': 0}
-        if value == 0:
-            display = {'sort_key': 0, 'html': 'None Women'}
-        elif value == 1:
-            display = {'sort_key': 0, 'html': 'Some Women'}
-        elif value == 2:
-            display = {'sort_key': 0, 'html': 'All Women'}
+        disaggregate_by = self.config['disaggregate_by']
+        disaggregation_type = 'Groups'
+        if disaggregate_by == 'group':
+            disaggregation_type = 'Leadership'
+
+        if value == '0':
+            display = {'sort_key': 0, 'html': 'All Male %s' % disaggregation_type}
+        elif value == '1':
+            display = {'sort_key': 0, 'html': 'Mixed %s' % disaggregation_type}
+        elif value == '2':
+            display = {'sort_key': 0, 'html': 'All Female %s' % disaggregation_type}
 
         return display
 
     @property
     def columns(self):
-        return [
+        columns = [
             DatabaseColumn('', AliasColumn('gender'), format_fn=self._to_display),
-            AggregateColumn('None', lambda x:x,
-                            [CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")])]),
-            AggregateColumn('Some', lambda x:x,
-                            [CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1")])]),
-            AggregateColumn('All', lambda x:x,
-                            [CareCustomColumn('all', filters=self.filters + [RawFilter("maxmin = 2")])])
-
+            AggregateColumn('Farmers who adopted No practices', lambda x: x,
+                            [CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")])])
         ]
+
+        if self.config['group'] != 'practice':
+            columns.append(
+                AggregateColumn('Farmers who adopted Some practices', lambda x: x,
+                                [CareCustomColumn('some', filters=self.filters + [RawFilter("maxmin = 1")])]))
+
+        columns.append(AggregateColumn('Farmers who adopted All practices', lambda x: x,
+                       [CareCustomColumn('all', filters=self.filters + [RawFilter("maxmin = 2")])]))
+        return columns
 
 
 class TableCardSqlData(CareSqlData):
@@ -321,12 +342,16 @@ class TableCardSqlData(CareSqlData):
         if self.config['table_card_group_by'] == 'group_name':
             return x
         else:
+            group_by = 'Groups'
+            if self.config['table_card_group_by'] == 'group_leadership':
+                group_by = 'Leadership'
+
             if int(x) == 0:
-                return 'None Women'
+                return 'All Male %s' % group_by
             elif int(x) == 1:
-                return 'Some Women'
+                return 'Mixed %s' % group_by
             elif int(x) == 2:
-                return 'All Women'
+                return 'All Female %s' % group_by
 
     @property
     def columns(self):
