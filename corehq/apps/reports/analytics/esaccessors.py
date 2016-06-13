@@ -209,7 +209,7 @@ def get_completed_counts_by_user(domain, datespan, user_ids=None):
 
 
 def _get_form_counts_by_user(domain, datespan, is_submission_time, user_ids=None):
-    form_query = FormES().domain(domain)
+    form_query = FormES().domain(domain).filter(filters.NOT(xmlns(SYSTEM_FORM_XMLNS))))
 
     if is_submission_time:
         form_query = (form_query
