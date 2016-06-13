@@ -1499,6 +1499,8 @@ class AdminTab(UITab):
                  'url': reverse('loadtest_report')},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
+                {'title': _('Download Global Impact Report'),
+                 'url': reverse('download_gir')},
             ]),
             (_('Administrative Operations'), admin_operations),
             (_('CommCare Reports'), [

@@ -9,7 +9,8 @@ from .views import (
     LoadtestReportView,
     ManagementCommandsView,
     CallcenterUCRCheck,
-    DimagisphereView)
+    DimagisphereView,
+    DownloadGIRView)
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -47,6 +48,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     (r'^api/', include(admin_api_urlpatterns)),
     url(r'^download_malt/$',
         DownloadMALTView.as_view(), name=DownloadMALTView.urlname),
+    url(r'^download_gir', DownloadGIRView.as_view(), name=DownloadGIRView.urlname),
     url(r'^dimagisphere/$',
         require_superuser(DimagisphereView.as_view(template_name='hqadmin/dimagisphere/form_feed.html')),
         name='dimagisphere'),
