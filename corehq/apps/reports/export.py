@@ -7,8 +7,10 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.models import FormExportSchema
 from corehq.elastic import stream_es_query
 import couchexport
+from couchexport.exceptions import SchemaMismatchException
 from couchexport.export import get_headers, get_writer, export_raw, get_formatted_rows
 from couchexport.models import DefaultExportSchema, Format, SavedExportSchema
+from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 
 from soil import DownloadBase
@@ -57,16 +59,20 @@ class BulkExport(object):
 
             # now that the headers are set, lets build the rows
             for i, config in enumerate(configs):
-                for doc in config.get_docs():
-                    if self.export_objects[i].transform:
-                        doc = self.export_objects[i].transform(doc)
-                    table = get_formatted_rows(
-                        doc, schemas[i], separator=self.separator,
-                        include_headers=isinstance(self, CustomBulkExport))
-                    if isinstance(self, CustomBulkExport):
-                        table = self.export_objects[i].trim(table, doc)
-                    table = self.export_objects[i].parse_tables(table)
-                    writer.write(table)
+                try:
+                    for doc in config.get_docs():
+                        if self.export_objects[i].transform:
+                            doc = self.export_objects[i].transform(doc)
+                        table = get_formatted_rows(
+                            doc, schemas[i], separator=self.separator,
+                            include_headers=isinstance(self, CustomBulkExport))
+                        if isinstance(self, CustomBulkExport):
+                            table = self.export_objects[i].trim(table, doc)
+                        table = self.export_objects[i].parse_tables(table)
+                        writer.write(table)
+                except SchemaMismatchException:
+                    # fire off a delayed force update to prevent this from happening again
+                    rebuild_schemas.delay(config.index)
 
             writer.close()
         return path
