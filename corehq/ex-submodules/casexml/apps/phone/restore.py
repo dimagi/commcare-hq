@@ -283,16 +283,13 @@ class RestoreParams(object):
     :param version:             The version of the restore format
     :param state_hash:          The case state hash string to use to verify the state of the phone
     :param include_item_count:  Set to `True` to include the item count in the response
-    :param force_restore_mode:  Set to `clean` or `legacy` to force a particular restore type.
     """
 
-    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False,
-                 force_restore_mode=None, app=None):
+    def __init__(self, sync_log_id='', version=V1, state_hash='', include_item_count=False, app=None):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
         self.include_item_count = include_item_count
-        self.force_restore_mode = force_restore_mode
         self.app = app
 
 
