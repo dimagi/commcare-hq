@@ -93,6 +93,7 @@ class CommtrackDataSourceMixin(object):
 class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
     slug = 'location_inventory'
 
+    @property
     def datetime(self):
         """
         Returns a datetime object at the end of the selected
@@ -173,7 +174,7 @@ class SimplifiedInventoryDataSourceNew(SimplifiedInventoryDataSource):
                 section_id=SECTION_TYPE_STOCK,
                 entry_id=None,
                 window_start=datetime.min,
-                window_end=self.datetime()
+                window_end=self.datetime,
             )
 
             if self.program_id:
