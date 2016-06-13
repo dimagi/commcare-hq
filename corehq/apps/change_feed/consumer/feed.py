@@ -97,10 +97,8 @@ class KafkaChangeFeed(ChangeFeed):
     def get_current_offsets(self):
         consumer = self._get_consumer(MIN_TIMEOUT, auto_offset_reset='smallest')
         try:
-            # we have to fetch the changes to populate the highwater offsets
-            # todo: there is likely a cleaner way to do this
-            changes = list(consumer)
-        except ConsumerTimeout:
+            next(consumer)
+        except (ConsumerTimeout, StopIteration):
             pass
         except (KafkaConfigurationError, KafkaUnavailableError) as e:
             # kafka seems to be having issues. log it and move on
