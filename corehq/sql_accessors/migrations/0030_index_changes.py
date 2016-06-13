@@ -22,7 +22,6 @@ class Migration(migrations.Migration):
             "DROP FUNCTION IF EXISTS get_case_indices_reverse(TEXT);",
             "SELECT 1"
         ),
-        migrator.get_migration('get_case_indices_reverse_1.sql'),
         HqRunSQL(
             "DROP FUNCTION IF EXISTS get_case_indices(TEXT);",
             "SELECT 1"

@@ -102,24 +102,34 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual([index1, index2], indices)
 
     def test_get_reverse_indices(self):
-        case = _create_case()
+        child_case1 = _create_case()
+        child_case1.deleted = True
+        child_case2 = _create_case()
 
         referenced_case_id = uuid.uuid4().hex
 
-        index1 = CommCareCaseIndexSQL(
-            case=case,
+        child_case1.track_create(CommCareCaseIndexSQL(
+            case=child_case1,
+            identifier='parent',
+            referenced_type='mother',
+            referenced_id=referenced_case_id,
+            relationship_id=CommCareCaseIndexSQL.CHILD
+        ))
+        index = CommCareCaseIndexSQL(
+            case=child_case2,
             identifier='parent',
             referenced_type='mother',
             referenced_id=referenced_case_id,
             relationship_id=CommCareCaseIndexSQL.CHILD
         )
-        case.track_create(index1)
+        child_case2.track_create(index)
 
-        CaseAccessorSQL.save_case(case)
+        CaseAccessorSQL.save_case(child_case1)
+        CaseAccessorSQL.save_case(child_case2)
 
-        indices = CaseAccessorSQL.get_reverse_indices(case.domain, referenced_case_id)
+        indices = CaseAccessorSQL.get_reverse_indices(DOMAIN, referenced_case_id)
         self.assertEqual(1, len(indices))
-        self.assertEqual(index1, indices[0])
+        self.assertEqual(index, indices[0])
 
     def test_get_reverse_indexed_cases(self):
         def _create_case_with_index(referenced_case_id):
