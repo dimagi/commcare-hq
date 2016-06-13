@@ -339,6 +339,11 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             .user_ids_handle_unknown(users_by_id.keys())
             .size(0)
         )
+        if self.case_type:
+            query = query.filter(case_es.case_type(self.case_type))
+        else:
+            query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
+
         query = query.aggregation(top_level_aggregation)
         missing_users = None in users_by_id.keys()
 

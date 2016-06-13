@@ -12,8 +12,12 @@ from corehq.apps.es.aggregations import (
 from corehq.apps.es.forms import (
     submitted as submitted_filter,
     completed as completed_filter,
-    xmlns)
-from corehq.apps.es.cases import closed_range
+    xmlns as xmlns_filter,
+)
+from corehq.apps.es.cases import (
+    closed_range as closed_range_filter,
+    case_type as case_type_filter,
+)
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_datetime
@@ -65,12 +69,14 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False,
     case_query = (CaseES()
          .domain(domain)
          .opened_range(lte=datespan.enddate)
-         .NOT(closed_range(lt=datespan.startdate))
+         .NOT(closed_range_filter(lt=datespan.startdate))
          .terms_aggregation('owner_id', 'owner_id')
          .size(0))
 
     if case_types:
         case_query = case_query.filter({"terms": {"type.exact": case_types}})
+    else:
+        case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
 
     if not is_total:
         case_query = case_query.active_in_range(
@@ -110,6 +116,8 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
 
     if case_types:
         case_query = case_query.case_type(case_types)
+    else:
+        case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
 
     if owner_ids:
         case_query = case_query.filter(filters.term(user_field, owner_ids))
@@ -209,7 +217,7 @@ def get_completed_counts_by_user(domain, datespan, user_ids=None):
 
 
 def _get_form_counts_by_user(domain, datespan, is_submission_time, user_ids=None):
-    form_query = FormES().domain(domain)
+    form_query = FormES().domain(domain).filter(filters.NOT(xmlns_filter(SYSTEM_FORM_XMLNS)))
 
     if is_submission_time:
         form_query = (form_query
@@ -241,7 +249,7 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
     form_query = (FormES()
                   .domain(domain)
                   .user_id(user_ids)
-                  .filter(filters.NOT(xmlns(SYSTEM_FORM_XMLNS))))
+                  .filter(filters.NOT(xmlns_filter(SYSTEM_FORM_XMLNS))))
 
     if is_submission_time:
         form_query = (form_query
