@@ -455,9 +455,10 @@ class RestoreConfig(object):
     :param restore_user:    The restore user requesting the restore
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
+    :param async:			Whether to get the restore response using a celery task
     """
 
-    def __init__(self, project=None, restore_user=None, params=None, cache_settings=None):
+    def __init__(self, project=None, restore_user=None, params=None, cache_settings=None, async=False):
         assert isinstance(restore_user, OTARestoreUser)
         self.project = project
         self.domain = project.name if project else ''
@@ -473,6 +474,7 @@ class RestoreConfig(object):
         self.overwrite_cache = self.cache_settings.overwrite_cache
 
         self.cache = get_redis_default_cache()
+        self.asyc = async
 
         self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
 
@@ -493,6 +495,14 @@ class RestoreConfig(object):
                 raise
 
     def get_payload(self):
+        if self.async:
+            return self._get_asynchronous_payload()
+        return self._get_synchronous_payload()
+
+    def _get_asynchronous_payload(self):
+        pass
+
+    def _get_synchronous_payload(self):
         """
         This function returns a RestoreResponse class that encapsulates the response.
         """
