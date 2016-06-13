@@ -1,6 +1,10 @@
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
+
+from corehq.apps.builds.utils import get_all_versions
+from corehq.apps.es import FormES
+from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm
 from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
     use_nvd3, use_jquery_ui
 from dimagi.utils.decorators.memoized import memoized
@@ -1168,3 +1172,52 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
         row = super(DeviceLogSoftAssertReport, self)._create_row(log, *args, **kwargs)
         row.append(log.domain)
         return row
+
+
+class CommCareVersionReport(AdminFacetedReport):
+    slug = "commcare_version"
+    name = ugettext_lazy("CommCare Version")
+    es_facet_list = DOMAIN_FACETS
+    es_facet_mapping = FACET_MAPPING
+    facet_title = ugettext_noop("Project Facets")
+
+    @property
+    def headers(self):
+        versions = get_all_versions()
+        headers = DataTablesHeader(
+            DataTablesColumn(_("Project"))
+        )
+        for version in versions:
+            headers.add_column(DataTablesColumn(version))
+        return headers
+
+    def es_query(self, params=None, size=None):
+        size = size if size is not None else self.pagination.count
+        return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
+                               start_at=self.pagination.start, size=size)
+
+    @property
+    def rows(self):
+        versions = get_all_versions()
+        now = datetime.utcnow()
+        days = now - timedelta(days=90)
+
+        def get_data():
+            terms = [
+                AggregationTerm('domain', 'domain'),
+                AggregationTerm('commcare_version', 'form.meta.commcare_version')
+            ]
+            query = FormES().submitted(gte=days, lte=now)
+            return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
+        rows = {}
+        for domain in self.es_results.get('hits', {}).get('hits', []):
+            domain_name = domain['_source']['name']
+            rows.update({domain_name: [domain_name] + [0] * len(versions)})
+
+        for data in get_data():
+            if data.commcare_version in versions:
+                row = rows.get(data.domain)
+                version_index = versions.index(data.commcare_version)
+                row[version_index + 1] = data.doc_count
+
+        return rows.values()

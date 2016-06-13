@@ -13,7 +13,6 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.filters.commtrack.ProgramFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
 
     data_source = {
@@ -78,7 +77,6 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                             'understock': '/static/commtrack/img/warning.png',
                             'adequate': '/static/commtrack/img/goodstock.png',
                             'overstock': '/static/commtrack/img/overstock.png',
-                            #'nodata': '/static/commtrack/img/no_data.png',
                             '_null': '/static/commtrack/img/no_data.png',
                         },
                     }

@@ -115,6 +115,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
                 'get': request.GET,
                 'post': SafeExceptionReporterFilter().get_post_parameters(request),
                 'method': request.method,
+                'username': request.user.username if getattr(request, 'user', None) else "",
                 'url': request.build_absolute_uri(),
             })
         return context

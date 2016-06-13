@@ -223,7 +223,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertEquals(case.dynamic_case_properties()['completed_training'], 'yes')
 
-    # @run_with_all_backends
+    @run_with_all_backends
     def test_reactivate_user(self):
         """Confirm that reactivating a user re-opens its user case."""
         self.user.save()
@@ -260,7 +260,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.assertTrue(user_case.closed)
         self.assertEquals(user_case.dynamic_case_properties()['foo'], 'bar')
 
-    # @run_with_all_backends
+    @run_with_all_backends
     def test_update_and_reactivate_in_one_save(self):
         """
         Confirm that a usercase can be updated and reactived in a single save of the user model

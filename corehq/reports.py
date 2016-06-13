@@ -12,7 +12,7 @@ from corehq.apps.hqadmin.reports import (
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
-)
+    CommCareVersionReport)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
@@ -98,7 +98,6 @@ def REPORTS(project):
             commtrack.StockStatusMapReport,
             commtrack.ReportingRatesReport,
             commtrack.ReportingStatusMapReport,
-            commtrack.LedgersByLocationReport,
         )))
 
     if project.has_careplan:
@@ -344,6 +343,7 @@ ADMIN_REPORTS = (
         CommConnectProjectSpacesReport,
         CommTrackProjectSpacesReport,
         DeviceLogSoftAssertReport,
+        CommCareVersionReport,
     )),
 )
 

@@ -21,6 +21,7 @@ from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from casexml.apps.case import const
 
+SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
     "contact_phone_number",
@@ -29,7 +30,7 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
-                       xmlns='http://commcarehq.org/case', attachments=None,
+                       xmlns=SYSTEM_FORM_XMLNS, attachments=None,
                        form_id=None):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.

@@ -71,6 +71,7 @@ def get_docs_in_domain_by_class(domain, doc_class):
         'CommtrackConfig',
         'HQGroupExportConfiguration',
         'Group',
+        'UserRole',
         'Invitation',
         'PerformanceConfiguration',
         'ReportConfiguration',

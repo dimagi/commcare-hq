@@ -1,18 +1,18 @@
-jQuery.fn.selText = function() {
-    var obj = this[0];
-    if ($.browser.msie) {
-        var range = obj.offsetParent.createTextRange();
-        range.moveToElementText(obj);
+/* globals jQuery */
+// http://stackoverflow.com/a/987376
+jQuery.fn.selectText = function(){
+    var doc = document,
+        element = this[0],
+        range, selection;
+    if (doc.body.createTextRange) {
+        range = document.body.createTextRange();
+        range.moveToElementText(element);
         range.select();
-    } else if ($.browser.mozilla || $.browser.opera) {
-        var selection = obj.ownerDocument.defaultView.getSelection();
-        var range = obj.ownerDocument.createRange();
-        range.selectNodeContents(obj);
+    } else if (window.getSelection) {
+        selection = window.getSelection();
+        range = document.createRange();
+        range.selectNodeContents(element);
         selection.removeAllRanges();
         selection.addRange(range);
-    } else if ($.browser.safari) {
-        var selection = obj.ownerDocument.defaultView.getSelection();
-        selection.setBaseAndExtent(obj, 0, obj, 1);
     }
-    return this;
-}
+};

@@ -425,6 +425,7 @@ class SyncRequestPost(XmlObject):
     ROOT_NAME = 'post'
 
     url = StringField('@url')
+    relevant = StringField('@relevant')
     data = NodeListField('data', QueryData)
 
 

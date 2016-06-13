@@ -1,5 +1,5 @@
 import logging
-from couchdbkit import ChangesStream, ResourceNotFound
+from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.indicators.models import FormIndicatorDefinition, \
     CaseIndicatorDefinition, CaseDataInFormIndicatorDefinition

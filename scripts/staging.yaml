@@ -45,12 +45,18 @@
 trunk: master
 name: autostaging
 branches:
+  - hqDefine-accounting  # danny 6/7
+  - hqDefine-users  # danny 6/7
   - demo-user # sravan 6/3
   - vellum-staging # J$ 11/13
+  - b3-final-cleanup+notifications-perms-change  # biyeun 6/7
   - notifications-perms-change # j$ 5/11
   - calculatedIcons # Sravan 3/2
   - xform-blobs  # daniel 5/23
-  - j2me-toggle # Nick P 6/1
+#  - j2me-toggle # Nick P 6/1
+  - upgrade-django-compressor # nick P 6/7
+  - b3-final-cleanup  # biyeun 6/7
+  - app-profile-update
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -61,7 +67,8 @@ submodules:
     # just so we always get latest master
     branches: []
   submodules/ctable-src:
-    branches: []
+    branches:
+      - b3-remove-use-bootstrap3  # biyeun 6/7
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
@@ -69,6 +76,7 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: []
+    branches:
+      - new-static-rename  # biyeun 6/7
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
