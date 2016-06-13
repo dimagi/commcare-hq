@@ -567,16 +567,10 @@ class CaseAccessorTestsSQL(TestCase):
         CaseAccessorSQL.save_case(case)
 
         # Create irrelevant case and index
-        other_case = _create_case()
-        other_child_index = CommCareCaseIndexSQL(
-            case=other_case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=case.case_id,
-            relationship_id=CommCareCaseIndexSQL.CHILD
-        )
-        other_case.track_create(other_child_index)
-        CaseAccessorSQL.save_case(other_case)
+        _create_case_with_index(case.case_id)
+
+        # create index on deleted case
+        _create_case_with_index(referenced_id1, case_is_deleted=True)
 
         self.assertEqual(
             set(CaseAccessorSQL.get_all_reverse_indices_info(DOMAIN, [referenced_id1, referenced_id2])),
