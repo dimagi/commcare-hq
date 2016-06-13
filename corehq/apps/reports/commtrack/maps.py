@@ -77,7 +77,6 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                             'understock': '/static/commtrack/img/warning.png',
                             'adequate': '/static/commtrack/img/goodstock.png',
                             'overstock': '/static/commtrack/img/overstock.png',
-                            #'nodata': '/static/commtrack/img/no_data.png',
                             '_null': '/static/commtrack/img/no_data.png',
                         },
                     }
