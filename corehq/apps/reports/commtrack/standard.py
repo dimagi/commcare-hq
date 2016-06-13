@@ -269,7 +269,6 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     fields = [
         'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
         'corehq.apps.reports.filters.commtrack.ProgramFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.apps.reports.filters.commtrack.AdvancedColumns',
     ]
     exportable = True
@@ -319,8 +318,6 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
             'domain': self.domain,
             'location_id': self.request.GET.get('location_id'),
             'program_id': self.request.GET.get('program'),
-            'startdate': self.datespan.startdate_utc,
-            'enddate': self.datespan.enddate_utc,
             'aggregate': True,
             'advanced_columns': self.showing_advanced_columns(),
         }

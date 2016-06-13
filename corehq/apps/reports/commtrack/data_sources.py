@@ -275,8 +275,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
         stock_states = StockState.objects.filter(
             section_id=STOCK_SECTION_TYPE,
-            last_modified_date__lte=self.end_date,
-            last_modified_date__gte=self.start_date,
         )
 
         if self.program_id:
