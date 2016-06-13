@@ -1,4 +1,6 @@
 import logging
+import bz2
+from base64 import b64encode
 from corehq.apps.style import crispy as hqcrispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -78,7 +80,9 @@ class OpenClinicaSettingsForm(forms.Form):
             settings.study.url = self.cleaned_data['url']
             settings.study.username = self.cleaned_data['username']
             if self.cleaned_data['password']:
-                settings.study.password = self.cleaned_data['password']
+                # Simple symmetric encryption. We don't need it to be strong, considering we'd have to store the
+                # algorithm and the key together anyway; it just shouldn't be plaintext.
+                settings.study.password = b64encode(bz2.compress(self.cleaned_data['password']))
             settings.study.protocol_id = self.cleaned_data['protocol_id']
             settings.study.metadata = self.cleaned_data['metadata']
             settings.save()
