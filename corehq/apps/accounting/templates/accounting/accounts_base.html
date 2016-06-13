@@ -9,7 +9,9 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
+    $(function () {
         hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
+    });
     </script>
 {% endblock %}
 
