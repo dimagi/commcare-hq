@@ -30,7 +30,7 @@ var MapItem = function(item, index, mappingContext){
     var app_manager = hqImport('app_manager/js/app_manager_media.js');
     var uploaders = hqImport('#app_manager/partials/nav_menu_media_js_common.html');
     // attach a media-manager if item.value is a file-path to icon
-    if (mappingContext.values_are_icons) {
+    if (mappingContext.values_are_icons()) {
         var actualPath = item.value[mappingContext.lang];
         var defaultIconPath = actualPath || self.generateIconPath();
         this.iconManager = new app_manager.AppMenuMediaManager({
@@ -58,7 +58,7 @@ var MapItem = function(item, index, mappingContext){
         var langs = _.union(_(item.value).keys(), [mappingContext.lang]) ;
         _.each(langs, function(lang){
             // return ko reference to path in `iconManager` for current UI language value
-            if (mappingContext.values_are_icons && lang === mappingContext.lang){
+            if (mappingContext.values_are_icons() && lang === mappingContext.lang){
                 new_value.push([lang, self.iconManager.customPath]);
             }
             // return new ko.observable for other languages
@@ -94,7 +94,7 @@ function MapList(o) {
     self.module_id = o.module_id;
     self.items = ko.observableArray();
     self.duplicatedItems = ko.observableArray();
-    self.values_are_icons = o.values_are_icons || false;
+    self.values_are_icons = ko.observable(o.values_are_icons || false);
     self.multimedia = o.multimedia;
     self.property_name = o.property_name;
 
@@ -167,7 +167,7 @@ uiElement.key_value_mapping = function (o) {
     var m = new MapList(o);
     m.edit = ko.observable(true);
     m.buttonText = o.buttonText || "Edit",
-    m.values_are_icons = o.values_are_icons || false;
+    m.values_are_icons = ko.observable(o.values_are_icons || false);
     m.openModal = function () {
         // create a throw-away modal every time
         // lets us create a sandbox for editing that you can cancel

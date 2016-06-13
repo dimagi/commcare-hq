@@ -680,7 +680,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         that.time_ago_extra.ui.detach();
 
                         if (this.val() === "enum" || this.val() === "enum-image") {
-                            that.enum_extra.values_are_icons = this.val() === 'enum-image';
+                            that.enum_extra.values_are_icons(this.val() === 'enum-image');
                             that.format.ui.parent().append(that.enum_extra.ui);
                         } else if (this.val() === "graph") {
                             // Replace format select with edit button

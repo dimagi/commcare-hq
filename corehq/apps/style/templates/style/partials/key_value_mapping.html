@@ -24,13 +24,13 @@
                     <div class="col-sm-1 text-center" style="width: 3px">
                         &rarr;
                     </div>
-                    <div class="col-sm-3" data-bind="visible: !$parent.values_are_icons">
+                    <div class="col-sm-3" data-bind="visible: !$parent.values_are_icons()">
                         <input type="text" class="form-control enum-value" data-bind="
                             attr: {placeholder: $parent.backup(value()).value},
                             value: value()[$parent.lang]
                         "/>
                     </div>
-                    <!-- ko if: $parent.values_are_icons -->
+                    <!-- ko if: $parent.values_are_icons() -->
                     <div data-bind="template: {name: 'value_icon_uploader', data: iconManager}">
                     </div>
                     <!-- /ko -->
@@ -47,7 +47,7 @@
                     </div>
                 </div>
                 <div class="row">
-                    <!-- ko if: $parent.values_are_icons -->
+                    <!-- ko if: $parent.values_are_icons() -->
                     <div data-bind="template: {name: 'icon_uploader_path', data: iconManager}"
                          style="margin-top: 3px">
                     </div>
@@ -106,7 +106,7 @@
 
 <!-- Read-only version of keys and values, displayed alongside button to pop up modal -->
 <div id="key_value_mapping_template" class="hide">
-    <div data-bind="template: {name: 'key_value_mapping_display_template', if: !$data.values_are_icons }"></div>
+    <div data-bind="template: {name: 'key_value_mapping_display_template', if: !$data.values_are_icons() }"></div>
     <button class="btn btn-default" data-bind="click: openModal, visible: $data.edit">
         <i class="fa fa-pencil"></i>
         <span data-bind="text: $data.buttonText"></span>
