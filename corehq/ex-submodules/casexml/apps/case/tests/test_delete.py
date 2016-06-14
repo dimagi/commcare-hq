@@ -37,6 +37,8 @@ class TestHardDelete(TestCase):
             self.assertEqual(3, len(change_context.changes))
             expected_ids = {case.case_id} | set(case.xform_ids)
             self.assertEqual(expected_ids, {change.id for change in change_context.changes})
+            for change in change_context.changes:
+                self.assertTrue(change.deleted)
 
         with self.assertRaises(CaseNotFound):
             self.casedb.get_case(case.case_id)
