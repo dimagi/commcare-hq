@@ -847,14 +847,6 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
 )
 
 
-ENABLE_HTTP_FOR_J2ME_WIDGET = StaticToggle(
-    'enable_http_for_j2me_widget',
-    'Enable widget for using http for j2me',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-
 def enable_toggles_for_scale_beta(domain):
     USE_SQL_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
     NEW_EXPORTS.set(domain, True, namespace=NAMESPACE_DOMAIN)

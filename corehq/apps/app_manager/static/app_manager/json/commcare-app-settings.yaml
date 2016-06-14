@@ -26,7 +26,6 @@
   default: false
   widget: "bool"
   force: true
-  toggle: ENABLE_HTTP_FOR_J2ME_WIDGET
 
 - id: platform
   name: "Java Phone Platform"
