@@ -3,11 +3,24 @@
 {% load i18n %}
 {% block js %}{{ block.super }}
     {% block reports-js %}
-    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <!--script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script-->
     {% endblock %}
 {% endblock %}
 
 {% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}\
+
+{% block requirejs_config %}
+    <script type="text/javascript">
+        requirejs.config({
+            paths: {
+                "jquery": "{% static 'jquery/dist/jquery.min' %}",
+                "ko": "{% static 'knockout/dist/knockout.debug' %}",
+            },
+        });
+
+        requirejs(["{% static 'fixtures/js/lookup-manage.js' %}"]);
+    </script>
+{% endblock %}
 
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
