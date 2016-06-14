@@ -5,9 +5,9 @@
     "icds-cas"
   ],
   "report_id": "mpr_9_vhnd_forms",
-  "data_source_table": "static-tasks_cases",
+  "data_source_table": "static-vhnd_form",
   "config": {
-    "title": "MPR - 8 - VHND Forms (Static)",
+    "title": "MPR - 9 - VHND Forms (Static)",
     "description": "",
     "visible": false,
     "aggregation_columns": [
