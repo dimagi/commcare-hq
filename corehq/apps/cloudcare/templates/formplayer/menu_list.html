@@ -1,25 +1,5 @@
 {% load hq_shared_tags %}
 
-<script id="nav-layout-view-template" type="text/template">
-  <section>
-    <div id="menus"></div>
-    <div id="languages"></div>
-  </section>
-</script>
-
-<script type="text/template" id="language-list-template">
-    <div class="dropdown">
-        <a data-target="#" href="page.html" data-toggle="dropdown" class="dropdown-toggle">Languages <b
-                class="caret"></b></a>
-        <ul class="dropdown-menu">
-        </ul>
-    </div>
-</script>
-
-<script type="text/template" id="language-list-item-template">
-    <a href="#"><%- id %></a>
-</script>
-
 <script type="text/template" id="menu-view-list-template">
     <p><h2><%- title %></h2></p>
     <table class="table table-hover table-striped table-bordered">
@@ -57,11 +37,11 @@
         <% if (imageUrl) { %>
         <img class="module-icon" src="<%- imageUrl %>"/>
         <% } else { %>
-        <% if (navState === "JUMP") { %>
-        <i class="fa fa-pencil fa-4x"></i>
-        <% } else { %>
-        <i class="fa fa-folder-open fa-4x" aria-hidden="true"></i>
-        <% } %>
+            <% if (navState === "JUMP") { %>
+                <i class="fa fa-pencil fa-4x"></i>
+            <% } else { %>
+                <i class="fa fa-folder-open fa-4x" aria-hidden="true"></i>
+            <% } %>
         <% } %>
     </td>
     <td class="col-sm-10">

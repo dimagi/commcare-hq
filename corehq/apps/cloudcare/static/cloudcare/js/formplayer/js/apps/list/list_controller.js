@@ -2,7 +2,7 @@
 
 FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, FormplayerFrontend, Backbone, Marionette, $){
     AppList.Controller = {
-            listApps: function(){
+        listApps: function(){
             var fetchingApps = FormplayerFrontend.request("appselect:apps");
 
             $.when(fetchingApps).done(function (apps) {
