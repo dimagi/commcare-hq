@@ -16,8 +16,7 @@ function setup() {
         scripts/uninstall-requirements.sh
         pip install \
             -r requirements/requirements.txt \
-            -r requirements/dev-requirements.txt \
-            coveralls
+            -r requirements/dev-requirements.txt
 
         # compile pyc files
         python -m compileall corehq custom submodules testapps *.py > /dev/null
