@@ -25,6 +25,11 @@ def get_test_file_json(filename):
 
 
 @nottest
+def get_test_name(test_name):
+    return str("test_%s" % re.sub("\s", "_", test_name))
+
+
+@nottest
 def test_generator(test_name, skip=False):
     @softer_assert
     def test(self):
@@ -37,6 +42,8 @@ def test_generator(test_name, skip=False):
         self.assertEqual(sync_log.case_ids_on_phone, set(desired_cases))
         assert_user_has_cases(self, self.user, desired_cases)
         assert_user_doesnt_have_cases(self, self.user, undesired_cases)
+
+    test.__name__ = get_test_name(test_name)
     return run_with_all_backends(test)
 
 
@@ -50,7 +57,7 @@ class TestSequenceMeta(type):
 
         for test in [(test['name'], test.get('skip', False)) for test in tests_to_run]:
             # Create a new testcase that the test runner is able to find
-            dict["test_%s" % re.sub("\s", "_", test[0])] = test_generator(test[0], test[1])
+            dict[get_test_name(test[0])] = test_generator(test[0], test[1])
 
         return type.__new__(mcs, name, bases, dict)
 
