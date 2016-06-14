@@ -317,7 +317,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 lookup_responses: _trimmed_responses(),
                 lookup_image: image_path,
                 lookup_display_results: self.lookup_display_results(),
-                lookup_field_header: self.lookup_field_header(),
+                lookup_field_header: self.lookup_field_header.val(),
                 lookup_field_template: self.lookup_field_template(),
             };
 
@@ -419,7 +419,14 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         }
 
         self.lookup_display_results = ko.observable(state.lookup_display_results);
-        self.lookup_field_header = ko.observable(state.lookup_field_header[lang]);
+        self.lookup_field_header = uiElement.input().val(
+            typeof state.lookup_field_header[lang] !== 'undefined' ? state.lookup_field_header[lang] : ''
+        );
+        self.lookup_field_header.observableVal = ko.observable(self.lookup_field_header.val());
+        self.lookup_field_header.on('change', function () {
+            self.lookup_field_header.observableVal(self.lookup_field_header.val());
+            _fireChange();  // input node created too late for initSaveButtonListeners
+        });
         self.lookup_field_template = ko.observable(state.lookup_field_template || '@case_id');
 
         self.show_add_extra = ko.computed(function(){
