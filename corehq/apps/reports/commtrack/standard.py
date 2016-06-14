@@ -1,17 +1,15 @@
 from corehq.apps.reports.commtrack.data_sources import (
-    StockStatusDataSource, ReportingStatusDataSource,
+    StockStatusDataSource,
     SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
 )
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
+from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.reports.filters.commtrack import SelectReportingType
 from corehq.form_processor.utils.general import should_use_sql_backend
-from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import Location
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
@@ -343,162 +341,3 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
                     # fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
                 ]
             yield result
-
-
-class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
-    name = ugettext_noop('Reporting Rate')
-    slug = 'reporting_rate'
-    fields = [
-        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
-        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-        'corehq.apps.reports.filters.commtrack.SelectReportingType',
-    ]
-    exportable = True
-    emailable = True
-
-    @classmethod
-    def display_in_dropdown(cls, domain=None, project=None, user=None):
-        return True
-
-    # temporary
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(ReportingRatesReport, cls).show_in_navigation(domain, project, user)
-
-    def is_aggregate_report(self):
-        return self.request.GET.get(SelectReportingType.slug, '') != 'facilities'
-
-    @property
-    def headers(self):
-        if self.is_aggregate_report():
-            return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                _('Location'),
-                _('# Sites'),
-                _('# Reporting'),
-                _('Reporting Rate'),
-                _('# Non-reporting'),
-                _('Non-reporting Rate'),
-            ]))
-        else:
-            return DataTablesHeader(*(DataTablesColumn(text) for text in [
-                _('Location'),
-                _('Parent location'),
-                _('Date of last report for selected period'),
-                _('Reporting'),
-            ]))
-
-    @property
-    @memoized
-    def _facility_data(self):
-        config = {
-            'domain': self.domain,
-            'location_id': self.request.GET.get('location_id'),
-            'startdate': self.datespan.startdate_utc,
-            'enddate': self.datespan.enddate_utc,
-            'request': self.request,
-        }
-        statuses = list(ReportingStatusDataSource(config).get_data())
-
-        results = []
-        for status in statuses:
-            results.append([
-                status['name'],
-                status['parent_name'],
-                status['last_reporting_date'].date() if status['last_reporting_date'] else _('Never'),
-                _('Yes') if status['reporting_status'] == 'reporting' else _('No'),
-            ])
-
-        master_tally = self.status_tally([site['reporting_status'] for site in statuses])
-
-        return master_tally, results
-
-    @property
-    @memoized
-    def _aggregate_data(self):
-        config = {
-            'domain': self.domain,
-            'location_id': self.request.GET.get('location_id'),
-            'startdate': self.datespan.startdate_utc,
-            'enddate': self.datespan.enddate_utc,
-            'request': self.request,
-        }
-        statuses = list(ReportingStatusDataSource(config).get_data())
-
-        def child_loc(path):
-            root = self.active_location
-            ix = path.index(root._id) if root else -1
-            try:
-                return path[ix + 1]
-            except IndexError:
-                return None
-
-        def case_iter():
-            for site in statuses:
-                if child_loc(site['loc_path']) is not None:
-                    yield (site['loc_path'], site['reporting_status'])
-        status_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), status)],
-                                        data=case_iter())
-        sites_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), path[-1])],
-                                       data=case_iter())
-
-        status_counts = dict((loc_id, self.status_tally(statuses))
-                             for loc_id, statuses in status_by_agg_site.iteritems())
-
-        master_tally = self.status_tally([site['reporting_status'] for site in statuses])
-
-        locs = (SQLLocation.objects
-                .filter(is_archived=False,
-                        location_id__in=status_counts.keys())
-                .order_by('name'))
-
-        def fmt(pct):
-            return '%.1f%%' % (100. * pct)
-
-        def fmt_pct_col(loc_id, col_type):
-            return fmt(status_counts[loc_id].get(col_type, {'pct': 0.})['pct'])
-
-        def fmt_count_col(loc_id, col_type):
-            return status_counts[loc_id].get(col_type, {'count': 0})['count']
-
-        def _rows():
-            for loc in locs:
-                row = [loc.name, len(sites_by_agg_site[loc.location_id])]
-                for k in ('reporting', 'nonreporting'):
-                    row.append(fmt_count_col(loc.location_id, k))
-                    row.append(fmt_pct_col(loc.location_id, k))
-
-                yield row
-
-        return master_tally, _rows()
-
-    def status_tally(self, statuses):
-        total = len(statuses)
-
-        return map_reduce(lambda s: [(s,)],
-                          lambda v: {'count': len(v), 'pct': len(v) / float(total)},
-                          data=statuses)
-
-    @property
-    def rows(self):
-        if self.is_aggregate_report():
-            return self._aggregate_data[1]
-        else:
-            return self._facility_data[1]
-
-    def master_pie_chart_data(self):
-        if self.is_aggregate_report():
-            tally = self._aggregate_data[0]
-        else:
-            tally = self._facility_data[0]
-
-        labels = {
-            'reporting': _('Reporting'),
-            'nonreporting': _('Non-reporting'),
-        }
-        return [{'label': labels[k], 'value': tally.get(k, {'count': 0.})['count']} for k in ('reporting', 'nonreporting')]
-
-    @property
-    def charts(self):
-        if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            return [PieChart(None, _('Current Reporting'), self.master_pie_chart_data())]
