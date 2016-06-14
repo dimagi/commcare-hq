@@ -21,6 +21,10 @@ from ..dbaccessors import (
 from ..models import Application
 
 
+def error(msg, code=400):
+    return json_response({'status': 'error', 'message': msg}, status_code=code)
+
+
 @json_error
 @login_or_digest_or_basic_or_apikey()
 def list_apps(request, domain):
@@ -29,8 +33,7 @@ def list_apps(request, domain):
             'name': app.name,
             'version': app.version,
             'app_id': app.get_id,
-            'download_url': absolute_reverse('direct_ccz', args=[domain],
-                                             params={'app_id': app.get_id})
+            'download_url': absolute_reverse('direct_ccz', args=[domain, app.get_id])
         }
     applications = Domain.get_by_name(domain).applications()
     return json_response({
@@ -40,7 +43,14 @@ def list_apps(request, domain):
 
 
 @json_error
-def direct_ccz(request, domain):
+@login_or_digest_or_basic_or_apikey()
+def get_app_versions(request, domain):
+    pass
+
+
+# TODO split into different views
+@json_error
+def direct_ccz(request, domain, app_id):
     """
     You must specify an app_id, and you may specify either 'version' or 'latest'
     latest can be one of:
@@ -50,10 +60,7 @@ def direct_ccz(request, domain):
     If 'version' and 'latest' aren't specified it will default to latest save
     You may also set 'include_multimedia=true' if you need multimedia.
     """
-    def error(msg, code=400):
-        return json_response({'status': 'error', 'message': msg}, status_code=code)
-
-    def get_app(app_id, version, latest):
+    def get_app(version, latest):
         if version:
             return get_build_doc_by_version(domain, app_id, version)
         elif latest == 'build':
@@ -64,14 +71,11 @@ def direct_ccz(request, domain):
             # either latest=='save' or they didn't specify
             return get_current_app(domain, app_id)
 
-    app_id = request.GET.get('app_id', None)
     version = request.GET.get('version', None)
     latest = request.GET.get('latest', None)
     include_multimedia = request.GET.get('include_multimedia', 'false').lower() == 'true'
 
     # Make sure URL params make sense
-    if not app_id:
-        return error("You must specify `app_id` in your GET parameters")
     if version and latest:
         return error("You can't specify both 'version' and 'latest'")
     if latest not in (None, 'release', 'build', 'save',):
@@ -101,3 +105,38 @@ def direct_ccz(request, domain):
         filename='{}.ccz'.format(slugify(app.name)),
     )
     return DownloadBase.get(download.download_id).toHttpResponse()
+
+
+def download_ccz(request, domain, app):
+    if not app:
+        raise ResourceNotFound()
+
+
+@json_error
+def working_copy(request, domain, app_id):
+    app = get_current_app(domain, app_id)
+
+
+@json_error
+def latest_build(request, domain, app_id):
+    app = wrap_app(get_latest_build_doc(domain, app_id))
+
+
+@json_error
+def latest_release(request, domain, app_id):
+    app = wrap_app(get_latest_released_app_doc(domain, app_id))
+
+
+@json_error
+def version(request, domain, app_id):
+    version = 
+    app = wrap_app(get_build_doc_by_version(domain, app_id, version))
+
+
+@json_error
+def deprecated_direct_ccz(request, domain):
+    """For backwards compatibility, to be removed after say, July 2016"""
+    app_id = request.GET.get('app_id', None)
+    if not app_id:
+        return error("You must specify `app_id` in your GET parameters")
+    return direct_ccz(request, domain, app_id)
