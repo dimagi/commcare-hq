@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from copy import deepcopy
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import primary_actions, post_case_blocks
+from corehq.apps.change_feed import topics
 from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy, _action_sort_key_function
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -17,6 +18,7 @@ from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils.general import should_use_sql_backend
 from couchforms.models import XFormInstance
+from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
 REBUILD_TEST_DOMAIN = 'rebuild-test'
 
@@ -330,7 +332,12 @@ class CaseRebuildTest(TestCase):
         # todo: should this be the behavior for archiving the create form?
         form_acessors = FormAccessors(REBUILD_TEST_DOMAIN)
         f1_doc = form_acessors.get_form(f1)
-        f1_doc.archive()
+        with capture_kafka_changes_context(topics.CASE_SQL) as change_context:
+            f1_doc.archive()
+
+        if should_use_sql_backend(case.domain):
+            self.assertEqual([case.case_id], [change.id for change in change_context.changes])
+
         case = case_accessors.get_case(case_id)
 
         if should_use_sql_backend(REBUILD_TEST_DOMAIN):
