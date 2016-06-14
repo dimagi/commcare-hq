@@ -64,3 +64,11 @@ kafka:
     - "9092"
   labels:
     commcare.name: "kafka"
+
+riakcs:
+  image: millerdev/riak-cs
+  labels:
+    commcare.name: "riakcs"
+  expose:
+    - "8080"
+    - "8098"

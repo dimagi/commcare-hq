@@ -96,3 +96,9 @@ ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
 
 SHARED_DRIVE_ROOT = '/sharedfiles'
+
+S3_BLOB_DB_SETTINGS = {
+    "url": "http://riakcs:9880",
+    "access_key": "admin-key",
+    "secret_key": "admin-secret",
+}

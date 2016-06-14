@@ -47,3 +47,13 @@ kafka:
   volumes:
     - ${DOCKER_DATA_HOME}/kafka:/tmp/kafka-logs
     - ${DOCKER_DATA_HOME}/zookeeper:/var/lib/zookeeper
+
+riakcs:
+  extends:
+    file: docker-compose-base.yml
+    service: riakcs
+  ports:
+    - "9880:8080"
+    - "8098:8098"
+  volumes:
+    - ${DOCKER_DATA_HOME}/riakcs:/var/lib/riak-data
