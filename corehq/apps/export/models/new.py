@@ -4,6 +4,7 @@ from itertools import groupby
 from functools import partial
 from collections import defaultdict, OrderedDict, namedtuple
 
+from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 
@@ -1091,7 +1092,14 @@ class CaseExportDataSchema(ExportDataSchema):
             current_case_schema._rev = original_rev
         current_case_schema.domain = domain
         current_case_schema.case_type = case_type
-        current_case_schema.save()
+        try:
+            current_case_schema.save()
+        except ResourceConflict:
+            # It's possible that another process updated the schema before we
+            # got to it. If so, we want to overwrite those changes because we
+            # have the most recently built schema.
+            current_case_schema._rev = CaseExportDataSchema.get_db().get_rev(current_case_schema._id)
+            current_case_schema.save()
 
         return current_case_schema
 
