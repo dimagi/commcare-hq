@@ -1,0 +1,345 @@
+{
+  "domains": [
+    "icds-test",
+    "icds-sql",
+    "icds-cas"
+  ],
+  "report_id": "static-mpr_2bii_child_death_list",
+  "data_source_table": "static-child_health_cases",
+  "config": {
+    "title": "MPR - 2bii - Child Death List (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Date of Death",
+        "field": "date_death",
+        "type": "date",
+        "slug": "date_death"
+      },
+      {
+        "compare_as_string": false,
+        "display": "List Type",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Child under five deaths",
+            "value": "1"
+          }
+        ],
+        "field": "dead_child_count",
+        "type": "choice_list",
+        "slug": "dead_child_count"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "awc_id",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by AWW"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "owner_id",
+        "field": "owner_id",
+        "choice_provider": {
+          "type": "owner"
+        },
+        "display": "Owner Name"
+      }
+    ],
+    "columns": [
+      {
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "person_name",
+        "field": "person_name",
+        "type": "field",
+        "display": {
+          "mar": "Name",
+          "tel": "Name",
+          "hin": "नाम",
+          "en": "Name"
+        }
+      },
+      {
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "age_at_death_yrs",
+        "field": "age_at_death_yrs",
+        "type": "field",
+        "display": {
+          "mar": "Age",
+          "tel": "Age",
+          "hin": "उम्र",
+          "en": "Age"
+        }
+      },
+      {
+        "format": "default",
+        "transform": {
+          "type": "translation",
+          "translations": {
+            "M": [
+              [
+                "mar",
+                "M"
+              ],
+              [
+                "tel",
+                "M"
+              ],
+              [
+                "hin",
+                "M"
+              ],
+              [
+                "en",
+                "M"
+              ]
+            ],
+            "O": [
+              [
+                "mar",
+                "O"
+              ],
+              [
+                "tel",
+                "O"
+              ],
+              [
+                "hin",
+                "O"
+              ],
+              [
+                "en",
+                "O"
+              ]
+            ],
+            "F": [
+              [
+                "mar",
+                "F"
+              ],
+              [
+                "tel",
+                "F"
+              ],
+              [
+                "hin",
+                "F"
+              ],
+              [
+                "en",
+                "F"
+              ]
+            ]
+          }
+        },
+        "column_id": "sex",
+        "field": "sex",
+        "type": "field",
+        "display": {
+          "mar": "Sex",
+          "tel": "Sex",
+          "hin": "लिंग",
+          "en": "Sex"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "format": "default",
+        "transform": {
+          "type": "translation",
+          "translations": {
+            "white": [
+              [
+                "mar",
+                "White"
+              ],
+              [
+                "tel",
+                "White"
+              ],
+              [
+                "hin",
+                "सफेद"
+              ],
+              [
+                "en",
+                "White"
+              ]
+            ],
+            "green": [
+              [
+                "mar",
+                "Green"
+              ],
+              [
+                "tel",
+                "Green"
+              ],
+              [
+                "hin",
+                "हरा"
+              ],
+              [
+                "en",
+                "Green"
+              ]
+            ],
+            "red": [
+              [
+                "mar",
+                "Red"
+              ],
+              [
+                "tel",
+                "Red"
+              ],
+              [
+                "hin",
+                "लाल"
+              ],
+              [
+                "en",
+                "Red"
+              ]
+            ],
+            "yellow": [
+              [
+                "mar",
+                "Yellow"
+              ],
+              [
+                "tel",
+                "Yellow"
+              ],
+              [
+                "hin",
+                "पीला"
+              ],
+              [
+                "en",
+                "Yellow"
+              ]
+            ]
+          }
+        },
+        "column_id": "zscore_grading_wfa",
+        "field": "zscore_grading_wfa",
+        "type": "field",
+        "display": {
+          "mar": "Nutrition Status",
+          "tel": "Nutrition Status",
+          "hin": "पोषक तत्वों का स्तर",
+          "en": "Nutrition Status"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "format": "default",
+        "transform": {
+          "type": "translation",
+          "translations": {
+            "yes": [
+              [
+                "mar",
+                "हो"
+              ],
+              [
+                "tel",
+                "అవును"
+              ],
+              [
+                "hin",
+                "हाँ"
+              ],
+              [
+                "en",
+                "Yes"
+              ]
+            ],
+            "no": [
+              [
+                "mar",
+                "नाही"
+              ],
+              [
+                "tel",
+                "లేదు"
+              ],
+              [
+                "hin",
+                "नहीं"
+              ],
+              [
+                "en",
+                "No"
+              ]
+            ]
+          }
+        },
+        "column_id": "resident",
+        "field": "resident",
+        "type": "field",
+        "display": {
+          "mar": "Resident",
+          "tel": "Resident",
+          "hin": "निवासी",
+          "en": "Resident"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "date_death",
+        "field": "date_death",
+        "type": "field",
+        "display": {
+          "mar": "Date Death",
+          "tel": "Date Death",
+          "hin": "मृत्यु की तारिक",
+          "en": "Date Death"
+        }
+      }
+    ],
+    "sort_expression": [
+      {
+        "field": "date_death",
+        "order": "DESC"
+      }
+    ],
+    "configured_charts": []
+  }
+}

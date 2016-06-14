@@ -212,6 +212,7 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload"
         )
     })
+    context['is_app_view'] = True
     return context
 
 
@@ -579,6 +580,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'use_custom_suite', 'custom_suite',
         'admin_password',
         'comment',
+        'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
         'application_version',
@@ -618,6 +620,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('use_grid_menus', None),
         ('comment', None),
         ('custom_base_url', None),
+        ('use_j2me_endpoint', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

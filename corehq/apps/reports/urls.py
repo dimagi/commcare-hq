@@ -31,8 +31,7 @@ from .views import (
     CaseDetailsView,
     CaseAttachmentsView,
     MySavedReportsView,
-    ScheduledReportsView,
-    ReportNotificationUnsubscribeView)
+    ScheduledReportsView)
 
 
 custom_report_urls = patterns('',
@@ -128,10 +127,8 @@ urlpatterns = patterns('corehq.apps.reports.views',
         ScheduledReportsView.as_view(), name=ScheduledReportsView.urlname),
     url(r'^scheduled_report/(?P<scheduled_report_id>[\w-]+)/delete$',
         'delete_scheduled_report', name='delete_scheduled_report'),
-    url(r'^scheduled_report/(?P<scheduled_report_id>[\w-]+)/unsubscribe',
-        ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^send_test_scheduled_report/(?P<scheduled_report_id>[\w-]+)/$',
-         'send_test_scheduled_report', name='send_test_scheduled_report'),
+        'send_test_scheduled_report', name='send_test_scheduled_report'),
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
         'view_scheduled_report', name='view_scheduled_report'),
 

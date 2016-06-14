@@ -54,6 +54,7 @@ from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
@@ -75,7 +76,6 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
 )
 from corehq.apps.builds import get_default_build_spec
-from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
@@ -4242,6 +4242,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # each language is a key and the value is a list of multimedia referenced in that language
     media_language_map = SchemaDictProperty(MediaList)
 
+    use_j2me_endpoint = BooleanProperty(default=False)
+
 
     @classmethod
     def wrap(cls, data):
@@ -4434,7 +4436,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return spec
 
     def get_jadjar(self):
-        return self.get_build().get_jadjar(self.get_jar_path())
+        return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
 
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
@@ -4717,7 +4719,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
-        if not self._id and not domain_has_apps(self.domain):
+        if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)

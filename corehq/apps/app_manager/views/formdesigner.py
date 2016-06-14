@@ -3,7 +3,7 @@ import logging
 
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.conf import settings
@@ -181,12 +181,17 @@ def get_form_data_schema(request, domain, form_unique_id):
         form, app = Form.get_form(form_unique_id, and_app=True)
     except ResourceConflict:
         raise Http404()
-    data.append(get_session_schema(form))
 
     if app.domain != domain:
         raise Http404()
-    if form and form.requires_case():
-        data.append(get_casedb_schema(app))  # TODO use domain instead of app
+
+    try:
+        data.append(get_session_schema(form))
+        if form and form.requires_case():
+            data.append(get_casedb_schema(app))  # TODO use domain instead of app
+    except Exception as e:
+        return HttpResponseBadRequest(e)
+
     data.extend(
         sorted(item_lists_by_domain(domain), key=lambda x: x['name'].lower())
     )

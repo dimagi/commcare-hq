@@ -1,7 +1,6 @@
 import fluff
 from custom.m4change.constants import PMTCT_CLIENTS_FORM
 from custom.m4change.user_calcs import get_date_delivery, form_passes_filter_date_delivery, get_received_on
-from datetime import datetime
 
 
 def _get_comparison_results(field_value, comparison_operator, expected_value):

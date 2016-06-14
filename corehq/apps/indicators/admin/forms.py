@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.forms import MultipleChoiceField
-from django.forms.util import ErrorList
+from django.forms.utils import ErrorList
 from corehq.apps.crud.models import BaseAdminCRUDForm
 from corehq.apps.indicators.models import FormDataAliasIndicatorDefinition, FormLabelIndicatorDefinition, CaseDataInFormIndicatorDefinition, FormDataInCaseIndicatorDefinition, CouchIndicatorDef, CountUniqueCouchIndicatorDef, MedianCouchIndicatorDef, CombinedCouchViewIndicatorDefinition, SumLastEmittedCouchIndicatorDef, DynamicIndicatorDefinition, NoGroupCouchIndicatorDefBase
 from corehq.apps.indicators.utils import get_namespaces, get_namespace_name, get_indicator_domains
