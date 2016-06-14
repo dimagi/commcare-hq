@@ -30,9 +30,9 @@ from couchforms.models import XFormInstance
 
 # CCHQ imports
 from corehq.apps.domain.decorators import (
-    login_or_digest,
-    login_or_basic,
-    login_or_api_key)
+    digest_auth,
+    basic_auth,
+    api_key_auth)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
@@ -45,6 +45,9 @@ from corehq.apps.api.resources import (
     HqBaseResource,
 )
 from dimagi.utils.parsing import string_to_boolean
+
+
+TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username']
 
 
 def api_auth(view_func):
@@ -70,9 +73,9 @@ class LoginAndDomainAuthentication(Authentication):
 
     def _get_auth_decorator(self, request):
         decorator_map = {
-            'digest': login_or_digest,
-            'basic': login_or_basic,
-            'api_key': login_or_api_key,
+            'digest': digest_auth,
+            'basic': basic_auth,
+            'api_key': api_key_auth,
         }
         # the initial digest request doesn't have any authorization, so default to
         # digest in order to send back
@@ -270,7 +273,7 @@ class WebUserResource(UserResource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        username = bundle.request.GET.get('username')
+        username = bundle.request.GET.get('web_username')
         if username:
             user = WebUser.get_by_username(username)
             return [user] if user else []
