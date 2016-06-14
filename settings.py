@@ -1241,6 +1241,7 @@ COUCHDB_APPS = [
     'grapevine',
     'uth',
     'dhis2',
+    'openclinica',
 
     # custom reports
     'care_benin',
