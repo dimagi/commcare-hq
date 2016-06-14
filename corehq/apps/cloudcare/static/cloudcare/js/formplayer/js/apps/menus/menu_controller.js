@@ -23,9 +23,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                     currentPage: menuResponse.currentPage,
                     styles: menuResponse.styles,
                     tiles: menuResponse.tiles,
+                    locales: menuResponse.locales,
                 };
                 if (menuResponse.type === "commands") {
-                    menuListView = new MenuList.MenuListView(menuData);
+                    menuListView = new MenuList.MenuLayoutView(menuData);
                     FormplayerFrontend.regions.main.show(menuListView.render());
                 }
                 else if (menuResponse.type === "entities") {

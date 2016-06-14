@@ -1,6 +1,28 @@
 /*global FormplayerFrontend */
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
+
+    MenuList.MenuLayoutView = Marionette.LayoutView.extend({
+        template: "#nav-layout-view-template",
+        regions: {
+            menus: "#menus",
+            languages: "#languages",
+        },
+
+        onBeforeShow: function () {
+            this.showChildView('menus', new MenuList.MenuListView(this.options));
+
+            var lst = _.map(this.options.locales, function(val) {
+                return {id: val};
+            });
+            var languageCollection = new Backbone.Collection(lst);
+            this.showChildView('languages', new MenuList.LanguageListView({
+                collection: languageCollection,
+            }));
+        },
+    });
+
+
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
 
@@ -46,6 +68,26 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
+    MenuList.LanguageView = Marionette.ItemView.extend({
+        tagName: "li",
+        template: "#language-list-item-template",
+        events: {
+            "click": "rowClick",
+        },
+
+        rowClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.request('currentUser').language = this.model.get('id');
+        },
+    });
+
+    MenuList.LanguageListView = Marionette.CompositeView.extend({
+        tagName: "div",
+        template: "#language-list-template",
+        childView: MenuList.LanguageView,
+        childViewContainer: "ul",
+    });
+
     var getGridAttributes = function (tile) {
         if (!tile) {
             return null;
@@ -80,9 +122,9 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         initialize: function (options) {
             this.tiles = options.tiles;
             this.styles = options.styles;
-            for(var i = 0; i < this.tiles.length; i++) {
+            for (var i = 0; i < this.tiles.length; i++) {
                 var tile = this.tiles[i];
-                if(tile === null){
+                if (tile === null) {
                     continue;
                 }
                 var fontSize = this.tiles[i].fontSize;

@@ -17,10 +17,12 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
             if (response.commands) {
                 this.type = "commands";
+                this.locales = response.locales;
                 return response.commands;
             }
             else if (response.entities) {
                 this.type = "entities";
+                this.locales = response.locales;
                 this.action = response.action;
                 this.styles = response.styles;
                 this.headers = response.headers;
