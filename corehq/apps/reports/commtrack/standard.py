@@ -272,11 +272,6 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
     def display_in_dropdown(cls, domain=None, project=None, user=None):
         return True
 
-    # temporary
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(InventoryReport, cls).show_in_navigation(domain, project, user)
-
     def showing_advanced_columns(self):
         return AdvancedColumns.get_value(self.request, self.domain)
 
@@ -360,11 +355,6 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
         return True
-
-    # temporary
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return super(ReportingRatesReport, cls).show_in_navigation(domain, project, user)
 
     def is_aggregate_report(self):
         return self.request.GET.get(SelectReportingType.slug, '') != 'facilities'
