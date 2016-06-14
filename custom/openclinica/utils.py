@@ -1,8 +1,10 @@
 from __future__ import absolute_import
+from base64 import b64decode
 from collections import defaultdict, namedtuple
 from datetime import datetime, date, time
 import logging
 import re
+import bz2
 from lxml import etree
 import os
 from django.conf import settings
@@ -201,13 +203,22 @@ def get_question_item(domain, form_xmlns, question):
 @quickcache(['domain'])
 def get_study_metadata_string(domain):
     """
-    Return the study metadata for the given domain as an XML string
+    Return the study metadata for the given domain as a string
+
+    Metadata is fetched from the OpenClinica web service
     """
-    from custom.openclinica.models import OpenClinicaSettings
+    from custom.openclinica.models import OpenClinicaAPI, OpenClinicaSettings
 
     oc_settings = OpenClinicaSettings.for_domain(domain)
     if oc_settings.study.is_ws_enabled:
-        raise NotImplementedError('Fetching study metadata using web services is not yet available')
+        password = bz2.decompress(b64decode(oc_settings.study.password))
+        api = OpenClinicaAPI(
+            oc_settings.study.url,
+            oc_settings.study.username,
+            password,
+            oc_settings.study.protocol_id
+        )
+        string = api.get_study_metadata_string(oc_settings['STUDY'])
     else:
         string = oc_settings.study.metadata
     # If the XML is Unicode but it says that it's UTF-8, then make it UTF-8.
@@ -220,7 +231,7 @@ def get_study_metadata_string(domain):
 
 def get_study_metadata(domain):
     """
-    Return the study metadata for the given domain as an ElementTree
+    Return the study metadata for the given domain as an XML element
     """
     # We can't cache an ElementTree instance. Split this function from get_study_metadata_string() to cache the
     # return value of get_study_metadata_string() when fetching via web service.
