@@ -940,20 +940,23 @@ class FormExportDataSchema(ExportDataSchema):
             current_xform_schema = FormExportDataSchema._merge_schemas(current_xform_schema, xform_schema)
             current_xform_schema.record_update(app.copy_of, app.version)
 
-        if original_id and original_rev:
-            current_xform_schema._id = original_id
-            current_xform_schema._rev = original_rev
-        current_xform_schema.domain = domain
-        current_xform_schema.app_id = app_id
-        current_xform_schema.xmlns = form_xmlns
-        try:
-            current_xform_schema.save()
-        except ResourceConflict:
-            # It's possible that another process updated the schema before we
-            # got to it. If so, we want to overwrite those changes because we
-            # have the most recently built schema.
-            current_xform_schema._rev = FormExportDataSchema.get_db().get_rev(current_xform_schema._id)
-            current_xform_schema.save()
+        if not original_id or app_build_ids:
+            # Don't save the schema if there is already a saved schema object
+            # and we didn't update it with any app builds
+            if original_id and original_rev:
+                current_xform_schema._id = original_id
+                current_xform_schema._rev = original_rev
+            current_xform_schema.domain = domain
+            current_xform_schema.app_id = app_id
+            current_xform_schema.xmlns = form_xmlns
+            try:
+                current_xform_schema.save()
+            except ResourceConflict:
+                # It's possible that another process updated the schema before we
+                # got to it. If so, we want to overwrite those changes because we
+                # have the most recently built schema.
+                current_xform_schema._rev = FormExportDataSchema.get_db().get_rev(current_xform_schema._id)
+                current_xform_schema.save()
 
         return current_xform_schema
 
@@ -1094,21 +1097,24 @@ class CaseExportDataSchema(ExportDataSchema):
 
             current_case_schema.record_update(app.copy_of, app.version)
 
-        if original_id and original_rev:
-            current_case_schema._id = original_id
-            current_case_schema._rev = original_rev
-        current_case_schema.domain = domain
-        current_case_schema.case_type = case_type
-        try:
-            current_case_schema.save()
-        except ResourceConflict:
-            # It's possible that another process updated the schema before we
-            # got to it. If so, we want to overwrite those changes because we
-            # have the most recently built schema.
-            current_case_schema._rev = CaseExportDataSchema.get_db().get_rev(current_case_schema._id)
-            current_case_schema.save()
+        if not original_id or app_build_ids:
+            # Don't save the schema if there is already a saved schema object
+            # and we didn't update it with any app builds
+            if original_id and original_rev:
+                current_case_schema._id = original_id
+                current_case_schema._rev = original_rev
+            current_case_schema.domain = domain
+            current_case_schema.case_type = case_type
+            try:
+                current_case_schema.save()
+            except ResourceConflict:
+                # It's possible that another process updated the schema before we
+                # got to it. If so, we want to overwrite those changes because we
+                # have the most recently built schema.
+                current_case_schema._rev = CaseExportDataSchema.get_db().get_rev(current_case_schema._id)
+                current_case_schema.save()
 
-        return current_case_schema
+            return current_case_schema
 
     @staticmethod
     def _generate_schema_from_case_property_mapping(case_property_mapping, parent_types, app_id, app_version):
