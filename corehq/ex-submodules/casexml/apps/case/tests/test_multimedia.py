@@ -41,6 +41,7 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
+        super(BaseCaseMultimediaTest, self).setUp()
         self.formdb = FormAccessors()
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
