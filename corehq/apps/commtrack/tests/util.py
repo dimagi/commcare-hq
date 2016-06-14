@@ -140,6 +140,7 @@ class CommTrackTest(TestCase):
     user_definitions = []
 
     def setUp(self):
+        super(CommTrackTest, self).setUp()
         # might as well clean house before doing anything
         delete_all_xforms()
         delete_all_cases()
@@ -189,6 +190,7 @@ class CommTrackTest(TestCase):
         delete_all_sync_logs()
         delete_all_users()
         self.domain.delete()  # domain delete cascades to everything else
+        super(CommTrackTest, self).tearDown()
 
 
 def get_ota_balance_xml(project, user):

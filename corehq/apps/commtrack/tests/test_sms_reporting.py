@@ -216,8 +216,8 @@ class StockAndReceiptTest(SMSTests):
         self.check_stock('pp', Decimal(20))
 
     def tearDown(self):
-        super(StockAndReceiptTest, self).tearDown()
         STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, False, NAMESPACE_DOMAIN)
+        super(StockAndReceiptTest, self).tearDown()
 
 
 def _get_location_from_form(form):
