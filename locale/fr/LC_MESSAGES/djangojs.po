@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-06-07 19:37+0000\n"
+"POT-Creation-Date: 2016-06-14 19:24+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:78
@@ -36,7 +36,7 @@ msgstr ""
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:474
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:481
 msgid "Select One"
 msgstr ""
 
@@ -75,40 +75,40 @@ msgid ""
 "server address"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:23
+#: corehq/apps/export/static/export/js/models.js:27
 msgid "Web Page (Excel Dashboards)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:25
+#: corehq/apps/export/static/export/js/models.js:29
 msgid "CSV (Zip file)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:27
+#: corehq/apps/export/static/export/js/models.js:31
 msgid "Excel (older versions)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:29
+#: corehq/apps/export/static/export/js/models.js:33
 msgid "Excel 2007"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:38
+#: corehq/apps/export/static/export/js/models.js:42
 msgid "Create"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:38
+#: corehq/apps/export/static/export/js/models.js:42
 #: corehq/apps/style/static/style/js/main.js:224
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:211
+#: corehq/apps/export/static/export/js/models.js:215
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:213
+#: corehq/apps/export/static/export/js/models.js:217
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:215
+#: corehq/apps/export/static/export/js/models.js:219
 msgid "None"
 msgstr ""
 
