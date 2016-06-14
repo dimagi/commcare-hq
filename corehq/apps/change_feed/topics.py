@@ -11,10 +11,21 @@ CASE_SQL = 'case-sql'
 FORM_SQL = 'form-sql'
 SMS = 'sms'
 LEDGER = 'ledger'
+COMMCARE_USER = 'commcare-user'
+GROUP = 'group'
 
 
 ALL = (
-    CASE, FORM, META, CASE_SQL, FORM_SQL, SMS, LEDGER
+    CASE,
+    CASE_SQL,
+    COMMCARE_USER,
+    DOMAIN,
+    FORM,
+    FORM_SQL,
+    GROUP,
+    LEDGER,
+    META,
+    SMS,
 )
 
 
