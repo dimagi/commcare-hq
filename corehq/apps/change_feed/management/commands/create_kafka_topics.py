@@ -15,6 +15,6 @@ def create_kafka_topics():
         if client.has_metadata_for_topic(topic):
             status = "already exists"
         else:
-            client.ensure_topic_exists(topic, timeout=5)
+            client.ensure_topic_exists(topic, timeout=10)
             status = "created"
         print("topic {}: {}".format(status, topic))
