@@ -19,6 +19,7 @@ seem to be a good fit.
 
 
 """
+import re
 import uuid
 from lxml import etree
 from lxml.builder import E
@@ -56,6 +57,10 @@ XSD_TYPES = ('string', 'int', 'boolean', 'decimal', 'date', 'time', 'dateTime')
 ODK_TYPES = XSD_TYPES + ('select', 'select1', 'geopoint', 'geotrace', 'geoshape', 'binary', 'barcode')
 # CommCare question group types
 GROUP_TYPES = ('group', 'repeatGroup')  # TODO: Support 'questionList'
+
+
+# Supported question parameters
+QUESTION_PARAMS = ('calculate', 'constraint', 'jr:constraintMsg')
 
 
 class XFormBuilder(object):
@@ -116,22 +121,23 @@ class XFormBuilder(object):
 
         :param name: Question name
         :param label: Question label
-        :param data_type: The type of the question
+        :param data_type: The type of the question, or None for hidden values
         :param group: The name of the question's group, or an iterable of names if nesting is deeper than one
         :param choices: A dictionary of {name: label} pairs
         :param label_safe: Does the label contain (safe) XML?
-        :param params: Supported question parameters: repeat_count
+        :param params: Supported question parameters: repeat_count, QUESTION_PARAMS
         :return: A Question instance, or QuestionGroup instance if `data_type` is a group type.
         """
-        if data_type not in ODK_TYPES + GROUP_TYPES:
+        if data_type is not None and data_type not in ODK_TYPES + GROUP_TYPES:
             raise TypeError('Unknown question data type "{}"'.format(data_type))
         if group is not None and not isinstance(group, basestring) and not hasattr(group, '__iter__'):
             raise TypeError('group parameter needs to be a string or iterable')
         groups = [group] if isinstance(group, basestring) else group
         self._append_to_data(name, groups)
-        self._append_to_translation(name, label, groups, choices, label_safe)
-        self._append_to_model(name, data_type, groups)
-        self._append_to_body(name, data_type, groups, choices, **params)
+        self._append_to_model(name, data_type, groups, **params)
+        if data_type is not None:
+            self._append_to_translation(name, label, groups, choices, label_safe, **params)
+            self._append_to_body(name, data_type, groups, choices, **params)
         if data_type in GROUP_TYPES:
             return QuestionGroup(name, self, groups)
         return Question(name, self, groups)
@@ -154,7 +160,7 @@ class XFormBuilder(object):
         return self.new_question(name, label, data_type, group, label_safe=label_safe, **params)
 
     @staticmethod
-    def get_text_id(name, groups=None, choice_name=None):
+    def get_text_id(name, groups=None, choice_name=None, is_hint=False):
         """
         Builds a text node "id" parameter
 
@@ -166,6 +172,8 @@ class XFormBuilder(object):
         'bar/baz/foo-label'
         >>> XFormBuilder.get_text_id('foo', ['bar', 'baz'], 'choice1')
         'bar/baz/foo-choice1-label'
+        >>> XFormBuilder.get_text_id('foo', is_hint=True)
+        'foo-hint'
 
         """
         text_id = []
@@ -174,7 +182,7 @@ class XFormBuilder(object):
         text_id.append(name)
         if choice_name is not None:
             text_id.append('-{}'.format(choice_name))
-        text_id.append('-label')
+        text_id.append('-hint' if is_hint else '-label')
         return ''.join(text_id)
 
     @staticmethod
@@ -194,6 +202,23 @@ class XFormBuilder(object):
             return '/data/' + name
         return '/data/{}/{}'.format('/'.join(groups), name)
 
+    def get_namespaced(self, name):
+        """
+        Return a namespaced parameter/tag name
+
+        >>> xform = XFormBuilder()
+        >>> xform.get_namespaced('jr:constraintMsg')
+        '{http://openrosa.org/javarosa}constraintMsg'
+        >>> xform.get_namespaced('constraint')
+        'constraint'
+
+        """
+        has_namespace = re.compile(r'(\w+):(\w+)')
+        if has_namespace.match(name):
+            template = has_namespace.sub(r'{{{\1}}}\2', name)
+            return template.format(**self.ns)
+        return name
+
     def _append_to_data(self, name, groups=None):
         if groups:
             node = self._data.xpath('./' + '/'.join(groups))[0]
@@ -201,27 +226,44 @@ class XFormBuilder(object):
             node = self._data
         node.append(etree.Element(name))
 
-    def _append_to_translation(self, name, label, group=None, choices=None, label_safe=False):
+    def _append_to_translation(self, name, label, group=None, choices=None, label_safe=False, **params):
 
-        def get_text_node(name_, label_, group_=None, choice_name_=None, label_safe_=False):
+        def get_text_node(name_, label_, group_=None, choice_name_=None, label_safe_=False, is_hint=False):
             if label_safe_:
                 return E.text(
-                    {'id': self.get_text_id(name_, group_, choice_name_)},
+                    {'id': self.get_text_id(name_, group_, choice_name_, is_hint)},
                     etree.fromstring('<value>{}</value>'.format(label_))
                 )
             return E.text(
-                {'id': self.get_text_id(name_, group_, choice_name_)},
+                {'id': self.get_text_id(name_, group_, choice_name_, is_hint)},
                 E.value(label_)
             )
 
         self._translation1.append(get_text_node(name, label, group, label_safe_=label_safe))
+        if 'hint' in params:
+            self._translation1.append(
+                get_text_node(name, params['hint'], group, label_safe_=label_safe, is_hint=True)
+            )
         if choices:
             for choice_name, choice_label in choices.items():
                 self._translation1.append(get_text_node(name, choice_label, group, choice_name, label_safe))
 
-    def _append_to_model(self, name, data_type, group=None):
-        if data_type in XSD_TYPES:
-            self._model.append(E.bind({'nodeset': self.get_data_ref(name, group), 'type': 'xsd:' + data_type}))
+    def _append_to_model(self, name, data_type, group=None, **params):
+        if data_type is None or data_type in XSD_TYPES:
+            attrs = {'nodeset': self.get_data_ref(name, group)}
+            if data_type in XSD_TYPES:
+                attrs['type'] = 'xsd:' + data_type
+            for param, value in params.items():
+                if param in QUESTION_PARAMS:
+                    ns_param = self.get_namespaced(param)
+                    attrs[ns_param] = value
+            self._model.append(E.bind(attrs))
+            if 'value' in params:
+                self._model.append(E.setvalue({
+                    'event': 'xforms-ready',
+                    'ref': self.get_data_ref(name, group),
+                    'value': params['value']
+                }))
 
     def _append_to_body(self, name, data_type, groups=None, choices=None, **params):
 
@@ -252,10 +294,15 @@ class XFormBuilder(object):
             '<group ref="/data/non-repeating_group"><label ref="jr:itext('non-repeating_group-label')" /></group>'
 
             """
-            return E.group(
+            node_ = E.group(
                 {'ref': self.get_data_ref(name_, groups_)},
                 E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))})
             )
+            if 'hint' in params_:
+                node_.append(
+                    E.hint({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, is_hint=True))})
+                )
+            return node_
 
         def get_repeat_group_question_node(name_, groups_=None, choices_=None, **params_):
             """
@@ -273,10 +320,13 @@ class XFormBuilder(object):
                     '{{{jr}}}count'.format(**self.ns): self.get_data_ref(question.name, question.groups),
                     '{{{jr}}}noAddRemove'.format(**self.ns): "true()"
                 })
-            return E.group(
-                E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))}),
-                E.repeat(repeat_attrs)
-            )
+            node_ = E.group(E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))}))
+            if 'hint' in params_:
+                node_.append(
+                    E.hint({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, is_hint=True))})
+                )
+            node_.append(E.repeat(repeat_attrs))
+            return node_
 
         def _get_any_select_question_node(tag, name_, groups_=None, choices_=None, **params_):
             """
@@ -297,6 +347,10 @@ class XFormBuilder(object):
             """
             node_ = etree.Element(tag, {'ref': self.get_data_ref(name_, groups_)})
             node_.append(E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))}))
+            if 'hint' in params_:
+                node_.append(
+                    E.hint({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, is_hint=True))})
+                )
             for choice_name in choices_.keys():
                 node_.append(
                     E.item(
@@ -327,10 +381,15 @@ class XFormBuilder(object):
             '<input ref="/data/text_question"><label ref="jr:itext(\'text_question-label\')"/></input>'
 
             """
-            return E.input(
+            node_ = E.input(
                 {'ref': self.get_data_ref(name_, groups_)},
                 E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_))})
             )
+            if 'hint' in params_:
+                node_.append(
+                    E.hint({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, is_hint=True))})
+                )
+            return node_
 
         if groups:
             node = walk_groups(self._body, groups)
