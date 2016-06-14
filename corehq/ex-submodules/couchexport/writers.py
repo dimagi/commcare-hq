@@ -511,7 +511,7 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
     target_app = 'OpenClinica'  # Export button to say "Export to OpenClinica"
 
     def _init(self):
-        from custom.openclinica.utils import get_study_constant
+        from corehq.apps.openclinica.utils import get_study_constant
 
         # We don't need to keep track of tables because we only have two: "study" contains context, and
         # "subjects" of which each row is a study subject. Initialise template context instead of tables.

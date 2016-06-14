@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, UpdateCaseAction, PreloadAction
 from corehq.apps.app_manager.xform_builder import XFormBuilder
-from custom.openclinica.utils import odm_nsmap
+from corehq.apps.openclinica.utils import odm_nsmap
 
 
 # Map ODM data types to ODK XForm data types

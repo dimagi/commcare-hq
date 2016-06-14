@@ -323,6 +323,7 @@ HQ_APPS = (
     'corehq.apps.api',
     'corehq.apps.indicators',
     'corehq.apps.notifications',
+    'corehq.apps.openclinica',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
     'corehq.apps.sofabed',
@@ -385,7 +386,6 @@ HQ_APPS = (
     'custom.common',
 
     'custom.dhis2',
-    'custom.openclinica',
     'custom.icds_reports',
 )
 
@@ -1219,6 +1219,7 @@ COUCHDB_APPS = [
     'indicators',
     'locations',
     'mobile_auth',
+    'openclinica',
     'pillowtop',
     'pillow_retry',
     'products',
@@ -1241,7 +1242,6 @@ COUCHDB_APPS = [
     'grapevine',
     'uth',
     'dhis2',
-    'openclinica',
 
     # custom reports
     'care_benin',
@@ -1756,8 +1756,6 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
-    'kemri': 'custom.openclinica',
-    'novartis': 'custom.openclinica',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

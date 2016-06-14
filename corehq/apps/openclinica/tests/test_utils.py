@@ -1,6 +1,6 @@
 from django.test import TestCase
-from custom.openclinica.models import StudySettings, OpenClinicaSettings
-from custom.openclinica.utils import get_study_metadata_string
+from corehq.apps.openclinica.models import StudySettings, OpenClinicaSettings
+from corehq.apps.openclinica.utils import get_study_metadata_string
 
 DOMAIN = 'test-domain'
 TEST_METADATA = '''<?xml version="1.0" encoding="UTF-8"?>

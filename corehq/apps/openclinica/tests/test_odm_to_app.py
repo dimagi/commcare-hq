@@ -4,7 +4,7 @@ from django.conf import settings
 from django.test import TestCase
 from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.domain.models import Domain
-from custom.openclinica.management.commands.odm_to_app import Command
+from corehq.apps.openclinica.management.commands.odm_to_app import Command
 
 
 class OdmToAppTest(TestCase, TestXmlMixin):

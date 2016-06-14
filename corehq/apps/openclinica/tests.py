@@ -1,4 +1,4 @@
-from custom.openclinica.utils import mk_oc_username, oc_format_date
+from corehq.apps.openclinica.utils import mk_oc_username, oc_format_date
 
 
 __test__ = {

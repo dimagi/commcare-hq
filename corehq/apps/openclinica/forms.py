@@ -6,7 +6,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
-from custom.openclinica.models import OpenClinicaSettings
+from corehq.apps.openclinica.models import OpenClinicaSettings
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 

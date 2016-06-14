@@ -73,8 +73,8 @@ from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import Invitation, CouchUser
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
-from custom.openclinica.forms import OpenClinicaSettingsForm
-from custom.openclinica.models import OpenClinicaSettings
+from corehq.apps.openclinica.forms import OpenClinicaSettingsForm
+from corehq.apps.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege

@@ -1,5 +1,6 @@
 from datetime import datetime
 from casexml.apps.case.models import CommCareCase
+from corehq import toggles
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.standard import CustomProjectReport
@@ -7,14 +8,14 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.elastic import SIZE_LIMIT
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import Format
-from custom.openclinica.const import (
+from corehq.apps.openclinica.const import (
     AUDIT_LOGS,
     CC_STUDY_SUBJECT_ID,
     CC_SUBJECT_KEY,
     CC_SUBJECT_CASE_TYPE,
 )
-from custom.openclinica.models import Subject
-from custom.openclinica.utils import get_study_constant
+from corehq.apps.openclinica.models import Subject
+from corehq.apps.openclinica.utils import get_study_constant
 
 
 class OdmExportReport(CustomProjectReport, CaseListMixin, GenericReportView):
@@ -32,6 +33,10 @@ class OdmExportReport(CustomProjectReport, CaseListMixin, GenericReportView):
     slug = "odm_export"
 
     export_format_override = Format.CDISC_ODM
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return toggles.OPENCLINICA.enabled(domain)
 
     @property
     def headers(self):
@@ -98,7 +103,7 @@ class OdmExportReport(CustomProjectReport, CaseListMixin, GenericReportView):
 
     @property
     def rows(self):
-        audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
+        audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `corehq.apps.openclinica.const.AUDIT_LOGS = False`
         for res in self.es_results['hits'].get('hits', []):
             case = CommCareCase.wrap(res['_source'])
             if not self.is_subject_selected(case):
@@ -122,7 +127,7 @@ class OdmExportReport(CustomProjectReport, CaseListMixin, GenericReportView):
         CdiscOdmExportWriter will render this using the odm_export.xml template to combine subjects into a single
         ODM XML document.
         """
-        audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
+        audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `corehq.apps.openclinica.const.AUDIT_LOGS = False`
         query = self._build_query().start(0).size(SIZE_LIMIT)
         for result in query.scroll():
             case = CommCareCase.wrap(result)

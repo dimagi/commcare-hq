@@ -1,7 +1,7 @@
 from collections import defaultdict
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
-from custom.openclinica.const import (
+from corehq.apps.openclinica.const import (
     AUDIT_LOGS,
     CC_DOB,
     CC_ENROLLMENT_DATE,
@@ -10,7 +10,7 @@ from custom.openclinica.const import (
     CC_SUBJECT_KEY,
     SINGLE_EVENT_FORM_EVENT_INDEX,
 )
-from custom.openclinica.utils import (
+from corehq.apps.openclinica.utils import (
     OpenClinicaIntegrationError,
     get_item_measurement_unit,
     get_question_item,
