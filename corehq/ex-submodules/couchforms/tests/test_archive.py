@@ -1,13 +1,18 @@
 import os
 from datetime import datetime, timedelta
 from django.test import TestCase
+from django.test.testcases import SimpleTestCase
+from django.test.utils import override_settings
 
+from corehq.apps.change_feed import topics
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.util.context_managers import drop_connected_signals
 from couchforms.signals import xform_archived, xform_unarchived
 
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.util.test_utils import TestFileMixin
+from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
 
 class TestFormArchiving(TestCase, TestFileMixin):
@@ -98,3 +103,24 @@ class TestFormArchiving(TestCase, TestFileMixin):
         xform.unarchive()
         self.assertEqual(1, archive_counter)
         self.assertEqual(1, restore_counter)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def testPublishChanges(self):
+        xml_data = self.get_xml('basic')
+        response, xform, cases = submit_form_locally(
+            xml_data,
+            'test-domain',
+        )
+
+        with capture_kafka_changes_context(topics.FORM_SQL) as change_context:
+            with drop_connected_signals(xform_archived):
+                xform.archive()
+        self.assertEqual(1, len(change_context.changes))
+        self.assertEqual(change_context.changes[0].id, xform.form_id)
+
+        xform = self.formdb.get_form(xform.form_id)
+        with capture_kafka_changes_context(topics.FORM_SQL) as change_context:
+            with drop_connected_signals(xform_unarchived):
+                xform.unarchive()
+        self.assertEqual(1, len(change_context.changes))
+        self.assertEqual(change_context.changes[0].id, xform.form_id)
