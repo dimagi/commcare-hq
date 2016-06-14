@@ -24,10 +24,16 @@ for service in $SERVICES; do
 
     echo -n "Waiting for TCP connection to $service @ $host:$port..."
 
+    counter=0
     while ! { exec 6<>/dev/tcp/${host}/${port}; } 2>/dev/null
     do
       echo -n .
       sleep 1
+      let counter=counter+1
+      if [ $counter -gt 90 ]; then
+        echo "TIMEOUT"
+        exit 1
+      fi
     done
 
     echo "$service ok"
