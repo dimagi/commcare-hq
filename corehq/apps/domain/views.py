@@ -11,6 +11,7 @@ import pytz
 from couchdbkit import ResourceNotFound
 import dateutil
 from django.core.paginator import Paginator
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import View
 from django.db.models import Sum
 from django.conf import settings
@@ -559,6 +560,7 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
     def page_context(self):
         return {'openclinica_settings_form': self.openclinica_settings_form}
 
+    @sensitive_post_parameters('username', 'password')
     def post(self, request, *args, **kwargs):
         if self.openclinica_settings_form.is_valid():
             if self.openclinica_settings_form.save(self.domain_object):
