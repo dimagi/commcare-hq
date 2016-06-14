@@ -3,9 +3,12 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
+from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.sql_db.operations import HqRunSQL, RawSQLMigration
 
-migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
+migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
+    'RELATIONSHIP_TYPE_EXTENSION': CommCareCaseIndexSQL.EXTENSION
+})
 
 
 class Migration(migrations.Migration):
