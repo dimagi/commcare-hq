@@ -3,6 +3,12 @@ from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
+from corehq.apps.userreports.models import (
+    CUSTOM_REPORT_PREFIX,
+    STATIC_PREFIX,
+    StaticDataSourceConfiguration,
+    StaticReportConfiguration,
+)
 
 types = [
     "feature_flags",
@@ -219,6 +225,25 @@ class Command(BaseCommand):
 
             old_id, new_id = self.save_couch_copy(report, self.new_domain)
             report_map[old_id] = new_id
+        for static_report in StaticReportConfiguration.by_domain(self.existing_domain):
+            if static_report.get_id.startswith(STATIC_PREFIX):
+                report_id = static_report.get_id.replace(
+                    STATIC_PREFIX + self.existing_domain + '-',
+                    ''
+                )
+                is_custom_report = False
+            else:
+                report_id = static_report.get_id.replace(
+                    CUSTOM_REPORT_PREFIX + self.existing_domain + '-',
+                    ''
+                )
+                is_custom_report = True
+            new_id = StaticReportConfiguration.get_doc_id(
+                self.new_domain, report_id, is_custom_report
+            )
+            # check that new report is in new domain's list of static reports
+            StaticReportConfiguration.by_id(new_id)
+            report_map[static_report.get_id] = new_id
         return report_map
 
     def copy_ucr_datasources(self):
@@ -230,6 +255,15 @@ class Command(BaseCommand):
 
             old_id, new_id = self.save_couch_copy(datasource, self.new_domain)
             datasource_map[old_id] = new_id
+        for static_datasource in StaticDataSourceConfiguration.by_domain(self.existing_domain):
+            table_id = static_datasource.get_id.replace(
+                StaticDataSourceConfiguration._datasource_id_prefix + self.existing_domain + '-',
+                ''
+            )
+            new_id = StaticDataSourceConfiguration.get_doc_id(self.new_domain, table_id)
+            # check that new datasource is in new domain's list of static datasources
+            StaticDataSourceConfiguration.by_id(new_id)
+            datasource_map[static_datasource.get_id] = new_id
         return datasource_map
 
     def copy_auto_case_update_rules(self):
