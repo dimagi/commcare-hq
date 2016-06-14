@@ -146,14 +146,16 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         return report_config, view
 
     @classmethod
-    def tearDown(cls):
+    def tearDownClass(cls):
         cls._delete_everything()
         # todo: understand why this is necessary. the view call uses the session and the
         # signal doesn't fire to kill it.
         Session.remove()
+        super(ConfigurableReportViewTest, cls).tearDownClass()
 
     @classmethod
-    def setUp(cls):
+    def setUpClass(cls):
+        super(ConfigurableReportViewTest, cls).setUpClass()
         cls._delete_everything()
 
     def test_export_table(self):
