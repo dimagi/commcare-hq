@@ -23,8 +23,6 @@ postgres:
   environment:
     POSTGRES_USER: commcarehq
     POSTGRES_PASSWORD: commcarehq
-  labels:
-    commcare.name: "postgres"
   expose:
     - "5432"
   volumes:
@@ -32,8 +30,6 @@ postgres:
 
 couch:
   image: klaemo/couchdb:latest
-  labels:
-    commcare.name: "couch"
   expose:
     - "5984"
   volumes:
@@ -41,8 +37,6 @@ couch:
 
 redis:
   image: redis
-  labels:
-    commcare.name: "redis"
   expose:
     - "6379"
   volumes:
@@ -52,8 +46,6 @@ elasticsearch:
   image: elasticsearch:1.7.4
   environment:
     ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-  labels:
-    commcare.name: "elastic"
   expose:
     - "9200"
   volumes:
@@ -66,16 +58,12 @@ kafka:
   expose:
     - "2181"
     - "9092"
-  labels:
-    commcare.name: "kafka"
   volumes:
     - ${VOLUME_PREFIX}kafka:/tmp/kafka-logs
     - ${VOLUME_PREFIX}zookeeper:/var/lib/zookeeper
 
 riakcs:
   image: dimagi/riak-cs
-  labels:
-    commcare.name: "riakcs"
   expose:
     - "9980"
   volumes:
