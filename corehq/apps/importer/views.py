@@ -268,7 +268,6 @@ def excel_commit(request, domain):
 
     download = DownloadBase()
     download.set_task(bulk_import_async.delay(
-        download.download_id,
         config,
         domain,
         excel_id,
@@ -298,19 +297,17 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
     try:
         download_context = get_download_context(download_id, check_state=True)
     except TaskFailedError as e:
-        # todo: this is async, so it's totally inappropriate to be using messages.error
-        # todo: and HttpResponseRedirect
         error = e.errors
         if error == 'EXPIRED':
-            return _spreadsheet_expired(request, domain)
+            error = _('Sorry, your session has expired. Please start over and try again.')
         elif error == 'HAS_ERRORS':
-            messages.error(request, _('The session containing the file you '
-                                      'uploaded has expired - please upload '
-                                      'a new one.'))
+            error = _('The session containing the file you uploaded has expired - please upload a new one.')
         else:
-            messages.error(request, _('Sorry something went wrong with that import. Please try again. '
-                                      'Report an issue if you continue to have problems.'))
-        return HttpResponseRedirect(base.ImportCases.get_url(domain=domain) + "?error=cache")
+            error = _('Error: %s') % error
+
+        context = RequestContext(request)
+        context.update({'error': error, 'url': base.ImportCases.get_url(domain=domain)})
+        return render_to_response('importer/partials/import_error.html', context_instance=context)
     else:
         context = RequestContext(request)
         context.update(download_context)

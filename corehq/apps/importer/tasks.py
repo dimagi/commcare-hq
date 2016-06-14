@@ -20,14 +20,20 @@ CASEBLOCK_CHUNKSIZE = 100
 
 
 @task
-def bulk_import_async(import_id, config, domain, excel_id):
+def bulk_import_async(config, domain, excel_id):
     excel_ref = DownloadBase.get(excel_id)
     try:
-        spreadsheet_or_error = importer_util.get_spreadsheet(excel_ref, config.named_columns)
-    except ImporterError as spreadsheet_or_error:
-        pass
-
-    result = do_import(spreadsheet_or_error, config, domain, task=bulk_import_async)
+        spreadsheet = importer_util.get_spreadsheet(excel_ref, config.named_columns)
+    except ImporterRefError:
+        return {'errors': 'EXPIRED'}
+    except ImporterError:
+        return {'errors': 'HAS_ERRORS'}
+    try:
+        result = do_import(spreadsheet, config, domain, task=bulk_import_async)
+    except Exception as e:
+        return {
+            'errors': e.message
+        }
 
     # return compatible with soil
     return {
@@ -35,17 +41,7 @@ def bulk_import_async(import_id, config, domain, excel_id):
     }
 
 
-def do_import(spreadsheet_or_error, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):
-    # todo: trace where these errors are used and how they can be triggered,
-    # and move this error handling to a more appropriate place
-    if isinstance(spreadsheet_or_error, Exception):
-        spreadsheet_error = spreadsheet_or_error
-        if isinstance(spreadsheet_error, ImporterRefError):
-            return {'errors': 'EXPIRED'}
-        elif isinstance(spreadsheet_error, ImporterError):
-            return {'errors': 'HAS_ERRORS'}
-
-    spreadsheet = spreadsheet_or_error
+def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):
     row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = num_chunks = 0
