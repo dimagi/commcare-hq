@@ -126,6 +126,11 @@ def clear_zone_awareness(es):
     print "Cleared"
 
 
+def pending_tasks(es):
+    cluster = ClusterClient(es)
+    pprint(cluster.pending_tasks())
+
+
 commands = {
     'cluster_status': cluster_status,
     'cluster_settings': cluster_settings,
@@ -136,6 +141,7 @@ commands = {
     'cancel_replica_shards': cancel_replica_shards,
     'force_zone_awareness': force_zone_awareness,
     'clear_zone_awareness': clear_zone_awareness,
+    'pending_tasks': pending_tasks,
 }
 
 
