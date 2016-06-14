@@ -946,7 +946,14 @@ class FormExportDataSchema(ExportDataSchema):
         current_xform_schema.domain = domain
         current_xform_schema.app_id = app_id
         current_xform_schema.xmlns = form_xmlns
-        current_xform_schema.save()
+        try:
+            current_xform_schema.save()
+        except ResourceConflict:
+            # It's possible that another process updated the schema before we
+            # got to it. If so, we want to overwrite those changes because we
+            # have the most recently built schema.
+            current_xform_schema._rev = FormExportDataSchema.get_db().get_rev(current_xform_schema._id)
+            current_xform_schema.save()
 
         return current_xform_schema
 
