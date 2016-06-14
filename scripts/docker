@@ -162,7 +162,7 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
-    docker-compose run -T --rm web run_tests "${TEST:-python}" "$@"
+    docker-compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"
 elif [ "$CMD" == "bash" ]; then

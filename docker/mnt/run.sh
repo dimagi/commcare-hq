@@ -11,7 +11,7 @@ function setup() {
 
     if [[ "$TEST" =~ ^python ]]; then
 
-        rm *.log *.lock
+        rm *.log *.lock || true
 
         scripts/uninstall-requirements.sh
         pip install \
@@ -20,7 +20,7 @@ function setup() {
             coveralls
 
         # compile pyc files
-        python -m compileall corehq submodules *.py
+        python -m compileall corehq custom submodules testapps *.py > /dev/null
 
         /usr/lib/jvm/jdk1.7.0/bin/keytool -genkey \
             -keyalg RSA \
@@ -34,7 +34,7 @@ function setup() {
     fi
 
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
-        npm install
+        npm install --progress=false
         bower install --config.interactive=false
     fi
 
@@ -78,7 +78,7 @@ function _run_tests() {
         /vendor/bin/coverage run manage.py test "$@" $TESTS
     else
         ./manage.py migrate --noinput
-        ./manage.py runserver 0.0.0.0:8000 &> /var/log/commcare-hq.log &
+        ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         host=127.0.0.1 port=8000 /mnt/wait.sh hq
         # HACK curl to avoid
         # Warning: PhantomJS timed out, possibly due to a missing Mocha run() call.
