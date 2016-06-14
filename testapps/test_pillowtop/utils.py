@@ -1,6 +1,5 @@
 import uuid
 
-from decorator import ContextManager
 from django.conf import settings
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed

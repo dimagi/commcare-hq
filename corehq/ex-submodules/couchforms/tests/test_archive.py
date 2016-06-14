@@ -1,7 +1,6 @@
 import os
 from datetime import datetime, timedelta
 from django.test import TestCase
-from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 
 from corehq.apps.change_feed import topics
