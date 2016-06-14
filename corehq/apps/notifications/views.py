@@ -20,7 +20,6 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     urlname = "notifications_service"
 
     @method_decorator(login_required)
-    @method_decorator(toggles.NOTIFICATIONS.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(NotificationsServiceRMIView, self).dispatch(request, *args, **kwargs)
 

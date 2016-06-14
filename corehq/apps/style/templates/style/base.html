@@ -368,7 +368,7 @@
         </script>
         {# JavaScript Display Logic Libaries #}
 
-        {% if request.couch_user and request|toggle_enabled:"NOTIFICATIONS" %}
+        {% if request.couch_user %}
         <script type="text/javascript" src="{% new_static '/notifications/js/NotificationsService.ko.js' %}"></script>
         <script type="text/javascript">
             $(function () {
