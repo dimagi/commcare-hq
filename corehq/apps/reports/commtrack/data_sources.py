@@ -250,8 +250,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
                 self.SLUG_MONTHS_REMAINING: 'months_remaining',
                 self.SLUG_CATEGORY: 'stock_category',
-                # SLUG_STOCKOUT_SINCE: 'stocked_out_since',
-                # SLUG_STOCKOUT_DURATION: 'stockout_duration_in_months',
                 self.SLUG_LAST_REPORTED: 'last_modified_date',
                 self.SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
             })
