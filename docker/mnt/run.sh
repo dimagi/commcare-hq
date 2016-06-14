@@ -11,15 +11,16 @@ function setup() {
 
     if [[ "$TEST" =~ ^python ]]; then
 
+        rm *.log *.lock
+
         scripts/uninstall-requirements.sh
         pip install \
             -r requirements/requirements.txt \
             -r requirements/dev-requirements.txt \
             coveralls
 
-        # some kind of optimization?
-        # skip Running setup.py bdist_wheel for ... ?
-        rm -rf /root/.cache/pip
+        # compile pyc files
+        python -m compileall corehq submodules *.py
 
         /usr/lib/jvm/jdk1.7.0/bin/keytool -genkey \
             -keyalg RSA \
@@ -107,14 +108,17 @@ chmod +x /mnt/run_tests
 cd /mnt
 if [ "$TRAVIS" == "true" ]; then
     ln -s commcare-hq-ro commcare-hq
+    mkdir commcare-hq/staticfiles
+    chown cchq:cchq commcare-hq-ro commcare-hq/staticfiles
 else
     # commcare-hq source overlay prevents modifications in this container
     # from leaking to the host; allows safe overwrite of localsettings.py
     rm -rf lib/overlay  # clear source overlay
-    mkdir -p commcare-hq lib/overlay lib/node_modules
+    mkdir -p commcare-hq lib/overlay/staticfiles lib/node_modules lib/staticfiles
     ln -s /mnt/lib/node_modules lib/overlay/node_modules
+    ln -s /mnt/lib/staticfiles lib/overlay/staticfiles
     mount -t aufs -o br=lib/overlay:commcare-hq-ro none commcare-hq
-    chown cchq:cchq lib/overlay
+    chown cchq:cchq lib/overlay lib/staticfiles
 fi
 
 mkdir -p lib/sharedfiles

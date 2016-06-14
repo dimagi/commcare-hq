@@ -157,7 +157,7 @@ case $CMD in
     teardown)
         TEARDOWN=yes
         shift
-        CMD="down --rmi local -v --remove-orphans"
+        CMD="down --rmi local -v"
         ;;
 esac
 
