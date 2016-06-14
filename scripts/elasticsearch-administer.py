@@ -99,7 +99,7 @@ def decommission_node(es):
     print "The node is now being decommissioned."
 
 
-def force_zone_replicas(es):
+def force_zone_awareness(es):
     cluster = ClusterClient(es)
     print "NODE SETTINGS:"
     for node in get_nodes_info(es):
@@ -115,7 +115,7 @@ def force_zone_replicas(es):
     print "Finished"
 
 
-def clear_zone_replicas(es):
+def clear_zone_awareness(es):
     # There doesn't appear to be a proper way to unset settings
     # https://github.com/elastic/elasticsearch/issues/6732
     cluster = ClusterClient(es)
@@ -132,8 +132,10 @@ commands = {
     'index_settings': index_settings,
     'decommission_node': decommission_node,
     'shard_status': shard_status,
-    'force_zone_replicas': force_zone_replicas,
-    'clear_zone_replicas': clear_zone_replicas,
+    'create_replica_shards': create_replica_shards,
+    'cancel_replica_shards': cancel_replica_shards,
+    'force_zone_awareness': force_zone_awareness,
+    'clear_zone_awareness': clear_zone_awareness,
 }
 
 
