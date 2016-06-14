@@ -237,13 +237,6 @@ DEMO_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-SUPPLY_REPORTS = StaticToggle(
-    'supply_reports',
-    "Early stages reports for CommCare Supply",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-)
-
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
@@ -834,6 +827,22 @@ PROJECT_HEALTH_DASHBOARD = StaticToggle(
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+SEND_UCR_REBUILD_INFO = StaticToggle(
+    'send_ucr_rebuild_info',
+    'Notify when UCR rebuilds finish or error.',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_USER]
+)
+
+
+ENABLE_HTTP_FOR_J2ME_WIDGET = StaticToggle(
+    'enable_http_for_j2me_widget',
+    'Enable widget for using http for j2me',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

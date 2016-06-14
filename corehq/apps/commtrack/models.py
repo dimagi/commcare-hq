@@ -529,7 +529,7 @@ def _reopen_or_create_supply_point(location):
     )
     if supply_point:
         if supply_point and supply_point.closed:
-            transactions = supply_point.closed_transactions
+            transactions = supply_point.get_closing_transactions()
             for transaction in transactions:
                 transaction.form.archive(user_id=const.COMMTRACK_USERNAME)
 

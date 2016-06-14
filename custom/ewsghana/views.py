@@ -5,7 +5,6 @@ from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from django.views.generic.base import RedirectView
 from corehq.apps.commtrack.models import StockState
@@ -24,13 +23,12 @@ from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
 from custom.ewsghana.handlers.web_submission_handler import WebSubmissionHandler
-from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension
+from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
 from custom.ewsghana.utils import make_url, has_input_stock_permissions, calculate_last_period, Msg
 from custom.ilsgateway.views import GlobalStats
-from custom.logistics.views import BaseConfigView
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.web import json_handler, json_response
 

@@ -137,7 +137,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
                   user_filter[HQUserType.UNKNOWN].show)):
                 user = _create_temp_user(user_id)
                 if user:
-                    users.append(temp_user)
+                    users.append(user)
         if user_filter[HQUserType.UNKNOWN].show:
             users.append(TempCommCareUser(domain, '*', None))
 

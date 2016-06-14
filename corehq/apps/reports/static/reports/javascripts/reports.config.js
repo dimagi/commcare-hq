@@ -1,3 +1,4 @@
+/* global alert_user */
 var HQReport = function (options) {
     'use strict';
     var self = this;
@@ -26,6 +27,8 @@ var HQReport = function (options) {
     self.getReportRenderUrl = options.getReportRenderUrl || getReportRenderUrl;
     self.getReportBaseUrl = options.getReportBaseUrl || getReportBaseUrl;
     self.getReportParams = options.getReportParams || getReportParams;
+    self.getExportSizeCheckUrl = options.getExportSizeCheckUrl;
+    self.checkExportSize = options.checkExportSize || false;
 
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
 
@@ -56,10 +59,23 @@ var HQReport = function (options) {
                                 success: function() {
                                     alert_user("Your requested excel report will be sent to the email address " +
                                                "defined in your account settings.", "success");
-                                }
-                            })
+                                },
+                            });
                         } else {
-                            window.location.href = self.getReportRenderUrl("export");
+                            if (self.checkExportSize){
+                                $.ajax({
+                                    url: self.getExportSizeCheckUrl(),
+                                    success: function(data) {
+                                        if (data.export_allowed) {
+                                            window.location.href = self.getReportRenderUrl("export");
+                                        } else {
+                                            alert_user(data.message, "danger");
+                                        }
+                                    },
+                                });
+                            } else {
+                                window.location.href = self.getReportRenderUrl("export");
+                            }
                         }
                     });
                 }

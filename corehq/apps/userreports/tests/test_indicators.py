@@ -17,8 +17,8 @@ from corehq.util.context_managers import drop_connected_signals
 
 class SingleIndicatorTestBase(SimpleTestCase):
 
-    def _check_result(self, indicator, document, value):
-        [result] = indicator.get_values(document)
+    def _check_result(self, indicator, document, value, context=None):
+        [result] = indicator.get_values(document, context=context)
         self.assertEqual(value, result.value)
 
 
@@ -162,6 +162,39 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
         self._check_result(indicator, dict(foo1='bar1', foo2='not bar2', foo3='bar3'), 0)
         # last and not right
         self._check_result(indicator, dict(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4'), 0)
+
+    def test_not_null_filter_root_doc(self):
+        indicator = IndicatorFactory.from_spec(
+            {
+                "filter": {
+                    "filter": {
+                        "operator": "in",
+                        "expression": {
+                            "expression": {
+                                "datatype": None,
+                                "type": "property_name",
+                                "property_name": "ccs_opened_date"
+                            },
+                            "type": "root_doc"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": [
+                            "",
+                            None
+                        ]
+                    },
+                    "type": "not"
+                },
+                "type": "boolean",
+                "display_name": None,
+                "column_id": "prop1_not_null"
+            }
+        )
+        self._check_result(indicator, {}, 1, EvaluationContext(root_doc=dict(ccs_opened_date='not_null')))
+        self._check_result(indicator, {}, 1, EvaluationContext(root_doc=dict(ccs_opened_date=' ')))
+        self._check_result(indicator, {}, 0, EvaluationContext(root_doc=dict(ccs_opened_date='')))
+        self._check_result(indicator, {}, 0, EvaluationContext(root_doc=dict(ccs_opened_date=None)))
+        self._check_result(indicator, {}, 0, EvaluationContext(root_doc=dict()))
 
 
 class CountIndicatorTest(SingleIndicatorTestBase):

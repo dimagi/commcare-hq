@@ -1742,8 +1742,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 caseblock.as_xml()
             ),
             self.domain,
-            self.username,
-            self._id
         )
 
     def remove_location_delegate(self, location):
@@ -1871,8 +1869,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
-    #do sync and create still work?
-
     program_id = StringProperty()
     last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
 
