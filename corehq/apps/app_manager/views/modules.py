@@ -660,6 +660,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         except AttributeError:
             return HttpResponseBadRequest("Unknown detail type '%s'" % detail_type)
 
+    lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
         detail.short.columns = map(DetailColumn.wrap, short)
         if persist_case_context is not None:
@@ -671,7 +672,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         if pull_down_tile is not None:
             detail.short.pull_down_tile = pull_down_tile
         if case_list_lookup is not None:
-            _save_case_list_lookup_params(detail.short, case_list_lookup)
+            _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
 
     if long is not None:
         detail.long.columns = map(DetailColumn.wrap, long)
@@ -696,7 +697,6 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
-        lang = request.COOKIES.get('lang', app.langs[0])
         module.search_config = CaseSearch(properties=[
             CaseSearchProperty.wrap(p) for p in _update_search_properties(module, search_properties, lang)
         ])
@@ -818,13 +818,17 @@ def _new_careplan_module(request, domain, app, name, lang):
     return response
 
 
-def _save_case_list_lookup_params(short, case_list_lookup):
+def _save_case_list_lookup_params(short, case_list_lookup, lang):
     short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
     short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
     short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
     short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)
     short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
     short.lookup_image = case_list_lookup.get("lookup_image", short.lookup_image)
+    short.lookup_display_results = case_list_lookup.get("lookup_display_results", short.lookup_display_results)
+    if case_list_lookup.get("lookup_field_header"):
+        short.lookup_field_header[lang] = case_list_lookup["lookup_field_header"]
+    short.lookup_field_template = case_list_lookup.get("lookup_field_template", short.lookup_field_template)
 
 
 @require_GET
