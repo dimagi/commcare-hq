@@ -14,7 +14,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import ConsumptionConfiguration, ConsumptionHelper
 
 from casexml.apps.stock.models import DocDomainMapping
-from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
+from casexml.apps.stock.utils import months_of_stock_remaining
 from couchexport.models import register_column_type, ComplexExportColumn
 from couchforms.signals import xform_archived, xform_unarchived
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -412,7 +412,7 @@ class StockState(models.Model):
 
     @property
     def stock_category(self):
-        return state_stock_category(self)
+        return self.consumption_helper.get_stock_category()
 
     @property
     @memoized

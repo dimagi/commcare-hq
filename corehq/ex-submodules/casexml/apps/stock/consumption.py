@@ -1,6 +1,6 @@
 import json
 from decimal import Decimal
-from casexml.apps.stock.utils import months_of_stock_remaining
+from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 
 from dimagi.utils import parsing as dateparse
@@ -61,6 +61,17 @@ class ConsumptionHelper(object):
             return int(max(needed_quantity - self.balance, 0))
         else:
             return None
+
+    def get_stock_category(self):
+        if not self.sql_location:
+            return 'nodata'
+        location_type = self.sql_location.location_type
+        return stock_category(
+            self.balance,
+            self.get_daily_consumption(),
+            location_type.understock_threshold,
+            location_type.overstock_threshold,
+        )
 
 
 class ConsumptionConfiguration(object):

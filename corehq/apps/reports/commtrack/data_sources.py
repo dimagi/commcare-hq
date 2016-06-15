@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from dateutil import parser
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockTransaction, StockReport
-from casexml.apps.stock.utils import months_of_stock_remaining, stock_category, state_stock_category
+from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
@@ -369,7 +369,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         'current_stock': format_decimal(state.stock_on_hand),
                         'count': 1,
                         'consumption': consumption,
-                        'category': state_stock_category(state),
+                        'category': state.stock_category,
                         'months_remaining': months_of_stock_remaining(
                             state.stock_on_hand,
                             _convert_to_daily(consumption)
