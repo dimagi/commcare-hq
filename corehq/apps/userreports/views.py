@@ -27,7 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.tour import tours
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
@@ -616,28 +616,14 @@ class ConfigureChartReport(ReportBuilderView):
         try:
             report_form = self.report_form
         except Exception as e:
-            if self.existing_report and self.existing_report.report_meta.edited_manually:
-                error_message_base = _(
-                    'It looks like this report was edited by hand and is no longer editable in report builder.'
-                )
-                if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
-                    error_message = '{} {}'.format(error_message_base, _(
-                        'You can edit the report manually using the <a href="{}">advanced UI</a>.'
-                    ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
-                else:
-                    error_message = '{} {}'.format(error_message_base, _(
-                        'You can delete and recreate this report using the button below, or '
-                        'report an issue if you believe you are seeing this page in error.'
-                    ))
-                self.template_name = 'userreports/report_error.html'
-                return {
-                    'report_id': self.existing_report.get_id,
-                    'is_static': self.existing_report.is_static,
-                    'error_message': error_message,
-                    'details': unicode(e)
-                }
-            else:
-                raise
+            self.template_name = 'userreports/report_error.html'
+            error_response = {
+                'report_id': self.existing_report.get_id,
+                'is_static': self.existing_report.is_static,
+                'error_message': '',
+                'details': unicode(e)
+            }
+            return self._handle_exception(error_response, e)
 
         return {
             'report': {
@@ -653,6 +639,33 @@ class ConfigureChartReport(ReportBuilderView):
             ],
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
+
+    def _handle_exception(self, response, exception):
+        if self.existing_report and self.existing_report.report_meta.edited_manually:
+            error_message_base = _(
+                'It looks like this report was edited by hand and is no longer editable in report builder.'
+            )
+            if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
+                error_message = '{} {}'.format(error_message_base, _(
+                    'You can edit the report manually using the <a href="{}">advanced UI</a>.'
+                ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
+            else:
+                error_message = '{} {}'.format(
+                    error_message_base,
+                    _('You can delete and recreate this report using the button below, or '
+                      'report an issue if you believe you are seeing this page in error.')
+                )
+            response['error_message'] = error_message
+            return response
+        elif isinstance(exception, DataSourceConfigurationNotFoundError):
+            response['details'] = None
+            response['error_message'] = '{} {}'.format(
+                str(exception),
+                DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+            )
+            return response
+        else:
+            raise
 
     @property
     @memoized
@@ -1033,7 +1046,7 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id)
+    rebuild_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1063,7 +1076,7 @@ def resume_building_data_source(request, domain, config_id):
             request,
             _(u'Resuming rebuilding table "{}".').format(config.display_name)
         )
-        resume_building_indicators.delay(config_id)
+        resume_building_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

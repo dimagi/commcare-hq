@@ -2,8 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import datetime
-import json_field.fields
+import jsonfield.fields
 
 
 class Migration(migrations.Migration):
@@ -20,7 +19,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('domain', models.CharField(max_length=128)),
                 ('type', models.CharField(max_length=128)),
-                ('data', json_field.fields.JSONField(default='null', help_text='Enter a valid JSON object')),
+                ('data', jsonfield.fields.JSONField()),
                 ('sql_location', models.ForeignKey(to='locations.SQLLocation')),
             ],
             options={

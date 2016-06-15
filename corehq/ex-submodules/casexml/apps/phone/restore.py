@@ -21,6 +21,7 @@ from casexml.apps.phone.models import (
     LOG_FORMAT_SIMPLIFIED,
     get_sync_log_class_by_format,
     OTARestoreUser,
+    SimplifiedSyncLog,
 )
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
@@ -430,6 +431,13 @@ class RestoreState(object):
     @memoized
     def loadtest_factor(self):
         return self.restore_user.loadtest_factor
+
+    def mark_as_new_format(self):
+        self.current_sync_log = SimplifiedSyncLog.wrap(
+            self.current_sync_log.to_json()
+        )
+        self.current_sync_log.log_format = LOG_FORMAT_SIMPLIFIED
+        self.current_sync_log.extensions_checked = True
 
 
 class RestoreConfig(object):

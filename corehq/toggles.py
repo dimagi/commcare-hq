@@ -237,13 +237,6 @@ DEMO_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-SUPPLY_REPORTS = StaticToggle(
-    'supply_reports',
-    "Early stages reports for CommCare Supply",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-)
-
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
@@ -600,6 +593,13 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+OPENCLINICA = StaticToggle(
+    'openclinica',
+    'Offer OpenClinica settings and CDISC ODM export',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
@@ -836,6 +836,22 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'Allow unlimited reports created in report builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+
+EXPORT_ZIPPED_APPS = StaticToggle(
+    'export-zipped-apps',
+    'Export+Import Zipped Applications',
+    TAG_UNKNOWN,
+    [NAMESPACE_USER]
+)
+
+
+SEND_UCR_REBUILD_INFO = StaticToggle(
+    'send_ucr_rebuild_info',
+    'Notify when UCR rebuilds finish or error.',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_USER]
 )
 
 

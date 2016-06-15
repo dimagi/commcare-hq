@@ -93,6 +93,9 @@ def _create_custom_app_strings(app, lang, for_default=False):
             for tab in detail.get_tabs():
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)
 
+            if getattr(detail, 'lookup_display_results'):
+                yield id_strings.callout_header_locale(module), trans(detail.lookup_field_header)
+
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
 
         icon = module.icon_app_string(lang, for_default=for_default)

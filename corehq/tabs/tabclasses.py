@@ -1145,6 +1145,13 @@ class ProjectSettingsTab(UITab):
                 'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
             })
 
+        if toggles.OPENCLINICA.enabled(self.domain):
+            from corehq.apps.domain.views import EditOpenClinicaSettingsView
+            project_info.append({
+                'title': _(EditOpenClinicaSettingsView.page_title),
+                'url': reverse(EditOpenClinicaSettingsView.urlname, args=[self.domain])
+            })
+
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
@@ -1499,6 +1506,8 @@ class AdminTab(UITab):
                  'url': reverse('loadtest_report')},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
+                {'title': _('CommCare Version'),
+                 'url': reverse('admin_report_dispatcher', args=('commcare_version', ))}
             ]),
             (_('Administrative Operations'), admin_operations),
             (_('CommCare Reports'), [

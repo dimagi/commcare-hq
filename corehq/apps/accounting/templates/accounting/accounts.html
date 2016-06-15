@@ -11,8 +11,9 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var baForm = new BillingAccountForm({{ basic_form.is_active.value|BOOL }});
         $(function () {
+            var BillingAccountForm = hqImport('accounting/ko/accounting.billing_account_form.ko.js').BillingAccountForm;
+            var baForm = new BillingAccountForm({{ basic_form.is_active.value|BOOL }});
             $('#account-form').koApplyBindings(baForm);
         });
 

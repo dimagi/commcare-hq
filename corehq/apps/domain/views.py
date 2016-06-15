@@ -11,6 +11,7 @@ import pytz
 from couchdbkit import ResourceNotFound
 import dateutil
 from django.core.paginator import Paginator
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import View
 from django.db.models import Sum
 from django.conf import settings
@@ -72,6 +73,8 @@ from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import Invitation, CouchUser
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
+from custom.openclinica.forms import OpenClinicaSettingsForm
+from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
@@ -534,6 +537,39 @@ class EditDhis2SettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+class EditOpenClinicaSettingsView(BaseProjectSettingsView):
+    template_name = 'domain/admin/openclinica_settings.html'
+    urlname = 'oc_settings'
+    page_title = ugettext_lazy('OpenClinica settings')
+
+    @method_decorator(domain_admin_required)
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def openclinica_settings_form(self):
+        oc_settings = OpenClinicaSettings.for_domain(self.domain_object.name)
+        initial = dict(oc_settings.study) if oc_settings else {}
+        if self.request.method == 'POST':
+            return OpenClinicaSettingsForm(self.request.POST, initial=initial)
+        return OpenClinicaSettingsForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {'openclinica_settings_form': self.openclinica_settings_form}
+
+    @sensitive_post_parameters('username', 'password')
+    def post(self, request, *args, **kwargs):
+        if self.openclinica_settings_form.is_valid():
+            if self.openclinica_settings_form.save(self.domain_object):
+                messages.success(request, _('OpenClinica settings successfully updated'))
+            else:
+                messages.error(request, _('An error occurred. Please try again.'))
+        return self.get(request, *args, **kwargs)
+
+
 @require_POST
 @require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
@@ -733,14 +769,16 @@ class DomainSubscriptionView(DomainAccountingSettings):
         def _get_feature_info(feature_rate):
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
             feature_type = feature_rate.feature.feature_type
+            if feature_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
+                remaining = _('Unlimited')
+            else:
+                remaining = feature_rate.monthly_limit - usage
+                if remaining < 0:
+                    remaining = _("%d over limit") % (-1 * remaining)
             return {
                 'name': get_feature_name(feature_type, self.product),
                 'usage': usage,
-                'remaining': (
-                    feature_rate.monthly_limit - usage
-                    if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE
-                    else _('Unlimited')
-                ),
+                'remaining': remaining,
                 'type': feature_type,
                 'recurring_interval': get_feature_recurring_interval(feature_type),
                 'subscription_credit': self._fmt_credit(self._credit_grand_total(

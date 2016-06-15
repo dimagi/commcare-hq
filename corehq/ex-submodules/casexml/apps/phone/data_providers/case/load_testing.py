@@ -20,7 +20,7 @@ def transform_loadtest_update(update, factor):
     return CaseSyncUpdate(case, update.sync_token, required_updates=update.required_updates)
 
 
-def get_elements_for_response(update, restore_state):
+def get_xml_for_response(update, restore_state):
     """
     Adds the XML from the case_update to the restore response.
     If factor is > 1 it will append that many updates to the response for load testing purposes.

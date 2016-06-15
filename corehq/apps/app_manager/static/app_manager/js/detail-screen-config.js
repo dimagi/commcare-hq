@@ -249,7 +249,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
     };
 
-    var caseListLookupViewModel = function($el, state, saveButton) {
+    var caseListLookupViewModel = function($el, state, lang, saveButton) {
         'use strict';
         var self = this,
             detail_type = $el.data('detail-type');
@@ -316,6 +316,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 lookup_extras: _trimmed_extras(),
                 lookup_responses: _trimmed_responses(),
                 lookup_image: image_path,
+                lookup_display_results: self.lookup_display_results(),
+                lookup_field_header: self.lookup_field_header(),
+                lookup_field_template: self.lookup_field_template(),
             };
 
             return data;
@@ -414,6 +417,10 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         if (self.responses().length === 0){
             self.add_item('responses');
         }
+
+        self.lookup_display_results = ko.observable(state.lookup_display_results);
+        self.lookup_field_header = ko.observable(state.lookup_field_header[lang]);
+        self.lookup_field_template = ko.observable(state.lookup_field_template || '@case_id');
 
         self.show_add_extra = ko.computed(function(){
             if (self.extras().length){
@@ -1169,7 +1176,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         that.shortScreen.saveButton.fire("change");
                     });
                     var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
-                    this.caseListLookup = new caseListLookupViewModel($case_list_lookup_el, spec.state.short, this.shortScreen.saveButton);
+                    this.caseListLookup = new caseListLookupViewModel(
+                        $case_list_lookup_el,
+                        spec.state.short,
+                        spec.lang,
+                        this.shortScreen.saveButton
+                    );
                     // Set up case search
                     this.search = new searchViewModel(
                         spec.searchProperties || [],

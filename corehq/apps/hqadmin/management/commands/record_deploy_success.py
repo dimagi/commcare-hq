@@ -3,7 +3,6 @@ from datadog import api as datadog_api
 import requests
 from django.core.management import call_command
 from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
-from dimagi.utils import gitinfo
 from django.core.management.base import BaseCommand
 from corehq.apps.hqadmin.models import HqDeploy
 from datetime import datetime

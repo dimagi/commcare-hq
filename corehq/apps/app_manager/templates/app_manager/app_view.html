@@ -3,6 +3,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% new_static 'app_manager/js/commcaresettings.js' %}"></script>
     <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
@@ -86,7 +89,11 @@
                 $loading = $main.find(".hq-loading").remove(),
                 $loadingError = $main.find(".hq-loading-error").remove();
 
-            $('#demand-releases').on('show.bs.tab', function () {
+            $('#demand-releases').on('show.bs.tab', _.throttle(function (event) {
+                if (event && (event.metaKey || event.ctrlKey || event.which === 2)) {
+                    window.open("{% url 'release_manager' domain app.get_id %}", '_blank');
+                    return
+                }
                 if (state === "loading" || state === "loaded") {
                     return;
                 }
@@ -112,7 +119,7 @@
                     showSpinner = false;
                     $main.html($loadingError.html());
                 });
-            });
+            }, 300));
         });
 
     </script>
@@ -255,6 +262,16 @@
                 <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
                     {% crispy copy_app_form %}
                 </form>
+                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
+                    <h3>Export compressed application</h3>
+                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-arrow-down"></i>
+                            {% trans "Download" %}
+                        </button>
+                    </form>
+                {% endif %}
             </div>
         </div>
         <div class="tab-pane" id="delete">

@@ -180,6 +180,10 @@ class SiteCodeToLocationCache(BulkCacheBase):
         return super(SiteCodeToLocationCache, self).__init__(domain)
 
     def lookup(self, site_code):
+        """
+        Note that this can raise SQLLocation.DoesNotExist if the location with the
+        given site code is not found.
+        """
         return SQLLocation.objects.get(
             domain=self.domain,
             site_code=site_code
@@ -334,6 +338,26 @@ def create_or_update_groups(domain, group_specs, log):
     return group_memoizer
 
 
+def get_location_from_site_code(site_code, location_cache):
+    if isinstance(site_code, basestring):
+        site_code = site_code.lower()
+    elif isinstance(site_code, (int, long)):
+        site_code = str(site_code)
+    else:
+        raise UserUploadError(
+            _("Unexpected format received for site code '%(site_code)s'") %
+            {'site_code': site_code}
+        )
+
+    try:
+        return location_cache.get(site_code)
+    except SQLLocation.DoesNotExist:
+        raise UserUploadError(
+            _("Could not find organization with site code '%(site_code)s'") %
+            {'site_code': site_code}
+        )
+
+
 def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     custom_data_validator = UserFieldsView.get_validator(domain)
@@ -472,14 +496,23 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if is_active is not None:
                         user.is_active = is_active
 
+                    if can_access_locations:
+                        # Do this here so that we validate the location code before we
+                        # save any other information to the user, this way either all of
+                        # the user's information is updated, or none of it
+                        if location_code:
+                            loc = get_location_from_site_code(location_code, location_cache)
+                        else:
+                            loc = None
+
                     user.save()
-                    if can_access_locations and location_code:
-                        loc = location_cache.get(location_code)
+                    if can_access_locations and loc:
                         if user.location_id != loc.location_id:
                             # this triggers a second user save so
                             # we want to avoid doing it if it isn't
                             # needed
                             user.set_location(loc)
+
                     if is_password(password):
                         # Without this line, digest auth doesn't work.
                         # With this line, digest auth works.

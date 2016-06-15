@@ -2,9 +2,12 @@
 {% if error %}
     <h4>{% trans "There was an error processing your request" %}</h4>
     <div id="error_{{ download_id }}" class="alert alert-danger">
-        {{ error|unordered_list}}
+        <ul>
+            {{ error|unordered_list}}
+        </ul>
     </div>
-{% elif is_ready %}
+{% endif %}
+{% if is_ready %}
     <div id="ready_{{ download_id }}">
     {% if has_file %}
         <p class="lead">

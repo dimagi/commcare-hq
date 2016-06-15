@@ -9,7 +9,7 @@ from corehq.apps.userreports.sql import IndicatorSqlAdapter, metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
-from fluff.signals import get_migration_context, get_tables_to_rebuild
+from fluff.signals import get_migration_context, get_tables_to_rebuild, reformat_alembic_diffs
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
@@ -64,7 +64,8 @@ class ConfigurableReportTableManagerMixin(object):
             engine = connection_manager.get_engine(engine_id)
             with engine.begin() as connection:
                 migration_context = get_migration_context(connection, table_map.keys())
-                diffs = compare_metadata(migration_context, metadata)
+                raw_diffs = compare_metadata(migration_context, metadata)
+                diffs = reformat_alembic_diffs(raw_diffs)
 
             tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
             for table_name in tables_to_rebuild:
@@ -81,14 +82,17 @@ class ConfigurableReportTableManagerMixin(object):
                         # if no signs of it popping back up by april 2016, should remove this
                         rev_after_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
                         _notify_cory(
-                            u'rebuilt table {} ({}) because {}. rev before: {}, rev after: {}'.format(
+                            u'rebuilt table {} ({})'.format(
                                 table_name,
                                 u'{} [{}]'.format(sql_adapter.config.display_name, sql_adapter.config._id),
-                                diffs,
-                                rev_before_rebuild,
-                                rev_after_rebuild,
                             ),
-                            sql_adapter.config.to_json(),
+                            {
+                                'data_source': sql_adapter.config.to_json(),
+                                'table_diffs': diffs,
+                                'rev_before_rebuild': rev_before_rebuild,
+                                'rev_after_rebuild': rev_after_rebuild
+                            }
+
                         )
                 else:
                     self.rebuild_table(sql_adapter)

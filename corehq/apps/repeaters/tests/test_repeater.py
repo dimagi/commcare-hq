@@ -256,10 +256,12 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     def tearDownClass(cls):
         cls.domain.delete()
         cls.repeater.delete()
+        super(CaseRepeaterTest, cls).tearDownClass()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain_name)
         delete_all_repeat_records()
+        super(CaseRepeaterTest, self).tearDown()
 
     @run_with_all_backends
     def test_case_close_format(self):

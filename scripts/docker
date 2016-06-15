@@ -1,0 +1,192 @@
+#! /bin/bash
+# CommCare HQ docker helper
+
+function usage() {
+    case $1 in
+        test)
+            echo "Run tests"
+            echo ""
+            echo "test [OPTIONS]"
+            echo ""
+            echo "All OPTIONS are passed to the selected test runner."
+            echo ""
+            echo "Set TEST environment variable to select a test runner:"
+            echo "  TEST=python|python-sharded|javascript"
+            echo ""
+            echo "The default is python."
+            echo ""
+            ;;
+        bash)
+            echo "Run bash in web container"
+            echo ""
+            ;;
+        shell)
+            echo "Run Django shell in web container"
+            echo ""
+            ;;
+        services)
+            echo "Manage CommCare HQ docker services"
+            echo ""
+            echo "Start services with ports mapped to the docker host if no"
+            echo "other options are given. This command uses a different base"
+            echo "container name than other commands so the containers and"
+            echo "volumes it creates will not interfere with other commands."
+            echo ""
+            echo "$0 services [--bootstrap] [COMMAND]"
+            echo ""
+            echo "Options:"
+            echo ""
+            echo "  --bootstrap         Run Django web server on port 8000"
+            echo ""
+            echo "Commands:"
+            echo "    All docker-compose commands are supported."
+            echo ""
+            ;;
+        teardown)
+            echo "Remove all containers, images and volumes"
+            echo ""
+            ;;
+        *)
+            echo "Manage docker services for CommCare HQ"
+            echo ""
+            echo "$0 COMMAND [OPTIONS]"
+            echo "      -h --help"
+            echo "      test|services|teardown|bash|shell|help"
+            echo ""
+            echo "$0 help COMMAND"
+            echo ""
+            echo "All other commands are passed directly to docker-compose."
+            echo ""
+            echo "Examples:"
+            echo ""
+            echo "  # list test containers"
+            echo "  $0 ps"
+            echo ""
+            echo "  # list service containers"
+            echo "  $0 services ps"
+            echo ""
+            echo "  # run bash in riakcs service container"
+            echo "  $0 services exec riakcs bash"
+            echo ""
+            echo "  # run bash in bootstrapped web conatiner"
+            echo "  $0 services --bootstrap bash"
+            ;;
+    esac
+    exit
+}
+
+CMD=$1
+shift
+if [ "$CMD" == "services" ]; then
+    CMD=$1
+    shift
+    if [ "$CMD" == "--bootstrap" ]; then
+        SERVICES="bootstrap"
+        CMD=$1
+        shift
+        if [ -z "$CMD" ]; then
+            CMD="run --rm web"
+        fi
+    else
+        SERVICES="services"
+        if [ -z "$CMD" ]; then
+            CMD="up -d"
+        fi
+    fi
+
+    XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
+    if [ "$DOCKER_BETA" == "true" ]; then
+        DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
+    elif [ `uname` == 'Linux' ]; then
+        DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
+    else
+        DOCKER_DATA_HOME=/data
+    fi
+
+    if [ `uname` == 'Darwin' -a "$DOCKER_BETA" != "true" ]; then
+        docker-machine ssh $DOCKER_MACHINE_NAME sudo mkdir -p $DOCKER_DATA_HOME
+    else
+        mkdir -p $DOCKER_DATA_HOME
+    fi
+
+    export ES_CLUSTER_NAME="${ES_CLUSTER_NAME:-$(hostname)}"
+    export COMPOSE_FILE=docker/hq-compose-${SERVICES}.yml
+    export COMPOSE_PROJECT_NAME=hqservice
+    export VOLUME_PREFIX="$DOCKER_DATA_HOME/"
+else
+    export COMPOSE_FILE=docker/hq-compose.yml
+    export COMPOSE_PROJECT_NAME=hqtest
+    if [ -n "$TRAVIS_BUILD_DIR" ]; then
+        export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
+    else
+        export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
+    fi
+fi
+# export variables for compose file (they must be set or it complains)
+export JS_SETUP="${JS_SETUP:-no}"
+export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
+export REUSE_DB="$REUSE_DB"
+export TRAVIS="$TRAVIS"
+
+if [ "$TRAVIS" == "true" ]; then
+    # don't mount /mnt/commcare-hq-ro volume read-only on travis
+    # overwrite of localsettings.py, etc. doesn't matter here
+    export RO=""
+else
+    export RO=":ro"
+fi
+
+if [ "$DOCKER_BETA" == "true" ]; then
+    # Put elasticsearch (and other) data in a named data volume, automatically
+    # created by docker, instead of $DOCKER_DATA_HOME/elasticsearch.
+    # https://forums.docker.com/t/elasticsearch-1-7-0-fails-to-start-on-docker4mac-1-11-1-beta10/11692/3
+    # The commit that introduced this can be reverted when the issue is resolved.
+    export DATA_VOLUME_PREFIX=${COMPOSE_PROJECT_NAME}-
+else
+    export DATA_VOLUME_PREFIX=${VOLUME_PREFIX}
+fi
+
+case $CMD in
+    -h | --help | help | "")
+        if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
+            usage services
+        else
+            usage $@
+        fi
+        ;;
+    teardown)
+        TEARDOWN=yes
+        shift
+        CMD="down --rmi local -v"
+        ;;
+esac
+
+if [ "$CMD" == "test" ]; then
+    docker-compose run --rm web run_tests "${TEST:-python}" "$@"
+elif [ "$CMD" == "shell" ]; then
+    docker-compose run --rm web ./manage.py $CMD "$@"
+elif [ "$CMD" == "bash" ]; then
+    docker-compose run --rm web $CMD "$@"
+else
+    docker-compose $CMD "$@"
+    if [ "$TEARDOWN" == "yes" ]; then
+        if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
+            echo "THIS WILL DELETE ALL SERVICE DATA"
+            read -p "Delete volumes? [yN] " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                echo "Volumes not deleted."
+                exit
+            fi
+        fi
+        docker volume rm \
+            ${VOLUME_PREFIX}couchdb \
+            ${VOLUME_PREFIX}elasticsearch \
+            ${VOLUME_PREFIX}kafka \
+            ${VOLUME_PREFIX}lib \
+            ${VOLUME_PREFIX}postgresql \
+            ${VOLUME_PREFIX}redis \
+            ${VOLUME_PREFIX}riakcs \
+            ${VOLUME_PREFIX}zookeeper
+    fi
+fi

@@ -14,7 +14,7 @@ Initial setup
 * Bootstrap the setup:
 
     ```
-      $ ./dockerhq.sh bootstrap
+      $ ./scripts/docker services --bootstrap
     ```
     
     This will do the following:
@@ -41,16 +41,10 @@ There are two different localsettings configurations, depending on whether HQ is
 
   * Running HQ inside a docker container
 
-    Make your `localsettings.py` extend `dockersettings.py` and comment out / delete your current
-    settings for PostgreSQL, Redis, CouchDB, Elasticsearch
-    ```python
-    from docker.dockersettings import *
-    # DATABASES ..
-    ```
-    See `docker/localsettings_docker.py` for an example.
+    Do nothing; `docker/localsettings.py` will be used inside the container.
 
   * Running docker services only
-    * Copy the appropriate postgres/couch/elasticsearch/redis configurations from `dockersettings.py` to `localsettings.py`
+    * Copy the appropriate postgres/couch/elasticsearch/redis configurations from `docker/localsettings.py` to `localsettings.py`
     * Replace the `HOST` values in the configurations (e.g. `postgres`) with `localhost`
 
 
@@ -58,14 +52,14 @@ General usage
 -------------
 
 ```
-  $ ./dockerhq.sh --help
+  $ ./scripts/docker --help
 ```
 
 **The services (couch, postgres, elastic, redis, zookeeper, kafka)**
 ```
-  $ ./dockerhq.sh services start
-  $ ./dockerhq.sh services stop
-  $ ./dockerhq.sh services logs postgres
+  $ ./scripts/docker services  # start docker services
+  $ ./scripts/docker services stop
+  $ ./scripts/docker services logs postgres
 ```
 The following services are included. Their ports are mapped to the local host so you can connect to them
 directly.
@@ -76,24 +70,18 @@ directly.
 * Redis (6397)
 * Zookeeper (2181)
 * Kafka (9092)
+* Riak CS (9980)
 
 **Run the django server**
 
 Assumes that you have updated your localsettings as described above.
 
 ```
-  $ ./dockerhq.sh runserver
+  $ ./scripts/docker services --bootstrap
 ```
 
 Notes
 -----
-**rebuild**
-After changing any of the python requirements the `web` image will need to be rebuilt:
-
-```
-  $ ./dockerhq.sh rebuild
-```
-
 **copying old data**
 If you don't want to start fresh, Farid wrote up some notes on copying data from an old dev environment [here](https://gist.github.com/proteusvacuum/a3884ce8b65681ebaf95).
 
@@ -110,17 +98,20 @@ Travis also uses Docker to run the HQ test suite. To simulate the travis build y
 script:
 
 ```
-  $ .travis/simulate.sh -h
-  simulate.sh [javascript|python-catchall|python-group-0|python-sharded]
+  $ ./scripts/docker test
+  runs python tests
+
+  $ TEST=javascript ./scripts/docker test
+  runs the python sharded tests
+
+  $ TEST=python-sharded ./scripts/docker test
+  runs the javascript tests (see .travis.yml for more env variable options)
   
-  $ .travis/simulate.sh javascript
-  runs the javascript build matrix
+  $ ./scripts/docker test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
+  runs only the corehq.apps.app_manager.tests.test_suite.SuiteTest
   
-  $ .travis/simulate.sh python-catchall --override-test app_manager.SuiteTest
-  runs only the app_manager.SuiteTest using the python-catchall matrix setup
-  
-  $ .travis/simulate.sh python-catchall --override-command bash
-  drops you into a bash shell in the python-catchall matrix setup from where you can
+  $ ./scripts/docker bash
+  drops you into a bash shell in the docker web container from where you can
   run any other commands
   
 ```

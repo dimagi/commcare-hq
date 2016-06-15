@@ -450,7 +450,16 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
     @property
     def path(self):
+        # todo: this is inconsistent with couch Location.path in that it
+        # doesn't include its own ID. Should look into adding the ID
+        # and removing the `path_including_self` function below
         return list(reversed(self.lineage))
+
+    @property
+    def path_including_self(self):
+        _path = self.path
+        _path.append(self.location_id)
+        return _path
 
     @classmethod
     def by_location_id(cls, location_id):
