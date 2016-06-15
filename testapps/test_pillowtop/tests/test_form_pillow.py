@@ -90,6 +90,23 @@ class FormPillowTest(TestCase):
         self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertFalse(Application.get(self.app._id).has_submissions)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_two_forms_with_same_app(self):
+        """Ensures two forms submitted to the same app does not error"""
+        kafka_seq = self._get_kafka_seq()
+
+        self._make_form()
+
+        # confirm change made it to kafka
+        self.assertFalse(self.app.has_submissions)
+
+        self.pillow.process_changes(since=kafka_seq, forever=False)
+        self.assertTrue(Application.get(self.app._id).has_submissions)
+
+        self._make_form()
+        self.pillow.process_changes(since=kafka_seq, forever=False)
+        self.assertTrue(Application.get(self.app._id).has_submissions)
+
     def _make_form(self, build_id=None):
         metadata = TestFormMetadata(domain=self.domain)
         form_xml = get_simple_form_xml(uuid.uuid4().hex, metadata=metadata)
