@@ -1,8 +1,13 @@
 import copy
 import json
+import os
+import tempfile
+import zipfile
 from collections import defaultdict
 from StringIO import StringIO
+from wsgiref.util import FileWrapper
 
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
@@ -268,17 +273,28 @@ def app_source(request, domain, app_id):
 
 
 @require_can_edit_apps
-def copy_app_check_domain(request, domain, name, app_id):
-    app_copy = import_app_util(app_id, domain, {'name': name})
+def copy_app_check_domain(request, domain, name, app_id_or_source):
+    app_copy = import_app_util(app_id_or_source, domain, {'name': name})
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
 @require_can_edit_apps
 def copy_app(request, domain):
     app_id = request.POST.get('app')
-    form = CopyApplicationForm(app_id, request.POST)
+    form = CopyApplicationForm(
+        app_id, request.POST, export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
+    )
     if form.is_valid():
-        return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'], app_id)
+        gzip = request.FILES.get('gzip')
+        if gzip:
+            with zipfile.ZipFile(gzip, 'r', zipfile.ZIP_DEFLATED) as z:
+                source = z.read(z.filelist[0].filename)
+            app_id_or_source = source
+        else:
+            app_id_or_source = app_id
+
+        return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'],
+                                     app_id_or_source)
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
@@ -302,6 +318,24 @@ def app_from_template(request, domain, slug):
     except (ModuleNotFoundException, FormNotFoundException):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
     return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
+
+
+@require_can_edit_apps
+def export_gzip(req, domain, app_id):
+    app_json = get_app(domain, app_id)
+    fd, fpath = tempfile.mkstemp()
+    with os.fdopen(fd, 'w') as tmp:
+        with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr('application.json', app_json.export_json())
+
+    wrapper = FileWrapper(open(fpath))
+    response = HttpResponse(wrapper, content_type='application/zip')
+    response['Content-Length'] = os.path.getsize(fpath)
+    app = Application.get(app_id)
+    set_file_download(response, '{domain}-{app_name}-{app_version}.zip'.format(
+        app_name=slugify(app.name), app_version=slugify(unicode(app.version)), domain=domain
+    ))
+    return response
 
 
 @require_can_edit_apps
