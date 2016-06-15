@@ -245,11 +245,11 @@ def get_tz_mins(tz_str):
     """
     Return the timezone offset in minutes
 
-    >>> def get_tz_mins('Z')
+    >>> get_tz_mins('Z')
     0
-    >>> def get_tz_mins('-05')
+    >>> get_tz_mins('-05')
     -300
-    >>> def get_tz_mins('+0530')
+    >>> get_tz_mins('+0530')
     330
 
     """
@@ -266,15 +266,13 @@ def get_tz_mins(tz_str):
 
 def oc_format_time(time_str, to_timezone, date_=None):
     """
-    Format time strings for OpenClinica
-
-    .. NOTE:: This uses 1900-01-01 as `date_` if no date is given. This can have implications for daylight savings.
+    Format time strings for OpenClinica.
 
     >>> from pytz import timezone
     >>> oc_format_time('13:11:12.000Z', timezone('US/Eastern'))
-    '10:11'
+    '08:11'
     >>> oc_format_time('15:11:12.000+02', timezone('US/Eastern'))
-    '10:11'
+    '08:11'
 
     """
     match = re.match(r'^\d{2}:\d{2}:\d{2}.\d+([\+-]\d+|Z)$', time_str)
@@ -285,7 +283,7 @@ def oc_format_time(time_str, to_timezone, date_=None):
 
     time_ = strptime(time_str, '%H:%M:%S.%f{}'.format(tz_str))
     if date_ is None:
-        year, month, day = time_.tm_year, time_.tm_mon, time_.tm_mday  # Defaults to 1900-01-01
+        year, month, day = 2000, 1, 1
     else:
         year, month, day = date_.year, date_.month, date_.day
     datetime_ = datetime(

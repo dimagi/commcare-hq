@@ -1,5 +1,7 @@
-from django.test import TestCase
+import doctest
+from django.test import TestCase, SimpleTestCase
 from custom.openclinica.models import StudySettings, OpenClinicaSettings
+import custom.openclinica.utils
 from custom.openclinica.utils import get_study_metadata_string
 
 DOMAIN = 'test-domain'
@@ -33,3 +35,10 @@ class UtilsTests(TestCase):
     def test_get_metadata_from_settings(self):
         metadata = get_study_metadata_string(DOMAIN)
         self.assertEqual(metadata, TEST_METADATA)
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(custom.openclinica.utils)  # Dumps errors to stderr
+        self.assertEqual(results.failed, 0)  # results.failed counts both failures and errors
