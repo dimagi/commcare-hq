@@ -13,6 +13,7 @@ SMS = 'sms'
 LEDGER = 'ledger'
 COMMCARE_USER = 'commcare-user'
 GROUP = 'group'
+WEB_USER = 'web-user'
 
 
 ALL = (
@@ -26,6 +27,7 @@ ALL = (
     LEDGER,
     META,
     SMS,
+    WEB_USER,
 )
 
 
