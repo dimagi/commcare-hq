@@ -1,10 +1,8 @@
 import logging
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.exceptions import ObjectDoesNotExist
-from casexml.apps.stock.consumption import ConsumptionHelper
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.analytics.couchaccessors import get_ledger_values_for_case_as_of
-from dimagi.ext import jsonobject
+from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -19,7 +17,8 @@ from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from casexml.apps.stock.models import StockReport
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from couchforms.models import XFormInstance
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, \
+    get_consumption_helper_from_ledger_value, StockLedgerValueWrapper
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
@@ -46,76 +45,6 @@ def _location_map(location_ids):
                             location_id__in=location_ids)
                     .prefetch_related('location_type'))
     }
-
-
-class StockLedgerValueWrapper(jsonobject.JsonObject):
-    domain = jsonobject.StringProperty()
-    case_id = jsonobject.StringProperty()
-    section_id = jsonobject.StringProperty()
-    entry_id = jsonobject.StringProperty()
-    balance = jsonobject.DecimalProperty()  # todo: should this be an int?
-    last_modified = jsonobject.DateTimeProperty()
-    last_modified_form_id = jsonobject.StringProperty()
-    daily_consumption = jsonobject.FloatProperty()
-    location_id = jsonobject.StringProperty()
-
-    _sql_product = None
-    _sql_location = None
-
-    def __init__(self, _obj=None, sql_product=None, sql_location=None, *args, **kwargs):
-        self._sql_product = sql_product
-        self._sql_location = sql_location
-        super(StockLedgerValueWrapper, self).__init__(_obj, *args, **kwargs)
-
-    @property
-    def sql_product(self):
-        if self.entry_id and not self._sql_product:
-            try:
-                self._sql_product = SQLProduct.objects.get(domain=self.domain, product_id=self.entry_id)
-            except ObjectDoesNotExist:
-                # todo: cache this result so multiple failing calls don't keep hitting the DB
-                return None
-
-        return self._sql_product
-
-    @property
-    def sql_location(self):
-        if self.location_id and not self._sql_location:
-            try:
-                self._sql_location = SQLLocation.objects.get(domain=self.domain, location_id=self.location_id)
-            except ObjectDoesNotExist:
-                # todo: cache this result so multiple failing calls don't keep hitting the DB
-                return None
-
-        return self._sql_location
-
-    @classmethod
-    def from_stock_state(cls, stock_state):
-        return cls(
-            case_id=stock_state.case_id,
-            section_id=stock_state.section_id,
-            entry_id=stock_state.product_id,
-            balance=stock_state.stock_on_hand,
-            last_modified=stock_state.last_modified_date,
-            last_modified_form_id=stock_state.last_modified_form_id,
-            daily_consumption=stock_state.daily_consumption,
-            location_id=stock_state.sql_location.location_id if stock_state.sql_location else None,
-            sql_location=stock_state.sql_location,
-            sql_product=stock_state.sql_product,
-        )
-
-
-def get_consumption_helper_from_ledger_value(domain, ledger_value):
-    assert isinstance(ledger_value, StockLedgerValueWrapper)
-    return ConsumptionHelper(
-        domain=domain,
-        case_id=ledger_value.case_id,
-        section_id=ledger_value.section_id,
-        entry_id=ledger_value.entry_id,
-        daily_consumption=ledger_value.daily_consumption,
-        balance=ledger_value.balance,
-        sql_location=ledger_value.sql_location,
-    )
 
 
 def geopoint(location):
