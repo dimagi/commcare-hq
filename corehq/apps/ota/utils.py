@@ -76,6 +76,7 @@ def demo_restore_date_created(commcare_user):
     """
     Returns date of last restore for the demo commcare user
     """
-    restore = DemoUserRestore.objects.get(id=commcare_user.demo_restore_id)
-    if restore:
-        return restore.timestamp_created
+    if commcare_user.is_demo_user:
+        restore = DemoUserRestore.objects.get(id=commcare_user.demo_restore_id)
+        if restore:
+            return restore.timestamp_created
