@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.form_processor.change_publishers import publish_ledger_v1_saved
@@ -12,9 +11,8 @@ from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import get_case_updates
 from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
-from casexml.apps.stock.models import StockReport, DocDomainMapping
+from casexml.apps.stock.models import DocDomainMapping
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from couchexport.models import register_column_type, ComplexExportColumn
 from couchforms.signals import xform_archived, xform_unarchived
@@ -26,7 +24,6 @@ from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.util.quickcache import quickcache
 from . import const
 from .const import StockActions, RequisitionActions, DAYS_IN_MONTH
