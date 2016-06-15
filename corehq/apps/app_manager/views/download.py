@@ -234,9 +234,16 @@ def download_file(request, domain, app_id, path):
                 payload = request.app.fetch_attachment(full_path)
             except ResourceNotFound:
                 if build_profile in request.app.build_profiles and build_profile_access:
-                    request.app.create_build_files(save=True, build_profile_id=build_profile)
-                    request.app.save()
-                    payload = request.app.fetch_attachment(full_path)
+                    try:
+                        # look for file guaranteed to exist if profile is created
+                        request.app.fetch_attachment('files/{id}/profile.xml')
+                    except ResourceNotFound:
+                        request.app.create_build_files(save=True, build_profile_id=build_profile)
+                        request.app.save()
+                        payload = request.app.fetch_attachment(full_path)
+                    else:
+                        # if profile.xml is found the profile has been built and its a bad request
+                        raise
                 else:
                     raise
             if type(payload) is unicode:
