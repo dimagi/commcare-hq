@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - hqDefine-accounting  # danny 6/7
   - hqDefine-users  # danny 6/7
   - demo-user # sravan 6/3
   - vellum-staging # J$ 11/13
