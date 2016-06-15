@@ -621,8 +621,6 @@ def iter_index_files(app, build_profile_id=None):
     errors = []
 
     def _get_name(f):
-        if build_profile_id:
-            f = f.replace(build_profile_id + '/', '')
         return {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
 
     def _encode_if_unicode(s):
@@ -630,6 +628,8 @@ def iter_index_files(app, build_profile_id=None):
 
     def _files(files):
         for name, f in files:
+            if build_profile_id:
+                name = name.replace(build_profile_id + '/', '')
             if name not in skip_files:
                 # TODO: make RemoteApp.create_all_files not return media files
                 extension = os.path.splitext(name)[1]

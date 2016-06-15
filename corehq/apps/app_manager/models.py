@@ -4715,6 +4715,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 user.save()
         copy.is_released = False
 
+        if not copy.is_remote_app():
+            copy.update_mm_map()
+
         return copy
 
     def delete_app(self):
@@ -4745,11 +4748,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             for lang in self.langs:
                 self.media_language_map[lang] = MediaList()
-            for form in self.get_forms(bare=False):
-                xml = XForm(form['form'].source)
+            for form in self.get_forms():
+                xml = form.wrapped_xform()
                 for lang in self.langs:
                     media = []
-                    for path in xml.all_references(lang):
+                    for path in xml.all_media_references(lang):
                         if path is not None:
                             media.append(path)
                             map_item = self.multimedia_map.get(path)
@@ -5074,7 +5077,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
-        locale = self.langs[0] if not build_profile_id else self.build_profiles[build_profile_id].langs[0]
+        locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5251,6 +5254,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for i,lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
+        for profile in self.build_profiles:
+            for i, lang in enumerate(profile.langs):
+                if lang == old_lang:
+                    profile.langs[i] = new_lang
         for module in self.get_modules():
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
@@ -5574,8 +5581,11 @@ class RemoteApp(ApplicationBase):
 
     def get_build_langs(self):
         if self.build_profiles:
-            # return first profile, generated as part of lazy migration
-            return self.build_profiles[self.build_profiles.keys()[0]].langs
+            if len(self.build_profiles.keys()) > 1:
+                raise AppEditingError('More than one app profile for a remote app')
+            else:
+                # return first profile, generated as part of lazy migration
+                return self.build_profiles[self.build_profiles.keys()[0]].langs
         else:
             return self.langs
 
