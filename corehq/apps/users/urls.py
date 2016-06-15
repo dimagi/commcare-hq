@@ -10,7 +10,7 @@ from .views.mobile.users import (
     UploadCommCareUsers, EditCommCareUserView,
     ConfirmBillingAccountForExtraUsersView, UserUploadStatusView,
     CommCareUserSelfRegistrationView, MobileWorkerListView,
-    CreateCommCareUserModal, DemoRestoretatusView
+    CreateCommCareUserModal, DemoRestoreStatusView
 )
 
 
@@ -63,8 +63,8 @@ patterns("corehq.apps.users.views.mobile.users",
     url(r'^commcare/reset_demo_user_restore/(?P<user_id>[ \w-]+)/$', 'reset_demo_user_restore',
         name='reset_demo_user_restore'),
     url(r'^commcare/demo_restore/status/(?P<download_id>[0-9a-fA-Z]{25,32})/(?P<user_id>[ \w-]+)/$',
-        DemoRestoretatusView.as_view(),
-        name=DemoRestoretatusView.urlname),
+        DemoRestoreStatusView.as_view(),
+        name=DemoRestoreStatusView.urlname),
     url(r'^commcare/demo_restore/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$', 'demo_restore_job_poll',
         name='demo_restore_job_poll'),
     url(r'^commcare/upload/$', UploadCommCareUsers.as_view(), name=UploadCommCareUsers.urlname),

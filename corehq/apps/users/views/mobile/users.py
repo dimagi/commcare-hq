@@ -394,7 +394,7 @@ def toggle_demo_mode(request, domain, user_id):
         download.set_task(res)
         return HttpResponseRedirect(
             reverse(
-                DemoRestoretatusView.urlname,
+                DemoRestoreStatusView.urlname,
                 args=[domain, download.download_id, user_id]
             )
         )
@@ -418,16 +418,16 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
         }]
 
 
-class DemoRestoretatusView(BaseManageCommCareUserView):
+class DemoRestoreStatusView(BaseManageCommCareUserView):
     urlname = 'demo_restore_status'
     page_title = ugettext_noop('Demo User Status')
 
     @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
-        return super(DemoRestoretatusView, self).dispatch(request, *args, **kwargs)
+        return super(DemoRestoreStatusView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        context = super(DemoRestoretatusView, self).main_context
+        context = super(DemoRestoreStatusView, self).main_context
         context.update({
             'domain': self.domain,
             'download_id': kwargs['download_id'],
@@ -475,7 +475,7 @@ def reset_demo_user_restore(request, domain, user_id):
 
     return HttpResponseRedirect(
         reverse(
-            DemoRestoretatusView.urlname,
+            DemoRestoreStatusView.urlname,
             args=[domain, download.download_id, user_id]
         )
     )
