@@ -1,6 +1,8 @@
 import logging
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports.analytics.couchaccessors import get_ledger_values_for_case_as_of
+from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -12,10 +14,11 @@ from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
 from dateutil import parser
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
-from casexml.apps.stock.models import StockTransaction, StockReport
-from casexml.apps.stock.utils import months_of_stock_remaining, stock_category, state_stock_category
+from casexml.apps.stock.models import StockReport
+from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from couchforms.models import XFormInstance
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, \
+    get_consumption_helper_from_ledger_value
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
@@ -58,6 +61,11 @@ class CommtrackDataSourceMixin(object):
 
     @property
     @memoized
+    def project(self):
+        return Domain.get_by_name(self.domain)
+
+    @property
+    @memoized
     def active_location(self):
         return Location.get_in_domain(self.domain, self.config.get('location_id'))
 
@@ -74,6 +82,14 @@ class CommtrackDataSourceMixin(object):
         prog_id = self.config.get('program_id')
         if prog_id != '':
             return prog_id
+
+    @property
+    @memoized
+    def product_ids(self):
+        if self.program_id:
+            return SQLProduct.objects\
+                .filter(domain=self.domain, program_id=self.program_id)\
+                .values_list('product_id', flat=True)
 
     @property
     def start_date(self):
@@ -151,14 +167,6 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
 
 class SimplifiedInventoryDataSourceNew(SimplifiedInventoryDataSource):
-
-    @property
-    @memoized
-    def product_ids(self):
-        if self.program_id:
-            return SQLProduct.objects\
-                .filter(domain=self.domain, program_id=self.program_id)\
-                .values_list('product_id', flat=True)
 
     def get_data(self):
         from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
@@ -268,8 +276,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def slugs(self):
         return self._slug_attrib_map.keys()
 
-    def get_data(self):
-        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
+    def _get_stock_states(self, sp_ids):
 
         stock_states = StockState.objects.filter(
             section_id=STOCK_SECTION_TYPE,
@@ -282,36 +289,47 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             stock_states = stock_states.filter(
                 case_id=sp_ids[0],
             )
-
-            return self.leaf_node_data(stock_states)
         else:
             stock_states = stock_states.filter(
                 case_id__in=sp_ids,
             )
 
+        return stock_states
+
+    def get_data(self):
+        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
+        if len(sp_ids) == 1:
+            return self.leaf_node_data(sp_ids[0])
+        else:
+            stock_states = self._get_stock_states(sp_ids)
             if self.config.get('aggregate'):
                 return self.aggregated_data(stock_states)
             else:
                 return self.raw_product_states(stock_states)
 
-    def leaf_node_data(self, stock_states):
-        for state in stock_states:
-            product = Product.get(state.product_id)
-
+    def leaf_node_data(self, supply_point_id):
+        ledger_values = get_wrapped_ledger_values(
+            self.domain,
+            [supply_point_id],
+            section_id=STOCK_SECTION_TYPE,
+            entry_ids=self.product_ids
+        )
+        for ledger_value in ledger_values:
             result = {
-                'product_id': product._id,
-                'product_name': product.name,
-                'current_stock': format_decimal(state.stock_on_hand),
+                'product_id': ledger_value.sql_product.product_id,
+                'product_name': ledger_value.sql_product.name,
+                'current_stock': format_decimal(ledger_value.balance),
             }
 
             if self._include_advanced_data():
+                consumption_helper = get_consumption_helper_from_ledger_value(self.project, ledger_value)
                 result.update({
-                    'location_id': SupplyPointCase.get(state.case_id).location_id,
+                    'location_id': ledger_value.location_id,
                     'location_lineage': None,
-                    'category': state.stock_category,
-                    'consumption': state.get_monthly_consumption(),
-                    'months_remaining': state.months_remaining,
-                    'resupply_quantity_needed': state.resupply_quantity_needed
+                    'category': consumption_helper.get_stock_category(),
+                    'consumption': consumption_helper.get_monthly_consumption(),
+                    'months_remaining': consumption_helper.get_months_remaining(),
+                    'resupply_quantity_needed': consumption_helper.get_resupply_quantity_needed()
                 })
 
             yield result
@@ -365,7 +383,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         'current_stock': format_decimal(state.stock_on_hand),
                         'count': 1,
                         'consumption': consumption,
-                        'category': state_stock_category(state),
+                        'category': state.stock_category,
                         'months_remaining': months_of_stock_remaining(
                             state.stock_on_hand,
                             _convert_to_daily(consumption)

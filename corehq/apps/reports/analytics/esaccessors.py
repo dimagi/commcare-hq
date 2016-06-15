@@ -1,7 +1,7 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
-from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations
+from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations, LedgerES
 from corehq.apps.es.aggregations import (
     TermsAggregation,
     ExtendedStatsAggregation,
@@ -511,3 +511,13 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
     user_submissions = submissions.get(user_id, None)
     if user_submissions:
         return user_submissions[0]['form']['meta'].get('username', None)
+
+
+def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None):
+    # todo: figure out why this causes circular import
+    from corehq.apps.reports.commtrack.util import StockLedgerValueWrapper
+    query = LedgerES().domain(domain).section(section_id).case(case_ids)
+    if entry_ids:
+        query = query.entry(entry_ids)
+
+    return [StockLedgerValueWrapper.wrap(row) for row in query.run().hits]
