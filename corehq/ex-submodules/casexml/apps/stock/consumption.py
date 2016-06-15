@@ -6,11 +6,15 @@ from corehq.apps.consumption.const import DAYS_IN_MONTH
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
+from dimagi.utils.decorators.memoized import memoized
 
 DEFAULT_CONSUMPTION_FUNCTION = lambda case_id, product_id: None
 
 
 class ConsumptionHelper(object):
+    """
+    Helper object for dealing with consumption at the individual domain/case/entry level
+    """
 
     def __init__(self, domain, case_id, section_id, entry_id, daily_consumption, balance):
         self.domain = domain
@@ -25,6 +29,7 @@ class ConsumptionHelper(object):
             self.domain, self.case_id, self.entry_id
         )
 
+    @memoized
     def get_daily_consumption(self):
         if self.daily_consumption is not None:
             return self.daily_consumption
