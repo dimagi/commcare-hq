@@ -1,4 +1,5 @@
 #! /bin/bash
+# This script runs inside the web container
 set -e
 
 if [ -z "$1" ]; then
