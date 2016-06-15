@@ -7,9 +7,8 @@ import operator
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.userreports.models import ReportConfiguration, StaticReportConfiguration
+from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.util.couch import get_document_or_not_found
 from dimagi.utils.dates import DateSpan
 
 
