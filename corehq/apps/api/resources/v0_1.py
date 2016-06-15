@@ -32,7 +32,10 @@ from couchforms.models import XFormInstance
 from corehq.apps.domain.decorators import (
     digest_auth,
     basic_auth,
-    api_key_auth)
+    api_key_auth,
+    login_or_digest,
+    login_or_basic,
+    login_or_api_key)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
@@ -68,18 +71,28 @@ def api_auth(view_func):
 
 class LoginAndDomainAuthentication(Authentication):
 
+    def __init__(self, allow_internal=False, *args, **kwargs):
+        super(LoginAndDomainAuthentication, self).__init__(*args, **kwargs)
+        if allow_internal:
+            self.decorator_map = {
+                'digest': login_or_digest,
+                'basic': login_or_basic,
+                'api_key': login_or_api_key,
+            }
+        else:
+            self.decorator_map = {
+                'digest': digest_auth,
+                'basic': basic_auth,
+                'api_key': api_key_auth,
+            }
+
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[self._get_auth_decorator(request), api_auth], **kwargs)
 
     def _get_auth_decorator(self, request):
-        decorator_map = {
-            'digest': digest_auth,
-            'basic': basic_auth,
-            'api_key': api_key_auth,
-        }
         # the initial digest request doesn't have any authorization, so default to
         # digest in order to send back
-        return decorator_map[determine_authtype_from_header(request, default='digest')]
+        return self.decorator_map[determine_authtype_from_header(request, default='digest')]
 
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'
