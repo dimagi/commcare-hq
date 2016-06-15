@@ -268,8 +268,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def slugs(self):
         return self._slug_attrib_map.keys()
 
-    def get_data(self):
-        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
+    def _get_stock_states(self, sp_ids):
 
         stock_states = StockState.objects.filter(
             section_id=STOCK_SECTION_TYPE,
@@ -282,13 +281,20 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             stock_states = stock_states.filter(
                 case_id=sp_ids[0],
             )
-
-            return self.leaf_node_data(stock_states)
         else:
             stock_states = stock_states.filter(
                 case_id__in=sp_ids,
             )
 
+        return stock_states
+
+    def get_data(self):
+        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
+        stock_states = self._get_stock_states(sp_ids)
+
+        if len(sp_ids) == 1:
+            return self.leaf_node_data(stock_states)
+        else:
             if self.config.get('aggregate'):
                 return self.aggregated_data(stock_states)
             else:
