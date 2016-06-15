@@ -18,7 +18,7 @@ from casexml.apps.stock.models import StockReport
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, \
-    get_consumption_helper_from_ledger_value, StockLedgerValueWrapper
+    get_consumption_helper_from_ledger_value
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
@@ -308,8 +308,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 return self.raw_product_states(stock_states)
 
     def leaf_node_data(self, supply_point_id):
-        stock_states = self._get_stock_states([supply_point_id])
-        ledger_values = [StockLedgerValueWrapper.from_stock_state(state) for state in stock_states]
+        ledger_values = get_wrapped_ledger_values(
+            self.domain,
+            [supply_point_id],
+            section_id=STOCK_SECTION_TYPE,
+            entry_ids=self.product_ids
+        )
         for ledger_value in ledger_values:
             result = {
                 'product_id': ledger_value.sql_product.product_id,
