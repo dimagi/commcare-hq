@@ -2,7 +2,7 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.analytics.couchaccessors import get_ledger_values_for_case_as_of
-from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
+from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values, get_aggregated_ledger_values
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -405,17 +405,22 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             # Note: this leaves out some harder to get quickly
             # values like location_id, but shouldn't be needed
             # unless we expand what uses this.
-            stock_states = self._get_stock_states(supply_point_ids)
-            aggregated_states = stock_states.values_list(
-                'sql_product__name',
-                'sql_product__product_id',
-            ).annotate(stock_on_hand=Sum('stock_on_hand'))
+            aggregated_ledger_values = get_aggregated_ledger_values(
+                domain=self.domain,
+                case_ids=supply_point_ids,
+                section_id=STOCK_SECTION_TYPE,
+                entry_ids=self.product_ids
+            )
+
+            product_name_map = dict(SQLProduct.objects.filter(
+                domain=self.domain,
+            ).values_list('product_id', 'name'))
             result = []
-            for ag in aggregated_states:
+            for ag in aggregated_ledger_values:
                 result.append({
-                    'product_name': ag[0],
-                    'product_id': ag[1],
-                    'current_stock': format_decimal(ag[2])
+                    'product_name': product_name_map.get(ag.entry_id),
+                    'product_id': ag.entry_id,
+                    'current_stock': format_decimal(Decimal(ag.balance))
                 })
 
             return result
