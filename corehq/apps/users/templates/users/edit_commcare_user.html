@@ -184,29 +184,13 @@
             {% if request|toggle_enabled:"MOBILE_USER_DEMO_MODE" or couch_user.is_demo_user %}
             <div class="alert alert-info">
                 <p>
-                    <i class="icon-question-sign"></i>
+                    <i class="fa fa-info-circle"></i>
                     {% if couch_user.is_demo_user %}
                         {% trans "Turn off demo mode to allow this mobile worker to start sending data to CommCareHQ again." %}
                     {% else %}
                         {% trans "This will mark the mobile worker as a demo user and CommCareHQ will ignore future form submissions from the user." %}
                     {% endif %}
                 </p>
-                {% if couch_user.is_demo_user %}
-                <form class="form form-horizontal"
-                      action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
-                      method="post">
-                      {% csrf_token %}
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-default">
-                            <i class="icon-refresh"></i>
-                            {% trans 'Refresh Demo Mode data' %}
-                        </button>
-                        {% blocktrans with when=demo_restore_date %}
-                            <span> Last refreshed {{ when }}</span>
-                        {% endblocktrans %}
-                    </div>
-                </form>
-                {% endif %}
                 <form class="form form-horizontal"
                       action="{% url "toggle_demo_mode" domain couch_user.user_id %}"
                       method="post">
@@ -223,6 +207,22 @@
                         </button>
                     </div>
                 </form>
+                {% if couch_user.is_demo_user %}
+                <form class="form form-horizontal"
+                      action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
+                      method="post">
+                      {% csrf_token %}
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-default">
+                            <i class="icon-refresh"></i>
+                            {% trans 'Refresh Demo Mode data' %}
+                        </button>
+                        {% blocktrans with when=demo_restore_date %}
+                            <span> Last refreshed {{ when }}</span>
+                        {% endblocktrans %}
+                    </div>
+                </form>
+                {% endif %}
             </div>
             {% endif %}
         </div>

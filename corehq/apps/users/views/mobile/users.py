@@ -392,13 +392,72 @@ def toggle_demo_mode(request, domain, user_id):
         download = DownloadBase()
         res = turn_on_demo_mode_task.delay(user, domain)
         download.set_task(res)
-        response = redirect('hq_soil_download', domain, download.download_id)
-        response['Location'] += '?next=%s' % (edit_user_url)
-        return response
+        return HttpResponseRedirect(
+            reverse(
+                DemoRestoretatusView.urlname,
+                args=[domain, download.download_id, user_id]
+            )
+        )
     else:
         turn_off_demo_mode(user)
         messages.success(request, _("Successfully turned off demo mode!"))
     return HttpResponseRedirect(edit_user_url)
+
+
+class BaseManageCommCareUserView(BaseUserSettingsView):
+
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseManageCommCareUserView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': MobileWorkerListView.page_title,
+            'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
+        }]
+
+
+class DemoRestoretatusView(BaseManageCommCareUserView):
+    urlname = 'demo_restore_status'
+    page_title = ugettext_noop('Demo User Status')
+
+    @use_bootstrap3
+    def dispatch(self, request, *args, **kwargs):
+        return super(DemoRestoretatusView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        context = super(DemoRestoretatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('demo_restore_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Demo User status"),
+            'progress_text': _("Getting latest restore data, please wait"),
+            'error_text': _("There was an unexpected error! Please try again or report an issue."),
+            'next_url': reverse(EditCommCareUserView.urlname, args=[self.domain, kwargs['user_id']]),
+            'next_url_text': _("Go back to Edit Mobile Worker"),
+        })
+        return render(request, 'style/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+@require_can_edit_commcare_users
+def demo_restore_job_poll(request, domain, download_id, template="users/mobile/partials/demo_restore_status.html"):
+
+    try:
+        context = get_download_context(download_id, check_state=True)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
+    context.update({
+        'on_complete_short': _('Done'),
+        'on_complete_long': _('User is now in Demo mode with latest restore!'),
+
+    })
+    return render(request, template, context)
 
 
 @require_can_edit_commcare_users
@@ -414,9 +473,12 @@ def reset_demo_user_restore(request, domain, user_id):
     res = reset_demo_user_restore_task.delay(user, domain)
     download.set_task(res)
 
-    response = redirect('hq_soil_download', domain, download.download_id)
-    response['Location'] += '?next=%s' % (reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
-    return response
+    return HttpResponseRedirect(
+        reverse(
+            DemoRestoretatusView.urlname,
+            args=[domain, download.download_id, user_id]
+        )
+    )
 
 
 @require_can_edit_commcare_users
@@ -449,20 +511,6 @@ def update_user_data(request, domain, couch_user_id):
         user.save()
     messages.success(request, "User data updated!")
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
-
-
-class BaseManageCommCareUserView(BaseUserSettingsView):
-
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseManageCommCareUserView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def parent_pages(self):
-        return [{
-            'title': MobileWorkerListView.page_title,
-            'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
-        }]
 
 
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
