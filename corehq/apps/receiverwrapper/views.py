@@ -23,6 +23,7 @@ from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
 from corehq.util.datadog.utils import count_by_response_code, log_counter
+from corehq.util.soft_assert import soft_assert
 import couchforms
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -211,6 +212,9 @@ def secure_post(request, domain, app_id=None):
 
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
+        _assert = soft_assert('{}@{}'.format('sreddy+logs', 'dimagi.com'))
+        # todo - remove softassert before putting on prod
+        _assert(False, "Ignored submission at {url}".format(url=request.path))
         return SubmissionPost.submission_ignored_response()
 
     try:
