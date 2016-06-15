@@ -10,7 +10,6 @@ from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.decorators.memoized import memoized
-from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from PIL import Image

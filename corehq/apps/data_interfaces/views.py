@@ -11,7 +11,6 @@ from corehq.apps.app_manager.util import all_case_properties_by_domain
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader
@@ -30,12 +29,14 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
-from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
-                                                    require_can_edit_data)
+from corehq.apps.data_interfaces.dispatcher import (
+    EditDataInterfaceDispatcher,
+    require_can_edit_data,
+)
 from corehq.apps.style.decorators import use_bootstrap3, use_typeahead, use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
-from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
+from .interfaces import FormManagementMode, BulkFormManagementInterface
 from django.db import transaction
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
