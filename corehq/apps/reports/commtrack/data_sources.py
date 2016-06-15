@@ -334,6 +334,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             yield result
 
     def aggregated_data(self, supply_point_ids):
+
         def _convert_to_daily(consumption):
             return consumption / 30 if consumption is not None else None
 
@@ -341,7 +342,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         if self._include_advanced_data():
             product_aggregation = {}
             for state in stock_states:
-                if state.product_id in product_aggregation:
+                if state.entry_id in product_aggregation:
                     product = product_aggregation[state.product_id]
                     product['current_stock'] = format_decimal(
                         product['current_stock'] + state.stock_on_hand
