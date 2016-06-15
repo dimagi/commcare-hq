@@ -113,7 +113,9 @@
                     {% trans "Display results in case list" %}
                 </label>
                 <div class="col-sm-4 checkbox">
-                    <input type="checkbox" data-bind="checked: lookup_display_results"/>
+                    <label>
+                         <input type="checkbox" data-bind="checked: lookup_display_results"/>
+                    </label>
                 </div>
             </div>
             <div data-bind="visible: lookup_display_results">
