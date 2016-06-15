@@ -310,7 +310,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             if self._include_advanced_data():
                 result.update({
-                    'location_id': SupplyPointCase.get(state.case_id).location_id,
+                    'location_id': state.sql_location.location_id if state.sql_location else '',
                     'location_lineage': None,
                     'category': state.stock_category,
                     'consumption': state.get_monthly_consumption(),
