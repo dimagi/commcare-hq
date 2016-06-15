@@ -444,22 +444,10 @@ class StockState(models.Model):
         return Domain.get_by_name(self.domain)
 
     def get_daily_consumption(self):
-        if self.daily_consumption is not None:
-            return self.daily_consumption
-        else:
-            monthly = self._get_default_monthly_consumption()
-            if monthly is not None:
-                return Decimal(monthly) / Decimal(DAYS_IN_MONTH)
+        return self.consumption_helper.get_daily_consumption()
 
     def get_monthly_consumption(self):
-
-        if self.daily_consumption is not None:
-            return self.daily_consumption * Decimal(DAYS_IN_MONTH)
-        else:
-            return self._get_default_monthly_consumption()
-
-    def _get_default_monthly_consumption(self):
-        return self.consumption_helper.get_default_monthly_consumption()
+        return self.consumption_helper.get_monthly_consumption()
 
     def to_json(self):
         from corehq.form_processor.serializers import StockStateSerializer

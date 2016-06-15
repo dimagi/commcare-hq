@@ -1,5 +1,6 @@
 import json
 from decimal import Decimal
+from corehq.apps.consumption.const import DAYS_IN_MONTH
 
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
@@ -22,6 +23,20 @@ class ConsumptionHelper(object):
         return get_default_monthly_consumption_for_case_and_entry(
             self.domain, self.case_id, self.entry_id
         )
+
+    def get_daily_consumption(self):
+        if self.daily_consumption is not None:
+            return self.daily_consumption
+        else:
+            monthly = self.get_default_monthly_consumption()
+            if monthly is not None:
+                return Decimal(monthly) / Decimal(DAYS_IN_MONTH)
+
+    def get_monthly_consumption(self):
+        if self.daily_consumption is not None:
+            return self.daily_consumption * Decimal(DAYS_IN_MONTH)
+        else:
+            return self.get_default_monthly_consumption()
 
 
 class ConsumptionConfiguration(object):
