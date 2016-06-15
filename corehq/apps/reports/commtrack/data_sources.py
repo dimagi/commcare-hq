@@ -342,13 +342,14 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         if self._include_advanced_data():
             product_aggregation = {}
             for state in stock_states:
+                consumption_helper = state.consumption_helper
                 if state.entry_id in product_aggregation:
-                    product = product_aggregation[state.product_id]
+                    product = product_aggregation[state.entry_id]
                     product['current_stock'] = format_decimal(
-                        product['current_stock'] + state.stock_on_hand
+                        product['current_stock'] + state.balance
                     )
 
-                    consumption = state.get_monthly_consumption()
+                    consumption = consumption_helper.get_monthly_consumption()
                     if product['consumption'] is None:
                         product['consumption'] = consumption
                     elif consumption is not None:
@@ -372,21 +373,21 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         _convert_to_daily(product['consumption'])
                     )
                 else:
-                    product = Product.get(state.product_id)
-                    consumption = state.get_monthly_consumption()
+                    product = state.sql_product
+                    consumption = consumption_helper.get_monthly_consumption()
 
-                    product_aggregation[state.product_id] = {
-                        'product_id': product._id,
+                    product_aggregation[state.entry_id] = {
+                        'product_id': state.entry_id,
                         'location_id': None,
                         'product_name': product.name,
                         'location_lineage': None,
                         'resupply_quantity_needed': None,
-                        'current_stock': format_decimal(state.stock_on_hand),
+                        'current_stock': format_decimal(state.balance),
                         'count': 1,
                         'consumption': consumption,
-                        'category': state.stock_category,
+                        'category': consumption_helper.get_stock_category(),
                         'months_remaining': months_of_stock_remaining(
-                            state.stock_on_hand,
+                            state.balance,
                             _convert_to_daily(consumption)
                         )
                     }
