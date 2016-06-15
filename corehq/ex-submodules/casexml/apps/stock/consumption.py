@@ -8,6 +8,22 @@ from casexml.apps.stock import const
 DEFAULT_CONSUMPTION_FUNCTION = lambda case_id, product_id: None
 
 
+class ConsumptionHelper(object):
+
+    def __init__(self, domain, case_id, section_id, entry_id, daily_consumption, balance):
+        self.domain = domain
+        self.case_id = case_id
+        self.section_id = section_id
+        self.entry_id = entry_id
+        self.daily_consumption = daily_consumption
+        self.balance = balance
+
+    def get_default_monthly_consumption(self):
+        return get_default_monthly_consumption_for_case_and_entry(
+            self.domain, self.case_id, self.entry_id
+        )
+
+
 class ConsumptionConfiguration(object):
     DEFAULT_MIN_PERIODS = 2
     DEFAULT_MIN_WINDOW = 10
