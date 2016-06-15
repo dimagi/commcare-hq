@@ -320,7 +320,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             if self._include_advanced_data():
                 consumption_helper = get_consumption_helper_from_ledger_value(self.project, ledger_value)
                 result.update({
-                    'location_id': state.sql_location.location_id if state.sql_location else '',
+                    'location_id': ledger_value.location_id,
                     'location_lineage': None,
                     'category': consumption_helper.get_stock_category(),
                     'consumption': consumption_helper.get_monthly_consumption(),
