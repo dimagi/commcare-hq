@@ -301,11 +301,10 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         if len(sp_ids) == 1:
             return self.leaf_node_data(sp_ids[0])
         else:
-            stock_states = self._get_stock_states(sp_ids)
             if self.config.get('aggregate'):
-                return self.aggregated_data(stock_states)
+                return self.aggregated_data(sp_ids)
             else:
-                return self.raw_product_states(stock_states)
+                return self.raw_product_states(sp_ids)
 
     def leaf_node_data(self, supply_point_id):
         ledger_values = get_wrapped_ledger_values(
@@ -334,10 +333,11 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             yield result
 
-    def aggregated_data(self, stock_states):
+    def aggregated_data(self, supply_point_ids):
         def _convert_to_daily(consumption):
             return consumption / 30 if consumption is not None else None
 
+        stock_states = self._get_stock_states(supply_point_ids)
         if self._include_advanced_data():
             product_aggregation = {}
             for state in stock_states:
@@ -412,7 +412,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             return result
 
-    def raw_product_states(self, stock_states):
+    def raw_product_states(self, supply_point_ids):
+        stock_states = self._get_stock_states(supply_point_ids)
         for state in stock_states:
             yield {
                 slug: f(state) for slug, f in self._slug_attrib_map.items()
