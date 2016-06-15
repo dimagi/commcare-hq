@@ -6,6 +6,9 @@ from dimagi.ext import jsonobject
 
 
 class StockLedgerValueWrapper(jsonobject.JsonObject):
+    """
+    Wrapper class to abstract StockState and the equivalent model coming out of Elasticsearch
+    """
     domain = jsonobject.StringProperty()
     case_id = jsonobject.StringProperty()
     section_id = jsonobject.StringProperty()
