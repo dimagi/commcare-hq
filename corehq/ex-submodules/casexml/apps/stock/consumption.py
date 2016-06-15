@@ -1,5 +1,6 @@
 import json
 from decimal import Decimal
+from casexml.apps.stock.utils import months_of_stock_remaining
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 
 from dimagi.utils import parsing as dateparse
@@ -37,6 +38,12 @@ class ConsumptionHelper(object):
             return self.daily_consumption * Decimal(DAYS_IN_MONTH)
         else:
             return self.get_default_monthly_consumption()
+
+    def get_months_remaining(self):
+        return months_of_stock_remaining(
+            self.balance,
+            self.get_daily_consumption()
+        )
 
 
 class ConsumptionConfiguration(object):

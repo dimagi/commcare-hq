@@ -403,10 +403,7 @@ class StockState(models.Model):
 
     @property
     def months_remaining(self):
-        return months_of_stock_remaining(
-            self.stock_on_hand,
-            self.get_daily_consumption()
-        )
+        return self.consumption_helper.get_months_remaining()
 
     @property
     def resupply_quantity_needed(self):
