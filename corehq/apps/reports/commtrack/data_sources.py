@@ -302,11 +302,9 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def leaf_node_data(self, supply_point_id):
         stock_states = self._get_stock_states([supply_point_id])
         for state in stock_states:
-            product = Product.get(state.product_id)
-
             result = {
-                'product_id': product._id,
-                'product_name': product.name,
+                'product_id': state.sql_product.product_id,
+                'product_name': state.sql_product.name,
                 'current_stock': format_decimal(state.stock_on_hand),
             }
 
