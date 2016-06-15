@@ -1,6 +1,9 @@
-from .interface import PillowProcessor
+from django.http import Http404
+
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.util.quickcache import quickcache
+
+from .interface import PillowProcessor
 
 
 class AppFormSubmissionTrackerProcessor(PillowProcessor):
@@ -30,4 +33,7 @@ class AppFormSubmissionTrackerProcessor(PillowProcessor):
 
     @quickcache(['domain', 'build_id'], timeout=60 * 60)
     def _get_app(self, domain, build_id):
-        return get_app(domain, build_id)
+        try:
+            return get_app(domain, build_id)
+        except Http404:
+            return None
