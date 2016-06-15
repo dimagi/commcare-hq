@@ -14,7 +14,6 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import ConsumptionConfiguration, ConsumptionHelper
 
 from casexml.apps.stock.models import DocDomainMapping
-from casexml.apps.stock.utils import months_of_stock_remaining
 from couchexport.models import register_column_type, ComplexExportColumn
 from couchforms.signals import xform_archived, xform_unarchived
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -27,7 +26,7 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from . import const
-from .const import StockActions, RequisitionActions, DAYS_IN_MONTH
+from .const import StockActions, RequisitionActions
 
 
 STOCK_ACTION_ORDER = [
