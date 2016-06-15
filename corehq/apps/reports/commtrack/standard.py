@@ -335,7 +335,6 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
                     fmt(row[StockStatusDataSource.SLUG_CONSUMPTION], int),
                     fmt(row[StockStatusDataSource.SLUG_MONTHS_REMAINING], lambda k: '%.1f' % k),
                     fmt(row[StockStatusDataSource.SLUG_CATEGORY], lambda k: statuses.get(k, k)),
-                    # fmt(row[StockStatusDataSource.SLUG_RESUPPLY_QUANTITY_NEEDED])
                 ]
             yield result
 
