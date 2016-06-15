@@ -191,37 +191,37 @@
                         {% trans "This will mark the mobile worker as a demo user and CommCareHQ will ignore future form submissions from the user." %}
                     {% endif %}
                 </p>
-                <form class="form form-horizontal"
-                      action="{% url "toggle_demo_mode" domain couch_user.user_id %}"
-                      method="post">
-                    <input type="hidden" name="demo_mode" value="{{ couch_user.is_demo_user|yesno:"no,yes" }}" />
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-info">
-                            {% if couch_user.is_demo_user %}
-                                <i class="icon-trash"></i>
-                                {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
-                            {% else %}
-                                {% trans 'Turn On Demo Mode for this Mobile Worker' %}
-                            {% endif %}
-                        </button>
-                    </div>
-                </form>
+                <p>
+                    <form class="form form-horizontal"
+                          action="{% url "toggle_demo_mode" domain couch_user.user_id %}"
+                          method="post">
+                        <input type="hidden" name="demo_mode" value="{{ couch_user.is_demo_user|yesno:"no,yes" }}" />
+                        {% csrf_token %}
+                            <button type="submit" class="btn btn-info">
+                                {% if couch_user.is_demo_user %}
+                                    <i class="icon-trash"></i>
+                                    {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
+                                {% else %}
+                                    {% trans 'Turn On Demo Mode for this Mobile Worker' %}
+                                {% endif %}
+                            </button>
+                    </form>
+                </p>
                 {% if couch_user.is_demo_user %}
-                <form class="form form-horizontal"
-                      action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
-                      method="post">
-                      {% csrf_token %}
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-default">
-                            <i class="icon-refresh"></i>
-                            {% trans 'Refresh Demo Mode data' %}
-                        </button>
-                        {% blocktrans with when=demo_restore_date %}
-                            <span> Last refreshed {{ when }}</span>
-                        {% endblocktrans %}
-                    </div>
-                </form>
+                <p>
+                    <form class="form form-horizontal"
+                          action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
+                          method="post">
+                          {% csrf_token %}
+                            <button type="submit" class="btn btn-default">
+                                <i class="icon-refresh"></i>
+                                {% trans 'Refresh Demo Mode data' %}
+                            </button>
+                            {% blocktrans with when=demo_restore_date %}
+                                <span> Last refreshed {{ when }}</span>
+                            {% endblocktrans %}
+                    </form>
+                </p>
                 {% endif %}
             </div>
             {% endif %}
