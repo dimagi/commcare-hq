@@ -338,11 +338,16 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         def _convert_to_daily(consumption):
             return consumption / 30 if consumption is not None else None
 
-        stock_states = self._get_stock_states(supply_point_ids)
         if self._include_advanced_data():
             product_aggregation = {}
-            for state in stock_states:
-                consumption_helper = state.consumption_helper
+            ledger_values = get_wrapped_ledger_values(
+                domain=self.domain,
+                case_ids=supply_point_ids,
+                section_id=STOCK_SECTION_TYPE,
+                entry_ids=self.product_ids
+            )
+            for state in ledger_values:
+                consumption_helper = get_consumption_helper_from_ledger_value(self.project, state)
                 if state.entry_id in product_aggregation:
                     product = product_aggregation[state.entry_id]
                     product['current_stock'] = format_decimal(
@@ -400,6 +405,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             # Note: this leaves out some harder to get quickly
             # values like location_id, but shouldn't be needed
             # unless we expand what uses this.
+            stock_states = self._get_stock_states(supply_point_ids)
             aggregated_states = stock_states.values_list(
                 'sql_product__name',
                 'sql_product__product_id',
