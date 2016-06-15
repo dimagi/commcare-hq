@@ -305,17 +305,18 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             result = {
                 'product_id': state.sql_product.product_id,
                 'product_name': state.sql_product.name,
-                'current_stock': format_decimal(state.stock_on_hand),
+                'current_stock': format_decimal(state.balance),
             }
 
             if self._include_advanced_data():
+                consumption_helper = state.consumption_helper
                 result.update({
                     'location_id': state.sql_location.location_id if state.sql_location else '',
                     'location_lineage': None,
-                    'category': state.stock_category,
-                    'consumption': state.get_monthly_consumption(),
-                    'months_remaining': state.months_remaining,
-                    'resupply_quantity_needed': state.resupply_quantity_needed
+                    'category': consumption_helper.get_stock_category(),
+                    'consumption': consumption_helper.get_monthly_consumption(),
+                    'months_remaining': consumption_helper.get_months_remaining(),
+                    'resupply_quantity_needed': consumption_helper.get_resupply_quantity_needed()
                 })
 
             yield result
