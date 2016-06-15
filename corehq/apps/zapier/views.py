@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.views.generic import View
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
@@ -29,6 +30,11 @@ class SubscribeView(View):
     def post(self, request, domain, *args, **kwargs):
         data = json.loads(request.body)
         subscription = get_subscription_by_url(domain, data['target_url'])
+
+        application = Application.get(docid=data['application'])
+        if not application or not application.get_form_by_xmlns(data['form']):
+            return HttpResponse(status=400)
+
         if subscription:
             # https://zapier.com/developer/documentation/v2/rest-hooks/
             # Generally, subscription URLs should be unique.
@@ -39,6 +45,7 @@ class SubscribeView(View):
             user_id=str(request.couch_user.get_id),
             event_name=data['event'],
             url=data['target_url'],
+            application_id=data['application'],
             form_xmlns=data['form']
         )
         return HttpResponse('OK')

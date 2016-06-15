@@ -6,7 +6,7 @@ from corehq.apps.zapier.utils import convert_xform_to_json
 
 @celery.task
 def send_to_subscribers_task(domain, xform):
-    for subscription in get_new_form_subscriptions(domain, xform.xmlns):
+    for subscription in get_new_form_subscriptions(domain, xform.app_id, xform.xmlns):
         response = subscription.send_to_subscriber(convert_xform_to_json(xform))
         if response.status_code == 410:
             # https://zapier.com/developer/documentation/v2/rest-hooks/
