@@ -290,17 +290,17 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
     def get_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
-        stock_states = self._get_stock_states(sp_ids)
-
         if len(sp_ids) == 1:
-            return self.leaf_node_data(stock_states)
+            return self.leaf_node_data(sp_ids[0])
         else:
+            stock_states = self._get_stock_states(sp_ids)
             if self.config.get('aggregate'):
                 return self.aggregated_data(stock_states)
             else:
                 return self.raw_product_states(stock_states)
 
-    def leaf_node_data(self, stock_states):
+    def leaf_node_data(self, supply_point_id):
+        stock_states = self._get_stock_states([supply_point_id])
         for state in stock_states:
             product = Product.get(state.product_id)
 
