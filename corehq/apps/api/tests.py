@@ -36,6 +36,10 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.api.resources import v0_4, v0_5
+from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
+from corehq.apps.locations.resources.v0_1 import InternalLocationResource
+from custom.ilsgateway.resources.v0_1 import ILSLocationResource
+from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.es import ElasticAPIQuerySet
 from corehq.apps.users.analytics import update_analytics_indexes
@@ -1548,3 +1552,47 @@ class TestApiKey(APIResourceTest):
 
         other_api_key.delete()
         other_user.delete()
+
+
+class InternalTestMixin(object):
+    def assert_internally_accessible(self, url):
+        # api auth should succeed for api endpoint
+        api_url = self._api_url(url, self.username)
+        response = self.client.get(api_url)
+        self.assertEqual(response.status_code, 200)
+        # session auth should succeed for internal API
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 401)
+
+
+class InternalFixtureResourceTest(APIResourceTest, InternalTestMixin):
+    resource = InternalFixtureResource
+    api_name = 'v0_5'
+
+    def test_basic(self):
+        self.assert_internally_accessible(self.list_endpoint)
+
+
+class InternalLocationResourceTest(APIResourceTest, InternalTestMixin):
+    resource = InternalLocationResource
+    api_name = 'v0_3'
+
+    def test_basic(self):
+        self.assert_internally_accessible(self.list_endpoint)
+
+
+class EWSLocationResourceTest(APIResourceTest, InternalTestMixin):
+    resource = EWSLocationResource
+    api_name = 'v0_3'
+
+    def test_basic(self):
+        self.assert_internally_accessible(self.list_endpoint)
+
+
+class ILSLocationResourceTest(APIResourceTest, InternalTestMixin):
+    resource = ILSLocationResource
+    api_name = 'v0_3'
+
+    def test_basic(self):
+        self.assert_internally_accessible(self.list_endpoint)
