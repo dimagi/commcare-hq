@@ -34,25 +34,27 @@ class LossAndAdjustment(KeywordHandler):
             return True
 
         now = datetime.utcnow()
-        report = StockReport.objects.create(
-            form_id='ilsgateway-xform',
-            date=now,
-            server_date=now,
-            type='balance',
-            domain=self.domain
-        )
         error = False
         products_without_soh = set()
         with transaction.atomic():
+            report = StockReport.objects.create(
+                form_id='ilsgateway-xform',
+                date=now,
+                server_date=now,
+                type='balance',
+                domain=self.domain
+            )
             for product_code, quantity in parsed_report:
                 try:
-                    product_id = SQLProduct.objects.get(domain=self.domain, code__iexact=product_code).product_id
+                    product_id = SQLProduct.objects.get(
+                        domain=self.domain,
+                        code__iexact=product_code
+                    ).product_id
                     self._create_stock_transaction(report, product_id, quantity)
                 except SQLProduct.DoesNotExist:
                     error = True
                 except StockState.DoesNotExist:
                     products_without_soh.add(product_code.lower())
-
         if error:
             self.respond(LOSS_ADJUST_BAD_FORMAT)
         elif products_without_soh:
