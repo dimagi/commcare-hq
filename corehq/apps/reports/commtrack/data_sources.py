@@ -84,6 +84,14 @@ class CommtrackDataSourceMixin(object):
             return prog_id
 
     @property
+    @memoized
+    def product_ids(self):
+        if self.program_id:
+            return SQLProduct.objects\
+                .filter(domain=self.domain, program_id=self.program_id)\
+                .values_list('product_id', flat=True)
+
+    @property
     def start_date(self):
         return self.config.get('startdate') or (datetime.utcnow() - timedelta(30)).date()
 
@@ -159,14 +167,6 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
 
 class SimplifiedInventoryDataSourceNew(SimplifiedInventoryDataSource):
-
-    @property
-    @memoized
-    def product_ids(self):
-        if self.program_id:
-            return SQLProduct.objects\
-                .filter(domain=self.domain, program_id=self.program_id)\
-                .values_list('product_id', flat=True)
 
     def get_data(self):
         from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
