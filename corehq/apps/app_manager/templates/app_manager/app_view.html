@@ -274,16 +274,16 @@
                 {% endif %}
             </div>
         </div>
-    </div>
-    <div class="tab-pane" id="delete">
-        <h3>{% trans "Delete Application" %}</h3>
-        <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger disable-on-submit">
-                <i class="fa fa-trash"></i>
-                {% trans "Delete this application" %}
-            </button>
-        </form>
+        <div class="tab-pane" id="delete">
+            <h3>{% trans "Delete Application" %}</h3>
+            <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger disable-on-submit">
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete this application" %}
+                </button>
+            </form>
+        </div>
     </div>
 {% endblock %}
 
