@@ -73,6 +73,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         return back_to_main(request, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
 
+    include_fullstory = False
     vellum_plugins = ["modeliteration", "itemset", "atwho"]
     if (toggles.COMMTRACK.enabled(domain)):
         vellum_plugins.append("commtrack")
@@ -81,6 +82,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     if ((app.vellum_case_management or toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain)) and
             _form_uses_case(module, form)):
         vellum_plugins.append("databrowser")
+        include_fullstory = not _form_too_large(app, form)
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
@@ -113,7 +115,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
-    include_fullstory = _form_uses_case(module, form) and not _form_too_large(app, form)
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
