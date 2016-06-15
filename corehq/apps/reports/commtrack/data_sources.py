@@ -22,7 +22,6 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, \
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
-from django.db.models import Sum
 
 
 def format_decimal(d):
