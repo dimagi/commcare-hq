@@ -2,7 +2,7 @@
   "operationalization": {
     "data_source": [
       {
-        "id": "006c243827ea58a92eb80117abc61629",
+        "id": "static-icds-sql-static-mpr_4a_6_pse",
         "date_filter_field": "submitted_on",
         "columns": [
           {
@@ -16,7 +16,7 @@
   "population" : {
     "data_source": [
       {
-        "id": "05e9c905d1cf4b11d0cfc92b559aaddd",
+        "id": "static-icds-sql-static-mpr_1_person_cases",
         "columns": [
           {
             "column_name": "open_count",
@@ -29,7 +29,8 @@
   "births_and_deaths": {
     "data_source": [
       {
-        "id": "a347fa3a66a68a53bad7a11284a85573",
+        "id": "static-icds-sql-static-mpr_2a_3_child_delivery_forms",
+        "date_filter_field": "submitted_on",
         "columns": [
           {
             "column_name": "live_F_resident_birth_count",
@@ -98,7 +99,7 @@
         ]
       },
       {
-        "id": "d983f451465565589a025316f2e9638b",
+        "id": "static-icds-sql-static-mpr_2a_person_cases",
         "date_filter_field": "date_death",
         "columns": [
           {
@@ -188,7 +189,7 @@
   "awc_details": {
     "data_source": [
       {
-        "id": "05e9c905d1cf4b11d0cfc92b55d9954d",
+        "id": "static-icds-sql-static-mpr_3i_person_cases",
         "date_filter_field": "opened_on",
         "columns": [
           {
@@ -202,7 +203,7 @@
         ]
       },
       {
-        "id": "a347fa3a66a68a53bad7a11284a85573",
+        "id": "static-icds-sql-static-mpr_2a_3_child_delivery_forms",
         "date_filter_field": "submitted_on",
         "columns": [
           {
@@ -224,7 +225,7 @@
         ]
       },
       {
-        "id": "9c5085d5188f493edb407561377e930c",
+        "id": "static-icds-sql-static-mpr_3ii_person_cases",
         "date_filter_field": "opened_on",
         "filter": [
           {
@@ -258,7 +259,7 @@
         ]
       },
       {
-        "id": "9c5085d5188f493edb407561377e930c",
+        "id": "static-icds-sql-static-mpr_3ii_person_cases",
         "date_filter_field": "opened_on",
         "filter": [
           {
@@ -300,7 +301,7 @@
   "supplementary_nutrition": {
     "data_source" : [
       {
-        "id": "006c243827ea58a92eb80117abc61629",
+        "id": "static-icds-sql-static-mpr_4a_6_pse",
         "columns": [
           {
             "column_name": "open_bfast_count",
@@ -379,7 +380,7 @@
   "using_salt": {
     "data_source": [
       {
-        "id": "9450f14a966672afd83279e2910688fa",
+        "id": "static-icds-sql-static-mpr_4b_infra_forms",
         "date_filter_field": "submitted_on",
         "columns": [
           {
@@ -393,7 +394,7 @@
   "programme_coverage": {
     "data_source": [
       {
-        "id": "006c243827ea58a92eb80117abc61629",
+        "id": "static-icds-sql-static-mpr_4a_6_pse",
         "date_filter_field": "submitted_on",
         "columns": [
           {
@@ -403,7 +404,7 @@
         ]
       },
       {
-        "id": "54b7d91e1d25beeff2b9200b558403e4",
+        "id": "static-icds-sql-static-mpr_5_child_health_cases",
         "date_filter_field": "month",
         "filter": [
           {
@@ -493,7 +494,7 @@
         ]
       },
       {
-        "id": "54b7d91e1d25beeff2b9200b558403e4",
+        "id": "static-icds-sql-static-mpr_5_child_health_cases",
         "date_filter_field": "month",
         "filter": [
           {
@@ -601,7 +602,7 @@
         ]
       },
       {
-        "id": "410c4dad6464125b1b8e8d875fb82aa5",
+        "id": "static-icds-sql-static-mpr_5_ccs_record_cases",
         "date_filter_field": "month",
         "columns": [
           {
@@ -683,7 +684,7 @@
   "preschool": {
     "data_source": [
       {
-        "id": "006c243827ea58a92eb80117abc61629",
+        "id": "static-icds-sql-static-mpr_4a_6_pse",
         "date_filter_field": "submitted_on",
         "columns": [
           {
@@ -701,7 +702,7 @@
         ]
       },
       {
-        "id": "c63199f5b4382da13f6bd50f95b4cff1",
+        "id": "static-icds-sql-static-mpr_6ac_child_health_cases",
         "date_filter_field": "month",
         "filter": [
           {
@@ -783,7 +784,7 @@
         ]
       },
       {
-        "id": "410c4dad6464125b1b8e8d875f8f4a38",
+        "id": "static-icds-sql-static-mpr_6b_child_health_cases",
         "date_filter_field": "month",
         "filter": [
           {
@@ -809,7 +810,7 @@
         ]
       },
       {
-        "id": "410c4dad6464125b1b8e8d875f8f4a38",
+        "id": "static-icds-sql-static-mpr_6b_child_health_cases",
         "date_filter_field": "month",
         "filter": [
           {
@@ -837,7 +838,7 @@
         ]
       },
       {
-        "id": "410c4dad6464125b1b8e8d875f8f4a38",
+        "id": "static-icds-sql-static-mpr_6b_child_health_cases",
         "date_filter_field": "month",
         "filter": [
           {
@@ -869,7 +870,7 @@
   "growth_monitoring": {
     "data_source": [
       {
-        "id": "c854d19db154be86b325681b6ee17f06",
+        "id": "static-icds-sql-static-mpr_7_growth_monitoring_forms",
         "date_filter_field": "last_date_gmp",
         "filter": [
           {
@@ -911,7 +912,7 @@
         ]
       },
       {
-        "id": "c854d19db154be86b325681b6ee17f06",
+        "id": "static-icds-sql-static-mpr_7_growth_monitoring_forms",
         "date_filter_field": "last_date_gmp",
         "filter": [
           {
@@ -959,7 +960,7 @@
         ]
       },
       {
-        "id": "c854d19db154be86b325681b6ee17f06",
+        "id": "static-icds-sql-static-mpr_7_growth_monitoring_forms",
         "date_filter_field": "last_date_gmp",
         "filter": [
           {
@@ -1007,7 +1008,7 @@
         ]
       },
       {
-        "id": "c63199f5b4382da13f6bd50f95b4cff1",
+        "id": "static-icds-sql-static-mpr_6ac_child_health_cases",
         "date_filter_field": "month",
         "filter": [
           {
@@ -1033,7 +1034,7 @@
         ]
       },
       {
-        "id": "c63199f5b4382da13f6bd50f95b4cff1",
+        "id": "static-icds-sql-static-mpr_6ac_child_health_cases",
         "date_filter_field": "month",
         "filter": [
           {
@@ -1061,7 +1062,7 @@
         ]
       },
       {
-        "id": "c63199f5b4382da13f6bd50f95b4cff1",
+        "id": "static-icds-sql-static-mpr_6ac_child_health_cases",
         "date_filter_field": "month",
         "filter": [
           {
@@ -1093,7 +1094,7 @@
   "immunization_coverage": {
     "data_source": [
       {
-        "id": "006c243827ea58a92eb80117abe6357a",
+        "id": "static-icds-sql-static-mpr_8_tasks_cases",
         "date_filter_field": "date_turns_one_yr",
         "columns": [
           {
@@ -1111,7 +1112,7 @@
   "vhnd": {
     "data_source": [
       {
-        "id": "9450f14a966672afd83279e2910694c3",
+        "id": "static-icds-sql-mpr_9_vhnd_forms",
         "date_filter_field": "submitted_on",
         "columns": [
           {
@@ -1181,7 +1182,7 @@
   "referral_services": {
     "data_source": [
       {
-        "id": "9450f14a966672afd83279e29126ca69",
+        "id": "static-icds-sql-static-mpr_10a_person_cases",
         "date_filter_field": "last_referral_date",
         "columns": [
           {
@@ -1306,7 +1307,7 @@
         ]
       },
       {
-        "id": "9450f14a966672afd83279e29126c35b",
+        "id": "static-icds-sql-static-mpr_10b_person_cases",
         "date_filter_field": "last_referral_date",
         "columns": [
           {
@@ -1418,7 +1419,7 @@
   "monitoring": {
     "data_source": [
       {
-        "id": "006c243827ea58a92eb80117abc613d4",
+        "id": "static-icds-sql-static-mpr_11_visitor_book_forms",
         "date_filter_field": "submitted_on",
         "columns": [
           {
