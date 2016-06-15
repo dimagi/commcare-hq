@@ -112,16 +112,19 @@ class Command(BaseCommand):
     def swap_doc_types(self, log_file, bad_xform_id, duplicate_xform_id, dry_run):
         bad_xform = XFormInstance.get(bad_xform_id)
         duplicate_xform = XFormInstance.get(duplicate_xform_id)
+        now = datetime.now().isoformat()
 
         # Convert the XFormInstance to an XFormDuplicate
         bad_xform.doc_type = XFormDuplicate.__name__
         bad_xform.problem = "Form was missing multimedia attachments. Replaced by {} on {}".format(
-            duplicate_xform_id, datetime.now().isoformat()
+            duplicate_xform_id, now
         )
         bad_xform = XFormDuplicate.wrap(bad_xform.to_json())
 
         # Convert the XFormDuplicate to an XFormInstance
-        del duplicate_xform.problem
+        duplicate_xform.problem = "This document was an xform duplicate that replaced {} on {}".format(
+            bad_xform_id, now
+        )
         duplicate_xform.doc_type = XFormInstance.__name__
         duplicate_xform = XFormInstance.wrap(duplicate_xform.to_json())
 
