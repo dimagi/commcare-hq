@@ -16,13 +16,14 @@ class ConsumptionHelper(object):
     Helper object for dealing with consumption at the individual domain/case/entry level
     """
 
-    def __init__(self, domain, case_id, section_id, entry_id, daily_consumption, balance):
+    def __init__(self, domain, case_id, section_id, entry_id, daily_consumption, balance, sql_location):
         self.domain = domain
         self.case_id = case_id
         self.section_id = section_id
         self.entry_id = entry_id
         self.daily_consumption = daily_consumption
         self.balance = balance
+        self.sql_location = sql_location
 
     def get_default_monthly_consumption(self):
         return get_default_monthly_consumption_for_case_and_entry(
@@ -49,6 +50,17 @@ class ConsumptionHelper(object):
             self.balance,
             self.get_daily_consumption()
         )
+
+    def get_resupply_quantity_needed(self):
+        monthly_consumption = self.get_monthly_consumption()
+        if monthly_consumption is not None and self.sql_location is not None:
+            overstock = self.sql_location.location_type.overstock_threshold
+            needed_quantity = int(
+                monthly_consumption * overstock
+            )
+            return int(max(needed_quantity - self.balance, 0))
+        else:
+            return None
 
 
 class ConsumptionConfiguration(object):

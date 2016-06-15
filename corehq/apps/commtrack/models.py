@@ -398,7 +398,8 @@ class StockState(models.Model):
             section_id=self.section_id,
             entry_id=self.product_id,
             daily_consumption=self.daily_consumption,
-            balance=self.balance
+            balance=self.balance,
+            sql_location=self.sql_location,
         )
 
     @property
@@ -407,15 +408,7 @@ class StockState(models.Model):
 
     @property
     def resupply_quantity_needed(self):
-        monthly_consumption = self.get_monthly_consumption()
-        if monthly_consumption is not None and self.sql_location is not None:
-            overstock = self.sql_location.location_type.overstock_threshold
-            needed_quantity = int(
-                monthly_consumption * overstock
-            )
-            return int(max(needed_quantity - self.stock_on_hand, 0))
-        else:
-            return None
+        return self.consumption_helper.get_resupply_quantity_needed()
 
     @property
     def stock_category(self):
