@@ -419,9 +419,21 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         }
 
         self.lookup_display_results = ko.observable(state.lookup_display_results);
+        var invisible = "", visible = "";
+        if (state.lookup_field_header[lang]) {
+            visible = invisible = state.lookup_field_header[lang]
+        } else {
+            _.each(_.keys(state.lookup_field_header), function(lang) {
+                if (state.lookup_field_header[lang]) {
+                    visible = state.lookup_field_header[lang] + langcodeTag.LANG_DELIN + lang;
+                }
+            });
+        }
+
         self.lookup_field_header = uiElement.input().val(
-            typeof state.lookup_field_header[lang] !== 'undefined' ? state.lookup_field_header[lang] : ''
+            invisible
         );
+        self.lookup_field_header.setVisibleValue(visible);
         self.lookup_field_header.observableVal = ko.observable(self.lookup_field_header.val());
         self.lookup_field_header.on('change', function () {
             self.lookup_field_header.observableVal(self.lookup_field_header.val());
