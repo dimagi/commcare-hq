@@ -40,6 +40,13 @@ logger = logging.getLogger(__name__)
 
 @require_can_edit_apps
 def form_designer(request, domain, app_id, module_id=None, form_id=None):
+    def _form_uses_case(module, form):
+        return module and module.case_type and form.requires_case()
+
+    def _form_too_large(app, form):
+        # form less than 1MB
+        return app.blobs['{}.xml'.format(form.unique_id)]['content_length'] > 102400
+
     meta = get_meta(request)
     track_entered_form_builder_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
 
@@ -71,7 +78,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
     if ((app.vellum_case_management or toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain)) and
-            module and module.case_type and form.requires_case()):
+            _form_uses_case(module, form)):
         vellum_plugins.append("databrowser")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
@@ -105,6 +112,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
+    include_fullstory = _form_uses_case(module, form) and not _form_too_large(app, form)
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
@@ -118,6 +126,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'app_callout_templates': next(app_callout_templates),
         'scheduler_data_nodes': scheduler_data_nodes,
         'no_header': True,
+        'include_fullstory': include_fullstory
     })
     return render(request, 'app_manager/form_designer.html', context)
 

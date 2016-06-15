@@ -3,6 +3,12 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block head %}{{ block.super }}
+    {% if include_fullstory %}
+        {% include 'analytics/fullstory.html' %}
+    {% endif %}
+{% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% new_static 'hqwebapp/js/lib/require.js' %}"></script>
 {% endblock %}
