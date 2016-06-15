@@ -1,10 +1,7 @@
 from __future__ import absolute_import
 from collections import namedtuple
 from datetime import timedelta
-from dimagi.utils.couch.delete import delete
-from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
 from redis.exceptions import RedisError, LockError
