@@ -118,6 +118,19 @@ def compute_consumption_or_default(
         )
 
 
+def get_default_monthly_consumption_for_case_and_entry(domain, case_id, entry_id):
+    if domain and domain.commtrack_settings:
+        config = domain.commtrack_settings.get_consumption_config()
+    else:
+        config = None
+
+    return compute_default_monthly_consumption(
+        case_id,
+        entry_id,
+        config
+    )
+
+
 def compute_default_monthly_consumption(case_id, product_id, configuration):
     return configuration.default_monthly_consumption_function(
         case_id,

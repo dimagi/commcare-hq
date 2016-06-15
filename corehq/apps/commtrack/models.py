@@ -11,7 +11,8 @@ from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.stock.consumption import (ConsumptionConfiguration, compute_default_monthly_consumption)
+from casexml.apps.stock.consumption import (ConsumptionConfiguration,
+                                            get_default_monthly_consumption_for_case_and_entry)
 from casexml.apps.stock.models import DocDomainMapping
 from casexml.apps.stock.utils import months_of_stock_remaining, state_stock_category
 from couchexport.models import register_column_type, ComplexExportColumn
@@ -447,16 +448,7 @@ class StockState(models.Model):
 
     def _get_default_monthly_consumption(self):
         domain = self.get_domain()
-        if domain and domain.commtrack_settings:
-            config = domain.commtrack_settings.get_consumption_config()
-        else:
-            config = None
-
-        return compute_default_monthly_consumption(
-            self.case_id,
-            self.product_id,
-            config
-        )
+        return get_default_monthly_consumption_for_case_and_entry(domain, self.case_id, self.product_id)
 
     def to_json(self):
         from corehq.form_processor.serializers import StockStateSerializer
