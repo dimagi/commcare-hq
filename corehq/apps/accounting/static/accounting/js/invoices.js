@@ -1,3 +1,4 @@
+// hqDefine intentionally not used
 (function() {
     var InvoiceModel = function () {
         var self = this;
@@ -7,4 +8,4 @@
     
     var invoiceModel = new InvoiceModel();
     $('fieldset').koApplyBindings(invoiceModel);
-})();
+}());

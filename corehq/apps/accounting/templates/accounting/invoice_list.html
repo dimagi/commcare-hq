@@ -6,11 +6,15 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% for adjust_balance_form in adjust_balance_forms %}
-        <script>
+    <script>
+        (function () {
+            var AdjustBalanceFormModel = hqImport('accounting/js/adjust-balance-modal.js').AdjustBalanceFormModel;
+            {% for adjust_balance_form in adjust_balance_forms %}
             $('#adjust-balance-form-{{ adjust_balance_form.invoice.id }}').koApplyBindings(new AdjustBalanceFormModel());
-        </script>
-    {% endfor %}
+            {% endfor %}
+        }());
+    </script>
+
 {% endblock %}
 
 {% block page_content %}

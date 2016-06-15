@@ -12,10 +12,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var billingInfoHandler = new BillingContactInfoHandler(
-            "{% trans "Please enter a valid email." %}"
-        );
-        billingInfoHandler.init();
+        hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
     </script>
     <script type="text/javascript">
      Stripe.setPublishableKey('{{ stripe_public_key }}');
