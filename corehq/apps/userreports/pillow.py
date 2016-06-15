@@ -82,14 +82,17 @@ class ConfigurableReportTableManagerMixin(object):
                         # if no signs of it popping back up by april 2016, should remove this
                         rev_after_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
                         _notify_cory(
-                            u'rebuilt table {} ({}) because {}. rev before: {}, rev after: {}'.format(
+                            u'rebuilt table {} ({})'.format(
                                 table_name,
                                 u'{} [{}]'.format(sql_adapter.config.display_name, sql_adapter.config._id),
-                                diffs,
-                                rev_before_rebuild,
-                                rev_after_rebuild,
                             ),
-                            sql_adapter.config.to_json(),
+                            {
+                                'data_source': sql_adapter.config.to_json(),
+                                'table_diffs': diffs,
+                                'rev_before_rebuild': rev_before_rebuild,
+                                'rev_after_rebuild': rev_after_rebuild
+                            }
+
                         )
                 else:
                     self.rebuild_table(sql_adapter)
