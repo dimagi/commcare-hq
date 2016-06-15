@@ -214,6 +214,33 @@ class TermsAggregation(Aggregation):
         }
 
 
+class SumResult(AggregationResult):
+
+    @property
+    def value(self):
+        return self.result['value']
+
+
+class SumAggregation(Aggregation):
+    """
+    Bucket aggregation that sums a field
+
+    :param name: aggregation name
+    :param field: name of the field to bucket on
+    :param size:
+    """
+    type = "sum"
+    result_class = SumResult
+
+    def __init__(self, name, field):
+        assert re.match(r'\w+$', name), \
+            "Names must be valid python variable names, was {}".format(name)
+        self.name = name
+        self.body = {
+            "field": field,
+        }
+
+
 class MissingAggregation(Aggregation):
     """
     A field data based single bucket aggregation, that creates a bucket of all
@@ -480,9 +507,10 @@ class NestedTermAggregationsHelper(object):
     This is not at all related to the ES 'nested aggregation'.
     """
 
-    def __init__(self, base_query, terms):
+    def __init__(self, base_query, terms, aggregation=None):
         self.base_query = base_query
         self.terms = terms
+        self.aggregation = aggregation
 
     def get_data(self):
         previous_term = None
@@ -491,6 +519,12 @@ class NestedTermAggregationsHelper(object):
             if previous_term is not None:
                 term = term.aggregation(previous_term)
             previous_term = term
+
+        if self.aggregation is not None:
+            if not isinstance(self.aggregation, SumAggregation):
+                raise ValueError('currently only SumAggregations are supported')
+            term = term.aggregation(self.aggregation)
+
         query = self.base_query.aggregation(term)
 
         def _add_terms(aggregation_bucket, term, remaining_terms, current_counts, current_key=None):
@@ -500,13 +534,17 @@ class NestedTermAggregationsHelper(object):
                     _add_terms(bucket, remaining_terms[0], remaining_terms[1:], current_counts, current_key=key)
                 else:
                     # base case
-                    current_counts[key] += bucket.doc_count
+                    if self.aggregation is None:
+                        current_counts[key] += bucket.doc_count
+                    else:
+                        current_counts[key] += getattr(bucket, self.aggregation.name).value
 
         counts = defaultdict(lambda: 0)
         _add_terms(query.size(0).run().aggregations, self.terms[0], self.terms[1:], current_counts=counts)
         return self._format_counts(counts)
 
     def _format_counts(self, counts):
-        row_class = namedtuple('NestedQueryRow', [term.name for term in self.terms] + ['doc_count'])
+        final_aggregation_name = 'doc_count' if self.aggregation is None else self.aggregation.name
+        row_class = namedtuple('NestedQueryRow', [term.name for term in self.terms] + [final_aggregation_name])
         for combined_key, count in counts.items():
             yield row_class(*(combined_key + (count,)))
