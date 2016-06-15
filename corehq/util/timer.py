@@ -1,12 +1,20 @@
 import time
 
+import itertools
+
 
 class Timer(object):
-    def __init__(self, name):
+    def __init__(self, name, is_root=True):
         self.name = name
         self.beginning = None
         self.end = None
         self.subs = []
+        self.root = self if is_root else None
+        self.parent = None
+
+    def init(self, root, parent):
+        self.root = root
+        self.parent = parent
 
     def start(self):
         self.beginning = time.time()
@@ -15,6 +23,7 @@ class Timer(object):
         self.end = time.time()
 
     def append(self, timer):
+        timer.init(self.root, self)
         self.subs.append(timer)
 
     @property
@@ -22,21 +31,40 @@ class Timer(object):
         if self.beginning and self.end:
             return self.end - self.beginning
 
+    @property
+    def percent_of_total(self):
+        return (self.duration / self.root.duration * 100) if self.duration and self.root else None
+
+    @property
+    def percent_of_parent(self):
+        return (self.duration / self.parent.duration * 100) if self.parent else None
+
     def to_dict(self):
         return {
             'name': self.name,
             'duration': self.duration,
+            'percent_total': self.percent_of_total,
+            'percent_parent': self.percent_of_parent,
             'subs': [sub.to_dict() for sub in self.subs]
         }
 
+    def to_list(self):
+        timers = [self] + list(itertools.chain(*[sub.to_list() for sub in self.subs]))
+        return timers
+
     def __repr__(self):
-        print 'Timer(name={}, beginning={}, end={})'.format(self.name, self.beginning, self.end)
+        return "Timer(name='{}', beginning={}, end={}, parent='{}')".format(
+            self.name,
+            self.beginning,
+            self.end,
+            self.parent.name if self.parent else ''
+        )
 
 
 class TimingContext(object):
     def __init__(self , name):
         self.timings = {}
-        self.root = Timer(name)
+        self.root = Timer(name, is_root=True)
         self.stack = [self.root]
 
     def __call__(self, name):
@@ -59,3 +87,6 @@ class TimingContext(object):
 
     def to_dict(self):
         return self.root.to_dict()
+
+    def to_list(self):
+        return self.root.to_list()

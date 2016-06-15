@@ -1,3 +1,5 @@
+from lxml import etree
+
 import HTMLParser
 import json
 import socket
@@ -392,24 +394,44 @@ def pillow_operation_api(request):
         return get_response("No pillow found with name '{}'".format(pillow_name))
 
 
-@require_superuser
-@require_GET
-def admin_restore(request, app_id=None):
-    full_username = request.GET.get('as', '')
-    if not full_username or '@' not in full_username:
-        return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
+class AdminRestoreView(TemplateView):
+    template_name = 'hqadmin/admin_restore.html'
 
-    username, domain = full_username.split('@')
-    if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
-        full_username = format_username(username, domain)
+    @use_bootstrap3
+    @method_decorator(require_superuser)
+    def get(self, request, *args, **kwargs):
+        full_username = request.GET.get('as', '')
+        if not full_username or '@' not in full_username:
+            return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
 
-    user = CommCareUser.get_by_username(full_username)
-    if not user:
-        return HttpResponseNotFound('User %s not found.' % full_username)
+        username, domain = full_username.split('@')
+        if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
+            full_username = format_username(username, domain)
 
-    overwrite_cache = request.GET.get('ignore_cache') == 'true'
-    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, app_id=app_id,
-                                **get_restore_params(request))
+        self.user = CommCareUser.get_by_username(full_username)
+        if not self.user:
+            return HttpResponseNotFound('User %s not found.' % full_username)
+
+        self.overwrite_cache = request.GET.get('ignore_cache') == 'true'
+
+        return super(AdminRestoreView, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(AdminRestoreView, self).get_context_data(**kwargs)
+        app_id = kwargs.get('app_id', None)
+        response, timing_context = get_restore_response(
+            self.user.domain, self.user, overwrite_cache=self.overwrite_cache, app_id=app_id,
+            **get_restore_params(self.request)
+        )
+        string_payload = ''.join(response.streaming_content)
+        xml_payload = etree.fromstring(string_payload)
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        context.update({
+            'payload': formatted_payload,
+            'status_code': response.status_code,
+            'timing_data': timing_context.to_list()
+        })
+        return context
 
 
 class ManagementCommandsView(BaseAdminSectionView):
