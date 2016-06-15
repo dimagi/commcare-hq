@@ -226,8 +226,7 @@ class SumAggregation(Aggregation):
     Bucket aggregation that sums a field
 
     :param name: aggregation name
-    :param field: name of the field to bucket on
-    :param size:
+    :param field: name of the field to sum
     """
     type = "sum"
     result_class = SumResult
