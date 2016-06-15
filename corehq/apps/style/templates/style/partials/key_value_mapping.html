@@ -124,7 +124,7 @@
                            attr: { 'data-hqmediapath': currentPath },
                            event: {
                                 mediaUploadComplete: uploadComplete,
-                                click: passToUploadController
+                                click: function(){setCustomPath(); passToUploadController()}
                            }">
             <i class="fa fa-cloud-upload"></i>
             <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
@@ -135,7 +135,7 @@
         <button type="button" class="btn btn-default pull-right"
                 data-bind="
                     visible: !$parent.editing(),
-                    click: function(){setCustomPath(); $parent.toggleEditMode()}">
+                    click: function(){if (!useCustomPath()) setCustomPath(); $parent.toggleEditMode()}">
             <i class="fa fa-cog"></i>
             {% trans 'Set Path' %}
         </button>

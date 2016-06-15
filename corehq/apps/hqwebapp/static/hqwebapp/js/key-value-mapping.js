@@ -114,7 +114,7 @@ function MapList(o) {
                 return {lang: lang, value: backup()};
             }
         }
-        return {lang: null, value: 'icon path'};
+        return {lang: null, value: 'value'};
     };
     self.removeItem = function (item) {
         self.items.remove(item);
@@ -177,7 +177,7 @@ uiElement.key_value_mapping = function (o) {
             langs: o.langs,
             module_id: o.module_id,
             items: m.getItems(),
-            values_are_icons: m.values_are_icons,
+            values_are_icons: m.values_are_icons(),
             multimedia: m.multimedia,
             property_name: o.property_name,
         });
