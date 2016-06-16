@@ -138,8 +138,10 @@ def ensure_plans(dry_run, verbose, for_tests, apps,
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
 
-    edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose, apps=apps,
-                                           editions=editions, feature_types=feature_types)
+    edition_to_features = _ensure_features(
+        editions=editions, feature_types=feature_types,
+        dry_run=dry_run, verbose=verbose, apps=apps,
+    )
     for product_type in product_types:
         for edition in editions:
             role_slug = edition_to_role[edition]
