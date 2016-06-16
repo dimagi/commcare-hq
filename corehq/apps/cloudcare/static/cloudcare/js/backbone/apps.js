@@ -134,7 +134,9 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
             return this.get("urlRoot");
         },
         getSubmitUrl: function () {
-            return this.get('post_url');
+            // http://stackoverflow.com/a/2599721/835696
+            // Strip host and scheme from url
+            return this.get('post_url').replace(/https?:\/\/[^\/]+/i, '');
         },
         renderFormRoot: function () {
             return this.get("renderFormRoot");
