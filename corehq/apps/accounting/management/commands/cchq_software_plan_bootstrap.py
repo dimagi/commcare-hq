@@ -129,18 +129,20 @@ class Command(BaseCommand):
         if for_tests:
             logger.info("Initializing Plans and Roles for Testing")
 
-        ensure_plans(dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps)
+        ensure_plans(dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
+                     editions=EDITIONS)
 
 
-def ensure_plans(dry_run, verbose, for_tests, apps):
+def ensure_plans(dry_run, verbose, for_tests, apps, editions):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
 
-    edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose, apps=apps)
+    edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose, apps=apps,
+                                           editions=editions)
     for product_type in PRODUCT_TYPES:
-        for edition in EDITIONS:
+        for edition in editions:
             role_slug = BOOTSTRAP_EDITION_TO_ROLE[edition]
             try:
                 role = Role.objects.get(slug=role_slug)
@@ -257,7 +259,7 @@ def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
     return product, product_rates
 
 
-def _ensure_features(dry_run, verbose, apps):
+def _ensure_features(dry_run, verbose, apps, editions):
     """
     Ensures that all the Features necessary for the plans are created.
     """
@@ -267,7 +269,7 @@ def _ensure_features(dry_run, verbose, apps):
         logger.info('Ensuring Features')
 
     edition_to_features = defaultdict(list)
-    for edition in EDITIONS:
+    for edition in editions:
         for feature_type in FEATURE_TYPES:
             feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
             if edition == SoftwarePlanEdition.ENTERPRISE:
