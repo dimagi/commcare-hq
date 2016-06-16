@@ -197,9 +197,6 @@ class EWSScriptTest(EWSTestCase, TestScript):
         SQLProduct.objects.all().delete()
         EWSGhanaConfig.for_domain(TEST_DOMAIN).delete()
         DocDomainMapping.objects.all().delete()
-        generator.delete_all_subscriptions()
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
         Domain.get_by_name(TEST_DOMAIN).delete()
         super(EWSScriptTest, cls).tearDownClass()
 
