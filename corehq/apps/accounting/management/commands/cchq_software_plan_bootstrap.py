@@ -15,7 +15,7 @@ from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import (
     SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, FeatureRate, FeatureType,
     UNLIMITED_FEATURE_USAGE,
-)
+    SoftwareProductRate)
 
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,24 @@ EDITIONS = [
 ]
 FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
 PRODUCT_TYPES = [p[0] for p in SoftwareProductType.CHOICES]
+
+BOOTSTRAP_PRODUCT_RATES = {
+    SoftwarePlanEdition.COMMUNITY: [
+        SoftwareProductRate(),  # use all the defaults
+    ],
+    SoftwarePlanEdition.STANDARD: [
+        SoftwareProductRate(monthly_fee=Decimal('100.00')),
+    ],
+    SoftwarePlanEdition.PRO: [
+        SoftwareProductRate(monthly_fee=Decimal('500.00')),
+    ],
+    SoftwarePlanEdition.ADVANCED: [
+        SoftwareProductRate(monthly_fee=Decimal('1000.00')),
+    ],
+    SoftwarePlanEdition.ENTERPRISE: [
+        SoftwareProductRate(monthly_fee=Decimal('0.00')),
+    ],
+}
 
 BOOTSTRAP_FEATURE_RATES = {
     SoftwarePlanEdition.COMMUNITY: {
@@ -207,7 +225,6 @@ def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
     Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
     """
     SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
-    SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
 
     if verbose:
         logger.info('Ensuring Products and Product Rates')
@@ -217,24 +234,6 @@ def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
         product.name = "Dimagi Only %s" % product.name
 
     product_rates = []
-    BOOTSTRAP_PRODUCT_RATES = {
-        SoftwarePlanEdition.COMMUNITY: [
-            SoftwareProductRate(),  # use all the defaults
-        ],
-        SoftwarePlanEdition.STANDARD: [
-            SoftwareProductRate(monthly_fee=Decimal('100.00')),
-        ],
-        SoftwarePlanEdition.PRO: [
-            SoftwareProductRate(monthly_fee=Decimal('500.00')),
-        ],
-        SoftwarePlanEdition.ADVANCED: [
-            SoftwareProductRate(monthly_fee=Decimal('1000.00')),
-        ],
-        SoftwarePlanEdition.ENTERPRISE: [
-            SoftwareProductRate(monthly_fee=Decimal('0.00')),
-        ],
-    }
-
     for product_rate in BOOTSTRAP_PRODUCT_RATES[edition]:
         if dry_run:
             logger.info("[DRY RUN] Creating Product: %s" % product)
