@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from corehq.apps.accounting import generator
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.apps.sms.tests import setup_default_sms_test_backend, delete_domain_phone_numbers
@@ -48,6 +49,8 @@ class RemindersTest(ILSTestScript):
         cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         cls.domain.delete()
+        generator.delete_all_subscriptions()
+        generator.delete_all_accounts()
         super(RemindersTest, cls).tearDownClass()
 
 
