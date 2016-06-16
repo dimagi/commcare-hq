@@ -40,23 +40,19 @@ BOOTSTRAP_PRODUCT_RATES = {
 FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
 BOOTSTRAP_FEATURE_RATES = {
     SoftwarePlanEdition.COMMUNITY: {
-        FeatureType.USER: dict(monthly_limit=50,
-                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.USER: dict(monthly_limit=50, per_excess_fee=Decimal('1.00')),
         FeatureType.SMS: dict(monthly_limit=0),
     },
     SoftwarePlanEdition.STANDARD: {
-        FeatureType.USER: dict(monthly_limit=100,
-                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.USER: dict(monthly_limit=100, per_excess_fee=Decimal('1.00')),
         FeatureType.SMS: dict(monthly_limit=100),
     },
     SoftwarePlanEdition.PRO: {
-        FeatureType.USER: dict(monthly_limit=500,
-                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.USER: dict(monthly_limit=500, per_excess_fee=Decimal('1.00')),
         FeatureType.SMS: dict(monthly_limit=500),
     },
     SoftwarePlanEdition.ADVANCED: {
-        FeatureType.USER: dict(monthly_limit=1000,
-                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.USER: dict(monthly_limit=1000, per_excess_fee=Decimal('1.00')),
         FeatureType.SMS: dict(monthly_limit=1000),
     },
     SoftwarePlanEdition.ENTERPRISE: {
@@ -66,23 +62,19 @@ BOOTSTRAP_FEATURE_RATES = {
 }
 BOOTSTRAP_FEATURE_RATES_FOR_TESTING = {
     SoftwarePlanEdition.COMMUNITY: {
-        FeatureType.USER: dict(monthly_limit=2,
-                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.USER: dict(monthly_limit=2, per_excess_fee=Decimal('1.00')),
         FeatureType.SMS: dict(monthly_limit=0),
     },
     SoftwarePlanEdition.STANDARD: {
-        FeatureType.USER: dict(monthly_limit=4,
-                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.USER: dict(monthly_limit=4, per_excess_fee=Decimal('1.00')),
         FeatureType.SMS: dict(monthly_limit=3),
     },
     SoftwarePlanEdition.PRO: {
-        FeatureType.USER: dict(monthly_limit=6,
-                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.USER: dict(monthly_limit=6, per_excess_fee=Decimal('1.00')),
         FeatureType.SMS: dict(monthly_limit=5),
     },
     SoftwarePlanEdition.ADVANCED: {
-        FeatureType.USER: dict(monthly_limit=8,
-                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.USER: dict(monthly_limit=8, per_excess_fee=Decimal('1.00')),
         FeatureType.SMS: dict(monthly_limit=7),
     },
     SoftwarePlanEdition.ENTERPRISE: {
