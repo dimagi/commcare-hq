@@ -118,14 +118,14 @@ class Command(BaseCommand):
             edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
             product_types=PRODUCT_TYPES, product_rate_data=BOOTSTRAP_PRODUCT_RATES,
             feature_types=FEATURE_TYPES, feature_type_data=feature_type_data,
-            dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
+            dry_run=dry_run, verbose=verbose, apps=default_apps,
         )
 
 
 def ensure_plans(edition_to_role,
                  product_types, product_rate_data,
                  feature_types, feature_type_data,
-                 dry_run, verbose, for_tests, apps):
+                 dry_run, verbose, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
@@ -154,7 +154,7 @@ def ensure_plans(edition_to_role,
             )
             feature_rates = _ensure_feature_rates(
                 edition_to_features[edition], edition, feature_type_data,
-                dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=apps,
+                dry_run=dry_run, verbose=verbose, apps=apps,
             )
             software_plan = SoftwarePlan(
                 name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
@@ -290,7 +290,7 @@ def _ensure_product_and_rate(product_type, edition, product_rate_data, dry_run, 
     return product, product_rate
 
 
-def _ensure_feature_rates(features, edition, feature_type_data, dry_run, verbose, for_tests, apps):
+def _ensure_feature_rates(features, edition, feature_type_data, dry_run, verbose, apps):
     """
     Ensures that all the FeatureRates necessary for the plans are created.
     """
