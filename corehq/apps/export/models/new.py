@@ -171,7 +171,11 @@ class ExportColumn(DocumentSchema):
         if self.item.transform:
             value = TRANSFORM_FUNCTIONS[self.item.transform](value, doc)
         if self.deid_transform:
-            value = DEID_TRANSFORM_FUNCTIONS[self.deid_transform](value, doc)
+            try:
+                value = DEID_TRANSFORM_FUNCTIONS[self.deid_transform](value, doc)
+            except ValueError:
+                # Unable to convert the string to a date
+                pass
         return value
 
     @staticmethod
