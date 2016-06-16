@@ -222,6 +222,38 @@ def ensure_plans(edition_to_role,
                                          default_product_plan.edition))
 
 
+def _ensure_features(dry_run, verbose, apps, editions, feature_types):
+    """
+    Ensures that all the Features necessary for the plans are created.
+    """
+    Feature = apps.get_model('accounting', 'Feature')
+
+    if verbose:
+        logger.info('Ensuring Features')
+
+    edition_to_features = defaultdict(list)
+    for edition in editions:
+        for feature_type in feature_types:
+            feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
+            if edition == SoftwarePlanEdition.ENTERPRISE:
+                feature.name = "Dimagi Only %s" % feature.name
+            if dry_run:
+                logger.info("[DRY RUN] Creating Feature: %s" % feature)
+            else:
+                try:
+                    feature = Feature.objects.get(name=feature.name)
+                    if verbose:
+                        logger.info("Feature '%s' already exists. Using "
+                                    "existing feature to add rate."
+                                    % feature.name)
+                except Feature.DoesNotExist:
+                    feature.save()
+                    if verbose:
+                        logger.info("Creating Feature: %s" % feature)
+            edition_to_features[edition].append(feature)
+    return edition_to_features
+
+
 def _ensure_product_and_rate(product_type, edition, product_rate_data, dry_run, verbose, apps):
     """
     Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
@@ -256,38 +288,6 @@ def _ensure_product_and_rate(product_type, edition, product_rate_data, dry_run, 
                         % product_rate.monthly_fee)
     product_rate.product = product
     return product, product_rate
-
-
-def _ensure_features(dry_run, verbose, apps, editions, feature_types):
-    """
-    Ensures that all the Features necessary for the plans are created.
-    """
-    Feature = apps.get_model('accounting', 'Feature')
-
-    if verbose:
-        logger.info('Ensuring Features')
-
-    edition_to_features = defaultdict(list)
-    for edition in editions:
-        for feature_type in feature_types:
-            feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
-            if edition == SoftwarePlanEdition.ENTERPRISE:
-                feature.name = "Dimagi Only %s" % feature.name
-            if dry_run:
-                logger.info("[DRY RUN] Creating Feature: %s" % feature)
-            else:
-                try:
-                    feature = Feature.objects.get(name=feature.name)
-                    if verbose:
-                        logger.info("Feature '%s' already exists. Using "
-                                    "existing feature to add rate."
-                                    % feature.name)
-                except Feature.DoesNotExist:
-                    feature.save()
-                    if verbose:
-                        logger.info("Creating Feature: %s" % feature)
-            edition_to_features[edition].append(feature)
-    return edition_to_features
 
 
 def _ensure_feature_rates(features, edition, feature_type_data, dry_run, verbose, for_tests, apps):
