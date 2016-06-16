@@ -47,7 +47,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
             dup = XFormInstance.get(dup_id)
             self.assertEqual(dup.doc_type, "XFormInstance")
-            self.assertIsNone(dup.problem)
+            self.assertTrue(dup.problem.startswith("This document was an xform duplicate that"))
 
             form_with_multi_dups = XFormInstance.get(form_with_multi_dups_id)
             self.assertEqual(form_with_multi_dups.doc_type, "XFormInstance")
