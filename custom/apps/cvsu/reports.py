@@ -25,8 +25,8 @@ class MultiReportPage(CustomProjectReport, ProjectReportParametersMixin, Datespa
     flush_layout = True
 
     @use_nvd3_v3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        return super(MultiReportPage, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        return super(MultiReportPage, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     @memoized

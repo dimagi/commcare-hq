@@ -3,14 +3,14 @@
 
 {% block core_libraries %}{{ block.super }}
 {% include "style/includes/angular.html" %}
-<script src="{% new_static 'angular-mocks/angular-mocks.js' %}"></script>
+<script src="{% static 'angular-mocks/angular-mocks.js' %}"></script>
 {% endblock %}
 
 {% block dependencies %}
-<script src="{% new_static 'app_manager/js/hq.app_data_drilldown.ng.js' %}"></script>
+<script src="{% static 'app_manager/js/hq.app_data_drilldown.ng.js' %}"></script>
 {% endblock %}
 
 {% block mocha_tests %}
-<script src="{% new_static 'app_manager/spec/utils/app_data_drilldown.utils.mo.js' %}"></script>
-<script src="{% new_static 'app_manager/spec/app_data_drilldown.DrilldownToFormController.init.spec.mo.js' %}"></script>
+<script src="{% static 'app_manager/spec/utils/app_data_drilldown.utils.mo.js' %}"></script>
+<script src="{% static 'app_manager/spec/app_data_drilldown.DrilldownToFormController.init.spec.mo.js' %}"></script>
 {% endblock %}

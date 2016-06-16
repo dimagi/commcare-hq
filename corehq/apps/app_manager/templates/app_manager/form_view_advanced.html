@@ -4,8 +4,8 @@
 {% load i18n %}
 
 {% block js_extra %}
-    <script src="{% new_static 'app_manager/js/case-config-ui-advanced.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/visit-scheduler.js' %}"></script>
+    <script src="{% static 'app_manager/js/case-config-ui-advanced.js' %}"></script>
+    <script src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
 {% endblock %}
 
 {% block case_management_js %}{{ block.super }}
