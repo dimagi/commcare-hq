@@ -121,11 +121,11 @@ class Command(BaseCommand):
 
         ensure_plans(dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
                      editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
-                     feature_types=FEATURE_TYPES)
+                     feature_types=FEATURE_TYPES, product_types=PRODUCT_TYPES)
 
 
 def ensure_plans(dry_run, verbose, for_tests, apps,
-                 editions, edition_to_role, feature_types):
+                 editions, edition_to_role, feature_types, product_types):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
@@ -133,7 +133,7 @@ def ensure_plans(dry_run, verbose, for_tests, apps,
 
     edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose, apps=apps,
                                            editions=editions, feature_types=feature_types)
-    for product_type in PRODUCT_TYPES:
+    for product_type in product_types:
         for edition in editions:
             role_slug = edition_to_role[edition]
             try:

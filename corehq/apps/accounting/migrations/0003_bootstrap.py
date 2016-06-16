@@ -9,6 +9,8 @@ from corehq.apps.accounting.management.commands.cchq_software_plan_bootstrap imp
 from corehq.apps.accounting.management.commands.cchq_software_plan_bootstrap import (
     BOOTSTRAP_EDITION_TO_ROLE,
     EDITIONS,
+    FEATURE_TYPES,
+    PRODUCT_TYPES,
 )
 
 from corehq.sql_db.operations import HqRunPython
@@ -16,7 +18,8 @@ from corehq.sql_db.operations import HqRunPython
 
 def cchq_software_plan_bootstrap(apps, schema_editor):
     ensure_plans(dry_run=False, verbose=True, for_tests=False, apps=apps,
-                 editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE)
+                 editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
+                 feature_types=FEATURE_TYPES, product_types=PRODUCT_TYPES)
 
 
 class Migration(migrations.Migration):
