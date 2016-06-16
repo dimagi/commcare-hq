@@ -838,6 +838,13 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MOBILE_USER_DEMO_MODE = StaticToggle(
+    'mobile_user_demo_mode',
+    'Ability to make a mobile worker into Demo only mobile worker',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 
 EXPORT_ZIPPED_APPS = StaticToggle(
     'export-zipped-apps',
