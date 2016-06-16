@@ -425,6 +425,10 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(len(new_schema.group_schemas), 1)
 
     def test_has_submissions_flag(self):
+        """
+        Ensure that when an app has `has_submissions` set it gets processed, otherwise
+        it should be skipped.
+        """
         app = self.current_app
 
         # After the first schema has been saved let's add a second app to process
