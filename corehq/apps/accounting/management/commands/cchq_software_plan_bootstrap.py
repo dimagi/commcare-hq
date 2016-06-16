@@ -20,13 +20,6 @@ from corehq.apps.accounting.models import (
 
 logger = logging.getLogger(__name__)
 
-EDITIONS = [
-    SoftwarePlanEdition.COMMUNITY,
-    SoftwarePlanEdition.STANDARD,
-    SoftwarePlanEdition.PRO,
-    SoftwarePlanEdition.ADVANCED,
-    SoftwarePlanEdition.ENTERPRISE,
-]
 BOOTSTRAP_EDITION_TO_ROLE = {
     SoftwarePlanEdition.COMMUNITY: 'community_plan_v0',
     SoftwarePlanEdition.STANDARD: 'standard_plan_v0',
@@ -122,14 +115,14 @@ class Command(BaseCommand):
             feature_type_data = BOOTSTRAP_FEATURE_RATES
 
         ensure_plans(
-            editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
+            edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
             product_types=PRODUCT_TYPES, product_rate_data=BOOTSTRAP_PRODUCT_RATES,
             feature_types=FEATURE_TYPES, feature_type_data=feature_type_data,
             dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
         )
 
 
-def ensure_plans(editions, edition_to_role,
+def ensure_plans(edition_to_role,
                  product_types, product_rate_data,
                  feature_types, feature_type_data,
                  dry_run, verbose, for_tests, apps):
@@ -137,6 +130,8 @@ def ensure_plans(editions, edition_to_role,
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
+
+    editions = edition_to_role.keys()
 
     edition_to_features = _ensure_features(
         editions=editions, feature_types=feature_types,
