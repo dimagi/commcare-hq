@@ -117,19 +117,22 @@ class Command(BaseCommand):
         for_tests = testing
         if for_tests:
             logger.info("Initializing Plans and Roles for Testing")
+            feature_type_data = BOOTSTRAP_FEATURE_RATES_FOR_TESTING
+        else:
+            feature_type_data = BOOTSTRAP_FEATURE_RATES
 
         ensure_plans(
             dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
             editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
             product_types=PRODUCT_TYPES, product_rate_data=BOOTSTRAP_PRODUCT_RATES,
-            feature_types=FEATURE_TYPES,
+            feature_types=FEATURE_TYPES, feature_type_data=feature_type_data,
         )
 
 
 def ensure_plans(dry_run, verbose, for_tests, apps,
                  editions, edition_to_role,
                  product_types, product_rate_data,
-                 feature_types):
+                 feature_types, feature_type_data):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
@@ -152,7 +155,10 @@ def ensure_plans(dry_run, verbose, for_tests, apps,
                 product_type, edition, product_rate_data,
                 dry_run=dry_run, verbose=verbose, apps=apps,
             )
-            feature_rates = _ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=apps)
+            feature_rates = _ensure_feature_rates(
+                edition_to_features[edition], edition, feature_type_data,
+                dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=apps,
+            )
             software_plan = SoftwarePlan(
                 name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
             )
@@ -289,7 +295,7 @@ def _ensure_features(dry_run, verbose, apps, editions, feature_types):
     return edition_to_features
 
 
-def _ensure_feature_rates(features, edition, dry_run, verbose, for_tests, apps):
+def _ensure_feature_rates(features, edition, feature_type_data, dry_run, verbose, for_tests, apps):
     """
     Ensures that all the FeatureRates necessary for the plans are created.
     """
@@ -300,10 +306,7 @@ def _ensure_feature_rates(features, edition, dry_run, verbose, for_tests, apps):
 
     feature_rates = []
     for feature in features:
-        feature_rate_params = (
-            BOOTSTRAP_FEATURE_RATES_FOR_TESTING
-            if for_tests else BOOTSTRAP_FEATURE_RATES
-        )[edition][feature.feature_type]
+        feature_rate_params = feature_type_data[edition][feature.feature_type]
         feature_rate = FeatureRate(**feature_rate_params)
         feature_rate.feature = feature
         if dry_run:
