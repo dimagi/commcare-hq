@@ -9,7 +9,7 @@ from corehq.apps.importer.exceptions import ImporterExcelFileEncrypted, \
 from corehq.apps.importer.tasks import bulk_import_async
 from django.views.decorators.http import require_POST
 
-from corehq.apps.importer.util import get_case_properties_for_case_type
+from corehq.apps.importer.util import get_case_properties_for_case_type, get_importer_error_message
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -79,7 +79,7 @@ def excel_config(request, domain):
     try:
         spreadsheet = importer_util.get_spreadsheet(file_ref, named_columns)
     except ImporterError as e:
-        return render_error(request, domain, _get_importer_error_message(e))
+        return render_error(request, domain, get_importer_error_message(e))
 
     columns = spreadsheet.get_header_columns()
     row_count = spreadsheet.get_num_rows()
@@ -177,7 +177,7 @@ def excel_fields(request, domain):
     try:
         spreadsheet = importer_util.get_spreadsheet(download_ref, named_columns)
     except ImporterError as e:
-        return render_error(request, domain, _get_importer_error_message(e))
+        return render_error(request, domain, get_importer_error_message(e))
 
     columns = spreadsheet.get_header_columns()
 
@@ -264,7 +264,7 @@ def excel_commit(request, domain):
     try:
         importer_util.get_spreadsheet(excel_ref, config.named_columns)
     except ImporterError as e:
-        return render_error(request, domain, _get_importer_error_message(e))
+        return render_error(request, domain, get_importer_error_message(e))
 
     download = DownloadBase()
     download.set_task(bulk_import_async.delay(
@@ -297,16 +297,8 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
     try:
         download_context = get_download_context(download_id, check_state=True)
     except TaskFailedError as e:
-        error = e.errors
-        if error == 'EXPIRED':
-            error = _('Sorry, your session has expired. Please start over and try again.')
-        elif error == 'HAS_ERRORS':
-            error = _('The session containing the file you uploaded has expired - please upload a new one.')
-        else:
-            error = _('Error: %s') % error
-
         context = RequestContext(request)
-        context.update({'error': error, 'url': base.ImportCases.get_url(domain=domain)})
+        context.update({'error': e.errors, 'url': base.ImportCases.get_url(domain=domain)})
         return render_to_response('importer/partials/import_error.html', context_instance=context)
     else:
         context = RequestContext(request)
@@ -318,20 +310,3 @@ def importer_job_poll(request, domain, download_id, template="importer/partials/
 def _spreadsheet_expired(req, domain):
     messages.error(req, _('Sorry, your session has expired. Please start over and try again.'))
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
-
-
-def _get_importer_error_message(e):
-    if isinstance(e, ImporterRefError):
-        # I'm not totally sure this is the right error, but it's what was being
-        # used before. (I think people were just calling _spreadsheet_expired
-        # or otherwise blaming expired sessions whenever anything unexpected
-        # happened though...)
-        return _('Sorry, your session has expired. Please start over and try again.')
-    elif isinstance(e, ImporterFileNotFound):
-        return _('The session containing the file you uploaded has expired '
-                 '- please upload a new one.')
-    elif isinstance(e, ImporterExcelFileEncrypted):
-        return _('The file you want to import is password protected. '
-                 'Please choose a file that is not password protected.')
-    elif isinstance(e, ImporterExcelError):
-        return _("The file uploaded has the following error: ").format(unicode(e))

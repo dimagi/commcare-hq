@@ -1,6 +1,6 @@
 from celery.task import task
 from xml.etree import ElementTree
-from corehq.apps.importer.exceptions import ImporterRefError, ImporterError
+from corehq.apps.importer.util import get_importer_error_message
 from dimagi.utils.couch.database import is_bigcouch
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from casexml.apps.case.models import CommCareCase
@@ -24,15 +24,14 @@ def bulk_import_async(config, domain, excel_id):
     excel_ref = DownloadBase.get(excel_id)
     try:
         spreadsheet = importer_util.get_spreadsheet(excel_ref, config.named_columns)
-    except ImporterRefError:
-        return {'errors': 'EXPIRED'}
-    except ImporterError:
-        return {'errors': 'HAS_ERRORS'}
+    except Exception as e:
+        return {'errors': get_importer_error_message(e)}
+
     try:
         result = do_import(spreadsheet, config, domain, task=bulk_import_async)
     except Exception as e:
         return {
-            'errors': e.message
+            'errors': 'Error: ' + e.message
         }
 
     # return compatible with soil
