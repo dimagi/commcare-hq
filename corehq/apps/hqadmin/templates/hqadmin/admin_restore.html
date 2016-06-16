@@ -34,6 +34,10 @@
         <div class="container-fluid">
             <div class="row">
                 <h3>Response Status Code: {{ status_code }}</h3>
+                <ul class="list-inline">
+                    <li><a href="https://confluence.dimagi.com/display/commcarehq/Hidden+features#Hiddenfeatures-PhoneRestore" target="_blank">Docs</a></li>
+                    <li><a href="{{request.get_full_path}}&raw=true">Raw</a></li>
+                </ul>
             <div>
               <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
