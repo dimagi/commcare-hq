@@ -17,6 +17,7 @@ from corehq.apps.analytics.tasks import track_workflow
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.utils.functional import lazy
 import six
+import re
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -34,47 +35,120 @@ class RegisterNewWebUserForm(forms.Form):
     account_email = forms.CharField(label=_("Email"))
     new_password = forms.CharField(label=_("Create Password"))
     project_name = forms.CharField(label=_("Project Name"))
-    phone_number = forms.CharField(label=_("Phone Number (Optional)"))
-    eula_confirmed = forms.BooleanField(required=False)
+    phone_number = forms.CharField(
+        max_length=80,
+        label=_("Phone Number (Optional)"),
+    )
+    eula_confirmed = forms.BooleanField(
+        required=False,
+        label=mark_safe_lazy(_(
+            """I have read and agree to the
+            <a data-toggle='modal'
+               data-target='#eulaModal'
+               href='#eulaModal'>
+               CommCare HQ End User License Agreement</a>.""")))
 
     def __init__(self, *args, **kwargs):
         super(RegisterNewWebUserForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
-        self.helper.form_class = "form"
+        self.helper.form_class = "form form-with-steps " \
+                                 "form-with-steps-primary " \
+                                 "form-with-steps-centered"
         self.helper.form_id = "register-new-user"
 
-        def _make_form_step(step_name):
-            return '<h3 class="form-step">{}</h3>'.format(step_name)
-
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Create Your Account'),
-                crispy.HTML(_make_form_step(ugettext("Step 1 of 4"))),
-                hqcrispy.InlineField('full_name'),
-                hqcrispy.InlineField('account_email'),
-                hqcrispy.InlineField('new_password'),
-                twbscrispy.StrictButton(ugettext("Next"))
+            crispy.Div(
+                crispy.Fieldset(
+                    _('Create Your Account'),
+                    hqcrispy.FormStepNumber(1, 3),
+                    hqcrispy.InlineField('full_name', css_class="input-lg"),
+                    hqcrispy.InlineField('account_email', css_class="input-lg"),
+                    hqcrispy.InlineField('new_password', css_class="input-lg"),
+                    twbscrispy.StrictButton(
+                        ugettext("Next"),
+                        css_class="btn btn-success btn-lg"
+                    )
+                ),
+                css_class="form-step form-step-start step-1 hide"
             ),
-            crispy.Fieldset(
-                _('Name Your First Project'),
-                crispy.HTML(_make_form_step(ugettext("Step 2 of 4"))),
-                hqcrispy.InlineField('project_name'),
-                twbscrispy.StrictButton(ugettext("Next"))
+            crispy.Div(
+                crispy.Fieldset(
+                    _('Name Your First Project'),
+                    hqcrispy.FormStepNumber(2, 3),
+                    hqcrispy.InlineField('project_name', css_class="input-lg"),
+                    hqcrispy.InlineField('eula_confirmed', css_class="input-lg"),
+                    twbscrispy.StrictButton(
+                        ugettext("Next"),
+                        css_class="btn btn-success btn-lg"
+                    )
+                ),
+                css_class="form-step step-2 hide"
             ),
-            crispy.Fieldset(
-                _('Get Help'),
-                crispy.HTML(_make_form_step(ugettext("Step 3 of 4"))),
-                hqcrispy.InlineField('phone_number'),
-                twbscrispy.StrictButton(ugettext("Skip"))
+            crispy.Div(
+                crispy.Fieldset(
+                    _('Can We Help?'),
+                    hqcrispy.FormStepNumber(3, 3),
+                    hqcrispy.InlineField('phone_number', css_class="input-lg"),
+                    crispy.HTML(
+                        '<p class="help-block">{}</p>'.format(ugettext(
+                            "(Optional) Leave your phone number if you would "
+                            "like someone from Dimagi to contact you and help "
+                            "assess your project's needs."
+                        ))
+                    ),
+                    twbscrispy.StrictButton(
+                        ugettext("Finish"),
+                        css_class="btn btn-success btn-lg"
+                    )
+                ),
+                css_class="form-step step-3"
             ),
-            crispy.Fieldset(
-                _('Confirm & Create'),
-                crispy.HTML(_make_form_step(ugettext("Step 4 of 4"))),
-                hqcrispy.InlineField('eula_confirmed'),
-                twbscrispy.StrictButton(ugettext("Finish"))
-            )
         )
+
+    def clean_full_name(self):
+        data = self.cleaned_data['full_name'].split()
+        return [data.pop(0)] + [' '.join(data)]
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data['phone_number']
+        phone_number = re.sub('\s|\+|\-', '', phone_number)
+        if phone_number == '':
+            return None
+        elif not re.match(r'\d+$', phone_number):
+            raise forms.ValidationError(ugettext(
+                "%s is an invalid phone number." % phone_number
+            ))
+        return phone_number
+
+    def clean_email(self):
+        data = self.cleaned_data['email'].strip().lower()
+        validate_email(data)
+        duplicate = CouchUser.get_by_username(data)
+        if duplicate:
+            # sync django user
+            duplicate.save()
+        if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
+            raise forms.ValidationError('Username already taken; please try another')
+        return data
+
+    def clean_password(self):
+        return clean_password(self.cleaned_data.get('password'))
+
+    def clean_eula_confirmed(self):
+        data = self.cleaned_data['eula_confirmed']
+        if data is not True:
+            raise forms.ValidationError(
+                "You must agree to our End User License Agreement in order "
+                "to register an account."
+            )
+        return data
+
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], basestring):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
 
 
 class DomainRegistrationForm(forms.Form):
