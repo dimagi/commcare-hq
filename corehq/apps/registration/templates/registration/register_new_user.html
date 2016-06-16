@@ -17,7 +17,8 @@
     $(function () {
       $(window).on('resize load', function () {
         console.log('resize');
-        $('.reg-form-holder').css('min-height', $('.hq-container').height() - 170 + 'px');
+        var newHeight = $(window).height() - $('#hq-navigation').outerHeight() - $('#hq-footer').outerHeight();
+        $('.reg-form-column').css('min-height', Math.max(newHeight, 440) + 'px');
       });
     });
   </script>
@@ -36,8 +37,15 @@
 {% block content %}
 <div class="container">
   <div class="row">
-    <div class="col-xs-8 col-xs-offset-4 col-md-7 col-md-offset-5">
-      {% crispy reg_form   %}
+    <div class="col-xs-8 col-xs-offset-4 col-md-7 col-md-offset-5 reg-form-column">
+      <div id="registration-form-container">
+        <ul class="form-step-progress">
+          <li class="active">{% trans "Create Account" %}</li>
+          <li class="active">{% trans "Name Project" %}</li>
+          <li>{% trans "Get Started" %}</li>
+        </ul>
+        {% crispy reg_form   %}
+      </div>
     </div>
   </div>
 </div>
