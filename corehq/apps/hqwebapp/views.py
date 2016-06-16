@@ -382,7 +382,9 @@ def logout(req):
 
 @login_and_domain_required
 def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
-    return soil_views.retrieve_download(req, download_id, template, extra_context={'domain': domain})
+    next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
+    return soil_views.retrieve_download(req, download_id, template,
+                                        extra_context={'domain': domain, 'next_url': next_url})
 
 
 def dropbox_next_url(request, download_id):
