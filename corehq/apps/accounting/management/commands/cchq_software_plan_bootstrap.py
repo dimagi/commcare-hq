@@ -13,9 +13,9 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import (
-    SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, FeatureRate, FeatureType,
+    SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, FeatureType,
     UNLIMITED_FEATURE_USAGE,
-    SoftwareProductRate)
+)
 
 
 logger = logging.getLogger(__name__)
@@ -38,74 +38,64 @@ FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
 PRODUCT_TYPES = [p[0] for p in SoftwareProductType.CHOICES]
 
 BOOTSTRAP_PRODUCT_RATES = {
-    SoftwarePlanEdition.COMMUNITY: [
-        SoftwareProductRate(),  # use all the defaults
-    ],
-    SoftwarePlanEdition.STANDARD: [
-        SoftwareProductRate(monthly_fee=Decimal('100.00')),
-    ],
-    SoftwarePlanEdition.PRO: [
-        SoftwareProductRate(monthly_fee=Decimal('500.00')),
-    ],
-    SoftwarePlanEdition.ADVANCED: [
-        SoftwareProductRate(monthly_fee=Decimal('1000.00')),
-    ],
-    SoftwarePlanEdition.ENTERPRISE: [
-        SoftwareProductRate(monthly_fee=Decimal('0.00')),
-    ],
+    SoftwarePlanEdition.COMMUNITY: {},  # use all the defaults
+    SoftwarePlanEdition.STANDARD: dict(monthly_fee=Decimal('100.00')),
+    SoftwarePlanEdition.PRO: dict(monthly_fee=Decimal('500.00')),
+    SoftwarePlanEdition.ADVANCED: dict(monthly_fee=Decimal('1000.00')),
+    SoftwarePlanEdition.ENTERPRISE: dict(monthly_fee=Decimal('0.00')),
 }
 
 BOOTSTRAP_FEATURE_RATES = {
     SoftwarePlanEdition.COMMUNITY: {
-        FeatureType.USER: FeatureRate(monthly_limit=50,
+        FeatureType.USER: dict(monthly_limit=50,
                                       per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: FeatureRate(monthly_limit=0),
+        FeatureType.SMS: dict(monthly_limit=0),
     },
     SoftwarePlanEdition.STANDARD: {
-        FeatureType.USER: FeatureRate(monthly_limit=100,
+        FeatureType.USER: dict(monthly_limit=100,
                                       per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: FeatureRate(monthly_limit=100),
+        FeatureType.SMS: dict(monthly_limit=100),
     },
     SoftwarePlanEdition.PRO: {
-        FeatureType.USER: FeatureRate(monthly_limit=500,
+        FeatureType.USER: dict(monthly_limit=500,
                                       per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: FeatureRate(monthly_limit=500),
+        FeatureType.SMS: dict(monthly_limit=500),
     },
     SoftwarePlanEdition.ADVANCED: {
-        FeatureType.USER: FeatureRate(monthly_limit=1000,
+        FeatureType.USER: dict(monthly_limit=1000,
                                       per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: FeatureRate(monthly_limit=1000),
+        FeatureType.SMS: dict(monthly_limit=1000),
     },
     SoftwarePlanEdition.ENTERPRISE: {
-        FeatureType.USER: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
-        FeatureType.SMS: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE),
+        FeatureType.USER: dict(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
+        FeatureType.SMS: dict(monthly_limit=UNLIMITED_FEATURE_USAGE),
     },
 }
 
 BOOTSTRAP_FEATURE_RATES_FOR_TESTING = {
     SoftwarePlanEdition.COMMUNITY: {
-        FeatureType.USER: FeatureRate(monthly_limit=2,
+        FeatureType.USER: dict(monthly_limit=2,
                                       per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: FeatureRate(monthly_limit=0),
+        FeatureType.SMS: dict(monthly_limit=0),
     },
     SoftwarePlanEdition.STANDARD: {
-        FeatureType.USER: FeatureRate(monthly_limit=4,
+        FeatureType.USER: dict(monthly_limit=4,
                                       per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: FeatureRate(monthly_limit=3),
+        FeatureType.SMS: dict(monthly_limit=3),
     },
     SoftwarePlanEdition.PRO: {
-        FeatureType.USER: FeatureRate(monthly_limit=6,
+        FeatureType.USER: dict(monthly_limit=6,
                                       per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: FeatureRate(monthly_limit=5),
+        FeatureType.SMS: dict(monthly_limit=5),
     },
     SoftwarePlanEdition.ADVANCED: {
-        FeatureType.USER: FeatureRate(monthly_limit=8,
+        FeatureType.USER: dict(monthly_limit=8,
                                       per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: FeatureRate(monthly_limit=7),
+        FeatureType.SMS: dict(monthly_limit=7),
     },
     SoftwarePlanEdition.ENTERPRISE: {
-        FeatureType.USER: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
-        FeatureType.SMS: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE),
+        FeatureType.USER: dict(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
+        FeatureType.SMS: dict(monthly_limit=UNLIMITED_FEATURE_USAGE),
     },
 }
 
@@ -227,6 +217,7 @@ def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
     Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
     """
     SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
+    SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
 
     if verbose:
         logger.info('Ensuring Products and Product Rates')
@@ -235,28 +226,26 @@ def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
     if edition == SoftwarePlanEdition.ENTERPRISE:
         product.name = "Dimagi Only %s" % product.name
 
-    product_rates = []
-    for product_rate in BOOTSTRAP_PRODUCT_RATES[edition]:
-        if dry_run:
-            logger.info("[DRY RUN] Creating Product: %s" % product)
-            logger.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
-        else:
-            try:
-                product = SoftwareProduct.objects.get(name=product.name)
-                if verbose:
-                    logger.info("Product '%s' already exists. Using "
-                                "existing product to add rate."
-                                % product.name)
-            except SoftwareProduct.DoesNotExist:
-                product.save()
-                if verbose:
-                    logger.info("Creating Product: %s" % product)
+    product_rate = SoftwareProductRate(**BOOTSTRAP_PRODUCT_RATES[edition])
+    if dry_run:
+        logger.info("[DRY RUN] Creating Product: %s" % product)
+        logger.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
+    else:
+        try:
+            product = SoftwareProduct.objects.get(name=product.name)
             if verbose:
-                logger.info("Corresponding product rate of $%d created."
-                            % product_rate.monthly_fee)
-        product_rate.product = product
-        product_rates.append(product_rate)
-    return product, product_rates
+                logger.info("Product '%s' already exists. Using "
+                            "existing product to add rate."
+                            % product.name)
+        except SoftwareProduct.DoesNotExist:
+            product.save()
+            if verbose:
+                logger.info("Creating Product: %s" % product)
+        if verbose:
+            logger.info("Corresponding product rate of $%d created."
+                        % product_rate.monthly_fee)
+    product_rate.product = product
+    return product, [product_rate]
 
 
 def _ensure_features(dry_run, verbose, apps, editions):
@@ -295,15 +284,18 @@ def _ensure_feature_rates(features, edition, dry_run, verbose, for_tests, apps):
     """
     Ensures that all the FeatureRates necessary for the plans are created.
     """
+    FeatureRate = apps.get_model('accounting', 'FeatureRate')
+
     if verbose:
         logger.info('Ensuring Feature Rates')
 
     feature_rates = []
     for feature in features:
-        feature_rate = (
+        feature_rate_params = (
             BOOTSTRAP_FEATURE_RATES_FOR_TESTING
             if for_tests else BOOTSTRAP_FEATURE_RATES
         )[edition][feature.feature_type]
+        feature_rate = FeatureRate(**feature_rate_params)
         feature_rate.feature = feature
         if dry_run:
             logger.info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
