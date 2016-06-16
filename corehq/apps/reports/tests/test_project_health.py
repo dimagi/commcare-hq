@@ -17,7 +17,7 @@ class MonthlyPerformanceSummaryTests(TestCase):
     now = datetime.datetime.utcnow()
     year, month = add_months(now.year, now.month, 1)
     month_as_date = datetime.date(year, month, 1)
-    prev_month_as_date = datetime.date(year, month-1, 1)
+    prev_month_as_date = datetime.date(year, month - 1, 1)
 
     @classmethod
     def setUpClass(cls):
