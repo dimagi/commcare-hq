@@ -72,6 +72,10 @@ def api_auth(view_func):
 class LoginAndDomainAuthentication(Authentication):
 
     def __init__(self, allow_internal=False, *args, **kwargs):
+        """
+        allow_internal:
+            set this to True to allow session based access to this resource
+        """
         super(LoginAndDomainAuthentication, self).__init__(*args, **kwargs)
         if allow_internal:
             self.decorator_map = {
