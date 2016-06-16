@@ -26,6 +26,7 @@ class DomainPillowTest(TestCase):
     ]
 
     def setUp(self):
+        super(DomainPillowTest, self).setUp()
         self.index_info = DOMAIN_INDEX_INFO
         self.elasticsearch = get_es_new()
         delete_all_domains()
@@ -34,6 +35,7 @@ class DomainPillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.index_info.index)
+        super(DomainPillowTest, self).tearDown()
 
     def test_kafka_domain_pillow(self):
         # make a domain
