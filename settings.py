@@ -332,6 +332,7 @@ HQ_APPS = (
     'corehq.tabs',
     'custom.apps.wisepill',
     'custom.fri',
+    'custom.openclinica',
     'fluff',
     'fluff.fluff_filter',
     'soil',
@@ -385,7 +386,6 @@ HQ_APPS = (
     'custom.common',
 
     'custom.dhis2',
-    'custom.openclinica',
     'custom.icds_reports',
 )
 
@@ -1756,8 +1756,6 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
-    'kemri': 'custom.openclinica',
-    'novartis': 'custom.openclinica',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
