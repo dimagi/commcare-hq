@@ -51,7 +51,7 @@ class Command(BaseCommand):
     )
 
     def handle(self, dry_run=False, verbose=False, testing=False, *args, **options):
-        logger.info('Bootstrapping standard plans. Enterprise plans will have to be created via the admin UIs.')
+        logger.info('Bootstrapping standard plans. Custom plans will have to be created via the admin UIs.')
 
         for_tests = testing
         if for_tests:
