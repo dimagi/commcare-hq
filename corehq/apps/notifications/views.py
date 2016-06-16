@@ -9,7 +9,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import toggles
-from corehq.apps.domain.decorators import login_required, require_superuser
+from corehq.apps.domain.decorators import login_required, require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
 from corehq.apps.notifications.models import Notification
@@ -47,7 +47,7 @@ class ManageNotificationView(BasePageView):
     page_title = ugettext_noop("Manage Notification")
     template_name = 'notifications/manage_notifications.html'
 
-    @method_decorator(require_superuser)
+    @method_decorator(require_superuser_or_developer)
     def dispatch(self, request, *args, **kwargs):
         return super(ManageNotificationView, self).dispatch(request, *args, **kwargs)
 
