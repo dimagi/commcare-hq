@@ -124,7 +124,8 @@ class Command(BaseCommand):
                      feature_types=FEATURE_TYPES)
 
 
-def ensure_plans(dry_run, verbose, for_tests, apps, editions, edition_to_role, feature_types):
+def ensure_plans(dry_run, verbose, for_tests, apps,
+                 editions, edition_to_role, feature_types):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
