@@ -37,15 +37,6 @@ from corehq.apps.smsbillables.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
-# don't actually use the plan lists below for initializing new plans! the amounts have been changed to make
-# it easier for testing:
-
-SUBSCRIBABLE_EDITIONS = [
-    SoftwarePlanEdition.ADVANCED,
-    SoftwarePlanEdition.PRO,
-    SoftwarePlanEdition.STANDARD,
-]
-
 
 def instantiate_accounting_for_tests():
     call_command('cchq_prbac_bootstrap', testing=True)
