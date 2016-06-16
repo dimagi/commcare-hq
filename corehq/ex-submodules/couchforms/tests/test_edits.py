@@ -27,6 +27,7 @@ class EditFormTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
+        super(EditFormTest, self).setUp()
         self.interface = FormProcessorInterface(self.domain)
         self.casedb = CaseAccessors(self.domain)
         self.formdb = FormAccessors(self.domain)
@@ -35,6 +36,7 @@ class EditFormTest(TestCase, TestFileMixin):
         FormProcessorTestUtils.delete_all_xforms(self.domain)
         FormProcessorTestUtils.delete_all_cases(self.domain)
         UnfinishedSubmissionStub.objects.all().delete()
+        super(EditFormTest, self).tearDown()
 
     @run_with_all_backends
     def test_basic_edit(self):
