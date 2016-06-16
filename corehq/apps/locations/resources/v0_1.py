@@ -5,8 +5,10 @@ from tastypie.resources import Resource
 from corehq.apps.api.resources.v0_1 import CustomResourceMeta, LoginAndDomainAuthentication
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.api.resources import HqBaseResource
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.util.quickcache import quickcache
+from dimagi.utils.decorators.memoized import memoized
 
 from ..models import Location, SQLLocation
 
@@ -53,9 +55,13 @@ class LocationResource(HqBaseResource):
     def child_queryset(self, domain, include_inactive, parent):
         return parent.sql_location.child_locations(include_inactive)
 
+    @memoized
+    def domain_obj(self, domain_name):
+        return Domain.get_by_name(domain_name)
+
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        project = bundle.request.project
+        project = getattr(bundle.request, 'project', self.domain_obj(domain))
         parent_id = bundle.request.GET.get('parent_id', None)
         include_inactive = json.loads(bundle.request.GET.get('include_inactive', 'false'))
         user = bundle.request.couch_user
@@ -69,8 +75,8 @@ class LocationResource(HqBaseResource):
         return [child for child in locs if child.location_id in viewable]
 
     def dehydrate_can_edit(self, bundle):
-        editable_ids = _user_locations_ids(bundle.request.couch_user,
-                bundle.request.project, only_editable=True)
+        project = getattr(bundle.request, 'project', self.domain_obj(bundle.request.domain))
+        editable_ids = _user_locations_ids(bundle.request.couch_user, project, only_editable=True)
         return bundle.obj.location_id in editable_ids
 
     class Meta(CustomResourceMeta):
