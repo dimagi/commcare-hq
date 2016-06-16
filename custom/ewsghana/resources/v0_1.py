@@ -19,7 +19,7 @@ class EWSLocationResource(LocationResource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        project = bundle.request.project
+        project = getattr(bundle.request, 'project', self.domain_ob(domain))
         parent_id = bundle.request.GET.get('parent_id', None)
         include_inactive = json.loads(bundle.request.GET.get('include_inactive', 'false'))
         show_administrative = bundle.request.GET.get('show_administrative', False)
