@@ -679,7 +679,7 @@ class FeatureRate(models.Model):
     def new_rate(cls, feature_name, feature_type,
                  monthly_fee=None, monthly_limit=None, per_excess_fee=None, save=True):
         feature, _ = Feature.objects.get_or_create(name=feature_name, feature_type=feature_type)
-        rate = FeatureRate(feature=feature)
+        rate = cls(feature=feature)
 
         if monthly_fee is not None:
             rate.monthly_fee = monthly_fee
