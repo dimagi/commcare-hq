@@ -22,11 +22,13 @@ from corehq.apps.domain.models import Domain
 
 class SimpleOtaRestoreTest(TestCase):
 
-    def setUp(cls):
+    def setUp(self):
+        super(SimpleOtaRestoreTest, self).setUp()
         delete_all_users()
 
     def tearDown(self):
         delete_all_users()
+        super(SimpleOtaRestoreTest, self).tearDown()
 
     def test_registration_xml(self):
         user = create_restore_user()
@@ -69,6 +71,7 @@ class OtaRestoreTest(TestCase, TestFileMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(OtaRestoreTest, cls).setUpClass()
         delete_all_cases()
         delete_all_sync_logs()
         cls.project = Domain(name='ota-restore-tests')
@@ -77,8 +80,10 @@ class OtaRestoreTest(TestCase, TestFileMixin):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
+        super(OtaRestoreTest, cls).tearDownClass()
 
     def setUp(self):
+        super(OtaRestoreTest, self).setUp()
         delete_all_users()
         self.restore_user = create_restore_user()
 
@@ -88,6 +93,7 @@ class OtaRestoreTest(TestCase, TestFileMixin):
         delete_all_sync_logs()
         restore_config = RestoreConfig(project=self.project, restore_user=self.restore_user)
         restore_config.cache.delete(restore_config._initial_cache_key())
+        super(OtaRestoreTest, self).tearDown()
 
     def testUserRestore(self):
         self.assertEqual(0, SyncLog.view(
@@ -299,5 +305,6 @@ class WebUserOtaRestoreTest(OtaRestoreTest):
     """Tests for restore using a web user"""
 
     def setUp(self):
+        super(WebUserOtaRestoreTest, self).setUp()
         delete_all_users()
         self.restore_user = create_restore_user(self.project.name, is_mobile_user=False)

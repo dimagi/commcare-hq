@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.http import (
@@ -30,11 +30,9 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
-from corehq.apps.es import CaseES, aggregations
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
-    use_bootstrap3, use_nvd3_v3
-from corehq.apps.style.utils import set_bootstrap_version3
-from corehq.apps.style.views import BaseB3SectionPageView
+    use_nvd3_v3
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
@@ -104,7 +102,7 @@ def get_hqadmin_base_context(request):
     }
 
 
-class BaseAdminSectionView(BaseB3SectionPageView):
+class BaseAdminSectionView(BaseSectionPageView):
     section_name = ugettext_lazy("Admin Reports")
 
     @property
@@ -122,7 +120,6 @@ class AuthenticateAs(BaseAdminSectionView):
     template_name = 'hqadmin/authenticate_as.html'
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(AuthenticateAs, self).dispatch(*args, **kwargs)
 
@@ -152,7 +149,6 @@ class RecentCouchChangesView(BaseAdminSectionView):
     template_name = 'hqadmin/couch_changes.html'
     page_title = ugettext_lazy("Recent Couch Changes")
 
-    @use_bootstrap3
     @use_nvd3_v3
     @use_datatables
     @use_jquery_ui
@@ -601,9 +597,10 @@ class _Db(object):
     Light wrapper for providing interface like Couchdbkit's Database objects.
     """
 
-    def __init__(self, dbname, getter):
+    def __init__(self, dbname, getter, doc_type):
         self.dbname = dbname
         self._getter = getter
+        self.doc_type = doc_type
 
     def get(self, record_id):
         try:
@@ -615,11 +612,13 @@ class _Db(object):
 _SQL_DBS = OrderedDict((db.dbname, db) for db in [
     _Db(
         XFormInstanceSQL._meta.db_table,
-        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data
+        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data,
+        XFormInstanceSQL.__name__
     ),
     _Db(
         CommCareCaseSQL._meta.db_table,
-        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data
+        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data,
+        CommCareCaseSQL.__name__
     ),
 ])
 
@@ -653,7 +652,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({
                 "doc": json.dumps(doc, indent=4, sort_keys=True),
-                "doc_type": doc.get('doc_type', 'Unknown'),
+                "doc_type": doc.get('doc_type', getattr(db, 'doc_type', 'Unknown')),
                 "dbname": db.dbname,
             })
 
@@ -664,7 +663,6 @@ def _lookup_id_in_database(doc_id, db_name=None):
 @require_superuser
 def web_user_lookup(request):
     template = "hqadmin/web_user_lookup.html"
-    set_bootstrap_version3()
     web_user_email = request.GET.get("q")
     if not web_user_email:
         return render(request, template, {})
@@ -813,7 +811,6 @@ class DownloadMALTView(BaseAdminSectionView):
     template_name = "hqadmin/malt_downloader.html"
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DownloadMALTView, self).dispatch(request, *args, **kwargs)
 
@@ -898,7 +895,6 @@ class CallcenterUCRCheck(BaseAdminSectionView):
     template_name = "hqadmin/call_center_ucr_check.html"
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(CallcenterUCRCheck, self).dispatch(request, *args, **kwargs)
 
@@ -923,4 +919,12 @@ class CallcenterUCRCheck(BaseAdminSectionView):
             'domain': domain
         }
 
+        return context
+
+
+class DimagisphereView(TemplateView):
+
+    def get_context_data(self, **kwargs):
+        context = super(DimagisphereView, self).get_context_data(**kwargs)
+        context['tvmode'] = 'tvmode' in self.request.GET
         return context

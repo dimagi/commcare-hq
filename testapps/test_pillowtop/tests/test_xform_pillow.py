@@ -1,4 +1,7 @@
+from decimal import Decimal
 from django.test import TestCase, override_settings
+from django.test.testcases import SimpleTestCase
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
@@ -6,7 +9,11 @@ from corehq.apps.es import FormES
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.xform import XFormPillow, get_sql_xform_to_elasticsearch_pillow
+from corehq.pillows.xform import (
+    XFormPillow,
+    get_sql_xform_to_elasticsearch_pillow,
+    transform_xform_for_elasticsearch
+)
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import get_form_ready_to_save, trap_extra_setup
 from elasticsearch.exceptions import ConnectionError
@@ -70,3 +77,67 @@ class XFormPillowTest(TestCase):
         self.assertEqual(self.domain, form_doc['domain'])
         self.assertEqual(metadata.xmlns, form_doc['xmlns'])
         self.assertEqual('XFormInstance', form_doc['doc_type'])
+
+
+class TransformXformForESTest(SimpleTestCase):
+    def test_transform_xform_for_elasticsearch_app_versions(self):
+        doc_dict = {
+            'domain': 'demo',
+            'form': {
+                'meta': {
+                    'appVersion': 'version "2.27.2"(414569). App v56. 2.27. Build 414569'
+                }
+            }
+        }
+        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        print doc_ret
+        self.assertEqual(doc_ret['form']['meta']['commcare_version'], '2.27.2')
+        self.assertEqual(doc_ret['form']['meta']['app_build_version'], 56)
+
+    def test_transform_xform_for_elasticsearch_app_versions_none(self):
+        doc_dict = {
+            'domain': 'demo',
+            'form': {
+                'meta': {
+                    'appVersion': 'not an app version'
+                }
+            }
+        }
+        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        self.assertEqual(doc_ret['form']['meta']['commcare_version'], None)
+        self.assertEqual(doc_ret['form']['meta']['app_build_version'], None)
+
+    def test_transform_xform_for_elasticsearch_location(self):
+        doc_dict = {
+            'domain': 'demo',
+            'form': {
+                'meta': {
+                    'location': '42.7 -21 0 0'
+                }
+            }
+        }
+        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        self.assertEqual(doc_ret['form']['meta']['geo_point'], {'lat': Decimal('42.7'), 'lon': Decimal('-21')})
+
+    def test_transform_xform_for_elasticsearch_location_missing(self):
+        doc_dict = {
+            'domain': 'demo',
+            'form': {
+                'meta': {
+                }
+            }
+        }
+        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        self.assertEqual(doc_ret['form']['meta']['geo_point'], None)
+
+    def test_transform_xform_for_elasticsearch_location_bad(self):
+        doc_dict = {
+            'domain': 'demo',
+            'form': {
+                'meta': {
+                    'location': 'not valid'
+                }
+            }
+        }
+        doc_ret = transform_xform_for_elasticsearch(doc_dict)
+        self.assertEqual(doc_ret['form']['meta']['geo_point'], None)

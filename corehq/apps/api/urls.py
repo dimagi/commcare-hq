@@ -6,7 +6,6 @@ from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4, v0_5
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource, InternalFixtureResource
 from corehq.apps.locations import resources as locations
-from corehq.apps.reports.resources.v0_1 import ReportResource
 from django.conf.urls import *
 from django.http import HttpResponseNotFound
 from tastypie.api import Api
@@ -20,7 +19,6 @@ API_LIST = (
         v0_1.CommCareCaseResource,
         v0_1.XFormInstanceResource,
         FixtureResource,
-        ReportResource,
         DomainMetadataResource,
     )),
     ((0, 2), (
@@ -29,7 +27,6 @@ API_LIST = (
         v0_2.CommCareCaseResource,
         v0_1.XFormInstanceResource,
         FixtureResource,
-        ReportResource,
         DomainMetadataResource,
     )),
     ((0, 3), (
@@ -38,7 +35,6 @@ API_LIST = (
         v0_3.CommCareCaseResource,
         v0_3.XFormInstanceResource,
         FixtureResource,
-        ReportResource,
         DomainMetadataResource,
         locations.v0_1.LocationResource,
         locations.v0_1.InternalLocationResource,
@@ -55,7 +51,6 @@ API_LIST = (
         v0_4.SingleSignOnResource,
         v0_4.HOPECaseResource,
         FixtureResource,
-        ReportResource,
         DomainMetadataResource,
     )),
     ((0, 5), (
@@ -72,7 +67,6 @@ API_LIST = (
         v0_5.StockTransactionResource,
         InternalFixtureResource,
         FixtureResource,
-        ReportResource,
         v0_5.DeviceReportResource,
         DomainMetadataResource,
         locations.v0_5.LocationResource,

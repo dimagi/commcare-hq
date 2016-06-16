@@ -2,6 +2,7 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.tests import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
@@ -123,4 +124,51 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
             expected,
             app.create_suite(),
             "./detail/lookup"
+        )
+
+    def test_case_list_lookup_display_results(self):
+        factory = AppFactory(build_version='2.11')
+        module, form = factory.new_basic_module('follow_up', 'case')
+        case_list = module.case_details.short
+        case_list.lookup_enabled = True
+        case_list.lookup_action = "callout.commcarehq.org.dummycallout.LAUNCH"
+        case_list.lookup_name = 'Scan fingerprint'
+        case_list.lookup_extras = [
+            {'key': 'deviceId', 'value': '123'},
+            {'key': 'apiKey', 'value': '0000'},
+            {'key': 'packageName', 'value': 'foo'},
+        ]
+        case_list.lookup_responses = [
+            {'key': 'fake'}
+        ]
+        case_list.lookup_display_results = True
+        case_list.lookup_field_header['en'] = 'Accuracy'
+        case_list.lookup_field_template = '@case_id'
+        expected = """
+          <partial>
+            <lookup name="Scan fingerprint"
+                    action="callout.commcarehq.org.dummycallout.LAUNCH">
+              <extra key="deviceId" value="123"/>
+              <extra key="apiKey" value="0000"/>
+              <extra key="packageName" value="foo"/>
+              <response key="fake"/>
+              <field>
+                <header>
+                  <text>
+                    <locale id="case_lists.m0.callout.header"/>
+                  </text>
+                </header>
+                <template>
+                  <text>
+                    <xpath function="@case_id"/>
+                  </text>
+                </template>
+              </field>
+            </lookup>
+          </partial>
+        """
+        self.assertXmlPartialEqual(
+            expected,
+            factory.app.create_suite(),
+            "./detail[@id='m0_case_short']/lookup"
         )

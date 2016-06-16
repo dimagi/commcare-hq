@@ -8,7 +8,6 @@ import re
 from restkit.errors import NoMoreData
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.loader import render_to_string
@@ -1754,8 +1753,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 caseblock.as_xml()
             ),
             self.domain,
-            self.username,
-            self._id
         )
 
     def remove_location_delegate(self, location):
@@ -1883,8 +1880,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
-    #do sync and create still work?
-
     program_id = StringProperty()
     last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
 

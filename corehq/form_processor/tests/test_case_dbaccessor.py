@@ -97,48 +97,22 @@ class CaseAccessorTestsSQL(TestCase):
 
         CaseAccessorSQL.save_case(case)
 
-        indices = CaseAccessorSQL.get_indices(case.case_id)
+        indices = CaseAccessorSQL.get_indices(case.domain, case.case_id)
         self.assertEqual(2, len(indices))
         self.assertEqual([index1, index2], indices)
 
     def test_get_reverse_indices(self):
-        case = _create_case()
-
         referenced_case_id = uuid.uuid4().hex
-
-        index1 = CommCareCaseIndexSQL(
-            case=case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=referenced_case_id,
-            relationship_id=CommCareCaseIndexSQL.CHILD
-        )
-        case.track_create(index1)
-
-        CaseAccessorSQL.save_case(case)
-
-        indices = CaseAccessorSQL.get_reverse_indices(referenced_case_id)
+        case, index = _create_case_with_index(referenced_case_id)
+        _create_case_with_index(referenced_case_id, case_is_deleted=True)
+        indices = CaseAccessorSQL.get_reverse_indices(DOMAIN, referenced_case_id)
         self.assertEqual(1, len(indices))
-        self.assertEqual(index1, indices[0])
+        self.assertEqual(index, indices[0])
 
     def test_get_reverse_indexed_cases(self):
-        def _create_case_with_index(referenced_case_id):
-            case = _create_case()
-
-            index1 = CommCareCaseIndexSQL(
-                case=case,
-                identifier='parent',
-                referenced_type='mother',
-                referenced_id=referenced_case_id,
-                relationship_id=CommCareCaseIndexSQL.CHILD
-            )
-            case.track_create(index1)
-
-            CaseAccessorSQL.save_case(case)
-            return case.case_id
-
         referenced_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
-        expected_case_ids = [_create_case_with_index(case_id) for case_id in referenced_case_ids]
+        _create_case_with_index(referenced_case_ids[0], case_is_deleted=True)  # case shouldn't be included in results
+        expected_case_ids = [_create_case_with_index(case_id)[0].case_id for case_id in referenced_case_ids]
         cases = CaseAccessorSQL.get_reverse_indexed_cases(DOMAIN, referenced_case_ids)
         self.assertEqual(2, len(cases))
         self.assertEqual(set(expected_case_ids), {c.case_id for c in cases})
@@ -171,7 +145,7 @@ class CaseAccessorTestsSQL(TestCase):
         with self.assertRaises(CaseNotFound):
             CaseAccessorSQL.get_case(case1.case_id)
 
-        self.assertEqual([], CaseAccessorSQL.get_indices(case1.case_id))
+        self.assertEqual([], CaseAccessorSQL.get_indices(case1.domain, case1.case_id))
         self.assertEqual([], CaseAccessorSQL.get_attachments(case1.case_id))
         self.assertEqual([], CaseAccessorSQL.get_transactions(case1.case_id))
 
@@ -319,7 +293,7 @@ class CaseAccessorTestsSQL(TestCase):
         case.track_create(original_index)
         CaseAccessorSQL.save_case(case)
 
-        [index] = CaseAccessorSQL.get_indices(case.case_id)
+        [index] = CaseAccessorSQL.get_indices(case.domain, case.case_id)
         index.identifier = 'new_identifier'  # shouldn't get saved
         index.referenced_type = 'new_type'
         index.referenced_id = uuid.uuid4().hex
@@ -327,7 +301,7 @@ class CaseAccessorTestsSQL(TestCase):
         case.track_update(index)
         CaseAccessorSQL.save_case(case)
 
-        [updated_index] = CaseAccessorSQL.get_indices(case.case_id)
+        [updated_index] = CaseAccessorSQL.get_indices(case.domain, case.case_id)
         self.assertEqual(updated_index.id, index.id)
         self.assertEqual(updated_index.identifier, original_index.identifier)
         self.assertEqual(updated_index.referenced_type, index.referenced_type)
@@ -346,10 +320,10 @@ class CaseAccessorTestsSQL(TestCase):
         ))
         CaseAccessorSQL.save_case(case)
 
-        [index] = CaseAccessorSQL.get_indices(case.case_id)
+        [index] = CaseAccessorSQL.get_indices(case.domain, case.case_id)
         case.track_delete(index)
         CaseAccessorSQL.save_case(case)
-        self.assertEqual([], CaseAccessorSQL.get_indices(case.case_id))
+        self.assertEqual([], CaseAccessorSQL.get_indices(case.domain, case.case_id))
 
     def test_save_case_delete_attachment(self):
         case = _create_case()
@@ -455,7 +429,7 @@ class CaseAccessorTestsSQL(TestCase):
         _create_case(user_id="user2", case_type='t1')
         _create_case(user_id="user1", case_type='t2')
 
-        case_ids = CaseAccessorSQL.get_open_case_ids_in_domain_by_type(DOMAIN, 't1', "user1")
+        case_ids = CaseAccessorSQL.get_open_case_ids_in_domain_by_type(DOMAIN, 't1', ["user1"])
         self.assertEqual(
             set(case_ids),
             {case1.case_id, case2.case_id}
@@ -485,28 +459,13 @@ class CaseAccessorTestsSQL(TestCase):
     def test_get_extension_case_ids(self):
         # Create case and index
         referenced_id = uuid.uuid4().hex
-        case = _create_case()
-        extension_index = CommCareCaseIndexSQL(
-            case=case,
-            identifier="task",
-            referenced_type="task",
-            referenced_id=referenced_id,
-            relationship_id=CommCareCaseIndexSQL.EXTENSION
-        )
-        case.track_create(extension_index)
-        CaseAccessorSQL.save_case(case)
+        case, _ = _create_case_with_index(referenced_id, identifier='task', referenced_type='task',
+                                relationship_id=CommCareCaseIndexSQL.EXTENSION)
 
-        # Create irrelevant case
-        other_case = _create_case()
-        child_index = CommCareCaseIndexSQL(
-            case=other_case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=referenced_id,
-            relationship_id=CommCareCaseIndexSQL.CHILD
-        )
-        case.track_create(child_index)
-        CaseAccessorSQL.save_case(other_case)
+        # Create irrelevant cases
+        _create_case_with_index(referenced_id)
+        _create_case_with_index(referenced_id, identifier='task', referenced_type='task',
+                                relationship_id=CommCareCaseIndexSQL.EXTENSION, case_is_deleted=True)
 
         self.assertEqual(
             CaseAccessorSQL.get_extension_case_ids(DOMAIN, [referenced_id]),
@@ -593,16 +552,10 @@ class CaseAccessorTestsSQL(TestCase):
         CaseAccessorSQL.save_case(case)
 
         # Create irrelevant case and index
-        other_case = _create_case()
-        other_child_index = CommCareCaseIndexSQL(
-            case=other_case,
-            identifier='parent',
-            referenced_type='mother',
-            referenced_id=case.case_id,
-            relationship_id=CommCareCaseIndexSQL.CHILD
-        )
-        other_case.track_create(other_child_index)
-        CaseAccessorSQL.save_case(other_case)
+        _create_case_with_index(case.case_id)
+
+        # create index on deleted case
+        _create_case_with_index(referenced_id1, case_is_deleted=True)
 
         self.assertEqual(
             set(CaseAccessorSQL.get_all_reverse_indices_info(DOMAIN, [referenced_id1, referenced_id2])),
@@ -686,8 +639,8 @@ class CaseAccessorTestsSQL(TestCase):
         case = _create_case()
         _create_case_transactions(case)
 
-        self.assertEqual(len(case.closed_transactions), 1)
-        self.assertTrue(case.closed_transactions[0].is_case_close)
+        self.assertEqual(len(case.get_closing_transactions()), 1)
+        self.assertTrue(case.get_closing_transactions()[0].is_case_close)
 
     def test_closed_transactions_with_tracked(self):
         case = _create_case()
@@ -708,7 +661,7 @@ class CaseAccessorTestsSQL(TestCase):
             type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_ATTACHMENT,
             revoked=False
         ))
-        self.assertEqual(len(case.closed_transactions), 2)
+        self.assertEqual(len(case.get_closing_transactions()), 2)
 
 
 class CaseAccessorsTests(TestCase):
@@ -776,6 +729,24 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
 
     FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
     return CaseAccessorSQL.get_case(case_id)
+
+
+def _create_case_with_index(referenced_case_id, identifier='parent', referenced_type='mother',
+                            relationship_id=CommCareCaseIndexSQL.CHILD, case_is_deleted=False):
+    case = _create_case()
+    case.deleted = case_is_deleted
+
+    index = CommCareCaseIndexSQL(
+        case=case,
+        identifier=identifier,
+        referenced_type=referenced_type,
+        referenced_id=referenced_case_id,
+        relationship_id=relationship_id
+    )
+    case.track_create(index)
+
+    CaseAccessorSQL.save_case(case)
+    return case, index
 
 
 def _create_case_transactions(case):

@@ -1,8 +1,10 @@
 from __future__ import absolute_import
+from base64 import b64decode
 from collections import defaultdict, namedtuple
 from datetime import datetime, date, time
 import logging
 import re
+import bz2
 from lxml import etree
 import os
 from django.conf import settings
@@ -28,6 +30,23 @@ odm_nsmap = {
     'OpenClinicaRules': "http://www.openclinica.org/ns/rules/v3.1",
     'xsi': "http://www.w3.org/2001/XMLSchema-instance",
 }
+
+
+def quote_nan(value):
+    """
+    Returns value in single quotes if value is not a number
+
+    >>> quote_nan('foo')
+    "'foo'"
+    >>> quote_nan('1')
+    '1'
+
+    """
+    try:
+        float(value)
+        return value
+    except ValueError:
+        return "'{}'".format(value)
 
 
 @quickcache(['domain'])
@@ -184,19 +203,35 @@ def get_question_item(domain, form_xmlns, question):
 @quickcache(['domain'])
 def get_study_metadata_string(domain):
     """
-    Return the study metadata for the given domain as an XML string
+    Return the study metadata for the given domain as a string
+
+    Metadata is fetched from the OpenClinica web service
     """
-    # For this first OpenClinica integration project, for the sake of simplicity, we are just fetching
-    # metadata from custom/openclinica/study_metadata.xml. In future, we can fetch it from the web service
-    # (See branch openclinica_ws)
-    metadata_filename = os.path.join(settings.BASE_DIR, 'custom', 'openclinica', 'study_metadata.xml')
-    with open(metadata_filename) as metadata_file:
-        return metadata_file.read()
+    from custom.openclinica.models import OpenClinicaAPI, OpenClinicaSettings
+
+    oc_settings = OpenClinicaSettings.for_domain(domain)
+    if oc_settings.study.is_ws_enabled:
+        password = bz2.decompress(b64decode(oc_settings.study.password))
+        api = OpenClinicaAPI(
+            oc_settings.study.url,
+            oc_settings.study.username,
+            password,
+            oc_settings.study.protocol_id
+        )
+        string = api.get_study_metadata_string(oc_settings['STUDY'])
+    else:
+        string = oc_settings.study.metadata
+    # If the XML is Unicode but it says that it's UTF-8, then make it UTF-8.
+    if isinstance(string, unicode):
+        match = re.match(r'<\?xml .*?encoding="([\w-]+)".*?\?>', string)  # Assumes no whitespace up front
+        if match:
+            string = string.encode(match.group(1))
+    return string
 
 
 def get_study_metadata(domain):
     """
-    Return the study metadata for the given domain as an ElementTree
+    Return the study metadata for the given domain as an XML element
     """
     # We can't cache an ElementTree instance. Split this function from get_study_metadata_string() to cache the
     # return value of get_study_metadata_string() when fetching via web service.

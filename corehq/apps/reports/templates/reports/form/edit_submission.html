@@ -11,10 +11,16 @@
     $(function () {
         GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is a global variable depended on by touchforms
         var edit_context = {{ edit_context|JSON }};
+        {% if request|toggle_enabled:"TF_USES_SQLITE_BACKEND" %}
+            var uses_sql_backend = true;
+        {% else %}
+            var uses_sql_backend = false;
+        {% endif %}
         $('#edit-container').inlineTouchform({
             formUrl: edit_context.formUrl,
             submitUrl: edit_context.submitUrl,
             sessionData: edit_context.sessionData,
+            uses_sql_backend: uses_sql_backend,
             onsubmit: function () {
                 window.location.href = edit_context.returnUrl;
             },
@@ -33,7 +39,7 @@
 {% block page_content %}
     <div class="inline-touchforms" data-bind="template: { name: 'form-fullform-ko-template' }" id="edit-container"></div>
     <div id="loading" class="hq-loading" style="display: none;">
-        <img width="32" height="32" alt="Loading" src="{% new_static 'formplayer/img/loading_transparent.gif' %}" />
+        <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
         {% trans "Loading" %}...
     </div>
 {% endblock %}

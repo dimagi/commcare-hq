@@ -1,4 +1,3 @@
-import logging
 from celery.task import task
 from corehq.apps.ivr import api
 from django.conf import settings

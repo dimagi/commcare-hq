@@ -62,6 +62,7 @@ def id_match_generator(id):
 class ImporterTest(TestCase):
 
     def setUp(self):
+        super(ImporterTest, self).setUp()
         self.domain = create_domain("importer-test").name
         self.default_case_type = 'importer-test-casetype'
         self.default_headers = ['case_id', 'age', 'sex', 'location']
@@ -73,6 +74,7 @@ class ImporterTest(TestCase):
 
     def tearDown(self):
         self.couch_user.delete()
+        super(ImporterTest, self).tearDown()
 
     def _config(self, col_names=None, search_column=None, case_type=None,
                 search_field='case_id', named_columns=False, create_new_cases=True, type_fields=None):

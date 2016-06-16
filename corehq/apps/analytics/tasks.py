@@ -1,8 +1,7 @@
 import csv
 import os
 from celery.schedules import crontab
-from celery.task import task, periodic_task
-import sys
+from celery.task import periodic_task
 import tinys3
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES

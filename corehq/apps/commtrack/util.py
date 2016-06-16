@@ -14,7 +14,6 @@ from datetime import date, timedelta
 from calendar import monthrange
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.xml import V2
 from django.utils.text import slugify
 from unidecode import unidecode
 from django.utils.translation import ugettext as _

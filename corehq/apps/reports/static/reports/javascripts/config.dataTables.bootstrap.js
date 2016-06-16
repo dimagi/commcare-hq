@@ -3,8 +3,7 @@
 function HQReportDataTables(options) {
     var self = this;
     self.dataTableElem = options.dataTableElem || '.datatable';
-    self.paginationType = options.paginationType || 'bootstrap';
-    self.useBootstrap3 = options.useBootstrap3 || false;
+    self.paginationType = options.paginationType || 'bs_normal';
     self.defaultRows = options.defaultRows || 10;
     self.startAtRowNum = options.startAtRowNum || 0;
     self.showAllRowsOption = options.showAllRowsOption || false;
@@ -81,7 +80,7 @@ function HQReportDataTables(options) {
         }
         applyBootstrapMagic();
 
-        var dataTablesDom = (self.useBootstrap3) ? "frt<'row dataTables_control'<'col-sm-5'il><'col-sm-7'p>>" : "frt<'row-fluid dataTables_control'<'span5'il><'span7'p>>";
+        var dataTablesDom = "frt<'row dataTables_control'<'col-sm-5'il><'col-sm-7'p>>";
         $(self.dataTableElem).each(function(){
             var params = {
                 sDom: dataTablesDom,
@@ -121,9 +120,6 @@ function HQReportDataTables(options) {
                     }
                     return defParams;
                 };
-                if (!self.useBootstrap3) {
-                    params.fnServerParams = self.fmtParams;
-                }
                 params.fnServerData = function ( sSource, aoData, fnCallback, oSettings ) {
                     var custom_callback = function(data) {
                         var result = fnCallback(data); // this must be called first because datatables clears the tfoot of the table
@@ -150,7 +146,7 @@ function HQReportDataTables(options) {
 
                     oSettings.jqXHR = $.ajax( {
                         "url": sSource,
-                        "data": (self.useBootstrap3) ? self.fmtParams(aoData) : aoData,
+                        "data": self.fmtParams(aoData),
                         "success": custom_callback,
                         "error": function(jqXHR, textStatus, errorThrown) {
                             $(".dataTables_processing").hide();
@@ -189,13 +185,8 @@ function HQReportDataTables(options) {
             if (!self.datatable)
                 self.datatable = datatable;
 
-            if (self.fixColumns && self.useBootstrap3) {
+            if (self.fixColumns) {
                 new $.fn.dataTable.FixedColumns(datatable, {
-                    iLeftColumns: self.fixColsNumLeft,
-                    iLeftWidth: self.fixColsWidth
-                });
-            } else if (self.fixColumns) {
-                new FixedColumns(datatable, {
                     iLeftColumns: self.fixColsNumLeft,
                     iLeftWidth: self.fixColsWidth
                 });
@@ -208,18 +199,16 @@ function HQReportDataTables(options) {
             }, 5000);
 
             $(window).on('resize', throttledResize);
-            if (self.useBootstrap3) {
-                $('.dataTables_paginate a').on('click', function () {
-                    datatable.fnAdjustColumnSizing();
-                });
-                // This fixes a bug in some browsers where if the first column
-                // contains a large amount of data, it will overlap with the
-                // second column. This makes sure after load, the columns are
-                // re-adjusted.
-                setTimeout( function () {
-                    datatable.fnAdjustColumnSizing();
-                }, 10);
-            }
+            $('.dataTables_paginate a').on('click', function () {
+                datatable.fnAdjustColumnSizing();
+            });
+            // This fixes a bug in some browsers where if the first column
+            // contains a large amount of data, it will overlap with the
+            // second column. This makes sure after load, the columns are
+            // re-adjusted.
+            setTimeout( function () {
+                datatable.fnAdjustColumnSizing();
+            }, 10);
 
             var $dataTablesFilter = $(".dataTables_filter");
             if($dataTablesFilter && $("#extra-filter-info")) {
@@ -234,7 +223,7 @@ function HQReportDataTables(options) {
 
                 $dataTablesFilter.append($inputField);
                 $inputField.attr("id", "dataTables-filter-box");
-                $inputField.addClass("search-query").addClass((self.useBootstrap3) ? 'form-control' : 'input-medium');
+                $inputField.addClass("search-query").addClass('form-control');
                 $inputField.attr("placeholder", "Search...");
 
                 $inputLabel.attr("for", "dataTables-filter-box");
@@ -252,7 +241,7 @@ function HQReportDataTables(options) {
                 $selectField.children().append(" per page");
                 if (self.showAllRowsOption)
                     $selectField.append($('<option value="-1" />').text("All Rows"));
-                $selectField.addClass((self.useBootstrap3) ? 'form-control' : 'input-medium');
+                $selectField.addClass('form-control');
                 $selectField.on("change", function(){
                     var selected_value = $selectField.find('option:selected').val();
                     window.analytics.usage("Reports", "Changed number of items shown", selected_value);

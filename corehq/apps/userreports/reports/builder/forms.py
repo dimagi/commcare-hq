@@ -6,7 +6,7 @@ import uuid
 from django import forms
 from django.core.urlresolvers import reverse
 from django.forms import Widget
-from django.forms.util import flatatt
+from django.forms.utils import flatatt
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe

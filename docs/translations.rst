@@ -174,7 +174,7 @@ This is most often the case in CommCare with forms.
 
 .. code-block:: django
 
-    {% bootstrap_fieldset form _("Specify New Password") %}
+    {% crispy form _("Specify New Password") %}
 
 Keeping translations up to date
 -------------------------------

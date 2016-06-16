@@ -181,8 +181,8 @@ class ProjectHealthDashboard(ProjectReport):
         return PROJECT_HEALTH_DASHBOARD.enabled(domain)
 
     @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(ProjectHealthDashboard, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(ProjectHealthDashboard, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def template_context(self):

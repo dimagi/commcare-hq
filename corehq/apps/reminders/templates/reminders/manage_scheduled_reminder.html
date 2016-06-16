@@ -4,8 +4,8 @@
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'reminders/ko/reminders.manage.js' %}"></script>
-    <script src="{% new_static 'style/js/main.js' %}"></script>
+    <script src="{% static 'reminders/ko/reminders.manage.js' %}"></script>
+    <script src="{% static 'style/js/main.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

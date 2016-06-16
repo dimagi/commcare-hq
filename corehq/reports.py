@@ -12,7 +12,7 @@ from corehq.apps.hqadmin.reports import (
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
-)
+    CommCareVersionReport)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
@@ -53,6 +53,7 @@ from corehq.apps.smsbillables.interface import (
     SMSGatewayFeeCriteriaInterface,
 )
 from corehq.apps.domain.views import DomainForwardingRepeatRecords
+from custom.openclinica.reports import OdmExportReport
 
 
 def REPORTS(project):
@@ -76,7 +77,7 @@ def REPORTS(project):
             ProjectHealthDashboard,
         )),
         (ugettext_lazy("Inspect Data"), (
-            inspect.SubmitHistory, CaseListReport,
+            inspect.SubmitHistory, CaseListReport, OdmExportReport,
         )),
         (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,
@@ -98,7 +99,6 @@ def REPORTS(project):
             commtrack.StockStatusMapReport,
             commtrack.ReportingRatesReport,
             commtrack.ReportingStatusMapReport,
-            commtrack.LedgersByLocationReport,
         )))
 
     if project.has_careplan:
@@ -344,6 +344,7 @@ ADMIN_REPORTS = (
         CommConnectProjectSpacesReport,
         CommTrackProjectSpacesReport,
         DeviceLogSoftAssertReport,
+        CommCareVersionReport,
     )),
 )
 

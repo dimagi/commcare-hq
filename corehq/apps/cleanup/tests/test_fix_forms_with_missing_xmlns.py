@@ -31,6 +31,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(TestFixFormsWithMissingXmlns, cls).setUpClass()
         cls.form_pillow = XFormPillow(online=False)
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
             completely_initialize_pillow_index(cls.form_pillow)
@@ -38,6 +39,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(cls.form_pillow.es_index)
+        super(TestFixFormsWithMissingXmlns, cls).tearDownClass()
 
     def _submit_form(self, xmlns, form_name, app_id, build_id):
         xform_source = self.get_xml('xform_template').format(xmlns=xmlns, name=form_name, id=uuid.uuid4().hex)

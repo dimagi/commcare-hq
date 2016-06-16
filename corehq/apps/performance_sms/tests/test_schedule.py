@@ -15,10 +15,12 @@ class TestSchedule(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestSchedule, cls).setUpClass()
         delete_all_configs()
 
     def tearDown(self):
         delete_all_configs()
+        super(TestSchedule, self).tearDown()
 
     def test_daily_schedule(self):
         config = _make_performance_config(self.domain, DAILY, hour=4)
