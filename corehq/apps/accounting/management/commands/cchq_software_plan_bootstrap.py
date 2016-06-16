@@ -20,13 +20,6 @@ from corehq.apps.accounting.models import (
 
 logger = logging.getLogger(__name__)
 
-BOOTSTRAP_EDITION_TO_ROLE = {
-    SoftwarePlanEdition.COMMUNITY: 'community_plan_v0',
-    SoftwarePlanEdition.STANDARD: 'standard_plan_v0',
-    SoftwarePlanEdition.PRO: 'pro_plan_v0',
-    SoftwarePlanEdition.ADVANCED: 'advanced_plan_v0',
-    SoftwarePlanEdition.ENTERPRISE: 'enterprise_plan_v0',
-}
 EDITIONS = [
     SoftwarePlanEdition.COMMUNITY,
     SoftwarePlanEdition.STANDARD,
@@ -34,9 +27,15 @@ EDITIONS = [
     SoftwarePlanEdition.ADVANCED,
     SoftwarePlanEdition.ENTERPRISE,
 ]
-FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
-PRODUCT_TYPES = [p[0] for p in SoftwareProductType.CHOICES]
+BOOTSTRAP_EDITION_TO_ROLE = {
+    SoftwarePlanEdition.COMMUNITY: 'community_plan_v0',
+    SoftwarePlanEdition.STANDARD: 'standard_plan_v0',
+    SoftwarePlanEdition.PRO: 'pro_plan_v0',
+    SoftwarePlanEdition.ADVANCED: 'advanced_plan_v0',
+    SoftwarePlanEdition.ENTERPRISE: 'enterprise_plan_v0',
+}
 
+PRODUCT_TYPES = [p[0] for p in SoftwareProductType.CHOICES]
 BOOTSTRAP_PRODUCT_RATES = {
     SoftwarePlanEdition.COMMUNITY: {},  # use all the defaults
     SoftwarePlanEdition.STANDARD: dict(monthly_fee=Decimal('100.00')),
@@ -45,6 +44,7 @@ BOOTSTRAP_PRODUCT_RATES = {
     SoftwarePlanEdition.ENTERPRISE: dict(monthly_fee=Decimal('0.00')),
 }
 
+FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
 BOOTSTRAP_FEATURE_RATES = {
     SoftwarePlanEdition.COMMUNITY: {
         FeatureType.USER: dict(monthly_limit=50,
@@ -71,7 +71,6 @@ BOOTSTRAP_FEATURE_RATES = {
         FeatureType.SMS: dict(monthly_limit=UNLIMITED_FEATURE_USAGE),
     },
 }
-
 BOOTSTRAP_FEATURE_RATES_FOR_TESTING = {
     SoftwarePlanEdition.COMMUNITY: {
         FeatureType.USER: dict(monthly_limit=2,
