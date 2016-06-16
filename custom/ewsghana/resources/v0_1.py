@@ -1,6 +1,7 @@
 import json
 
 from corehq.apps.api.util import get_object_or_not_exist
+from corehq.apps.api.resources.v0_1 import LoginAndDomainAuthentication
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.locations.resources.v0_1 import LocationResource
 from corehq.util.quickcache import quickcache
@@ -34,4 +35,5 @@ class EWSLocationResource(LocationResource):
         return [child for child in locs if child.location_id in viewable]
 
     class Meta(LocationResource.Meta):
+        authentication = LoginAndDomainAuthentication(allow_internal=True)
         resource_name = 'ews_location'

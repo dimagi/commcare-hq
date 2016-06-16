@@ -72,7 +72,7 @@ class InternalFixtureResource(FixtureResource):
         return Resource.dispatch(self, request_type, request, **kwargs)
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_apps)
+        authentication = RequirePermissionAuthentication(Permissions.edit_apps, allow_internal=True)
         object_class = FixtureDataItem
         resource_name = 'fixture_internal'
         limit = 0
