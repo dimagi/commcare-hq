@@ -393,7 +393,7 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
 def download_index_files(app, build_profile_id=None):
     if app.copy_of:
         prefix = 'files/'
-        if build_profile_id:
+        if build_profile_id is not None:
             prefix += build_profile_id + '/'
             needed_for_CCZ = lambda path: path.startswith(prefix)
         else:

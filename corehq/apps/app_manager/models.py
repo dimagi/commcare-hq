@@ -4624,7 +4624,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
-            if build_profile_id:
+            if build_profile_id is not None:
                 url += '?profile={profile_id}'.format(profile_id=build_profile_id)
             code.add_data(url)
 
@@ -4643,7 +4643,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             if settings.BITLY_LOGIN:
                 view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
-                if build_profile_id:
+                if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
                     )
@@ -4764,7 +4764,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.media_language_map = {}
 
     def get_build_langs(self, build_profile_id=None):
-        if build_profile_id:
+        if build_profile_id is not None:
             return self.build_profiles[build_profile_id].langs
         else:
             return self.langs

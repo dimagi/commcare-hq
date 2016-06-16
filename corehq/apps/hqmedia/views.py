@@ -460,7 +460,7 @@ def iter_app_files(app, include_multimedia_files, include_index_files, build_pro
     if include_multimedia_files:
         app.remove_unused_mappings()
         languages = None
-        if build_profile_id:
+        if build_profile_id is not None:
             languages = app.build_profiles[build_profile_id].langs
         file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
     if include_index_files:
@@ -628,7 +628,7 @@ def iter_index_files(app, build_profile_id=None):
 
     def _files(files):
         for name, f in files:
-            if build_profile_id:
+            if build_profile_id is not None:
                 name = name.replace(build_profile_id + '/', '')
             if name not in skip_files:
                 # TODO: make RemoteApp.create_all_files not return media files
