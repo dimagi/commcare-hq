@@ -120,20 +120,21 @@ class Command(BaseCommand):
             logger.info("Initializing Plans and Roles for Testing")
 
         ensure_plans(dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
-                     editions=EDITIONS)
+                     editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
+                     feature_types=FEATURE_TYPES)
 
 
-def ensure_plans(dry_run, verbose, for_tests, apps, editions):
+def ensure_plans(dry_run, verbose, for_tests, apps, editions, edition_to_role, feature_types):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
 
     edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose, apps=apps,
-                                           editions=editions)
+                                           editions=editions, feature_types=feature_types)
     for product_type in PRODUCT_TYPES:
         for edition in editions:
-            role_slug = BOOTSTRAP_EDITION_TO_ROLE[edition]
+            role_slug = edition_to_role[edition]
             try:
                 role = Role.objects.get(slug=role_slug)
             except Role.DoesNotExist:
@@ -248,7 +249,7 @@ def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
     return product, [product_rate]
 
 
-def _ensure_features(dry_run, verbose, apps, editions):
+def _ensure_features(dry_run, verbose, apps, editions, feature_types):
     """
     Ensures that all the Features necessary for the plans are created.
     """
@@ -259,7 +260,7 @@ def _ensure_features(dry_run, verbose, apps, editions):
 
     edition_to_features = defaultdict(list)
     for edition in editions:
-        for feature_type in FEATURE_TYPES:
+        for feature_type in feature_types:
             feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
             if edition == SoftwarePlanEdition.ENTERPRISE:
                 feature.name = "Dimagi Only %s" % feature.name
