@@ -13,7 +13,7 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import (
-    SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, FeatureType,
+    SoftwareProductType, SoftwarePlanEdition, SoftwarePlanVisibility, FeatureRate, FeatureType,
     UNLIMITED_FEATURE_USAGE,
 )
 
@@ -36,6 +36,60 @@ EDITIONS = [
 ]
 FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
 PRODUCT_TYPES = [p[0] for p in SoftwareProductType.CHOICES]
+
+BOOTSTRAP_FEATURE_RATES = {
+    SoftwarePlanEdition.COMMUNITY: {
+        FeatureType.USER: FeatureRate(monthly_limit=50,
+                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: FeatureRate(monthly_limit=0),
+    },
+    SoftwarePlanEdition.STANDARD: {
+        FeatureType.USER: FeatureRate(monthly_limit=100,
+                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: FeatureRate(monthly_limit=100),
+    },
+    SoftwarePlanEdition.PRO: {
+        FeatureType.USER: FeatureRate(monthly_limit=500,
+                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: FeatureRate(monthly_limit=500),
+    },
+    SoftwarePlanEdition.ADVANCED: {
+        FeatureType.USER: FeatureRate(monthly_limit=1000,
+                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: FeatureRate(monthly_limit=1000),
+    },
+    SoftwarePlanEdition.ENTERPRISE: {
+        FeatureType.USER: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
+        FeatureType.SMS: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE),
+    },
+}
+
+BOOTSTRAP_FEATURE_RATES_FOR_TESTING = {
+    SoftwarePlanEdition.COMMUNITY: {
+        FeatureType.USER: FeatureRate(monthly_limit=2,
+                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: FeatureRate(monthly_limit=0),
+    },
+    SoftwarePlanEdition.STANDARD: {
+        FeatureType.USER: FeatureRate(monthly_limit=4,
+                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: FeatureRate(monthly_limit=3),
+    },
+    SoftwarePlanEdition.PRO: {
+        FeatureType.USER: FeatureRate(monthly_limit=6,
+                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: FeatureRate(monthly_limit=5),
+    },
+    SoftwarePlanEdition.ADVANCED: {
+        FeatureType.USER: FeatureRate(monthly_limit=8,
+                                      per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: FeatureRate(monthly_limit=7),
+    },
+    SoftwarePlanEdition.ENTERPRISE: {
+        FeatureType.USER: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
+        FeatureType.SMS: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE),
+    },
+}
 
 
 class Command(BaseCommand):
@@ -240,40 +294,15 @@ def _ensure_feature_rates(features, edition, dry_run, verbose, for_tests, apps):
     """
     Ensures that all the FeatureRates necessary for the plans are created.
     """
-    FeatureRate = apps.get_model('accounting', 'FeatureRate')
-
     if verbose:
         logger.info('Ensuring Feature Rates')
 
     feature_rates = []
-    BOOTSTRAP_FEATURE_RATES = {
-        SoftwarePlanEdition.COMMUNITY: {
-            FeatureType.USER: FeatureRate(monthly_limit=2 if for_tests else 50,
-                                          per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=0),  # use defaults here
-        },
-        SoftwarePlanEdition.STANDARD: {
-            FeatureType.USER: FeatureRate(monthly_limit=4 if for_tests else 100,
-                                          per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=3 if for_tests else 100),
-        },
-        SoftwarePlanEdition.PRO: {
-            FeatureType.USER: FeatureRate(monthly_limit=6 if for_tests else 500,
-                                          per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=5 if for_tests else 500),
-        },
-        SoftwarePlanEdition.ADVANCED: {
-            FeatureType.USER: FeatureRate(monthly_limit=8 if for_tests else 1000,
-                                          per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=7 if for_tests else 1000),
-        },
-        SoftwarePlanEdition.ENTERPRISE: {
-            FeatureType.USER: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE),
-        },
-    }
     for feature in features:
-        feature_rate = BOOTSTRAP_FEATURE_RATES[edition][feature.feature_type]
+        feature_rate = (
+            BOOTSTRAP_FEATURE_RATES_FOR_TESTING
+            if for_tests else BOOTSTRAP_FEATURE_RATES
+        )[edition][feature.feature_type]
         feature_rate.feature = feature
         if dry_run:
             logger.info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
