@@ -4,9 +4,9 @@
 {% load i18n %}
 {% block js %}{{ block.super }}
     {% compress js %}
-    <script src="{% new_static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-    <script src="{% new_static 'style/js/main.js' %}"></script>
-    <script src="{% new_static 'reports/ko/saved_reports.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+    <script src="{% static 'style/js/main.js' %}"></script>
+    <script src="{% static 'reports/ko/saved_reports.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 

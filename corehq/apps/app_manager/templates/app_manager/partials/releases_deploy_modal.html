@@ -232,7 +232,7 @@
                                                 </form>
                                             </div>
                                             <div data-bind="visible: $parent.generating_url()">
-                                                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
                                             </div>
                                             <div data-bind="visible: !$parent.sms_url($index()) && !$parent.generating_url()">
                                                 <span class="label label-danger">

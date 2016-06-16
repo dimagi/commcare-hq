@@ -6,17 +6,17 @@
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/guidGenerator.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/graph-config.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
+    <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
     {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
-    <script src="{% new_static 'app_manager/js/detail-screen-config.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/shadow-module-settings.js' %}"></script>
+    <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
+    <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
     {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
         {% for detail in details %}

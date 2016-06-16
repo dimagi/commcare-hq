@@ -15,9 +15,9 @@ from corehq.apps.domain.decorators import domain_admin_required, login_or_digest
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import queue_prime_restore
-from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
@@ -155,7 +155,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     return restore_config.get_response()
 
 
-class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
+class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
     page_title = ugettext_noop("Speed up 'Sync with Server'")
     section_name = ugettext_noop("Project Settings")
     urlname = 'prime_restore_cache'
