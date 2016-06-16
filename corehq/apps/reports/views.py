@@ -1798,6 +1798,7 @@ class EditFormInstance(View):
                 'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
                 'sessionData': edit_session_data,
                 'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
+                'domain': domain,
             }
         })
         return render(request, 'reports/form/edit_submission.html', context)
