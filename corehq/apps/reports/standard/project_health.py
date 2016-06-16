@@ -108,6 +108,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_active_pct(self):
         if self.delta_active and self._previous_summary and self._previous_summary.active:
             return float(self.delta_active / float(self._previous_summary.active)) * 100.
+        elif self.delta_active == 0:
+            return 0
 
     @memoized
     def get_all_user_stubs(self):
