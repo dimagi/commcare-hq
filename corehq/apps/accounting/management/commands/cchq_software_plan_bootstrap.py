@@ -153,7 +153,7 @@ def ensure_plans(editions, edition_to_role,
                 return
             software_plan_version = SoftwarePlanVersion(role=role)
 
-            product, product_rates = _ensure_product_and_rate(
+            product, product_rate = _ensure_product_and_rate(
                 product_type, edition, product_rate_data,
                 dry_run=dry_run, verbose=verbose, apps=apps,
             )
@@ -183,15 +183,13 @@ def ensure_plans(editions, edition_to_role,
                     if hasattr(SoftwarePlanVersion, 'product_rates'):
                         software_plan_version.save()
 
-                    for product_rate in product_rates:
-                        product_rate.save()
-                        if hasattr(SoftwarePlanVersion, 'product_rates'):
-                            software_plan_version.product_rates.add(product_rate)
-                        elif hasattr(SoftwarePlanVersion, 'product_rate'):
-                            assert len(product_rates) == 1
-                            software_plan_version.product_rate = product_rate
-                        else:
-                            raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
+                    product_rate.save()
+                    if hasattr(SoftwarePlanVersion, 'product_rates'):
+                        software_plan_version.product_rates.add(product_rate)
+                    elif hasattr(SoftwarePlanVersion, 'product_rate'):
+                        software_plan_version.product_rate = product_rate
+                    else:
+                        raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
 
                     # must save before assigning many-to-many relationship
                     if hasattr(SoftwarePlanVersion, 'product_rate'):
@@ -262,7 +260,7 @@ def _ensure_product_and_rate(product_type, edition, product_rate_data, dry_run, 
             logger.info("Corresponding product rate of $%d created."
                         % product_rate.monthly_fee)
     product_rate.product = product
-    return product, [product_rate]
+    return product, product_rate
 
 
 def _ensure_features(dry_run, verbose, apps, editions, feature_types):
