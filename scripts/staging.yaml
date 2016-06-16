@@ -55,6 +55,7 @@ branches:
   - b3-final-cleanup  # biyeun 6/7
   - app-profile-update
   - pillow-to-mark-apps-as-data-submitted # Ben 6/15
+  - timing-restore  # Simon 6/16
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
