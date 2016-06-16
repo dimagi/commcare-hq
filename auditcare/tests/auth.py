@@ -13,9 +13,9 @@ from auditcare.tests.testutils import delete_all, get_latest_access
 from auditcare.utils import _thread_locals
 
 
-class authenticationTestCase(TestCase):
+class AuthenticationTestCase(TestCase):
     def setUp(self):
-        super(authenticationTestCase, self).setUp()
+        super(AuthenticationTestCase, self).setUp()
         if hasattr(_thread_locals, 'user'):
             delattr(_thread_locals, 'user')
         User.objects.all().delete()
