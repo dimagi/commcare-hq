@@ -418,7 +418,6 @@ class DemoRestoreStatusView(BaseManageCommCareUserView):
     urlname = 'demo_restore_status'
     page_title = ugettext_noop('Demo User Status')
 
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DemoRestoreStatusView, self).dispatch(request, *args, **kwargs)
 
