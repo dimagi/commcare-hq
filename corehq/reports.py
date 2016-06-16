@@ -53,6 +53,7 @@ from corehq.apps.smsbillables.interface import (
     SMSGatewayFeeCriteriaInterface,
 )
 from corehq.apps.domain.views import DomainForwardingRepeatRecords
+from custom.openclinica.reports import OdmExportReport
 
 
 def REPORTS(project):
@@ -76,7 +77,7 @@ def REPORTS(project):
             ProjectHealthDashboard,
         )),
         (ugettext_lazy("Inspect Data"), (
-            inspect.SubmitHistory, CaseListReport,
+            inspect.SubmitHistory, CaseListReport, OdmExportReport,
         )),
         (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,

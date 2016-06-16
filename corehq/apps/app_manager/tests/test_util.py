@@ -1,10 +1,6 @@
 import corehq.apps.app_manager.util as util
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
-    Application,
     Module,
-    OpenCaseAction,
-    OpenSubCaseAction,
     AdvancedModule,
     FormSchedule,
     ScheduleVisit

@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - hqDefine-accounting  # danny 6/7
   - hqDefine-users  # danny 6/7
   - demo-user # sravan 6/3
   - vellum-staging # J$ 11/13
@@ -55,6 +54,7 @@ branches:
   - xform-blobs  # daniel 5/23
   - b3-final-cleanup  # biyeun 6/7
   - app-profile-update
+  - pillow-to-mark-apps-as-data-submitted # Ben 6/15
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

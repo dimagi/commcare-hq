@@ -82,7 +82,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
+    EntryPoint, WireInvoice, FeatureType,
     StripePaymentMethod, LastPayment,
     UNLIMITED_FEATURE_USAGE,
 )

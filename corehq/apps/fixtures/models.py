@@ -1,4 +1,3 @@
-from decimal import Decimal
 from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
@@ -16,7 +15,7 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.xml_utils import serialize
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import SQLLocation, LOCATION_REPORTING_PREFIX
+from corehq.apps.locations.models import SQLLocation
 
 
 class FixtureTypeField(DocumentSchema):
