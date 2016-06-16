@@ -282,12 +282,14 @@ class UrgentStockoutNotificationTestCase(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(UrgentStockoutNotificationTestCase, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
     def setUp(self):
+        super(UrgentStockoutNotificationTestCase, self).setUp()
         self.product = Product(domain=self.TEST_DOMAIN, name='Test Product', code_='tp', unit='each',
                                program_id=self.program.get_id)
         self.product.save()
@@ -318,6 +320,8 @@ class UrgentStockoutNotificationTestCase(EWSTestCase):
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
+
+        super(UrgentStockoutNotificationTestCase, self).tearDown()
 
     def test_all_facility_stockout(self):
         """Send a notification because all facilities are stocked out of a product."""
@@ -446,12 +450,14 @@ class UrgentNonReportingNotificationTestCase(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(UrgentNonReportingNotificationTestCase, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
     def setUp(self):
+        super(UrgentNonReportingNotificationTestCase, self).setUp()
         self.product = Product(domain=self.TEST_DOMAIN, name='Test Product', code_='tp', unit='each',
                                program_id=self.program.get_id)
         self.product.save()
@@ -482,6 +488,8 @@ class UrgentNonReportingNotificationTestCase(EWSTestCase):
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
+
+        super(UrgentNonReportingNotificationTestCase, self).tearDown()
 
     def test_all_facility_not_report(self):
         """Send a notification because all facilities don't send report."""
@@ -582,10 +590,12 @@ class SMSNotificationTestCase(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(SMSNotificationTestCase, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
 
     def setUp(self):
+        super(SMSNotificationTestCase, self).setUp()
         self.district = make_loc('test-district', 'Test District', self.TEST_DOMAIN, 'district')
         self.user = bootstrap_web_user(
             username='test', domain=self.TEST_DOMAIN, phone_number='+4444', location=self.district,
@@ -602,6 +612,8 @@ class SMSNotificationTestCase(EWSTestCase):
             user.delete()
 
         delete_domain_phone_numbers(self.TEST_DOMAIN)
+
+        super(SMSNotificationTestCase, self).tearDown()
 
     def test_send_sms(self):
         """Successful SMS sent."""
