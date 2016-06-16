@@ -44,9 +44,9 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         return module and module.case_type and form.requires_case()
 
     def _form_too_large(app, form):
-        # form less than 0.5MB, anything larger starts to have
+        # form less than 0.1MB, anything larger starts to have
         # performance issues with fullstory
-        return app.blobs['{}.xml'.format(form.unique_id)]['content_length'] > 524288
+        return app.blobs['{}.xml'.format(form.unique_id)]['content_length'] > 102400
 
     meta = get_meta(request)
     track_entered_form_builder_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
