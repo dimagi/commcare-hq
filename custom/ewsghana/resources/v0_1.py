@@ -1,6 +1,7 @@
 import json
 
 from corehq.apps.api.util import get_object_or_not_exist
+from corehq.apps.api.resources.v0_1 import LoginAndDomainAuthentication
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.locations.resources.v0_1 import LocationResource
 from corehq.util.quickcache import quickcache
@@ -19,7 +20,7 @@ class EWSLocationResource(LocationResource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        project = getattr(bundle.request, 'project', self.domain_ob(domain))
+        project = getattr(bundle.request, 'project', self.domain_obj(domain))
         parent_id = bundle.request.GET.get('parent_id', None)
         include_inactive = json.loads(bundle.request.GET.get('include_inactive', 'false'))
         show_administrative = bundle.request.GET.get('show_administrative', False)
@@ -34,4 +35,5 @@ class EWSLocationResource(LocationResource):
         return [child for child in locs if child.location_id in viewable]
 
     class Meta(LocationResource.Meta):
+        authentication = LoginAndDomainAuthentication(allow_internal=True)
         resource_name = 'ews_location'

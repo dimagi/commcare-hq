@@ -1556,14 +1556,14 @@ class TestApiKey(APIResourceTest):
 
 class InternalTestMixin(object):
     def assert_internally_accessible(self, url):
-        # api auth should succeed for api endpoint
+        # api auth should succeed
         api_url = self._api_url(url, self.username)
         response = self.client.get(api_url)
         self.assertEqual(response.status_code, 200)
-        # session auth should succeed for internal API
+        # session auth should also succeed since these are used internally over sessions
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
 
 
 class InternalFixtureResourceTest(APIResourceTest, InternalTestMixin):
