@@ -688,7 +688,7 @@
             "agg_fun": "count_if",
             "condition": {
               "operator": "==",
-              "value": "yes"
+              "value": "2"
             }
           },
           {
