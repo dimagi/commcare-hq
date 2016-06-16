@@ -122,17 +122,17 @@ class Command(BaseCommand):
             feature_type_data = BOOTSTRAP_FEATURE_RATES
 
         ensure_plans(
-            dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
             editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
             product_types=PRODUCT_TYPES, product_rate_data=BOOTSTRAP_PRODUCT_RATES,
             feature_types=FEATURE_TYPES, feature_type_data=feature_type_data,
+            dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
         )
 
 
-def ensure_plans(dry_run, verbose, for_tests, apps,
-                 editions, edition_to_role,
+def ensure_plans(editions, edition_to_role,
                  product_types, product_rate_data,
-                 feature_types, feature_type_data):
+                 feature_types, feature_type_data,
+                 dry_run, verbose, for_tests, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
