@@ -11,7 +11,8 @@ from sqlalchemy.sql.sqltypes import Integer, VARCHAR
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, TableDataFormat
 from corehq.apps.reports.util import get_INFilter_bindparams
-from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains, TableCardDataIndividualFormatter, TableCardDataGroupsFormatter
+from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains, TableCardDataIndividualFormatter, TableCardDataGroupsFormatter, \
+    get_domains_with_next
 from sqlalchemy import select
 import urllib
 import re
@@ -66,7 +67,7 @@ class CareQueryMeta(QueryMeta):
         group_having = ''
         having_group_by = []
         if ('disaggregate_by' in filter_values and filter_values['disaggregate_by'] == 'group') or \
-                ('table_card_group_by' in filter_values and filter_values['table_card_group_by']):
+                (filter_values.get('table_card_group_by') == 'group_leadership'):
             having_group_by.append('group_leadership')
         elif 'group_leadership' in filter_values and filter_values['group_leadership']:
             group_having = "(MAX(CAST(gender as int4)) + MIN(CAST(gender as int4))) " \
@@ -367,24 +368,25 @@ class TableCardSqlData(CareSqlData):
                              CareCustomColumn('none', filters=self.filters + [RawFilter("maxmin = 0")])]),
         ]
 
+    @property
+    def domains_with_practices(self):
+        return [
+            {
+                'text': element.text,
+                'practices': [practice.text for practice in element.next]
+            }
+            for element in get_domains_with_next(self.domain, value_chain=self.config['value_chain'])
+        ]
+
     def headers(self, data):
         column_headers = []
-        groupped_headers = [list(v) for l,v in groupby(sorted(data.keys(), key=lambda x:x[2]), lambda x: x[2])]
-        for domain in groupped_headers:
-            groupped_practices = [list(v) for l,v in groupby(sorted(domain, key=lambda x:x[3]), lambda x: x[3])]
-            domain_group = DataTablesColumnGroup(self.group_name_fn(domain[0][2]))
-            for practice in groupped_practices:
-                domain_group.add_column(DataTablesColumn(self.group_name_fn(practice[0][3])))
-
-            column_headers.append(domain_group)
-        column_headers = sorted(column_headers, key=lambda x: x.html)
-
         i = 1
-        for column in column_headers:
-            for j in range(0, len(column.columns)):
-                column.columns[j] = DataTablesColumn('Practice ' + i.__str__(), help_text=column.columns[j].html)
+        for domain in self.domains_with_practices:
+            domain_group = DataTablesColumnGroup(domain['text'])
+            for practice in domain['practices']:
+                domain_group.add_column(DataTablesColumn('Practice %i' % i, help_text=practice))
                 i += 1
-
+            column_headers.append(domain_group)
         return column_headers
 
     @property
@@ -413,7 +415,8 @@ class TableCardReportGrouppedPercentSqlData(TableCardSqlData):
 
     def format_rows(self, rows):
         formatter = TableCardDataIndividualFormatter(TableDataFormat(self.columns, no_value=self.no_value))
-        formatted_rows = formatter.format(rows, keys=self.keys, group_by=self.group_by, domain=self.domain)
+        formatted_rows = formatter.format(rows, keys=self.keys, group_by=self.group_by, domain=self.domain,
+                                          value_chain=self.config['value_chain'])
         formatter = TableCardDataGroupsFormatter(TableDataFormat(self.columns, no_value=self.no_value))
         return formatter.format(list(formatted_rows), keys=self.keys, group_by=self.group_by)
 
@@ -452,11 +455,12 @@ class TableCardReportIndividualPercentSqlData(TableCardSqlData):
 
     def format_rows(self, rows):
         formatter = TableCardDataIndividualFormatter(TableDataFormat(self.columns, no_value=self.no_value))
-        return formatter.format(rows, keys=self.keys, group_by=self.group_by, domain=self.domain)
+        return formatter.format(rows, keys=self.keys, group_by=self.group_by, domain=self.domain,
+                                value_chain=self.config['value_chain'])
 
     def calculate_total_row(self, headers, rows):
         total_row = ['Total']
-        for header in range(1, headers.__len__()):
+        for header in range(1, len(headers)):
             total_row.append('0/0')
 
         def _calc_totals(row, idx):
@@ -481,6 +485,11 @@ class TableCardReportIndividualPercentSqlData(TableCardSqlData):
 
         for row in rows:
             for idx, practice in enumerate(row[1:], 1):
-                _calc_totals(practice, idx)
+                value = practice
+                if 'html' in practice:
+                    value = practice['html']
+
+                if value != 'N/A':
+                    _calc_totals(practice, idx)
 
         return total_row
