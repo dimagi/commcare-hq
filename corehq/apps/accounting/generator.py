@@ -13,9 +13,22 @@ from corehq.apps.smsbillables.generator import DIRECTIONS
 from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (
-    Currency, BillingAccount, Subscription, Subscriber, SoftwareProductType,
-    DefaultProductPlan, SubscriptionAdjustment,
-    SoftwarePlanEdition, BillingContactInfo, SubscriptionType,
+    BillingAccount,
+    BillingContactInfo,
+    Currency,
+    DefaultProductPlan,
+    Feature,
+    FeatureRate,
+    SoftwarePlan,
+    SoftwarePlanEdition,
+    SoftwareProductType,
+    Subscriber,
+    Subscription,
+    SubscriptionAdjustment,
+    SubscriptionType,
+    SoftwarePlanVersion,
+    SoftwareProduct,
+    SoftwareProductRate,
 )
 from corehq.apps.smsbillables.models import (
     SmsGatewayFee, SmsGatewayFeeCriteria, SmsUsageFee, SmsUsageFeeCriteria,
@@ -36,7 +49,15 @@ SUBSCRIBABLE_EDITIONS = [
 
 def instantiate_accounting_for_tests():
     call_command('cchq_prbac_bootstrap', testing=True)
-    call_command('cchq_software_plan_bootstrap', testing=True, fresh_start=True)
+
+    DefaultProductPlan.objects.all().delete()
+    SoftwarePlanVersion.objects.all().delete()
+    SoftwarePlan.objects.all().delete()
+    SoftwareProductRate.objects.all().delete()
+    SoftwareProduct.objects.all().delete()
+    FeatureRate.objects.all().delete()
+    Feature.objects.all().delete()
+    call_command('cchq_software_plan_bootstrap', testing=True)
 
 
 def init_default_currency():
