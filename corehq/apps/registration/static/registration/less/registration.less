@@ -1,5 +1,43 @@
-.reg-form-holder {
-  width: 100%;
-  margin-top: 50px;
-  margin-bottom: 50px;
+
+
+@reg-form-width: 380px;
+@reg-form-height: 375px;
+#registration-form-container {
+  position: absolute;
+  left: 50%;
+  margin-left: -@reg-form-width/2;
+  width: @reg-form-width;
+  top: 50%;
+  margin-top: -@reg-form-height/2 - 20px;
+  height: @reg-form-height;
+}
+
+.reg-form-column {
+  position: relative;
+  min-height: 400px;
+}
+
+ul.form-step-progress li {
+  width: 33.3%;
+  &:before {
+    width: 80%;
+  }
+}
+
+#div_id_eula_confirmed {
+  text-align: left;
+  label {
+    margin-left: 20px;
+  }
+  input.checkbox {
+    /* Double-sized Checkboxes */
+    -ms-transform: scale(1.8); /* IE */
+    -moz-transform: scale(1.8); /* FF */
+    -webkit-transform: scale(1.8); /* Safari and Chrome */
+    -o-transform: scale(1.8); /* Opera */
+
+    width: 40px;
+    margin-left: -22px;
+    height: 25px;
+  }
 }
