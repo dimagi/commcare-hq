@@ -52,7 +52,8 @@ branches:
   - notifications-perms-change # j$ 5/11
   - calculatedIcons # Sravan 3/2
   - xform-blobs  # daniel 5/23
-  - pillow-to-mark-apps-as-data-submitted # Ben 6/15
+  - pillow-to-mark-apps-as-data-submitted  # Ben 6/15
+  - ignore-base-url  # Ben 6/16/16
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
