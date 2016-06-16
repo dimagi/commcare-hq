@@ -17,9 +17,12 @@ from corehq.sql_db.operations import HqRunPython
 
 
 def cchq_software_plan_bootstrap(apps, schema_editor):
-    ensure_plans(dry_run=False, verbose=True, for_tests=False, apps=apps,
-                 editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
-                 feature_types=FEATURE_TYPES, product_types=PRODUCT_TYPES)
+    ensure_plans(
+        dry_run=False, verbose=True, for_tests=False, apps=apps,
+        editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
+        product_types=PRODUCT_TYPES,
+        feature_types=FEATURE_TYPES,
+    )
 
 
 class Migration(migrations.Migration):

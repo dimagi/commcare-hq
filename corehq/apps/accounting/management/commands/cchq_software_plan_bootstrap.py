@@ -118,13 +118,18 @@ class Command(BaseCommand):
         if for_tests:
             logger.info("Initializing Plans and Roles for Testing")
 
-        ensure_plans(dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
-                     editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
-                     feature_types=FEATURE_TYPES, product_types=PRODUCT_TYPES)
+        ensure_plans(
+            dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
+            editions=EDITIONS, edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
+            product_types=PRODUCT_TYPES,
+            feature_types=FEATURE_TYPES,
+        )
 
 
 def ensure_plans(dry_run, verbose, for_tests, apps,
-                 editions, edition_to_role, feature_types, product_types):
+                 editions, edition_to_role,
+                 product_types,
+                 feature_types):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
