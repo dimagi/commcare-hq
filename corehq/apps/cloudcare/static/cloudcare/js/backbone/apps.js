@@ -633,12 +633,6 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                 }
             }
 
-            // superhacky
-            if ($('#use-offline').is(':checked')) {
-                url += (url.indexOf('?') != -1 ? '&' : '?');
-                url += "offline=true"
-            }
-
             return url;
         },
         getSyncUrl: function () {
