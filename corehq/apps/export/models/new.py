@@ -920,8 +920,9 @@ class FormExportDataSchema(ExportDataSchema):
         )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
-            # TODO: Remove this when we mark applications that have been submitted
-            if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
+            # Skip if it doesn't have submissions and it's not the latest build
+            if (not app_doc.get('has_submissions', False) and
+                    app_build_ids[-1] != app_doc['_id']):
                 continue
 
             app = Application.wrap(app_doc)
@@ -1060,8 +1061,9 @@ class CaseExportDataSchema(ExportDataSchema):
         )
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
-            # TODO: Remove this when we mark applications that have been submitted
-            if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
+            # Skip if it doesn't have submissions and it's not the latest build
+            if (not app_doc.get('has_submissions', False) and
+                    app_build_ids[-1] != app_doc['_id']):
                 continue
             app = Application.wrap(app_doc)
             case_property_mapping = get_case_properties(
