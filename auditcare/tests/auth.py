@@ -15,6 +15,7 @@ from auditcare.utils import _thread_locals
 
 class authenticationTestCase(TestCase):
     def setUp(self):
+        super(authenticationTestCase, self).setUp()
         if hasattr(_thread_locals, 'user'):
             delattr(_thread_locals, 'user')
         User.objects.all().delete()
