@@ -10,7 +10,7 @@ from optparse import make_option
 from django.apps import apps as default_apps
 from django.core.management.base import BaseCommand
 
-from corehq.apps.accounting.management.commands.cchq_software_plan_bootstrap import ensure_plans
+from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.accounting.models import (
     SoftwareProductType, SoftwarePlanEdition, FeatureType,
 )

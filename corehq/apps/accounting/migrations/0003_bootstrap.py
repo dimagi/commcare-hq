@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.apps.accounting.management.commands.cchq_software_plan_bootstrap import ensure_plans
+from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.accounting.management.commands.cchq_software_plan_bootstrap import (
     BOOTSTRAP_EDITION_TO_ROLE,
     BOOTSTRAP_FEATURE_RATES,
