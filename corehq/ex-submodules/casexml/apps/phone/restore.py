@@ -592,13 +592,13 @@ class RestoreConfig(object):
             response = task.get(timeout=INITIAL_ASYNC_TIMEOUT_THRESHOLD if new_task else 1)
         except TimeoutError:
             # return a 202 with progress
-            progress = AsyncRestoreResponse(task, sync_log_to_update._id)
-            return progress
+            response = AsyncRestoreResponse(task, sync_log_to_update._id)
         else:
             # task is done, unset task id
             sync_log_to_update.async_task_id = None
             sync_log_to_update.save()
-            return response
+
+        return response
 
     def _get_synchronous_payload(self):
         """
