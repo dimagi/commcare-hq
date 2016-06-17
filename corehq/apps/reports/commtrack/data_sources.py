@@ -235,21 +235,21 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         # all the data back
         return self.config.get('advanced_columns', True)
 
-    def _get_dict_for_ledger_value(self, s):
+    def _get_dict_for_ledger_value(self, ledger_value):
         values = {
-            self.SLUG_PRODUCT_NAME: s.sql_product.name,
-            self.SLUG_PRODUCT_ID: s.entry_id,
-            self.SLUG_CURRENT_STOCK: s.balance,
+            self.SLUG_PRODUCT_NAME: ledger_value.sql_product.name,
+            self.SLUG_PRODUCT_ID: ledger_value.entry_id,
+            self.SLUG_CURRENT_STOCK: ledger_value.balance,
         }
 
         if self._include_advanced_data():
-            consumption_helper = get_consumption_helper_from_ledger_value(self.project, s)
+            consumption_helper = get_consumption_helper_from_ledger_value(self.project, ledger_value)
             values.update({
-                self.SLUG_LOCATION_ID: s.location_id,
+                self.SLUG_LOCATION_ID: ledger_value.location_id,
                 self.SLUG_CONSUMPTION: consumption_helper.get_monthly_consumption(),
                 self.SLUG_MONTHS_REMAINING: consumption_helper.get_months_remaining(),
                 self.SLUG_CATEGORY: consumption_helper.get_stock_category(),
-                self.SLUG_LAST_REPORTED: s.last_modified,
+                self.SLUG_LAST_REPORTED: ledger_value.last_modified,
                 self.SLUG_RESUPPLY_QUANTITY_NEEDED: consumption_helper.get_resupply_quantity_needed()
             })
 
