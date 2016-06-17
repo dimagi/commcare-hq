@@ -35,6 +35,7 @@ class PillowtopReindexerTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(PillowtopReindexerTest, cls).setUpClass()
         with trap_extra_setup(ConnectionError):
             CasePillow()  # verify connection to elasticsearch
 
@@ -42,6 +43,7 @@ class PillowtopReindexerTest(TestCase):
     def tearDownClass(cls):
         for index in [CASE_SEARCH_INDEX, USER_INDEX, CASE_INDEX, XFORM_INDEX]:
             ensure_index_deleted(index)
+        super(PillowtopReindexerTest, cls).tearDownClass()
 
     def test_domain_reindexer(self):
         delete_all_domains()
@@ -146,16 +148,19 @@ class UserReindexerTest(TestCase):
     ]
 
     def setUp(self):
+        super(UserReindexerTest, self).setUp()
         delete_all_users()
 
     @classmethod
     def setUpClass(cls):
+        super(UserReindexerTest, cls).setUpClass()
         create_domain(DOMAIN)
         ensure_index_deleted(USER_INDEX)
 
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(USER_INDEX)
+        super(UserReindexerTest, cls).tearDownClass()
 
     def test_user_reindexer_v2(self):
         username = 'reindex-test-username-v2'
@@ -189,15 +194,18 @@ class GroupReindexerTest(TestCase):
     ]
 
     def setUp(self):
+        super(GroupReindexerTest, self).setUp()
         delete_all_groups()
 
     @classmethod
     def setUpClass(cls):
+        super(GroupReindexerTest, cls).setUpClass()
         ensure_index_deleted(GROUP_INDEX_INFO.index)
 
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(GROUP_INDEX_INFO.index)
+        super(GroupReindexerTest, cls).tearDownClass()
 
     def test_group_reindexer(self):
         group = Group(domain=DOMAIN, name='g1')

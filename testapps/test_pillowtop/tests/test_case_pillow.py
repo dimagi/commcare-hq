@@ -16,6 +16,7 @@ class CasePillowTest(TestCase):
     domain = 'case-pillowtest-domain'
 
     def setUp(self):
+        super(CasePillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         with trap_extra_setup(ConnectionError):
             self.pillow = CasePillow()
@@ -24,6 +25,7 @@ class CasePillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.pillow.es_index)
+        super(CasePillowTest, self).tearDown()
 
     def test_case_pillow_couch(self):
         # make a case
