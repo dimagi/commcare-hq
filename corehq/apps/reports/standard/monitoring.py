@@ -255,10 +255,12 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return users_data.combined_users
 
     @property
+    @memoized
     def users_by_id(self):
         return {user.user_id: user for user in self.all_users}
 
     @property
+    @memoized
     def user_ids(self):
         return self.users_by_id.keys()
 
@@ -312,6 +314,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return map(format_row, rows)
 
     @property
+    @memoized
     def missing_users(self):
         return None in self.user_ids
 
