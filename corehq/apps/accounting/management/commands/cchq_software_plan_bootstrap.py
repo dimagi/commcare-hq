@@ -118,18 +118,19 @@ class Command(BaseCommand):
             edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
             edition_to_product_rate=BOOTSTRAP_PRODUCT_RATES,
             edition_to_feature_rate=edition_to_feature_rate,
+            feature_types=FEATURE_TYPES,
             dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
         )
 
 
-def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_rate,
+def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_rate, feature_types,
                  dry_run, verbose, for_tests, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
 
-    edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose, apps=apps)
+    edition_to_features = _ensure_features(feature_types, dry_run=dry_run, verbose=verbose, apps=apps)
     for product_type in PRODUCT_TYPES:
         for edition in EDITIONS:
             role_slug = edition_to_role[edition]
@@ -251,7 +252,7 @@ def _ensure_product_and_rate(edition_to_product_rate, product_type, edition, dry
     return product, product_rate
 
 
-def _ensure_features(dry_run, verbose, apps):
+def _ensure_features(feature_types, dry_run, verbose, apps):
     """
     Ensures that all the Features necessary for the plans are created.
     """
@@ -262,7 +263,7 @@ def _ensure_features(dry_run, verbose, apps):
 
     edition_to_features = defaultdict(list)
     for edition in EDITIONS:
-        for feature_type in FEATURE_TYPES:
+        for feature_type in feature_types:
             feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
             if edition == SoftwarePlanEdition.ENTERPRISE:
                 feature.name = "Dimagi Only %s" % feature.name
