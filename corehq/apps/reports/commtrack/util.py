@@ -107,3 +107,9 @@ def get_relevant_supply_point_ids(domain, active_location=None):
 
 def get_product_id_name_mapping(domain):
     return dict(SQLProduct.objects.filter(domain=domain).values_list('product_id', 'name'))
+
+
+def get_product_ids_for_program(domain, program_id):
+    return SQLProduct.objects.filter(
+        domain=domain, program_id=program_id
+    ).values_list('product_id', flat=True)
