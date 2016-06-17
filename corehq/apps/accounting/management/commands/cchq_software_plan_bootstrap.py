@@ -37,6 +37,24 @@ EDITIONS = [
 FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
 PRODUCT_TYPES = [p[0] for p in SoftwareProductType.CHOICES]
 
+BOOTSTRAP_PRODUCT_RATES = {
+    SoftwarePlanEdition.COMMUNITY: [
+        dict(),
+    ],
+    SoftwarePlanEdition.STANDARD: [
+        dict(monthly_fee=Decimal('100.00')),
+    ],
+    SoftwarePlanEdition.PRO: [
+        dict(monthly_fee=Decimal('500.00')),
+    ],
+    SoftwarePlanEdition.ADVANCED: [
+        dict(monthly_fee=Decimal('1000.00')),
+    ],
+    SoftwarePlanEdition.ENTERPRISE: [
+        dict(monthly_fee=Decimal('0.00')),
+    ],
+}
+
 BOOTSTRAP_FEATURE_RATES = {
     SoftwarePlanEdition.COMMUNITY: {
         FeatureType.USER: dict(monthly_limit=50, per_excess_fee=Decimal('1.00')),
@@ -209,25 +227,9 @@ def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
         product.name = "Dimagi Only %s" % product.name
 
     product_rates = []
-    BOOTSTRAP_PRODUCT_RATES = {
-        SoftwarePlanEdition.COMMUNITY: [
-            SoftwareProductRate(),  # use all the defaults
-        ],
-        SoftwarePlanEdition.STANDARD: [
-            SoftwareProductRate(monthly_fee=Decimal('100.00')),
-        ],
-        SoftwarePlanEdition.PRO: [
-            SoftwareProductRate(monthly_fee=Decimal('500.00')),
-        ],
-        SoftwarePlanEdition.ADVANCED: [
-            SoftwareProductRate(monthly_fee=Decimal('1000.00')),
-        ],
-        SoftwarePlanEdition.ENTERPRISE: [
-            SoftwareProductRate(monthly_fee=Decimal('0.00')),
-        ],
-    }
 
     for product_rate in BOOTSTRAP_PRODUCT_RATES[edition]:
+        product_rate = SoftwareProductRate(**product_rate)
         if dry_run:
             logger.info("[DRY RUN] Creating Product: %s" % product)
             logger.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
