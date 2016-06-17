@@ -34,12 +34,8 @@ PRODUCT_TYPES = [
 ]
 
 BOOTSTRAP_PRODUCT_RATES = {
-    SoftwarePlanEdition.RESELLER: [
-        dict(monthly_fee=Decimal('1000.00')),
-    ],
-    SoftwarePlanEdition.MANAGED_HOSTING: [
-        dict(monthly_fee=Decimal('1000.00')),
-    ],
+    SoftwarePlanEdition.RESELLER: dict(monthly_fee=Decimal('1000.00')),
+    SoftwarePlanEdition.MANAGED_HOSTING: dict(monthly_fee=Decimal('1000.00')),
 }
 
 BOOTSTRAP_FEATURE_RATES = {
