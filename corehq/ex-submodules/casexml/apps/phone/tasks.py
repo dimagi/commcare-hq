@@ -1,5 +1,6 @@
+from celery import current_task
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task, Task
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
 
 
@@ -22,3 +23,15 @@ def force_update_cleanliness_flags():
     # that there are no bugs in the weekly task.
     # If we haven't seen any issues by the end of 2015 (so 6 runs) we should remove this.
     set_cleanliness_flags_for_all_domains(force_full=True)
+
+
+@task(queue='async_restore_queue')
+def get_async_restore_payload(restore_config):
+    """Process an async restore
+    """
+    current_task.update_state(state="PROGRESS", meta={'done': 50, 'total': 100})
+    response = restore_config._get_synchronous_payload()
+
+    return response
+    # task should call a subclass of the restore, which also takes a download
+    # object and can update status

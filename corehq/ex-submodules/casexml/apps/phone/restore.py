@@ -5,6 +5,9 @@ import os
 from uuid import uuid4
 import shutil
 import hashlib
+from celery.exceptions import TimeoutError
+from celery.result import AsyncResult
+
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
 from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
@@ -12,6 +15,7 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
+from casexml.apps.phone.tasks import get_async_restore_payload
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
@@ -50,6 +54,10 @@ INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 # restores that take less than this time will not be cached to allow
 # for rapid iteration on fixtures/cases/etc.
 INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
+
+# if a sync is happening asynchronously, we wait for this long for a result to
+# initially be returned, otherwise we return a 202
+INITIAL_ASYNC_TIMEOUT_THRESHOLD = 30
 
 
 def stream_response(payload, headers=None):
@@ -201,6 +209,38 @@ class FileRestoreResponse(RestoreResponse):
         return stream_response(open(self.get_filename(), 'r'), headers)
 
 
+class AsyncRestoreResponse(object):
+
+    def __init__(self, task, restore_id):
+        self.task = task
+        self.restore_id = restore_id
+
+    def _get_progress(self):
+        progress = self.task.info if self.task.info else {}
+        return {
+            'done': progress.get('done', 0),
+            'total': progress.get('total', 0),
+            'retry-after': INITIAL_ASYNC_TIMEOUT_THRESHOLD,
+        }
+
+    def get_http_response(self):
+        """TODO: Make this better
+        """
+        # duck-typed RestoreResponse
+        opening_tag = """<OpenRosaResponse xmlns="http://openrosa.org/http/response">"""
+        sync_opening_tag = """<Sync xmlns="http://commcarehq.org/sync">"""
+        restore = "<restore_id>{restore_id}</restore_id>".format(restore_id=self.restore_id)
+        progress = "<progress value={done} max={total} retry-after={retry-after} />".format(
+            **self._get_progress()
+        )
+        sync_closing_tag = """</Sync>"""
+        closing_tag = "</OpenRosaResponse>"
+        return HttpResponse(
+            "".join([opening_tag, sync_opening_tag, restore, progress, sync_closing_tag, closing_tag]),
+            status=202
+        )
+
+
 class CachedPayload(object):
 
     def __init__(self, payload, is_initial):
@@ -318,7 +358,7 @@ class RestoreState(object):
     """
     restore_class = FileRestoreResponse
 
-    def __init__(self, project, restore_user, params):
+    def __init__(self, project, restore_user, params, async=False):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
 
@@ -332,6 +372,7 @@ class RestoreState(object):
         self.start_time = None
         self.duration = None
         self.current_sync_log = None
+        self.async = async
 
     def validate_state(self):
         check_version(self.params.version)
@@ -465,9 +506,10 @@ class RestoreConfig(object):
         self.restore_user = restore_user
         self.params = params or RestoreParams()
         self.cache_settings = cache_settings or RestoreCacheSettings()
+        self.async = async
 
         self.version = self.params.version
-        self.restore_state = RestoreState(self.project, self.restore_user, self.params)
+        self.restore_state = RestoreState(self.project, self.restore_user, self.params, async)
 
         self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
@@ -477,6 +519,10 @@ class RestoreConfig(object):
         self.asyc = async
 
         self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
+
+    @property
+    def cache(self):
+        return get_redis_default_cache()
 
     @property
     @memoized
@@ -495,25 +541,64 @@ class RestoreConfig(object):
                 raise
 
     def get_payload(self):
-        if self.async:
-            return self._get_asynchronous_payload()
-        return self._get_synchronous_payload()
-
-    def _get_asynchronous_payload(self):
-        pass
-
-    def _get_synchronous_payload(self):
-        """
-        This function returns a RestoreResponse class that encapsulates the response.
-        """
         self.validate()
 
         cached_response = self.get_cached_payload()
         if cached_response:
             return cached_response
 
-        self.restore_state.start_sync()
+        unfinished_async_task = self.sync_log and self.sync_log.async_task_id
+        if unfinished_async_task:
+            return self._get_asynchronous_payload()
 
+        # Start new sync
+        if self.async:
+            print "ASYNC"
+            response = self._get_asynchronous_payload()
+        else:
+            print "SYNC"
+            self.restore_state.start_sync()
+            response = self._get_synchronous_payload()
+            self.restore_state.finish_sync()
+
+            self.set_cached_payload_if_necessary(response, self.restore_state.duration)
+
+        return response
+
+    def _get_asynchronous_payload(self):
+        if self.sync_log and self.sync_log.async_task_id:
+            # a running task exists
+            task = AsyncResult(self.sync_log.async_task_id)
+            new_task = False
+            sync_log_to_update = self.sync_log
+        else:
+            # start a new task
+            self.restore_state.start_sync()
+            task = get_async_restore_payload.delay(self)
+            new_task = True
+            sync_log_to_update = self.restore_state.current_sync_log
+            self.restore_state.current_sync_log.async_task_id = task.id
+            self.restore_state.finish_sync()
+
+        try:
+            # if this is a new task, wait for INITIAL_ASYNC_TIMEOUT in case
+            # this restore completes quickly. otherwise, only wait 1 second for
+            # a response
+            response = task.get(timeout=INITIAL_ASYNC_TIMEOUT_THRESHOLD if new_task else 1)
+        except TimeoutError:
+            # return a 202 with progress
+            progress = AsyncRestoreResponse(task, sync_log_to_update._id)
+            return progress
+        else:
+            # task is done, unset task id
+            sync_log_to_update.async_task_id = None
+            sync_log_to_update.save()
+            return response
+
+    def _get_synchronous_payload(self):
+        """
+        This function returns a RestoreResponse class that encapsulates the response.
+        """
         with self.restore_state.restore_class(
                 self.restore_user.username, items=self.params.include_item_count) as response:
             normal_providers = get_restore_providers(self.timing_context)
@@ -539,10 +624,7 @@ class RestoreConfig(object):
                     partial_response.close()
 
             response.finalize()
-
-        self.restore_state.finish_sync()
-        self.set_cached_payload_if_necessary(response, self.restore_state.duration)
-        return response
+            return response
 
     def get_response(self):
         try:
