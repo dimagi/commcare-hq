@@ -360,7 +360,7 @@ hqDefine('accounting/ko/accounting.payment_method_handler.js', function () {
         self.balance(initData.totalBalance);
         self.customPaymentAmount(self.balance());
 
-        self.id = null; // TODO remove once cost-item-template does not need this
+        self.id = null;
 
         self.reset =  function () {
             initData.paginatedListModel.refreshList();
