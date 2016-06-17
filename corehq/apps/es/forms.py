@@ -27,7 +27,6 @@ class FormES(HQESQuery):
             user_type,
             user_ids_handle_unknown,
             j2me_submissions,
-            domains,
         ] + super(FormES, self).builtin_filters
 
     def user_aggregation(self):
@@ -41,10 +40,6 @@ class FormES(HQESQuery):
 
     def domain_aggregation(self):
         return self.terms_aggregation('domain', 'domain')
-
-
-def domains(domains):
-    return filters.term('domain', domains)
 
 
 def xmlns(xmlnss):

@@ -1208,7 +1208,7 @@ class CommCareVersionReport(AdminFacetedReport):
                 AggregationTerm('domain', 'domain'),
                 AggregationTerm('commcare_version', 'form.meta.commcare_version')
             ]
-            query = FormES().submitted(gte=days, lte=now).domains(domains)
+            query = FormES().submitted(gte=days, lte=now).domain(domains)
             return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
         rows = {}
         for domain in self.es_results.get('hits', {}).get('hits', []):
