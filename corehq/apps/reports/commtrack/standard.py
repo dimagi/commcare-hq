@@ -144,7 +144,9 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         )
         product_grouping = {}
         for ledger_value in ledger_values:
-            consumption_helper = get_consumption_helper_from_ledger_value(Domain.get_by_name(self.domain), ledger_value)
+            consumption_helper = get_consumption_helper_from_ledger_value(
+                Domain.get_by_name(self.domain), ledger_value
+            )
             status = consumption_helper.get_stock_category()
             if ledger_value.entry_id in product_grouping:
                 product_grouping[ledger_value.entry_id][status] += 1
