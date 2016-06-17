@@ -6,7 +6,7 @@ from corehq.apps.reports.commtrack.data_sources import (
 )
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState
+from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
