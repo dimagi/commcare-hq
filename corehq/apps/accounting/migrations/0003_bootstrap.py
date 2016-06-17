@@ -21,7 +21,7 @@ def cchq_software_plan_bootstrap(apps, schema_editor):
         edition_to_feature_rate=BOOTSTRAP_FEATURE_RATES,
         feature_types=FEATURE_TYPES,
         product_types=PRODUCT_TYPES,
-        dry_run=False, verbose=True, for_tests=False, apps=apps,
+        dry_run=False, verbose=True, apps=apps,
     )
 
 
