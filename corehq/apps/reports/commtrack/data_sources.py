@@ -235,21 +235,22 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         # all the data back
         return self.config.get('advanced_columns', True)
 
-    def _get_dict_for_stock_state(self, s):
+    def _get_dict_for_ledger_value(self, s):
         values = {
             self.SLUG_PRODUCT_NAME: s.sql_product.name,
-            self.SLUG_PRODUCT_ID: s.product_id,
+            self.SLUG_PRODUCT_ID: s.entry_id,
             self.SLUG_CURRENT_STOCK: s.balance,
         }
 
         if self._include_advanced_data():
+            consumption_helper = get_consumption_helper_from_ledger_value(self.project, s)
             values.update({
                 self.SLUG_LOCATION_ID: s.location_id,
-                self.SLUG_CONSUMPTION: s.consumption_helper.get_monthly_consumption(),
-                self.SLUG_MONTHS_REMAINING: s.consumption_helper.get_months_remaining(),
-                self.SLUG_CATEGORY: s.consumption_helper.get_stock_category(),
-                self.SLUG_LAST_REPORTED: s.last_modified_date,
-                self.SLUG_RESUPPLY_QUANTITY_NEEDED: s.consumption_helper.get_resupply_quantity_needed()
+                self.SLUG_CONSUMPTION: consumption_helper.get_monthly_consumption(),
+                self.SLUG_MONTHS_REMAINING: consumption_helper.get_months_remaining(),
+                self.SLUG_CATEGORY: consumption_helper.get_stock_category(),
+                self.SLUG_LAST_REPORTED: s.last_modified,
+                self.SLUG_RESUPPLY_QUANTITY_NEEDED: consumption_helper.get_resupply_quantity_needed()
             })
 
         return values
@@ -421,9 +422,14 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             return result
 
     def raw_product_states(self, supply_point_ids):
-        stock_states = self._get_stock_states(supply_point_ids)
-        for state in stock_states:
-            yield self._get_dict_for_stock_state(state)
+        ledger_values = get_wrapped_ledger_values(
+            domain=self.domain,
+            case_ids=supply_point_ids,
+            section_id=STOCK_SECTION_TYPE,
+            entry_ids=self.product_ids
+        )
+        for ledger_value in ledger_values:
+            yield self._get_dict_for_ledger_value(ledger_value)
 
 
 class StockStatusBySupplyPointDataSource(StockStatusDataSource):
