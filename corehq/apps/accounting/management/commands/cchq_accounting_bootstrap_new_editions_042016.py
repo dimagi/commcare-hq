@@ -2,7 +2,6 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 # Standard library imports
-from decimal import Decimal
 import logging
 from optparse import make_option
 
@@ -10,55 +9,18 @@ from optparse import make_option
 from django.apps import apps as default_apps
 from django.core.management.base import BaseCommand
 
-from corehq.apps.accounting.bootstrap.utils import ensure_plans
-from corehq.apps.accounting.models import (
-    SoftwareProductType, SoftwarePlanEdition, FeatureType,
+from corehq.apps.accounting.bootstrap.config.resellers_and_managed_hosting import (
+    BOOTSTRAP_EDITION_TO_ROLE,
+    BOOTSTRAP_FEATURE_RATES,
+    BOOTSTRAP_FEATURE_RATES_FOR_TESTING,
+    BOOTSTRAP_PRODUCT_RATES,
+    FEATURE_TYPES,
+    PRODUCT_TYPES,
 )
+from corehq.apps.accounting.bootstrap.utils import ensure_plans
 
 
 logger = logging.getLogger(__name__)
-
-BOOTSTRAP_EDITION_TO_ROLE = {
-    SoftwarePlanEdition.MANAGED_HOSTING: 'managed_hosting_plan_v0',
-    SoftwarePlanEdition.RESELLER: 'reseller_plan_v0',
-}
-
-FEATURE_TYPES = [
-    FeatureType.USER,
-    FeatureType.SMS,
-]
-PRODUCT_TYPES = [
-    SoftwareProductType.COMMCARE,
-    SoftwareProductType.COMMCONNECT,
-    SoftwareProductType.COMMTRACK,
-]
-
-BOOTSTRAP_PRODUCT_RATES = {
-    SoftwarePlanEdition.RESELLER: dict(monthly_fee=Decimal('1000.00')),
-    SoftwarePlanEdition.MANAGED_HOSTING: dict(monthly_fee=Decimal('1000.00')),
-}
-
-BOOTSTRAP_FEATURE_RATES = {
-    SoftwarePlanEdition.RESELLER: {
-        FeatureType.USER: dict(monthly_limit=10, per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: dict(monthly_limit=0),
-    },
-    SoftwarePlanEdition.MANAGED_HOSTING: {
-        FeatureType.USER: dict(monthly_limit=0, per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: dict(monthly_limit=0),
-    },
-}
-
-BOOTSTRAP_FEATURE_RATES_FOR_TESTING = {
-    SoftwarePlanEdition.RESELLER: {
-        FeatureType.USER: dict(monthly_limit=2, per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: dict(monthly_limit=0),
-    },
-    SoftwarePlanEdition.MANAGED_HOSTING: {
-        FeatureType.USER: dict(monthly_limit=0, per_excess_fee=Decimal('1.00')),
-        FeatureType.SMS: dict(monthly_limit=0),
-    },
-}
 
 
 class Command(BaseCommand):
