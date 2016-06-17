@@ -15,7 +15,7 @@ from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
-from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN, prepare_domain, create_products
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN, create_products
 from custom.ilsgateway.utils import make_loc
 from custom.logistics.tests.utils import bootstrap_user
 
@@ -26,7 +26,6 @@ class RemindersTest(ILSTestScript):
     def setUpClass(cls):
         super(RemindersTest, cls).setUpClass()
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
-        cls.domain = prepare_domain(TEST_DOMAIN)
 
         cls.district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
                                 domain=TEST_DOMAIN)
@@ -48,7 +47,6 @@ class RemindersTest(ILSTestScript):
         delete_domain_phone_numbers(TEST_DOMAIN)
         cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
-        cls.domain.delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
         super(RemindersTest, cls).tearDownClass()
