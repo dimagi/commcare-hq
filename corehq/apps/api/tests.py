@@ -1555,7 +1555,7 @@ class TestApiKey(APIResourceTest):
 
 
 class InternalTestMixin(object):
-    def assert_internally_accessible(self, url):
+    def assert_accessible_via_sessions(self, url):
         # api auth should succeed
         api_url = self._api_url(url, self.username)
         response = self.client.get(api_url)
@@ -1571,7 +1571,7 @@ class InternalFixtureResourceTest(APIResourceTest, InternalTestMixin):
     api_name = 'v0_5'
 
     def test_basic(self):
-        self.assert_internally_accessible(self.list_endpoint)
+        self.assert_accessible_via_sessions(self.list_endpoint)
 
 
 class InternalLocationResourceTest(APIResourceTest, InternalTestMixin):
@@ -1579,7 +1579,7 @@ class InternalLocationResourceTest(APIResourceTest, InternalTestMixin):
     api_name = 'v0_3'
 
     def test_basic(self):
-        self.assert_internally_accessible(self.list_endpoint)
+        self.assert_accessible_via_sessions(self.list_endpoint)
 
 
 class EWSLocationResourceTest(APIResourceTest, InternalTestMixin):
@@ -1587,7 +1587,7 @@ class EWSLocationResourceTest(APIResourceTest, InternalTestMixin):
     api_name = 'v0_3'
 
     def test_basic(self):
-        self.assert_internally_accessible(self.list_endpoint)
+        self.assert_accessible_via_sessions(self.list_endpoint)
 
 
 class ILSLocationResourceTest(APIResourceTest, InternalTestMixin):
@@ -1595,4 +1595,4 @@ class ILSLocationResourceTest(APIResourceTest, InternalTestMixin):
     api_name = 'v0_3'
 
     def test_basic(self):
-        self.assert_internally_accessible(self.list_endpoint)
+        self.assert_accessible_via_sessions(self.list_endpoint)

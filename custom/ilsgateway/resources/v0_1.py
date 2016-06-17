@@ -11,5 +11,5 @@ class ILSLocationResource(LocationResource):
         )
 
     class Meta(LocationResource.Meta):
-        authentication = LoginAndDomainAuthentication(allow_internal=True)
+        authentication = LoginAndDomainAuthentication(allow_session_auth=True)
         resource_name = 'ils_location'

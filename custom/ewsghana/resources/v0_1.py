@@ -35,5 +35,5 @@ class EWSLocationResource(LocationResource):
         return [child for child in locs if child.location_id in viewable]
 
     class Meta(LocationResource.Meta):
-        authentication = LoginAndDomainAuthentication(allow_internal=True)
+        authentication = LoginAndDomainAuthentication(allow_session_auth=True)
         resource_name = 'ews_location'
