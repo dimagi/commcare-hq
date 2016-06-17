@@ -1,11 +1,18 @@
 import mock
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
+from corehq.apps.app_manager.tests import TestXmlMixin
 
 from celery.exceptions import TimeoutError
 from celery.result import EagerResult, AsyncResult
 
 from corehq.apps.domain.models import Domain
-from casexml.apps.phone.restore import RestoreConfig, RestoreParams, AsyncRestoreResponse, FileRestoreResponse
+from casexml.apps.phone.restore import (
+    RestoreConfig,
+    RestoreParams,
+    AsyncRestoreResponse,
+    FileRestoreResponse,
+    ASYNC_RETRY_AFTER
+)
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.case.tests.util import (
     delete_all_cases,
@@ -123,3 +130,32 @@ class AsyncRestoreTest(TestCase):
     #     >>> revoke(task_id, terminate=True)
     #     """
     #     self.skipTest("")
+
+
+class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):
+    def setUp(self):
+        self.task = mock.MagicMock()
+        self.task.info = {'done': 25, 'total': 100}
+
+        self.response = AsyncRestoreResponse(self.task)
+
+    def test_response(self):
+        expected = """
+        <OpenRosaResponse xmlns="http://openrosa.org/http/response">
+            <Sync xmlns="http://commcarehq.org/sync">
+                <progress total="{total}" done="{done}" retry-after="{retry_after}"/>
+            </Sync>
+        </OpenRosaResponse>
+        """.format(
+            total=self.task.info['total'],
+            done=self.task.info['done'],
+            retry_after=ASYNC_RETRY_AFTER
+        )
+        self.assertXmlEqual(self.response.compile_response(), expected)
+
+    def test_html_response(self):
+        http_response = self.response.get_http_response()
+        self.assertEqual(http_response.status_code, 202)
+        self.assertTrue(http_response.has_header('Retry-After'))
+        self.assertEqual(http_response['retry-after'], str(ASYNC_RETRY_AFTER))
+        self.assertXmlEqual(http_response.content, self.response.compile_response())

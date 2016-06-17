@@ -58,6 +58,9 @@ INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 # if a sync is happening asynchronously, we wait for this long for a result to
 # initially be returned, otherwise we return a 202
 INITIAL_ASYNC_TIMEOUT_THRESHOLD = 30
+# The Retry-After header parameter. Ask the phone to retry in this many seconds
+# to see if the task is done.
+ASYNC_RETRY_AFTER = 30
 
 
 def stream_response(payload, headers=None):
@@ -211,34 +214,40 @@ class FileRestoreResponse(RestoreResponse):
 
 class AsyncRestoreResponse(object):
 
-    def __init__(self, task, restore_id):
+    def __init__(self, task):
         self.task = task
-        self.restore_id = restore_id
 
-    def _get_progress(self):
+    def get_progress(self):
         progress = self.task.info if self.task.info else {}
         return {
             'done': progress.get('done', 0),
             'total': progress.get('total', 0),
-            'retry-after': INITIAL_ASYNC_TIMEOUT_THRESHOLD,
+            'retry-after': ASYNC_RETRY_AFTER,
         }
 
+    def compile_response(self):
+        root = ElementTree.Element("OpenRosaResponse")
+        root.set('xmlns', "http://openrosa.org/http/response")
+        sync_tag = ElementTree.Element("Sync")
+        sync_tag.set('xmlns', "http://commcarehq.org/sync")
+        root.append(sync_tag)
+        progress_tag = ElementTree.Element("progress")
+        progress_tag.set('done', str(self.get_progress()['done']))
+        progress_tag.set('total', str(self.get_progress()['total']))
+        progress_tag.set('retry-after', str(self.get_progress()['retry-after']))
+        sync_tag.append(progress_tag)
+
+        return ElementTree.tostring(root, encoding='utf-8')
+
     def get_http_response(self):
-        """TODO: Make this better
-        """
         # duck-typed RestoreResponse
-        opening_tag = """<OpenRosaResponse xmlns="http://openrosa.org/http/response">"""
-        sync_opening_tag = """<Sync xmlns="http://commcarehq.org/sync">"""
-        restore = "<restore_id>{restore_id}</restore_id>".format(restore_id=self.restore_id)
-        progress = "<progress value={done} max={total} retry-after={retry-after} />".format(
-            **self._get_progress()
+        response = HttpResponse(
+            self.compile_response(),
+            status=202,
+            content_type="text/xml"
         )
-        sync_closing_tag = """</Sync>"""
-        closing_tag = "</OpenRosaResponse>"
-        return HttpResponse(
-            "".join([opening_tag, sync_opening_tag, restore, progress, sync_closing_tag, closing_tag]),
-            status=202
-        )
+        response["Retry-After"] = ASYNC_RETRY_AFTER
+        return response
 
 
 class CachedPayload(object):
