@@ -24,16 +24,16 @@ class AppFormSubmissionTrackerProcessor(PillowProcessor):
         domain = change.metadata.domain
 
         if build_id and domain:
-            app = self._get_app(domain, build_id)
-
-            if not app.has_submissions:
-                app.has_submissions = True
-                app.save()
-                self._get_app.clear(self, domain, build_id)
+            self._mark_has_submission(domain, build_id)
 
     @quickcache(['domain', 'build_id'], timeout=60 * 60)
-    def _get_app(self, domain, build_id):
+    def _mark_has_submission(self, domain, build_id):
+        app = None
         try:
-            return get_app(domain, build_id)
+            app = get_app(domain, build_id)
         except Http404:
-            return None
+            pass
+
+        if app and not app.has_submissions:
+            app.has_submissions = True
+            app.save()
