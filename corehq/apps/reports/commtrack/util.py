@@ -102,4 +102,4 @@ def get_relevant_supply_point_ids(domain, active_location=None):
 
         return supply_point_ids
     else:
-        return filter_relevant(SQLLocation.objects.filter(domain=domain))
+        return list(filter_relevant(SQLLocation.objects.filter(domain=domain)))
