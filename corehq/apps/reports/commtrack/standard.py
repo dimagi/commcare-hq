@@ -1,3 +1,5 @@
+from corehq.apps.domain.models import Domain
+from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
 from corehq.apps.reports.commtrack.data_sources import (
     StockStatusDataSource, ReportingStatusDataSource,
     SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
@@ -14,7 +16,8 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, get_product_id_name_mapping
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, get_product_id_name_mapping, \
+    get_product_ids_for_program, get_consumption_helper_from_ledger_value
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.filters.commtrack import AdvancedColumns
 
@@ -131,20 +134,17 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
+        product_ids = get_product_ids_for_program(self.domain, self.program_id) if self.program_id else None
 
-        stock_states = StockState.objects.filter(
-            case_id__in=sp_ids,
-            section_id=STOCK_SECTION_TYPE
+        ledger_values = get_wrapped_ledger_values(
+            domain=self.domain,
+            case_ids=sp_ids,
+            section_id=STOCK_SECTION_TYPE,
+            entry_ids=product_ids,
         )
-
-        stock_states = stock_states.order_by('product_id')
-
-        if self.program_id:
-            stock_states = stock_states.filter(sql_product__program_id=self.program_id)
-
         product_grouping = {}
-        for state in stock_states:
-            consumption_helper = state.consumption_helper
+        for state in ledger_values:
+            consumption_helper = get_consumption_helper_from_ledger_value(Domain.get_by_name(self.domain), state)
             status = consumption_helper.get_stock_category()
             if state.entry_id in product_grouping:
                 product_grouping[state.entry_id][status] += 1
