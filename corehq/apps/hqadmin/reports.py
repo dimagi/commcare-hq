@@ -1216,8 +1216,8 @@ class CommCareVersionReport(AdminFacetedReport):
             rows.update({domain_name: [domain_name] + [0] * len(versions)})
 
         for data in get_data():
-            if data.commcare_version in versions:
-                row = rows.get(data.domain)
+            row = rows.get(data.domain, None)
+            if row and data.commcare_version in versions:
                 version_index = versions.index(data.commcare_version)
                 row[version_index + 1] = data.doc_count
 
