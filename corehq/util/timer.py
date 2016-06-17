@@ -3,7 +3,9 @@ import time
 import itertools
 
 
-class Timer(object):
+class NestableTimer(object):
+    """Timer object that can be nested. Used by ``TimingContext``.
+    """
     def __init__(self, name, is_root=True):
         self.name = name
         self.beginning = None
@@ -53,7 +55,7 @@ class Timer(object):
         return timers
 
     def __repr__(self):
-        return "Timer(name='{}', beginning={}, end={}, parent='{}')".format(
+        return "NestableTimer(name='{}', beginning={}, end={}, parent='{}')".format(
             self.name,
             self.beginning,
             self.end,
@@ -62,13 +64,29 @@ class Timer(object):
 
 
 class TimingContext(object):
+    """Context manager for timing operations. Particularly useful for doing nested timing.
+
+    Example usage:
+        def sleep():
+            time.sleep(0.1)
+
+        def inner_sleep(timing_context):
+            sleep()
+            with timing_context('inner_sleep'):
+                sleep()
+
+        with TimingContext('demo_timing') as context:
+            sleep()
+            with context('level0'):
+                inner_sleep(context)
+    """
     def __init__(self , name):
         self.timings = {}
-        self.root = Timer(name, is_root=True)
+        self.root = NestableTimer(name, is_root=True)
         self.stack = [self.root]
 
     def __call__(self, name):
-        timer = Timer(name)
+        timer = NestableTimer(name)
         current = self.peek()
         current.append(timer)
         self.stack.append(timer)
@@ -86,7 +104,25 @@ class TimingContext(object):
         timer.stop()
 
     def to_dict(self):
+        """Get timing data as a recursive dictionary of the format:
+        {
+            "name": "demo_timing",
+            "duration": 0.3,
+            "percent_total": 100.0,
+            "percent_parent": null,
+            "subs": [
+                {
+                    "name": "level0",
+                    "duration": 0.2,
+                    "percent_total": 66.66,
+                    "percent_parent": 66.66,
+                    "subs": [...]
+                }
+            ]
+        }
+        """
         return self.root.to_dict()
 
     def to_list(self):
+        """Get the list of ``NestableTimer`` objects in hierarchy order"""
         return self.root.to_list()
