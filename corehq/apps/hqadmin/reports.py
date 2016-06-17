@@ -1203,19 +1203,19 @@ class CommCareVersionReport(AdminFacetedReport):
         now = datetime.utcnow()
         days = now - timedelta(days=90)
 
-        def get_data():
+        def get_data(domains):
             terms = [
                 AggregationTerm('domain', 'domain'),
                 AggregationTerm('commcare_version', 'form.meta.commcare_version')
             ]
-            query = FormES().submitted(gte=days, lte=now)
+            query = FormES().submitted(gte=days, lte=now).domains(domains)
             return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
         rows = {}
         for domain in self.es_results.get('hits', {}).get('hits', []):
             domain_name = domain['_source']['name']
             rows.update({domain_name: [domain_name] + [0] * len(versions)})
 
-        for data in get_data():
+        for data in get_data(rows.keys()):
             row = rows.get(data.domain, None)
             if row and data.commcare_version in versions:
                 version_index = versions.index(data.commcare_version)

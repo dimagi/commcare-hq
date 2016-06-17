@@ -13,6 +13,7 @@ class FormES(HQESQuery):
         'is_xform_instance': {"term": {"doc_type": "xforminstance"}},
         'has_xmlns': {"not": {"missing": {"field": "xmlns"}}},
         'has_user': {"not": {"missing": {"field": "form.meta.userID"}}},
+        'has_domain': {"not": {"missing": {"field": "domain"}}}
     }
 
     @property
@@ -26,6 +27,7 @@ class FormES(HQESQuery):
             user_type,
             user_ids_handle_unknown,
             j2me_submissions,
+            domains,
         ] + super(FormES, self).builtin_filters
 
     def user_aggregation(self):
@@ -39,6 +41,10 @@ class FormES(HQESQuery):
 
     def domain_aggregation(self):
         return self.terms_aggregation('domain', 'domain')
+
+
+def domains(domains):
+    return filters.term('domain', domains)
 
 
 def xmlns(xmlnss):
