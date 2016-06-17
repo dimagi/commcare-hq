@@ -51,7 +51,8 @@ from corehq.util.supervisord.api import (
     pillow_supervisor_status
 )
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.data_analytics.models import MALTRow, GIRRow, GIR_FIELDS
+from corehq.apps.data_analytics.models import MALTRow, GIRRow
+from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
@@ -848,7 +849,6 @@ class DownloadGIRView(BaseAdminSectionView):
     template_name = "hqadmin/gir_downloader.html"
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DownloadGIRView, self).dispatch(request, *args, **kwargs)
 

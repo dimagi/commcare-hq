@@ -4,7 +4,8 @@ from collections import namedtuple
 from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.data_analytics.esaccessors import get_app_submission_breakdown_es
-from corehq.apps.data_analytics.models import MALTRow, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET
+from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.const import AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET
 from corehq.apps.domain.models import Domain
 from corehq.const import MISSING_APP_ID
 from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
