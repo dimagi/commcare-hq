@@ -132,7 +132,7 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
                 return
             software_plan_version = SoftwarePlanVersion(role=role)
 
-            product, product_rates = _ensure_product_and_rate(product_type, edition, dry_run=dry_run, verbose=verbose, apps=apps)
+            product, product_rate = _ensure_product_and_rate(product_type, edition, dry_run=dry_run, verbose=verbose, apps=apps)
             feature_rates = _ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=apps)
             software_plan = SoftwarePlan(
                 name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
@@ -156,15 +156,13 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
                     if hasattr(SoftwarePlanVersion, 'product_rates'):
                         software_plan_version.save()
 
-                    for product_rate in product_rates:
-                        product_rate.save()
-                        if hasattr(SoftwarePlanVersion, 'product_rates'):
-                            software_plan_version.product_rates.add(product_rate)
-                        elif hasattr(SoftwarePlanVersion, 'product_rate'):
-                            assert len(product_rates) == 1
-                            software_plan_version.product_rate = product_rate
-                        else:
-                            raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
+                    product_rate.save()
+                    if hasattr(SoftwarePlanVersion, 'product_rates'):
+                        software_plan_version.product_rates.add(product_rate)
+                    elif hasattr(SoftwarePlanVersion, 'product_rate'):
+                        software_plan_version.product_rate = product_rate
+                    else:
+                        raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
 
                     # must save before assigning many-to-many relationship
                     if hasattr(SoftwarePlanVersion, 'product_rate'):
@@ -235,7 +233,7 @@ def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
             logger.info("Corresponding product rate of $%d created."
                         % product_rate.monthly_fee)
     product_rate.product = product
-    return product, [product_rate]
+    return product, product_rate
 
 
 def _ensure_features(dry_run, verbose, apps):
