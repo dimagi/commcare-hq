@@ -209,11 +209,9 @@ def get_saved_apps(app):
 
 class MultiplePreviouslyFixedForms(Exception):
     def __init__(self, build_id, app_id):
-        msg = "Unable to determine matching form. Multiple forms in app {} " \
-              "were previously repaired. Build submitted against was {}".format(
-            app_id, build_id
-        )
-        super(MultiplePreviouslyFixedForms, self).__init__(msg)
+        template = "Unable to determine matching form. Multiple forms in app " \
+                   "{} were previously repaired. Build submitted against was {}"
+        super(MultiplePreviouslyFixedForms, self).__init__(template.format(app_id, build_id))
 
 
 @quickcache(["xform_instance.build_id"], memoize_timeout=ONE_HOUR)
