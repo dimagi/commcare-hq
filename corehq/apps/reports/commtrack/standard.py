@@ -14,7 +14,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import Location, SQLLocation
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids
+from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, get_product_id_name_mapping
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.filters.commtrack import AdvancedColumns
 
@@ -152,7 +152,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
             else:
                 product_grouping[state.entry_id] = {
-                    'obj': Product.get(state.entry_id),
+                    'entry_id': state.entry_id,
                     'stockout': 0,
                     'understock': 0,
                     'overstock': 0,
@@ -162,8 +162,9 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 }
                 product_grouping[state.entry_id][status] = 1
 
+        product_name_map = get_product_id_name_mapping(self.domain)
         rows = [[
-            product['obj'].name,
+            product_name_map.get(product['entry_id'], product['entry_id']),
             product['facility_count'],
             100.0 * product['stockout'] / product['facility_count'],
             100.0 * product['understock'] / product['facility_count'],
