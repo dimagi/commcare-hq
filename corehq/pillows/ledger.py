@@ -16,7 +16,6 @@ from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeP
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
-
 @quickcache(['case_id'])
 def _location_id_for_case(case_id):
     try:
