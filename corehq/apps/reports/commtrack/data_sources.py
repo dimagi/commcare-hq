@@ -235,35 +235,24 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         # all the data back
         return self.config.get('advanced_columns', True)
 
-    @property
-    @memoized
-    def _slug_attrib_map(self):
-        raw_map = {
-            self.SLUG_PRODUCT_NAME: lambda s: s.sql_product.name,
-            self.SLUG_PRODUCT_ID: 'product_id',
-            self.SLUG_CURRENT_STOCK: 'balance',
+    def _get_dict_for_stock_state(self, s):
+        values = {
+            self.SLUG_PRODUCT_NAME: s.sql_product.name,
+            self.SLUG_PRODUCT_ID: s.product_id,
+            self.SLUG_CURRENT_STOCK: s.balance,
         }
 
         if self._include_advanced_data():
-            raw_map.update({
-                self.SLUG_LOCATION_ID: lambda s: s.location_id,
-                self.SLUG_CONSUMPTION: lambda s: s.consumption_helper.get_monthly_consumption(),
-                self.SLUG_MONTHS_REMAINING: lambda s: s.consumption_helper.get_months_remaining(),
-                self.SLUG_CATEGORY: lambda s: s.consumption_helper.get_stock_category(),
-                self.SLUG_LAST_REPORTED: 'last_modified_date',
-                self.SLUG_RESUPPLY_QUANTITY_NEEDED: lambda s: s.consumption_helper.get_resupply_quantity_needed()
+            values.update({
+                self.SLUG_LOCATION_ID: s.location_id,
+                self.SLUG_CONSUMPTION: s.consumption_helper.get_monthly_consumption(),
+                self.SLUG_MONTHS_REMAINING: s.consumption_helper.get_months_remaining(),
+                self.SLUG_CATEGORY: s.consumption_helper.get_stock_category(),
+                self.SLUG_LAST_REPORTED: s.last_modified_date,
+                self.SLUG_RESUPPLY_QUANTITY_NEEDED: s.consumption_helper.get_resupply_quantity_needed()
             })
 
-        # normalize the slug attrib map so everything is callable
-        def _normalize_row(slug, function_or_property):
-            if not callable(function_or_property):
-                function = lambda s: getattr(s, function_or_property, '')
-            else:
-                function = function_or_property
-
-            return slug, function
-
-        return dict(_normalize_row(k, v) for k, v in raw_map.items())
+        return values
 
     def slugs(self):
         slugs = [
@@ -434,9 +423,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     def raw_product_states(self, supply_point_ids):
         stock_states = self._get_stock_states(supply_point_ids)
         for state in stock_states:
-            yield {
-                slug: f(state) for slug, f in self._slug_attrib_map.items()
-            }
+            yield self._get_dict_for_stock_state(state)
 
 
 class StockStatusBySupplyPointDataSource(StockStatusDataSource):
