@@ -119,11 +119,12 @@ class Command(BaseCommand):
             edition_to_product_rate=BOOTSTRAP_PRODUCT_RATES,
             edition_to_feature_rate=edition_to_feature_rate,
             feature_types=FEATURE_TYPES,
+            product_types=PRODUCT_TYPES,
             dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
         )
 
 
-def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_rate, feature_types,
+def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_rate, feature_types, product_types,
                  dry_run, verbose, for_tests, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
@@ -131,7 +132,7 @@ def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_ra
     Role = apps.get_model('django_prbac', 'Role')
 
     edition_to_features = _ensure_features(feature_types, dry_run=dry_run, verbose=verbose, apps=apps)
-    for product_type in PRODUCT_TYPES:
+    for product_type in product_types:
         for edition in EDITIONS:
             role_slug = edition_to_role[edition]
             try:
