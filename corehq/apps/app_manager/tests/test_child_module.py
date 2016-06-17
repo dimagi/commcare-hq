@@ -341,6 +341,31 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('child-module-rename-session-vars'), upd_guppy_form.render_xform())
 
+    def test_incorrect_case_var_for_case_update(self):
+        # see http://manage.dimagi.com/default.asp?230013
+        factory = AppFactory(build_version='2.9')
+        new_episode_module, new_episode_form = factory.new_basic_module('register_episode', 'episode')
+        factory.form_opens_case(new_episode_form)
+
+        lab_test_module, lab_test_form = factory.new_advanced_module('lab_test', 'episode')
+        factory.form_requires_case(lab_test_form, 'episode')
+        factory.form_opens_case(lab_test_form, 'lab_test', is_subcase=True, is_extension=True)
+        factory.form_opens_case(lab_test_form, 'lab_referral', is_subcase=True, parent_tag='open_lab_test')
+
+        lab_update_module, lab_update_form = factory.new_advanced_module('lab_update', 'lab_test', parent_module=lab_test_module)
+        factory.form_requires_case(lab_update_form, 'episode', update={'episode_type': '/data/question1'})
+        factory.form_requires_case(lab_update_form, 'lab_test', parent_case_type='episode')
+        lab_update_form.source = self.get_xml('original_form', override_path=('data',))
+
+        print factory.app.create_suite()
+        form_xml = lab_update_form.render_xform()
+        self.assertTrue(
+            '<bind calculate="instance(\'commcaresession\')/session/data/case_id_new_lab_test_0" nodeset="/data/case_load_episode_0/case/@case_id"/>' not in form_xml
+        )
+        self.assertTrue(
+            '<bind calculate="instance(\'commcaresession\')/session/data/case_id_load_episode_0" nodeset="/data/case_load_episode_0/case/@case_id"/>' in form_xml
+        )
+
 
 class BasicSubModuleTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
