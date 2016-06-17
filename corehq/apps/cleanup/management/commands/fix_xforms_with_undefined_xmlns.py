@@ -220,7 +220,7 @@ class MultiplePreviouslyFixedForms(Exception):
 def get_correct_xmlns(xform_instance):
     if xform_instance.build_id is None:
         return None
-    app = get_app(xform_instance.domain, xform_instance.build_id)
+    build = get_app(xform_instance.domain, xform_instance.build_id)
     # TODO: What if the app has been deleted?
 
     previously_fixed_forms_in_build = get_previously_fixed_forms(build)
