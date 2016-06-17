@@ -356,7 +356,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         query = (
             case_es.CaseES()
             .domain(self.domain)
-            .user_ids_handle_unknown(user_ids)
+            .user_ids_handle_unknown(self.user_ids)
             .size(0)
         )
         if self.case_type:
