@@ -17,12 +17,12 @@ from corehq.apps.accounting.models import (
 class TestCreditAdjustmentValidation(TransactionTestCase):
 
     def tearDown(self):
-        super(TestCreditAdjustmentValidation, self).tearDown()
         CreditAdjustment.objects.all().delete()
         LineItem.objects.all().delete()
         Invoice.objects.all().delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
+        super(TestCreditAdjustmentValidation, self).tearDown()
 
     def test_clean(self):
         account = BillingAccount.objects.create(

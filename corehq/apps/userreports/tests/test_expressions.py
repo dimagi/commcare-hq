@@ -883,6 +883,7 @@ def test_unsupported_evaluator_statements(self, eq, context):
 class TestFormsExpressionSpec(TestCase):
 
     def setUp(self):
+        super(TestFormsExpressionSpec, self).setUp()
         self.domain = uuid.uuid4().hex
         factory = CaseFactory(domain=self.domain)
         [self.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
@@ -901,6 +902,7 @@ class TestFormsExpressionSpec(TestCase):
     def tearDown(self):
         delete_all_xforms()
         delete_all_cases()
+        super(TestFormsExpressionSpec, self).tearDown()
 
     @run_with_all_backends
     def test_evaluation(self):
