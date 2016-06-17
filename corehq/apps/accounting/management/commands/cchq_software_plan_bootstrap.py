@@ -111,10 +111,14 @@ class Command(BaseCommand):
         if for_tests:
             logger.info("Initializing Plans and Roles for Testing")
 
-        ensure_plans(dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps)
+        ensure_plans(
+            edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
+            dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
+        )
 
 
-def ensure_plans(dry_run, verbose, for_tests, apps):
+def ensure_plans(edition_to_role,
+                 dry_run, verbose, for_tests, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
@@ -123,7 +127,7 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
     edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose, apps=apps)
     for product_type in PRODUCT_TYPES:
         for edition in EDITIONS:
-            role_slug = BOOTSTRAP_EDITION_TO_ROLE[edition]
+            role_slug = edition_to_role[edition]
             try:
                 role = Role.objects.get(slug=role_slug)
             except Role.DoesNotExist:
