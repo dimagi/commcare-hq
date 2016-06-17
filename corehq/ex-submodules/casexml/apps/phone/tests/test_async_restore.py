@@ -87,7 +87,7 @@ class AsyncRestoreTest(TestCase):
         self.assertTrue(task.delay.called)
 
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_subsequent_restores_on_same_synclog_returns_async_restore_response(self, task):
+    def test_restore_then_sync_on_same_synclog_returns_async_restore_response(self, task):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         delay.get = mock.MagicMock(side_effect=TimeoutError())  # task not finished
@@ -102,7 +102,7 @@ class AsyncRestoreTest(TestCase):
         subsequent_payload = subsequent_restore.get_payload()
         self.assertTrue(isinstance(subsequent_payload, AsyncRestoreResponse))
 
-    def test_subsequent_restores_job_complete(self):
+    def test_subsequent_syncs_when_job_complete(self):
         # First sync, return a timout. Ensure that the async_task_id gets set
         with mock.patch.object(EagerResult, 'get', mock.MagicMock(side_effect=TimeoutError())):
             restore_config = self._restore_config(async=True)
@@ -123,6 +123,23 @@ class AsyncRestoreTest(TestCase):
             self.assertTrue(isinstance(subsequent_payload, FileRestoreResponse))
             # a new synclog should not have been created
             self.assertIsNone(subsequent_restore.restore_state.current_sync_log)
+
+    def test_consecutive_restores_kills_old_jobs(self):
+        """If the user does a fresh restore, jobs that are already queued or that have
+        started should be killed
+
+        """
+        from casexml.apps.phone.models import (
+            SyncLog,)
+        with mock.patch.object(EagerResult, 'get', mock.MagicMock(side_effect=TimeoutError())):
+            first_restore = self._restore_config(async=True)
+            first_restore.get_payload()
+            sync_log_id = first_restore.restore_state.current_sync_log._id
+            self.assertIsNotNone(first_restore.restore_state.current_sync_log.async_task_id)
+
+        second_restore = self._restore_config(async=True)
+        second_restore.get_payload()
+        self.assertIsNone(SyncLog.get(sync_log_id).async_task_id)
 
     # def submitting_form_for_synclog_kills_task_removes_async_id(self):
     #     """
@@ -158,4 +175,4 @@ class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):
         self.assertEqual(http_response.status_code, 202)
         self.assertTrue(http_response.has_header('Retry-After'))
         self.assertEqual(http_response['retry-after'], str(ASYNC_RETRY_AFTER))
-        self.assertXmlEqual(http_response.content, self.response.compile_response())
+        self.assertXmlEqual(list(http_response.streaming_content)[0], self.response.compile_response())

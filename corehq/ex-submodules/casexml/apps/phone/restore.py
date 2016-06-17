@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 
 from io import FileIO
+from cStringIO import StringIO
 import os
 from uuid import uuid4
 import shutil
 import hashlib
 from celery.exceptions import TimeoutError
+from celery.task.control import revoke as revoke_celery_task
 from celery.result import AsyncResult
 
 from couchdbkit import ResourceConflict, ResourceNotFound
@@ -57,15 +59,15 @@ INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 # if a sync is happening asynchronously, we wait for this long for a result to
 # initially be returned, otherwise we return a 202
-INITIAL_ASYNC_TIMEOUT_THRESHOLD = 30
+INITIAL_ASYNC_TIMEOUT_THRESHOLD = 1
 # The Retry-After header parameter. Ask the phone to retry in this many seconds
 # to see if the task is done.
 ASYNC_RETRY_AFTER = 30
 
 
-def stream_response(payload, headers=None):
+def stream_response(payload, headers=None, status=200):
     try:
-        response = StreamingHttpResponse(FileWrapper(payload), content_type="text/xml")
+        response = StreamingHttpResponse(FileWrapper(payload), content_type="text/xml", status=status)
         if headers:
             for header, value in headers.items():
                 response[header] = value
@@ -241,12 +243,12 @@ class AsyncRestoreResponse(object):
 
     def get_http_response(self):
         # duck-typed RestoreResponse
-        response = HttpResponse(
-            self.compile_response(),
+        headers = {"Retry-After": ASYNC_RETRY_AFTER}
+        response = stream_response(
+            StringIO(self.compile_response()),
             status=202,
-            content_type="text/xml"
+            headers=headers,
         )
-        response["Retry-After"] = ASYNC_RETRY_AFTER
         return response
 
 
@@ -524,10 +526,13 @@ class RestoreConfig(object):
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
 
-        self.cache = get_redis_default_cache()
         self.asyc = async
 
         self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
+
+    @property
+    def cache(self):
+        return get_redis_default_cache()
 
     @property
     @memoized
@@ -577,6 +582,13 @@ class RestoreConfig(object):
             new_task = False
             sync_log_to_update = self.sync_log
         else:
+            # kill old tasks
+            old_sync_log = SyncLog.last_for_user(self.restore_user.user_id)
+            if old_sync_log and old_sync_log.async_task_id:
+                revoke_celery_task(old_sync_log.async_task_id)
+                old_sync_log.async_task_id = None
+                old_sync_log.save()
+
             # start a new task
             self.restore_state.start_sync()
             task = get_async_restore_payload.delay(self)
