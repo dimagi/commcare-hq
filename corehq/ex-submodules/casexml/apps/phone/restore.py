@@ -530,10 +530,6 @@ class RestoreConfig(object):
         self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
 
     @property
-    def cache(self):
-        return get_redis_default_cache()
-
-    @property
     @memoized
     def sync_log(self):
         return self.restore_state.last_sync_log
