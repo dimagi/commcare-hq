@@ -144,7 +144,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
         product_grouping = {}
         for state in stock_states:
-            status = state.stock_category
+            consumption_helper = state.consumption_helper
+            status = consumption_helper.get_stock_category()
             if state.product_id in product_grouping:
                 product_grouping[state.product_id][status] += 1
                 product_grouping[state.product_id]['facility_count'] += 1
