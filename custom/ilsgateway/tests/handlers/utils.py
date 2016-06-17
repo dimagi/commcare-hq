@@ -135,6 +135,8 @@ def prepare_domain(domain_name):
             administrative=administrative,
         )
 
+    generator.delete_all_subscriptions()
+    generator.delete_all_accounts()
     generator.instantiate_accounting_for_tests()
     account = BillingAccount.get_or_create_account_by_domain(
         domain.name,
