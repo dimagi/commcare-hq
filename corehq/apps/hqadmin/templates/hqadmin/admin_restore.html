@@ -5,19 +5,19 @@
         <title>Restore Response</title>
 
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" href="{% new_static 'codemirror/lib/codemirror.css' %}" />
-        <link type="text/css" rel="stylesheet" href="{% new_static 'codemirror/addon/fold/foldgutter.css' %}"/>
-        <link type="text/css" rel="stylesheet" href="{% new_static 'jquery-treetable/css/jquery.treetable.css' %}"/>
+        <link type="text/css" rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
+        <link type="text/css" rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
+        <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
 
         {% compress js %}
-            <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'jquery-treetable/jquery.treetable.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'codemirror/lib/codemirror.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'codemirror/mode/xml/xml.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'codemirror/addon/fold/foldcode.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'codemirror/addon/fold/foldgutter.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'codemirror/addon/fold/xml-fold.js' %}"></script>
+            <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'jquery-treetable/jquery.treetable.js' %}"></script>
+            <script type="text/javascript" src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+            <script type="text/javascript" src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
+            <script type="text/javascript" src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
+            <script type="text/javascript" src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
+            <script type="text/javascript" src="{% static 'codemirror/addon/fold/xml-fold.js' %}"></script>
         {% endcompress %}
 
         <style>
