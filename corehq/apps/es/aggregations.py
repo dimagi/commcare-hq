@@ -218,7 +218,7 @@ class TermsAggregation(Aggregation):
 
     def order(self, field, order="desc"):
         query = deepcopy(self)
-        query.body['order'] = { field: order }
+        query.body['order'] = {field: order}
         return query
 
 
