@@ -147,12 +147,12 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             consumption_helper = state.consumption_helper
             status = consumption_helper.get_stock_category()
             if state.product_id in product_grouping:
-                product_grouping[state.product_id][status] += 1
-                product_grouping[state.product_id]['facility_count'] += 1
+                product_grouping[state.entry_id][status] += 1
+                product_grouping[state.entry_id]['facility_count'] += 1
 
             else:
-                product_grouping[state.product_id] = {
-                    'obj': Product.get(state.product_id),
+                product_grouping[state.entry_id] = {
+                    'obj': Product.get(state.entry_id),
                     'stockout': 0,
                     'understock': 0,
                     'overstock': 0,
@@ -160,7 +160,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                     'nodata': 0,
                     'facility_count': 1
                 }
-                product_grouping[state.product_id][status] = 1
+                product_grouping[state.entry_id][status] = 1
 
         rows = [[
             product['obj'].name,
