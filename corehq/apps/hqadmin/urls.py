@@ -1,6 +1,7 @@
 from django.conf.urls import *
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.hqadmin.views import AdminRestoreView
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from .views import (
     FlagBrokenBuilds, AuthenticateAs, SystemInfoView,
@@ -29,8 +30,8 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^management_commands/$', ManagementCommandsView.as_view(),
         name=ManagementCommandsView.urlname),
     url(r'^run_command/$', 'run_command', name="run_management_command"),
-    url(r'^phone/restore/$', 'admin_restore', name="admin_restore"),
-    url(r'^phone/restore/(?P<app_id>[\w-]+)/$', 'admin_restore', name='app_aware_admin_restore'),
+    url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
+    url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
     url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),
     url(r'^stats_data/$', 'stats_data', name="admin_stats_data"),
     url(r'^admin_reports_stats_data/$', 'admin_reports_stats_data', name="admin_reports_stats_data"),
