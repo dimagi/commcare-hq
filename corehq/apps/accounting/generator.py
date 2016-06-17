@@ -9,34 +9,49 @@ import mock
 from django.conf import settings
 from django.core.management import call_command
 
-from corehq.apps.smsbillables.generator import DIRECTIONS
 from dimagi.utils.data import generator as data_gen
 
 from corehq.apps.accounting.models import (
-    Currency, BillingAccount, Subscription, Subscriber, SoftwareProductType,
-    DefaultProductPlan, SubscriptionAdjustment,
-    SoftwarePlanEdition, BillingContactInfo, SubscriptionType,
-)
-from corehq.apps.smsbillables.models import (
-    SmsGatewayFee, SmsGatewayFeeCriteria, SmsUsageFee, SmsUsageFeeCriteria,
-    SmsBillable,
+    BillingAccount,
+    BillingContactInfo,
+    Currency,
+    DefaultProductPlan,
+    Feature,
+    FeatureRate,
+    SoftwarePlan,
+    SoftwarePlanEdition,
+    SoftwareProductType,
+    Subscriber,
+    Subscription,
+    SubscriptionAdjustment,
+    SubscriptionType,
+    SoftwarePlanVersion,
+    SoftwareProduct,
+    SoftwareProductRate,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.smsbillables.generator import DIRECTIONS
+from corehq.apps.smsbillables.models import (
+    SmsBillable,
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+    SmsUsageFee,
+    SmsUsageFeeCriteria,
+)
 from corehq.apps.users.models import WebUser, CommCareUser
-
-# don't actually use the plan lists below for initializing new plans! the amounts have been changed to make
-# it easier for testing:
-
-SUBSCRIBABLE_EDITIONS = [
-    SoftwarePlanEdition.ADVANCED,
-    SoftwarePlanEdition.PRO,
-    SoftwarePlanEdition.STANDARD,
-]
 
 
 def instantiate_accounting_for_tests():
     call_command('cchq_prbac_bootstrap', testing=True)
-    call_command('cchq_software_plan_bootstrap', testing=True, fresh_start=True)
+
+    DefaultProductPlan.objects.all().delete()
+    SoftwarePlanVersion.objects.all().delete()
+    SoftwarePlan.objects.all().delete()
+    SoftwareProductRate.objects.all().delete()
+    SoftwareProduct.objects.all().delete()
+    FeatureRate.objects.all().delete()
+    Feature.objects.all().delete()
+    call_command('cchq_software_plan_bootstrap', testing=True)
 
 
 def init_default_currency():
