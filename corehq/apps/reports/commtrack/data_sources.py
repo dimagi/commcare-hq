@@ -7,7 +7,7 @@ from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values,
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import Location
-from corehq.apps.commtrack.models import SupplyPointCase, StockState, SQLLocation
+from corehq.apps.commtrack.models import SupplyPointCase, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
@@ -251,26 +251,6 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 self.SLUG_RESUPPLY_QUANTITY_NEEDED,
             ])
         return slugs
-
-    def _get_stock_states(self, sp_ids):
-
-        stock_states = StockState.objects.filter(
-            section_id=STOCK_SECTION_TYPE,
-        )
-
-        if self.program_id:
-            stock_states = stock_states.filter(sql_product__program_id=self.program_id)
-
-        if len(sp_ids) == 1:
-            stock_states = stock_states.filter(
-                case_id=sp_ids[0],
-            )
-        else:
-            stock_states = stock_states.filter(
-                case_id__in=sp_ids,
-            )
-
-        return stock_states
 
     def get_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
