@@ -503,7 +503,29 @@ AggregationTerm = namedtuple('AggregationTerm', ['name', 'field'])
 class NestedTermAggregationsHelper(object):
     """
     Helper to run nested term-based queries (equivalent to SQL group-by clauses).
-    This is not at all related to the ES 'nested aggregation'.
+    This is not at all related to the ES 'nested aggregation'. The final aggregation
+    defaults to a count of documents, though can also be used to sum a different field
+    of the document.
+
+    Example usage:
+
+    # counting all forms submitted in a domain grouped by app id and user id
+    NestedTermAggregationsHelper(
+        base_query=FormES().domain(domain_name),
+        terms=[
+            AggregationTerm('app_id', 'app_id'),
+            AggregationTerm('user_id', 'form.meta.userID'),
+        ]
+    ).get_data()
+
+    # summing the balances of ledger values, grouped by the entry id
+    NestedTermAggregationsHelper(
+        base_query=LedgerES().domain(domain).section(section_id),
+        terms=[
+            AggregationTerm('entry_id', 'entry_id'),
+        ],
+        bottom_level_aggregation=SumAggregation('balance', 'balance'),
+    ).get_data()
     """
 
     def __init__(self, base_query, terms, bottom_level_aggregation=None):
