@@ -101,11 +101,16 @@ class FormPillowTest(TestCase):
         self.assertFalse(self.app.has_submissions)
 
         self.pillow.process_changes(since=kafka_seq, forever=False)
-        self.assertTrue(Application.get(self.app._id).has_submissions)
+        newly_saved_app = Application.get(self.app._id)
+        self.assertTrue(newly_saved_app.has_submissions)
+        # Ensure that the app has been saved
+        self.assertNotEqual(self.app._rev, newly_saved_app._rev)
 
         self._make_form()
         self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertTrue(Application.get(self.app._id).has_submissions)
+        # Ensure that the app has not been saved twice
+        self.assertEqual(Application.get(self.app._id)._rev, newly_saved_app._rev)
 
     def _make_form(self, build_id=None):
         metadata = TestFormMetadata(domain=self.domain)
