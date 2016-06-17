@@ -338,12 +338,12 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 section_id=STOCK_SECTION_TYPE,
                 entry_ids=self.product_ids
             )
-            for state in ledger_values:
-                consumption_helper = get_consumption_helper_from_ledger_value(self.project, state)
-                if state.entry_id in product_aggregation:
-                    product = product_aggregation[state.entry_id]
+            for ledger_value in ledger_values:
+                consumption_helper = get_consumption_helper_from_ledger_value(self.project, ledger_value)
+                if ledger_value.entry_id in product_aggregation:
+                    product = product_aggregation[ledger_value.entry_id]
                     product['current_stock'] = format_decimal(
-                        product['current_stock'] + state.balance
+                        product['current_stock'] + ledger_value.balance
                     )
 
                     consumption = consumption_helper.get_monthly_consumption()
@@ -354,8 +354,8 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
                     product['count'] += 1
 
-                    if state.sql_location is not None:
-                        location_type = state.sql_location.location_type
+                    if ledger_value.sql_location is not None:
+                        location_type = ledger_value.sql_location.location_type
                         product['category'] = stock_category(
                             product['current_stock'],
                             _convert_to_daily(product['consumption']),
@@ -370,21 +370,21 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         _convert_to_daily(product['consumption'])
                     )
                 else:
-                    product = state.sql_product
+                    product = ledger_value.sql_product
                     consumption = consumption_helper.get_monthly_consumption()
 
-                    product_aggregation[state.entry_id] = {
-                        'product_id': state.entry_id,
+                    product_aggregation[ledger_value.entry_id] = {
+                        'product_id': ledger_value.entry_id,
                         'location_id': None,
                         'product_name': product.name,
                         'location_lineage': None,
                         'resupply_quantity_needed': None,
-                        'current_stock': format_decimal(state.balance),
+                        'current_stock': format_decimal(ledger_value.balance),
                         'count': 1,
                         'consumption': consumption,
                         'category': consumption_helper.get_stock_category(),
                         'months_remaining': months_of_stock_remaining(
-                            state.balance,
+                            ledger_value.balance,
                             _convert_to_daily(consumption)
                         )
                     }
