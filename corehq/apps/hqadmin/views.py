@@ -9,7 +9,7 @@ from StringIO import StringIO
 
 import dateutil
 from django.utils.datastructures import SortedDict
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -393,7 +393,6 @@ def pillow_operation_api(request):
 class AdminRestoreView(TemplateView):
     template_name = 'hqadmin/admin_restore.html'
 
-    @use_bootstrap3
     @method_decorator(require_superuser)
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
