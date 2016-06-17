@@ -27,13 +27,7 @@ BOOTSTRAP_EDITION_TO_ROLE = {
     SoftwarePlanEdition.ADVANCED: 'advanced_plan_v0',
     SoftwarePlanEdition.ENTERPRISE: 'enterprise_plan_v0',
 }
-EDITIONS = [
-    SoftwarePlanEdition.COMMUNITY,
-    SoftwarePlanEdition.STANDARD,
-    SoftwarePlanEdition.PRO,
-    SoftwarePlanEdition.ADVANCED,
-    SoftwarePlanEdition.ENTERPRISE,
-]
+
 FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
 PRODUCT_TYPES = [p[0] for p in SoftwareProductType.CHOICES]
 
@@ -131,9 +125,10 @@ def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_ra
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
 
-    edition_to_features = _ensure_features(feature_types, dry_run=dry_run, verbose=verbose, apps=apps)
+    editions = edition_to_role.keys()
+    edition_to_features = _ensure_features(feature_types, editions, dry_run=dry_run, verbose=verbose, apps=apps)
     for product_type in product_types:
-        for edition in EDITIONS:
+        for edition in editions:
             role_slug = edition_to_role[edition]
             try:
                 role = Role.objects.get(slug=role_slug)
@@ -253,7 +248,7 @@ def _ensure_product_and_rate(edition_to_product_rate, product_type, edition, dry
     return product, product_rate
 
 
-def _ensure_features(feature_types, dry_run, verbose, apps):
+def _ensure_features(feature_types, editions, dry_run, verbose, apps):
     """
     Ensures that all the Features necessary for the plans are created.
     """
@@ -263,7 +258,7 @@ def _ensure_features(feature_types, dry_run, verbose, apps):
         logger.info('Ensuring Features')
 
     edition_to_features = defaultdict(list)
-    for edition in EDITIONS:
+    for edition in editions:
         for feature_type in feature_types:
             feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
             if edition == SoftwarePlanEdition.ENTERPRISE:
