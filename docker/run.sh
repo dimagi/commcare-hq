@@ -38,10 +38,6 @@ function setup() {
     fi
 
     /mnt/wait.sh
-
-    if [[ "$TEST" =~ ^python ]]; then
-        su cchq -c "./manage.py create_kafka_topics"
-    fi
 }
 
 function run_tests() {
@@ -73,6 +69,7 @@ function _run_tests() {
     fi
 
     if [ "$TEST" != "javascript" ]; then
+        ./manage.py create_kafka_topics
         echo "coverage run manage.py test $@ $TESTS"
         /vendor/bin/coverage run manage.py test "$@" $TESTS
     else
