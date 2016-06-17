@@ -238,27 +238,20 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
     @property
     @memoized
     def _slug_attrib_map(self):
-        @memoized
-        def product_name(product_id):
-            return Product.get(product_id).name
-
-        @memoized
-        def supply_point_location(case_id):
-            return SupplyPointCase.get(case_id).location_id
-
         raw_map = {
-            self.SLUG_PRODUCT_NAME: lambda s: product_name(s.product_id),
+            self.SLUG_PRODUCT_NAME: lambda s: s.sql_product.name,
             self.SLUG_PRODUCT_ID: 'product_id',
-            self.SLUG_CURRENT_STOCK: 'stock_on_hand',
+            self.SLUG_CURRENT_STOCK: 'balance',
         }
+
         if self._include_advanced_data():
             raw_map.update({
-                self.SLUG_LOCATION_ID: lambda s: supply_point_location(s.case_id),
-                self.SLUG_CONSUMPTION: lambda s: s.get_monthly_consumption(),
-                self.SLUG_MONTHS_REMAINING: 'months_remaining',
-                self.SLUG_CATEGORY: 'stock_category',
+                self.SLUG_LOCATION_ID: lambda s: s.location_id,
+                self.SLUG_CONSUMPTION: lambda s: s.consumption_helper.get_monthly_consumption(),
+                self.SLUG_MONTHS_REMAINING: lambda s: s.consumption_helper.get_months_remaining(),
+                self.SLUG_CATEGORY: lambda s: s.consumption_helper.get_stock_category(),
                 self.SLUG_LAST_REPORTED: 'last_modified_date',
-                self.SLUG_RESUPPLY_QUANTITY_NEEDED: 'resupply_quantity_needed',
+                self.SLUG_RESUPPLY_QUANTITY_NEEDED: lambda s: s.consumption_helper.get_resupply_quantity_needed()
             })
 
         # normalize the slug attrib map so everything is callable
