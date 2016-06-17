@@ -1,20 +1,15 @@
-import uuid
 import re
-from collections import defaultdict
 from datetime import datetime
 from itertools import chain
 
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_correct_app_class
-from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.es import FormES
 from corehq.apps.es.filters import NOT, doc_type
 from corehq.util.couch import IterDB
-from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
