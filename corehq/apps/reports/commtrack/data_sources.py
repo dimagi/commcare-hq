@@ -2,7 +2,7 @@ import logging
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.analytics.couchaccessors import get_ledger_values_for_case_as_of
-from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
+from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values, get_aggregated_ledger_values
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -22,7 +22,6 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, \
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
-from django.db.models import Sum
 
 
 def format_decimal(d):
@@ -301,11 +300,10 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         if len(sp_ids) == 1:
             return self.leaf_node_data(sp_ids[0])
         else:
-            stock_states = self._get_stock_states(sp_ids)
             if self.config.get('aggregate'):
-                return self.aggregated_data(stock_states)
+                return self.aggregated_data(sp_ids)
             else:
-                return self.raw_product_states(stock_states)
+                return self.raw_product_states(sp_ids)
 
     def leaf_node_data(self, supply_point_id):
         ledger_values = get_wrapped_ledger_values(
@@ -334,20 +332,28 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
 
             yield result
 
-    def aggregated_data(self, stock_states):
+    def aggregated_data(self, supply_point_ids):
+
         def _convert_to_daily(consumption):
             return consumption / 30 if consumption is not None else None
 
         if self._include_advanced_data():
             product_aggregation = {}
-            for state in stock_states:
-                if state.product_id in product_aggregation:
-                    product = product_aggregation[state.product_id]
+            ledger_values = get_wrapped_ledger_values(
+                domain=self.domain,
+                case_ids=supply_point_ids,
+                section_id=STOCK_SECTION_TYPE,
+                entry_ids=self.product_ids
+            )
+            for state in ledger_values:
+                consumption_helper = get_consumption_helper_from_ledger_value(self.project, state)
+                if state.entry_id in product_aggregation:
+                    product = product_aggregation[state.entry_id]
                     product['current_stock'] = format_decimal(
-                        product['current_stock'] + state.stock_on_hand
+                        product['current_stock'] + state.balance
                     )
 
-                    consumption = state.get_monthly_consumption()
+                    consumption = consumption_helper.get_monthly_consumption()
                     if product['consumption'] is None:
                         product['consumption'] = consumption
                     elif consumption is not None:
@@ -371,21 +377,21 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         _convert_to_daily(product['consumption'])
                     )
                 else:
-                    product = Product.get(state.product_id)
-                    consumption = state.get_monthly_consumption()
+                    product = state.sql_product
+                    consumption = consumption_helper.get_monthly_consumption()
 
-                    product_aggregation[state.product_id] = {
-                        'product_id': product._id,
+                    product_aggregation[state.entry_id] = {
+                        'product_id': state.entry_id,
                         'location_id': None,
                         'product_name': product.name,
                         'location_lineage': None,
                         'resupply_quantity_needed': None,
-                        'current_stock': format_decimal(state.stock_on_hand),
+                        'current_stock': format_decimal(state.balance),
                         'count': 1,
                         'consumption': consumption,
-                        'category': state.stock_category,
+                        'category': consumption_helper.get_stock_category(),
                         'months_remaining': months_of_stock_remaining(
-                            state.stock_on_hand,
+                            state.balance,
                             _convert_to_daily(consumption)
                         )
                     }
@@ -398,21 +404,28 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
             # Note: this leaves out some harder to get quickly
             # values like location_id, but shouldn't be needed
             # unless we expand what uses this.
-            aggregated_states = stock_states.values_list(
-                'sql_product__name',
-                'sql_product__product_id',
-            ).annotate(stock_on_hand=Sum('stock_on_hand'))
+            aggregated_ledger_values = get_aggregated_ledger_values(
+                domain=self.domain,
+                case_ids=supply_point_ids,
+                section_id=STOCK_SECTION_TYPE,
+                entry_ids=self.product_ids
+            )
+
+            product_name_map = dict(SQLProduct.objects.filter(
+                domain=self.domain,
+            ).values_list('product_id', 'name'))
             result = []
-            for ag in aggregated_states:
+            for ag in aggregated_ledger_values:
                 result.append({
-                    'product_name': ag[0],
-                    'product_id': ag[1],
-                    'current_stock': format_decimal(ag[2])
+                    'product_name': product_name_map.get(ag.entry_id),
+                    'product_id': ag.entry_id,
+                    'current_stock': format_decimal(Decimal(ag.balance))
                 })
 
             return result
 
-    def raw_product_states(self, stock_states):
+    def raw_product_states(self, supply_point_ids):
+        stock_states = self._get_stock_states(supply_point_ids)
         for state in stock_states:
             yield {
                 slug: f(state) for slug, f in self._slug_attrib_map.items()

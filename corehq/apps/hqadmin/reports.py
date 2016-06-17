@@ -5,8 +5,9 @@ import json
 from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm
-from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
-    use_nvd3, use_jquery_ui
+from corehq.apps.style.decorators import (
+    use_nvd3,
+)
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
@@ -654,8 +655,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     base_template = "hqadmin/domain_faceted_report.html"
 
     @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(AdminDomainStatsReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(AdminDomainStatsReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def template_context(self):

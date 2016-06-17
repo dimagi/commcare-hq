@@ -1,9 +1,3 @@
-try {
-    USE_BOOTSTRAP_3;
-} catch (e) {
-    var USE_BOOTSTRAP_3 = false;
-}
-
 ko.bindingHandlers.staticChecked = {
     init: function (element) {
         $('<span class="icon"></span>').appendTo(element);
@@ -12,7 +6,7 @@ ko.bindingHandlers.staticChecked = {
         var value = ko.utils.unwrapObservable(valueAccessor());
         var span = $('span', element);
         var allBindings = allBindingsAccessor();
-        var DEFAULT_ICON = (USE_BOOTSTRAP_3) ? 'fa fa-check' : 'icon-ok';
+        var DEFAULT_ICON = 'fa fa-check';
         var iconTrue = ko.utils.unwrapObservable(allBindings.iconTrue) || DEFAULT_ICON,
             iconFalse = ko.utils.unwrapObservable(allBindings.iconFalse) || '';
 
@@ -152,9 +146,7 @@ ko.bindingHandlers.saveButton2 = {
                 saveButton.ajax(saveOptions());
             }
         });
-        if (USE_BOOTSTRAP_3) {
-            $(element).css('vertical-align', 'top').css('display', 'inline-block');
-        }
+        $(element).css('vertical-align', 'top').css('display', 'inline-block');
 
         saveButton.ui.appendTo(element);
         element.saveButton = saveButton;
@@ -179,9 +171,7 @@ ko.bindingHandlers.deleteButton = {
                 deleteButton.ajax(saveOptions());
             }
         });
-        if (USE_BOOTSTRAP_3) {
-            $(element).css('vertical-align', 'top').css('display', 'inline-block');
-        }
+        $(element).css('vertical-align', 'top').css('display', 'inline-block');
         deleteButton.ui.appendTo(element);
         element.deleteButton = deleteButton;
         deleteButton.on('state:change', function () {

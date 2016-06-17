@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -48,7 +48,6 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_ba
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_select2,
     use_daterangepicker,
     use_datatables,
@@ -69,7 +68,6 @@ from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,
     get_datasource_config,
     get_report_config,
-    get_report_configs,
     is_report_config_id_static,
     id_is_static,
 )
@@ -154,7 +152,6 @@ class BaseUserConfigReportsView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
 
-    @use_bootstrap3
     @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(BaseUserConfigReportsView, self).dispatch(request, *args, **kwargs)
@@ -234,7 +231,6 @@ class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
-    @use_bootstrap3
     @use_select2
     @use_daterangepicker
     @use_datatables
@@ -274,10 +270,6 @@ def paywall_home(domain):
 
 class ReportBuilderPaywallBase(BaseDomainView):
     page_title = ugettext_lazy('Subscribe')
-
-    @use_bootstrap3
-    def dispatch(self, *args, **kwargs):
-        return super(ReportBuilderPaywallBase, self).dispatch(*args, **kwargs)
 
     @property
     def section_name(self):

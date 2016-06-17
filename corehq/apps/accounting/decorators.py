@@ -90,7 +90,6 @@ def requires_privilege_json_response(slug, http_status_code=None,
         'message': error_message
     }
     ```
-    todo accounting for API requests
     """
     http_status_code = http_status_code or 401
     if get_response is None:

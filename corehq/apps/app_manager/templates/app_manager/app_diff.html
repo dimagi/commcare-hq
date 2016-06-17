@@ -4,7 +4,7 @@
 
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
-        <link type="text/css" rel="stylesheet" href="{% new_static 'app_manager/css/diff.css' %}"/>
+        <link type="text/css" rel="stylesheet" href="{% static 'app_manager/css/diff.css' %}"/>
     {% endcompress %}
 {% endblock stylesheets %}
 

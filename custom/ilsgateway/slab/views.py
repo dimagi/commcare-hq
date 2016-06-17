@@ -10,7 +10,6 @@ from corehq.apps.locations.views import LocationsListView
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.style.decorators import (
     use_jquery_ui,
-    use_bootstrap3,
     use_multiselect,
 )
 from custom.ilsgateway.models import SLABConfig
@@ -22,7 +21,6 @@ from dimagi.utils.decorators.memoized import memoized
 class SLABConfigurationView(LocationsListView):
     template_name = 'ilsgateway/slab/slab_configuration.html'
 
-    @use_bootstrap3
     @use_jquery_ui
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
@@ -33,7 +31,6 @@ class SLABEditLocationView(BaseDomainView):
     template_name = 'ilsgateway/slab/edit_location.html'
     page_title = 'Edit location'
 
-    @use_bootstrap3
     @use_multiselect
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):

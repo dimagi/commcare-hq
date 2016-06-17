@@ -7,13 +7,13 @@
 <link type="text/less"
       rel="stylesheet"
       media="all"
-      href="{% new_static 'dashboard/less/dashboard.debug.less' %}" />
+      href="{% static 'dashboard/less/dashboard.debug.less' %}" />
 {% else %}
 {% compress css %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% new_static 'dashboard/less/dashboard.less' %}" />
+          href="{% static 'dashboard/less/dashboard.less' %}" />
 {% endcompress %}
 {% endif %}
 {% endblock stylesheets %}
