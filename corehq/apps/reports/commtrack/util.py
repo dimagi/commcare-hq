@@ -59,7 +59,7 @@ class StockLedgerValueWrapper(jsonobject.JsonObject):
             last_modified=stock_state.last_modified_date,
             last_modified_form_id=stock_state.last_modified_form_id,
             daily_consumption=stock_state.daily_consumption,
-            location_id=stock_state.sql_location.location_id if stock_state.sql_location else None,
+            location_id=stock_state.location_id,
             sql_location=stock_state.sql_location,
             sql_product=stock_state.sql_product,
         )
