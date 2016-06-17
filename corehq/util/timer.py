@@ -80,8 +80,7 @@ class TimingContext(object):
             with context('level0'):
                 inner_sleep(context)
     """
-    def __init__(self , name):
-        self.timings = {}
+    def __init__(self, name):
         self.root = NestableTimer(name, is_root=True)
         self.stack = [self.root]
 
