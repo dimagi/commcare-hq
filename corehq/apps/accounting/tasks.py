@@ -541,3 +541,7 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
             })
     except Exception as e:
         log_accounting_error("Error updating exchange rates: %s" % e.message)
+
+
+def assign_explicit_community_subscriptions(apps, from_date):
+    pass
