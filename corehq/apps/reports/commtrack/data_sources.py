@@ -18,7 +18,7 @@ from casexml.apps.stock.models import StockReport
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from couchforms.models import XFormInstance
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, \
-    get_consumption_helper_from_ledger_value
+    get_consumption_helper_from_ledger_value, get_product_id_name_mapping
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
@@ -368,9 +368,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 entry_ids=self.product_ids
             )
 
-            product_name_map = dict(SQLProduct.objects.filter(
-                domain=self.domain,
-            ).values_list('product_id', 'name'))
+            product_name_map = get_product_id_name_mapping(self.domain)
             result = []
             for ag in aggregated_ledger_values:
                 result.append({
