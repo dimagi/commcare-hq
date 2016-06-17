@@ -70,7 +70,7 @@ def doc_to_change(doc):
             data_source_type=data_sources.COUCH,
             data_source_name=CommCareCase.get_db().dbname,
             document_type=doc['doc_type'],
-            document_subtype=doc['type'],
+            document_subtype=doc.get('type'),
             domain=doc['domain'],
             is_deletion=False,
         )
