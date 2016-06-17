@@ -503,13 +503,35 @@ AggregationTerm = namedtuple('AggregationTerm', ['name', 'field'])
 class NestedTermAggregationsHelper(object):
     """
     Helper to run nested term-based queries (equivalent to SQL group-by clauses).
-    This is not at all related to the ES 'nested aggregation'.
+    This is not at all related to the ES 'nested aggregation'. The final aggregation
+    defaults to a count of documents, though can also be used to sum a different field
+    of the document.
+
+    Example usage:
+
+    # counting all forms submitted in a domain grouped by app id and user id
+    NestedTermAggregationsHelper(
+        base_query=FormES().domain(domain_name),
+        terms=[
+            AggregationTerm('app_id', 'app_id'),
+            AggregationTerm('user_id', 'form.meta.userID'),
+        ]
+    ).get_data()
+
+    # summing the balances of ledger values, grouped by the entry id
+    NestedTermAggregationsHelper(
+        base_query=LedgerES().domain(domain).section(section_id),
+        terms=[
+            AggregationTerm('entry_id', 'entry_id'),
+        ],
+        bottom_level_aggregation=SumAggregation('balance', 'balance'),
+    ).get_data()
     """
 
-    def __init__(self, base_query, terms, aggregation=None):
+    def __init__(self, base_query, terms, bottom_level_aggregation=None):
         self.base_query = base_query
         self.terms = terms
-        self.aggregation = aggregation
+        self.bottom_level_aggregation = bottom_level_aggregation
 
     def get_data(self):
         previous_term = None
@@ -519,10 +541,10 @@ class NestedTermAggregationsHelper(object):
                 term = term.aggregation(previous_term)
             previous_term = term
 
-        if self.aggregation is not None:
-            if not isinstance(self.aggregation, SumAggregation):
+        if self.bottom_level_aggregation is not None:
+            if not isinstance(self.bottom_level_aggregation, SumAggregation):
                 raise ValueError('currently only SumAggregations are supported')
-            term = term.aggregation(self.aggregation)
+            term = term.aggregation(self.bottom_level_aggregation)
 
         query = self.base_query.aggregation(term)
 
@@ -533,17 +555,18 @@ class NestedTermAggregationsHelper(object):
                     _add_terms(bucket, remaining_terms[0], remaining_terms[1:], current_counts, current_key=key)
                 else:
                     # base case
-                    if self.aggregation is None:
+                    if self.bottom_level_aggregation is None:
                         current_counts[key] += bucket.doc_count
                     else:
-                        current_counts[key] += getattr(bucket, self.aggregation.name).value
+                        current_counts[key] += getattr(bucket, self.bottom_level_aggregation.name).value
 
         counts = defaultdict(lambda: 0)
         _add_terms(query.size(0).run().aggregations, self.terms[0], self.terms[1:], current_counts=counts)
         return self._format_counts(counts)
 
     def _format_counts(self, counts):
-        final_aggregation_name = 'doc_count' if self.aggregation is None else self.aggregation.name
+        final_aggregation_name = ('doc_count' if self.bottom_level_aggregation is None
+                                  else self.bottom_level_aggregation.name)
         row_class = namedtuple('NestedQueryRow', [term.name for term in self.terms] + [final_aggregation_name])
         for combined_key, count in counts.items():
             yield row_class(*(combined_key + (count,)))

@@ -533,5 +533,7 @@ def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
         AggregationTerm('entry_id', 'entry_id'),
     ]
     return NestedTermAggregationsHelper(
-        base_query=query, terms=terms, aggregation=SumAggregation('balance', 'balance')
+        base_query=query,
+        terms=terms,
+        bottom_level_aggregation=SumAggregation('balance', 'balance'),
     ).get_data()
