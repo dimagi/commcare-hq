@@ -10,18 +10,17 @@ fi
 function setup() {
     [ -n "$1" ] && TEST="$1"
 
+    rm *.log *.lock || true
+
+    scripts/uninstall-requirements.sh
+    pip install \
+        -r requirements/requirements.txt \
+        -r requirements/dev-requirements.txt
+
+    # compile pyc files
+    python -m compileall corehq custom submodules testapps *.py > /dev/null
+
     if [[ "$TEST" =~ ^python ]]; then
-
-        rm *.log *.lock || true
-
-        scripts/uninstall-requirements.sh
-        pip install \
-            -r requirements/requirements.txt \
-            -r requirements/dev-requirements.txt
-
-        # compile pyc files
-        python -m compileall corehq custom submodules testapps *.py > /dev/null
-
         /usr/lib/jvm/jdk1.7.0/bin/keytool -genkey \
             -keyalg RSA \
             -keysize 2048 \
