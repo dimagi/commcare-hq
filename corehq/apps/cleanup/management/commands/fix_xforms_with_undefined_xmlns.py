@@ -24,10 +24,13 @@ from optparse import make_option
 
 
 ONE_HOUR = 60 * 60
+INFO = "info"
+ERROR = "error"
+WARNING = "warning"
 
-
-def xmlns_map_log_message(xmlns, unique_id):
-    return "Using xmlns {} for form id {}\n".format(xmlns, unique_id)
+SET_XMLNS = "set-xmlns-on-xfrom"
+ERROR_SAVING = "error-saving-xform"
+MULTI_MATCH = "multiple-possible-forms"
 
 
 
@@ -58,41 +61,32 @@ class Command(BaseCommand):
 
     @staticmethod
     def fix_xforms(log_file, dry_run):
+        unfixable_builds = set()
         total, submissions = get_submissions_without_xmlns()
         xform_db = IterDB(XFormInstance.get_db())
         with xform_db as xform_db:
             for i, xform_instance in enumerate(submissions):
                 Command._print_progress(i, total)
                 try:
-                    unique_id = get_form_unique_id(xform_instance)
-                except (MultipleFormsMissingXmlns, FormNameMismatch) as e:
-                    log_file.write(e.message)
-                    print e.message
+                    xmlns = get_correct_xmlns(xform_instance)
+                except MultiplePreviouslyFixedForms as e:
+                    if xform_instance.build_id not in unfixable_builds:
+                        unfixable_builds.add(xform_instance.build_id)
+                        print e.message
+                    _log(log_file, WARNING, MULTI_MATCH, xform_instance)
                     continue
 
-                if unique_id:
-                    if unique_id not in unique_id_to_xmlns_map:
-                        xmlns = get_xmlns(unique_id, xform_instance.app_id,
-                                          xform_instance.domain)
-                        log_file.write(xmlns_map_log_message(xmlns, unique_id))
-                        unique_id_to_xmlns_map[unique_id] = xmlns
-
+                if xmlns:
                     set_xmlns_on_submission(
                         xform_instance,
-                        unique_id_to_xmlns_map[unique_id],
+                        xmlns,
                         xform_db,
                         log_file,
                         dry_run,
                     )
 
-                    key = (xform_instance.app_id, xform_instance.domain)
-                    val = unique_id
-                    if val not in app_to_unique_ids_map[key]:
-                        log_file.write(unique_ids_map_log_message(key[0], key[1], unique_id))
-                        app_to_unique_ids_map[key].add(val)
-
         for error_id in xform_db.error_ids:
-            log_file.write("Failed to save xform {}\n".format(error_id))
+            _log(ERROR, ERROR_SAVING, xform_id=error_id)
 
     @staticmethod
     def _print_progress(i, total_submissions):
@@ -100,6 +94,28 @@ class Command(BaseCommand):
             print "Progress: {} of {} ({})  {}".format(
                 i, total_submissions, round(i / float(total_submissions), 2), datetime.now()
             )
+
+
+def _log(stream, level, event, xform=None, xform_id=None):
+    basic_template = "[{level}] {event}, xform_id={xform_id}"
+    full_template = basic_template + ", domain={xform.domain}, username={xform.metadata.username}, " \
+                                     "app_id={xform.app_id}, build_id={xform.build_id}, " \
+                                     "xmlns={xform.xmlns}"
+    if xform_id:
+        msg = basic_template.format(level=level, event=event, xform_id=xform_id)
+    else:
+        msg = full_template.format(level=level, event=event, xform_id=xform._id, xform=xform)
+    stream.write(msg + "\n")
+
+
+def parse_log_message(line):
+    match = re.match('^\[(.*)\] ([^,]*), (.*)', line)
+    level, event, extras = match.groups()
+    extras_dict = {}
+    for pair in extras.split(", "):
+        key, val = pair.split("=", 1)
+        extras_dict[key] = val
+    return level, event, extras_dict
 
 
 def get_submissions_without_xmlns():
@@ -154,15 +170,21 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, log_file, dry_run):
     xform_instance.form_migrated_from_undefined_xmlns = datetime.utcnow()
     if not dry_run:
         xform_db.save(xform_instance)
-    log_file.write(
-        "Set new xmlns {} on submission {}\n".format(xmlns, xform_instance._id)
-    )
-
+    _log(log_file, INFO, SET_XMLNS, xform_instance)
 
 def get_forms_without_xmlns(app):
     return [form for form in app.get_forms() if form.xmlns == "undefined"]
 
 
+def get_previously_fixed_forms(app):
+    ret = []
+    for form in app.get_forms():
+        try:
+            if form.form_migrated_from_undefined_xmlns:
+                ret.append(form)
+        except AttributeError:
+            pass
+    return ret
 
 
 def replace_xml(xform, new_xml):
@@ -190,64 +212,22 @@ def get_saved_apps(app):
     return [get_correct_app_class(row['doc']).wrap(row['doc']) for row in saved_apps]
 
 
-class MultipleFormsMissingXmlns(Exception):
-
-    def __init__(self, build_id):
-        msg = "Multiple forms missing xmlns for build {}".format(
-            build_id
+class MultiplePreviouslyFixedForms(Exception):
+    def __init__(self, build_id, app_id):
+        msg = "Unable to determine matching form. Multiple forms in app {} were previously repaired. Build submitted against was {}".format(
+            app_id, build_id
         )
-        super(MultipleFormsMissingXmlns, self).__init__(msg)
-
-
-class FormNameMismatch(Exception):
-
-    def __init__(self, instance_id, instance_build_id, form_unique_id):
-        msg = "xform {} name does not match form {} name in build {}".format(
-            instance_id,
-            form_unique_id,
-            instance_build_id
-        )
-        super(FormNameMismatch, self).__init__(msg)
-
+        super(MultiplePreviouslyFixedForms, self).__init__(msg)
 
 @quickcache(["xform_instance.build_id"], memoize_timeout=ONE_HOUR)
-def get_form_unique_id(xform_instance):
+def get_correct_xmlns(xform_instance):
     if xform_instance.build_id is None:
         return None
     app = get_app(xform_instance.domain, xform_instance.build_id)
     # TODO: What if the app has been deleted?
-    forms_without_xmlns = get_forms_without_xmlns(app)
-    if len(forms_without_xmlns) != 1:
-        raise MultipleFormsMissingXmlns(xform_instance.build_id)
-    form = forms_without_xmlns[0]
-    if not _name_matches(xform_instance.name, form.name):
-        raise FormNameMismatch(
-            xform_instance._id,
-            xform_instance.build_id,
-            form.unique_id,
-        )
-    return form.unique_id
 
-
-def get_xmlns(form_unique_id, app_id, domain):
-    app = get_app(domain, app_id)
-    existing_xmlns = set()
-    for build in [app] + get_saved_apps(app):
-        try:
-            form = build.get_form(form_unique_id)
-        except FormNotFoundException:
-            continue
-        if form.xmlns != "undefined":
-            existing_xmlns.add(form.xmlns)
-    if len(existing_xmlns) == 1:
-        return existing_xmlns.pop()
-    assert len(existing_xmlns) == 0
-    return generate_random_xmlns()
-
-
-def _name_matches(xform_name, form_names):
-    if xform_name in form_names.values():
-        return True
-    if xform_name in [u"{} [{}]".format(v, k) for k, v in form_names.iteritems()]:
-        return True
-    return False
+    previously_fixed_forms_in_build = get_previously_fixed_forms(build)
+    if len(previously_fixed_forms_in_build) == 1:
+        return previously_fixed_forms_in_build[0].xmlns
+    else:
+        raise MultiplePreviouslyFixedForms(xform_instance.build_id, xform_instance.app_id)
