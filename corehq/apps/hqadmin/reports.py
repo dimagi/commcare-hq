@@ -1195,7 +1195,7 @@ class CommCareVersionReport(AdminFacetedReport):
     def es_query(self, params=None, size=None):
         size = size if size is not None else self.pagination.count
         return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
-                               start_at=self.pagination.start, size=size)
+                               start_at=self.pagination.start, size=size, fields=['name'])
 
     @property
     def rows(self):
@@ -1212,7 +1212,7 @@ class CommCareVersionReport(AdminFacetedReport):
             return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
         rows = {}
         for domain in self.es_results.get('hits', {}).get('hits', []):
-            domain_name = domain['_source']['name']
+            domain_name = domain['fields']['name']
             rows.update({domain_name: [domain_name] + [0] * len(versions)})
 
         for data in get_data(rows.keys()):
