@@ -266,7 +266,21 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
         return dict(_normalize_row(k, v) for k, v in raw_map.items())
 
     def slugs(self):
-        return self._slug_attrib_map.keys()
+        slugs = [
+            self.SLUG_PRODUCT_NAME,
+            self.SLUG_PRODUCT_ID,
+            self.SLUG_CURRENT_STOCK,
+        ]
+        if self._include_advanced_data():
+            slugs.extend([
+                self.SLUG_LOCATION_ID,
+                self.SLUG_CONSUMPTION,
+                self.SLUG_MONTHS_REMAINING,
+                self.SLUG_CATEGORY,
+                self.SLUG_LAST_REPORTED,
+                self.SLUG_RESUPPLY_QUANTITY_NEEDED,
+            ])
+        return slugs
 
     def _get_stock_states(self, sp_ids):
 
