@@ -143,16 +143,16 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             entry_ids=product_ids,
         )
         product_grouping = {}
-        for state in ledger_values:
-            consumption_helper = get_consumption_helper_from_ledger_value(Domain.get_by_name(self.domain), state)
+        for ledger_value in ledger_values:
+            consumption_helper = get_consumption_helper_from_ledger_value(Domain.get_by_name(self.domain), ledger_value)
             status = consumption_helper.get_stock_category()
-            if state.entry_id in product_grouping:
-                product_grouping[state.entry_id][status] += 1
-                product_grouping[state.entry_id]['facility_count'] += 1
+            if ledger_value.entry_id in product_grouping:
+                product_grouping[ledger_value.entry_id][status] += 1
+                product_grouping[ledger_value.entry_id]['facility_count'] += 1
 
             else:
-                product_grouping[state.entry_id] = {
-                    'entry_id': state.entry_id,
+                product_grouping[ledger_value.entry_id] = {
+                    'entry_id': ledger_value.entry_id,
                     'stockout': 0,
                     'understock': 0,
                     'overstock': 0,
@@ -160,7 +160,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                     'nodata': 0,
                     'facility_count': 1
                 }
-                product_grouping[state.entry_id][status] = 1
+                product_grouping[ledger_value.entry_id][status] = 1
 
         product_name_map = get_product_id_name_mapping(self.domain)
         rows = [[
