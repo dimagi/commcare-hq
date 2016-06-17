@@ -37,8 +37,11 @@ def unique_ids_map_log_message(app_id, domain, form_unique_id):
 
 
 class Command(BaseCommand):
-    help = 'Fix forms with "undefined" xmlns'
-    args = '<prev_log_path> <log_path>'
+    help = ("Running this command will fix xform submissions with 'undefined' xmlns."
+     " It will only fix xforms that are submitted against builds that have"
+     " already been repaired.")
+
+    args = '<log_path>'
 
     option_list = BaseCommand.option_list + (
         make_option(
