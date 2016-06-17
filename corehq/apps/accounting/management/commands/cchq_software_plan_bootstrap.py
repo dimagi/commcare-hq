@@ -28,8 +28,15 @@ BOOTSTRAP_EDITION_TO_ROLE = {
     SoftwarePlanEdition.ENTERPRISE: 'enterprise_plan_v0',
 }
 
-FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
-PRODUCT_TYPES = [p[0] for p in SoftwareProductType.CHOICES]
+FEATURE_TYPES = [
+    FeatureType.USER,
+    FeatureType.SMS,
+]
+PRODUCT_TYPES = [
+    SoftwareProductType.COMMCARE,
+    SoftwareProductType.COMMCONNECT,
+    SoftwareProductType.COMMTRACK,
+]
 
 BOOTSTRAP_PRODUCT_RATES = {
     SoftwarePlanEdition.COMMUNITY: dict(),
