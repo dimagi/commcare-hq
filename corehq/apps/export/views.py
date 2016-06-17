@@ -52,6 +52,7 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
+    ExportInstance,
 )
 from corehq.apps.export.const import (
     FORM_EXPORT,
@@ -788,10 +789,14 @@ class DownloadFormExportView(BaseDownloadExportView):
         """
         try:
             export_object = self._get_export(self.domain, self.export_id)
-            has_multimedia = FormAccessors(self.domain).forms_have_multimedia(
-                export_object.app_id,
-                getattr(export_object, 'xmlns', '')
-            )
+            if isinstance(export_object, ExportInstance):
+                has_multimedia = export_object.has_multimedia
+            else:
+                has_multimedia = forms_have_multimedia(
+                    self.domain,
+                    export_object.app_id,
+                    getattr(export_object, 'xmlns', '')
+                )
         except Exception as e:
             return format_angular_error(e.message)
         return format_angular_success({
