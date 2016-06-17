@@ -21,25 +21,24 @@ class MonthlyPerformanceSummaryTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(MonthlyPerformanceSummaryTests, cls).setUpClass()
         cls._setup_domain()
         cls._setup_users()
         cls._setup_malt_tables()
-
-    def setUp(self):
         users_in_group = []
-        self.prev_month = MonthlyPerformanceSummary(
-            domain=self.DOMAIN_NAME,
+        cls.prev_month = MonthlyPerformanceSummary(
+            domain=cls.DOMAIN_NAME,
             performance_threshold=15,
-            month=self.prev_month_as_date,
+            month=cls.prev_month_as_date,
             previous_summary=None,
             users=users_in_group,
             has_group_filter=False,
         )
-        self.month = MonthlyPerformanceSummary(
-            domain=self.DOMAIN_NAME,
+        cls.month = MonthlyPerformanceSummary(
+            domain=cls.DOMAIN_NAME,
             performance_threshold=15,
-            month=self.month_as_date,
-            previous_summary=self.prev_month,
+            month=cls.month_as_date,
+            previous_summary=cls.prev_month,
             users=users_in_group,
             has_group_filter=False,
         )

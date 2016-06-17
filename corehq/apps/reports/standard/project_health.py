@@ -11,6 +11,7 @@ from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es.groups import GroupES
+from itertools import chain
 
 
 def get_performance_threshold(domain_name):
@@ -52,24 +53,29 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def __init__(self, domain, month, users, has_group_filter, performance_threshold, previous_summary=None):
         self._previous_summary = previous_summary
         self._next_summary = None
-        self._base_queryset = MALTRow.objects.filter(
+        base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
         if has_group_filter:
-            self._base_queryset = self._base_queryset.filter(
+            base_queryset = base_queryset.filter(
                 user_id__in=users,
             )
-        self._performing_queryset = self._base_queryset.filter(
-            num_of_forms__gte=performance_threshold,
-        )
+
+        self.queryset = base_queryset.disctint('user_id')
+
+        num_performing_user = (base_queryset
+                               .filter(num_of_forms__gte=performance_threshold)
+                               .distinct('user_id')
+                               .count())
+
         super(MonthlyPerformanceSummary, self).__init__(
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
-            active=self._base_queryset.distinct('user_id').count(),
-            performing=self._performing_queryset.distinct('user_id').count(),
+            active=self.queryset.count(),
+            performing=num_performing_user,
         )
 
     def set_next_month_summary(self, next_month_summary):
@@ -111,7 +117,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @memoized
     def get_all_user_stubs(self):
-        malt_all = self._base_queryset.distinct('user_id')
         return {
             row.user_id: UserActivityStub(
                 user_id=row.user_id,
@@ -120,7 +125,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 is_performing=row.num_of_forms >= self.performance_threshold,
                 previous_stub=None,
                 next_stub=None,
-            ) for row in malt_all
+            ) for row in self.queryset
         }
 
     @memoized
@@ -210,15 +215,11 @@ class ProjectHealthDashboard(ProjectReport):
 
     def get_users_by_filtered_groupids(self):
         groupids_param = self.get_filtered_group_ids()
-        users_list = GroupES().domain(self.domain).group_ids(groupids_param).source(["users"]).values()
-        user_id_list = []
-        for user in users_list:
-            usersid = user.values()[0]
-            user_id_list.extend(usersid)
-        return user_id_list
-
-    def has_group_filter(self):
-        return True if self.get_users_by_filtered_groupids() else False
+        users_lists = (GroupES()
+                       .domain(self.domain)
+                       .group_ids(groupids_param)
+                       .values_list("users", flat=True))
+        return set(chain(*users_lists))
 
     def previous_six_months(self):
         now = datetime.datetime.utcnow()
@@ -235,7 +236,7 @@ class ProjectHealthDashboard(ProjectReport):
                 month=month_as_date,
                 previous_summary=last_month_summary,
                 users=users_in_group,
-                has_group_filter=self.has_group_filter(),
+                has_group_filter=bool(self.get_users_by_filtered_groupids()),
             )
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
