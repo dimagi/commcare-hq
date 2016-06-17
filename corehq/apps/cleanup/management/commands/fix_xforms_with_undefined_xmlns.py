@@ -28,7 +28,6 @@ ERROR_SAVING = "error-saving-xform"
 MULTI_MATCH = "multiple-possible-forms"
 
 
-
 class Command(BaseCommand):
     help = ("Running this command will fix xform submissions with 'undefined' xmlns."
      " It will only fix xforms that are submitted against builds that have"
@@ -167,6 +166,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, log_file, dry_run):
         xform_db.save(xform_instance)
     _log(log_file, INFO, SET_XMLNS, xform_instance)
 
+
 def get_forms_without_xmlns(app):
     return [form for form in app.get_forms() if form.xmlns == "undefined"]
 
@@ -209,10 +209,12 @@ def get_saved_apps(app):
 
 class MultiplePreviouslyFixedForms(Exception):
     def __init__(self, build_id, app_id):
-        msg = "Unable to determine matching form. Multiple forms in app {} were previously repaired. Build submitted against was {}".format(
+        msg = "Unable to determine matching form. Multiple forms in app {} " \
+              "were previously repaired. Build submitted against was {}".format(
             app_id, build_id
         )
         super(MultiplePreviouslyFixedForms, self).__init__(msg)
+
 
 @quickcache(["xform_instance.build_id"], memoize_timeout=ONE_HOUR)
 def get_correct_xmlns(xform_instance):
