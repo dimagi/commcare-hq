@@ -33,8 +33,17 @@ def num_web_users(domain, *args):
 
 
 def num_mobile_users(domain, *args):
-    row = CouchUser.get_db().view('users/by_domain', startkey=[domain], endkey=[domain, {}]).one()
-    return row["value"] if row else 0
+    startkey = ['active', domain, 'CommCareUser']
+    endkey = startkey + [{}]
+    result = CouchUser.get_db().view(
+        'users/by_domain',
+        startkey=startkey,
+        endkey=endkey,
+        include_docs=False,
+        reduce=True
+    ).one()
+    return result['value'] if result else 0
+
 
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
 
