@@ -113,11 +113,12 @@ class Command(BaseCommand):
 
         ensure_plans(
             edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
+            edition_to_product_rate=BOOTSTRAP_PRODUCT_RATES,
             dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
         )
 
 
-def ensure_plans(edition_to_role,
+def ensure_plans(edition_to_role, edition_to_product_rate,
                  dry_run, verbose, for_tests, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
@@ -136,7 +137,10 @@ def ensure_plans(edition_to_role,
                 return
             software_plan_version = SoftwarePlanVersion(role=role)
 
-            product, product_rate = _ensure_product_and_rate(product_type, edition, dry_run=dry_run, verbose=verbose, apps=apps)
+            product, product_rate = _ensure_product_and_rate(
+                edition_to_product_rate, product_type, edition,
+                dry_run=dry_run, verbose=verbose, apps=apps,
+            )
             feature_rates = _ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=apps)
             software_plan = SoftwarePlan(
                 name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
@@ -204,7 +208,7 @@ def ensure_plans(edition_to_role,
                                          default_product_plan.edition))
 
 
-def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
+def _ensure_product_and_rate(edition_to_product_rate, product_type, edition, dry_run, verbose, apps):
     """
     Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
     """
@@ -218,7 +222,7 @@ def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
     if edition == SoftwarePlanEdition.ENTERPRISE:
         product.name = "Dimagi Only %s" % product.name
 
-    product_rate = SoftwareProductRate(**BOOTSTRAP_PRODUCT_RATES[edition])
+    product_rate = SoftwareProductRate(**edition_to_product_rate[edition])
     if dry_run:
         logger.info("[DRY RUN] Creating Product: %s" % product)
         logger.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
