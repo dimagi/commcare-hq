@@ -3,6 +3,7 @@ from datetime import datetime
 from corehq.apps.accounting import generator
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.tests import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroups, SupplyPointStatusTypes, \
@@ -39,6 +40,7 @@ class RemindersTest(ILSTestScript):
         create_products(cls, TEST_DOMAIN, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
 
     def tearDown(self):
+        SQLLocation.objects.all().delete()
         SupplyPointStatus.objects.all().delete()
         super(RemindersTest, self).tearDown()
 
@@ -294,3 +296,8 @@ class TestStockOut(RemindersTest):
             'overstocked_list': 'Test Facility 1 (dp, ip)'
         }
         self.run_script(script)
+
+    @classmethod
+    def tearDownClass(cls):
+        SQLLocation.objects.all().delete()
+        SLABConfig.objects.all().delete()

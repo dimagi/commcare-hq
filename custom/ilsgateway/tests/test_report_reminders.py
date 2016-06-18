@@ -4,6 +4,7 @@ import mock
 from django.test import TestCase
 from django.utils import translation
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.tests import setup_default_sms_test_backend, delete_domain_phone_numbers
 from custom.ilsgateway.models import DeliveryGroups, SupplyPointStatus
 from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_CONFIRM, REMINDER_MONTHLY_RANDR_SUMMARY, \
@@ -36,6 +37,7 @@ class TestReportGroups(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        SQLLocation.objects.all().delete()
         delete_domain_phone_numbers(TEST_DOMAIN)
         cls.sms_backend.delete()
         cls.sms_backend_mapping.delete()
@@ -117,6 +119,7 @@ class TestReportSummaryBase(TestScript):
 
     @classmethod
     def tearDownClass(cls):
+        SQLLocation.objects.all().delete()
         delete_domain_phone_numbers(TEST_DOMAIN)
         cls.domain.delete()
         super(TestReportSummaryBase, cls).tearDownClass()
