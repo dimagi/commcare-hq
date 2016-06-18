@@ -28,10 +28,10 @@ class RemindersTest(ILSTestScript):
         super(RemindersTest, cls).setUpClass()
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
 
-        cls.district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
-                                domain=TEST_DOMAIN)
-        cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
-                                domain=TEST_DOMAIN, parent=cls.district)
+        # cls.district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
+        #                         domain=TEST_DOMAIN)
+        # cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
+        #                         domain=TEST_DOMAIN, parent=cls.district)
         cls.facility_sp_id = cls.facility.sql_location.supply_point_id
         cls.user1 = bootstrap_user(
             cls.facility, username='test_user', domain=TEST_DOMAIN, home_loc='loc1', phone_number='5551234',
