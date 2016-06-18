@@ -10,18 +10,17 @@ fi
 function setup() {
     [ -n "$1" ] && TEST="$1"
 
+    rm *.log *.lock || true
+
+    scripts/uninstall-requirements.sh
+    pip install \
+        -r requirements/requirements.txt \
+        -r requirements/test-requirements.txt
+
+    # compile pyc files
+    python -m compileall corehq custom submodules testapps *.py > /dev/null
+
     if [[ "$TEST" =~ ^python ]]; then
-
-        rm *.log *.lock || true
-
-        scripts/uninstall-requirements.sh
-        pip install \
-            -r requirements/requirements.txt \
-            -r requirements/dev-requirements.txt
-
-        # compile pyc files
-        python -m compileall corehq custom submodules testapps *.py > /dev/null
-
         /usr/lib/jvm/jdk1.7.0/bin/keytool -genkey \
             -keyalg RSA \
             -keysize 2048 \
@@ -39,10 +38,6 @@ function setup() {
     fi
 
     /mnt/wait.sh
-
-    if [[ "$TEST" =~ ^python ]]; then
-        su cchq -c "./manage.py create_kafka_topics"
-    fi
 }
 
 function run_tests() {
@@ -74,6 +69,7 @@ function _run_tests() {
     fi
 
     if [ "$TEST" != "javascript" ]; then
+        ./manage.py create_kafka_topics
         echo "coverage run manage.py test $@ $TESTS"
         /vendor/bin/coverage run manage.py test "$@" $TESTS
     else
