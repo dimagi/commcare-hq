@@ -82,11 +82,11 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     if ((app.vellum_case_management or toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain)) and
             _form_uses_case(module, form)):
         vellum_plugins.append("databrowser")
-        include_fullstory = not _form_too_large(app, form)
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
     vellum_features.update(feature_previews.previews_dict(domain))
+    include_fullstory = not _form_too_large(app, form)
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,
         'image_resize': app.enable_image_resize,
