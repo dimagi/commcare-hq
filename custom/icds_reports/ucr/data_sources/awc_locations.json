@@ -5,7 +5,7 @@
     "icds-cas"
   ],
   "config": {
-    "engine_id": "default",
+    "engine_id": "{default/ucr}",
     "base_item_expression": {},
     "configured_filter": {
       "type": "and",
