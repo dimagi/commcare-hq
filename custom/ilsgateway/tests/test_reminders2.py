@@ -24,7 +24,7 @@ class RemindersTest(ILSTestScript):
 
     @classmethod
     def setUpClass(cls):
-        super(ILSTestScript, super(RemindersTest, cls)).setUpClass()
+        super(RemindersTest, cls).bypass_setUpClass()
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
 
@@ -41,7 +41,7 @@ class RemindersTest(ILSTestScript):
 
     def tearDown(self):
         SupplyPointStatus.objects.all().delete()
-        super(TestScript, super(ILSTestScript, super(RemindersTest, self))).tearDown()
+        super(RemindersTest, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
@@ -49,7 +49,7 @@ class RemindersTest(ILSTestScript):
         cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         cls.domain.delete()
-        super(ILSTestScript, super(RemindersTest, cls)).tearDownClass()
+        super(RemindersTest, cls).tearDownClass()
 
 
 class TestStockOnHandReminders(RemindersTest):
@@ -86,7 +86,7 @@ class TestStockOnHandReminders(RemindersTest):
 class TestDeliveryReminder(RemindersTest):
 
     def setUp(self):
-        super(ILSTestScript, super(RemindersTest, super(TestDeliveryReminder, self))).setUp()
+        super(TestDeliveryReminder, self).setUp()
         self.facility.metadata['group'] = DeliveryGroups().current_delivering_group()
         self.facility.save()
 
@@ -132,7 +132,7 @@ class TestDeliveryReminder(RemindersTest):
 class TestRandRReminder(RemindersTest):
 
     def setUp(self):
-        super(ILSTestScript, super(RemindersTest, super(TestRandRReminder, self))).setUp()
+        super(TestRandRReminder, self).setUp()
         self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
         self.facility.save()
 
@@ -178,7 +178,7 @@ class TestRandRReminder(RemindersTest):
 class TestSupervisionStatusSet(RemindersTest):
 
     def setUp(self):
-        super(ILSTestScript, super(RemindersTest, super(TestSupervisionStatusSet, self))).setUp()
+        super(TestSupervisionStatusSet, self).setUp()
         self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
         self.facility.save()
 

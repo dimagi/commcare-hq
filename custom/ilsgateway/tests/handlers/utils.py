@@ -27,6 +27,10 @@ def create_products(cls, domain_name, codes):
 class ILSTestScript(TestScript):
 
     @classmethod
+    def bypass_setUpClass(cls):
+        super(ILSTestScript, cls).setUpClass()
+
+    @classmethod
     def setUpClass(cls):
         super(ILSTestScript, cls).setUpClass()
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
