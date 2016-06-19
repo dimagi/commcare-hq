@@ -1187,6 +1187,6 @@
         "property_value": "st"
       }
     },
-    "engine_id": "{default/ucr}"
+    "engine_id": "ucr"
   }
 }

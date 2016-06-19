@@ -4089,6 +4089,6 @@
         ]
       }
     },
-    "engine_id": "{default/ucr}"
+    "engine_id": "ucr"
   }
 }

@@ -579,6 +579,6 @@
     ],
     "named_expressions": {},
     "named_filters": {},
-    "engine_id": "{default/ucr}"
+    "engine_id": "ucr"
   }
 }
