@@ -52,9 +52,6 @@
 [submodule "corehq/apps/hqmedia/static/hqmedia/MediaUploader"]
 	path = corehq/apps/hqmedia/static/hqmedia/MediaUploader
 	url = git://github.com/dimagi/MediaUploader.git
-[submodule "submodules/bootstrap3_crispy"]
-	path = submodules/bootstrap3_crispy
-	url = https://github.com/dimagi/django-crispy-forms.git
 [submodule "corehq/apps/prelogin"]
 	path = corehq/apps/prelogin
 	url = https://github.com/dimagi/commcarehq-prelogin.git
