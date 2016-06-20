@@ -195,6 +195,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
                 return_value=results):
             build_ids = CaseExportDataSchema._get_app_build_ids_to_process(
                 'dummy',
+                'dummy-app-id',
                 last_app_versions
             )
         self.assertEqual(sorted(build_ids), ['2', '4'])
