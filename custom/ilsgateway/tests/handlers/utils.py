@@ -117,11 +117,16 @@ class ILSTestScript(TestScript):
         SQLProduct.objects.all().delete()
         ILSGatewayConfig.for_domain(TEST_DOMAIN).delete()
         DocDomainMapping.objects.all().delete()
-        Location.by_site_code(TEST_DOMAIN, 'loc1').delete()
-        Location.by_site_code(TEST_DOMAIN, 'loc2').delete()
-        Location.by_site_code(TEST_DOMAIN, 'dis1').delete()
-        Location.by_site_code(TEST_DOMAIN, 'reg1').delete()
-        Location.by_site_code(TEST_DOMAIN, 'moh1').delete()
+        for site_code in [
+            'loc1',
+            'loc2',
+            'dis1',
+            'reg1',
+            'moh1',
+        ]:
+            location = Location.by_site_code(TEST_DOMAIN, site_code).delete()
+            if location:
+                location.delete()
         SQLLocation.objects.all().delete()
         generator.delete_all_subscriptions()
         Domain.get_by_name(TEST_DOMAIN).delete()
