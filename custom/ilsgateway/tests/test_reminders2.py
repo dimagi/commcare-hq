@@ -1,7 +1,9 @@
 from datetime import datetime
 
+from corehq.apps.accounting import generator
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.tests import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroups, SupplyPointStatusTypes, \
@@ -14,7 +16,7 @@ from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
-from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN, prepare_domain, create_products
+from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN, create_products
 from custom.ilsgateway.utils import make_loc
 from custom.logistics.tests.utils import bootstrap_user
 
@@ -23,13 +25,13 @@ class RemindersTest(ILSTestScript):
 
     @classmethod
     def setUpClass(cls):
+        super(RemindersTest, cls).setUpClass()
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
-        cls.domain = prepare_domain(TEST_DOMAIN)
 
-        cls.district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
-                                domain=TEST_DOMAIN)
-        cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
-                                domain=TEST_DOMAIN, parent=cls.district)
+        # cls.district = make_loc(code="dis1", name="Test District 1", type="DISTRICT",
+        #                         domain=TEST_DOMAIN)
+        # cls.facility = make_loc(code="loc1", name="Test Facility 1", type="FACILITY",
+        #                         domain=TEST_DOMAIN, parent=cls.district)
         cls.facility_sp_id = cls.facility.sql_location.supply_point_id
         cls.user1 = bootstrap_user(
             cls.facility, username='test_user', domain=TEST_DOMAIN, home_loc='loc1', phone_number='5551234',
@@ -38,14 +40,18 @@ class RemindersTest(ILSTestScript):
         create_products(cls, TEST_DOMAIN, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
 
     def tearDown(self):
+        SQLLocation.objects.all().delete()
         SupplyPointStatus.objects.all().delete()
+        super(RemindersTest, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
         delete_domain_phone_numbers(TEST_DOMAIN)
         cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
-        cls.domain.delete()
+        generator.delete_all_subscriptions()
+        generator.delete_all_accounts()
+        super(RemindersTest, cls).tearDownClass()
 
 
 class TestStockOnHandReminders(RemindersTest):
@@ -82,6 +88,7 @@ class TestStockOnHandReminders(RemindersTest):
 class TestDeliveryReminder(RemindersTest):
 
     def setUp(self):
+        super(TestDeliveryReminder, self).setUp()
         self.facility.metadata['group'] = DeliveryGroups().current_delivering_group()
         self.facility.save()
 
@@ -127,6 +134,7 @@ class TestDeliveryReminder(RemindersTest):
 class TestRandRReminder(RemindersTest):
 
     def setUp(self):
+        super(TestRandRReminder, self).setUp()
         self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
         self.facility.save()
 
@@ -172,6 +180,7 @@ class TestRandRReminder(RemindersTest):
 class TestSupervisionStatusSet(RemindersTest):
 
     def setUp(self):
+        super(TestSupervisionStatusSet, self).setUp()
         self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
         self.facility.save()
 
@@ -287,3 +296,8 @@ class TestStockOut(RemindersTest):
             'overstocked_list': 'Test Facility 1 (dp, ip)'
         }
         self.run_script(script)
+
+    @classmethod
+    def tearDownClass(cls):
+        SQLLocation.objects.all().delete()
+        SLABConfig.objects.all().delete()

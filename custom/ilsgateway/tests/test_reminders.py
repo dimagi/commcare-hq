@@ -5,6 +5,7 @@ from django.test.testcases import TestCase
 from corehq.apps.accounting import generator
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 
@@ -58,6 +59,7 @@ class TestReminders(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        SQLLocation.objects.all().delete()
         cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         Domain.get_by_name(TEST_DOMAIN).delete()

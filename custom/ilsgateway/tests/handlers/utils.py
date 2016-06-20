@@ -28,6 +28,7 @@ class ILSTestScript(TestScript):
 
     @classmethod
     def setUpClass(cls):
+        super(ILSTestScript, cls).setUpClass()
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         domain = prepare_domain(TEST_DOMAIN)
         mohsw = make_loc(code="moh1", name="Test MOHSW 1", type="MOHSW", domain=domain.name)
@@ -81,6 +82,7 @@ class ILSTestScript(TestScript):
         create_products(cls, domain.name, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
 
     def setUp(self):
+        super(ILSTestScript, self).setUp()
         self.domain = Domain.get_by_name(TEST_DOMAIN)
         self.loc1 = Location.by_site_code(TEST_DOMAIN, 'loc1')
         self.loc2 = Location.by_site_code(TEST_DOMAIN, 'loc2')
@@ -112,6 +114,7 @@ class ILSTestScript(TestScript):
         SQLLocation.objects.all().delete()
         generator.delete_all_subscriptions()
         Domain.get_by_name(TEST_DOMAIN).delete()
+        super(ILSTestScript, cls).tearDownClass()
 
 
 def prepare_domain(domain_name):
@@ -132,6 +135,8 @@ def prepare_domain(domain_name):
             administrative=administrative,
         )
 
+    generator.delete_all_subscriptions()
+    generator.delete_all_accounts()
     generator.instantiate_accounting_for_tests()
     account = BillingAccount.get_or_create_account_by_domain(
         domain.name,
