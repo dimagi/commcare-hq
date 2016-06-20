@@ -1195,7 +1195,7 @@ class CommCareVersionReport(AdminFacetedReport):
     def es_query(self, params=None, size=None):
         size = size if size is not None else self.pagination.count
         return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
-                               start_at=self.pagination.start, size=size)
+                               start_at=self.pagination.start, size=size, fields=['name'])
 
     @property
     def rows(self):
@@ -1203,21 +1203,21 @@ class CommCareVersionReport(AdminFacetedReport):
         now = datetime.utcnow()
         days = now - timedelta(days=90)
 
-        def get_data():
+        def get_data(domains):
             terms = [
                 AggregationTerm('domain', 'domain'),
                 AggregationTerm('commcare_version', 'form.meta.commcare_version')
             ]
-            query = FormES().submitted(gte=days, lte=now)
+            query = FormES().submitted(gte=days, lte=now).domain(domains).size(0)
             return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
         rows = {}
         for domain in self.es_results.get('hits', {}).get('hits', []):
-            domain_name = domain['_source']['name']
+            domain_name = domain['fields']['name']
             rows.update({domain_name: [domain_name] + [0] * len(versions)})
 
-        for data in get_data():
-            if data.commcare_version in versions:
-                row = rows.get(data.domain)
+        for data in get_data(rows.keys()):
+            row = rows.get(data.domain, None)
+            if row and data.commcare_version in versions:
                 version_index = versions.index(data.commcare_version)
                 row[version_index + 1] = data.doc_count
 
