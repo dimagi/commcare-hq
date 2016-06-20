@@ -11,6 +11,7 @@ from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es.groups import GroupES
+from corehq.apps.es.users import UserES
 from itertools import chain
 
 
@@ -213,12 +214,23 @@ class ProjectHealthDashboard(ProjectReport):
     def get_filtered_group_ids(self):
         return self.request.GET.getlist('group')
 
+    def get_filtered_location_id(self):
+        return self.request.GET.get('location_id')
+
     def get_users_by_filtered_groupids(self):
         groupids_param = self.get_filtered_group_ids()
         users_lists = (GroupES()
                        .domain(self.domain)
                        .group_ids(groupids_param)
                        .values_list("users", flat=True))
+        return set(chain(*users_lists))
+
+    def get_users_by_filtered_location(self):
+        locationid_param = self.get_filtered_location_id()
+        users_lists = (UserES()
+                       .domain(self.domain)
+                       .location(locationid_param)
+                       .values_list('_id', flat=True))
         return set(chain(*users_lists))
 
     def previous_six_months(self):
