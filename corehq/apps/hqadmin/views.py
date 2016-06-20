@@ -3,6 +3,7 @@ from lxml import etree
 import HTMLParser
 import json
 import socket
+import csv
 from datetime import timedelta, date
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
@@ -50,7 +51,8 @@ from corehq.util.supervisord.api import (
     pillow_supervisor_status
 )
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.models import MALTRow, GIRRow
+from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
@@ -862,6 +864,43 @@ def _malt_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     queryset = MALTRow.objects.filter(month=query_month)
     return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)
+
+
+class DownloadGIRView(BaseAdminSectionView):
+    urlname = 'download_gir'
+    page_title = ugettext_lazy("Download GIR")
+    template_name = "hqadmin/gir_downloader.html"
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadGIRView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if 'year_month' in request.GET:
+            try:
+                year, month = request.GET['year_month'].split('-')
+                year, month = int(year), int(month)
+                return _gir_csv_response(month, year)
+            except (ValueError, ValidationError):
+                messages.error(
+                    request,
+                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                )
+        return super(DownloadGIRView, self).get(request, *args, **kwargs)
+
+
+def _gir_csv_response(month, year):
+    query_month = "{year}-{month}-01".format(year=year, month=month)
+    queryset = GIRRow.objects.filter(month=query_month)
+    field_names = GIR_FIELDS
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = u'attachment; filename=gir.csv'
+    writer = csv.writer(response)
+    writer.writerow(list(field_names))
+    for obj in queryset:
+        writer.writerow(obj.export_row)
+    return response
 
 
 @require_superuser

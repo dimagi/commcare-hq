@@ -41,6 +41,8 @@ from corehq import toggles
 
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
+from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLIFIES_YES
+
 lang_lookup = defaultdict(str)
 
 DATA_DICT = settings.INTERNAL_DATA
@@ -164,7 +166,16 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     goal_followup_rate = DecimalProperty()
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
-    performance_threshold = IntegerProperty()
+    performance_threshold = IntegerProperty(default=15)
+    experienced_threshold = IntegerProperty(default=3)
+    amplifies_workers = StringProperty(
+        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
+        default=AMPLIFIES_NOT_SET
+    )
+    amplifies_project = StringProperty(
+        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
+        default=AMPLIFIES_NOT_SET
+    )
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
 
 
