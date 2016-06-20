@@ -2,6 +2,7 @@ import json
 from simpleeval import InvalidExpression
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
@@ -304,3 +305,31 @@ class FormsExpressionSpec(JsonObject):
 
         context.set_cache_value(cache_key, xforms)
         return xforms
+
+
+class SubcasesExpressionSpec(JsonObject):
+    type = TypeProperty('get_subcases')
+    case_id_expression = DefaultProperty(required=True)
+
+    def configure(self, case_id_expression):
+        self._case_id_expression = case_id_expression
+
+    def __call__(self, item, context=None):
+        case_id = self._case_id_expression(item, context)
+        if not case_id:
+            return []
+
+        assert context.root_doc['domain']
+        return self._get_subcases(case_id, context)
+
+    def _get_subcases(self, case_id, context):
+        domain = context.root_doc['domain']
+        cache_key = (self.__class__.__name__, case_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        case_accessors = CaseAccessors(domain)
+        indices = case_accessors.get_all_reverse_indices_info([case_id])
+        subcases = [c.to_json() for c in case_accessors.get_cases([i.case_id for i in indices])]
+        context.set_cache_value(cache_key, subcases)
+        return subcases
