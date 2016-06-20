@@ -883,6 +883,23 @@ class ExportDataSchema(Document):
             app_version,
         )
 
+    @staticmethod
+    def _save_export_schema(current_schema, original_id, original_rev):
+        if original_id and original_rev:
+            current_schema._id = original_id
+            current_schema._rev = original_rev
+
+        try:
+            current_schema.save()
+        except ResourceConflict:
+            # It's possible that another process updated the schema before we
+            # got to it. If so, we want to overwrite those changes because we
+            # have the most recently built schema.
+            current_schema._rev = ExportDataSchema.get_db().get_rev(current_schema._id)
+            current_schema.save()
+
+        return current_schema
+
 
 class FormExportDataSchema(ExportDataSchema):
 
@@ -927,7 +944,7 @@ class FormExportDataSchema(ExportDataSchema):
         app_build_ids = FormExportDataSchema._get_app_build_ids_to_process(
             domain,
             app_id,
-            current_xform_schema.last_app_versions
+            current_xform_schema.last_app_versions,
         )
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             # TODO: Remove this when we mark applications that have been submitted
@@ -951,22 +968,14 @@ class FormExportDataSchema(ExportDataSchema):
             current_xform_schema.record_update(app.copy_of, app.version)
 
         if not original_id or app_build_ids:
-            # Don't save the schema if there is already a saved schema object
-            # and we didn't update it with any app builds
-            if original_id and original_rev:
-                current_xform_schema._id = original_id
-                current_xform_schema._rev = original_rev
             current_xform_schema.domain = domain
             current_xform_schema.app_id = app_id
             current_xform_schema.xmlns = form_xmlns
-            try:
-                current_xform_schema.save()
-            except ResourceConflict:
-                # It's possible that another process updated the schema before we
-                # got to it. If so, we want to overwrite those changes because we
-                # have the most recently built schema.
-                current_xform_schema._rev = FormExportDataSchema.get_db().get_rev(current_xform_schema._id)
-                current_xform_schema.save()
+            current_xform_schema = FormExportDataSchema._save_export_schema(
+                current_xform_schema,
+                original_id,
+                original_rev
+            )
 
         return current_xform_schema
 
@@ -1107,24 +1116,18 @@ class CaseExportDataSchema(ExportDataSchema):
 
             current_case_schema.record_update(app.copy_of, app.version)
 
+        # Don't save the schema if there is already a saved schema object
+        # and we didn't update it with any app builds
         if not original_id or app_build_ids:
-            # Don't save the schema if there is already a saved schema object
-            # and we didn't update it with any app builds
-            if original_id and original_rev:
-                current_case_schema._id = original_id
-                current_case_schema._rev = original_rev
             current_case_schema.domain = domain
             current_case_schema.case_type = case_type
-            try:
-                current_case_schema.save()
-            except ResourceConflict:
-                # It's possible that another process updated the schema before we
-                # got to it. If so, we want to overwrite those changes because we
-                # have the most recently built schema.
-                current_case_schema._rev = CaseExportDataSchema.get_db().get_rev(current_case_schema._id)
-                current_case_schema.save()
 
-            return current_case_schema
+            current_case_schema = CaseExportDataSchema._save_export_schema(
+                current_case_schema,
+                original_id,
+                original_rev
+            )
+        return current_case_schema
 
     @staticmethod
     def _generate_schema_from_case_property_mapping(case_property_mapping, parent_types, app_id, app_version):
