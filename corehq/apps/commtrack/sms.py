@@ -79,25 +79,26 @@ def process(domain, data):
 class StockReportParser(object):
     """a helper object for parsing raw stock report texts"""
 
-    def __init__(self, domain, v):
+    def __init__(self, domain, verified_contact, location=None):
         self.domain = domain
-        self.v = v
+        self.verified_contact = verified_contact
 
-        self.location = None
+        self.location = location
         self.case = None
-        u = v.owner
+        u = verified_contact.owner
 
         if domain.commtrack_enabled:
             # if user is not actually a user, we let someone else process
             if not isinstance(u, CouchUser):
                 raise NotAUserClassError
 
-            # currently only support one location on the UI
-            self.location = u.location
+            if not self.location:
+                self.location = u.location
+
             if self.location:
                 self.case = SupplyInterface(domain.name).get_by_location(self.location)
 
-        self.C = domain.commtrack_settings
+        self.commtrack_settings = domain.commtrack_settings
 
     def parse(self, text):
         """take in a text and return the parsed stock transactions"""
@@ -119,7 +120,7 @@ class StockReportParser(object):
             self.case, self.location = self.get_supply_point_and_location(args[0])
             args = args[1:]
 
-        action = self.C.action_by_keyword(action_keyword)
+        action = self.commtrack_settings.action_by_keyword(action_keyword)
         if action and action.type == 'stock':
             # TODO: support single-action by product, as well as by action?
             self.verify_location_registration()
@@ -135,7 +136,8 @@ class StockReportParser(object):
                 "You can no longer use requisitions! Please contact your project supervisor for help"
             ))
 
-        elif self.C.multiaction_enabled and action_keyword == self.C.multiaction_keyword:
+        elif (self.commtrack_settings.multiaction_enabled
+              and action_keyword == self.commtrack_settings.multiaction_keyword):
             # multiple action stock report
             _tx = self.multiple_action_transactions(args)
         else:
@@ -219,7 +221,7 @@ class StockReportParser(object):
                 break
 
             old_action = action
-            _next_action = self.C.action_by_keyword(keyword)
+            _next_action = self.commtrack_settings.action_by_keyword(keyword)
             if _next_action:
                 action = _next_action
                 if not found_product_for_action:
@@ -285,8 +287,8 @@ class StockReportParser(object):
 
         return {
             'timestamp': datetime.utcnow(),
-            'user': self.v.owner,
-            'phone': self.v.phone_number,
+            'user': self.verified_contact.owner,
+            'phone': self.verified_contact.phone_number,
             'location': self.location,
             'transactions': tx,
         }
@@ -342,7 +344,7 @@ class StockAndReceiptParser(StockReportParser):
 
         self.verify_location_registration()
         self.case_id = self.case.case_id
-        action = self.C.action_by_keyword('soh')
+        action = self.commtrack_settings.action_by_keyword('soh')
         _tx = self.single_action_transactions(action, args)
 
         return self.unpack_transactions(_tx)
