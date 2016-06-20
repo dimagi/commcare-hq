@@ -901,6 +901,14 @@ class FormExportDataSchema(ExportDataSchema):
         return FORM_EXPORT
 
     @staticmethod
+    def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
+        return get_built_app_ids_for_app_id(
+            domain,
+            app_id,
+            last_app_versions.get(app_id)
+        )
+
+    @staticmethod
     def generate_schema_from_builds(domain, app_id, form_xmlns, force_rebuild=False):
         """Builds a schema from Application builds for a given identifier
 
@@ -916,12 +924,11 @@ class FormExportDataSchema(ExportDataSchema):
         else:
             current_xform_schema = FormExportDataSchema()
 
-        app_build_ids = get_built_app_ids_for_app_id(
+        app_build_ids = FormExportDataSchema._get_app_build_ids_to_process(
             domain,
             app_id,
-            current_xform_schema.last_app_versions.get(app_id)
+            current_xform_schema.last_app_versions
         )
-
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             # TODO: Remove this when we mark applications that have been submitted
             if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
