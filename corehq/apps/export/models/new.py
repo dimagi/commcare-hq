@@ -885,6 +885,10 @@ class ExportDataSchema(Document):
 
     @staticmethod
     def _save_export_schema(current_schema, original_id, original_rev):
+        """
+        Given a schema object, this function saves the object and ensures that the
+        ID remains the save as the previous save if there existed a previous version.
+        """
         if original_id and original_rev:
             current_schema._id = original_id
             current_schema._rev = original_rev
@@ -931,7 +935,7 @@ class FormExportDataSchema(ExportDataSchema):
 
         :param domain: The domain that the export belongs to
         :param app_id: The app_id that the export belongs to
-        :param unique_form_id: The unique identifier of the item being exported
+        :param unique_form_id: The unique identifier of the schema being exported
         :returns: Returns a FormExportDataSchema instance
         """
         original_id, original_rev = None, None
@@ -960,6 +964,8 @@ class FormExportDataSchema(ExportDataSchema):
             )
             current_xform_schema.record_update(app.copy_of, app.version)
 
+        # Don't save the schema if there is already a saved schema object
+        # and we didn't update it with any app builds
         if not original_id or app_build_ids:
             current_xform_schema.domain = domain
             current_xform_schema.app_id = app_id
@@ -1069,7 +1075,7 @@ class CaseExportDataSchema(ExportDataSchema):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
-        :param unique_form_id: The unique identifier of the item being exported
+        :param case_type: The unique identifier of the schema being exported
         :returns: Returns a CaseExportDataSchema instance
         """
 
