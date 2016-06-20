@@ -140,15 +140,13 @@ var HQReport = function (options) {
             }
         };
 
-        $(self.filterAccordion).on('hidden', hiddenFilterButtonStatus);  // B2 event
-        $(self.filterAccordion).on('hidden.bs.collapse', hiddenFilterButtonStatus);  // B3 event
+        $(self.filterAccordion).on('hidden.bs.collapse', hiddenFilterButtonStatus);
 
         var showFilterButtonStatus = function () {
             $(self.toggleFiltersButton).button('close');
         };
 
-        $(self.filterAccordion).on('show', showFilterButtonStatus);  // B2 event
-        $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);  // B3 event
+        $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);
 
     };
 

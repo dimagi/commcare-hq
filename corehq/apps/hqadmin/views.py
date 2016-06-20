@@ -1,3 +1,5 @@
+from lxml import etree
+
 import HTMLParser
 import json
 import socket
@@ -7,7 +9,7 @@ from StringIO import StringIO
 
 import dateutil
 from django.utils.datastructures import SortedDict
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -30,11 +32,9 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
-from corehq.apps.es import CaseES, aggregations
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
-    use_bootstrap3, use_nvd3_v3
-from corehq.apps.style.utils import set_bootstrap_version3
-from corehq.apps.style.views import BaseB3SectionPageView
+    use_nvd3_v3
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
@@ -104,7 +104,7 @@ def get_hqadmin_base_context(request):
     }
 
 
-class BaseAdminSectionView(BaseB3SectionPageView):
+class BaseAdminSectionView(BaseSectionPageView):
     section_name = ugettext_lazy("Admin Reports")
 
     @property
@@ -122,7 +122,6 @@ class AuthenticateAs(BaseAdminSectionView):
     template_name = 'hqadmin/authenticate_as.html'
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(AuthenticateAs, self).dispatch(*args, **kwargs)
 
@@ -152,7 +151,6 @@ class RecentCouchChangesView(BaseAdminSectionView):
     template_name = 'hqadmin/couch_changes.html'
     page_title = ugettext_lazy("Recent Couch Changes")
 
-    @use_bootstrap3
     @use_nvd3_v3
     @use_datatables
     @use_jquery_ui
@@ -392,24 +390,51 @@ def pillow_operation_api(request):
         return get_response("No pillow found with name '{}'".format(pillow_name))
 
 
-@require_superuser
-@require_GET
-def admin_restore(request, app_id=None):
-    full_username = request.GET.get('as', '')
-    if not full_username or '@' not in full_username:
-        return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
+class AdminRestoreView(TemplateView):
+    template_name = 'hqadmin/admin_restore.html'
 
-    username, domain = full_username.split('@')
-    if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
-        full_username = format_username(username, domain)
+    @method_decorator(require_superuser)
+    def get(self, request, *args, **kwargs):
+        full_username = request.GET.get('as', '')
+        if not full_username or '@' not in full_username:
+            return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
 
-    user = CommCareUser.get_by_username(full_username)
-    if not user:
-        return HttpResponseNotFound('User %s not found.' % full_username)
+        username, domain = full_username.split('@')
+        if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
+            full_username = format_username(username, domain)
 
-    overwrite_cache = request.GET.get('ignore_cache') == 'true'
-    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, app_id=app_id,
-                                **get_restore_params(request))
+        self.user = CommCareUser.get_by_username(full_username)
+        if not self.user:
+            return HttpResponseNotFound('User %s not found.' % full_username)
+
+        self.overwrite_cache = request.GET.get('ignore_cache') == 'true'
+        self.app_id = kwargs.get('app_id', None)
+
+        raw = request.GET.get('raw') == 'true'
+        if raw:
+            response, _ = self._get_restore_response()
+            return response
+
+        return super(AdminRestoreView, self).get(request, *args, **kwargs)
+
+    def _get_restore_response(self):
+        return get_restore_response(
+            self.user.domain, self.user, overwrite_cache=self.overwrite_cache, app_id=self.app_id,
+            **get_restore_params(self.request)
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super(AdminRestoreView, self).get_context_data(**kwargs)
+        response, timing_context = self._get_restore_response()
+        string_payload = ''.join(response.streaming_content)
+        xml_payload = etree.fromstring(string_payload)
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        context.update({
+            'payload': formatted_payload,
+            'status_code': response.status_code,
+            'timing_data': timing_context.to_list()
+        })
+        return context
 
 
 class ManagementCommandsView(BaseAdminSectionView):
@@ -667,7 +692,6 @@ def _lookup_id_in_database(doc_id, db_name=None):
 @require_superuser
 def web_user_lookup(request):
     template = "hqadmin/web_user_lookup.html"
-    set_bootstrap_version3()
     web_user_email = request.GET.get("q")
     if not web_user_email:
         return render(request, template, {})
@@ -816,7 +840,6 @@ class DownloadMALTView(BaseAdminSectionView):
     template_name = "hqadmin/malt_downloader.html"
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DownloadMALTView, self).dispatch(request, *args, **kwargs)
 
@@ -901,7 +924,6 @@ class CallcenterUCRCheck(BaseAdminSectionView):
     template_name = "hqadmin/call_center_ucr_check.html"
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(CallcenterUCRCheck, self).dispatch(request, *args, **kwargs)
 

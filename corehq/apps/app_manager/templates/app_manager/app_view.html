@@ -7,22 +7,22 @@
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'app_manager/js/commcaresettings.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/supported-languages.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/password_setter.jquery.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
+    <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 
     {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
-    <script src="{% new_static 'app_manager/js/app_manager_utils.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/releases.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/language-profiles.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
+    <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+    <script src="{% static 'app_manager/js/releases.js' %}"></script>
+    <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
     {{ block.super }}
     {% if app.get_doc_type == "Application" %}
-        <script src="{% new_static 'translations/js/translations.js' %}"></script>
+        <script src="{% static 'translations/js/translations.js' %}"></script>
     {% endif %}
     {% if app %}
     <script>
@@ -227,7 +227,7 @@
         <div class="tab-pane" id="releases">
             <!-- templates only; will be populated asynchronously -->
             <script type="text/html" class="hq-loading">
-                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
                 {% trans "Loading..." %}
             </script>
             <script type="text/html" class="hq-loading-error">
@@ -247,7 +247,7 @@
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
                 <div data-bind="if: load_state() === 'loading'">
-                    <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
                     {% trans "Loading ..." %}
                 </div>
                 <div data-bind="html: multimedia_page_html"></div>

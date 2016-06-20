@@ -5,8 +5,9 @@ import json
 from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm
-from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
-    use_nvd3, use_jquery_ui
+from corehq.apps.style.decorators import (
+    use_nvd3,
+)
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
@@ -654,8 +655,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     base_template = "hqadmin/domain_faceted_report.html"
 
     @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(AdminDomainStatsReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(AdminDomainStatsReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def template_context(self):
@@ -1195,7 +1196,7 @@ class CommCareVersionReport(AdminFacetedReport):
     def es_query(self, params=None, size=None):
         size = size if size is not None else self.pagination.count
         return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
-                               start_at=self.pagination.start, size=size)
+                               start_at=self.pagination.start, size=size, fields=['name'])
 
     @property
     def rows(self):
@@ -1203,21 +1204,21 @@ class CommCareVersionReport(AdminFacetedReport):
         now = datetime.utcnow()
         days = now - timedelta(days=90)
 
-        def get_data():
+        def get_data(domains):
             terms = [
                 AggregationTerm('domain', 'domain'),
                 AggregationTerm('commcare_version', 'form.meta.commcare_version')
             ]
-            query = FormES().submitted(gte=days, lte=now)
+            query = FormES().submitted(gte=days, lte=now).domain(domains).size(0)
             return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
         rows = {}
         for domain in self.es_results.get('hits', {}).get('hits', []):
-            domain_name = domain['_source']['name']
+            domain_name = domain['fields']['name']
             rows.update({domain_name: [domain_name] + [0] * len(versions)})
 
-        for data in get_data():
-            if data.commcare_version in versions:
-                row = rows.get(data.domain)
+        for data in get_data(rows.keys()):
+            row = rows.get(data.domain, None)
+            if row and data.commcare_version in versions:
                 version_index = versions.index(data.commcare_version)
                 row[version_index + 1] = data.doc_count
 

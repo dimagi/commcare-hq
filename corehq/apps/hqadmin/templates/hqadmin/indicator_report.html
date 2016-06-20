@@ -5,10 +5,10 @@
 
 {% block js %}{{ block.super }}
 {% compress js %}
-<script src="{% new_static 'hqwebapp/js/lib/history-1.7.1.js' %}" type='text/javascript'></script>
-<script src="{% new_static 'hqwebapp/js/hash-tab.js' %}" type='text/javascript'></script>
-<script src='{% new_static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
-<script src='{% new_static 'hqadmin/js/visualizations.js' %}' type='text/javascript'></script>
+<script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}" type='text/javascript'></script>
+<script src="{% static 'hqwebapp/js/hash-tab.js' %}" type='text/javascript'></script>
+<script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
+<script src='{% static 'hqadmin/js/visualizations.js' %}' type='text/javascript'></script>
 {% endcompress %}
 {% endblock %}
 

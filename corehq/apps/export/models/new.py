@@ -46,7 +46,6 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     TRANSFORM_FUNCTIONS,
     DEID_TRANSFORM_FUNCTIONS,
-    PROPERTY_TAG_ROW,
     PROPERTY_TAG_CASE,
     USER_DEFINED_SPLIT_TYPES,
     PLAIN_USER_DEFINED_SPLIT_TYPE
@@ -172,7 +171,11 @@ class ExportColumn(DocumentSchema):
         if self.item.transform:
             value = TRANSFORM_FUNCTIONS[self.item.transform](value, doc)
         if self.deid_transform:
-            value = DEID_TRANSFORM_FUNCTIONS[self.deid_transform](value, doc)
+            try:
+                value = DEID_TRANSFORM_FUNCTIONS[self.deid_transform](value, doc)
+            except ValueError:
+                # Unable to convert the string to a date
+                pass
         return value
 
     @staticmethod
@@ -432,6 +435,15 @@ class ExportInstance(BlobMixin, Document):
     @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
+
+    @property
+    @memoized
+    def has_multimedia(self):
+        for table in self.tables:
+            for column in table.selected_columns:
+                if isinstance(column, MultiMediaExportColumn):
+                    return True
+        return False
 
     @property
     def selected_tables(self):

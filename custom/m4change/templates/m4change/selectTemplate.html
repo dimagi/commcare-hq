@@ -5,9 +5,9 @@
 {% load i18n %}
 
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% new_static 'case/js/cheapxml.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'case/js/casexml.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'm4change/javascripts/mcct_project_review_page_management.js' %}"></script>
+    <script type="text/javascript" src="{% static 'case/js/cheapxml.js' %}"></script>
+    <script type="text/javascript" src="{% static 'case/js/casexml.js' %}"></script>
+    <script type="text/javascript" src="{% static 'm4change/javascripts/mcct_project_review_page_management.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -76,7 +76,7 @@
 {% block pretable %}
     <div id="logo-top" class="row">
         <div class="col-sm-3" id="logo-top-left">
-            <img src="{% new_static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
+            <img src="{% static 'm4change/images/SurePLogo.jpg' %}" alt="sure_p_logo"/>
         </div>
         <div class="col-sm-6 buttons" id="logo-title">
             {{ block.super }}
@@ -103,7 +103,7 @@
             </form>
         </div>
         <div class="col-sm-3" id="logo-top-right">
-            <img src="{% new_static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
+            <img src="{% static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
         </div>
     </div>
 {% endblock %}
@@ -111,7 +111,7 @@
 {% block posttable %}
     <div id="logo-bottom" class="row">
         <div class="col-sm-12">
-            <img src="{% new_static 'm4change/images/PathfinderInternationalLogo.jpg' %}"
+            <img src="{% static 'm4change/images/PathfinderInternationalLogo.jpg' %}"
                  alt="pathfinder_international_logo"/>
         </div>
     </div>

@@ -43,7 +43,7 @@ class CaseSearchPillowTest(TestCase):
         kafka_seq = self._get_kafka_seq()
 
         case = self._make_case(case_properties={'foo': 'bar'})
-        producer.send_change(topics.CASE, doc_to_change(case).metadata)
+        producer.send_change(topics.CASE, doc_to_change(case.to_json()).metadata)
         # confirm change made it to kafka
         message = consumer.next()
         change_meta = change_meta_from_kafka_message(message.value)

@@ -25,7 +25,6 @@ from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime

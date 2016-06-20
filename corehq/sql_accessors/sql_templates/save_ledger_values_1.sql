@@ -20,11 +20,11 @@ BEGIN
     ELSE
         INSERT INTO form_processor_ledgervalue (
             case_id, section_id, entry_id, balance, last_modified, last_modified_form_id,
-            domain, location_id, daily_consumption
+            domain, daily_consumption
         ) VALUES (
             ledger_value.case_id, ledger_value.section_id, ledger_value.entry_id,
             ledger_value.balance, ledger_value.last_modified, ledger_value.last_modified_form_id,
-            ledger_value.domain, ledger_value.location_id, ledger_value.daily_consumption
+            ledger_value.domain, ledger_value.daily_consumption
         );
     END IF;
 

@@ -8,7 +8,6 @@ import re
 from restkit.errors import NoMoreData
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.loader import render_to_string
@@ -514,7 +513,16 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
+        """
+        If create_record is True, a DomainRemovalRecord is created so that the
+        action can be undone, and the DomainRemovalRecord is returned.
+
+        If create_record is True but the domain membership is not found,
+        then None is returned.
+        """
         self.get_by_user_id.clear(self.__class__, self.user_id, domain)
+        record = None
+
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
                 if create_record:
@@ -525,11 +533,13 @@ class _AuthorizableMixin(IsMemberOfMixin):
                     )
                 del self.domain_memberships[i]
                 break
+
         for i, domain_name in enumerate(self.domains):
             if domain_name == domain:
                 del self.domains[i]
                 break
-        if create_record:
+
+        if record:
             record.save()
             return record
 

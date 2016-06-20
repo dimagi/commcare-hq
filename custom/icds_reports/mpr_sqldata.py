@@ -321,9 +321,9 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
                         else:
                             denom = data.get(cell['second_value'], 1)
                         if 'format' in cell:
-                            cell_data = '%.2f%%' % (cell['func'](num, denom) * 100)
+                            cell_data = '%.2f%%' % (cell['func'](num, float(denom or 1)) * 100)
                         else:
-                            cell_data = '%.2f' % cell['func'](num, denom)
+                            cell_data = '%.2f' % cell['func'](num, float(denom or 1))
                         row_data.append(cell_data)
                     else:
                         row_data.append(data.get(cell, cell if cell == '--' or idx == 0 else 0))
@@ -473,11 +473,11 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
 
                             if 'second_value' in cell:
                                 denom = data.get(cell['second_value'], 1)
-                                alias_data = cell['func'](num, (denom or 1))
+                                alias_data = cell['func'](num, float(denom or 1))
                                 if "format" in cell:
-                                    cell_data = "%.2f%%" % (cell['func'](num, (denom or 1)) * 100)
+                                    cell_data = "%.2f%%" % (cell['func'](num, float(denom or 1)) * 100)
                                 else:
-                                    cell_data = "%.2f" % cell['func'](num, (denom or 1))
+                                    cell_data = "%.2f" % cell['func'](num, float(denom or 1))
                             else:
                                 cell_data = num
                                 alias_data = num
@@ -845,8 +845,8 @@ class MPRPreschoolEducation(ICDSMixin, MPRData):
 
                             if 'second_value' in cell:
                                 denom = data.get(cell['second_value'], 1)
-                                alias_data = cell['func'](num, (denom or 1))
-                                cell_data = "%.2f" % cell['func'](num, (denom or 1))
+                                alias_data = cell['func'](num, float(denom or 1))
+                                cell_data = "%.2f" % cell['func'](num, float(denom or 1))
                             else:
                                 cell_data = num
                                 alias_data = num
@@ -1134,8 +1134,8 @@ class MPRGrowthMonitoring(ICDSMixin, MPRData):
                             for c in cell['columns']:
                                 num += data.get(c, 0)
                             denom = data.get(cell['second_value'], 1)
-                            alias_data = cell['func'](num, (denom or 1))
-                            cell_data = "%.2f" % cell['func'](num, (denom or 1))
+                            alias_data = cell['func'](num, float(denom or 1))
+                            cell_data = "%.2f" % cell['func'](num, float(denom or 1))
                         else:
                             for c in cell['columns']:
                                 if 'func' in cell:
@@ -1144,8 +1144,7 @@ class MPRGrowthMonitoring(ICDSMixin, MPRData):
                                     else:
                                         num = cell['func'](num, data.get(c, 0))
                                 else:
-                                    for c in cell['columns']:
-                                        num += data.get(c, 0)
+                                    num += data.get(c, 0)
                             cell_data = num
                             alias_data = num
 
@@ -1242,7 +1241,7 @@ class MPRGrowthMonitoring(ICDSMixin, MPRData):
                     'alias': 'child_male'
                 },
                 {
-                    'columns': ('child_female', 'childe_male'),
+                    'columns': ('child_female', 'child_male'),
                     'alias': 'all_child'
                 },
             ),
@@ -1585,7 +1584,7 @@ class MPRImmunizationCoverage(ICDSMixin, MPRData):
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             children_completing = data.get('open_child_count', 0)
             vaccination = data.get('open_child_1yr_immun_complete', 1)
-            immunization = "%.2f%%" % ((children_completing / (vaccination or 1)) * 100)
+            immunization = "%.2f%%" % ((children_completing / float(vaccination or 1)) * 100)
             return (
                 '(I) Children Completing 12 months during the month: {0}'.format(children_completing),
                 '(II) Of this, number of children who have received all vaccinations: {0}'.format(vaccination),
@@ -1616,7 +1615,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 for idx, cell in enumerate(row):
                     if isinstance(cell, dict):
                         num = data.get(cell['column'], 0)
-                        row_data.append("%.2f%%" % cell['func'](num, (self.awc_number or 1)))
+                        row_data.append("%.2f%%" % cell['func'](num, float(self.awc_number or 1)))
                     else:
                         row_data.append(data.get(cell, cell if not cell or idx == 0 else 0))
                 rows.append(row_data)
@@ -1803,11 +1802,11 @@ class MPRReferralServices(ICDSMixin, MPRData):
                                 denom = self.awc_number
                             else:
                                 denom = data.get(cell['second_value'], 1)
-                            alias_data = cell['func'](num, (denom or 1))
+                            alias_data = cell['func'](num, float(denom or 1))
                             if 'format' in cell:
                                 cell_data = "%.2f%%" % (alias_data * 100)
                             else:
-                                cell_data = "%.2f" % cell['func'](num, (denom or 1))
+                                cell_data = "%.2f" % cell['func'](num, float(denom or 1))
                         else:
                             values = []
                             for c in cell['columns']:
@@ -2218,7 +2217,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                         num = 0
                         for c in cell['columns']:
                             num += data.get(c, 0)
-                        row_data.append("%.2f%%" % cell['func'](num, (self.awc_number or 1)))
+                        row_data.append("%.2f%%" % cell['func'](num, float(self.awc_number or 1)))
                     else:
                         row_data.append(data.get(cell, cell if not cell or idx == 0 else 0))
                 rows.append(row_data)

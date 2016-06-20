@@ -18,7 +18,6 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
@@ -45,7 +44,6 @@ class InputStockView(BaseDomainView):
     template_name = 'ewsghana/input_stock.html'
 
     @method_decorator(login_and_domain_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         couch_user = self.request.couch_user
         site_code = kwargs['site_code']

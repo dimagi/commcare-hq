@@ -65,7 +65,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
+    AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler

@@ -9,7 +9,6 @@ from corehq.form_processor.change_providers import SqlCaseChangeProvider
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX, CASE_ES_TYPE
 from corehq.pillows.utils import get_user_type
 from dimagi.utils.couch import LockManager
-from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
 import logging
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler

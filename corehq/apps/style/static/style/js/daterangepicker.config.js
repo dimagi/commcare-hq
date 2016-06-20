@@ -14,7 +14,7 @@ $(function () {
     $.fn.getDateRangeSeparator = function () {
         return ' to ';
     };
-    $.fn.createBootstrap3DateRangePicker = function(
+    $.fn.createDateRangePicker = function(
         range_labels, separator, startdate, enddate
     ) {
         var now = moment();
@@ -53,7 +53,7 @@ $(function () {
         }
     };
     $.fn.createBootstrap3DefaultDateRangePicker = function () {
-        this.createBootstrap3DateRangePicker(
+        this.createDateRangePicker(
             {
                 last_7_days: 'Last 7 Days',
                 last_month: 'Last Month',

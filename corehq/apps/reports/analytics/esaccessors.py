@@ -8,7 +8,7 @@ from corehq.apps.es.aggregations import (
     TopHitsAggregation,
     MissingAggregation,
     MISSING_KEY,
-)
+    AggregationTerm, NestedTermAggregationsHelper, SumAggregation)
 from corehq.apps.es.forms import (
     submitted as submitted_filter,
     completed as completed_filter,
@@ -521,3 +521,19 @@ def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None):
         query = query.entry(entry_ids)
 
     return [StockLedgerValueWrapper.wrap(row) for row in query.run().hits]
+
+
+def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
+    # todo: figure out why this causes circular import
+    query = LedgerES().domain(domain).section(section_id).case(case_ids)
+    if entry_ids:
+        query = query.entry(entry_ids)
+
+    terms = [
+        AggregationTerm('entry_id', 'entry_id'),
+    ]
+    return NestedTermAggregationsHelper(
+        base_query=query,
+        terms=terms,
+        bottom_level_aggregation=SumAggregation('balance', 'balance'),
+    ).get_data()

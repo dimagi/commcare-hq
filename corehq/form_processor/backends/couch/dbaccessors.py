@@ -18,7 +18,6 @@ from corehq.apps.hqcase.dbaccessors import (
 )
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.blobs.mixin import BlobMixin
-from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
@@ -91,10 +90,6 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_form_ids_for_user(domain, user_id):
         return get_form_ids_for_user(domain, user_id)
-
-    @staticmethod
-    def forms_have_multimedia(domain, app_id, xmlns):
-        return forms_have_multimedia(domain, app_id, xmlns)
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):

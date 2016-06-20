@@ -81,10 +81,6 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def forms_have_multimedia(domain, app_id, xmlns):
-        raise NotImplementedError
-
-    @abstractmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         raise NotImplementedError
 
@@ -150,9 +146,6 @@ class FormAccessors(object):
 
     def get_attachment_content(self, form_id, attachment_name):
         return self.db_accessor.get_attachment_content(form_id, attachment_name)
-
-    def forms_have_multimedia(self, app_id, xmlns):
-        return self.db_accessor.forms_have_multimedia(self.domain, app_id, xmlns)
 
     def soft_delete_forms(self, form_ids, deletion_date=None, deletion_id=None):
         return self.db_accessor.soft_delete_forms(self.domain, form_ids, deletion_date, deletion_id)
