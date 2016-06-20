@@ -2,7 +2,7 @@ from .standard import *
 from .case import *
 
 
-def get_restore_providers(timing_context):
+def get_element_providers(timing_context):
     """
     Get restore providers which contribute directly to the XML.
     """
@@ -15,7 +15,7 @@ def get_restore_providers(timing_context):
     ]
 
 
-def get_long_running_providers(timing_context):
+def get_full_response_providers(timing_context):
     """
     Get restore providers that are expected to run for a long time.
 

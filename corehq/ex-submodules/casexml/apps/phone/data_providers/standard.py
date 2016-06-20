@@ -17,9 +17,9 @@ class RestoreDataProvider(TimedProvider):
         raise NotImplementedError('Need to implement this method')
 
 
-class LongRunningRestoreDataProvider(TimedProvider):
+class FullResponseDataProvider(TimedProvider):
     """
-    Base class for things that gives data optionally asynchronously to a restore.
+    Base class for things that deal with their own response.
     """
     def get_response(self, restore_state):
         raise NotImplementedError('Need to implement this method')

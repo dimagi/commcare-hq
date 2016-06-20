@@ -11,7 +11,7 @@ from celery.result import AsyncResult
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
-from casexml.apps.phone.data_providers import get_restore_providers, get_long_running_providers
+from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
@@ -608,8 +608,8 @@ class RestoreConfig(object):
         """
         with self.restore_state.restore_class(
                 self.restore_user.username, items=self.params.include_item_count) as response:
-            normal_providers = get_restore_providers(self.timing_context)
-            for provider in normal_providers:
+            element_providers = get_element_providers(self.timing_context)
+            for provider in element_providers:
                 with self.timing_context(provider.__class__.__name__):
                     for element in provider.get_elements(self.restore_state):
                         if element.tag == 'fixture' and len(element) == 0:
@@ -621,9 +621,8 @@ class RestoreConfig(object):
                             ElementTree.SubElement(element, 'empty_element')
                         response.append(element)
 
-            # in the future these will be done asynchronously so keep them separate
-            long_running_providers = get_long_running_providers(self.timing_context)
-            for provider in long_running_providers:
+            full_response_providers = get_full_response_providers(self.timing_context)
+            for provider in full_response_providers:
                 with self.timing_context(provider.__class__.__name__):
                     partial_response = provider.get_response(self.restore_state, async_task)
                     response = response + partial_response

@@ -1,10 +1,10 @@
-from casexml.apps.phone.data_providers import LongRunningRestoreDataProvider
+from casexml.apps.phone.data_providers import FullResponseDataProvider
 from casexml.apps.phone.data_providers.case.clean_owners import CleanOwnerCaseSyncOperation
 
 
-class CasePayloadProvider(LongRunningRestoreDataProvider):
+class CasePayloadProvider(FullResponseDataProvider):
     """
-    Long running restore provider responsible for generating the case and stock payloads.
+    Full restore provider responsible for generating the case and stock payloads.
     """
 
     def get_response(self, restore_state, async_task=None):
