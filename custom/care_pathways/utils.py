@@ -185,6 +185,21 @@ class TableCardDataGroupsFormatter(DataFormatter):
 
 class TableCardDataIndividualFormatter(DataFormatter):
 
+    def first_column_format(self, x, table_card_group_by):
+        if table_card_group_by == 'group_name':
+            return x
+        else:
+            group_by = 'Groups'
+            if table_card_group_by == 'group_leadership':
+                group_by = 'Leadership'
+
+            if int(x) == 0:
+                return 'All Male %s' % group_by
+            elif int(x) == 1:
+                return 'Mixed %s' % group_by
+            elif int(x) == 2:
+                return 'All Female %s' % group_by
+
     def calculate_total_column(self, row):
         TAG_RE = re.compile(r'<[^>]+>')
 
@@ -204,7 +219,7 @@ class TableCardDataIndividualFormatter(DataFormatter):
                                     100 * int(num_practices or 0) / float(total_practices or 1))
         return {'sort_key': value, 'html': value}
 
-    def _init_row(self, domain, practices):
+    def _init_row(self, practices):
         row = {}
         for practice in practices:
             row[practice.val] = None
@@ -219,7 +234,7 @@ class TableCardDataIndividualFormatter(DataFormatter):
         groups = sorted(list(groups))
         result = OrderedDict()
         for group in groups:
-            result[group] = self._init_row(domain, practices)
+            result[group] = self._init_row(practices)
 
         for key, row in data.iteritems():
             formatted_row = self._format.format_row(row)
@@ -234,6 +249,41 @@ class TableCardDataIndividualFormatter(DataFormatter):
                 else:
                     formatted_row.append(value)
             total_column = self.calculate_total_column(formatted_row)
-            res = [{'html': key, 'sort_key': key}, total_column]
+            name = self.first_column_format(key, group_by)
+            res = [{'html': name, 'sort_key': name}, total_column]
+            res.extend(formatted_row)
+            yield res
+
+
+class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
+
+    def format(self, data, keys=None, group_by=None, domain=None, practices=None):
+        practices = practices or []
+        groups = set()
+        id_to_name = {}
+        for row in sorted(data.keys()):
+            groups.add(row[0])
+            id_to_name[row[0]] = u'{} ({})'.format(row[1].title(), row[2])
+
+        groups = sorted(list(groups), key=lambda r: id_to_name[r])
+        result = OrderedDict()
+        for group in groups:
+            result[group] = self._init_row(domain, practices)
+
+        for key, row in data.iteritems():
+            formatted_row = self._format.format_row(row)
+            result[key[0]][row['practices']] = formatted_row[1]
+            id_to_name[key[0]] = u'{} ({})'.format(key[1], key[2])
+
+        for key, row in result.items():
+            formatted_row = []
+            for practice in practices:
+                value = row[practice.val]
+                if value is None:
+                    formatted_row.append({'html': 'N/A', 'sort_key': 'N/A'})
+                else:
+                    formatted_row.append(value)
+            total_column = self.calculate_total_column(formatted_row)
+            res = [{'html': id_to_name[key], 'sort_key': id_to_name[key]}, total_column]
             res.extend(formatted_row)
             yield res

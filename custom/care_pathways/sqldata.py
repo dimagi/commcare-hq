@@ -12,7 +12,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, TableDataFormat
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains, TableCardDataIndividualFormatter, TableCardDataGroupsFormatter, \
-    get_domains_with_next
+    get_domains_with_next, TableCardDataGroupsIndividualFormatter
 from sqlalchemy import select
 import urllib
 import re
@@ -80,26 +80,31 @@ class CareQueryMeta(QueryMeta):
         table_card_group = []
         if 'group_name' in self.group_by:
             table_card_group.append('group_name')
-        s1 = alias(select([table.c.doc_id, table.c.group_id,
+        s1 = alias(select([table.c.doc_id, table.c.group_case_id, table.c.group_name, table.c.group_id,
                            (sqlalchemy.func.max(table.c.prop_value) +
                             sqlalchemy.func.min(table.c.prop_value)).label('maxmin')] + filter_cols +
                           external_cols, from_obj=table,
-                          group_by=[table.c.doc_id, table.c.group_id] + filter_cols + external_cols), name='x')
+                          group_by=([table.c.doc_id, table.c.group_case_id, table.c.group_name, table.c.group_id] +
+                                    filter_cols + external_cols)), name='x')
         s2 = alias(
             select(
-                [table.c.group_id,
+                [table.c.group_case_id,
                  sqlalchemy.cast(
                      cast(func.max(table.c.gender), Integer) + cast(func.min(table.c.gender), Integer), VARCHAR
                  ).label('gender')] + table_card_group,
                 from_obj=table,
-                group_by=['group_id'] + table_card_group + having_group_by, having=group_having
+                group_by=[table.c.group_case_id] + table_card_group + having_group_by, having=group_having
             ), name='y'
         )
+        group_by = list(self.group_by)
+        if 'group_case_id' in group_by:
+            group_by[group_by.index('group_case_id')] = s1.c.group_case_id
+            group_by[group_by.index('group_name')] = s1.c.group_name
         return select(
-            [sqlalchemy.func.count(s1.c.doc_id).label(self.key)] + self.group_by,
-            group_by=[s1.c.maxmin] + filter_cols + self.group_by,
+            [sqlalchemy.func.count(s1.c.doc_id).label(self.key)] + group_by,
+            group_by=[s1.c.maxmin] + filter_cols + group_by,
             having=AND(having).build_expression(s1),
-            from_obj=join(s1, s2, s1.c.group_id == s2.c.group_id)
+            from_obj=join(s1, s2, s1.c.group_case_id == s2.c.group_case_id)
         ).params(filter_values)
 
 
@@ -355,6 +360,13 @@ class TableCardSqlData(CareSqlData):
                 return 'All Female %s' % group_by
 
     @property
+    def formatter(self):
+        if self.config['table_card_group_by'] == 'group_name':
+            return TableCardDataGroupsIndividualFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        else:
+            return TableCardDataIndividualFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+
+    @property
     def columns(self):
         if self.config['table_card_group_by'] == 'group_name':
             first_column = 'group_name'
@@ -410,7 +422,7 @@ class TableCardSqlData(CareSqlData):
     @property
     def group_by(self):
         if self.config['table_card_group_by'] == 'group_name':
-            return ['group_name', 'value_chain', 'domains', 'practices']
+            return ['group_case_id', 'group_name', 'group_id', 'value_chain', 'domains', 'practices']
         else:
             return ['gender', 'value_chain', 'domains', 'practices']
 
@@ -432,9 +444,9 @@ class TableCardReportGrouppedPercentSqlData(TableCardSqlData):
         return headers
 
     def format_rows(self, rows):
-        formatter = TableCardDataIndividualFormatter(TableDataFormat(self.columns, no_value=self.no_value))
-        formatted_rows = formatter.format(rows, keys=self.keys, group_by=self.group_by, domain=self.domain,
-                                          practices=list(self.flat_practices))
+        formatter = self.formatter
+        formatted_rows = formatter.format(rows, keys=self.keys, group_by=self.config['table_card_group_by'],
+                                          domain=self.domain, practices=list(self.flat_practices))
         formatter = TableCardDataGroupsFormatter(TableDataFormat(self.columns, no_value=self.no_value))
         return formatter.format(list(formatted_rows), keys=self.keys, group_by=self.group_by)
 
@@ -479,9 +491,9 @@ class TableCardReportIndividualPercentSqlData(TableCardSqlData):
         return headers
 
     def format_rows(self, rows):
-        formatter = TableCardDataIndividualFormatter(TableDataFormat(self.columns, no_value=self.no_value))
-        formatted = list(formatter.format(rows, keys=self.keys, group_by=self.group_by, domain=self.domain,
-                                          practices=list(self.flat_practices)))
+        formatter = self.formatter
+        formatted = list(formatter.format(rows, keys=self.keys, group_by=self.config['table_card_group_by'],
+                                          domain=self.domain, practices=list(self.flat_practices)))
         for row in formatted:
             for el in row:
                 if el['sort_key'] == 'N/A':
