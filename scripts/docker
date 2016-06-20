@@ -6,14 +6,18 @@ function usage() {
         test)
             echo "Run tests"
             echo ""
-            echo "test [OPTIONS]"
+            echo "$0 test [OPTIONS]"
             echo ""
-            echo "All OPTIONS are passed to the selected test runner."
+            echo "OPTIONS are passed to the selected test runner."
             echo ""
             echo "Set TEST environment variable to select a test runner:"
             echo "  TEST=python|python-sharded|javascript"
             echo ""
             echo "The default is python."
+            echo ""
+            echo "Tests are run with a project name of 'hqtest', so the"
+            echo "containers and volumes it creates will not interfere with"
+            echo "'hqservice' containers managed by other commands."
             echo ""
             ;;
         bash)
@@ -24,22 +28,23 @@ function usage() {
             echo "Run Django shell in web container"
             echo ""
             ;;
-        services)
-            echo "Manage CommCare HQ docker services"
+        hqtest)
+            echo "Manage test containers"
             echo ""
-            echo "Start services with ports mapped to the docker host if no"
-            echo "other options are given. This command uses a different base"
-            echo "container name than other commands so the containers and"
-            echo "volumes it creates will not interfere with other commands."
+            echo "$0 hqtest [COMMAND]"
             echo ""
-            echo "$0 services [--bootstrap] [COMMAND]"
+            echo "OPTIONS are passed to the selected test runner."
             echo ""
-            echo "Options:"
+            echo "Examples:"
             echo ""
-            echo "  --bootstrap         Run Django web server on port 8000"
+            echo "  # list test containers"
+            echo "  $0 hqtest ps"
             echo ""
-            echo "Commands:"
-            echo "    All docker-compose commands are supported."
+            echo "  # stop test containers"
+            echo "  $0 hqtest stop"
+            echo ""
+            echo "  # remove all test containers and volumes"
+            echo "  $0 hqtest teardown"
             echo ""
             ;;
         teardown)
@@ -51,7 +56,7 @@ function usage() {
             echo ""
             echo "$0 COMMAND [OPTIONS]"
             echo "      -h --help"
-            echo "      test|services|teardown|bash|shell|help"
+            echo "      test|bash|shell|hqtest|teardown|help"
             echo ""
             echo "$0 help COMMAND"
             echo ""
@@ -59,27 +64,35 @@ function usage() {
             echo ""
             echo "Examples:"
             echo ""
-            echo "  # list test containers"
+            echo "  # list service containers"
             echo "  $0 ps"
             echo ""
-            echo "  # list service containers"
-            echo "  $0 services ps"
+            echo "  # run services in background"
+            echo "  $0 up -d"
             echo ""
-            echo "  # run bash in riakcs service container"
-            echo "  $0 services exec riakcs bash"
-            echo ""
-            echo "  # run bash in bootstrapped web conatiner"
-            echo "  $0 services --bootstrap bash"
             ;;
     esac
     exit
 }
 
-CMD=$1
+CMD="$1"
 shift
-if [ "$CMD" == "services" ]; then
-    CMD=$1
-    shift
+if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
+    if [ "$CMD" == "hqtest" ]; then
+        CMD="$1"
+        shift
+        if [ -z "$CMD" ]; then
+            CMD=help
+        fi
+    fi
+    export COMPOSE_FILE=docker/hq-compose.yml
+    export COMPOSE_PROJECT_NAME=hqtest
+    if [ -n "$TRAVIS_BUILD_DIR" ]; then
+        export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
+    else
+        export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
+    fi
+else
     if [ "$CMD" == "--bootstrap" ]; then
         SERVICES="bootstrap"
         CMD=$1
@@ -90,7 +103,7 @@ if [ "$CMD" == "services" ]; then
     else
         SERVICES="services"
         if [ -z "$CMD" ]; then
-            CMD="up -d"
+            CMD="help"
         fi
     fi
 
@@ -116,14 +129,6 @@ if [ "$CMD" == "services" ]; then
     export COMPOSE_PROJECT_NAME=hqservice
     export VOLUME_PREFIX="$DOCKER_DATA_HOME/"
     export KAFKA_ADVERTISED_HOST_NAME="$KAFKA_ADVERTISED_HOST_NAME"
-else
-    export COMPOSE_FILE=docker/hq-compose.yml
-    export COMPOSE_PROJECT_NAME=hqtest
-    if [ -n "$TRAVIS_BUILD_DIR" ]; then
-        export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
-    else
-        export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
-    fi
 fi
 # export variables for compose file (they must be set or it complains)
 export JS_SETUP="${JS_SETUP:-no}"
@@ -151,8 +156,8 @@ fi
 
 case $CMD in
     -h | --help | help | "")
-        if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
-            usage services
+        if [ "$COMPOSE_PROJECT_NAME" == "hqtest" ]; then
+            usage hqtest
         else
             usage $@
         fi
