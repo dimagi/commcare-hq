@@ -103,10 +103,15 @@ class ILSTestScript(TestScript):
             cls.sms_backend_mapping.delete()
         if cls.sms_backend.id is not None:
             cls.sms_backend.delete()
-        CommCareUser.get_by_username('stella').delete()
-        CommCareUser.get_by_username('bella').delete()
-        CommCareUser.get_by_username('trella').delete()
-        CommCareUser.get_by_username('msd_person').delete()
+        for username in [
+            'stella',
+            'bella',
+            'trella',
+            'msd_person',
+        ]:
+            user = CommCareUser.get_by_username(username)
+            if user:
+                user.delete()
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
         SQLProduct.objects.all().delete()
