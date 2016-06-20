@@ -1228,7 +1228,6 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case_id = models.CharField(max_length=255, default=None)  # remove foreign key until we're sharding this
-    location_id = models.CharField(max_length=255, null=True, default=None)
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
     entry_id = models.CharField(max_length=100, default=None)
@@ -1256,12 +1255,6 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
         return UniqueLedgerReference(
             case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
         )
-
-    @property
-    def sql_location(self):
-        from corehq.apps.locations.models import SQLLocation
-        if self.location_id:
-            return SQLLocation.by_location_id(self.location_id)
 
     def to_json(self):
         from .serializers import LedgerValueSerializer
