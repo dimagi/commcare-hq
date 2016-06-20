@@ -86,10 +86,15 @@ function _run_tests() {
 
 function bootstrap() {
     JS_SETUP=yes setup python
-    ./manage.py sync_couch_views
-    ./manage.py migrate --noinput
-    ./manage.py compilejsi18n
-    ./manage.py bootstrap demo admin@example.com password
+    su cchq -c "./manage.py sync_couch_views && \
+                ./manage.py migrate --noinput && \
+                ./manage.py compilejsi18n && \
+                ./manage.py bootstrap demo admin@example.com password"
+}
+
+function runserver() {
+    JS_SETUP=yes setup python
+    su cchq -c "./manage.py runserver $@ 0.0.0.0:8000"
 }
 
 export -f setup
@@ -118,7 +123,7 @@ else
 fi
 
 mkdir -p lib/sharedfiles
-ln -s /mnt/lib/sharedfiles /sharedfiles
+ln -sf /mnt/lib/sharedfiles /sharedfiles
 chown cchq:cchq lib/sharedfiles
 
 cd commcare-hq

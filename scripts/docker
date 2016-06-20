@@ -24,6 +24,16 @@ function usage() {
             echo "Run bash in web container"
             echo ""
             ;;
+        runserver)
+            echo "Run Django web server on port 8000"
+            echo ""
+            echo "$0 runserver [-d|COMMAND]"
+            echo ""
+            echo "Options:"
+            echo ""
+            echo "  -d      Run in background."
+            echo ""
+            ;;
         shell)
             echo "Run Django shell in web container"
             echo ""
@@ -93,12 +103,18 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
         export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
     fi
 else
-    if [ "$CMD" == "--bootstrap" ]; then
-        SERVICES="bootstrap"
-        CMD=$1
-        shift
-        if [ -z "$CMD" ]; then
-            CMD="run --rm web"
+    if [[ "$CMD" =~ ^(runserver|bash|shell|ps)$ ]]; then
+        SERVICES="runserver"
+        if [ "$CMD" == "runserver" ]; then
+            CMD="$1"
+            shift
+            if [ "$CMD" == "--bootstrap" ]; then
+                CMD=bootstrap
+            elif [ "$CMD" == "-d" ]; then
+                CMD="up -d"
+            elif [ -z "$CMD" ]; then
+                CMD="up"
+            fi
         fi
     else
         SERVICES="services"

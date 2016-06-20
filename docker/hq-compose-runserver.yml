@@ -4,7 +4,7 @@ web:
     COMMCAREHQ_BOOTSTRAP: "yes"
     DEPENDENT_SERVICES: "couch postgres redis kafka elasticsearch riakcs"
   privileged: true  # allows mount inside container
-  command: [bootstrap]
+  command: [runserver]
   links:
     - postgres
     - couch
