@@ -61,9 +61,9 @@ class Command(BaseCommand):
         ids_file_path = args[0].strip()
         log_path = args[1].strip()
 
-        num_with_1_dup = 0
-        num_with_multi_dup = 0
-        num_with_no_dup = 0
+        one_dup_counts = defaultdict(lambda: 0)
+        multi_dups_counts = defaultdict(lambda: 0)
+        no_dups_counts = defaultdict(lambda: 0)
 
         with open(log_path, "w") as log_file:
             with open(ids_file_path, "r") as lines:
@@ -77,20 +77,28 @@ class Command(BaseCommand):
                     self._print_progress(i, total_lines)
                     duplicates = self.get_duplicates(domain, bad_xform_id)
                     if len(duplicates) == 1:
-                        num_with_1_dup += 1
+                        one_dup_counts[domain] += 1
                         self.swap_doc_types(
                             log_file, bad_xform_id, list(duplicates)[0], domain, dry_run
                         )
                     elif len(duplicates) > 1:
-                        num_with_multi_dup += 1
+                        multi_dups_counts[domain] += 1
                         self.log_too_many_dups(log_file, bad_xform_id, domain, duplicates)
                     else:
-                        num_with_no_dup += 1
                         self.log_no_dups(log_file, bad_xform_id, domain)
+                        no_dups_counts[domain] += 1
 
-        print "Found {} forms with no duplicates".format(num_with_no_dup)
-        print "Found {} forms with one duplicate".format(num_with_1_dup)
-        print "Found {} forms with multiple duplicates".format(num_with_multi_dup)
+        print "Found {} forms with no duplicates".format(sum(no_dups_counts.values()))
+        print "Found {} forms with one duplicate".format(sum(one_dup_counts.values()))
+        print "Found {} forms with multiple duplicates".format(sum(multi_dups_counts.values()))
+        print ""
+        domains = set(no_dups_counts.keys()) | set(one_dup_counts.keys()) | set(multi_dups_counts.keys())
+        domains = sorted(list(domains))
+        for domain in domains:
+            print domain
+            print "\t{} forms with no duplicates".format(no_dups_counts[domain])
+            print "\t{} forms with one duplicate". format(one_dup_counts[domain])
+            print "\t{} forms with multiple duplicates".format(multi_dups_counts[domain])
 
     def get_duplicates(self, domain, xform_id):
 
