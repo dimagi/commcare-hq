@@ -10,6 +10,7 @@ import settingshelper as helper
 
 # odd celery fix
 import djcelery
+# this isn't much of a change
 
 djcelery.setup_loader()
 
