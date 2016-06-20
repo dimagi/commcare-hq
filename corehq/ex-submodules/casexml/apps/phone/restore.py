@@ -7,7 +7,6 @@ from uuid import uuid4
 import shutil
 import hashlib
 from celery.exceptions import TimeoutError
-from celery.task.control import revoke as revoke_celery_task
 from celery.result import AsyncResult
 
 from couchdbkit import ResourceConflict, ResourceNotFound
@@ -216,9 +215,8 @@ class FileRestoreResponse(RestoreResponse):
 
 class AsyncRestoreResponse(object):
 
-    def __init__(self, task, restore_id):
+    def __init__(self, task):
         self.task = task
-        self.restore_id = restore_id
 
     def get_progress(self):
         progress = self.task.info if self.task.info else {}
@@ -238,10 +236,7 @@ class AsyncRestoreResponse(object):
         progress_tag.set('done', str(self.get_progress()['done']))
         progress_tag.set('total', str(self.get_progress()['total']))
         progress_tag.set('retry-after', str(self.get_progress()['retry-after']))
-        restore_tag = ElementTree.Element("restore_id")
-        restore_tag.text = self.restore_id
         sync_tag.append(progress_tag)
-        sync_tag.append(restore_tag)
 
         return ElementTree.tostring(root, encoding='utf-8')
 
@@ -561,10 +556,6 @@ class RestoreConfig(object):
         if cached_response:
             return cached_response
 
-        unfinished_async_task = self.sync_log and self.sync_log.async_task_id
-        if unfinished_async_task:
-            return self._get_asynchronous_payload()
-
         # Start new sync
         if self.async:
             print "ASYNC"
@@ -579,27 +570,23 @@ class RestoreConfig(object):
 
         return response
 
-    def _get_asynchronous_payload(self):
-        if self.sync_log and self.sync_log.async_task_id:
-            # a running task exists
-            task = AsyncResult(self.sync_log.async_task_id)
-            new_task = False
-            sync_log_to_update = self.sync_log
-        else:
-            # kill old tasks
-            old_sync_log = SyncLog.last_for_user(self.restore_user.user_id)
-            if old_sync_log and old_sync_log.async_task_id:
-                revoke_celery_task(old_sync_log.async_task_id)
-                old_sync_log.async_task_id = None
-                old_sync_log.save()
+    @property
+    def _async_cache_key(self):
+        return "async-restore-{}".format(self.restore_user.user_id)
 
+    def _get_asynchronous_payload(self):
+        task_id = self.cache.get(self._async_cache_key)
+        if task_id:
+            # a running task exists
+            # TODO: the task might actually have been deleted somewhere...
+            task = AsyncResult(task_id)
+            new_task = False
+        else:
             # start a new task
-            self.restore_state.start_sync()
             task = get_async_restore_payload.delay(self)
             new_task = True
-            sync_log_to_update = self.restore_state.current_sync_log
-            self.restore_state.current_sync_log.async_task_id = task.id
-            self.restore_state.current_sync_log.save()
+            # store the task id in cache
+            self.cache.set(self._async_cache_key, task.id)
 
         try:
             # if this is a new task, wait for INITIAL_ASYNC_TIMEOUT in case
@@ -608,11 +595,10 @@ class RestoreConfig(object):
             response = task.get(timeout=INITIAL_ASYNC_TIMEOUT_THRESHOLD if new_task else 1)
         except TimeoutError:
             # return a 202 with progress
-            response = AsyncRestoreResponse(task, sync_log_to_update._id)
+            response = AsyncRestoreResponse(task)
         else:
             # task is done, unset task id
-            sync_log_to_update.async_task_id = None
-            #
+            self.cache.delete(self._async_cache_key)
 
         return response
 
@@ -634,7 +620,6 @@ class RestoreConfig(object):
                             # this element from being empty.
                             ElementTree.SubElement(element, 'empty_element')
                         response.append(element)
-
 
             # in the future these will be done asynchronously so keep them separate
             long_running_providers = get_long_running_providers(self.timing_context)
