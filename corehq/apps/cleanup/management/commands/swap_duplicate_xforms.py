@@ -10,6 +10,11 @@ from django.core.management import BaseCommand
 from couchforms.models import XFormInstance, XFormDuplicate
 
 
+PROBLEM_TEMPLATE_START = "This document was an xform duplicate that replaced "
+# This string will be used in the problem field of fixed xforms.
+FIXED_FORM_PROBLEM_TEMPLATE = PROBLEM_TEMPLATE_START + "{id_} on {datetime_}"
+
+
 class Command(BaseCommand):
     help = 'Replace xforms missing attachments with xfrom duplicates containing attachments.'
     args = '<ids_file_path> <log_path>'
@@ -73,12 +78,15 @@ class Command(BaseCommand):
                     duplicates = self.get_duplicates(domain, bad_xform_id)
                     if len(duplicates) == 1:
                         num_with_1_dup += 1
-                        self.swap_doc_types(log_file, bad_xform_id, list(duplicates)[0], dry_run)
+                        self.swap_doc_types(
+                            log_file, bad_xform_id, list(duplicates)[0], domain, dry_run
+                        )
                     elif len(duplicates) > 1:
                         num_with_multi_dup += 1
-                        self.log_too_many_dups(log_file, bad_xform_id, duplicates)
+                        self.log_too_many_dups(log_file, bad_xform_id, domain, duplicates)
                     else:
                         num_with_no_dup += 1
+                        self.log_no_dups(log_file, bad_xform_id, domain)
 
         print "Found {} forms with no duplicates".format(num_with_no_dup)
         print "Found {} forms with one duplicate".format(num_with_1_dup)
@@ -109,7 +117,7 @@ class Command(BaseCommand):
                     continue
                 self.dups_by_domain[domain][orig_id].add(dup._id)
 
-    def swap_doc_types(self, log_file, bad_xform_id, duplicate_xform_id, dry_run):
+    def swap_doc_types(self, log_file, bad_xform_id, duplicate_xform_id, domain, dry_run):
         bad_xform = XFormInstance.get(bad_xform_id)
         duplicate_xform = XFormInstance.get(duplicate_xform_id)
         now = datetime.now().isoformat()
@@ -122,36 +130,43 @@ class Command(BaseCommand):
         bad_xform = XFormDuplicate.wrap(bad_xform.to_json())
 
         # Convert the XFormDuplicate to an XFormInstance
-        duplicate_xform.problem = "This document was an xform duplicate that replaced {} on {}".format(
-            bad_xform_id, now
+        duplicate_xform.problem = FIXED_FORM_PROBLEM_TEMPLATE.format(
+            id_=bad_xform_id, datetime_=now
         )
         duplicate_xform.doc_type = XFormInstance.__name__
         duplicate_xform = XFormInstance.wrap(duplicate_xform.to_json())
 
-        self.log_swap(log_file, bad_xform_id, duplicate_xform_id, dry_run)
+        self.log_swap(log_file, bad_xform_id, duplicate_xform_id, domain, dry_run)
 
         if not dry_run:
             duplicate_xform.save()
             bad_xform.save()
 
     @staticmethod
-    def log_too_many_dups(log_file, bad_xform_id, duplicates):
+    def log_too_many_dups(log_file, bad_xform_id, domain, duplicates):
         log_file.write(
-            "Multiple duplicates for {}. Duplicates: {}\n".format(
+            "Multiple duplicates for {} in {}. Duplicates: {}\n".format(
                 bad_xform_id,
+                domain,
                 ", ".join(d for d in duplicates)
             )
         )
 
     @staticmethod
-    def log_swap(log_file, bad_xform_id, duplicate_xform_id, dry_run):
+    def log_swap(log_file, bad_xform_id, domain, duplicate_xform_id, dry_run):
         if dry_run:
             prefix = "Would have swapped"
         else:
             prefix = "Swapped"
         log_file.write(
-            "{} bad xform {} for duplicate {}\n".format(prefix, bad_xform_id, duplicate_xform_id)
+            "{} bad xform {} for duplicate {} in {}\n".format(
+                prefix, bad_xform_id, duplicate_xform_id, domain
+            )
         )
+
+    @staticmethod
+    def log_no_dups(log_file, bad_xform_id, domain):
+        log_file.write("No duplicates found for {} in {}\n".format(bad_xform_id, domain))
 
     @staticmethod
     def _print_progress(i, total_submissions):
