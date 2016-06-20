@@ -136,7 +136,8 @@ class StockReportParser(object):
                 "You can no longer use requisitions! Please contact your project supervisor for help"
             ))
 
-        elif self.commtrack_settings.multiaction_enabled and action_keyword == self.commtrack_settings.multiaction_keyword:
+        elif (self.commtrack_settings.multiaction_enabled
+              and action_keyword == self.commtrack_settings.multiaction_keyword):
             # multiple action stock report
             _tx = self.multiple_action_transactions(args)
         else:
