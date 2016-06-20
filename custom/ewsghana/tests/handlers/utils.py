@@ -32,6 +32,7 @@ class EWSTestCase(TestCase):
         cls.sms_backend_mapping.delete()
         cls.backend.delete()
         generator.delete_all_subscriptions()
+        super(EWSTestCase, cls).tearDownClass()
 
 
 class EWSScriptTest(EWSTestCase, TestScript):

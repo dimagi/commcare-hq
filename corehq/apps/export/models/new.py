@@ -437,6 +437,15 @@ class ExportInstance(BlobMixin, Document):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
     @property
+    @memoized
+    def has_multimedia(self):
+        for table in self.tables:
+            for column in table.selected_columns:
+                if isinstance(column, MultiMediaExportColumn):
+                    return True
+        return False
+
+    @property
     def selected_tables(self):
         return filter(lambda t: t.selected, self.tables)
 

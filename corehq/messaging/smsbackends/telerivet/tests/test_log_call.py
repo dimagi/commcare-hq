@@ -17,8 +17,8 @@ class TelerivetLogCallTestCase(util.LogCallTestCase):
         self.backend.save()
 
     def tearDown(self):
-        super(TelerivetLogCallTestCase, self).tearDown()
         self.backend.delete()
+        super(TelerivetLogCallTestCase, self).tearDown()
 
     def simulate_inbound_call(self, phone_number):
         return Client().post('/telerivet/in/', {

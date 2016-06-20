@@ -63,7 +63,6 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         ledger_value = ledger_db.get_ledger(stock_trans.ledger_reference)
         if not ledger_value:
             ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
-            ledger_value.location_id = stock_trans.location_id
             ledger_value.domain = stock_report_helper.domain
             ledger_db.set_ledger(ledger_value)
         transaction = _get_ledger_transaction(

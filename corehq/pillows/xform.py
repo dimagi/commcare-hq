@@ -6,7 +6,7 @@ from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlFormChangeProvider
@@ -22,6 +22,7 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEven
 from pillowtop.es_utils import ElasticsearchIndexInfo, get_index_info_from_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
     ElasticPillowReindexer
@@ -176,6 +177,26 @@ def get_couch_form_reindexer():
                 'include_docs': True,
             }
         )
+    )
+
+
+def get_app_form_submission_tracker_pillow(pillow_id='AppFormSubmissionTrackerPillow'):
+    """
+    This gets a pillow which iterates through all forms and marks the corresponding app
+    as having submissions. This could be expanded to be more generic and include
+    other processing that needs to happen on each form
+    """
+    checkpoint = PillowCheckpoint('app-form-submission-tracker')
+    form_processor = AppFormSubmissionTrackerProcessor()
+    change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor')
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=change_feed,
+        processor=form_processor,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
+        ),
     )
 
 

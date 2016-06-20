@@ -34,6 +34,7 @@ want.
 As of this writing, there's not much else developed, but it's pretty easy to
 add support for other aggregation types and more results processing
 """
+from copy import deepcopy
 import re
 from collections import namedtuple, defaultdict
 
@@ -204,7 +205,7 @@ class TermsAggregation(Aggregation):
     type = "terms"
     result_class = BucketResult
 
-    def __init__(self, name, field, size=None):
+    def __init__(self, name, field, size=None, sort_field=None, order="desc"):
         assert re.match(r'\w+$', name), \
             "Names must be valid python variable names, was {}".format(name)
         self.name = name
@@ -212,6 +213,13 @@ class TermsAggregation(Aggregation):
             "field": field,
             "size": size if size is not None else SIZE_LIMIT,
         }
+        if sort_field:
+            self.order(sort_field, order)
+
+    def order(self, field, order="desc"):
+        query = deepcopy(self)
+        query.body['order'] = {field: order}
+        return query
 
 
 class SumResult(AggregationResult):
