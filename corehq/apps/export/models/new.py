@@ -221,10 +221,7 @@ class ExportColumn(DocumentSchema):
         return column
 
     def _is_deleted(self, app_ids_and_versions):
-        return (
-            is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions) and
-            bool(app_ids_and_versions)  # If this is empty that means there are no builds
-        )
+        return is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions)
 
     def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
         """
@@ -486,10 +483,11 @@ class ExportInstance(BlobMixin, Document):
                 label=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
-            table.is_deleted = (is_occurrence_deleted(
+            table.is_deleted = is_occurrence_deleted(
                 group_schema.last_occurrences,
                 latest_app_ids_and_versions,
-            ) and bool(latest_app_ids_and_versions))
+            )
+
             prev_index = 0
             for item in group_schema.items:
                 index, column = table.get_column(
