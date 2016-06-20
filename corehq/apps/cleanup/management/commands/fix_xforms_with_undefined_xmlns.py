@@ -50,6 +50,17 @@ class Command(BaseCommand):
         dry_run = options.get("dry_run", True)
         log_path = args[0].strip()
 
+        if not options.get('no_input', False) and not dry_run:
+            confirm = raw_input(
+                u"""
+                Are you sure you want to fix XFormInstances with "undefined" xmlns?
+                This is NOT a dry run. y/N?
+                """
+            )
+            if confirm != "y":
+                print "\n\t\tSwap duplicates cancelled."
+                return
+
         with open(log_path, "w") as log_file:
             self.fix_xforms(log_file, dry_run)
 
