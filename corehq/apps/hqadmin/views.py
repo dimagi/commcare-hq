@@ -10,6 +10,7 @@ from StringIO import StringIO
 import dateutil
 from django.utils.datastructures import SortedDict
 from django.views.decorators.http import require_POST
+from django.views.generic import View
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -144,6 +145,16 @@ class AuthenticateAs(BaseAdminSectionView):
             login(request, request.user)
             return HttpResponseRedirect('/')
         return self.get(request, *args, **kwargs)
+
+
+class AuthenticationAPI(View):
+    urlname = 'is_authenticated'
+
+    def post(self, request):
+        if request.user.is_authenticated:
+            return json_response({'status': 'authenticated'})
+
+        return json_response({'status': 'forbidden'}, status_code=403)
 
 
 class RecentCouchChangesView(BaseAdminSectionView):

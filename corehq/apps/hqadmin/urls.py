@@ -10,6 +10,7 @@ from .views import (
     LoadtestReportView,
     ManagementCommandsView,
     CallcenterUCRCheck,
+    AuthenticationAPI,
     DimagisphereView)
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
@@ -27,6 +28,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^auth_as/(?P<username>[^/]*)/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^auth_as/(?P<username>[^/]*)/(?P<domain>{})/$'.format(new_domain_re),
         AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
+    url(r'^is_authenticated/$', AuthenticationAPI.as_view(), name=AuthenticationAPI.urlname),
     url(r'^management_commands/$', ManagementCommandsView.as_view(),
         name=ManagementCommandsView.urlname),
     url(r'^run_command/$', 'run_command', name="run_management_command"),
