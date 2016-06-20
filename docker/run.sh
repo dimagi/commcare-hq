@@ -86,9 +86,10 @@ function _run_tests() {
 
 function bootstrap() {
     JS_SETUP=yes setup python
-    su cchq -c "./manage.py sync_couch_views && \
-                ./manage.py migrate --noinput && \
-                ./manage.py compilejsi18n && \
+    su cchq -c "export CCHQ_IS_FRESH_INSTALL=1 &&
+                ./manage.py sync_couch_views &&
+                ./manage.py migrate --noinput &&
+                ./manage.py compilejsi18n &&
                 ./manage.py bootstrap demo admin@example.com password"
 }
 

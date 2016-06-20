@@ -34,11 +34,12 @@ function usage() {
         runserver)
             echo "Run Django web server on port 8000"
             echo ""
-            echo "$0 runserver [-d|COMMAND]"
+            echo "$0 runserver [-d|--bootstrap|COMMAND]"
             echo ""
             echo "Options:"
             echo ""
-            echo "  -d      Run in background."
+            echo "  --bootstrap     Migrate new database and setup demo user."
+            echo "  -d              Run in background."
             echo ""
             ;;
         shell)
