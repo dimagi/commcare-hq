@@ -668,6 +668,11 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                 if hasattr(new_domain, field):
                     delattr(new_domain, field)
 
+            # Saving the domain should happen before we import any apps since
+            # importing apps can update the domain object (for example, if user
+            # as a case needs to be enabled)
+            new_domain.save()
+
             new_app_components = {}  # a mapping of component's id to its copy
 
             def copy_data_items(old_type_id, new_type_id):
@@ -707,8 +712,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             if share_user_roles:
                 for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
                     self.copy_component('UserRole', doc_id, new_domain_name, user=user)
-
-            new_domain.save()
 
         if user:
             def add_dom_to_user(user):
