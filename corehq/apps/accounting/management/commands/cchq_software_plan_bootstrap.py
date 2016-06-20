@@ -27,118 +27,116 @@ BOOTSTRAP_EDITION_TO_ROLE = {
     SoftwarePlanEdition.ADVANCED: 'advanced_plan_v0',
     SoftwarePlanEdition.ENTERPRISE: 'enterprise_plan_v0',
 }
-EDITIONS = [
-    SoftwarePlanEdition.COMMUNITY,
-    SoftwarePlanEdition.STANDARD,
-    SoftwarePlanEdition.PRO,
-    SoftwarePlanEdition.ADVANCED,
-    SoftwarePlanEdition.ENTERPRISE,
+
+FEATURE_TYPES = [
+    FeatureType.USER,
+    FeatureType.SMS,
 ]
-FEATURE_TYPES = [f[0] for f in FeatureType.CHOICES]
-PRODUCT_TYPES = [p[0] for p in SoftwareProductType.CHOICES]
+PRODUCT_TYPES = [
+    SoftwareProductType.COMMCARE,
+    SoftwareProductType.COMMCONNECT,
+    SoftwareProductType.COMMTRACK,
+]
+
+BOOTSTRAP_PRODUCT_RATES = {
+    SoftwarePlanEdition.COMMUNITY: dict(),
+    SoftwarePlanEdition.STANDARD: dict(monthly_fee=Decimal('100.00')),
+    SoftwarePlanEdition.PRO: dict(monthly_fee=Decimal('500.00')),
+    SoftwarePlanEdition.ADVANCED: dict(monthly_fee=Decimal('1000.00')),
+    SoftwarePlanEdition.ENTERPRISE: dict(monthly_fee=Decimal('0.00')),
+}
+
+BOOTSTRAP_FEATURE_RATES = {
+    SoftwarePlanEdition.COMMUNITY: {
+        FeatureType.USER: dict(monthly_limit=50, per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: dict(monthly_limit=0),
+    },
+    SoftwarePlanEdition.STANDARD: {
+        FeatureType.USER: dict(monthly_limit=100, per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: dict(monthly_limit=100),
+    },
+    SoftwarePlanEdition.PRO: {
+        FeatureType.USER: dict(monthly_limit=500, per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: dict(monthly_limit=500),
+    },
+    SoftwarePlanEdition.ADVANCED: {
+        FeatureType.USER: dict(monthly_limit=1000, per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: dict(monthly_limit=1000),
+    },
+    SoftwarePlanEdition.ENTERPRISE: {
+        FeatureType.USER: dict(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
+        FeatureType.SMS: dict(monthly_limit=UNLIMITED_FEATURE_USAGE),
+    },
+}
+
+BOOTSTRAP_FEATURE_RATES_FOR_TESTING = {
+    SoftwarePlanEdition.COMMUNITY: {
+        FeatureType.USER: dict(monthly_limit=2, per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: dict(monthly_limit=0),
+    },
+    SoftwarePlanEdition.STANDARD: {
+        FeatureType.USER: dict(monthly_limit=4, per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: dict(monthly_limit=3),
+    },
+    SoftwarePlanEdition.PRO: {
+        FeatureType.USER: dict(monthly_limit=6, per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: dict(monthly_limit=5),
+    },
+    SoftwarePlanEdition.ADVANCED: {
+        FeatureType.USER: dict(monthly_limit=8, per_excess_fee=Decimal('1.00')),
+        FeatureType.SMS: dict(monthly_limit=7),
+    },
+    SoftwarePlanEdition.ENTERPRISE: {
+        FeatureType.USER: dict(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
+        FeatureType.SMS: dict(monthly_limit=UNLIMITED_FEATURE_USAGE),
+    },
+}
 
 
 class Command(BaseCommand):
     help = 'Populate a fresh db with standard set of Software Plans.'
 
     option_list = BaseCommand.option_list + (
-        make_option('--dry-run', action='store_true',  default=False,
+        make_option('--dry-run', action='store_true', default=False,
                     help='Do not actually modify the database, just verbosely log what happen'),
-        make_option('--verbose', action='store_true',  default=False,
+        make_option('--verbose', action='store_true', default=False,
                     help='Enable debug output'),
-        make_option('--fresh-start', action='store_true',  default=False,
-                    help='Wipe all plans and start over. USE CAUTION. Also instantiate plans.'),
-        make_option('--flush', action='store_true',  default=False,
-                    help='Wipe all plans and start over. USE CAUTION.'),
-        make_option('--force-reset', action='store_true',  default=False,
-                    help='Assign latest version of all DefaultProductPlans to current '
-                         'subscriptions and delete older versions.'),
-        make_option('--testing', action='store_true',  default=False,
+        make_option('--testing', action='store_true', default=False,
                     help='Run this command for testing purposes.'),
     )
 
-    def handle(self, dry_run=False, verbose=False, fresh_start=False, flush=False, force_reset=False,
-               testing=False, *args, **options):
-        logger.info('Bootstrapping standard plans. Enterprise plans will have to be created via the admin UIs.')
+    def handle(self, dry_run=False, verbose=False, testing=False, *args, **options):
+        logger.info('Bootstrapping standard plans. Custom plans will have to be created via the admin UIs.')
 
         for_tests = testing
         if for_tests:
             logger.info("Initializing Plans and Roles for Testing")
+            edition_to_feature_rate = BOOTSTRAP_FEATURE_RATES_FOR_TESTING
+        else:
+            edition_to_feature_rate = BOOTSTRAP_FEATURE_RATES
 
-        if force_reset:
-            confirm_force_reset = raw_input("Are you sure you want to assign the latest default plan version to all"
-                                            "current subscriptions and remove the older versions? Type 'yes' to "
-                                            "continue.")
-            if confirm_force_reset == 'yes':
-                _force_reset_subscription_versions(verbose=verbose, apps=default_apps)
-            return
-
-        if fresh_start or flush:
-            confirm_fresh_start = raw_input(
-                "Are you sure you want to delete all SoftwarePlans and start over? "
-                "You can't do this if there are any active Subscriptions."
-                " Type 'yes' to continue.\n"
-            ) if not for_tests else 'yes'
-            if confirm_fresh_start == 'yes' or True:
-                _flush_plans(verbose=verbose, apps=default_apps)
-
-        if not flush:
-            ensure_plans(dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps)
+        ensure_plans(
+            edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
+            edition_to_product_rate=BOOTSTRAP_PRODUCT_RATES,
+            edition_to_feature_rate=edition_to_feature_rate,
+            feature_types=FEATURE_TYPES,
+            product_types=PRODUCT_TYPES,
+            dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=default_apps,
+        )
 
 
-def _flush_plans(verbose, apps):
-    DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
-    Feature = apps.get_model('accounting', 'Feature')
-    FeatureRate = apps.get_model('accounting', 'FeatureRate')
-    SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
-    SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
-    SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
-    SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
-
-    if verbose:
-        logger.info("Flushing ALL SoftwarePlans...")
-    DefaultProductPlan.objects.all().delete()
-    SoftwarePlanVersion.objects.all().delete()
-    SoftwarePlan.objects.all().delete()
-    SoftwareProductRate.objects.all().delete()
-    SoftwareProduct.objects.all().delete()
-    FeatureRate.objects.all().delete()
-    Feature.objects.all().delete()
-
-
-def _force_reset_subscription_versions(verbose, apps):
-    DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
-    Subscription = apps.get_model('accounting', 'Subscription')
-
-    for default_plan in DefaultProductPlan.objects.all():
-        software_plan = default_plan.plan
-        latest_version = software_plan.get_version()
-        subscriptions_to_update = Subscription.objects.filter(plan_version__plan__pk=software_plan.pk).exclude(
-            plan_version=latest_version).all()
-        # assign latest version of software plan to all subscriptions referencing that software plan
-        if verbose:
-            logger.info('Updating %d subscriptions to latest version of %s.' %
-                        (len(subscriptions_to_update), software_plan.name))
-        for subscription in subscriptions_to_update:
-            subscription.plan_version = latest_version
-            subscription.save()
-        # delete all old versions of that software plan
-        versions_to_remove = software_plan.softwareplanversion_set.exclude(pk=latest_version.pk).all()
-        if verbose:
-            logger.info("Removing %d old versions." % len(versions_to_remove))
-        versions_to_remove.delete()
-
-
-def ensure_plans(dry_run, verbose, for_tests, apps):
+def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_rate, feature_types, product_types,
+                 dry_run, verbose, for_tests, apps):
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
 
-    edition_to_features = _ensure_features(dry_run=dry_run, verbose=verbose, apps=apps)
-    for product_type in PRODUCT_TYPES:
-        for edition in EDITIONS:
-            role_slug = BOOTSTRAP_EDITION_TO_ROLE[edition]
+    editions = edition_to_role.keys()
+    edition_to_features = _ensure_features(feature_types, editions, dry_run=dry_run, verbose=verbose, apps=apps)
+    for product_type in product_types:
+        for edition in editions:
+            role_slug = edition_to_role[edition]
             try:
                 role = Role.objects.get(slug=role_slug)
             except Role.DoesNotExist:
@@ -147,8 +145,14 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
                 return
             software_plan_version = SoftwarePlanVersion(role=role)
 
-            product, product_rates = _ensure_product_and_rate(product_type, edition, dry_run=dry_run, verbose=verbose, apps=apps)
-            feature_rates = _ensure_feature_rates(edition_to_features[edition], edition, dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=apps)
+            product, product_rate = _ensure_product_and_rate(
+                edition_to_product_rate, product_type, edition,
+                dry_run=dry_run, verbose=verbose, apps=apps,
+            )
+            feature_rates = _ensure_feature_rates(
+                edition_to_feature_rate, edition_to_features[edition], edition,
+                dry_run=dry_run, verbose=verbose, for_tests=for_tests, apps=apps,
+            )
             software_plan = SoftwarePlan(
                 name='%s Edition' % product.name, edition=edition, visibility=SoftwarePlanVisibility.PUBLIC
             )
@@ -171,15 +175,13 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
                     if hasattr(SoftwarePlanVersion, 'product_rates'):
                         software_plan_version.save()
 
-                    for product_rate in product_rates:
-                        product_rate.save()
-                        if hasattr(SoftwarePlanVersion, 'product_rates'):
-                            software_plan_version.product_rates.add(product_rate)
-                        elif hasattr(SoftwarePlanVersion, 'product_rate'):
-                            assert len(product_rates) == 1
-                            software_plan_version.product_rate = product_rate
-                        else:
-                            raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
+                    product_rate.save()
+                    if hasattr(SoftwarePlanVersion, 'product_rates'):
+                        software_plan_version.product_rates.add(product_rate)
+                    elif hasattr(SoftwarePlanVersion, 'product_rate'):
+                        software_plan_version.product_rate = product_rate
+                    else:
+                        raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
 
                     # must save before assigning many-to-many relationship
                     if hasattr(SoftwarePlanVersion, 'product_rate'):
@@ -217,7 +219,7 @@ def ensure_plans(dry_run, verbose, for_tests, apps):
                                          default_product_plan.edition))
 
 
-def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
+def _ensure_product_and_rate(edition_to_product_rate, product_type, edition, dry_run, verbose, apps):
     """
     Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
     """
@@ -231,49 +233,29 @@ def _ensure_product_and_rate(product_type, edition, dry_run, verbose, apps):
     if edition == SoftwarePlanEdition.ENTERPRISE:
         product.name = "Dimagi Only %s" % product.name
 
-    product_rates = []
-    BOOTSTRAP_PRODUCT_RATES = {
-        SoftwarePlanEdition.COMMUNITY: [
-            SoftwareProductRate(),  # use all the defaults
-        ],
-        SoftwarePlanEdition.STANDARD: [
-            SoftwareProductRate(monthly_fee=Decimal('100.00')),
-        ],
-        SoftwarePlanEdition.PRO: [
-            SoftwareProductRate(monthly_fee=Decimal('500.00')),
-        ],
-        SoftwarePlanEdition.ADVANCED: [
-            SoftwareProductRate(monthly_fee=Decimal('1000.00')),
-        ],
-        SoftwarePlanEdition.ENTERPRISE: [
-            SoftwareProductRate(monthly_fee=Decimal('0.00')),
-        ],
-    }
-
-    for product_rate in BOOTSTRAP_PRODUCT_RATES[edition]:
-        if dry_run:
-            logger.info("[DRY RUN] Creating Product: %s" % product)
-            logger.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
-        else:
-            try:
-                product = SoftwareProduct.objects.get(name=product.name)
-                if verbose:
-                    logger.info("Product '%s' already exists. Using "
-                                "existing product to add rate."
-                                % product.name)
-            except SoftwareProduct.DoesNotExist:
-                product.save()
-                if verbose:
-                    logger.info("Creating Product: %s" % product)
+    product_rate = SoftwareProductRate(**edition_to_product_rate[edition])
+    if dry_run:
+        logger.info("[DRY RUN] Creating Product: %s" % product)
+        logger.info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
+    else:
+        try:
+            product = SoftwareProduct.objects.get(name=product.name)
             if verbose:
-                logger.info("Corresponding product rate of $%d created."
-                            % product_rate.monthly_fee)
-        product_rate.product = product
-        product_rates.append(product_rate)
-    return product, product_rates
+                logger.info("Product '%s' already exists. Using "
+                            "existing product to add rate."
+                            % product.name)
+        except SoftwareProduct.DoesNotExist:
+            product.save()
+            if verbose:
+                logger.info("Creating Product: %s" % product)
+        if verbose:
+            logger.info("Corresponding product rate of $%d created."
+                        % product_rate.monthly_fee)
+    product_rate.product = product
+    return product, product_rate
 
 
-def _ensure_features(dry_run, verbose, apps):
+def _ensure_features(feature_types, editions, dry_run, verbose, apps):
     """
     Ensures that all the Features necessary for the plans are created.
     """
@@ -283,8 +265,8 @@ def _ensure_features(dry_run, verbose, apps):
         logger.info('Ensuring Features')
 
     edition_to_features = defaultdict(list)
-    for edition in EDITIONS:
-        for feature_type in FEATURE_TYPES:
+    for edition in editions:
+        for feature_type in feature_types:
             feature = Feature(name='%s %s' % (feature_type, edition), feature_type=feature_type)
             if edition == SoftwarePlanEdition.ENTERPRISE:
                 feature.name = "Dimagi Only %s" % feature.name
@@ -305,7 +287,7 @@ def _ensure_features(dry_run, verbose, apps):
     return edition_to_features
 
 
-def _ensure_feature_rates(features, edition, dry_run, verbose, for_tests, apps):
+def _ensure_feature_rates(edition_to_feature_rate, features, edition, dry_run, verbose, for_tests, apps):
     """
     Ensures that all the FeatureRates necessary for the plans are created.
     """
@@ -315,34 +297,8 @@ def _ensure_feature_rates(features, edition, dry_run, verbose, for_tests, apps):
         logger.info('Ensuring Feature Rates')
 
     feature_rates = []
-    BOOTSTRAP_FEATURE_RATES = {
-        SoftwarePlanEdition.COMMUNITY: {
-            FeatureType.USER: FeatureRate(monthly_limit=2 if for_tests else 50,
-                                          per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=0),  # use defaults here
-        },
-        SoftwarePlanEdition.STANDARD: {
-            FeatureType.USER: FeatureRate(monthly_limit=4 if for_tests else 100,
-                                          per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=3 if for_tests else 100),
-        },
-        SoftwarePlanEdition.PRO: {
-            FeatureType.USER: FeatureRate(monthly_limit=6 if for_tests else 500,
-                                          per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=5 if for_tests else 500),
-        },
-        SoftwarePlanEdition.ADVANCED: {
-            FeatureType.USER: FeatureRate(monthly_limit=8 if for_tests else 1000,
-                                          per_excess_fee=Decimal('1.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=7 if for_tests else 1000),
-        },
-        SoftwarePlanEdition.ENTERPRISE: {
-            FeatureType.USER: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE, per_excess_fee=Decimal('0.00')),
-            FeatureType.SMS: FeatureRate(monthly_limit=UNLIMITED_FEATURE_USAGE),
-        },
-    }
     for feature in features:
-        feature_rate = BOOTSTRAP_FEATURE_RATES[edition][feature.feature_type]
+        feature_rate = FeatureRate(**edition_to_feature_rate[edition][feature.feature_type])
         feature_rate.feature = feature
         if dry_run:
             logger.info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
