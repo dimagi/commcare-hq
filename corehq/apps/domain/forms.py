@@ -992,7 +992,7 @@ def clean_password(txt):
 
 def legacy_get_password_strength(value):
     # 1 Special Character, 1 Number, 1 Capital Letter with the length of Minimum 8
-    # initial score rigged to reach 2 when all requirementss are met
+    # initial score rigged to reach 2 when all requirements are met
     score = -2
     if SPECIAL.search(value):
         score += 1
