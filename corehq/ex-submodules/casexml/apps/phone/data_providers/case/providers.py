@@ -7,6 +7,6 @@ class CasePayloadProvider(LongRunningRestoreDataProvider):
     Long running restore provider responsible for generating the case and stock payloads.
     """
 
-    def get_response(self, restore_state):
-        sync_op = CleanOwnerCaseSyncOperation(self.timing_context, restore_state)
+    def get_response(self, restore_state, async_task=None):
+        sync_op = CleanOwnerCaseSyncOperation(self.timing_context, restore_state, async_task)
         return sync_op.get_payload()

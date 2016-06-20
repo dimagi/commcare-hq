@@ -32,10 +32,9 @@ def force_update_cleanliness_flags():
 def get_async_restore_payload(restore_config):
     """Process an async restore
     """
-    current_task.update_state(state="PROGRESS", meta={'done': 50, 'total': 100})
 
     restore_config.restore_state.start_sync()
-    response = restore_config._get_synchronous_payload()
+    response = restore_config._get_synchronous_payload(async_task=current_task)
     restore_config.restore_state.finish_sync()
 
     return response

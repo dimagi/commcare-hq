@@ -1,6 +1,7 @@
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
+from functools import partial
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
@@ -78,7 +79,7 @@ class CleanOwnerSyncPayload(object):
                 sync_xml_items=get_xml_for_response(update, self.restore_state)
             )
             self._process_case_update(case)
-            self.checked_cases.add(case.case_id)  # mark case as checked
+            self._mark_case_as_checked(case)
 
     def _process_case_update(self, case):
         if case.indices:
@@ -89,6 +90,9 @@ class CleanOwnerSyncPayload(object):
             self.all_dependencies_syncing.add(case.case_id)
             if case.closed:
                 self.closed_cases.add(case.case_id)
+
+    def _mark_case_as_checked(self, case):
+        self.checked_cases.add(case.case_id)
 
     def _update_indices_in_new_synclog(self, case):
         self.extension_indices[case.case_id] = {
@@ -186,12 +190,37 @@ class CleanOwnerSyncPayload(object):
                 self.response.append(xml_item)
 
 
+class AsyncCleanOwnerPayload(CleanOwnerSyncPayload):
+    def __init__(self, timing_context, case_ids_to_sync, restore_state, current_task):
+        super(AsyncCleanOwnerPayload, self).__init__(timing_context, case_ids_to_sync, restore_state)
+        self.current_task = current_task
+
+    def get_payload(self):
+        self._update_progress(total=len(self.all_maybe_syncing))
+        return super(AsyncCleanOwnerPayload, self).get_payload()
+
+    def _update_progress(self, done=0, total=0):
+        print "#####"
+        print "progress: {}, total: {}".format(done, total)
+        print "#####"
+
+        self.current_task.update_state(
+            state="PROGRESS",
+            meta={'done': done, 'total': total}
+        )
+
+    def _mark_case_as_checked(self, case):
+        super(AsyncCleanOwnerPayload, self)._mark_case_as_checked(case)
+        self._update_progress(done=len(self.checked_cases), total=len(self.all_maybe_syncing))
+
+
 class CleanOwnerCaseSyncOperation(object):
 
-    def __init__(self, timing_context, restore_state):
+    def __init__(self, timing_context, restore_state, async_task=None):
         self.timing_context = timing_context
         self.restore_state = restore_state
         self.case_accessor = CaseAccessors(self.restore_state.domain)
+        self.async_task = async_task
 
     @property
     @memoized
@@ -203,6 +232,12 @@ class CleanOwnerCaseSyncOperation(object):
             ).values_list('owner_id', 'is_clean')
         )
 
+    @property
+    def payload_class(self):
+        if self.async_task is not None:
+            return partial(AsyncCleanOwnerPayload, current_task=self.async_task)
+        return CleanOwnerSyncPayload
+
     def is_clean(self, owner_id):
         return self.cleanliness_flags.get(owner_id, False)
 
@@ -210,7 +245,7 @@ class CleanOwnerCaseSyncOperation(object):
         self.restore_state.mark_as_new_format()
         with self.timing_context('get_case_ids_to_sync'):
             case_ids_to_sync = self.get_case_ids_to_sync()
-        sync_payload = CleanOwnerSyncPayload(self.timing_context, case_ids_to_sync, self.restore_state)
+        sync_payload = self.payload_class(self.timing_context, case_ids_to_sync, self.restore_state)
         return sync_payload.get_payload()
 
     def get_case_ids_to_sync(self):

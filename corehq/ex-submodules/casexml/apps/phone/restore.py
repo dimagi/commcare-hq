@@ -586,7 +586,7 @@ class RestoreConfig(object):
             task = get_async_restore_payload.delay(self)
             new_task = True
             # store the task id in cache
-            self.cache.set(self._async_cache_key, task.id)
+            self.cache.set(self._async_cache_key, task.id, timeout=None)
 
         try:
             # if this is a new task, wait for INITIAL_ASYNC_TIMEOUT in case
@@ -602,7 +602,7 @@ class RestoreConfig(object):
 
         return response
 
-    def _get_synchronous_payload(self):
+    def _get_synchronous_payload(self, async_task=None):
         """
         This function returns a RestoreResponse class that encapsulates the response.
         """
@@ -625,7 +625,7 @@ class RestoreConfig(object):
             long_running_providers = get_long_running_providers(self.timing_context)
             for provider in long_running_providers:
                 with self.timing_context(provider.__class__.__name__):
-                    partial_response = provider.get_response(self.restore_state)
+                    partial_response = provider.get_response(self.restore_state, async_task)
                     response = response + partial_response
                     partial_response.close()
 
