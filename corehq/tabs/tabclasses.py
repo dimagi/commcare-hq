@@ -1502,8 +1502,6 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
-                {'title': _('Loadtest Report'),
-                 'url': reverse('loadtest_report')},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('CommCare Version'),
