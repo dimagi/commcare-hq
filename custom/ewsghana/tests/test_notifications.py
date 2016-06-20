@@ -27,6 +27,7 @@ class MissingReportNotificationTestCase(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(MissingReportNotificationTestCase, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
 
@@ -37,6 +38,7 @@ class MissingReportNotificationTestCase(EWSTestCase):
         cls.program2.save()
 
     def setUp(self):
+        super(MissingReportNotificationTestCase, self).setUp()
         self.district = make_loc('test-district', 'Test District', self.TEST_DOMAIN, 'district')
         self.facility = make_loc('test-faciity', 'Test Facility', self.TEST_DOMAIN, 'Polyclinic', self.district)
         self.user = bootstrap_web_user(
@@ -57,6 +59,8 @@ class MissingReportNotificationTestCase(EWSTestCase):
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
+
+        super(MissingReportNotificationTestCase, self).tearDown()
 
     def test_all_facilities_reported(self):
         """No notifications generated if all have reported."""
@@ -168,12 +172,14 @@ class StockoutReportNotificationTestCase(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(StockoutReportNotificationTestCase, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
         cls.program.save()
 
     def setUp(self):
+        super(StockoutReportNotificationTestCase, self).setUp()
         self.district = make_loc('test-district', 'Test District', self.TEST_DOMAIN, 'district')
         self.facility = make_loc('test-faciity', 'Test Facility', self.TEST_DOMAIN, 'Polyclinic', self.district)
         self.user = bootstrap_web_user(
@@ -194,6 +200,8 @@ class StockoutReportNotificationTestCase(EWSTestCase):
 
         for product in Product.by_domain(self.TEST_DOMAIN):
             product.delete()
+
+        super(StockoutReportNotificationTestCase, self).tearDown()
 
     def test_missing_notification(self):
         """No notification if there were no reports. Covered by missing report."""
