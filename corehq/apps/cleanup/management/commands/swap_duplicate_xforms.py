@@ -13,6 +13,7 @@ from couchforms.models import XFormInstance, XFormDuplicate
 PROBLEM_TEMPLATE_START = "This document was an xform duplicate that replaced "
 # This string will be used in the problem field of fixed xforms.
 FIXED_FORM_PROBLEM_TEMPLATE = PROBLEM_TEMPLATE_START + "{id_} on {datetime_}"
+BAD_FORM_PROBLEM_TEMPLATE = "Form was missing multimedia attachments. Replaced by {} on {}"
 
 
 class Command(BaseCommand):
@@ -144,9 +145,7 @@ class Command(BaseCommand):
 
         # Convert the XFormInstance to an XFormDuplicate
         bad_xform.doc_type = XFormDuplicate.__name__
-        bad_xform.problem = "Form was missing multimedia attachments. Replaced by {} on {}".format(
-            duplicate_xform_id, now
-        )
+        bad_xform.problem = BAD_FORM_PROBLEM_TEMPLATE.format(duplicate_xform_id, now)
         bad_xform = XFormDuplicate.wrap(bad_xform.to_json())
 
         # Convert the XFormDuplicate to an XFormInstance
