@@ -80,10 +80,18 @@ function usage() {
             echo "Manage docker services for CommCare HQ"
             echo ""
             echo "$0 COMMAND [OPTIONS]"
-            echo "      -h --help"
-            echo "      test|bash|shell|hqtest|rebuild|teardown|help"
             echo ""
             echo "$0 help COMMAND"
+            echo ""
+            echo "Commands:"
+            echo "  bash        Run bash in container"
+            echo "  help        Get help on a command"
+            echo "  hqtest      Manage test containers"
+            echo "  rebuild     Stop, remove, and rebuild image(s)"
+            echo "  runserver   Run Django web server on port 8000"
+            echo "  shell       Run Django shell in web container"
+            echo "  teardown    Remove all containers, images and volumes"
+            echo "  test        Run tests"
             echo ""
             echo "All other commands are passed directly to docker-compose."
             echo ""
@@ -91,6 +99,9 @@ function usage() {
             echo ""
             echo "  # list service containers"
             echo "  $0 ps"
+            echo ""
+            echo "  # stop service containers"
+            echo "  $0 stop"
             echo ""
             echo "  # run services in background"
             echo "  $0 up -d"
@@ -187,7 +198,7 @@ else
 fi
 
 case $CMD in
-    -h | --help | help | "")
+    -h | --help | help | services | "")
         if [ "$COMPOSE_PROJECT_NAME" == "hqtest" ]; then
             usage hqtest
         else
