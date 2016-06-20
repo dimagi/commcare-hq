@@ -64,6 +64,14 @@ function usage() {
             echo "  $0 hqtest teardown"
             echo ""
             ;;
+        rebuild)
+            echo "Stop, remove, and rebuild image(s)"
+            echo ""
+            echo "$0 rebuild [SERVICES...]"
+            echo ""
+            echo "Existing local images are removed before rebuilding."
+            echo ""
+            ;;
         teardown)
             echo "Remove all containers, images and volumes"
             echo ""
@@ -73,7 +81,7 @@ function usage() {
             echo ""
             echo "$0 COMMAND [OPTIONS]"
             echo "      -h --help"
-            echo "      test|bash|shell|hqtest|teardown|help"
+            echo "      test|bash|shell|hqtest|rebuild|teardown|help"
             echo ""
             echo "$0 help COMMAND"
             echo ""
@@ -204,6 +212,15 @@ elif [ "$CMD" == "bash" ]; then
         docker exec -it $CONTAINER $CMD "$@"
     else
         docker-compose run --rm $SERVICE_NAME $CMD "$@"
+    fi
+elif [ "$CMD" == "rebuild" ]; then
+    if [ -z "$1" ]; then
+        docker-compose down --rmi local
+        docker-compose build
+    else
+        docker-compose stop "$@"
+        docker-compose rm "$@"
+        docker-compose build "$@"
     fi
 else
     docker-compose $CMD "$@"

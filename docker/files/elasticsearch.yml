@@ -1,8 +1,6 @@
-# Until a rebuild command exists, here's how to make changes to this file take effect:
-#     $ sudo ./scripts/docker services stop elasticsearch
-#     $ sudo ./scripts/docker services rm elasticsearch
-#     $ sudo ./scripts/docker services build elasticsearch
-#     $ sudo ./scripts/docker services
+# Don't forget to rebuild and start the elasticsearch image after changing this file:
+#     $ ./scripts/docker rebuild elasticsearch
+#     $ ./scripts/docker up -d elasticsearch
 
 http.port: 9200
 
