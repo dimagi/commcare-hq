@@ -969,7 +969,9 @@ class FormExportDataSchema(ExportDataSchema):
         app_build_ids.append(app_id)
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             # TODO: Remove this when we mark applications that have been submitted
-            if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
+            if (USE_SQL_BACKEND.enabled(domain) and
+                    not app_doc.get('is_released', False) and
+                    app_doc.get('copy_of')):
                 continue
 
             app = Application.wrap(app_doc)
@@ -1111,8 +1113,11 @@ class CaseExportDataSchema(ExportDataSchema):
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             # TODO: Remove this when we mark applications that have been submitted
-            if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
+            if (USE_SQL_BACKEND.enabled(domain) and
+                    not app_doc.get('is_released', False) and
+                    app_doc.get('copy_of')):
                 continue
+
             app = Application.wrap(app_doc)
             current_case_schema = CaseExportDataSchema._process_app_build(
                 current_case_schema,
