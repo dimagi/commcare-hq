@@ -1,7 +1,7 @@
 from django import forms
 
 # todo proper B3 Handle
-from crispy_forms.bootstrap import StrictButton, FormActions
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from django.utils.translation import ugettext

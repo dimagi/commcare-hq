@@ -5,18 +5,18 @@
 
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
-        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'leaflet/dist/leaflet.css' %}" />
-        <link rel="stylesheet" href="{% new_static 'reports/css/maps.css' %}" />
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}" />
+        <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
     {% endcompress %}
 {% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% new_static 'reports_core/js/choice-list-api.js' %}"></script>
-    <script src="{% new_static 'reports_core/js/charts.js' %}"></script>
-    <script src="{% new_static 'reports_core/js/maps.js' %}"></script>
-    <script src="{% new_static 'leaflet/dist/leaflet.js' %}"></script>
-    <script src="{% new_static 'reports/javascripts/maps_utils.js' %}"></script>
+    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
+    <script src="{% static 'reports_core/js/charts.js' %}"></script>
+    <script src="{% static 'reports_core/js/maps.js' %}"></script>
+    <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+    <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
@@ -80,8 +80,6 @@
 
         var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
-            paginationType: 'bs_normal',
-            useBootstrap3: true,
             defaultRows: {{ report_table.default_rows|default:10 }},
             startAtRowNum: {{ report_table.start_at_row|default:0 }},
             showAllRowsOption: {{ report_table.show_all_rows|JSON }},

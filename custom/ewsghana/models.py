@@ -1,12 +1,9 @@
-from django.core.urlresolvers import reverse
 from django.dispatch import receiver
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import WebUser
-from corehq.apps.users.views import EditWebUserView
-from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from custom.utils.utils import add_to_module_map
 from casexml.apps.stock.models import DocDomainMapping

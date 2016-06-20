@@ -4,6 +4,7 @@ from itertools import groupby
 from functools import partial
 from collections import defaultdict, OrderedDict, namedtuple
 
+from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 
@@ -45,7 +46,6 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     TRANSFORM_FUNCTIONS,
     DEID_TRANSFORM_FUNCTIONS,
-    PROPERTY_TAG_ROW,
     PROPERTY_TAG_CASE,
     USER_DEFINED_SPLIT_TYPES,
     PLAIN_USER_DEFINED_SPLIT_TYPE
@@ -171,7 +171,11 @@ class ExportColumn(DocumentSchema):
         if self.item.transform:
             value = TRANSFORM_FUNCTIONS[self.item.transform](value, doc)
         if self.deid_transform:
-            value = DEID_TRANSFORM_FUNCTIONS[self.deid_transform](value, doc)
+            try:
+                value = DEID_TRANSFORM_FUNCTIONS[self.deid_transform](value, doc)
+            except ValueError:
+                # Unable to convert the string to a date
+                pass
         return value
 
     @staticmethod
@@ -431,6 +435,15 @@ class ExportInstance(BlobMixin, Document):
     @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
+
+    @property
+    @memoized
+    def has_multimedia(self):
+        for table in self.tables:
+            for column in table.selected_columns:
+                if isinstance(column, MultiMediaExportColumn):
+                    return True
+        return False
 
     @property
     def selected_tables(self):
@@ -939,13 +952,23 @@ class FormExportDataSchema(ExportDataSchema):
             current_xform_schema = FormExportDataSchema._merge_schemas(current_xform_schema, xform_schema)
             current_xform_schema.record_update(app.copy_of, app.version)
 
-        if original_id and original_rev:
-            current_xform_schema._id = original_id
-            current_xform_schema._rev = original_rev
-        current_xform_schema.domain = domain
-        current_xform_schema.app_id = app_id
-        current_xform_schema.xmlns = form_xmlns
-        current_xform_schema.save()
+        if not original_id or app_build_ids:
+            # Don't save the schema if there is already a saved schema object
+            # and we didn't update it with any app builds
+            if original_id and original_rev:
+                current_xform_schema._id = original_id
+                current_xform_schema._rev = original_rev
+            current_xform_schema.domain = domain
+            current_xform_schema.app_id = app_id
+            current_xform_schema.xmlns = form_xmlns
+            try:
+                current_xform_schema.save()
+            except ResourceConflict:
+                # It's possible that another process updated the schema before we
+                # got to it. If so, we want to overwrite those changes because we
+                # have the most recently built schema.
+                current_xform_schema._rev = FormExportDataSchema.get_db().get_rev(current_xform_schema._id)
+                current_xform_schema.save()
 
         return current_xform_schema
 
@@ -1086,14 +1109,24 @@ class CaseExportDataSchema(ExportDataSchema):
 
             current_case_schema.record_update(app.copy_of, app.version)
 
-        if original_id and original_rev:
-            current_case_schema._id = original_id
-            current_case_schema._rev = original_rev
-        current_case_schema.domain = domain
-        current_case_schema.case_type = case_type
-        current_case_schema.save()
+        if not original_id or app_build_ids:
+            # Don't save the schema if there is already a saved schema object
+            # and we didn't update it with any app builds
+            if original_id and original_rev:
+                current_case_schema._id = original_id
+                current_case_schema._rev = original_rev
+            current_case_schema.domain = domain
+            current_case_schema.case_type = case_type
+            try:
+                current_case_schema.save()
+            except ResourceConflict:
+                # It's possible that another process updated the schema before we
+                # got to it. If so, we want to overwrite those changes because we
+                # have the most recently built schema.
+                current_case_schema._rev = CaseExportDataSchema.get_db().get_rev(current_case_schema._id)
+                current_case_schema.save()
 
-        return current_case_schema
+            return current_case_schema
 
     @staticmethod
     def _generate_schema_from_case_property_mapping(case_property_mapping, parent_types, app_id, app_version):

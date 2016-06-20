@@ -142,6 +142,7 @@ class FormMultimediaExportTest(SimpleTestCase):
 class FormExportTest(TestCase):
 
     def setUp(self):
+        super(FormExportTest, self).setUp()
         self.app_id = 'kasdlfkjsldfkjsdlkjf'
         self.domain_name = 'form-export-test'
         self.domain = create_domain(self.domain_name)
@@ -167,6 +168,7 @@ class FormExportTest(TestCase):
 
     def tearDown(self):
         self.couch_user.delete()
+        super(FormExportTest, self).tearDown()
 
     def post_it(self, user_id=None, form_id=XFORM_ID):
         user_id = user_id or self.couch_user._id

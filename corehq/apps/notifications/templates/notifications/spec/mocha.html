@@ -2,12 +2,12 @@
 {% load hq_shared_tags %}
 
 {% block core_libraries %}{{ block.super }}
-<script type="text/javascript" src="{% new_static 'knockout/dist/knockout.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'style/js/hq.helpers.js' %}"></script>
+<script type="text/javascript" src="{% static 'knockout/dist/knockout.js' %}"></script>
+<script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
 {% endblock %}
 
 {% block dependencies %}
-<script src="{% new_static 'notifications/js/NotificationsService.ko.js' %}"></script>
+<script src="{% static 'notifications/js/NotificationsService.ko.js' %}"></script>
 {% endblock %}
 
 {% block fixtures %}
@@ -17,5 +17,5 @@
 {% endblock %}
 
 {% block mocha_tests %}
-<script src="{% new_static 'notifications/spec/NotificationsService.spec.mo.js' %}"></script>
+<script src="{% static 'notifications/spec/NotificationsService.spec.mo.js' %}"></script>
 {% endblock %}

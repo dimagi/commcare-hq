@@ -161,7 +161,6 @@ from .util import (
     users_matching_filter,
 )
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_jquery_ui,
     use_select2,
     use_datatables,
@@ -215,7 +214,6 @@ def old_saved_reports(request, domain):
 class BaseProjectReportSectionView(BaseDomainView):
     section_name = ugettext_lazy("Project Reports")
 
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         request.project = Domain.get_by_name(self.domain)
         if not hasattr(request, 'couch_user'):
@@ -1040,7 +1038,6 @@ class ReportNotificationUnsubscribeView(TemplateView):
     broken_link_error = ugettext_noop('Invalid unsubscribe link')
     report = None
 
-    @use_bootstrap3
     def get(self, request, *args, **kwargs):
         if 'success' not in kwargs and 'error' not in kwargs:
             try:
@@ -1713,7 +1710,6 @@ def download_form(request, domain, instance_id):
 
 class EditFormInstance(View):
 
-    @use_bootstrap3
     @method_decorator(require_form_view_permission)
     @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, request, *args, **kwargs):

@@ -1707,11 +1707,17 @@ class SortOnlyDetailColumn(DetailColumn):
 
 class CaseListLookupMixin(DocumentSchema):
     """
-        Allows for the addition of Android Callouts to do lookups from the CaseList
+    Allows for the addition of Android Callouts to do lookups from the CaseList
+
         <lookup action="" image="" name="">
-            <extra key="" value = "" />
-            <response key ="" />
+            <extra key="" value="" />
+            <response key="" />
+            <field>
+                <header><text><locale id=""/></text></header>
+                <template><text><xpath function=""/></text></template>
+            </field>
         </lookup>
+
     """
     lookup_enabled = BooleanProperty(default=False)
     lookup_action = StringProperty()
@@ -1720,6 +1726,10 @@ class CaseListLookupMixin(DocumentSchema):
 
     lookup_extras = SchemaListProperty()
     lookup_responses = SchemaListProperty()
+
+    lookup_display_results = BooleanProperty(default=False)  # Display callout results in case list?
+    lookup_field_header = DictProperty()
+    lookup_field_template = StringProperty()
 
 
 class Detail(IndexedSchema, CaseListLookupMixin):
@@ -4242,6 +4252,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # each language is a key and the value is a list of multimedia referenced in that language
     media_language_map = SchemaDictProperty(MediaList)
 
+    use_j2me_endpoint = BooleanProperty(default=False)
+
+    # Whether or not the Application has had any forms submitted against it
+    has_submissions = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -4434,7 +4448,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return spec
 
     def get_jadjar(self):
-        return self.get_build().get_jadjar(self.get_jar_path())
+        return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
 
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):

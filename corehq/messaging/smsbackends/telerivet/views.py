@@ -2,7 +2,7 @@ import uuid
 from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
-from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
+from corehq.apps.style.decorators import use_angular_js
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
     TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm)
@@ -237,7 +237,6 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
             'unexpected_error': None if name_error else self.unexpected_error,
         }
 
-    @use_bootstrap3
     @use_angular_js
     def dispatch(self, *args, **kwargs):
         return super(TelerivetSetupView, self).dispatch(*args, **kwargs)

@@ -64,6 +64,7 @@ class AuthenticateAsIntegrationTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AuthenticateAsIntegrationTest, cls).setUpClass()
         cls.domain = Domain(name='my-test-views')
         cls.domain.save()
         cls.username = 'cornelius'
@@ -82,6 +83,7 @@ class AuthenticateAsIntegrationTest(TestCase):
         cls.mobile_worker.delete()
         cls.regular.delete()
         cls.domain.delete()
+        super(AuthenticateAsIntegrationTest, cls).tearDownClass()
 
     def test_authenticate_as(self):
         self.client.login(username=self.username, password=self.password)

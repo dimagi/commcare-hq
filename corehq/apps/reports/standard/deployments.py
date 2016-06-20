@@ -18,8 +18,10 @@ from phonelog.models import UserErrorEntry
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
+from corehq.apps.es import UserES
 from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 
@@ -372,6 +374,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     @property
     def headers(self):
         return DataTablesHeader(
+            DataTablesColumn(_("User")),
             DataTablesColumn(_("Expression")),
             DataTablesColumn(_("Message")),
             DataTablesColumn(_("Session")),
@@ -407,12 +410,25 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
             for app in get_brief_apps_in_domain(self.domain)
         }
 
+    def _ids_to_users(self, user_ids):
+        users = (UserES()
+                 .domain(self.domain)
+                 .user_ids(user_ids)
+                 .values('_id', 'username', 'first_name', 'last_name'))
+        return {
+            u['_id']: user_display_string(u['username'], u['first_name'], u['last_name'])
+            for u in users
+        }
+
     @property
     def rows(self):
         start = self.pagination.start
         end = start + self.pagination.count
-        for error in self._queryset.order_by('-date')[start:end]:
+        errors = self._queryset.order_by('-date')[start:end]
+        users = self._ids_to_users({e.user_id for e in errors if e.user_id})
+        for error in errors:
             yield [
+                users.get(error.user_id, error.user_id),
                 error.expr,
                 error.msg,
                 error.session,

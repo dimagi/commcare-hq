@@ -18,8 +18,8 @@
     {% endif %}
 {% endblock %}
 {% block filter_js %}
-<link href="{% new_static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
-<script src="{% new_static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
+<link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
+<script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
 <script type="text/javascript">
     $(function () {
         $('#{{ css_id }}').parent().koApplyBindings({

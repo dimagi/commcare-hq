@@ -14,6 +14,7 @@ from casexml.apps.phone.exceptions import (
 )
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
+from corehq.util.timer import TimingContext
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.models import (
     SyncLog,
@@ -21,6 +22,7 @@ from casexml.apps.phone.models import (
     LOG_FORMAT_SIMPLIFIED,
     get_sync_log_class_by_format,
     OTARestoreUser,
+    SimplifiedSyncLog,
 )
 import logging
 from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
@@ -431,6 +433,13 @@ class RestoreState(object):
     def loadtest_factor(self):
         return self.restore_user.loadtest_factor
 
+    def mark_as_new_format(self):
+        self.current_sync_log = SimplifiedSyncLog.wrap(
+            self.current_sync_log.to_json()
+        )
+        self.current_sync_log.log_format = LOG_FORMAT_SIMPLIFIED
+        self.current_sync_log.extensions_checked = True
+
 
 class RestoreConfig(object):
     """
@@ -458,6 +467,8 @@ class RestoreConfig(object):
         self.overwrite_cache = self.cache_settings.overwrite_cache
 
         self.cache = get_redis_default_cache()
+
+        self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
 
     @property
     @memoized
@@ -489,24 +500,27 @@ class RestoreConfig(object):
 
         with self.restore_state.restore_class(
                 self.restore_user.username, items=self.params.include_item_count) as response:
-            normal_providers = get_restore_providers()
+            normal_providers = get_restore_providers(self.timing_context)
             for provider in normal_providers:
-                for element in provider.get_elements(self.restore_state):
-                    if element.tag == 'fixture' and len(element) == 0:
-                        # There is a bug on mobile versions prior to 2.27 where
-                        # a parsing error will cause mobile to ignore the element
-                        # after this one if this element is empty.
-                        # So we have to add a dummy empty_element child to prevent
-                        # this element from being empty.
-                        ElementTree.SubElement(element, 'empty_element')
-                    response.append(element)
+                with self.timing_context(provider.__class__.__name__):
+                    for element in provider.get_elements(self.restore_state):
+                        if element.tag == 'fixture' and len(element) == 0:
+                            # There is a bug on mobile versions prior to 2.27 where
+                            # a parsing error will cause mobile to ignore the element
+                            # after this one if this element is empty.
+                            # So we have to add a dummy empty_element child to prevent
+                            # this element from being empty.
+                            ElementTree.SubElement(element, 'empty_element')
+                        response.append(element)
+
 
             # in the future these will be done asynchronously so keep them separate
-            long_running_providers = get_long_running_providers()
+            long_running_providers = get_long_running_providers(self.timing_context)
             for provider in long_running_providers:
-                partial_response = provider.get_response(self.restore_state)
-                response = response + partial_response
-                partial_response.close()
+                with self.timing_context(provider.__class__.__name__):
+                    partial_response = provider.get_response(self.restore_state)
+                    response = response + partial_response
+                    partial_response.close()
 
             response.finalize()
 
@@ -516,7 +530,8 @@ class RestoreConfig(object):
 
     def get_response(self):
         try:
-            payload = self.get_payload()
+            with self.timing_context:
+                payload = self.get_payload()
             return payload.get_http_response()
         except RestoreException, e:
             logging.exception("%s error during restore submitted by %s: %s" %

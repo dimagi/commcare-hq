@@ -38,7 +38,6 @@ class Command(BaseCommand):
             'couchforms/by_xmlns',
             key=DEVICE_LOG_XMLNS,
             reduce=False,
-            include_docs=True,
         )]
 
         with open(self.filename, 'w') as f:

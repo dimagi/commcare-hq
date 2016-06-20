@@ -197,11 +197,13 @@ class TestExpandedColumn(TestCase):
         return data_source, data_source.column_configs[0]
 
     def setUp(self):
+        super(TestExpandedColumn, self).setUp()
         delete_all_cases()
 
     def tearDown(self):
         delete_all_cases()
         connection_manager.dispose_engine(UCR_ENGINE_ID)
+        super(TestExpandedColumn, self).tearDown()
 
     def test_getting_distinct_values(self):
         data_source, column = self._build_report([

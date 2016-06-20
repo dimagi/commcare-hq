@@ -511,19 +511,7 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
     target_app = 'OpenClinica'  # Export button to say "Export to OpenClinica"
 
     def _init(self):
-        from custom.openclinica.utils import get_study_constant
-
-        # We don't need to keep track of tables because we only have two: "study" contains context, and
-        # "subjects" of which each row is a study subject. Initialise template context instead of tables.
-        self.context = {
-            'subjects': [],
-            # The template accepts XML strings in params "study_xml" and "admin_data_xml" which are
-            # study-specific. We parse these from the study metadata, which, for this first OpenClinica
-            # project, is stored in custom/openclinica/study_metadata.xml. In future projects we will need to store
-            # study metadata for each domain that uses OpenClinica integration.
-            'study_xml': get_study_constant(domain=None, name='study_xml'),
-            'admin_data_xml': get_study_constant(domain=None, name='admin_data_xml'),
-        }
+        self.context = {'subjects': []}
         # We'll keep the keys from the header rows of both tables, so that we can zip them up with the rest of the
         # rows to create dictionaries for the ODM XML template
         self.study_keys = []

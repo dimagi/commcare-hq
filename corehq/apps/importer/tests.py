@@ -1,3 +1,4 @@
+import mock
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
@@ -6,8 +7,8 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
     get_cases_in_domain
-from corehq.apps.importer.exceptions import ImporterRefError, ImporterError
-from corehq.apps.importer.tasks import do_import
+from corehq.apps.importer.exceptions import ImporterError
+from corehq.apps.importer.tasks import do_import, bulk_import_async
 from corehq.apps.importer.util import ImporterConfig, is_valid_owner
 from corehq.apps.locations.models import LocationType
 from corehq.apps.users.models import WebUser, CommCareUser, DomainMembership
@@ -62,6 +63,7 @@ def id_match_generator(id):
 class ImporterTest(TestCase):
 
     def setUp(self):
+        super(ImporterTest, self).setUp()
         self.domain = create_domain("importer-test").name
         self.default_case_type = 'importer-test-casetype'
         self.default_headers = ['case_id', 'age', 'sex', 'location']
@@ -73,6 +75,7 @@ class ImporterTest(TestCase):
 
     def tearDown(self):
         self.couch_user.delete()
+        super(ImporterTest, self).tearDown()
 
     def _config(self, col_names=None, search_column=None, case_type=None,
                 search_field='case_id', named_columns=False, create_new_cases=True, type_fields=None):
@@ -96,14 +99,17 @@ class ImporterTest(TestCase):
         )
 
     def testImportNone(self):
-        res = do_import(ImporterRefError(), self._config(), self.domain)
-        self.assertEqual('EXPIRED', res['errors'])
+        res = bulk_import_async(self._config(), self.domain, None)
+        self.assertEqual('Sorry, your session has expired. Please start over and try again.',
+                         unicode(res['errors']))
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     def testImporterErrors(self):
-        res = do_import(ImporterError(), self._config(), self.domain)
-        self.assertEqual('HAS_ERRORS', res['errors'])
-        self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
+        with mock.patch('corehq.apps.importer.tasks.importer_util.get_spreadsheet', side_effect=ImporterError()):
+            res = bulk_import_async(self._config(), self.domain, None)
+            self.assertEqual('The session containing the file you uploaded has expired - please upload a new one.',
+                             unicode(res['errors']))
+            self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     def testImportBasic(self):
         config = self._config(self.default_headers)
