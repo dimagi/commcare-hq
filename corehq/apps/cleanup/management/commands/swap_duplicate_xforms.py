@@ -127,6 +127,18 @@ class Command(BaseCommand):
 
     def swap_doc_types(self, log_file, bad_xform_id, duplicate_xform_id, domain, dry_run):
         bad_xform = XFormInstance.get(bad_xform_id)
+
+        # confirm that the doc hasn't already been fixed:
+        bad_xform_problem = None
+        try:
+            bad_xform_problem = bad_xform.problem or ""
+        except AttributeError:
+            pass
+        if bad_xform_problem:
+            if re.match(PROBLEM_TEMPLATE_START, bad_xform_problem):
+                self.log_already_fixed(log_file, bad_xform_id, domain)
+                return
+
         duplicate_xform = XFormInstance.get(duplicate_xform_id)
         now = datetime.now().isoformat()
 
@@ -175,6 +187,10 @@ class Command(BaseCommand):
     @staticmethod
     def log_no_dups(log_file, bad_xform_id, domain):
         log_file.write("No duplicates found for {} in {}\n".format(bad_xform_id, domain))
+
+    @staticmethod
+    def log_already_fixed(log_file, bad_xform_id, domain):
+        log_file.write("Already fixed xform {} in {}".format(bad_xform_id, domain))
 
     @staticmethod
     def _print_progress(i, total_submissions):
