@@ -4,4 +4,4 @@ FROM elasticsearch:1.7.4
 # https://mobz.github.io/elasticsearch-head/
 RUN plugin -i mobz/elasticsearch-head
 
-COPY elasticsearch.yml /usr/share/elasticsearch/config/elasticsearch.yml
+COPY files/elasticsearch.yml /usr/share/elasticsearch/config/elasticsearch.yml
