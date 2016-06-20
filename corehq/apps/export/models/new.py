@@ -221,7 +221,10 @@ class ExportColumn(DocumentSchema):
         return column
 
     def _is_deleted(self, app_ids_and_versions):
-        return is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions)
+        return (
+            is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions) and
+            bool(app_ids_and_versions)  # If this is empty that means there are no builds
+        )
 
     def update_properties_from_app_ids_and_versions(self, app_ids_and_versions):
         """
@@ -474,10 +477,10 @@ class ExportInstance(BlobMixin, Document):
                 label=instance.defaults.get_default_table_name(group_schema.path),
                 selected=instance.defaults.default_is_table_selected(group_schema.path),
             )
-            table.is_deleted = is_occurrence_deleted(
+            table.is_deleted = (is_occurrence_deleted(
                 group_schema.last_occurrences,
                 latest_app_ids_and_versions,
-            )
+            ) and bool(latest_app_ids_and_versions))
             prev_index = 0
             for item in group_schema.items:
                 index, column = table.get_column(
@@ -954,6 +957,7 @@ class FormExportDataSchema(ExportDataSchema):
             app_id,
             current_xform_schema.last_app_versions,
         )
+        app_build_ids.append(app_id)
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             # TODO: Remove this when we mark applications that have been submitted
             if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
@@ -966,7 +970,8 @@ class FormExportDataSchema(ExportDataSchema):
                 app_id,
                 form_xmlns,
             )
-            current_xform_schema.record_update(app.copy_of, app.version)
+
+            current_xform_schema.record_update(app_id, app.version)
 
         # Don't save the schema if there is already a saved schema object
         # and we didn't update it with any app builds
@@ -993,7 +998,7 @@ class FormExportDataSchema(ExportDataSchema):
             xform,
             case_updates,
             app.langs,
-            app.copy_of,
+            app_id,
             app.version,
         )
         return FormExportDataSchema._merge_schemas(current_schema, xform_schema)
@@ -1075,10 +1080,11 @@ class CaseExportDataSchema(ExportDataSchema):
         return map(lambda app_build_version: app_build_version.build_id, app_build_verions)
 
     @staticmethod
-    def generate_schema_from_builds(domain, case_type, force_rebuild=False):
+    def generate_schema_from_builds(domain, app_id, case_type, force_rebuild=False):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
+        :param app_id: The app_id that the export belongs to
         :param case_type: The unique identifier of the schema being exported
         :returns: Returns a CaseExportDataSchema instance
         """
@@ -1096,6 +1102,7 @@ class CaseExportDataSchema(ExportDataSchema):
             domain,
             current_case_schema.last_app_versions,
         )
+        app_build_ids.append(app_id)
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             # TODO: Remove this when we mark applications that have been submitted
@@ -1105,9 +1112,10 @@ class CaseExportDataSchema(ExportDataSchema):
             current_case_schema = CaseExportDataSchema._process_app_build(
                 current_case_schema,
                 app,
+                app.copy_of or app_id,  # If copy of doesn't exist, then it is the current app
                 case_type,
             )
-            current_case_schema.record_update(app.copy_of, app.version)
+            current_case_schema.record_update(app.copy_of or app_id, app.version)
 
         # Don't save the schema if there is already a saved schema object
         # and we didn't update it with any app builds
@@ -1123,7 +1131,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return current_case_schema
 
     @staticmethod
-    def _process_app_build(current_schema, app, case_type):
+    def _process_app_build(current_schema, app, app_id, case_type):
         case_property_mapping = get_case_properties(
             app,
             [case_type],
@@ -1137,18 +1145,18 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
-            app.copy_of,
+            app_id,
             app.version,
         ))
         if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
             case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
-                app.copy_of,
+                app_id,
                 app.version,
             ))
 
         case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
             case_property_mapping,
-            app.copy_of,
+            app_id,
             app.version,
         ))
         case_schemas.append(current_schema)
