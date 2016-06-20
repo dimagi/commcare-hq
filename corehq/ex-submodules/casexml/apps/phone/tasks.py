@@ -1,7 +1,9 @@
 from celery import current_task
+from couchdbkit import ResourceConflict
 from celery.schedules import crontab
-from celery.task import periodic_task, task, Task
+from celery.task import periodic_task, task
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
+from casexml.apps.phone.models import SyncLog
 
 
 @periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="1"),
@@ -30,7 +32,11 @@ def get_async_restore_payload(restore_config):
     """Process an async restore
     """
     current_task.update_state(state="PROGRESS", meta={'done': 50, 'total': 100})
+
     response = restore_config._get_synchronous_payload()
+
+    restore_config.restore_state.finish_sync()
+
 
     return response
     # task should call a subclass of the restore, which also takes a download

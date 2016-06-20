@@ -152,21 +152,24 @@ class AsyncRestoreTest(TestCase):
 class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):
     def setUp(self):
         self.task = mock.MagicMock()
+        self.sync_log_id = "random_restore_id"
         self.task.info = {'done': 25, 'total': 100}
 
-        self.response = AsyncRestoreResponse(self.task)
+        self.response = AsyncRestoreResponse(self.task, self.sync_log_id)
 
     def test_response(self):
         expected = """
         <OpenRosaResponse xmlns="http://openrosa.org/http/response">
             <Sync xmlns="http://commcarehq.org/sync">
                 <progress total="{total}" done="{done}" retry-after="{retry_after}"/>
+                <restore_id>{restore_id}</restore_id>
             </Sync>
         </OpenRosaResponse>
         """.format(
             total=self.task.info['total'],
             done=self.task.info['done'],
-            retry_after=ASYNC_RETRY_AFTER
+            retry_after=ASYNC_RETRY_AFTER,
+            restore_id=self.sync_log_id,
         )
         self.assertXmlEqual(self.response.compile_response(), expected)
 

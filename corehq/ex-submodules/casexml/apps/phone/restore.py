@@ -59,7 +59,7 @@ INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 
 # if a sync is happening asynchronously, we wait for this long for a result to
 # initially be returned, otherwise we return a 202
-INITIAL_ASYNC_TIMEOUT_THRESHOLD = 1
+INITIAL_ASYNC_TIMEOUT_THRESHOLD = 10
 # The Retry-After header parameter. Ask the phone to retry in this many seconds
 # to see if the task is done.
 ASYNC_RETRY_AFTER = 30
@@ -216,8 +216,9 @@ class FileRestoreResponse(RestoreResponse):
 
 class AsyncRestoreResponse(object):
 
-    def __init__(self, task):
+    def __init__(self, task, restore_id):
         self.task = task
+        self.restore_id = restore_id
 
     def get_progress(self):
         progress = self.task.info if self.task.info else {}
@@ -237,7 +238,10 @@ class AsyncRestoreResponse(object):
         progress_tag.set('done', str(self.get_progress()['done']))
         progress_tag.set('total', str(self.get_progress()['total']))
         progress_tag.set('retry-after', str(self.get_progress()['retry-after']))
+        restore_tag = ElementTree.Element("restore_id")
+        restore_tag.text = self.restore_id
         sync_tag.append(progress_tag)
+        sync_tag.append(restore_tag)
 
         return ElementTree.tostring(root, encoding='utf-8')
 
@@ -595,7 +599,7 @@ class RestoreConfig(object):
             new_task = True
             sync_log_to_update = self.restore_state.current_sync_log
             self.restore_state.current_sync_log.async_task_id = task.id
-            self.restore_state.finish_sync()
+            self.restore_state.current_sync_log.save()
 
         try:
             # if this is a new task, wait for INITIAL_ASYNC_TIMEOUT in case
@@ -604,11 +608,11 @@ class RestoreConfig(object):
             response = task.get(timeout=INITIAL_ASYNC_TIMEOUT_THRESHOLD if new_task else 1)
         except TimeoutError:
             # return a 202 with progress
-            response = AsyncRestoreResponse(task)
+            response = AsyncRestoreResponse(task, sync_log_to_update._id)
         else:
             # task is done, unset task id
             sync_log_to_update.async_task_id = None
-            sync_log_to_update.save()
+            #
 
         return response
 
