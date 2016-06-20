@@ -1,4 +1,3 @@
-from django.core.exceptions import ObjectDoesNotExist
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.locations.models import SQLLocation
@@ -20,7 +19,7 @@ from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 def _location_id_for_case(case_id):
     try:
         return SQLLocation.objects.get(supply_point_id=case_id).location_id
-    except ObjectDoesNotExist:
+    except SQLLocation.DoesNotExist:
         return None
 
 
