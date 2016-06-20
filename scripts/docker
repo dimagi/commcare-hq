@@ -105,14 +105,17 @@ if [ "$CMD" == "services" ]; then
 
     if [ `uname` == 'Darwin' -a "$DOCKER_BETA" != "true" ]; then
         docker-machine ssh $DOCKER_MACHINE_NAME sudo mkdir -p $DOCKER_DATA_HOME
+        KAFKA_ADVERTISED_HOST_NAME=$(docker-machine ip $DOCKER_MACHINE_NAME)
     else
         mkdir -p $DOCKER_DATA_HOME
+        KAFKA_ADVERTISED_HOST_NAME=localhost
     fi
 
     export ES_CLUSTER_NAME="${ES_CLUSTER_NAME:-$(hostname)}"
     export COMPOSE_FILE=docker/hq-compose-${SERVICES}.yml
     export COMPOSE_PROJECT_NAME=hqservice
     export VOLUME_PREFIX="$DOCKER_DATA_HOME/"
+    export KAFKA_ADVERTISED_HOST_NAME="$KAFKA_ADVERTISED_HOST_NAME"
 else
     export COMPOSE_FILE=docker/hq-compose.yml
     export COMPOSE_PROJECT_NAME=hqtest
