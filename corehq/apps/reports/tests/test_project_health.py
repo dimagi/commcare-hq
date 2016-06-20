@@ -6,6 +6,7 @@ from corehq.apps.data_analytics.models import MALTRow
 from corehq.const import MISSING_APP_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 
 class MonthlyPerformanceSummaryTests(TestCase):
@@ -45,9 +46,8 @@ class MonthlyPerformanceSummaryTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        users = CommCareUser.all()
-        for user in users:
-            user.delete()
+        super(MonthlyPerformanceSummaryTests, cls).tearDownClass()
+        delete_all_users()
         MALTRow.objects.all().delete()
 
     @classmethod
