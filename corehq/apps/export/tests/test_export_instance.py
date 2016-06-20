@@ -68,7 +68,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         """Only questions that are in the main table and of the same version should be shown"""
         build_ids_and_versions = {self.app_id: 3}
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
 
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
@@ -98,7 +98,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         """Given a higher app_version, all the old questions should not be shown or selected"""
         build_ids_and_versions = {self.app_id: 4}
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
@@ -197,7 +197,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
             self.second_app_id: 4,
         }
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
@@ -221,7 +221,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
             self.second_app_id: 5,
         }
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
@@ -354,7 +354,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
             self.app_id: 3,
         }
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
@@ -370,7 +370,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
         self.assertFalse(instance.tables[0].columns[first_non_system_property].selected)
 
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
 
             instance = FormExportInstance.generate_instance_from_schema(
@@ -391,7 +391,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
             self.app_id: 3,
         }
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
@@ -405,7 +405,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
             self.app_id: 4,
         }
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
 
             instance = FormExportInstance.generate_instance_from_schema(
