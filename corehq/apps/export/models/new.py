@@ -213,7 +213,11 @@ class ExportColumn(DocumentSchema):
         else:
             column = ExportColumn(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
-        column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table and not is_case_update
+        column.selected = (
+            not column._is_deleted(app_ids_and_versions) and
+            not is_case_update and
+            is_main_table
+        )
         return column
 
     def _is_deleted(self, app_ids_and_versions):
