@@ -79,11 +79,11 @@ def process(domain, data):
 class StockReportParser(object):
     """a helper object for parsing raw stock report texts"""
 
-    def __init__(self, domain, verified_contact):
+    def __init__(self, domain, verified_contact, location=None):
         self.domain = domain
         self.verified_contact = verified_contact
 
-        self.location = None
+        self.location = location
         self.case = None
         u = verified_contact.owner
 
@@ -92,8 +92,9 @@ class StockReportParser(object):
             if not isinstance(u, CouchUser):
                 raise NotAUserClassError
 
-            # currently only support one location on the UI
-            self.location = u.location
+            if not self.location:
+                self.location = u.location
+
             if self.location:
                 self.case = SupplyInterface(domain.name).get_by_location(self.location)
 

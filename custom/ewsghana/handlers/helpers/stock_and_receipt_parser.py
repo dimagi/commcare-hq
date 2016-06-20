@@ -16,25 +16,7 @@ class ProductCodeException(Exception):
 class EWSStockAndReceiptParser(StockAndReceiptParser):
 
     def __init__(self, domain, verified_contact, location=None):
-        self.domain = domain
-        self.verified_contact = verified_contact
-
-        self.location = location
-        self.case = None
-        u = verified_contact.owner
-
-        if domain.commtrack_enabled:
-            # if user is not actually a user, we let someone else process
-            if not isinstance(u, CouchUser):
-                raise NotAUserClassError
-
-            if not self.location:
-                self.location = u.location
-
-            if self.location:
-                self.case = SupplyInterface(domain.name).get_by_location(self.location)
-
-        self.C = domain.commtrack_settings
+        super(EWSStockAndReceiptParser, self).__init__(domain, verified_contact, location)
         self.bad_codes = set()
 
     def product_from_code(self, prod_code):
