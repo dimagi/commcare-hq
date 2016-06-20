@@ -952,19 +952,12 @@ class FormExportDataSchema(ExportDataSchema):
                 continue
 
             app = Application.wrap(app_doc)
-            xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
-            if not xform:
-                continue
-            case_updates = xform.get_case_updates(xform.get_module().case_type)
-            xform = xform.wrapped_xform()
-            xform_schema = FormExportDataSchema._generate_schema_from_xform(
-                xform,
-                case_updates,
-                app.langs,
-                app.copy_of,
-                app.version,
+            current_xform_schema = FormExportDataSchema._process_app_build(
+                current_xform_schema,
+                app,
+                app_id,
+                form_xmlns,
             )
-            current_xform_schema = FormExportDataSchema._merge_schemas(current_xform_schema, xform_schema)
             current_xform_schema.record_update(app.copy_of, app.version)
 
         if not original_id or app_build_ids:
@@ -978,6 +971,22 @@ class FormExportDataSchema(ExportDataSchema):
             )
 
         return current_xform_schema
+
+    @staticmethod
+    def _process_app_build(current_schema, app, app_id, form_xmlns):
+        xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
+        if not xform:
+            return current_schema
+        case_updates = xform.get_case_updates(xform.get_module().case_type)
+        xform = xform.wrapped_xform()
+        xform_schema = FormExportDataSchema._generate_schema_from_xform(
+            xform,
+            case_updates,
+            app.langs,
+            app.copy_of,
+            app.version,
+        )
+        return FormExportDataSchema._merge_schemas(current_schema, xform_schema)
 
     @staticmethod
     def _generate_schema_from_xform(xform, case_updates, langs, app_id, app_version):
@@ -1083,37 +1092,11 @@ class CaseExportDataSchema(ExportDataSchema):
             if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
                 continue
             app = Application.wrap(app_doc)
-            case_property_mapping = get_case_properties(
+            current_case_schema = CaseExportDataSchema._process_app_build(
+                current_case_schema,
                 app,
-                [case_type],
-                include_parent_properties=False
+                case_type,
             )
-            parent_types, _ = (
-                ParentCasePropertyBuilder(app)
-                .get_parent_types_and_contributed_properties(case_type)
-            )
-            case_schemas = []
-            case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
-                case_property_mapping,
-                parent_types,
-                app.copy_of,
-                app.version,
-            ))
-            if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
-                case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
-                    app.copy_of,
-                    app.version,
-                ))
-
-            case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
-                case_property_mapping,
-                app.copy_of,
-                app.version,
-            ))
-            case_schemas.append(current_case_schema)
-
-            current_case_schema = CaseExportDataSchema._merge_schemas(*case_schemas)
-
             current_case_schema.record_update(app.copy_of, app.version)
 
         # Don't save the schema if there is already a saved schema object
@@ -1128,6 +1111,39 @@ class CaseExportDataSchema(ExportDataSchema):
                 original_rev
             )
         return current_case_schema
+
+    @staticmethod
+    def _process_app_build(current_schema, app, case_type):
+        case_property_mapping = get_case_properties(
+            app,
+            [case_type],
+            include_parent_properties=False
+        )
+        parent_types, _ = (
+            ParentCasePropertyBuilder(app)
+            .get_parent_types_and_contributed_properties(case_type)
+        )
+        case_schemas = []
+        case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
+            case_property_mapping,
+            parent_types,
+            app.copy_of,
+            app.version,
+        ))
+        if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
+            case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
+                app.copy_of,
+                app.version,
+            ))
+
+        case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
+            case_property_mapping,
+            app.copy_of,
+            app.version,
+        ))
+        case_schemas.append(current_schema)
+
+        return CaseExportDataSchema._merge_schemas(*case_schemas)
 
     @staticmethod
     def _generate_schema_from_case_property_mapping(case_property_mapping, parent_types, app_id, app_version):
