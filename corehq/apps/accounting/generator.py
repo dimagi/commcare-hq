@@ -39,8 +39,10 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFeeCriteria,
 )
 from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.util.test_utils import unit_testing_only
 
 
+@unit_testing_only
 def instantiate_accounting_for_tests():
     call_command('cchq_prbac_bootstrap', testing=True)
 
@@ -54,6 +56,7 @@ def instantiate_accounting_for_tests():
     call_command('cchq_software_plan_bootstrap', testing=True)
 
 
+@unit_testing_only
 def init_default_currency():
     currency, _ = Currency.objects.get_or_create(
         code=settings.DEFAULT_CURRENCY
@@ -65,10 +68,12 @@ def init_default_currency():
     return currency
 
 
+@unit_testing_only
 def unique_name():
     return uuid.uuid4().hex.lower()[:60]
 
 
+@unit_testing_only
 def arbitrary_web_user(save=True, is_dimagi=False):
     domain = Domain(name=unique_name()[:25])
     domain.save()
@@ -83,6 +88,7 @@ def arbitrary_web_user(save=True, is_dimagi=False):
     return web_user
 
 
+@unit_testing_only
 def billing_account(web_user_creator, web_user_contact, currency=None, save=True):
     account_name = data_gen.arbitrary_unique_name(prefix="BA")[:40]
     currency = currency or Currency.objects.get(code=settings.DEFAULT_CURRENCY)
@@ -98,6 +104,7 @@ def billing_account(web_user_creator, web_user_contact, currency=None, save=True
     return billing_account
 
 
+@unit_testing_only
 def arbitrary_contact_info(account, web_user_creator):
     return BillingContactInfo(
         account=account,
@@ -114,6 +121,7 @@ def arbitrary_contact_info(account, web_user_creator):
     )
 
 
+@unit_testing_only
 def delete_all_accounts():
     BillingContactInfo.objects.all().delete()
     BillingAccount.objects.all().delete()
@@ -125,6 +133,7 @@ def delete_all_accounts():
     Currency.objects.all().delete()
 
 
+@unit_testing_only
 def subscribable_plan(edition=SoftwarePlanEdition.STANDARD):
     return DefaultProductPlan.objects.get(
         edition=edition,
@@ -133,6 +142,7 @@ def subscribable_plan(edition=SoftwarePlanEdition.STANDARD):
     ).plan.get_version()
 
 
+@unit_testing_only
 def generate_domain_subscription(account, domain, date_start, date_end,
                                  plan_version=None, service_type=SubscriptionType.NOT_SET):
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
@@ -148,12 +158,14 @@ def generate_domain_subscription(account, domain, date_start, date_end,
     return subscription
 
 
+@unit_testing_only
 def delete_all_subscriptions():
     SubscriptionAdjustment.objects.all().delete()
     Subscription.objects.all().delete()
     Subscriber.objects.all().delete()
 
 
+@unit_testing_only
 def get_start_date():
     start_date = datetime.date.today()
     (_, last_day) = calendar.monthrange(start_date.year, start_date.month)
@@ -161,6 +173,7 @@ def get_start_date():
     return start_date.replace(day=min(max(2, start_date.day), last_day - 1))
 
 
+@unit_testing_only
 def arbitrary_domain():
     domain = Domain(
         name=data_gen.arbitrary_unique_name()[:20],
@@ -170,6 +183,7 @@ def arbitrary_domain():
     return domain
 
 
+@unit_testing_only
 def arbitrary_commcare_user(domain, is_active=True):
     username = unique_name()
     try:
@@ -181,6 +195,7 @@ def arbitrary_commcare_user(domain, is_active=True):
         pass
 
 
+@unit_testing_only
 def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
     count = 0
     for _ in range(0, num_users):
@@ -191,6 +206,7 @@ def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
     return num_users
 
 
+@unit_testing_only
 def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, direction=None, multipart_count=1):
     from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
 
@@ -219,6 +235,7 @@ def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, dire
     return billables
 
 
+@unit_testing_only
 def create_excess_community_users(domain):
     community_plan = DefaultProductPlan.objects.get(
         product_type=SoftwareProductType.COMMCARE,
