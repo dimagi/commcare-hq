@@ -973,18 +973,14 @@ class FormExportDataSchema(ExportDataSchema):
 
             current_xform_schema.record_update(app_id, app.version)
 
-        # Don't save the schema if there is already a saved schema object
-        # and we didn't update it with any app builds
-        if not original_id or app_build_ids:
-            current_xform_schema.domain = domain
-            current_xform_schema.app_id = app_id
-            current_xform_schema.xmlns = form_xmlns
-            current_xform_schema = FormExportDataSchema._save_export_schema(
-                current_xform_schema,
-                original_id,
-                original_rev
-            )
-
+        current_xform_schema.domain = domain
+        current_xform_schema.app_id = app_id
+        current_xform_schema.xmlns = form_xmlns
+        current_xform_schema = FormExportDataSchema._save_export_schema(
+            current_xform_schema,
+            original_id,
+            original_rev
+        )
         return current_xform_schema
 
     @staticmethod
@@ -1117,17 +1113,13 @@ class CaseExportDataSchema(ExportDataSchema):
             )
             current_case_schema.record_update(app.copy_of or app_id, app.version)
 
-        # Don't save the schema if there is already a saved schema object
-        # and we didn't update it with any app builds
-        if not original_id or app_build_ids:
-            current_case_schema.domain = domain
-            current_case_schema.case_type = case_type
-
-            current_case_schema = CaseExportDataSchema._save_export_schema(
-                current_case_schema,
-                original_id,
-                original_rev
-            )
+        current_case_schema.domain = domain
+        current_case_schema.case_type = case_type
+        current_case_schema = CaseExportDataSchema._save_export_schema(
+            current_case_schema,
+            original_id,
+            original_rev
+        )
         return current_case_schema
 
     @staticmethod
