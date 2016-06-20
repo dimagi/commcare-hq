@@ -156,6 +156,52 @@ class OpenClinicaAPI(object):
         odm = soap_env.xpath('./SOAP-ENV:Body/OC:createResponse/OC:odm', namespaces=nsmap)[0]
         return odm.text
 
+    def get_subject_keys(self):
+        subject_client = self.get_client('studySubject')
+        resp = subject_client.service.listAllByStudy({'identifier': self._study_id})
+        return [s.subject.uniqueIdentifier for s in resp.studySubjects.studySubject] if resp.studySubjects else []
+
+    def create_subject(self, subject):
+        subject_client = self.get_client('studySubject')
+        subject_data = {
+            'label': subject['study_subject_id'],
+            'enrollmentDate': str(subject['enrollment_date']),
+            'subject': {
+                'uniqueIdentifier': subject['subject_key'][3:],  # Drop the initial 'SS_'
+                'gender': {'1': 'm', '2': 'f'}[subject['sex']],
+                'dateOfBirth': str(subject['dob']),
+            },
+            'studyRef': {
+                'identifier': self._study_id,
+            },
+        }
+        resp = subject_client.service.create(subject_data)
+        if resp.result != 'Success':
+            raise OpenClinicaIntegrationError(
+                'Unable to register subject "{}" via OpenClinica webservice'.format(subject['subject_key'])
+            )
+
+    def schedule_event(self, subject, event):
+        event_client = self.get_client('event')
+        event_data = {
+            'studySubjectRef': {
+                'label': subject['study_subject_id'],
+            },
+            'studyRef': {
+                'identifier': self._study_id,
+            },
+            'eventDefinitionOID': event['study_event_oid'],
+            'startDate': event['start_long'].split()[0],  # e.g. 1999-12-31
+            'startTime': event['start_short'].split()[1],  # e.g. 23:59
+            'endDate': event['end_long'].split()[0],
+            'endTime': event['end_short'].split()[1],
+        }
+        resp = event_client.service.schedule(event_data)
+        if resp.result != 'Success':
+            raise OpenClinicaIntegrationError(
+                'Unable to schedule event "{}"  via OpenClinica webservice'.format(event['study_event_oid'])
+            )
+
 
 class StudySettings(DocumentSchema):
     is_ws_enabled = BooleanProperty()
@@ -461,7 +507,9 @@ class Subject(object):
                     eventslist.append({
                         'study_event_oid': oid,
                         'repeat_key': i + 1,
+                        'start_short': study_event.start_short,
                         'start_long': study_event.start_long,
+                        'end_short': study_event.end_short,
                         'end_long': study_event.end_long,
                         'forms': mkformslist(study_event.forms)
                     })
