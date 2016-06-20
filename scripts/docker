@@ -21,7 +21,14 @@ function usage() {
             echo ""
             ;;
         bash)
-            echo "Run bash in web container"
+            echo "Run bash in container"
+            echo ""
+            echo "$0 bash [SERVICE_NAME]"
+            echo ""
+            echo "Run bash in the currently running container if it is up."
+            echo "Otherwise create a new container and run bash inside it."
+            echo "See docker/hq-compose.yml for applicable service names."
+            echo "The default is 'web'."
             echo ""
             ;;
         runserver)
@@ -190,7 +197,14 @@ if [ "$CMD" == "test" ]; then
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"
 elif [ "$CMD" == "bash" ]; then
-    docker-compose run --rm web $CMD "$@"
+    SERVICE_NAME="${1:-web}"
+    shift
+    CONTAINER="${COMPOSE_PROJECT_NAME}_${SERVICE_NAME}_1"
+    if [ "$(docker inspect -f {{.State.Running}} $CONTAINER 2> /dev/null)" == "true" ]; then
+        docker exec -it $CONTAINER $CMD "$@"
+    else
+        docker-compose run --rm $SERVICE_NAME $CMD "$@"
+    fi
 else
     docker-compose $CMD "$@"
     if [ "$TEARDOWN" == "yes" ]; then
