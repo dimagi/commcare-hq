@@ -101,7 +101,8 @@ class ILSTestScript(TestScript):
         delete_domain_phone_numbers(TEST_DOMAIN)
         if cls.sms_backend_mapping.id is not None:
             cls.sms_backend_mapping.delete()
-        cls.sms_backend.delete()
+        if cls.sms_backend.id is not None:
+            cls.sms_backend.delete()
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('bella').delete()
         CommCareUser.get_by_username('trella').delete()
