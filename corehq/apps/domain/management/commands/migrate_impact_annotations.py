@@ -10,13 +10,19 @@ class Command(BaseCommand):
         print "Migrating impact annotations"
 
         for domain in Domain.get_all():
+            changed = False
             for app in domain.applications():
                 if app.amplifies_project == "yes":
                     domain.internal.amplifies_project = "yes"
+                    changed = True
                 elif app.amplifies_project == "no" and domain.internal.amplifies_project != "yes":
                     domain.internal.amplifies_project = "no"
+                    changed = True
                 if app.amplifies_workers == "yes":
                     domain.internal.amplifies_workers = "yes"
+                    changed = True
                 elif app.amplifies_workers == "no" and domain.internal.amplifies_workers != "yes":
                     domain.internal.amplifies_workers = "no"
-            domain.save()
+                    changed = True
+            if changed:
+                domain.save()

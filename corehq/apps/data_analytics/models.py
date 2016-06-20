@@ -5,7 +5,7 @@ from django.db import models
 from corehq.apps.data_analytics.const import NOT_SET
 
 
-GIRExportRow = namedtuple('girrow',
+GIRExportRow = namedtuple('GIRExportRow',
                           'domain country sector subsector bu self_service test start device active_users wam '
                           'pam wam_current wam_1_prior wam_2_prior active_current active_1_prior active_2_prior '
                           'using_and_performing not_performing inactive_experienced inactive_not_experienced '

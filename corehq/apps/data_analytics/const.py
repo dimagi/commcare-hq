@@ -116,3 +116,5 @@ GIR_FIELDS = [
     "D5 All Active Users",
     "D6 All Active Users Current + Prior 2 Mos",
 ]
+
+NO_BU = "MISSING BU"

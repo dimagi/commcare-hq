@@ -12,7 +12,7 @@ from corehq.apps.data_analytics.esaccessors import (
 )
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import (
-    TEST_COUCH_TO_SQL_MAP, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET, BU_MAPPING
+    TEST_COUCH_TO_SQL_MAP, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET, BU_MAPPING, NO_BU
 )
 
 
@@ -32,41 +32,7 @@ class GIRTableGenerator(object):
         rows = []
         for domain in Domain.get_all():
             for monthspan in self.monthspan_list:
-                user_tuple = GIRTableGenerator.classify_users(domain, monthspan)
-                max_device = GIRTableGenerator.get_max_device(domain, monthspan)
-                possible_experience = get_possibly_experienced(domain, monthspan)
-                recently_active = GIRTableGenerator.get_active_recent(domain, monthspan)
-                gir_dict = {
-                    'month': monthspan.startdate,
-                    'domain_name': domain.name,
-                    'country':
-                        ', '.join([unicode(COUNTRIES.get(abbr, abbr)) for abbr in domain.deployment.countries]),
-                    'sector': domain.internal.area,
-                    'subsector': domain.internal.sub_area,
-                    'bu': GIRTableGenerator.get_bu(domain),
-                    'self_service': domain.internal.self_started,
-                    'test_domain': TEST_COUCH_TO_SQL_MAP.get(domain.is_test, NOT_SET),
-                    'start_date': domain.date_created,
-                    'device_id': max_device,
-                    'wam': AMPLIFY_COUCH_TO_SQL_MAP.get(domain.internal.amplifies_workers, NOT_SET),
-                    'pam': AMPLIFY_COUCH_TO_SQL_MAP.get(domain.internal.amplifies_project, NOT_SET),
-                    'wams_current': len(user_tuple.performing & user_tuple.experienced),
-                    'active_users': len(user_tuple.active | user_tuple.sms),
-                    'using_and_performing': len(user_tuple.performing),
-                    'not_performing': len(user_tuple.active - user_tuple.performing),
-                    'inactive_experienced':
-                        len((user_tuple.total - user_tuple.active) & user_tuple.experienced),
-                    'inactive_not_experienced':
-                        len((user_tuple.total - user_tuple.active) - user_tuple.experienced),
-                    'not_experienced': len(user_tuple.performing - user_tuple.experienced),
-                    'not_performing_not_experienced':
-                        len(user_tuple.active - user_tuple.performing - user_tuple.experienced),
-                    'active_ever': len(possible_experience | recently_active),
-                    'possibly_exp': len(possible_experience),
-                    'ever_exp': len(user_tuple.experienced),
-                    'exp_and_active_ever': len(user_tuple.active & user_tuple.experienced),
-                    'active_in_span': len(recently_active)
-                }
+                gir_dict = GIRTableGenerator.get_gir_dict_for_domain_and_monthspan(domain, monthspan)
                 rows.append(gir_dict)
         GIRRow.objects.bulk_create(
             [GIRRow(**gir_row) for gir_row in rows]
@@ -91,9 +57,9 @@ class GIRTableGenerator(object):
         if domain.internal.business_unit:
             return domain.internal.business_unit
         elif domain.deployment.countries:
-            return BU_MAPPING.get(domain.deployment.countries[0], "MISSING BU")
+            return BU_MAPPING.get(domain.deployment.countries[0], NO_BU)
         else:
-            return "MISSING BU"
+            return NO_BU
 
     @staticmethod
     def get_active_recent(domain, monthspan):
@@ -124,3 +90,42 @@ class GIRTableGenerator(object):
             if number > max_number:
                 max_device = device
         return max_device
+
+    @staticmethod
+    def get_gir_dict_for_domain_and_monthspan(domain, monthspan):
+        user_tuple = GIRTableGenerator.classify_users(domain, monthspan)
+        max_device = GIRTableGenerator.get_max_device(domain, monthspan)
+        possible_experience = get_possibly_experienced(domain, monthspan)
+        recently_active = GIRTableGenerator.get_active_recent(domain, monthspan)
+        gir_dict = {
+            'month': monthspan.startdate,
+            'domain_name': domain.name,
+            'country':
+                ', '.join([unicode(COUNTRIES.get(abbr, abbr)) for abbr in domain.deployment.countries]),
+            'sector': domain.internal.area,
+            'subsector': domain.internal.sub_area,
+            'bu': GIRTableGenerator.get_bu(domain),
+            'self_service': domain.internal.self_started,
+            'test_domain': TEST_COUCH_TO_SQL_MAP.get(domain.is_test, NOT_SET),
+            'start_date': domain.date_created,
+            'device_id': max_device,
+            'wam': AMPLIFY_COUCH_TO_SQL_MAP.get(domain.internal.amplifies_workers, NOT_SET),
+            'pam': AMPLIFY_COUCH_TO_SQL_MAP.get(domain.internal.amplifies_project, NOT_SET),
+            'wams_current': len(user_tuple.performing & user_tuple.experienced),
+            'active_users': len(user_tuple.active | user_tuple.sms),
+            'using_and_performing': len(user_tuple.performing),
+            'not_performing': len(user_tuple.active - user_tuple.performing),
+            'inactive_experienced':
+                len((user_tuple.total - user_tuple.active) & user_tuple.experienced),
+            'inactive_not_experienced':
+                len((user_tuple.total - user_tuple.active) - user_tuple.experienced),
+            'not_experienced': len(user_tuple.performing - user_tuple.experienced),
+            'not_performing_not_experienced':
+                len(user_tuple.active - user_tuple.performing - user_tuple.experienced),
+            'active_ever': len(possible_experience | recently_active),
+            'possibly_exp': len(possible_experience),
+            'ever_exp': len(user_tuple.experienced),
+            'exp_and_active_ever': len(user_tuple.active & user_tuple.experienced),
+            'active_in_span': len(recently_active)
+        }
+        return gir_dict
