@@ -165,14 +165,15 @@ fi
 export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"
-export TRAVIS="$TRAVIS"
 
-if [ "$TRAVIS" == "true" ]; then
+if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
     # don't mount /mnt/commcare-hq-ro volume read-only on travis
     # overwrite of localsettings.py, etc. doesn't matter here
     export RO=""
+    export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-none}"
 else
     export RO=":ro"
+    export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-aufs}"
 fi
 
 if [ "$DOCKER_BETA" == "true" ]; then

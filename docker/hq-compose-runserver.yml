@@ -3,6 +3,7 @@ web:
   environment:
     COMMCAREHQ_BOOTSTRAP: "yes"
     DEPENDENT_SERVICES: "couch postgres redis kafka elasticsearch riakcs"
+    DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
   privileged: true  # allows mount inside container
   command: [runserver]
   links:
