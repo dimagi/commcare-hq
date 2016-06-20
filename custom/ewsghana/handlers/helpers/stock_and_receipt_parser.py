@@ -15,13 +15,13 @@ class ProductCodeException(Exception):
 
 class EWSStockAndReceiptParser(StockAndReceiptParser):
 
-    def __init__(self, domain, v, location=None):
+    def __init__(self, domain, verified_contact, location=None):
         self.domain = domain
-        self.v = v
+        self.verified_contact = verified_contact
 
         self.location = location
         self.case = None
-        u = v.owner
+        u = verified_contact.owner
 
         if domain.commtrack_enabled:
             # if user is not actually a user, we let someone else process

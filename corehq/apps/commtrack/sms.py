@@ -79,13 +79,13 @@ def process(domain, data):
 class StockReportParser(object):
     """a helper object for parsing raw stock report texts"""
 
-    def __init__(self, domain, v):
+    def __init__(self, domain, verified_contact):
         self.domain = domain
-        self.v = v
+        self.verified_contact = verified_contact
 
         self.location = None
         self.case = None
-        u = v.owner
+        u = verified_contact.owner
 
         if domain.commtrack_enabled:
             # if user is not actually a user, we let someone else process
@@ -285,8 +285,8 @@ class StockReportParser(object):
 
         return {
             'timestamp': datetime.utcnow(),
-            'user': self.v.owner,
-            'phone': self.v.phone_number,
+            'user': self.verified_contact.owner,
+            'phone': self.verified_contact.phone_number,
             'location': self.location,
             'transactions': tx,
         }

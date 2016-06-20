@@ -14,8 +14,8 @@ class ILSStockReportParser(StockReportParser):
 
     _formatterBridge = None
 
-    def __init__(self, domain, v, formatter=None):
-        super(ILSStockReportParser, self).__init__(domain, v)
+    def __init__(self, domain, verified_contact, formatter=None):
+        super(ILSStockReportParser, self).__init__(domain, verified_contact)
         self._formatterBridge = formatter
         self.error = False
         self.errors = []
