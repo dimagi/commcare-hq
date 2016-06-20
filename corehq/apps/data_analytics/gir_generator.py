@@ -1,6 +1,6 @@
 import datetime
 
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 from django_countries.data import COUNTRIES
 
@@ -42,14 +42,17 @@ class GIRTableGenerator(object):
     def classify_users(domain, monthspan):
         performing_users = []
         experienced_users = []
-        all_users, users_dict, sms = active_mobile_users(domain, monthspan.startdate, monthspan.enddate)
+        all_users, user_forms, sms = active_mobile_users(domain, monthspan.startdate, monthspan.enddate)
+        user_query = MALTRow.objects.filter(domain_name=domain).values('user_id', 'month').distinct()
+        user_months = defaultdict(int)
+        for entry in user_query:
+            user_months[entry['user_id']] += 1
         for user in all_users:
-            if users_dict.get(user, 0) > domain.internal.performance_threshold:
+            if user_forms.get(user, 0) > domain.internal.performance_threshold:
                 performing_users.append(user)
-            if len(MALTRow.objects.filter(user_id=user).values('month').distinct()) > \
-                    domain.internal.experienced_threshold:
+            if user_months.get(user, 0) >= domain.internal.experienced_threshold:
                 experienced_users.append(user)
-        return UserCategories(set(users_dict.keys()), set(performing_users),
+        return UserCategories(set(user_forms.keys()), set(performing_users),
                               set(experienced_users), all_users, sms)
 
     @staticmethod
