@@ -42,29 +42,20 @@ from casexml.apps.case.xml import check_version, V1
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
+from casexml.apps.phone.const import (
+    INITIAL_SYNC_CACHE_TIMEOUT,
+    INITIAL_SYNC_CACHE_THRESHOLD,
+    INITIAL_ASYNC_TIMEOUT_THRESHOLD,
+    ASYNC_RETRY_AFTER,
+    ASYNC_RESTORE_CACHE_KEY_PREFIX,
+    RESTORE_CACHE_KEY_PREFIX,
+)
+
 from wsgiref.util import FileWrapper
 from xml.etree import ElementTree
 
 
 logger = logging.getLogger(__name__)
-
-# how long a cached payload sits around for (in seconds).
-INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
-
-# the threshold for setting a cached payload on initial sync (in seconds).
-# restores that take less than this time will not be cached to allow
-# for rapid iteration on fixtures/cases/etc.
-INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
-
-# if a sync is happening asynchronously, we wait for this long for a result to
-# initially be returned, otherwise we return a 202
-INITIAL_ASYNC_TIMEOUT_THRESHOLD = 10
-# The Retry-After header parameter. Ask the phone to retry in this many seconds
-# to see if the task is done.
-ASYNC_RETRY_AFTER = 30
-
-ASYNC_RESTORE_CACHE_KEY_PREFIX = "async-restore"
-RESTORE_CACHE_KEY_PREFIX = "ota-restore"
 
 
 def restore_cache_key(prefix, user_id, version=None):

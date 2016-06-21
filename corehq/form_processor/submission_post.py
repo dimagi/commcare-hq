@@ -23,6 +23,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
+from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
@@ -121,7 +122,7 @@ class SubmissionPost(object):
             legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
     def _invalidate_async_tasks(self, user_id):
-        from casexml.apps.phone.restore import restore_cache_key, ASYNC_RESTORE_CACHE_KEY_PREFIX
+        from casexml.apps.phone.restore import restore_cache_key
         cache = get_redis_default_cache()
         cache_key = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, user_id)
         task_id = cache.get(cache_key)
