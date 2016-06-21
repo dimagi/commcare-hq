@@ -42,7 +42,7 @@ from corehq.util.test_utils import unit_testing_only
 
 
 @unit_testing_only
-def instantiate_accounting_for_tests():
+def instantiate_accounting():
     call_command('cchq_prbac_bootstrap', testing=True)
 
     DefaultProductPlan.objects.all().delete()

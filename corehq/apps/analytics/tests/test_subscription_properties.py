@@ -21,7 +21,7 @@ class TestSubscriptionProperties(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        generator.instantiate_accounting_for_tests()
+        generator.instantiate_accounting()
 
         cls.base_domain = Domain(name="base", is_active=True)
         cls.base_domain.save()

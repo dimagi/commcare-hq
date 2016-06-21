@@ -132,7 +132,7 @@ def prepare_domain(domain_name):
             administrative=administrative,
         )
 
-    generator.instantiate_accounting_for_tests()
+    generator.instantiate_accounting()
     account = BillingAccount.get_or_create_account_by_domain(
         domain.name,
         created_by="automated-test",

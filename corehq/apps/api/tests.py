@@ -90,7 +90,7 @@ class APIResourceTest(TestCase):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting_for_tests()
+        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.list_endpoint = reverse('api_dispatch_list',
                 kwargs=dict(domain=cls.domain.name,
@@ -1365,7 +1365,7 @@ class TestBulkUserAPI(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting_for_tests()
+        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'

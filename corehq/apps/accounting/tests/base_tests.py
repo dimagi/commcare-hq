@@ -11,7 +11,7 @@ class BaseAccountingTest(TestCase):
     def setUpClass(cls):
         super(BaseAccountingTest, cls).setUpClass()
         Role.get_cache().clear()
-        generator.instantiate_accounting_for_tests()
+        generator.instantiate_accounting()
 
     def tearDown(self):
         for domain in Domain.get_all():
