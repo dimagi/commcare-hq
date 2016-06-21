@@ -12,7 +12,9 @@ from casexml.apps.phone.restore import (
     RestoreParams,
     AsyncRestoreResponse,
     FileRestoreResponse,
-    ASYNC_RETRY_AFTER
+    ASYNC_RETRY_AFTER,
+    restore_cache_key,
+    ASYNC_RESTORE_CACHE_KEY_PREFIX,
 )
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.case.tests.util import (
@@ -106,7 +108,7 @@ class AsyncRestoreTest(TestCase):
 
     def test_subsequent_syncs_when_job_complete(self):
         # First sync, return a timout. Ensure that the async_task_id gets set
-        cache_id = "async-restore-{}".format(self.user.user_id)
+        cache_id = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id, '2.0')
         with mock.patch('casexml.apps.phone.restore.get_async_restore_payload') as task:
             delay = mock.MagicMock()
             delay.id = 'random_task_id'

@@ -63,6 +63,17 @@ INITIAL_ASYNC_TIMEOUT_THRESHOLD = 10
 # to see if the task is done.
 ASYNC_RETRY_AFTER = 30
 
+ASYNC_RESTORE_CACHE_KEY_PREFIX = "async-restore"
+RESTORE_CACHE_KEY_PREFIX = "ota-restore"
+
+
+def restore_cache_key(prefix, user_id, version):
+    return hashlib.md5('{prefix}-{user}-{version}'.format(
+        prefix=prefix,
+        user=user_id,
+        version=version,
+    )).hexdigest()
+
 
 def stream_response(payload, headers=None, status=200):
     try:
@@ -563,7 +574,7 @@ class RestoreConfig(object):
         else:
             print "SYNC"
             self.restore_state.start_sync()
-            response = self._get_synchronous_payload()
+            response = self.generate_payload()
             self.restore_state.finish_sync()
 
             self.set_cached_payload_if_necessary(response, self.restore_state.duration)
@@ -572,7 +583,7 @@ class RestoreConfig(object):
 
     @property
     def _async_cache_key(self):
-        return "async-restore-{}".format(self.restore_user.user_id)
+        return restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id, self.version)
 
     def _get_asynchronous_payload(self):
         task_id = self.cache.get(self._async_cache_key)
@@ -602,7 +613,7 @@ class RestoreConfig(object):
 
         return response
 
-    def _get_synchronous_payload(self, async_task=None):
+    def generate_payload(self, async_task=None):
         """
         This function returns a RestoreResponse class that encapsulates the response.
         """
@@ -621,10 +632,10 @@ class RestoreConfig(object):
                             ElementTree.SubElement(element, 'empty_element')
                         response.append(element)
 
-            full_response_providers = get_full_response_providers(self.timing_context)
+            full_response_providers = get_full_response_providers(self.timing_context, async_task)
             for provider in full_response_providers:
                 with self.timing_context(provider.__class__.__name__):
-                    partial_response = provider.get_response(self.restore_state, async_task)
+                    partial_response = provider.get_response(self.restore_state)
                     response = response + partial_response
                     partial_response.close()
 
@@ -647,10 +658,7 @@ class RestoreConfig(object):
                                 status=412)  # precondition failed
 
     def _initial_cache_key(self):
-        return hashlib.md5('ota-restore-{user}-{version}'.format(
-            user=self.restore_user.user_id,
-            version=self.version,
-        )).hexdigest()
+        return restore_cache_key(RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id, self.version)
 
     def get_cached_payload(self):
         if self.overwrite_cache:
