@@ -5,6 +5,7 @@ from corehq.apps.app_manager.tests import TestXmlMixin
 from celery.exceptions import TimeoutError
 from celery.result import EagerResult, AsyncResult
 
+from casexml.apps.case.xml import V2
 from corehq.apps.domain.models import Domain
 from casexml.apps.phone.restore import (
     RestoreConfig,
@@ -51,7 +52,7 @@ class AsyncRestoreTest(TestCase):
         cls.domain = 'dummy-project'
         cls.project = Domain(name=cls.domain)
         cls.project.save()
-        cls.user = create_restore_user()
+        cls.user = create_restore_user(domain=cls.domain)
 
     @classmethod
     def tearDownClass(cls):
@@ -65,7 +66,7 @@ class AsyncRestoreTest(TestCase):
         restore_config = RestoreConfig(
             project=self.project,
             restore_user=self.user,
-            params=RestoreParams(sync_log_id=sync_log_id),
+            params=RestoreParams(sync_log_id=sync_log_id, version=V2),
             async=async
         )
         self.addCleanup(restore_config.cache.clear)
