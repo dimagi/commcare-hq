@@ -191,6 +191,9 @@ class CleanOwnerSyncPayload(object):
 
 
 class AsyncCleanOwnerPayload(CleanOwnerSyncPayload):
+    """
+    Case Sync Payload that updates progress on a celery task
+    """
     def __init__(self, timing_context, case_ids_to_sync, restore_state, current_task):
         super(AsyncCleanOwnerPayload, self).__init__(timing_context, case_ids_to_sync, restore_state)
         self.current_task = current_task
@@ -199,19 +202,15 @@ class AsyncCleanOwnerPayload(CleanOwnerSyncPayload):
         self._update_progress(total=len(self.all_maybe_syncing))
         return super(AsyncCleanOwnerPayload, self).get_payload()
 
-    def _update_progress(self, done=0, total=0):
-        print "#####"
-        print "progress: {}, total: {}".format(done, total)
-        print "#####"
+    def _mark_case_as_checked(self, case):
+        super(AsyncCleanOwnerPayload, self)._mark_case_as_checked(case)
+        self._update_progress(done=len(self.checked_cases), total=len(self.all_maybe_syncing))
 
+    def _update_progress(self, done=0, total=0):
         self.current_task.update_state(
             state="PROGRESS",
             meta={'done': done, 'total': total}
         )
-
-    def _mark_case_as_checked(self, case):
-        super(AsyncCleanOwnerPayload, self)._mark_case_as_checked(case)
-        self._update_progress(done=len(self.checked_cases), total=len(self.all_maybe_syncing))
 
 
 class CleanOwnerCaseSyncOperation(object):

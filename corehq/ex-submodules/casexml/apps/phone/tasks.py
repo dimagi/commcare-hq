@@ -34,9 +34,9 @@ def get_async_restore_payload(restore_config):
     """
 
     restore_config.restore_state.start_sync()
-    response = restore_config._get_synchronous_payload(async_task=current_task)
+    response = restore_config.generate_payload(async_task=current_task)
     restore_config.restore_state.finish_sync()
+    restore_config.set_cached_payload_if_necessary(response, restore_config.restore_state.duration)
+    # cache sync
 
     return response
-    # task should call a subclass of the restore, which also takes a download
-    # object and can update status
