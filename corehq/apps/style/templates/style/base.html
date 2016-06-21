@@ -529,6 +529,11 @@
         {% endcompress %}
         {% endif %}
 
+        {% if request.use_ko_validation %}
+          <script type="text/javascript" src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
+          <script type="text/javascript" src="{% static 'style/ko/validators.ko.js' %}"></script>
+        {% endif %}
+
         {% block js %}{% endblock js %}
 
         {# Report Issue #}

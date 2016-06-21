@@ -286,3 +286,19 @@ def use_blazy(view_func):
         request.use_blazy = True
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
+
+
+def use_ko_validation(view_func):
+    """Use this decorator to use knockout validation in knockout forms
+
+    Example Tag Usage:
+
+    @use_ko_validation
+    def dispatch(self, request, *args, **kwargs):
+        return super(MyView, self).dispatch(request, *args, **kwargs)
+    """
+    @wraps(view_func)
+    def _wrapped(class_based_view, request, *args, **kwargs):
+        request.use_ko_validation = True
+        return view_func(class_based_view, request, *args, **kwargs)
+    return _wrapped
