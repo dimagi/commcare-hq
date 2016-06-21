@@ -94,10 +94,12 @@ $(function () {
         }
     });
 
-    // Handle control-click, middle-click, etc.
+    // Handle control-click, middle-click, etc. opening in a new window
     $("a[data-toggle='tab']").on("click", function(event) {
         if (event && (event.metaKey || event.ctrlKey || event.which === 2)) {
             window.open($(event.target).attr("href"), '_blank');
+
+            // Prevent the tab from showing in the current window
             $(event.target).one("show.bs.tab", function() {
                 return false;
             });

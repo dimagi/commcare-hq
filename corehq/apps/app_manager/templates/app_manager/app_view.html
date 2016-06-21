@@ -75,7 +75,7 @@
                 return self;
             }());
             $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#demand-multimedia').on('show.bs.tab', function () {
+            $('#demand-multimedia').on('shown.bs.tab', function () {
                 if (multimedia_tab.load_state() === null) {
                     multimedia_tab.load_if_necessary();
                 }
@@ -89,7 +89,7 @@
                 $loading = $main.find(".hq-loading").remove(),
                 $loadingError = $main.find(".hq-loading-error").remove();
 
-            $('#demand-releases').on('show.bs.tab', function () {
+            $('#demand-releases').on('shown.bs.tab', function () {
                 if (state === "loading" || state === "loaded") {
                     return;
                 }
