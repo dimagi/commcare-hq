@@ -1,3 +1,4 @@
+import uuid
 from collections import namedtuple
 from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
@@ -20,7 +21,7 @@ from django.utils.translation import ugettext as _
 import re
 
 from corehq.form_processor.interfaces.supply import SupplyInterface
-
+from corehq.form_processor.utils.general import should_use_sql_backend
 
 CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 
@@ -219,7 +220,8 @@ def submit_mapping_case_block(user, index):
 
 
 def location_map_case_id(user):
-    # TODO: migrate these to use uuid5(uuid.NAMESPACE_OID, user.user_id)
+    if should_use_sql_backend(user.domain):
+        return uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user.user_id)
     return 'user-owner-mapping-' + user.user_id
 
 
