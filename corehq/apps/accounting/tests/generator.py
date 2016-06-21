@@ -37,7 +37,6 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFee,
     SmsUsageFeeCriteria,
 )
-from corehq.apps.smsbillables.tests.generator import DIRECTIONS
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.util.test_utils import unit_testing_only
 
@@ -204,35 +203,6 @@ def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
         while commcare_user is None:
             commcare_user = arbitrary_commcare_user(domain, is_active=is_active)
     return num_users
-
-
-@unit_testing_only
-def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, direction=None, multipart_count=1):
-    from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
-
-    direction = direction or random.choice(DIRECTIONS)
-
-    gateway_fee = SmsGatewayFee.create_new('MACH', direction, Decimal(0.5))
-    usage_fee = SmsUsageFee.create_new(direction, Decimal(0.25))
-
-    _, last_day_message = calendar.monthrange(message_month_date.year, message_month_date.month)
-
-    billables = []
-    for _ in range(0, num_sms):
-        sms_billable = SmsBillable(
-            gateway_fee=gateway_fee,
-            usage_fee=usage_fee,
-            log_id=data_gen.arbitrary_unique_name()[:50],
-            phone_number=data_gen.random_phonenumber(),
-            domain=domain,
-            direction=direction,
-            date_sent=datetime.date(message_month_date.year, message_month_date.month,
-                                    random.randint(1, last_day_message)),
-            multipart_count=multipart_count,
-        )
-        sms_billable.save()
-        billables.append(sms_billable)
-    return billables
 
 
 @unit_testing_only

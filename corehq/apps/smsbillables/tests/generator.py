@@ -1,9 +1,12 @@
+import calendar
 import random
 import datetime
 import string
 import uuid
 from collections import namedtuple
 from decimal import Decimal
+
+from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.util.test_utils import unit_testing_only
 
@@ -262,3 +265,30 @@ def arbitrary_phone_numbers_and_prefixes(country_code_and_prefixes):
                     prefix
                 )
                 break
+
+
+@unit_testing_only
+def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, direction=None, multipart_count=1):
+    direction = direction or random.choice(DIRECTIONS)
+
+    gateway_fee = SmsGatewayFee.create_new('MACH', direction, Decimal(0.5))
+    usage_fee = SmsUsageFee.create_new(direction, Decimal(0.25))
+
+    _, last_day_message = calendar.monthrange(message_month_date.year, message_month_date.month)
+
+    billables = []
+    for _ in range(0, num_sms):
+        sms_billable = SmsBillable(
+            gateway_fee=gateway_fee,
+            usage_fee=usage_fee,
+            log_id=data_gen.arbitrary_unique_name()[:50],
+            phone_number=data_gen.random_phonenumber(),
+            domain=domain,
+            direction=direction,
+            date_sent=datetime.date(message_month_date.year, message_month_date.month,
+                                    random.randint(1, last_day_message)),
+            multipart_count=multipart_count,
+        )
+        sms_billable.save()
+        billables.append(sms_billable)
+    return billables
