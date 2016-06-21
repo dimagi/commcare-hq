@@ -67,12 +67,19 @@ ASYNC_RESTORE_CACHE_KEY_PREFIX = "async-restore"
 RESTORE_CACHE_KEY_PREFIX = "ota-restore"
 
 
-def restore_cache_key(prefix, user_id, version):
-    return hashlib.md5('{prefix}-{user}-{version}'.format(
-        prefix=prefix,
-        user=user_id,
-        version=version,
-    )).hexdigest()
+def restore_cache_key(prefix, user_id, version=None):
+    if version is not None:
+        hashable_key = '{prefix}-{user}-{version}'.format(
+            prefix=prefix,
+            user=user_id,
+            version=version,
+        )
+    else:
+        hashable_key = '{prefix}-{user}'.format(
+            prefix=prefix,
+            user=user_id,
+        )
+    return hashlib.md5(hashable_key).hexdigest()
 
 
 def stream_response(payload, headers=None, status=200):
@@ -583,7 +590,7 @@ class RestoreConfig(object):
 
     @property
     def _async_cache_key(self):
-        return restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id, self.version)
+        return restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id)
 
     def _get_asynchronous_payload(self):
         task_id = self.cache.get(self._async_cache_key)

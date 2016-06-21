@@ -3,9 +3,14 @@ from django.test import TestCase, SimpleTestCase
 from corehq.apps.app_manager.tests import TestXmlMixin
 
 from celery.exceptions import TimeoutError
-from celery.result import EagerResult, AsyncResult
+from celery.result import AsyncResult
 
 from casexml.apps.case.xml import V2
+from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.tests.util import (
+    delete_all_cases,
+    delete_all_sync_logs,
+ )
 from corehq.apps.domain.models import Domain
 from casexml.apps.phone.restore import (
     RestoreConfig,
@@ -17,11 +22,9 @@ from casexml.apps.phone.restore import (
     ASYNC_RESTORE_CACHE_KEY_PREFIX,
 )
 from casexml.apps.phone.tests.utils import create_restore_user
-from casexml.apps.case.tests.util import (
-    delete_all_cases,
-    delete_all_sync_logs,
- )
+from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.util.test_utils import flag_enabled
 
 
 class AsyncRestoreTest(TestCase):
@@ -108,7 +111,7 @@ class AsyncRestoreTest(TestCase):
 
     def test_subsequent_syncs_when_job_complete(self):
         # First sync, return a timout. Ensure that the async_task_id gets set
-        cache_id = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id, '2.0')
+        cache_id = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id)
         with mock.patch('casexml.apps.phone.restore.get_async_restore_payload') as task:
             delay = mock.MagicMock()
             delay.id = 'random_task_id'
@@ -133,29 +136,45 @@ class AsyncRestoreTest(TestCase):
             # a new synclog should not have been created
             self.assertIsNone(subsequent_restore.restore_state.current_sync_log)
 
-    # def test_consecutive_restores_kills_old_jobs(self):
-    #     """If the user does a fresh restore, jobs that are already queued or that have
-    #     started should be killed
+    @flag_enabled('ASYNC_RESTORE')
+    def test_restore_in_progress_form_submitted_kills_old_jobs(self):
+        """If the user submits a form somehow while a job is running, the job should be terminated
+        """
+        cache_id = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id)
+        fake_task_id = 'fake-task-id'
+        restore_config = self._restore_config(async=True)
+        # pretend we have a task running
+        restore_config.cache.set(cache_id, fake_task_id)
+        correct_user_factory = CaseFactory(
+            domain=self.domain,
+            form_extras={
+                'auth_context': AuthContext(
+                    authenticated=True,
+                    domain=self.domain,
+                    user_id=self.user.user_id
+                ),
+            }
+        )
+        other_user_factory = CaseFactory(
+            domain=self.domain,
+            form_extras={
+                'auth_context': AuthContext(
+                    authenticated=True,
+                    domain=self.domain,
+                    user_id='other_user'
+                ),
+            }
+        )
+        with mock.patch('corehq.form_processor.submission_post.revoke_celery_task') as revoke:
+            # with a different user in the same domain, task doesn't get killed
+            other_user_factory.create_case()
+            self.assertFalse(revoke.called)
+            self.assertEqual(restore_config.cache.get(cache_id), fake_task_id)
 
-    #     """
-    #     from casexml.apps.phone.models import (
-    #         SyncLog,)
-    #     with mock.patch.object(EagerResult, 'get', mock.MagicMock(side_effect=TimeoutError())):
-    #         first_restore = self._restore_config(async=True)
-    #         first_restore.get_payload()
-    #         sync_log_id = first_restore.restore_state.current_sync_log._id
-    #         self.assertIsNotNone(first_restore.restore_state.current_sync_log.async_task_id)
-
-    #     second_restore = self._restore_config(async=True)
-    #     second_restore.get_payload()
-    #     self.assertIsNone(SyncLog.get(sync_log_id).async_task_id)
-
-    # def submitting_form_for_synclog_kills_task_removes_async_id(self):
-    #     """
-    #     >>> from celery.task.control import revoke
-    #     >>> revoke(task_id, terminate=True)
-    #     """
-    #     self.skipTest("")
+            # task gets killed when the user submits a form
+            correct_user_factory.create_case()
+            revoke.assert_called_with(fake_task_id)
+            self.assertIsNone(restore_config.cache.get(cache_id))
 
 
 class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):
