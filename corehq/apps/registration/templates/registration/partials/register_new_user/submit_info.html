@@ -1,0 +1,31 @@
+{% load i18n %}
+
+<div class="submit-info" data-bind="visible: isSubmitting">
+  <h2>{% trans "Creating Account..." %}</h2>
+  <p class="commcare-icon">
+    <i class="fcc fa-spin fcc-flower"></i>
+  </p>
+  <p class="lead">
+    {% blocktrans %}
+      Please wait a moment&mdash;almost there!
+    {% endblocktrans %}
+  </p>
+  <p class="timeout-message" data-bind="visible: showFirstTimeout">
+    <i class="fa fa-check"></i> {% trans "Created sample applications..." %}
+  </p>
+  <p class="timeout-message" data-bind="visible: showSecondTimeout">
+    <i class="fa fa-check"></i> {% trans "Enabled CloudCare trial..." %}
+  </p>
+  <p class="timeout-message" data-bind="visible: showThirdTimeout">
+    <i class="fa fa-check"></i> {% trans "Updated reports..." %}
+  </p>
+  <p class="timeout-message" data-bind="visible: showFourthTimeout">
+    <i class="fa fa-spin fa-refresh"></i> {% trans "Syncing with servers..." %}
+  </p>
+  <hr data-bind="visible: showFirstTimeout" />
+  <p>
+    {% blocktrans %}
+      Thank you for choosing <strong>CommCare</strong>. <i class="fa fa-heart"></i>
+    {% endblocktrans %}
+  </p>
+</div>
