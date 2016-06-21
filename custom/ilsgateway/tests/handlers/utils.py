@@ -126,7 +126,7 @@ class ILSTestScript(TestScript):
             'reg1',
             'moh1',
         ]:
-            location = Location.by_site_code(TEST_DOMAIN, site_code).delete()
+            location = Location.by_site_code(TEST_DOMAIN, site_code)
             if location:
                 location.delete()
         SQLLocation.objects.all().delete()
