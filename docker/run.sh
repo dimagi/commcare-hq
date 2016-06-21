@@ -86,10 +86,16 @@ function _run_tests() {
 
 function bootstrap() {
     JS_SETUP=yes setup python
-    ./manage.py sync_couch_views
-    ./manage.py migrate --noinput
-    ./manage.py compilejsi18n
-    ./manage.py bootstrap demo admin@example.com password
+    su cchq -c "export CCHQ_IS_FRESH_INSTALL=1 &&
+                ./manage.py sync_couch_views &&
+                ./manage.py migrate --noinput &&
+                ./manage.py compilejsi18n &&
+                ./manage.py bootstrap demo admin@example.com password"
+}
+
+function runserver() {
+    JS_SETUP=yes setup python
+    su cchq -c "./manage.py runserver $@ 0.0.0.0:8000"
 }
 
 export -f setup
@@ -102,7 +108,7 @@ type _run_tests | tail -n +4 | head -n -1 >> /mnt/run_tests
 chmod +x /mnt/run_tests
 
 cd /mnt
-if [ "$TRAVIS" == "true" ]; then
+if [ "$DOCKER_HQ_OVERLAY" == "none" ]; then
     ln -s commcare-hq-ro commcare-hq
     mkdir commcare-hq/staticfiles
     chown cchq:cchq commcare-hq-ro commcare-hq/staticfiles
@@ -110,15 +116,21 @@ else
     # commcare-hq source overlay prevents modifications in this container
     # from leaking to the host; allows safe overwrite of localsettings.py
     rm -rf lib/overlay  # clear source overlay
-    mkdir -p commcare-hq lib/overlay/staticfiles lib/node_modules lib/staticfiles
+    mkdir -p commcare-hq lib/overlay lib/node_modules lib/staticfiles
     ln -s /mnt/lib/node_modules lib/overlay/node_modules
     ln -s /mnt/lib/staticfiles lib/overlay/staticfiles
-    mount -t aufs -o br=lib/overlay:commcare-hq-ro none commcare-hq
+    if [ "$DOCKER_HQ_OVERLAY" == "overlayfs" ]; then
+        rm -rf lib/work
+        mkdir lib/work
+        mount -t overlay -olowerdir=commcare-hq-ro,upperdir=lib/overlay,workdir=lib/work overlay commcare-hq
+    else
+        mount -t aufs -o br=lib/overlay:commcare-hq-ro none commcare-hq
+    fi
     chown cchq:cchq lib/overlay lib/staticfiles
 fi
 
 mkdir -p lib/sharedfiles
-ln -s /mnt/lib/sharedfiles /sharedfiles
+ln -sf /mnt/lib/sharedfiles /sharedfiles
 chown cchq:cchq lib/sharedfiles
 
 cd commcare-hq
