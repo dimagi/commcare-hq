@@ -64,7 +64,7 @@ class CloudantDatabase(namedtuple('CloudantInstance', 'instance db_name')):
             ask_user('Granting api_key {} access to database {}'.format(api_key, db_uri))
         if not security:
             security = {'cloudant': {}}
-        security['cloudant'][api_key] = ['_admin']
+        security['cloudant'][api_key] = ["_admin", "_reader", "_writer", "_replicator"]
 
         security = requests.put(security_url, auth=self.instance, json=security).json()
         print security
