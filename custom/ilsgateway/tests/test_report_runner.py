@@ -5,7 +5,7 @@ from django.test.testcases import TestCase
 
 from casexml.apps.stock.models import StockTransaction, StockReport
 
-from corehq.apps.accounting import generator
+from corehq.apps.accounting.tests import generator
 from corehq.apps.locations.forms import LocationForm
 
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues,\

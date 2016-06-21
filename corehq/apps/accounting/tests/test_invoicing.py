@@ -4,15 +4,7 @@ import datetime
 
 from dimagi.utils.dates import add_months_to_date
 
-from corehq.apps.sms.models import INCOMING, OUTGOING
-from corehq.apps.smsbillables.models import (
-    SmsBillable,
-    SmsGatewayFee,
-    SmsGatewayFeeCriteria,
-    SmsUsageFee,
-    SmsUsageFeeCriteria,
-)
-from corehq.apps.accounting import generator, tasks, utils
+from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.models import (
     SMALL_INVOICE_THRESHOLD,
     BillingAccount,
@@ -30,7 +22,16 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment,
     SubscriptionType,
 )
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.sms.models import INCOMING, OUTGOING
+from corehq.apps.smsbillables.models import (
+    SmsBillable,
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+    SmsUsageFee,
+    SmsUsageFeeCriteria,
+)
 
 
 class BaseInvoiceTestCase(BaseAccountingTest):

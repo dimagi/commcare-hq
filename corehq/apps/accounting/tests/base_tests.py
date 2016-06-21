@@ -1,8 +1,8 @@
 from django.test import TestCase
-from corehq.apps.accounting import generator
-from corehq.apps.domain.models import Domain
-
 from django_prbac.models import Role
+
+from corehq.apps.accounting.tests import generator
+from corehq.apps.domain.models import Domain
 
 
 class BaseAccountingTest(TestCase):

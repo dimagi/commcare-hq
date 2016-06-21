@@ -1,5 +1,5 @@
-from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SubscriptionAdjustment, Subscription
+from corehq.apps.accounting.tests import generator
 
 
 class DomainSubscriptionMixin(object):

@@ -3,9 +3,9 @@ from random import randint
 
 from django.test import TestCase
 
-from corehq.apps.accounting.generator import init_default_currency
-from corehq.apps.smsbillables import generator
+from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SQLMobileBackend
+from corehq.apps.smsbillables import generator
 from corehq.apps.smsbillables.models import (
     SmsBillable,
     SmsGatewayFee,

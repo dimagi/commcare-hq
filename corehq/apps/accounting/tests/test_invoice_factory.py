@@ -1,5 +1,5 @@
 import datetime
-from corehq.apps.accounting import generator
+
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
@@ -7,6 +7,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.util.dates import get_previous_month_date_range
 

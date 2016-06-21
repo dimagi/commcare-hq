@@ -4,12 +4,13 @@ import datetime
 
 from dimagi.utils.dates import add_months_to_date
 
-from corehq.apps.accounting import tasks, utils, generator
+from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.models import (
     CreditLine, CreditAdjustment, FeatureType, SoftwareProductType,
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount, Subscription,
     CreditAdjustmentReason,
 )
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 

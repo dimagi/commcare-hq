@@ -3,7 +3,6 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.test import TransactionTestCase
 
-from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditAdjustment,
@@ -12,6 +11,7 @@ from corehq.apps.accounting.models import (
     Subscriber,
     Subscription,
 )
+from corehq.apps.accounting.tests import generator
 
 
 class TestCreditAdjustmentValidation(TransactionTestCase):

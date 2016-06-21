@@ -4,7 +4,7 @@ from random import choice, randint
 from django.apps import apps
 from django.test import TestCase
 
-from corehq.apps.accounting.generator import init_default_currency
+from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SMS, SQLMobileBackend
 from corehq.apps.smsbillables import generator
 from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import bootstrap_usage_fees

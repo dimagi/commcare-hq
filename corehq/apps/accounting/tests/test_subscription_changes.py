@@ -1,10 +1,11 @@
-from corehq.apps.domain.models import Domain
 from django.test import SimpleTestCase
-from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting import generator
+
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
     Subscriber)
+from corehq.apps.accounting.tests import generator
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
     Permissions, UserRole, UserRolePresets, WebUser, CommCareUser,
 )
