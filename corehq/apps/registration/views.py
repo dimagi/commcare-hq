@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import HttpResponseRedirect, Http404, HttpResponse, QueryDict
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
