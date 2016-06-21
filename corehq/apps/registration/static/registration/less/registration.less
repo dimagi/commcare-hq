@@ -1,14 +1,20 @@
 
+.box-shadow(@shadow) {
+  -moz-box-shadow: @shadow;
+  -webkit-box-shadow: @shadow;
+          box-shadow: @shadow;
+}
 
 @reg-form-width: 380px;
 @reg-form-height: 375px;
+
 #registration-form-container {
   position: absolute;
   left: 50%;
   margin-left: -@reg-form-width/2;
   width: @reg-form-width;
   top: 50%;
-  margin-top: -@reg-form-height/2 - 20px;
+  margin-top: -@reg-form-height/2 - 40px;
   height: @reg-form-height;
 }
 
@@ -18,7 +24,7 @@
 }
 
 ul.form-step-progress li {
-  width: 33.3%;
+  width: 50%;
   &:before {
     width: 80%;
   }
@@ -40,4 +46,82 @@ ul.form-step-progress li {
     margin-left: -22px;
     height: 25px;
   }
+}
+
+.fake-autocomplete-fields {
+  display: none;
+}
+
+span.validationMessage {
+  text-align: left;
+  display: block;
+  margin: .5em;
+}
+
+p.validation-message-block {
+  margin: .5em;
+  text-align: left;
+  margin-top: -0.6em;
+  margin-bottom: 1.1em;
+}
+
+.has-feedback .form-control {
+  border-width: 2px;
+}
+
+.has-success .form-control,
+.has-success .form-control:focus {
+  border-color: #47b700;
+}
+.has-success .form-control {
+  .box-shadow(0px 0px 10px 1px rgba(175, 242, 133, .5));
+}
+.has-success .form-control:focus {
+  .box-shadow(0px 0px 15px 1px rgba(175, 242, 133, .75));
+}
+
+.has-error .form-control,
+.has-error .form-control:focus {
+  border-color: #e53e30;
+}
+.has-error .form-control {
+  .box-shadow(0px 0px 10px 1px rgba(239, 207, 203, .5));
+}
+.has-error .form-control:focus {
+  .box-shadow(0px 0px 15px 1px rgba(239, 207, 203, .75));
+}
+
+.has-warning .form-control,
+.has-warning .form-control:focus {
+  border-color: #f9c700;
+}
+.has-warning .form-control {
+  .box-shadow(0px 0px 10px 1px rgba(248, 236, 189, .5));
+}
+.has-warning .form-control:focus {
+  .box-shadow(0px 0px 15px 1px rgba(248, 236, 189, .75));
+}
+
+.submit-errors {
+  p, ul {
+    text-align: left;
+  }
+}
+.submit-info {
+  .commcare-icon {
+    font-size: 3em;
+  }
+}
+
+.submit-info,
+.server-errors,
+.submit-success {
+  h2 {
+    margin: .5rem 0 1rem;
+  }
+}
+
+.server-errors,
+.submit-success {
+  text-align: left;
 }
