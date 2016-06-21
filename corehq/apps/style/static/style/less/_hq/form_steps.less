@@ -4,6 +4,7 @@
     margin: 10px 0;
     .border-top-radius(5px);
     .border-bottom-radius(5px);
+    box-sizing: content-box;
   }
   .form-step fieldset {
     padding: 0.01em 0 0 0;
@@ -60,6 +61,7 @@ ul.form-step-progress {
     font-size: 9px;
     float: left;
     position: relative;
+    .transition(background 500ms ease-out);
 
     &:after {
       content: counter(step);
@@ -70,13 +72,15 @@ ul.form-step-progress {
       font-size: 10px;
       color: #333;
       background: white;
-      border-radius: 5px;
+      .border-top-radius(5px);
+      .border-bottom-radius(5px);
       margin: 0 auto 5px auto;
       top: -25px;
       left: 50%;
       margin-left: -10px;
       font-weight: bold;
       position: absolute;
+      .transition(background 500ms ease-out);
     }
     &:before {
       content: '';
@@ -85,6 +89,7 @@ ul.form-step-progress {
       position: absolute;
       left: -40%;
       top: -15px;
+      .transition(background 500ms ease-out);
     }
   }
   li:first-child:before {
