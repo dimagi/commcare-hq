@@ -1103,7 +1103,7 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
         errors = []
         try:
             valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[])}
+                           for question in self.get_questions(langs=[], include_triggers=True)}
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
