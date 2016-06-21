@@ -92,4 +92,3 @@ def pprint_stats(stats, outstream):
         )
         for user in sorted(list(users)):
             outstream.write("        {}\n".format(user))
-
