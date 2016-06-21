@@ -51,7 +51,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users, has_group_filter, performance_threshold, previous_summary=None):
+    def __init__(self, domain, month, users, has_filters, performance_threshold, previous_summary=None):
         self._previous_summary = previous_summary
         self._next_summary = None
         base_queryset = MALTRow.objects.filter(
@@ -59,7 +59,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
-        if has_group_filter:
+        if has_filters:
             base_queryset = base_queryset.filter(
                 user_id__in=users,
             )
@@ -200,7 +200,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     fields = [
         'corehq.apps.reports.filters.select.MultiGroupFilter',
-        'corehq.apps.reports.filters.fixtures.AsyncLocationFilter',
+        'corehq.apps.reports.filters.fixtures.OptionalAsyncLocationFilter',
     ]
 
     @classmethod
@@ -215,30 +215,36 @@ class ProjectHealthDashboard(ProjectReport):
         return self.request.GET.getlist('group')
 
     def get_filtered_location_id(self):
-        return self.request.GET.get('location_id')
+        return self.request.GET.getlist('location_id')
 
-    def get_users_by_filtered_groupids(self):
+    def get_users_by_filters(self):
         groupids_param = self.get_filtered_group_ids()
-        users_lists = (GroupES()
-                       .domain(self.domain)
-                       .group_ids(groupids_param)
-                       .values_list("users", flat=True))
-        return set(chain(*users_lists))
-
-    def get_users_by_filtered_location(self):
         locationid_param = self.get_filtered_location_id()
-        users_lists = (UserES()
-                       .domain(self.domain)
-                       .location(locationid_param)
-                       .values_list('_id', flat=True))
-        return set(chain(*users_lists))
+        users_lists_by_location = (UserES()
+                                   .domain(self.domain)
+                                   .location(locationid_param)
+                                   .values_list('_id', flat=True))
+        users_list_by_group = (GroupES()
+                               .domain(self.domain)
+                               .group_ids(groupids_param)
+                               .values_list("users", flat=True))
+        if locationid_param and locationid_param != [u'']:
+            users_set = set(users_lists_by_location)
+        elif locationid_param and locationid_param != [u''] and groupids_param:
+            users_set = set(chain(*users_list_by_group)).intersection(users_lists_by_location)
+        else:
+            users_set = set(chain(*users_list_by_group))
+        return users_set
+
+    def has_filters(self):
+        return True if (self.get_filtered_group_ids() or self.get_filtered_location_id()) else False
 
     def previous_six_months(self):
         now = datetime.datetime.utcnow()
         six_month_summary = []
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
-        users_in_group = self.get_users_by_filtered_groupids()
+        filtered_users = self.get_users_by_filters()
         for i in range(-5, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
@@ -247,8 +253,8 @@ class ProjectHealthDashboard(ProjectReport):
                 performance_threshold=performance_threshold,
                 month=month_as_date,
                 previous_summary=last_month_summary,
-                users=users_in_group,
-                has_group_filter=bool(self.get_users_by_filtered_groupids()),
+                users=filtered_users,
+                has_filters=bool(self.has_filters()),
             )
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
