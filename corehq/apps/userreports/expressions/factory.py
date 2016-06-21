@@ -8,7 +8,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
-    IterationNumberExpressionSpec
+    IterationNumberExpressionSpec, SubcasesExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
@@ -172,6 +172,14 @@ def _get_forms_expression(spec, context):
     return wrapped
 
 
+def _get_subcases_expression(spec, context):
+    wrapped = SubcasesExpressionSpec.wrap(spec)
+    wrapped.configure(
+        case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context)
+    )
+    return wrapped
+
+
 def _filter_items_expression(spec, context):
     wrapped = FilterItemsExpressionSpec.wrap(spec)
     wrapped.configure(
@@ -238,6 +246,7 @@ class ExpressionFactory(object):
         'diff_days': _diff_days_expression,
         'evaluator': _evaluator_expression,
         'get_case_forms': _get_forms_expression,
+        'get_subcases': _get_subcases_expression,
         'filter_items': _filter_items_expression,
         'map_items': _map_items_expression,
         'reduce_items': _reduce_items_expression,
