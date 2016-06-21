@@ -32,6 +32,7 @@ class EWSTestCase(TestCase):
         cls.sms_backend_mapping.delete()
         cls.backend.delete()
         generator.delete_all_subscriptions()
+        super(EWSTestCase, cls).tearDownClass()
 
 
 class EWSScriptTest(EWSTestCase, TestScript):
@@ -60,6 +61,7 @@ class EWSScriptTest(EWSTestCase, TestScript):
         stock_transaction.save()
 
     def setUp(self):
+        super(EWSScriptTest, self).setUp()
         Product.get_by_code(TEST_DOMAIN, 'mc')
         Product.get_by_code(TEST_DOMAIN, 'lf')
 
@@ -68,9 +70,11 @@ class EWSScriptTest(EWSTestCase, TestScript):
         StockReport.objects.all().delete()
         StockState.objects.all().delete()
         DocDomainMapping.objects.all().delete()
+        super(EWSScriptTest, self).tearDown()
 
     @classmethod
     def setUpClass(cls):
+        super(EWSScriptTest, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         domain = prepare_domain(TEST_DOMAIN)
 
@@ -194,10 +198,8 @@ class EWSScriptTest(EWSTestCase, TestScript):
         SQLProduct.objects.all().delete()
         EWSGhanaConfig.for_domain(TEST_DOMAIN).delete()
         DocDomainMapping.objects.all().delete()
-        generator.delete_all_subscriptions()
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
         Domain.get_by_name(TEST_DOMAIN).delete()
+        super(EWSScriptTest, cls).tearDownClass()
 
 
 def assign_products_to_location():

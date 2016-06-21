@@ -13,6 +13,7 @@ class FormES(HQESQuery):
         'is_xform_instance': {"term": {"doc_type": "xforminstance"}},
         'has_xmlns': {"not": {"missing": {"field": "xmlns"}}},
         'has_user': {"not": {"missing": {"field": "form.meta.userID"}}},
+        'has_domain': {"not": {"missing": {"field": "domain"}}}
     }
 
     @property

@@ -40,7 +40,8 @@ def restore(request, domain, app_id=None):
     """
     user = request.user
     couch_user = CouchUser.from_django_user(user)
-    return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    response, _ = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    return response
 
 
 @json_error
@@ -152,7 +153,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             overwrite_cache=overwrite_cache
         ),
     )
-    return restore_config.get_response()
+    return restore_config.get_response(), restore_config.timing_context
 
 
 class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):

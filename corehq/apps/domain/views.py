@@ -2469,6 +2469,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'phone_model',
             'commtrack_domain',
             'performance_threshold',
+            'experienced_threshold',
+            'amplifies_workers',
+            'amplifies_project',
             'business_unit',
             'workshop_region',
         ]

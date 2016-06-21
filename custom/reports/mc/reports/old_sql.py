@@ -1,4 +1,5 @@
 from collections import defaultdict
+
 from corehq.apps.reports.util import make_ctable_table_name
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import *
@@ -319,8 +320,8 @@ class McSqlData(SqlData):
     def filter_values(self):
         base_filter_values = {
             'domain': self.domain,
-            'startdate': self.datespan.startdate_param_utc,
-            'enddate': self.datespan.enddate_param_utc,
+            'startdate': self.datespan.startdate.strftime("%Y-%m-%d"),
+            'enddate': self.datespan.enddate.strftime("%Y-%m-%d"),
         }
         if self.fixture_item is not None:
             user_ids = tuple(u._id for u in self.get_users())

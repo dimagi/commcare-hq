@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from django.db import IntegrityError
 from django.core import cache
 from django.core.servers.basehttp import FileWrapper
@@ -35,7 +36,7 @@ class DownloadBase(object):
                  cache_backend=SOIL_DEFAULT_CACHE, content_type=None,
                  suffix=None, message=None):
         self.content_type = content_type if content_type else mimetype
-        self.content_disposition = content_disposition
+        self.content_disposition = self.clean_content_disposition(content_disposition)
         self.transfer_encoding = transfer_encoding
         self.extras = extras or {}
         self.download_id = download_id or uuid.uuid4().hex
@@ -75,6 +76,17 @@ class DownloadBase(object):
 
     def save(self, expiry=None):
         self.get_cache().set(self.download_id, self, expiry)
+
+    def clean_content_disposition(self, content_disposition):
+        """
+        http://manage.dimagi.com/default.asp?229983
+        Sometimes filenames have characters in them which aren't allowed in
+        headers and causes the download to fail.
+        """
+        if isinstance(content_disposition, basestring):
+            return re.compile('[\r\n]').sub('', content_disposition)
+
+        return content_disposition
 
     def toHttpResponse(self):
         response = HttpResponse(self.get_content(),

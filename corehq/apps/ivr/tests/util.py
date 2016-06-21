@@ -23,11 +23,13 @@ class LogCallTestCase(TestCase):
         Call.by_domain(domain).delete()
 
     def setUp(self):
+        super(LogCallTestCase, self).setUp()
         self.domain = 'test-log-call-domain'
         self.delete_call_logs(self.domain)
 
     def tearDown(self):
         self.delete_call_logs(self.domain)
+        super(LogCallTestCase, self).tearDown()
 
     def simulate_inbound_call(self, phone_number):
         """

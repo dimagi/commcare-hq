@@ -61,9 +61,10 @@ class DomainRegistrationForm(forms.Form):
             'hr_name',
             'org',
         ]
-        force_sql_backed = getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False)
-        if not force_sql_backed and current_user and current_user.is_superuser:
-            fields.append('use_new_backend')
+        # TODO: revert this once the sharding config is fixed
+        # force_sql_backed = getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False)
+        # if not force_sql_backed and current_user and current_user.is_superuser:
+        #     fields.append('use_new_backend')
 
         fields.append(hqcrispy.FormActions(
             twbscrispy.StrictButton(

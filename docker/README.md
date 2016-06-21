@@ -14,7 +14,7 @@ Initial setup
 * Bootstrap the setup:
 
     ```
-      $ ./scripts/docker services --bootstrap
+      $ ./scripts/docker runserver --bootstrap
     ```
     
     This will do the following:
@@ -57,9 +57,9 @@ General usage
 
 **The services (couch, postgres, elastic, redis, zookeeper, kafka)**
 ```
-  $ ./scripts/docker services  # start docker services
-  $ ./scripts/docker services stop
-  $ ./scripts/docker services logs postgres
+  $ ./scripts/docker up -d  # start docker services in background
+  $ ./scripts/docker stop
+  $ ./scripts/docker logs postgres
 ```
 The following services are included. Their ports are mapped to the local host so you can connect to them
 directly.
@@ -74,10 +74,8 @@ directly.
 
 **Run the django server**
 
-Assumes that you have updated your localsettings as described above.
-
 ```
-  $ ./scripts/docker services --bootstrap
+  $ ./scripts/docker runserver
 ```
 
 Notes

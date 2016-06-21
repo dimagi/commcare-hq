@@ -11,7 +11,7 @@ from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.app_manager.util import get_correct_app_class
-from corehq.apps.cleanup.management.commands.fix_forms_with_missing_xmlns import (
+from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xmlns import (
     generate_random_xmlns,
     set_xmlns_on_form,
 )
@@ -153,7 +153,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         with tempdir() as tmp:
             log_file = os.path.join(tmp, 'log.txt')
 
-            call_command('fix_forms_with_missing_xmlns', '/dev/null', log_file)
+            call_command('fix_forms_and_apps_with_missing_xmlns', '/dev/null', log_file)
 
             with open(log_file) as log_file:
                 log = log_file.read()
@@ -167,7 +167,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         with tempdir() as tmp:
             log_file = os.path.join(tmp, 'log.txt')
 
-            call_command('fix_forms_with_missing_xmlns', '/dev/null', log_file)
+            call_command('fix_forms_and_apps_with_missing_xmlns', '/dev/null', log_file)
 
             with open(log_file) as log_file:
                 log = log_file.read()
@@ -185,7 +185,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         with tempdir() as tmp:
             log_file = os.path.join(tmp, 'log.txt')
 
-            call_command('fix_forms_with_missing_xmlns', '/dev/null', log_file)
+            call_command('fix_forms_and_apps_with_missing_xmlns', '/dev/null', log_file)
 
             with open(log_file) as log_file:
                 log = log_file.read()

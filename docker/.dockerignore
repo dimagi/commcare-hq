@@ -1,4 +1,2 @@
-/*.sh
-/*.yml
-/localsettings.py
-/Dockerfile_commcarehq_base
+*
+!files

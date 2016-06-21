@@ -52,6 +52,8 @@ class TestESQuery(ElasticTestMixin, TestCase):
                 "filtered": {
                     "filter": {
                         "and": [
+                            {"not": {"missing": {
+                                "field": "domain"}}},
                             {"term": {"doc_type": "xforminstance"}},
                             {"not": {"missing":
                                 {"field": "xmlns"}}},
@@ -93,6 +95,8 @@ class TestESQuery(ElasticTestMixin, TestCase):
                         "and": [
                             {"term": {"domain.exact": "zombocom"}},
                             {"term": {"xmlns.exact": "banana"}},
+                            {"not": {"missing": {
+                                "field": "domain"}}},
                             {"term": {"doc_type": "xforminstance"}},
                             {"not": {"missing":
                                 {"field": "xmlns"}}},

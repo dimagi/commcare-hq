@@ -369,7 +369,7 @@ def _get_export_properties(export_id, export_is_legacy):
             for table in schema.tables:
                 # - in question id is replaced by . in excel exports
                 properties |= {c.display.replace('.', '-') for c in
-                               table.columns}
+                               table.columns if c.display}
         else:
             from corehq.apps.export.models import FormExportInstance
             export = FormExportInstance.get(export_id)

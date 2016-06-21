@@ -10,6 +10,8 @@ from corehq.toggles import PROJECT_HEALTH_DASHBOARD
 from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.es.groups import GroupES
+from itertools import chain
 
 
 def get_performance_threshold(domain_name):
@@ -48,27 +50,43 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, performance_threshold, previous_summary=None):
+    def __init__(self, domain, month, users, has_group_filter, performance_threshold, previous_summary=None):
         self._previous_summary = previous_summary
         self._next_summary = None
-        self._base_queryset = MALTRow.objects.filter(
+        base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
-        self._performing_queryset = self._base_queryset.filter(
-            num_of_forms__gte=performance_threshold,
-        )
+        if has_group_filter:
+            base_queryset = base_queryset.filter(
+                user_id__in=users,
+            )
+        self._queryset = base_queryset.distinct('user_id')
+
+        num_performing_user = (base_queryset
+                               .filter(num_of_forms__gte=performance_threshold)
+                               .distinct('user_id')
+                               .count())
+
         super(MonthlyPerformanceSummary, self).__init__(
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
-            active=self._base_queryset.distinct('user_id').count(),
-            performing=self._performing_queryset.distinct('user_id').count(),
+            active=self._queryset.count(),
+            performing=num_performing_user,
         )
 
     def set_next_month_summary(self, next_month_summary):
         self._next_summary = next_month_summary
+
+    @property
+    def number_of_performing_users(self):
+        return self.performing
+
+    @property
+    def number_of_active_users(self):
+        return self.active
 
     @property
     def previous_month(self):
@@ -77,12 +95,15 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def delta_performing(self):
-        return self.performing - self._previous_summary.performing if self._previous_summary else self.performing
+        if self._previous_summary:
+            return self.number_of_performing_users - self._previous_summary.number_of_performing_users
+        else:
+            return self.number_of_performing_users
 
     @property
     def delta_performing_pct(self):
-        if self.delta_performing and self._previous_summary and self._previous_summary.performing:
-            return float(self.delta_performing / float(self._previous_summary.performing)) * 100.
+        if self.delta_performing and self._previous_summary and self._previous_summary.number_of_performing_users:
+            return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
 
     @property
     def delta_active(self):
@@ -103,7 +124,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 is_performing=row.num_of_forms >= self.performance_threshold,
                 previous_stub=None,
                 next_stub=None,
-            ) for row in self._base_queryset.distinct('user_id')
+            ) for row in self._queryset
         }
 
     @memoized
@@ -176,6 +197,10 @@ class ProjectHealthDashboard(ProjectReport):
     name = ugettext_noop("Project Performance")
     base_template = "reports/project_health/project_health_dashboard.html"
 
+    fields = [
+        'corehq.apps.reports.filters.select.MultiGroupFilter',
+    ]
+
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return PROJECT_HEALTH_DASHBOARD.enabled(domain)
@@ -184,12 +209,23 @@ class ProjectHealthDashboard(ProjectReport):
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(ProjectHealthDashboard, self).decorator_dispatcher(request, *args, **kwargs)
 
-    @property
-    def template_context(self):
+    def get_filtered_group_ids(self):
+        return self.request.GET.getlist('group')
+
+    def get_users_by_filtered_groupids(self):
+        groupids_param = self.get_filtered_group_ids()
+        users_lists = (GroupES()
+                       .domain(self.domain)
+                       .group_ids(groupids_param)
+                       .values_list("users", flat=True))
+        return set(chain(*users_lists))
+
+    def previous_six_months(self):
         now = datetime.datetime.utcnow()
-        rows = []
+        six_month_summary = []
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
+        users_in_group = self.get_users_by_filtered_groupids()
         for i in range(-5, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
@@ -198,15 +234,22 @@ class ProjectHealthDashboard(ProjectReport):
                 performance_threshold=performance_threshold,
                 month=month_as_date,
                 previous_summary=last_month_summary,
+                users=users_in_group,
+                has_group_filter=bool(self.get_users_by_filtered_groupids()),
             )
-            rows.append(this_month_summary)
+            six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
             last_month_summary = this_month_summary
+        return six_month_summary
 
+    @property
+    def template_context(self):
+        six_months_reports = self.previous_six_months()
+        performance_threshold = get_performance_threshold(self.domain)
         return {
-            'rows': rows,
-            'this_month': rows[-1],
-            'last_month': rows[-2],
+            'six_months_reports': six_months_reports,
+            'this_month': six_months_reports[-1],
+            'last_month': six_months_reports[-2],
             'threshold': performance_threshold,
         }

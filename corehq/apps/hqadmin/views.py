@@ -1,13 +1,16 @@
+from lxml import etree
+
 import HTMLParser
 import json
 import socket
+import csv
 from datetime import timedelta, date
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
 from django.utils.datastructures import SortedDict
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -48,15 +51,14 @@ from corehq.util.supervisord.api import (
     pillow_supervisor_status
 )
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.models import MALTRow, GIRRow
+from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
@@ -71,7 +73,6 @@ from . import service_checks, escheck
 from .forms import AuthenticateAsForm, BrokenBuildsForm
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
-from .multimech import GlobalConfig
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
 
@@ -388,24 +389,51 @@ def pillow_operation_api(request):
         return get_response("No pillow found with name '{}'".format(pillow_name))
 
 
-@require_superuser
-@require_GET
-def admin_restore(request, app_id=None):
-    full_username = request.GET.get('as', '')
-    if not full_username or '@' not in full_username:
-        return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
+class AdminRestoreView(TemplateView):
+    template_name = 'hqadmin/admin_restore.html'
 
-    username, domain = full_username.split('@')
-    if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
-        full_username = format_username(username, domain)
+    @method_decorator(require_superuser)
+    def get(self, request, *args, **kwargs):
+        full_username = request.GET.get('as', '')
+        if not full_username or '@' not in full_username:
+            return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
 
-    user = CommCareUser.get_by_username(full_username)
-    if not user:
-        return HttpResponseNotFound('User %s not found.' % full_username)
+        username, domain = full_username.split('@')
+        if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
+            full_username = format_username(username, domain)
 
-    overwrite_cache = request.GET.get('ignore_cache') == 'true'
-    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, app_id=app_id,
-                                **get_restore_params(request))
+        self.user = CommCareUser.get_by_username(full_username)
+        if not self.user:
+            return HttpResponseNotFound('User %s not found.' % full_username)
+
+        self.overwrite_cache = request.GET.get('ignore_cache') == 'true'
+        self.app_id = kwargs.get('app_id', None)
+
+        raw = request.GET.get('raw') == 'true'
+        if raw:
+            response, _ = self._get_restore_response()
+            return response
+
+        return super(AdminRestoreView, self).get(request, *args, **kwargs)
+
+    def _get_restore_response(self):
+        return get_restore_response(
+            self.user.domain, self.user, overwrite_cache=self.overwrite_cache, app_id=self.app_id,
+            **get_restore_params(self.request)
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super(AdminRestoreView, self).get_context_data(**kwargs)
+        response, timing_context = self._get_restore_response()
+        string_payload = ''.join(response.streaming_content)
+        xml_payload = etree.fromstring(string_payload)
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        context.update({
+            'payload': formatted_payload,
+            'status_code': response.status_code,
+            'timing_data': timing_context.to_list()
+        })
+        return context
 
 
 class ManagementCommandsView(BaseAdminSectionView):
@@ -505,91 +533,6 @@ def stats_data(request):
 @datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
 def admin_reports_stats_data(request):
     return stats_data(request)
-
-
-class LoadtestReportView(BaseAdminSectionView):
-    urlname = 'loadtest_report'
-    template_name = 'hqadmin/loadtest.html'
-    page_title = ugettext_lazy("Loadtest Results")
-
-    @method_decorator(require_superuser)
-    @use_nvd3_v3
-    @use_jquery_ui
-    @use_datatables
-    def dispatch(self, request, *args, **kwargs):
-        return super(LoadtestReportView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        # The multimech results api is kinda all over the place.
-        # the docs are here: http://testutils.org/multi-mechanize/datastore.html
-
-        scripts = ['submit_form.py', 'ota_restore.py']
-
-        tests = []
-        # datetime info seems to be buried in GlobalConfig.results[0].run_id,
-        # which makes ORM-level sorting problematic
-        for gc in Session.query(GlobalConfig).all()[::-1]:
-            gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
-            if gc.results:
-                for script, uc in gc.scripts.items():
-                    uc.results = filter(
-                        lambda res: res.user_group_name == uc.user_group,
-                        gc.results
-                    )
-                test = {
-                    'datetime': gc.results[0].run_id,
-                    'run_time': gc.run_time,
-                    'results': gc.results,
-                }
-                for script in scripts:
-                    test[script.split('.')[0]] = gc.scripts.get(script)
-                tests.append(test)
-
-        context = get_hqadmin_base_context(self.request)
-        context.update({
-            "tests": tests,
-            "hide_filters": True,
-        })
-
-        date_axis = Axis(label="Date", dateFormat="%m/%d/%Y")
-        tests_axis = Axis(label="Number of Tests in 30s")
-        chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
-        submit_data = []
-        ota_data = []
-        total_data = []
-        max_val = 0
-        max_date = None
-        min_date = None
-        for test in tests:
-            date = test['datetime']
-            total = len(test['results'])
-            max_val = total if total > max_val else max_val
-            max_date = date if not max_date or date > max_date else max_date
-            min_date = date if not min_date or date < min_date else min_date
-            submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
-            ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
-            total_data.append({'x': date, 'y': total})
-
-        deployments = [row['key'][1] for row in HqDeploy.get_list(
-            settings.SERVER_ENVIRONMENT, min_date, max_date
-        )]
-        deploy_data = [{'x': min_date, 'y': 0}]
-        for date in deployments:
-            deploy_data.extend([
-                {'x': date, 'y': 0},
-                {'x': date, 'y': max_val},
-                {'x': date, 'y': 0},
-            ])
-        deploy_data.append({'x': max_date, 'y': 0})
-
-        chart.add_dataset("Deployments", deploy_data)
-        chart.add_dataset("Form Submission Count", submit_data)
-        chart.add_dataset("OTA Restore Count", ota_data)
-        chart.add_dataset("Total Count", total_data)
-
-        context['charts'] = [chart]
-        return context
 
 
 class _Db(object):
@@ -833,6 +776,43 @@ def _malt_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     queryset = MALTRow.objects.filter(month=query_month)
     return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)
+
+
+class DownloadGIRView(BaseAdminSectionView):
+    urlname = 'download_gir'
+    page_title = ugettext_lazy("Download GIR")
+    template_name = "hqadmin/gir_downloader.html"
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadGIRView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if 'year_month' in request.GET:
+            try:
+                year, month = request.GET['year_month'].split('-')
+                year, month = int(year), int(month)
+                return _gir_csv_response(month, year)
+            except (ValueError, ValidationError):
+                messages.error(
+                    request,
+                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                )
+        return super(DownloadGIRView, self).get(request, *args, **kwargs)
+
+
+def _gir_csv_response(month, year):
+    query_month = "{year}-{month}-01".format(year=year, month=month)
+    queryset = GIRRow.objects.filter(month=query_month)
+    field_names = GIR_FIELDS
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = u'attachment; filename=gir.csv'
+    writer = csv.writer(response)
+    writer.writerow(list(field_names))
+    for obj in queryset:
+        writer.writerow(obj.export_row)
+    return response
 
 
 @require_superuser
