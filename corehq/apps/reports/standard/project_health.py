@@ -215,7 +215,10 @@ class ProjectHealthDashboard(ProjectReport):
         return self.request.GET.getlist('group')
 
     def get_filtered_location_id(self):
-        return self.request.GET.getlist('location_id')
+        location_id = self.request.GET.getlist('location_id')
+        if location_id == [u'']:
+            location_id = []
+        return location_id
 
     def get_users_by_filters(self):
         groupids_param = self.get_filtered_group_ids()
@@ -228,10 +231,10 @@ class ProjectHealthDashboard(ProjectReport):
                                .domain(self.domain)
                                .group_ids(groupids_param)
                                .values_list("users", flat=True))
-        if locationid_param and locationid_param != [u'']:
-            users_set = set(users_lists_by_location)
-        elif locationid_param and locationid_param != [u''] and groupids_param:
+        if locationid_param and groupids_param:
             users_set = set(chain(*users_list_by_group)).intersection(users_lists_by_location)
+        elif locationid_param:
+                users_set = set(users_lists_by_location)
         else:
             users_set = set(chain(*users_list_by_group))
         return users_set
