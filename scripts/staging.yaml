@@ -47,7 +47,7 @@ name: autostaging
 branches:
   - 2-session-api # sravan 6/17
   - hqDefine-users  # danny 6/7
-#  - demo-user # sravan 6/3
+  - demo-user # sravan 6/3
   - vellum-staging # J$ 11/13
   - calculatedIcons # Sravan 3/2
   - xform-blobs  # daniel 5/23
