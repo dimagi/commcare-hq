@@ -515,18 +515,18 @@
         {# Blazy for async loading images #}
         {% compress js %}
             <script type="text/javascript" src="{% static 'blazy/blazy.js' %}"></script>
-            <script type="text/javascript">
-              var hqLazy = new Blazy({
-                container: 'body',
-                success: function(element) {
-                    setTimeout(function(){
-                    var parent = element.parentNode;
-                    parent.className = parent.className.replace(/\bloading\b/,'');
-                  }, 200);
-                }
-              });
-            </script>
         {% endcompress %}
+        <script type="text/javascript">
+          var hqLazy = new Blazy({
+            container: 'body',
+            success: function(element) {
+                setTimeout(function(){
+                var parent = element.parentNode;
+                parent.className = parent.className.replace(/\bloading\b/,'');
+              }, 200);
+            }
+          });
+        </script>
         {% endif %}
 
         {% if request.use_ko_validation %}
