@@ -2,6 +2,7 @@ import re
 from contextlib import contextmanager
 
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext
 from crispy_forms.bootstrap import FormActions as OriginalFormActions, InlineField, AccordionGroup
 from crispy_forms.layout import Field as OldField, LayoutObject
 from crispy_forms.utils import render_field, get_template_pack, flatatt
@@ -69,6 +70,32 @@ class StaticField(LayoutObject):
         context.update({
             'field_label': self.field_label,
             'field_value': self.field_value,
+        })
+        return render_to_string(self.template, context)
+
+
+class FormStepNumber(LayoutObject):
+    template = 'style/crispy/form_step_number.html'
+
+    def __init__(self, step_num, total_steps):
+        self.step_label = ugettext("Step {} of {}".format(step_num, total_steps))
+
+    def render(self, form, form_style, context, template_pack=None):
+        context.update({
+            'step_label': self.step_label,
+        })
+        return render_to_string(self.template, context)
+
+
+class ValidationMessage(LayoutObject):
+    template = 'style/crispy/validation_message.html'
+
+    def __init__(self, ko_observable):
+        self.ko_observable = ko_observable
+
+    def render(self, form, form_style, context, template_pack=None):
+        context.update({
+            'ko_observable': self.ko_observable,
         })
         return render_to_string(self.template, context)
 

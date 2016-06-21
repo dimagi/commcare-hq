@@ -1,0 +1,98 @@
+{% extends "registration/base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "Create an Account" %}{% endblock title %}
+
+{% block js-inline  %}{{ block.super }}
+  {% url "eula_basic" as eula_url %}
+  {% include 'hqstyle/partials/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
+  <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
+  <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
+  <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+  <script src="{% static 'style/ko/password_validators.ko.js' %}"></script>
+  <script type="text/javascript" src="{% static 'registration/js/new_user.ko.js' %}"></script>
+  <script type="text/javascript">
+    $(function () {
+      var reg = hqImport('registration/js/new_user.ko.js');
+      reg.initRMI('{% url 'process_registration' %}');
+      {% if not hide_password_feedback %}
+        reg.showPasswordFeedback();
+      {% endif %}
+      var regForm = new reg.FormViewModel({}, '#registration-form-container', ['step-1', 'step-2', 'final-step']);
+      $('#registration-form-container').koApplyBindings(regForm);
+
+      reg.setResetEmailFeedbackFn(function (isValidating) {
+        // separating form and function
+        if (isValidating) {
+          $('#div_id_email')
+            .removeClass('has-error has-success')
+            .addClass('has-warning')
+            .find('.form-control-feedback')
+              .removeClass('fa-check fa-remove')
+              .addClass('fa-spinner fa-spin');
+        } else {
+          $('#div_id_email')
+            .removeClass('has-warning')
+            .addClass((regForm.emailDelayed.isValid() && regForm.email.isValid()) ? 'has-success' : 'has-error')
+            .find('.form-control-feedback')
+              .removeClass('fa-spinner fa-spin')
+              .addClass((regForm.emailDelayed.isValid() && regForm.email.isValid()) ? 'fa-check' : 'fa-remove');
+        }
+      });
+    });
+  </script>
+  <script type="text/javascript">
+    $(function () {
+      $(window).on('resize load', function () {
+        var newHeight = $(window).height() - $('#hq-navigation').outerHeight() - $('#hq-footer').outerHeight();
+        $('.reg-form-column').css('min-height', Math.max(newHeight, 450) + 'px');
+      });
+    });
+  </script>
+{% endblock %}
+
+{% block stylesheets %}{{ block.super }}
+  {% compress css %}
+  <link type="text/less" rel="stylesheet" media="screen" href="{% static 'registration/less/registration.less' %}"/>
+  {% endcompress %}
+{% endblock %}
+
+{% block background_content %}
+<div class="bg-full-cover-fixed bg-registration b-lazy" data-src="{% static 'hqwebapp/img/molly.jpg' %}"></div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-xs-8 col-xs-offset-4 col-md-7 col-md-offset-5 reg-form-column">
+      <div id="registration-form-container">
+        <ul class="form-step-progress">
+          <li class="active">{% trans "Create Account" %}</li>
+          <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>
+        </ul>
+        <form method="post"
+              action=""
+              autocomplete="off"
+              class="form form-with-steps form-with-steps-primary form-with-steps-centered">
+          {% crispy reg_form   %}
+          <div class="form-step final-step" style="display: none;">
+
+            {% include "registration/partials/register_new_user/submit_info.html" %}
+            {% include "registration/partials/register_new_user/submit_errors.html" %}
+            {% include "registration/partials/register_new_user/server_errors.html" %}
+            {% include "registration/partials/register_new_user/success.html" %}
+
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% include 'registration/partials/eula_modal.html' %}
+{% endblock %}
