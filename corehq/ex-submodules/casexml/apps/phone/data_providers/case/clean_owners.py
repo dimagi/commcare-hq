@@ -6,6 +6,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.phone.cleanliness import get_case_footprint_info
+from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 from casexml.apps.phone.data_providers.case.load_testing import get_xml_for_response
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
@@ -209,7 +210,11 @@ class AsyncCleanOwnerPayload(CleanOwnerSyncPayload):
     def _update_progress(self, done=0, total=0):
         self.current_task.update_state(
             state="PROGRESS",
-            meta={'done': done, 'total': total}
+            meta={
+                'done': done,
+                'total': total,
+                'retry-after': ASYNC_RETRY_AFTER
+            }
         )
 
 

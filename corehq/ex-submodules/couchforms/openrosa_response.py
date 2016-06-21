@@ -19,6 +19,7 @@ class ResponseNature(object):
     SUBMIT_USER_UPDATED = 'submit_user_updated'
 
     OTA_RESTORE_SUCCESS = 'ota_restore_success'
+    OTA_RESTORE_PENDING = 'ota_restore_pending'
     OTA_RESTORE_ERROR = 'ota_restore_error'
 
 

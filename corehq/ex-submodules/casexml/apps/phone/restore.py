@@ -37,6 +37,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.openrosa_response import (
     ResponseNature,
     get_simple_response_xml,
+    get_response_element,
 )
 from casexml.apps.case.xml import check_version, V1
 from django.http import HttpResponse, StreamingHttpResponse
@@ -50,6 +51,7 @@ from casexml.apps.phone.const import (
     ASYNC_RESTORE_CACHE_KEY_PREFIX,
     RESTORE_CACHE_KEY_PREFIX,
 )
+from casexml.apps.phone.xml import get_sync_element, get_progress_element
 
 from wsgiref.util import FileWrapper
 from xml.etree import ElementTree
@@ -224,34 +226,30 @@ class FileRestoreResponse(RestoreResponse):
 
 class AsyncRestoreResponse(object):
 
-    def __init__(self, task):
+    def __init__(self, task, username):
         self.task = task
+        self.username = username
 
-    def get_progress(self):
-        progress = self.task.info if self.task.info else {}
-        return {
-            'done': progress.get('done', 0),
-            'total': progress.get('total', 0),
-            'retry-after': ASYNC_RETRY_AFTER,
+        task_info = self.task.info if self.task.info else {}
+        self.progress = {
+            'done': task_info.get('done', 0),
+            'total': task_info.get('total', 0),
+            'retry_after': task_info.get('retry-after', ASYNC_RETRY_AFTER),
         }
 
     def compile_response(self):
-        root = ElementTree.Element("OpenRosaResponse")
-        root.set('xmlns', "http://openrosa.org/http/response")
-        sync_tag = ElementTree.Element("Sync")
-        sync_tag.set('xmlns', "http://commcarehq.org/sync")
+        root = get_response_element(
+            message="Asynchronous restore under way for {}".format(self.username),
+            nature=ResponseNature.OTA_RESTORE_PENDING
+        )
+        sync_tag = get_sync_element()
+        sync_tag.append(get_progress_element(**self.progress))
         root.append(sync_tag)
-        progress_tag = ElementTree.Element("progress")
-        progress_tag.set('done', str(self.get_progress()['done']))
-        progress_tag.set('total', str(self.get_progress()['total']))
-        progress_tag.set('retry-after', str(self.get_progress()['retry-after']))
-        sync_tag.append(progress_tag)
 
         return ElementTree.tostring(root, encoding='utf-8')
 
     def get_http_response(self):
-        # duck-typed RestoreResponse
-        headers = {"Retry-After": ASYNC_RETRY_AFTER}
+        headers = {"Retry-After": self.progress['retry_after']}
         response = stream_response(
             StringIO(self.compile_response()),
             status=202,
@@ -604,7 +602,7 @@ class RestoreConfig(object):
             response = task.get(timeout=INITIAL_ASYNC_TIMEOUT_THRESHOLD if new_task else 1)
         except TimeoutError:
             # return a 202 with progress
-            response = AsyncRestoreResponse(task)
+            response = AsyncRestoreResponse(task, self.restore_user.username)
         else:
             # task is done, unset task id
             self.cache.delete(self._async_cache_key)

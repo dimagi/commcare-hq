@@ -182,21 +182,25 @@ class AsyncRestoreTest(TestCase):
 class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):
     def setUp(self):
         self.task = mock.MagicMock()
-        self.task.info = {'done': 25, 'total': 100}
+        self.retry_after = 25
+        self.task.info = {'done': 25, 'total': 100, 'retry-after': 25}
+        self.username = 'mclovin'
 
-        self.response = AsyncRestoreResponse(self.task)
+        self.response = AsyncRestoreResponse(self.task, self.username)
 
     def test_response(self):
         expected = """
         <OpenRosaResponse xmlns="http://openrosa.org/http/response">
+            <message nature='ota_restore_pending'>Asynchronous restore under way for {username}</message>
             <Sync xmlns="http://commcarehq.org/sync">
                 <progress total="{total}" done="{done}" retry-after="{retry_after}"/>
             </Sync>
         </OpenRosaResponse>
         """.format(
+            username=self.username,
             total=self.task.info['total'],
             done=self.task.info['done'],
-            retry_after=ASYNC_RETRY_AFTER,
+            retry_after=self.retry_after,
         )
         self.assertXmlEqual(self.response.compile_response(), expected)
 
@@ -204,5 +208,5 @@ class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):
         http_response = self.response.get_http_response()
         self.assertEqual(http_response.status_code, 202)
         self.assertTrue(http_response.has_header('Retry-After'))
-        self.assertEqual(http_response['retry-after'], str(ASYNC_RETRY_AFTER))
+        self.assertEqual(http_response['retry-after'], str(self.retry_after))
         self.assertXmlEqual(list(http_response.streaming_content)[0], self.response.compile_response())
