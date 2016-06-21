@@ -62,7 +62,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             base_queryset = base_queryset.filter(
                 user_id__in=users,
             )
-        self._queryset = base_queryset.distinct('user_id')
+        self._distinct_user_ids = base_queryset.distinct('user_id')
 
         num_performing_user = (base_queryset
                                .filter(num_of_forms__gte=performance_threshold)
@@ -73,7 +73,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
-            active=self._queryset.count(),
+            active=self._distinct_user_ids.count(),
             performing=num_performing_user,
         )
 
@@ -124,7 +124,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 is_performing=row.num_of_forms >= self.performance_threshold,
                 previous_stub=None,
                 next_stub=None,
-            ) for row in self._queryset
+            ) for row in self._distinct_user_ids
         }
 
     @memoized
