@@ -826,7 +826,7 @@ def _save_case_list_lookup_params(short, case_list_lookup, lang):
     short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
     short.lookup_image = case_list_lookup.get("lookup_image", short.lookup_image)
     short.lookup_display_results = case_list_lookup.get("lookup_display_results", short.lookup_display_results)
-    if case_list_lookup.get("lookup_field_header"):
+    if "lookup_field_header" in case_list_lookup:
         short.lookup_field_header[lang] = case_list_lookup["lookup_field_header"]
     short.lookup_field_template = case_list_lookup.get("lookup_field_template", short.lookup_field_template)
 
