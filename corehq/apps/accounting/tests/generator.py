@@ -30,7 +30,6 @@ from corehq.apps.accounting.models import (
     SoftwareProductRate,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.smsbillables.generator import DIRECTIONS
 from corehq.apps.smsbillables.models import (
     SmsBillable,
     SmsGatewayFee,
@@ -38,6 +37,7 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFee,
     SmsUsageFeeCriteria,
 )
+from corehq.apps.smsbillables.tests.generator import DIRECTIONS
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.util.test_utils import unit_testing_only
 
