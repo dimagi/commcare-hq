@@ -28,7 +28,6 @@ WARNING = "warning"
 SET_XMLNS = "set-xmlns-on-xfrom"
 ERROR_SAVING = "error-saving-xform"
 MULTI_MATCH = "multiple-possible-forms"
-NONE_MARKED_FIXED = "no-forms-in-build-marked-fixed"
 FORM_HAS_UNDEFINED_XMLNS = "build-has-form-with-undefined-xmlns"
 CANT_MATCH = "cant-match-xform-to-form"
 
