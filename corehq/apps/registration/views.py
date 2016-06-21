@@ -1,16 +1,18 @@
 from datetime import datetime
+import logging
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse, QueryDict
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 import sys
 
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, View
+from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq.apps.analytics.tasks import (
     track_workflow,
@@ -27,8 +29,10 @@ from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainReg
     RegisterNewWebUserForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
-from corehq.apps.style.decorators import use_blazy
+from corehq.apps.style.decorators import use_blazy, use_jquery_ui, \
+    use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
+from django.contrib.auth.models import User
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip
@@ -41,6 +45,61 @@ def get_domain_context():
 
 def registration_default(request):
     return redirect(register_user)
+
+
+class ProcessRegistrationView(JSONResponseMixin, View):
+    urlname = 'process_registration'
+
+    def get(self, request, *args, **kwargs):
+        raise Http404()
+
+    def _create_new_account(self, reg_form):
+        activate_new_user(reg_form, ip=get_ip(self.request))
+        new_user = authenticate(
+            username=reg_form.cleaned_data['email'],
+            password=reg_form.cleaned_data['password']
+        )
+        track_workflow(new_user.email, "Requested new account")
+        login(self.request, new_user)
+
+    @allow_remote_invocation
+    def register_new_user(self, data):
+        reg_form = RegisterNewWebUserForm(data['data'])
+        if reg_form.is_valid():
+            self._create_new_account(reg_form)
+            try:
+                request_new_domain(
+                    self.request, reg_form, is_new_user=True
+                )
+            except NameUnavailableException:
+                # technically, the form should never reach this as names are
+                # auto-generated now. But, just in case...
+                logging.error("There as an issue generating a unique domain name "
+                              "for a user during new registration.")
+                return {
+                    'errors': {
+                        'project name unavailable': [],
+                    }
+                }
+            return {
+                'success': True,
+            }
+        logging.error(
+            "There was an error processing a new user registration form."
+            "This shouldn't happen as validation should be top-notch "
+            "client-side. Here is what the errors are: {}".format(reg_form.errors))
+        return {
+            'errors': reg_form.errors,
+        }
+
+    @allow_remote_invocation
+    def check_username_availability(self, data):
+        email = data['email'].strip()
+        duplicate = CouchUser.get_by_username(email)
+        is_existing = User.objects.filter(username__iexact=email).count() > 0 or duplicate
+        return {
+            'isValid': not is_existing,
+        }
 
 
 class NewUserRegistrationView(BasePageView):
@@ -57,18 +116,12 @@ class NewUserRegistrationView(BasePageView):
         return self.request.GET.get('e', '')
 
     @property
-    @memoized
-    def reg_form(self):
-        if self.request.method == 'POST':
-            return RegisterNewWebUserForm(self.request.POST)
-        return RegisterNewWebUserForm(
-            initial={'account_email': self.prefilled_email}
-        )
-
-    @property
     def page_context(self):
         return {
-            'reg_form': self.reg_form,
+            'reg_form': RegisterNewWebUserForm(
+                initial={'email': self.prefilled_email}
+            ),
+            'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
         }
 
     @property
