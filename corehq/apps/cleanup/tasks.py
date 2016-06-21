@@ -1,12 +1,4 @@
-import os
 from collections import defaultdict
-
-from django.conf import settings
-from django.core.management import call_command
-
-from celery.schedules import crontab
-from celery.task import periodic_task
-from datetime import datetime
 
 from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
     parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
@@ -68,14 +60,28 @@ def get_summary_stats_from_stream(stream):
 
 def pprint_stats(stats, outstream):
     outstream.write("Number of errors: {}\n".format(sum(stats['errors'].values())))
-    outstream.write("Number of xforms that we could not fix (multi match): {}\n".format(sum(stats['not_fixed_multi_match'].values())))
-    outstream.write("Number of xforms that we could not fix (cant match): {}\n".format(sum(stats['not_fixed_cant_match'].values())))
-    outstream.write("Number of xforms that we could not fix (undef xmlns): {}\n".format(sum(stats['not_fixed_undefined_xmlns'].values())))
-    outstream.write("Number of xforms that we fixed: {}\n".format(sum(stats['fixed'].values())))
+    outstream.write(
+        "Number of xforms that we could not fix (multi match): {}\n".format(
+            sum(stats['not_fixed_multi_match'].values()))
+    )
+    outstream.write(
+        "Number of xforms that we could not fix (cant match): {}\n".format(
+            sum(stats['not_fixed_cant_match'].values())
+        )
+    )
+    outstream.write(
+        "Number of xforms that we could not fix (undef xmlns): {}\n".format(
+            sum(stats['not_fixed_undefined_xmlns'].values())
+        )
+    )
+    outstream.write("Number of xforms that we fixed: {}\n".format(
+        sum(stats['fixed'].values()))
+    )
     outstream.write("Domains and users that submitted bad xforms:\n")
     for domain, users in sorted(stats['submitting_bad_forms'].items()):
         outstream.write(
-            "    {} ({} fixed, {} not fixed (multi), {} not fixed (cant_match), {} not fixed (undef xmlns), {} errors)\n".format(
+            "    {} ({} fixed, {} not fixed (multi), {} not fixed (cant_match),"
+            " {} not fixed (undef xmlns), {} errors)\n".format(
                 domain,
                 stats['fixed'][domain],
                 stats['not_fixed_multi_match'][domain],
