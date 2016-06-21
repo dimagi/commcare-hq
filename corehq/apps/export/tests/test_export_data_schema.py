@@ -424,6 +424,54 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(new_schema.last_app_versions[app._id], 6)
         self.assertEqual(len(new_schema.group_schemas), 1)
 
+    def test_has_submissions_flag(self):
+        """
+        Ensure that when an app has `has_submissions` set it gets processed, otherwise
+        it should be skipped.
+        """
+        app = self.current_app
+
+        # After the first schema has been saved let's add a second app to process
+        second_build = Application.wrap(self.get_json('basic_application'))
+        second_build._id = '456'
+        second_build.copy_of = app.get_id
+        second_build.version = 6
+        second_build.save()
+        self.addCleanup(second_build.delete)
+
+        third_build = Application.wrap(self.get_json('basic_application'))
+        third_build._id = '789'
+        third_build.copy_of = app.get_id
+        third_build.version = 7
+        third_build.save()
+        self.addCleanup(third_build.delete)
+
+        with patch(
+                'corehq.apps.export.models.new.FormExportDataSchema._merge_schemas',
+                return_value=FormExportDataSchema()) as mock_merge:
+            new_schema = FormExportDataSchema.generate_schema_from_builds(
+                app.domain,
+                app._id,
+                'my_sweet_xmlns'
+            )
+            self.assertEqual(mock_merge.call_count, 1)
+        self.assertEqual(new_schema.last_app_versions[app._id], 7)
+
+        # Set the second build to have submissions
+        second_build.has_submissions = True
+        second_build.save()
+
+        with patch(
+                'corehq.apps.export.models.new.FormExportDataSchema._merge_schemas',
+                return_value=FormExportDataSchema()) as mock_merge:
+            new_schema = FormExportDataSchema.generate_schema_from_builds(
+                app.domain,
+                app._id,
+                'my_sweet_xmlns',
+                force_rebuild=True,
+            )
+            self.assertEqual(mock_merge.call_count, 2)
+
 
 class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     file_path = ['data']
