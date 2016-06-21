@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 from django.db import IntegrityError
 from django.core import cache
 from django.core.servers.basehttp import FileWrapper
@@ -83,7 +82,9 @@ class DownloadBase(object):
         Sometimes filenames have characters in them which aren't allowed in
         headers and causes the download to fail.
         """
-        return re.compile('[\r\n]').sub('', content_disposition)
+        if isinstance(content_disposition, basestring):
+            return content_disposition.replace('\r', '').replace('\n', '')
+        return content_disposition
 
     def toHttpResponse(self):
         response = HttpResponse(self.get_content(),
