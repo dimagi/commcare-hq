@@ -87,6 +87,19 @@ class FormStepNumber(LayoutObject):
         return render_to_string(self.template, context)
 
 
+class ValidationMessage(LayoutObject):
+    template = 'style/crispy/validation_message.html'
+
+    def __init__(self, ko_observable):
+        self.ko_observable = ko_observable
+
+    def render(self, form, form_style, context, template_pack=None):
+        context.update({
+            'ko_observable': self.ko_observable,
+        })
+        return render_to_string(self.template, context)
+
+
 @contextmanager
 def edited_classes(context, label_class, field_class):
     original_label_class = context.get('label_class')
