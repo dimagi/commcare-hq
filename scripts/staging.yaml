@@ -51,7 +51,6 @@ branches:
   - vellum-staging # J$ 11/13
   - calculatedIcons # Sravan 3/2
   - xform-blobs  # daniel 5/23
-  - ignore-base-url  # Ben 6/16/16
   - new-signup  # Biyeun 6/21
 submodules:
   submodules/touchforms-src:
