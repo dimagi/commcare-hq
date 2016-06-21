@@ -21,6 +21,10 @@ class FullResponseDataProvider(TimedProvider):
     """
     Base class for things that deal with their own response.
     """
+    def __init__(self, timing_context, async_task=None):
+        super(FullResponseDataProvider, self).__init__(timing_context)
+        self.async_task = async_task
+
     def get_response(self, restore_state):
         raise NotImplementedError('Need to implement this method')
 
