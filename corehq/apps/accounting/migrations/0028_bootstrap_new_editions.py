@@ -3,14 +3,14 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.apps.accounting.management.commands.cchq_software_plan_bootstrap import ensure_plans
-from corehq.apps.accounting.management.commands.cchq_accounting_bootstrap_new_editions_042016 import (
+from corehq.apps.accounting.bootstrap.config.resellers_and_managed_hosting import (
     BOOTSTRAP_EDITION_TO_ROLE,
     BOOTSTRAP_FEATURE_RATES,
     BOOTSTRAP_PRODUCT_RATES,
     FEATURE_TYPES,
     PRODUCT_TYPES,
 )
+from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.sql_db.operations import HqRunPython
 
 
