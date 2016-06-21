@@ -115,7 +115,9 @@ class ILSTestScript(TestScript):
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
         SQLProduct.objects.all().delete()
-        ILSGatewayConfig.for_domain(TEST_DOMAIN).delete()
+        ils_gateway_config = ILSGatewayConfig.for_domain(TEST_DOMAIN)
+        if ils_gateway_config:
+            ils_gateway_config.delete()
         DocDomainMapping.objects.all().delete()
         for site_code in [
             'loc1',
