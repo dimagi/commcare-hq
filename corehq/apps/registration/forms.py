@@ -32,13 +32,12 @@ class RegisterNewWebUserForm(forms.Form):
     # Not inheriting from other forms to de-obfuscate the role of this form.
 
     full_name = forms.CharField(label=_("Full Name"))
-    account_email = forms.CharField(label=_("Email"))
-    new_password = forms.CharField(label=_("Create Password"))
-    project_name = forms.CharField(label=_("Project Name"))
-    phone_number = forms.CharField(
-        max_length=80,
-        label=_("Phone Number (Optional)"),
+    email = forms.CharField(label=_("Email"))
+    password = forms.CharField(
+        label=_("Create Password"),
+        widget=forms.PasswordInput(),
     )
+    project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
         label=mark_safe_lazy(_(
@@ -52,57 +51,88 @@ class RegisterNewWebUserForm(forms.Form):
         super(RegisterNewWebUserForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
-        self.helper.form_class = "form form-with-steps " \
-                                 "form-with-steps-primary " \
-                                 "form-with-steps-centered"
-        self.helper.form_id = "register-new-user"
+        self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Fieldset(
                     _('Create Your Account'),
-                    hqcrispy.FormStepNumber(1, 3),
-                    hqcrispy.InlineField('full_name', css_class="input-lg"),
-                    hqcrispy.InlineField('account_email', css_class="input-lg"),
-                    hqcrispy.InlineField('new_password', css_class="input-lg"),
+                    hqcrispy.FormStepNumber(1, 2),
+                    hqcrispy.InlineField(
+                        'full_name',
+                        css_class="input-lg",
+                        data_bind="value: fullName, "
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "   validator: fullName "
+                                  "}"
+                    ),
+                    hqcrispy.InlineField(
+                        'email',
+                        css_class="input-lg",
+                        data_bind="value: email, "
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "  validator: email, "
+                                  "  delayedValidator: emailDelayed "
+                                  "}",
+                    ),
+                    crispy.HTML('<p class="validation-message-block" '
+                                'data-bind="visible: isEmailValidating, '
+                                'text: validatingEmailMsg">&nbsp;</p>'),
+                    hqcrispy.ValidationMessage('emailDelayed'),
+                    hqcrispy.InlineField(
+                        'password',
+                        css_class="input-lg",
+                        autocomplete="new-password",
+                        data_bind="value: password, "
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "   validator: password, "
+                                  "   delayedValidator: passwordDelayed "
+                                  "}",
+                    ),
+                    hqcrispy.ValidationMessage('passwordDelayed'),
                     twbscrispy.StrictButton(
                         ugettext("Next"),
-                        css_class="btn btn-success btn-lg"
+                        css_class="btn btn-success btn-lg",
+                        data_bind="click: nextStep, disable: disableNextStepOne"
                     )
                 ),
-                css_class="form-step form-step-start step-1 hide"
+                css_class="form-step step-1"
             ),
             crispy.Div(
                 crispy.Fieldset(
                     _('Name Your First Project'),
-                    hqcrispy.FormStepNumber(2, 3),
-                    hqcrispy.InlineField('project_name', css_class="input-lg"),
-                    hqcrispy.InlineField('eula_confirmed', css_class="input-lg"),
+                    hqcrispy.FormStepNumber(2, 2),
+                    hqcrispy.InlineField(
+                        'project_name',
+                        css_class="input-lg",
+                        data_bind="value: projectName, "
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "   validator: projectName "
+                                  "}",
+                    ),
+                    hqcrispy.InlineField(
+                        'eula_confirmed',
+                        css_class="input-lg",
+                        data_bind="checked: eulaConfirmed"
+                    ),
                     twbscrispy.StrictButton(
-                        ugettext("Next"),
-                        css_class="btn btn-success btn-lg"
-                    )
-                ),
-                css_class="form-step step-2 hide"
-            ),
-            crispy.Div(
-                crispy.Fieldset(
-                    _('Can We Help?'),
-                    hqcrispy.FormStepNumber(3, 3),
-                    hqcrispy.InlineField('phone_number', css_class="input-lg"),
-                    crispy.HTML(
-                        '<p class="help-block">{}</p>'.format(ugettext(
-                            "(Optional) Leave your phone number if you would "
-                            "like someone from Dimagi to contact you and help "
-                            "assess your project's needs."
-                        ))
+                        ugettext("Previous"),
+                        css_class="btn btn-primary-dark btn-lg",
+                        data_bind="click: previousStep"
                     ),
                     twbscrispy.StrictButton(
                         ugettext("Finish"),
-                        css_class="btn btn-success btn-lg"
+                        css_class="btn btn-success btn-lg",
+                        data_bind="click: submitForm, "
+                                  "disable: disableNextStepTwo"
                     )
                 ),
-                css_class="form-step step-3"
+                css_class="form-step step-2",
+                style="display: none;"
             ),
         )
 
