@@ -2,7 +2,7 @@
 
 ### Architecture
 
-Exports are designed to build off the corresponding application to generate a schema that represents the questions, properties, and system properties that are available to the user to selected. There is exactly one schema for each Application/Module/Form triplet or Application/Case Type pair. On initial generation of an export schema, each built application that has `has_submissions` set to True will be processed along with the current or "live" application.
+Exports are designed to build off the corresponding application to generate a schema that represents the questions, properties, and system properties that are available to the user to select. There is exactly one schema for each Application/Module/Form triplet or Application/Case Type pair. On initial generation of an export schema, each built application that has `has_submissions` set to True will be processed along with the current or "live" application.
 
 Example:
 
@@ -14,7 +14,7 @@ Suppose there exists the following app builds
 | 1234  | 10  | q1,q3   |
 | 1234  | 1  | q1,q2,q3   |
 
-Below illustrates what the schema will look like after processing each app from beginning to current. The actual schema is simplified for understanding. Each question has an app_id and version associated with it.
+Below illustrates what the schema will look like after processing each app from beginning to current. The example schema is simplified for understanding. Each question has an app_id and version associated with it.
 
 After processing build_version 1:
 ```
@@ -40,7 +40,7 @@ q4.last_occurences = { app_id: 12 }
 
 The export that is then generated will look something like this:
 
-| question |is_selected | is_deleted | is_hidden |
+| question | is selected (by default) | is marked deleted | is hidden from user |
 |------|---|---|---|
 | q1 | ✓ |  |  |
 | q2 | ✓ |  |  |
