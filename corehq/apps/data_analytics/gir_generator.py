@@ -50,9 +50,11 @@ class GIRTableGenerator(object):
         for entry in user_query:
             user_months[entry['user_id']] += 1
         for user in all_users:
-            if user_forms.get(user, 0) >= (domain.internal.performance_threshold or DEFAULT_PERFORMANCE_THRESHOLD):
+            if user_forms.get(user, 0) >= \
+                    (domain.internal.performance_threshold or DEFAULT_PERFORMANCE_THRESHOLD):
                 performing_users.append(user)
-            if user_months.get(user, 0) >= (domain.internal.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD):
+            if user_months.get(user, 0) >= \
+                    (domain.internal.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD):
                 experienced_users.append(user)
         return UserCategories(set(user_forms.keys()), set(performing_users),
                               set(experienced_users), all_users, sms)
