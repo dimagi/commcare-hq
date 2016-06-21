@@ -49,6 +49,10 @@ The export that is then generated will look something like this:
 
 Since q3's latest build_version is 10, the code deduces that it has been deleted and therefore hides it and marks it as deleted.
 
+### System Properties
+
+System properties are properties that CommCareHQ adds to the form or case that are essentially meta data.  Examples of these include: form id, case type, case id, form xmlns, etc. System properties are added to a white list. This means that by default a system property on the form will _not_ be added to the export for selection. A list of the system properties can be found in [corehq/apps/export/system_properties.py](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/export/system_properties.py)
+
 ### Optimizations
 
 Often times iterating through each build in an application can be time consuming. To reduce the time to process an application, the code only processes applications that have been marked as having submissions.
