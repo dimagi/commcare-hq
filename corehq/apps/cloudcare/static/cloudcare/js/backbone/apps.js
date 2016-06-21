@@ -772,6 +772,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
             data.onLoading = tfLoading;
             data.onLoadingComplete = tfLoadingComplete;
             data.domain = this.model.get("domain");
+            data.formplayerEnabled = this.options.formplayerEnabled;
             var loadSession = function() {
                 var sess = new WebFormSession(data);
                 // TODO: probably shouldn't hard code these divs
@@ -972,6 +973,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                 instanceViewerEnabled: self.options.instanceViewerEnabled,
                 username: self.options.username,
                 syncDbUrl: self.options.syncDbUrl,
+                formplayerEnabled: self.options.formplayerEnabled,
             });
 
             // fetch session list here
