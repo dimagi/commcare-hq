@@ -236,7 +236,7 @@ def download_file(request, domain, app_id, path):
                 if build_profile in request.app.build_profiles and build_profile_access:
                     try:
                         # look for file guaranteed to exist if profile is created
-                        request.app.fetch_attachment('files/{id}/profile.xml')
+                        request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
                     except ResourceNotFound:
                         request.app.create_build_files(save=True, build_profile_id=build_profile)
                         request.app.save()
