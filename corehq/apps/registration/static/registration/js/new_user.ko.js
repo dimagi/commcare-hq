@@ -2,7 +2,7 @@
 /* global ko */
 /* global _ */
 /* global RMI */
-/* global zxcvbn */
+/* global django */
 
 /* New User Registration Form Model
  * This model is for validating and stepping through the new user registration form
@@ -21,7 +21,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
     };
     _private.resetEmailFeedback = function (isValidating) {
         throw "please call setResetEmailFeedbackFn. " +
-              "Expects boolean isValidating.";
+              "Expects boolean isValidating. " + isValidating;
     };
 
     module.setResetEmailFeedbackFn = function (callback) {
@@ -87,14 +87,14 @@ hqDefine('registration/js/new_user.ko.js', function () {
                                 {
                                     success: function (result) {
                                         callback(result.isValid);
-                                    }
+                                    },
                                 }
-                            )
+                            );
                         } else if (self.email() !== undefined) {
                             _private.resetEmailFeedback(false);
                         }
                     },
-                    message: django.gettext("There is already a user with this email.")
+                    message: django.gettext("There is already a user with this email."),
                 }
             });
         self.isEmailValidating = ko.observable(false);
@@ -115,7 +115,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
         self.passwordDelayed = ko.pureComputed(self.password)
             .extend(_rateLimit)
             .extend({
-                zxcvbnPassword: 2
+                zxcvbnPassword: 2,
             });
 
         // ---------------------------------------------------------------------
@@ -148,7 +148,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
                 password: self.password(),
                 project_name: self.projectName(),
                 eula_confirmed: self.eulaConfirmed(),
-            }
+            };
         };
 
         var _getFormStepUi = function (stepNum) {
@@ -184,7 +184,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
         self.nextStep = function () {
             var _nextStep = self.currentStep() + 1;
             if (_nextStep >= self.steps().length) {
-               return;
+                return;
             }
             _getFormStepUi(self.currentStep())
                 .hide("slide", {}, 300, function () {
@@ -271,7 +271,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
                     error: function () {
                         self.isSubmitting(false);
                         self.hasServerError(true);
-                    }
+                    },
                 }
             );
             self.nextStep();
