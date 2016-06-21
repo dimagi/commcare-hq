@@ -328,8 +328,6 @@ class SubcasesExpressionSpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        case_accessors = CaseAccessors(domain)
-        indices = case_accessors.get_all_reverse_indices_info([case_id])
-        subcases = [c.to_json() for c in case_accessors.get_cases([i.case_id for i in indices])]
+        subcases = [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
         context.set_cache_value(cache_key, subcases)
         return subcases
