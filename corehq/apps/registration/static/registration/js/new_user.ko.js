@@ -17,11 +17,11 @@ hqDefine('registration/js/new_user.ko.js', function () {
     _private.csrf = null;
     _private.showPasswordFeedback = false;
     _private.rmi = function () {
-        console.log("Please call initRMI first.");
+        throw "Please call initRMI first.";
     };
     _private.resetEmailFeedback = function (isValidating) {
-        console.log("please call setResetEmailFeedbackFn. " +
-            "Expects boolean isValidating.");
+        throw "please call setResetEmailFeedbackFn. " +
+              "Expects boolean isValidating.";
     };
 
     module.setResetEmailFeedbackFn = function (callback) {
