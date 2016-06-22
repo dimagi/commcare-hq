@@ -486,7 +486,7 @@ class StaticDataSourceConfiguration(JsonObject):
 
     @classmethod
     def all(cls):
-        for wrapped, _ in cls._all():
+        for wrapped, path in cls._all():
             for domain in wrapped.domains:
                 yield cls._get_datasource_config(wrapped, domain)
 
@@ -566,7 +566,7 @@ class StaticReportConfiguration(JsonObject):
 
     @classmethod
     def all(cls):
-        for wrapped, _ in StaticReportConfiguration._all():
+        for wrapped, path in StaticReportConfiguration._all():
             for domain in wrapped.domains:
                 yield cls._get_report_config(wrapped, domain)
 
@@ -613,7 +613,7 @@ class StaticReportConfiguration(JsonObject):
 
     @classmethod
     def report_class_by_domain_and_id(cls, domain, config_id):
-        for wrapped, _ in cls._all():
+        for wrapped, path in cls._all():
             if cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report) == config_id:
                 return wrapped.custom_configurable_report
         raise BadSpecError(_('The report configuration referenced by this report could '
