@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_section.html' %}
+{% extends 'style/base_section.html' %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
@@ -20,11 +20,7 @@
         });
         $('#subscription_management').koApplyBindings(viewModel);
 
-        var billingInfoHandler = new BillingContactInfoHandler(
-            "{% trans "Please enter a valid email." %}"
-        );
-        billingInfoHandler.init();
-
+        hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
         $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
     </script>
 {% endblock %}

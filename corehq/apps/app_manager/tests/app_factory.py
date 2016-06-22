@@ -110,7 +110,7 @@ class AppFactory(object):
             form.actions.load_update_cases.append(action)
 
     @staticmethod
-    def form_opens_case(form, case_type=None, is_subcase=False):
+    def form_opens_case(form, case_type=None, is_subcase=False, parent_tag=None, is_extension=False):
         if form.form_type == 'module_form':
             if is_subcase:
                 form.actions.subcases.append(OpenSubCaseAction(
@@ -129,7 +129,10 @@ class AppFactory(object):
                 name_path='/data/name'
             )
             if is_subcase:
-                action.case_indices = [CaseIndex(tag=form.actions.load_update_cases[-1].case_tag)]
+                if not parent_tag:
+                    parent_tag = form.actions.load_update_cases[-1].case_tag
+
+                action.case_indices = [CaseIndex(tag=parent_tag, relationship='extension' if is_extension else 'child')]
 
             form.actions.open_cases.append(action)
 

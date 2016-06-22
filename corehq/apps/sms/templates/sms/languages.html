@@ -1,4 +1,4 @@
-{% extends "style/bootstrap3/base_section.html" %}
+{% extends "style/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -7,13 +7,13 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
-    <script src="{% new_static 'langcodes/js/langcodes.js' %}"></script>
-    <script src="{% new_static 'app_manager/js/supported-languages.js' %}"></script>
+    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
+    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <link rel="stylesheet" href="{% new_static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui/jquery-ui-redmond-1.8.16.css' %}"/>
     <style>
         .sortable-handle {
             cursor: move;
@@ -58,7 +58,7 @@
             <div id="translations-tab" class="tab-pane">
                 <div>
                     <section>
-                        {% include "style/bootstrap3/partials/bulk_upload.html" %}
+                        {% include "style/partials/bulk_upload.html" %}
                     </section>
                 </div>
             </div>

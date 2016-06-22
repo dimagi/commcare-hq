@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from django.db import IntegrityError
 from django.core import cache
 from django.core.servers.basehttp import FileWrapper
@@ -27,13 +28,15 @@ class DownloadBase(object):
     A basic download object.
     """
 
+    has_file = False
+
     def __init__(self, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None,
                  cache_backend=SOIL_DEFAULT_CACHE, content_type=None,
                  suffix=None, message=None):
         self.content_type = content_type if content_type else mimetype
-        self.content_disposition = content_disposition
+        self.content_disposition = self.clean_content_disposition(content_disposition)
         self.transfer_encoding = transfer_encoding
         self.extras = extras or {}
         self.download_id = download_id or uuid.uuid4().hex
@@ -73,6 +76,17 @@ class DownloadBase(object):
 
     def save(self, expiry=None):
         self.get_cache().set(self.download_id, self, expiry)
+
+    def clean_content_disposition(self, content_disposition):
+        """
+        http://manage.dimagi.com/default.asp?229983
+        Sometimes filenames have characters in them which aren't allowed in
+        headers and causes the download to fail.
+        """
+        if isinstance(content_disposition, basestring):
+            return re.compile('[\r\n]').sub('', content_disposition)
+
+        return content_disposition
 
     def toHttpResponse(self):
         response = HttpResponse(self.get_content(),
@@ -152,20 +166,46 @@ class DownloadBase(object):
         except IntegrityError:
             # Not called in task context just pass
             pass
-    
+
     @classmethod
     def create(cls, payload, **kwargs):
         """
-        Create a Download object from a payload, plus any additional arguments 
+        Create a Download object from a payload, plus any additional arguments
         to pass through to the constructor.
         """
         raise NotImplementedError("This should be overridden by subclasses!")
+
+
+class MultipleTaskDownload(DownloadBase):
+    """Download object for groups of tasks
+    """
+
+    @property
+    def task(self):
+        from celery.result import GroupResult
+        result = GroupResult.restore(self.task_id)
+        return result
+
+    def set_task(self, task_group, timeout=60 * 60 * 24):
+        task_group.save()
+        self.get_cache().set(self._task_key(), task_group.id, timeout)
+
+    def get_progress(self):
+        current = sum(int(result.ready()) for result in self.task.results)
+        total = len(self.task.subtasks)
+        percent = current * 100 // total if total and current is not None else 0
+        return {
+            'current': current,
+            'total': total,
+            'percent': percent,
+        }
 
 
 class CachedDownload(DownloadBase):
     """
     Download that lives in the cache
     """
+    has_file = True
 
     def __init__(self, cacheindex, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
@@ -199,6 +239,7 @@ class FileDownload(DownloadBase):
     Download that lives on the filesystem
     Uses django-transfer to get files stored on the external drive if use_transfer=True
     """
+    has_file = True
 
     def __init__(self, filename, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',

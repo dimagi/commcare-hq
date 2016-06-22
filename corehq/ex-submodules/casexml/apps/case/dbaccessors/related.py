@@ -1,6 +1,7 @@
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo
+from dimagi.utils.couch.database import iter_docs
 
 
 def get_indexed_case_ids(domain, case_ids):
@@ -30,19 +31,14 @@ def get_reverse_indexed_case_ids(domain, case_ids):
     return [r.case_id for r in get_all_reverse_indices_info(domain, case_ids, CASE_INDEX_CHILD)]
 
 
-def get_reverse_indexed_cases(domain, case_ids, relationship=CASE_INDEX_CHILD):
+def get_reverse_indexed_cases(domain, case_ids, relationship=None):
     """
-    Given a base list of cases, gets all wrapped cases that directly
-    reference them (with relationship <relationship>).
+    Gets all reverse indexed cases of a case (including child cases and extensions).
     """
     from casexml.apps.case.models import CommCareCase
-    keys = [[domain, case_id, 'reverse_index', relationship] for case_id in case_ids]
-    return CommCareCase.view(
-        'case_indices/related',
-        keys=keys,
-        reduce=False,
-        include_docs=True,
-    )
+    indices = get_all_reverse_indices_info(domain, case_ids, relationship)
+    for case in iter_docs(CommCareCase.get_db(), [i.case_id for i in indices]):
+        yield CommCareCase.wrap(case)
 
 
 def get_all_reverse_indices_info(domain, case_ids, relationship=None):
@@ -86,16 +82,3 @@ def get_reverse_indices(case):
 def get_reverse_indices_for_case_id(domain, case_id):
     return [CommCareCaseIndex.wrap(raw)
             for raw in get_reverse_indices_json(domain, case_id)]
-
-
-def get_extension_chain(case_ids, domain):
-    """given a list of case_ids, returns a list of all extensions of those cases"""
-    extension_chain_ids = set()
-    incoming_extensions = set(get_extension_case_ids(domain, case_ids))
-    all_extension_ids = set(incoming_extensions)
-    new_extensions = set(incoming_extensions)
-    while new_extensions:
-        new_extensions = set(get_extension_case_ids(domain, list(new_extensions)))
-        all_extension_ids = all_extension_ids | new_extensions
-        extension_chain_ids = extension_chain_ids | all_extension_ids
-    return extension_chain_ids

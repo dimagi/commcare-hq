@@ -13,6 +13,7 @@ from corehq.apps.export.models import (
     PathNode,
     MAIN_TABLE,
     FormExportInstanceDefaults,
+    MultiMediaExportColumn,
 )
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
     TOP_MAIN_FORM_TABLE_PROPERTIES
@@ -240,24 +241,29 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
 
 class TestExportInstance(SimpleTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.schema = FormExportInstance(
+    def setUp(self):
+        self.instance = FormExportInstance(
             tables=[
                 TableConfiguration(
                     path=MAIN_TABLE
                 ),
                 TableConfiguration(
                     path=[PathNode(name='data', is_repeat=False), PathNode(name='repeat', is_repeat=True)],
+                    columns=[
+                        MultiMediaExportColumn(
+                            selected=True
+                        )
+                    ]
+
                 )
             ]
         )
 
     def test_get_table(self):
-        table = self.schema.get_table(MAIN_TABLE)
+        table = self.instance.get_table(MAIN_TABLE)
         self.assertEqual(table.path, MAIN_TABLE)
 
-        table = self.schema.get_table([
+        table = self.instance.get_table([
             PathNode(name='data', is_repeat=False), PathNode(name='repeat', is_repeat=True)
         ])
         self.assertEqual(
@@ -265,10 +271,17 @@ class TestExportInstance(SimpleTestCase):
             [PathNode(name='data', is_repeat=False), PathNode(name='repeat', is_repeat=True)]
         )
 
-        table = self.schema.get_table([
+        table = self.instance.get_table([
             PathNode(name='data', is_repeat=False), PathNode(name='DoesNotExist', is_repeat=False)
         ])
         self.assertIsNone(table)
+
+    def test_has_multimedia(self):
+        self.assertTrue(self.instance.has_multimedia)
+
+    def test_has_multimedia_not_selected(self):
+        self.instance.tables[1].columns[0].selected = False
+        self.assertFalse(self.instance.has_multimedia)
 
 
 @mock.patch(
@@ -279,6 +292,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportInstanceFromSavedInstance, cls).setUpClass()
         cls.app_id = '1234'
         cls.schema = FormExportDataSchema(
             group_schemas=[

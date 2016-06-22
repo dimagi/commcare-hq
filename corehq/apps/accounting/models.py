@@ -1708,7 +1708,6 @@ class InvoiceBaseManager(models.Manager):
 
 class InvoiceBase(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
-    date_received = models.DateField(blank=True, db_index=True, null=True)
     is_hidden = models.BooleanField(default=False)
     tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
@@ -2857,7 +2856,7 @@ class StripePaymentMethod(PaymentMethod):
 
     @property
     def all_cards(self):
-        return self.customer.cards.data
+        return filter(lambda card: card is not None, self.customer.cards.data)
 
     def all_cards_serialized(self, billing_account):
         return [{
@@ -2873,9 +2872,10 @@ class StripePaymentMethod(PaymentMethod):
         return self.customer.cards.retrieve(card_token)
 
     def get_autopay_card(self, billing_account):
-        return next((card for card in self.all_cards
-                     if card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) == 'True'),
-                    None)
+        return next((
+            card for card in self.all_cards
+            if card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) == 'True'
+        ), None)
 
     def remove_card(self, card_token):
         card = self.get_card(card_token)

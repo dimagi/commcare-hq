@@ -55,7 +55,6 @@ from corehq.apps.locations.models import Location
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_select2,
     use_angular_js,
     use_multiselect,
@@ -91,9 +90,7 @@ class EditCommCareUserView(BaseEditUserView):
     user_update_form_class = UpdateCommCareUserInfoForm
     page_title = ugettext_noop("Edit Mobile Worker")
 
-    @use_bootstrap3
     @use_multiselect
-    @use_select2
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
@@ -296,7 +293,6 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
         }
 
     @use_select2
-    @use_bootstrap3
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
@@ -421,7 +417,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @use_bootstrap3
     @use_select2
     @use_angular_js
     @method_decorator(require_can_edit_commcare_users)
@@ -719,7 +714,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
-    @use_bootstrap3
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
@@ -817,10 +811,6 @@ class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
     page_title = ugettext_noop('Mobile Worker Upload Status')
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(UserUploadStatusView, self).dispatch(request, *args, **kwargs)
-
     def get(self, request, *args, **kwargs):
         context = super(UserUploadStatusView, self).main_context
         context.update({
@@ -833,7 +823,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
             'next_url_text': _("Return to manage mobile workers"),
         })
-        return render(request, 'style/bootstrap3/soil_status_full.html', context)
+        return render(request, 'style/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -923,10 +913,6 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     template_name = "users/mobile/commcare_user_self_register.html"
     urlname = "commcare_user_self_register"
     strict_domain_fetching = True
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(CommCareUserSelfRegistrationView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

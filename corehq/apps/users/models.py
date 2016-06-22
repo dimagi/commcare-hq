@@ -1,6 +1,3 @@
-"""
-couch models go here
-"""
 from __future__ import absolute_import
 import copy
 from datetime import datetime
@@ -11,7 +8,6 @@ import re
 from restkit.errors import NoMoreData
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.loader import render_to_string
@@ -37,7 +33,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from casexml.apps.phone.models import User as CaseXMLUser
+from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
@@ -517,7 +513,16 @@ class _AuthorizableMixin(IsMemberOfMixin):
         self.save()
 
     def delete_domain_membership(self, domain, create_record=False):
+        """
+        If create_record is True, a DomainRemovalRecord is created so that the
+        action can be undone, and the DomainRemovalRecord is returned.
+
+        If create_record is True but the domain membership is not found,
+        then None is returned.
+        """
         self.get_by_user_id.clear(self.__class__, self.user_id, domain)
+        record = None
+
         for i, dm in enumerate(self.domain_memberships):
             if dm.domain == domain:
                 if create_record:
@@ -528,11 +533,13 @@ class _AuthorizableMixin(IsMemberOfMixin):
                     )
                 del self.domain_memberships[i]
                 break
+
         for i, domain_name in enumerate(self.domains):
             if domain_name == domain:
                 del self.domains[i]
                 break
-        if create_record:
+
+        if record:
             record.save()
             return record
 
@@ -941,10 +948,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                     status = 'unverified'
                 except PhoneNumberInUseException:
                     status = 'duplicate'
+                    duplicate = PhoneNumber.by_phone(phone, include_pending=True)
                     if requesting_user.is_member_of(duplicate.domain):
-                        duplicate = PhoneNumber.by_phone(phone, include_pending=True)
                         info['dup_url'] = get_object_url(duplicate.domain,
-                            duplicate.owner_doc_type, duplicate_owner_id)
+                            duplicate.owner_doc_type, duplicate.owner_id)
                 except InvalidFormatException:
                     status = 'invalid'
 
@@ -1185,6 +1192,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             couch_user.created_on = force_to_datetime(date)
         else:
             couch_user.created_on = datetime.utcnow()
+
+        user_data = kwargs.get('user_data', {})
+        couch_user.user_data = user_data
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1382,12 +1392,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             commcare_user.add_phone_number(phone_number)
 
         device_id = kwargs.get('device_id', '')
-        user_data = kwargs.get('user_data', {})
         # populate the couch user
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
-        commcare_user.user_data = user_data
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
@@ -1489,25 +1497,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_web_user(self):
         return False
 
-    def to_casexml_user(self):
-        user = CaseXMLUser(
-            user_id=self.userID,
-            username=self.raw_username,
-            password=self.password,
-            date_joined=self.date_joined,
-            user_data=self.user_data,
-            domain=self.domain,
-            loadtest_factor=self.loadtest_factor,
-            first_name=self.first_name,
-            last_name=self.last_name,
-            phone_number=self.phone_number,
+    def to_ota_restore_user(self):
+        return OTARestoreCommCareUser(
+            self.domain,
+            self,
+            loadtest_factor=self.loadtest_factor or 1,
         )
-
-        def get_owner_ids():
-            return self.get_owner_ids()
-        user.get_owner_ids = get_owner_ids
-        user._hq_user = self # don't tell anyone that we snuck this here
-        return user
 
     def _get_form_ids(self):
         return FormAccessors(self.domain).get_form_ids_for_user(self.user_id)
@@ -1515,7 +1510,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_case_ids(self):
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
-    def get_owner_ids(self):
+    def get_owner_ids(self, domain=None):
         owner_ids = [self.user_id]
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
@@ -1757,8 +1752,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 caseblock.as_xml()
             ),
             self.domain,
-            self.username,
-            self._id
         )
 
     def remove_location_delegate(self, location):
@@ -1886,8 +1879,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
-    #do sync and create still work?
-
     program_id = StringProperty()
     last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
 
@@ -1918,6 +1909,12 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def is_web_user(self):
         return True
+
+    def to_ota_restore_user(self, domain):
+        return OTARestoreWebUser(
+            domain,
+            self,
+        )
 
     def get_email(self):
         # Do not change the name of this method because this is implementing

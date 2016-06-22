@@ -87,6 +87,7 @@ class UserLocMapTest(CommTrackTest):
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def setUp(self):
+        super(TestUserBulkUpload, self).setUp()
         self.domain_name = 'mydomain'
         self.domain = Domain(name=self.domain_name)
         self.domain.save()
@@ -103,6 +104,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def tearDown(self):
         self.domain.delete()
+        super(TestUserBulkUpload, self).tearDown()
 
     @property
     def user(self):

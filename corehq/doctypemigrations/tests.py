@@ -15,6 +15,7 @@ from django.conf import settings
 class TestDocTypeMigrations(TestCase):
 
     def setUp(self):
+        super(TestDocTypeMigrations, self).setUp()
         self.migration = Migrator(
             slug='user_db_migration',
             source_db_name=None,
@@ -51,6 +52,7 @@ class TestDocTypeMigrations(TestCase):
         self.migration.source_db.delete_docs(docs)
         self.migration.target_db.delete_docs(
             _get_non_design_docs(self.migration.target_db))
+        super(TestDocTypeMigrations, self).tearDown()
 
     def assert_in_sync(self):
         actual_docs = _get_non_design_docs(self.migration.target_db)

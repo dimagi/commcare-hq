@@ -1,6 +1,6 @@
 from datetime import datetime
 
-import json_field
+import jsonfield
 from django.dispatch.dispatcher import receiver
 from corehq.apps.domain.signals import commcare_domain_pre_delete
 from corehq.apps.locations.signals import location_edited
@@ -470,7 +470,7 @@ class PendingReportingDataRecalculation(models.Model):
     domain = models.CharField(max_length=128)
     sql_location = models.ForeignKey(SQLLocation)
     type = models.CharField(max_length=128)
-    data = json_field.JSONField()
+    data = jsonfield.JSONField()
 
     class Meta:
         app_label = 'ilsgateway'

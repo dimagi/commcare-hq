@@ -5,7 +5,8 @@ from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from simpleeval import InvalidExpression
-from casexml.apps.case.mock import CaseStructure, CaseFactory
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.mock import CaseStructure, CaseFactory, CaseIndex
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -787,7 +788,7 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
         },
         30 * 60
     ),
-    # supports string manupulation
+    # supports string manipulation
     ({}, "str(a)+'text'", {"a": 3}, "3text"),
     # context can contain expressions
     (
@@ -850,9 +851,12 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("a+b+c+9", {"a": 5, "b": 2, "c": 8}, 5 + 2 + 8 + 9),
     ("a*b", {"a": 2, "b": 23}, 2 * 23),
     ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
-    ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1')
+    ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1'),
+    ("range(1, a)", {"a": 5}, [1, 2, 3, 4]),
+    # ranges > 100 items aren't supported
+    ("range(200)", {}, None),
 ])
-def test_supported_evluator_statements(self, eq, context, expected_value):
+def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
 
 
@@ -864,9 +868,9 @@ def test_supported_evluator_statements(self, eq, context, expected_value):
     ("a**b", {"a": 2, "b": 23}),
     ("lambda x: x*x", {"a": 2}),
     ("int(10 in range(1,20))", {"a": 2}),
-    ("max(a, b)", {"a": 3, "b": 5})
+    ("max(a, b)", {"a": 3, "b": 5}),
 ])
-def test_unsupported_evluator_statements(self, eq, context):
+def test_unsupported_evaluator_statements(self, eq, context):
     with self.assertRaises(InvalidExpression):
         eval_statements(eq, context)
     expression = ExpressionFactory.from_spec({
@@ -880,6 +884,7 @@ def test_unsupported_evluator_statements(self, eq, context):
 class TestFormsExpressionSpec(TestCase):
 
     def setUp(self):
+        super(TestFormsExpressionSpec, self).setUp()
         self.domain = uuid.uuid4().hex
         factory = CaseFactory(domain=self.domain)
         [self.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
@@ -898,6 +903,7 @@ class TestFormsExpressionSpec(TestCase):
     def tearDown(self):
         delete_all_xforms()
         delete_all_cases()
+        super(TestFormsExpressionSpec, self).tearDown()
 
     @run_with_all_backends
     def test_evaluation(self):
@@ -912,6 +918,64 @@ class TestFormsExpressionSpec(TestCase):
         context = EvaluationContext({"domain": "wrong-domain"}, 0)
         forms = self.expression(self.case.to_json(), context)
         self.assertEqual(forms, [])
+
+
+class TestGetSubcasesExpression(TestCase):
+
+    def setUp(self):
+        super(TestGetSubcasesExpression, self).setUp()
+        self.domain = uuid.uuid4().hex
+        self.factory = CaseFactory(domain=self.domain)
+        self.expression = ExpressionFactory.from_spec({
+            "type": "get_subcases",
+            "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            },
+        })
+        self.context = EvaluationContext({"domain": self.domain})
+
+    def tearDown(self):
+        delete_all_xforms()
+        delete_all_cases()
+        super(TestGetSubcasesExpression, self).tearDown()
+
+    @run_with_all_backends
+    def test_no_subcases(self):
+        case = self.factory.create_case()
+        subcases = self.expression(case.to_json(), self.context)
+        self.assertEqual(len(subcases), 0)
+
+    @run_with_all_backends
+    def test_single_child(self):
+        parent_id = uuid.uuid4().hex
+        child_id = uuid.uuid4().hex
+        [child, parent] = self.factory.create_or_update_case(CaseStructure(
+            case_id=child_id,
+            indices=[
+                CaseIndex(CaseStructure(case_id=parent_id, attrs={'create': True}))
+            ]
+        ))
+        subcases = self.expression(parent.to_json(), self.context)
+        self.assertEqual(len(subcases), 1)
+        self.assertEqual(child.case_id, subcases[0]['_id'])
+
+    @run_with_all_backends
+    def test_single_extension(self):
+        host_id = uuid.uuid4().hex
+        extension_id = uuid.uuid4().hex
+        [extension, host] = self.factory.create_or_update_case(CaseStructure(
+            case_id=extension_id,
+            indices=[
+                CaseIndex(
+                    CaseStructure(case_id=host_id, attrs={'create': True}),
+                    relationship=CASE_INDEX_EXTENSION
+                )
+            ]
+        ))
+        subcases = self.expression(host.to_json(), self.context)
+        self.assertEqual(len(subcases), 1)
+        self.assertEqual(extension.case_id, subcases[0]['_id'])
 
 
 class TestIterationNumberExpression(SimpleTestCase):

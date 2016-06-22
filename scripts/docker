@@ -1,0 +1,260 @@
+#! /bin/bash
+# CommCare HQ docker helper
+
+function usage() {
+    case $1 in
+        test)
+            echo "Run tests"
+            echo ""
+            echo "$0 test [OPTIONS]"
+            echo ""
+            echo "OPTIONS are passed to the selected test runner."
+            echo ""
+            echo "Set TEST environment variable to select a test runner:"
+            echo "  TEST=python|python-sharded|javascript"
+            echo ""
+            echo "The default is python."
+            echo ""
+            echo "Tests are run with a project name of 'hqtest', so the"
+            echo "containers and volumes it creates will not interfere with"
+            echo "'hqservice' containers managed by other commands."
+            echo ""
+            ;;
+        bash)
+            echo "Run bash in container"
+            echo ""
+            echo "$0 bash [SERVICE_NAME]"
+            echo ""
+            echo "Run bash in the currently running container if it is up."
+            echo "Otherwise create a new container and run bash inside it."
+            echo "See docker/hq-compose.yml for applicable service names."
+            echo "The default is 'web'."
+            echo ""
+            ;;
+        runserver)
+            echo "Run Django web server on port 8000"
+            echo ""
+            echo "$0 runserver [-d|--bootstrap|COMMAND]"
+            echo ""
+            echo "Options:"
+            echo ""
+            echo "  --bootstrap     Migrate new database and setup demo user."
+            echo "  -d              Run in background."
+            echo ""
+            ;;
+        shell)
+            echo "Run Django shell in web container"
+            echo ""
+            ;;
+        hqtest)
+            echo "Manage test containers"
+            echo ""
+            echo "$0 hqtest [COMMAND]"
+            echo ""
+            echo "OPTIONS are passed to the selected test runner."
+            echo ""
+            echo "Examples:"
+            echo ""
+            echo "  # list test containers"
+            echo "  $0 hqtest ps"
+            echo ""
+            echo "  # stop test containers"
+            echo "  $0 hqtest stop"
+            echo ""
+            echo "  # remove all test containers and volumes"
+            echo "  $0 hqtest teardown"
+            echo ""
+            ;;
+        rebuild)
+            echo "Stop, remove, and rebuild image(s)"
+            echo ""
+            echo "$0 rebuild [SERVICES...]"
+            echo ""
+            echo "Existing local images are removed before rebuilding."
+            echo ""
+            ;;
+        teardown)
+            echo "Remove all containers, images and volumes"
+            echo ""
+            ;;
+        *)
+            echo "Manage docker services for CommCare HQ"
+            echo ""
+            echo "$0 COMMAND [OPTIONS]"
+            echo ""
+            echo "$0 help COMMAND"
+            echo ""
+            echo "Commands:"
+            echo "  bash        Run bash in container"
+            echo "  help        Get help on a command"
+            echo "  hqtest      Manage test containers"
+            echo "  rebuild     Stop, remove, and rebuild image(s)"
+            echo "  runserver   Run Django web server on port 8000"
+            echo "  shell       Run Django shell in web container"
+            echo "  teardown    Remove all containers, images and volumes"
+            echo "  test        Run tests"
+            echo ""
+            echo "All other commands are passed directly to docker-compose."
+            echo ""
+            echo "Examples:"
+            echo ""
+            echo "  # list service containers"
+            echo "  $0 ps"
+            echo ""
+            echo "  # stop service containers"
+            echo "  $0 stop"
+            echo ""
+            echo "  # run services in background"
+            echo "  $0 up -d"
+            echo ""
+            ;;
+    esac
+    exit
+}
+
+CMD="$1"
+shift
+if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
+    if [ "$CMD" == "hqtest" ]; then
+        CMD="$1"
+        shift
+        if [ -z "$CMD" ]; then
+            CMD=help
+        fi
+    fi
+    export COMPOSE_FILE=docker/hq-compose.yml
+    export COMPOSE_PROJECT_NAME=hqtest
+    if [ -n "$TRAVIS_BUILD_DIR" ]; then
+        export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
+    else
+        export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
+    fi
+else
+    if [[ "$CMD" =~ ^(runserver|bash|shell|ps)$ ]]; then
+        SERVICES="runserver"
+        if [ "$CMD" == "runserver" ]; then
+            CMD="$1"
+            shift
+            if [ "$CMD" == "--bootstrap" ]; then
+                CMD=bootstrap
+            elif [ "$CMD" == "-d" ]; then
+                CMD="up -d"
+            elif [ -z "$CMD" ]; then
+                CMD="up"
+            fi
+        fi
+    else
+        SERVICES="services"
+        if [ -z "$CMD" ]; then
+            CMD="help"
+        fi
+    fi
+
+    XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
+    if [ "$DOCKER_BETA" == "true" ]; then
+        DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
+    elif [ `uname` == 'Linux' ]; then
+        DOCKER_DATA_HOME=$XDG_DATA_HOME/dockerhq
+    else
+        DOCKER_DATA_HOME=/data
+    fi
+
+    if [ `uname` == 'Darwin' -a "$DOCKER_BETA" != "true" ]; then
+        docker-machine ssh $DOCKER_MACHINE_NAME sudo mkdir -p $DOCKER_DATA_HOME
+        KAFKA_ADVERTISED_HOST_NAME=$(docker-machine ip $DOCKER_MACHINE_NAME)
+    else
+        mkdir -p $DOCKER_DATA_HOME
+        KAFKA_ADVERTISED_HOST_NAME=localhost
+    fi
+
+    export ES_CLUSTER_NAME="${ES_CLUSTER_NAME:-$(hostname)}"
+    export COMPOSE_FILE=docker/hq-compose-${SERVICES}.yml
+    export COMPOSE_PROJECT_NAME=hqservice
+    export VOLUME_PREFIX="$DOCKER_DATA_HOME/"
+    export KAFKA_ADVERTISED_HOST_NAME="$KAFKA_ADVERTISED_HOST_NAME"
+fi
+# export variables for compose file (they must be set or it complains)
+export JS_SETUP="${JS_SETUP:-no}"
+export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
+export REUSE_DB="$REUSE_DB"
+
+if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
+    # don't mount /mnt/commcare-hq-ro volume read-only on travis
+    # overwrite of localsettings.py, etc. doesn't matter here
+    export RO=""
+    export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-none}"
+else
+    export RO=":ro"
+    export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-aufs}"
+fi
+
+if [ "$DOCKER_BETA" == "true" ]; then
+    # Put elasticsearch (and other) data in a named data volume, automatically
+    # created by docker, instead of $DOCKER_DATA_HOME/elasticsearch.
+    # https://forums.docker.com/t/elasticsearch-1-7-0-fails-to-start-on-docker4mac-1-11-1-beta10/11692/3
+    # The commit that introduced this can be reverted when the issue is resolved.
+    export DATA_VOLUME_PREFIX=${COMPOSE_PROJECT_NAME}-
+else
+    export DATA_VOLUME_PREFIX=${VOLUME_PREFIX}
+fi
+
+case $CMD in
+    -h | --help | help | services | "")
+        if [ "$COMPOSE_PROJECT_NAME" == "hqtest" ]; then
+            usage hqtest
+        else
+            usage $@
+        fi
+        ;;
+    teardown)
+        TEARDOWN=yes
+        shift
+        CMD="down --rmi local -v"
+        ;;
+esac
+
+if [ "$CMD" == "test" ]; then
+    docker-compose run --rm web run_tests "${TEST:-python}" "$@"
+elif [ "$CMD" == "shell" ]; then
+    docker-compose run --rm web ./manage.py $CMD "$@"
+elif [ "$CMD" == "bash" ]; then
+    SERVICE_NAME="${1:-web}"
+    shift
+    CONTAINER="${COMPOSE_PROJECT_NAME}_${SERVICE_NAME}_1"
+    if [ "$(docker inspect -f {{.State.Running}} $CONTAINER 2> /dev/null)" == "true" ]; then
+        docker exec -it $CONTAINER $CMD "$@"
+    else
+        docker-compose run --rm $SERVICE_NAME $CMD "$@"
+    fi
+elif [ "$CMD" == "rebuild" ]; then
+    if [ -z "$1" ]; then
+        docker-compose down --rmi local
+        docker-compose build
+    else
+        docker-compose stop "$@"
+        docker-compose rm "$@"
+        docker-compose build "$@"
+    fi
+else
+    docker-compose $CMD "$@"
+    if [ "$TEARDOWN" == "yes" ]; then
+        if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
+            echo "THIS WILL DELETE ALL SERVICE DATA"
+            read -p "Delete volumes? [yN] " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                echo "Volumes not deleted."
+                exit
+            fi
+        fi
+        docker volume rm \
+            ${VOLUME_PREFIX}couchdb \
+            ${VOLUME_PREFIX}elasticsearch \
+            ${VOLUME_PREFIX}kafka \
+            ${VOLUME_PREFIX}lib \
+            ${VOLUME_PREFIX}postgresql \
+            ${VOLUME_PREFIX}redis \
+            ${VOLUME_PREFIX}riakcs \
+            ${VOLUME_PREFIX}zookeeper
+    fi
+fi

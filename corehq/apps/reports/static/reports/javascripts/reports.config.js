@@ -1,3 +1,4 @@
+/* global alert_user */
 var HQReport = function (options) {
     'use strict';
     var self = this;
@@ -26,6 +27,8 @@ var HQReport = function (options) {
     self.getReportRenderUrl = options.getReportRenderUrl || getReportRenderUrl;
     self.getReportBaseUrl = options.getReportBaseUrl || getReportBaseUrl;
     self.getReportParams = options.getReportParams || getReportParams;
+    self.getExportSizeCheckUrl = options.getExportSizeCheckUrl;
+    self.checkExportSize = options.checkExportSize || false;
 
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
 
@@ -48,18 +51,31 @@ var HQReport = function (options) {
                 if (self.isExportable) {
                     $(self.exportReportButton).click(function (e) {
                         e.preventDefault();
-                        if (self.isExportAll) {
+                        if (self.isEmailable) {
                             $.ajax({
                                 url: getReportBaseUrl("export"),
                                 data: getReportParams(undefined),
                                 type: "POST",
                                 success: function() {
-                                    alert_user("Your requested excel report will be sent to the email address " +
+                                    alert_user("Your requested Excel report will be sent to the email address " +
                                                "defined in your account settings.", "success");
-                                }
-                            })
+                                },
+                            });
                         } else {
-                            window.location.href = self.getReportRenderUrl("export");
+                            if (self.checkExportSize){
+                                $.ajax({
+                                    url: self.getExportSizeCheckUrl(),
+                                    success: function(data) {
+                                        if (data.export_allowed) {
+                                            window.location.href = self.getReportRenderUrl("export");
+                                        } else {
+                                            alert_user(data.message, "danger");
+                                        }
+                                    },
+                                });
+                            } else {
+                                window.location.href = self.getReportRenderUrl("export");
+                            }
                         }
                     });
                 }
@@ -124,15 +140,13 @@ var HQReport = function (options) {
             }
         };
 
-        $(self.filterAccordion).on('hidden', hiddenFilterButtonStatus);  // B2 event
-        $(self.filterAccordion).on('hidden.bs.collapse', hiddenFilterButtonStatus);  // B3 event
+        $(self.filterAccordion).on('hidden.bs.collapse', hiddenFilterButtonStatus);
 
         var showFilterButtonStatus = function () {
             $(self.toggleFiltersButton).button('close');
         };
 
-        $(self.filterAccordion).on('show', showFilterButtonStatus);  // B2 event
-        $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);  // B3 event
+        $(self.filterAccordion).on('show.bs.collapse', showFilterButtonStatus);
 
     };
 

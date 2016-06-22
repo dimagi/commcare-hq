@@ -2,14 +2,18 @@ import collections
 import copy
 import datetime
 
+from jsonobject.exceptions import BadValueError
+
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from corehq.pillows.utils import get_user_type
+from couchforms.jsonobject_extensions import GeoPointProperty
 from .base import HQPillow
 from couchforms.const import RESERVED_WORDS
 from couchforms.models import XFormInstance
@@ -18,6 +22,7 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEven
 from pillowtop.es_utils import ElasticsearchIndexInfo, get_index_info_from_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
     ElasticPillowReindexer
@@ -63,10 +68,6 @@ class XFormPillow(HQPillow):
     handler_domain_map = {}
     default_mapping = XFORM_MAPPING
 
-    @classmethod
-    def get_unique_id(self):
-        return XFORM_INDEX
-
     def change_transform(self, doc_dict, include_props=True):
         return transform_xform_for_elasticsearch(doc_dict, include_props)
 
@@ -91,6 +92,22 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
             # Some docs have their @xmlns and #text here
             if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
                 doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
+
+            app_version_info = get_app_version_info(
+                doc_ret['domain'],
+                doc_ret.get('build_id'),
+                doc_ret.get('version'),
+                doc_ret['form']['meta'],
+            )
+            doc_ret['form']['meta']['commcare_version'] = app_version_info.commcare_version
+            doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
+
+            try:
+                geo_point = GeoPointProperty().wrap(doc_ret['form']['meta']['location'])
+                doc_ret['form']['meta']['geo_point'] = geo_point.lat_lon
+            except (KeyError, BadValueError):
+                doc_ret['form']['meta']['geo_point'] = None
+                pass
 
         try:
             user_id = doc_ret['form']['meta']['userID']
@@ -160,6 +177,26 @@ def get_couch_form_reindexer():
                 'include_docs': True,
             }
         )
+    )
+
+
+def get_app_form_submission_tracker_pillow(pillow_id='AppFormSubmissionTrackerPillow'):
+    """
+    This gets a pillow which iterates through all forms and marks the corresponding app
+    as having submissions. This could be expanded to be more generic and include
+    other processing that needs to happen on each form
+    """
+    checkpoint = PillowCheckpoint('app-form-submission-tracker')
+    form_processor = AppFormSubmissionTrackerProcessor()
+    change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor')
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=change_feed,
+        processor=form_processor,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
+        ),
     )
 
 

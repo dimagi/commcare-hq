@@ -14,12 +14,11 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
 
-from couchdbkit import ResourceConflict, ResourceNotFound
+from couchdbkit import ResourceConflict
 
 from casexml.apps.case.models import CASE_STATUS_OPEN
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
-from casexml.apps.stock.models import StockTransaction
 from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
@@ -56,14 +55,12 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
     use_datatables,
-    use_bootstrap3,
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.xml_utils import indent_xml
 from corehq.apps.analytics.tasks import track_clicked_preview_on_hubspot
@@ -85,7 +82,6 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 
 class CloudcareMain(View):
 
-    @use_bootstrap3
     @use_datatables
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
@@ -132,7 +128,7 @@ class CloudcareMain(View):
         def _default_lang():
             if apps:
                 # unfortunately we have to go back to the DB to find this
-                return Application.get(apps[0]["_id"]).langs[0]
+                return Application.get(apps[0]["_id"]).default_language
             else:
                 return "en"
 
@@ -442,14 +438,14 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
         raise Http404
 
     assert user.is_member_of(domain)
-    casexml_user = user.to_casexml_user()
+    restore_user = user.to_ota_restore_user()
     if not fixture_id:
         ret = ElementTree.Element("fixtures")
-        for fixture in generator.get_fixtures(casexml_user, version=V2):
+        for fixture in generator.get_fixtures(restore_user, version=V2):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        fixture = generator.get_fixture_by_id(fixture_id, casexml_user, version=V2)
+        fixture = generator.get_fixture_by_id(fixture_id, restore_user, version=V2)
         if not fixture:
             raise Http404
         assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
@@ -584,7 +580,6 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 

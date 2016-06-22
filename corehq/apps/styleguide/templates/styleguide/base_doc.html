@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_section.html' %}
+{% extends 'style/base_section.html' %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
@@ -6,7 +6,7 @@
 {% block stylesheets %}{{ block.super }}
 <link rel="stylesheet"
       media="all"
-      href="{% new_static 'styleguide/css/pycco-syntax.css' %}" />
+      href="{% static 'styleguide/css/pycco-syntax.css' %}" />
 {% endblock %}
 
 {% block page_content %}

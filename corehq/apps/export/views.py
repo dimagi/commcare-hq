@@ -25,6 +25,7 @@ from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
+from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, \
     login_or_digest_or_basic_or_apikey
@@ -52,6 +53,7 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
+    ExportInstance,
 )
 from corehq.apps.export.const import (
     FORM_EXPORT,
@@ -73,7 +75,6 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.reports.tasks import rebuild_export_task
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_select2,
     use_daterangepicker,
     use_jquery_ui,
@@ -152,7 +153,6 @@ class BaseExportView(BaseProjectDataView):
     export_type = None
     is_async = True
 
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, *args, **kwargs):
         return super(BaseExportView, self).dispatch(*args, **kwargs)
@@ -447,7 +447,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     filter_form_class = None
 
     @use_daterangepicker
-    @use_bootstrap3
     @use_select2
     @use_angular_js
     @method_decorator(login_and_domain_required)
@@ -790,11 +789,15 @@ class DownloadFormExportView(BaseDownloadExportView):
         """Checks to see if this form export has multimedia available to export
         """
         try:
-            export_object = self.get_export_schema(self.domain, self.export_id)
-            has_multimedia = FormAccessors(self.domain).forms_have_multimedia(
-                export_object.app_id,
-                getattr(export_object, 'xmlns', '')
-            )
+            export_object = self._get_export(self.domain, self.export_id)
+            if isinstance(export_object, ExportInstance):
+                has_multimedia = export_object.has_multimedia
+            else:
+                has_multimedia = forms_have_multimedia(
+                    self.domain,
+                    export_object.app_id,
+                    getattr(export_object, 'xmlns', '')
+                )
         except Exception as e:
             return format_angular_error(e.message)
         return format_angular_success({
@@ -809,7 +812,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """
         try:
             filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-            filter_form = FilterFormCouchExportDownloadForm(
+            filter_form = self.filter_form_class(
                 self.domain_object, self.timezone, filter_form_data
             )
             if not filter_form.is_valid():
@@ -817,7 +820,7 @@ class DownloadFormExportView(BaseDownloadExportView):
                     _("Please check that you've submitted all required filters.")
                 )
             download = DownloadBase()
-            export_object = self.get_export_schema(self.domain, export_specs[0]['export_id'])
+            export_object = self._get_export(self.domain, export_specs[0]['export_id'])
             task_kwargs = filter_form.get_multimedia_task_kwargs(
                 export_object, download.download_id
             )
@@ -904,7 +907,6 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     allow_bulk_export = True
     is_deid = False
 
-    @use_bootstrap3
     @use_select2
     @use_angular_js
     @method_decorator(login_and_domain_required)
@@ -1414,7 +1416,6 @@ class CaseExportListView(BaseExportListView):
 class BaseNewExportView(BaseExportView):
     template_name = 'export/customize_export_new.html'
 
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
@@ -1468,7 +1469,6 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
             self.domain,
             app_id,
             xmlns,
-            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -1486,7 +1486,6 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
         schema = CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
             case_type,
-            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 

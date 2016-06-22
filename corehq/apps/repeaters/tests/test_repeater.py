@@ -50,6 +50,7 @@ class BaseRepeaterTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(BaseRepeaterTest, cls).setUpClass()
         case_block = CaseBlock(
             case_id=CASE_ID,
             create=True,
@@ -88,6 +89,7 @@ class BaseRepeaterTest(TestCase):
 class RepeaterTest(BaseRepeaterTest):
 
     def setUp(self):
+        super(RepeaterTest, self).setUp()
         self.domain = "test-domain"
         create_domain(self.domain)
         self.case_repeater = CaseRepeater(
@@ -108,6 +110,7 @@ class RepeaterTest(BaseRepeaterTest):
         self.form_repeater.delete()
         FormProcessorTestUtils.delete_all_xforms(self.domain)
         delete_all_repeat_records()
+        super(RepeaterTest, self).tearDown()
 
     @run_with_all_backends
     def test_skip_device_logs(self):
@@ -253,10 +256,12 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     def tearDownClass(cls):
         cls.domain.delete()
         cls.repeater.delete()
+        super(CaseRepeaterTest, cls).tearDownClass()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain_name)
         delete_all_repeat_records()
+        super(CaseRepeaterTest, self).tearDown()
 
     @run_with_all_backends
     def test_case_close_format(self):
@@ -371,6 +376,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 class RepeaterFailureTest(BaseRepeaterTest):
 
     def setUp(self):
+        super(RepeaterFailureTest, self).setUp()
         self.domain_name = "test-domain"
         self.domain = create_domain(self.domain_name)
 
@@ -385,6 +391,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.domain.delete()
         self.repeater.delete()
         delete_all_repeat_records()
+        super(RepeaterFailureTest, self).tearDown()
 
     @run_with_all_backends
     def test_failure(self):
@@ -415,6 +422,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
                 raise IgnoreDocument
 
     def setUp(self):
+        super(IgnoreDocumentTest, self).setUp()
         self.domain = "test-domain"
         create_domain(self.domain)
 
@@ -428,6 +436,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
     def tearDown(self):
         self.repeater.delete()
         delete_all_repeat_records()
+        super(IgnoreDocumentTest, self).tearDown()
 
     @run_with_all_backends
     def test_ignore_document(self):
@@ -458,6 +467,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 return cls.payload
 
     def setUp(self):
+        super(TestRepeaterFormat, self).setUp()
         self.domain = "test-domain"
         create_domain(self.domain)
         self.post_xml(self.xform_xml, self.domain)
@@ -473,6 +483,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
         self.repeater.delete()
         FormProcessorTestUtils.delete_all_xforms(self.domain)
         delete_all_repeat_records()
+        super(TestRepeaterFormat, self).tearDown()
 
     def test_new_format_same_name(self):
         with self.assertRaises(DuplicateFormatException):

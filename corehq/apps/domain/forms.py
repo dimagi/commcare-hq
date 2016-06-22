@@ -1,4 +1,3 @@
-import copy
 import datetime
 import io
 import logging
@@ -8,11 +7,10 @@ import uuid
 from urlparse import urlparse, parse_qs
 
 import dateutil
-import django
 from captcha.fields import CaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import FormActions, StrictButton
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from dateutil.relativedelta import relativedelta
 from django import forms
@@ -66,8 +64,9 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
+from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
-    AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, Domain, TransferDomainRequest)
+    AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
@@ -883,6 +882,33 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             'The default value is 15.'
         )
     )
+    experienced_threshold = IntegerField(
+        label=ugettext_noop("Experienced Threshold"),
+        required=False,
+        help_text=ugettext_lazy(
+            "The number of different months in which a worker must submit forms to count as experienced. "
+            "The default value is 3."
+        )
+    )
+    amplifies_workers = ChoiceField(
+        label=ugettext_noop("Service Delivery App"),
+        choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
+        required=False,
+        help_text=("This application is used for service delivery. Examples: An "
+                   "FLW who uses CommCare to improve counseling and screening of pregnant women. "
+                   "An FLW that uses CommCare Supply to improve their supply of medicines. A teacher "
+                   "who uses CommCare to assess and improve students' performance."
+                   )
+    )
+    amplifies_project = ChoiceField(
+        label=ugettext_noop("Amplifies Project"),
+        choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
+        required=False,
+        help_text=("Amplifies the impact of a Frontline Program (FLP). "
+                   "Examples: Programs that use M&E data collected by CommCare. "
+                   "Programs that use CommCare data to make programmatic decisions."
+                   )
+    )
 
     def __init__(self, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -924,6 +950,9 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'countries',
                 'commtrack_domain',
                 'performance_threshold',
+                'experienced_threshold',
+                'amplifies_workers',
+                'amplifies_project',
                 crispy.Div(*additional_fields),
             ),
             crispy.Fieldset(
@@ -965,6 +994,9 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             phone_model=self.cleaned_data['phone_model'],
             commtrack_domain=self.cleaned_data['commtrack_domain'] == 'true',
             performance_threshold=self.cleaned_data['performance_threshold'],
+            experienced_threshold=self.cleaned_data['experienced_threshold'],
+            amplifies_workers=self.cleaned_data['amplifies_workers'],
+            amplifies_project=self.cleaned_data['amplifies_project'],
             business_unit=self.cleaned_data['business_unit'],
             **kwargs
         )
@@ -994,7 +1026,7 @@ def clean_password(txt):
 
 def legacy_get_password_strength(value):
     # 1 Special Character, 1 Number, 1 Capital Letter with the length of Minimum 8
-    # initial score rigged to reach 2 when all requirementss are met
+    # initial score rigged to reach 2 when all requirements are met
     score = -2
     if SPECIAL.search(value):
         score += 1
@@ -1937,7 +1969,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             privileges = get_privileges(plan_version)
             if (
                 REPORT_BUILDER_5 in privileges
-                and not (REPORT_BUILDER_ADD_ON_PRIVS - REPORT_BUILDER_5 - REPORT_BUILDER_TRIAL) & privileges
+                and not (REPORT_BUILDER_ADD_ON_PRIVS - {REPORT_BUILDER_5, REPORT_BUILDER_TRIAL}) & privileges
             ):
                 new_plan_version = plan_version
                 break

@@ -84,3 +84,5 @@ class UpdateLocationKeywordTest(TestCase, DomainSubscriptionMixin):
         cls.domain_obj.delete()
 
         cls.teardown_subscription()
+
+        super(UpdateLocationKeywordTest, cls).tearDownClass()

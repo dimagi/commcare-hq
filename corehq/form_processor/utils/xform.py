@@ -5,11 +5,11 @@ import xml2json
 from datetime import datetime
 
 from dimagi.ext import jsonobject
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
-from corehq.form_processor.models import Attachment
-
+from corehq.form_processor.models import Attachment, XFormInstanceSQL
 
 # The functionality below to create a simple wrapped XForm is used in production code (repeaters) and so is
 # not in the test utils
@@ -126,6 +126,14 @@ def adjust_datetimes(data, parent=None, key=None):
     find all datetime-like strings within data (deserialized json)
     and format them uniformly, in place.
 
+    this only processes timezones correctly if the call comes from a request with domain information
+    otherwise it will default to not processing timezones.
+
+    to force timezone processing, it can be called as follows
+
+    >>> from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
+    >>> with force_phone_timezones_should_be_processed():
+    >>>     adjust_datetimes(form_json)
     """
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
@@ -162,4 +170,6 @@ def add_couch_properties_to_sql_form_json(sql_form_json):
 
 
 def _get_doc_type_from_state(state):
+    if state & XFormInstanceSQL.DELETED == XFormInstanceSQL.DELETED:
+        return 'XFormIntance' + DELETED_SUFFIX
     return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')

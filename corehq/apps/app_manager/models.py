@@ -54,6 +54,7 @@ from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
@@ -71,11 +72,11 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.xpath import (
+    dot_interpolate,
     interpolate_xpath,
     LocationXpath,
 )
 from corehq.apps.builds import get_default_build_spec
-from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
@@ -109,7 +110,6 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     update_unique_ids,
     app_callout_templates,
-    use_app_aware_sync,
     xpath_references_case,
     xpath_references_user_case,
 )
@@ -1548,18 +1548,48 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
     @property
+    def treat_as_expression(self):
+        """
+        Returns if whether the key can be treated as a valid expression that can be included in
+        condition-predicate of an if-clause for e.g. if(<expression>, value, ...)
+        """
+        special_chars = '{}()[]=<>."\'/'
+        return any(special_char in self.key for special_char in special_chars)
+
+    @property
     def key_as_variable(self):
         """
         Return an xml variable name to represent this key.
-        If the key has no spaces, return the key with "k" prepended.
-        If the key does contain spaces, return a hash of the key with "h" prepended.
+
+        If the key contains spaces or a condition-predicate of an if-clause,
+        return a hash of the key with "h" prepended.
+        If not, return the key with "k" prepended.
+
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        if " " not in self.key:
-            return 'k{key}'.format(key=self.key)
-        else:
+        if ' ' in self.key or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+        else:
+            return 'k{key}'.format(key=self.key)
+
+    def key_as_condition(self, property):
+        if self.treat_as_expression:
+            condition = dot_interpolate(self.key, property)
+            return u"{condition}".format(condition=condition)
+        else:
+            return u"{property} = '{key}'".format(
+                property=property,
+                key=self.key
+            )
+
+    def ref_to_key_variable(self, index, sort_or_display):
+        if sort_or_display == "sort":
+            key_as_var = "{}, ".format(index)
+        elif sort_or_display == "display":
+            key_as_var = "${var_name}, ".format(var_name=self.key_as_variable)
+
+        return key_as_var
 
 
 class GraphAnnotations(IndexedSchema):
@@ -1686,6 +1716,18 @@ class DetailColumn(IndexedSchema):
 
         return super(DetailColumn, cls).wrap(data)
 
+    @classmethod
+    def from_json(cls, data):
+        from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+
+        to_ret = cls.wrap(data)
+        if to_ret.format == 'enum-image':
+            # interpolate icons-paths
+            for item in to_ret.enum:
+                for lang, path in item.value.iteritems():
+                    item.value[lang] = interpolate_media_path(path)
+        return to_ret
+
 
 class SortElement(IndexedSchema):
     field = StringProperty()
@@ -1708,11 +1750,17 @@ class SortOnlyDetailColumn(DetailColumn):
 
 class CaseListLookupMixin(DocumentSchema):
     """
-        Allows for the addition of Android Callouts to do lookups from the CaseList
+    Allows for the addition of Android Callouts to do lookups from the CaseList
+
         <lookup action="" image="" name="">
-            <extra key="" value = "" />
-            <response key ="" />
+            <extra key="" value="" />
+            <response key="" />
+            <field>
+                <header><text><locale id=""/></text></header>
+                <template><text><xpath function=""/></text></template>
+            </field>
         </lookup>
+
     """
     lookup_enabled = BooleanProperty(default=False)
     lookup_action = StringProperty()
@@ -1721,6 +1769,10 @@ class CaseListLookupMixin(DocumentSchema):
 
     lookup_extras = SchemaListProperty()
     lookup_responses = SchemaListProperty()
+
+    lookup_display_results = BooleanProperty(default=False)  # Display callout results in case list?
+    lookup_field_header = DictProperty()
+    lookup_field_template = StringProperty()
 
 
 class Detail(IndexedSchema, CaseListLookupMixin):
@@ -1948,20 +2000,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         from corehq.apps.locations.util import parent_child
         hierarchy = None
         for column in columns:
-            if column.format in ('enum', 'enum-image'):
-                for item in column.enum:
-                    key = item.key
-                    # key cannot contain certain characters because it is used
-                    # to generate an xpath variable name within suite.xml
-                    # (names with spaces will be hashed to form the xpath
-                    # variable name)
-                    if not re.match('^([\w_ -]*)$', key):
-                        yield {
-                            'type': 'invalid id key',
-                            'key': key,
-                            'module': self.get_module_info(),
-                        }
-            elif column.field_type == FIELD_TYPE_LOCATION:
+            if column.field_type == FIELD_TYPE_LOCATION:
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
                     LocationXpath('').validate(column.field_property, hierarchy)
@@ -3740,6 +3779,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     module_type = 'shadow'
     source_module_id = StringProperty()
     forms = []
+    excluded_form_ids = SchemaListProperty()
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
@@ -3785,7 +3825,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def get_suite_forms(self):
         if not self.source_module:
             return []
-        return self.source_module.get_forms()
+        return [f for f in self.source_module.get_forms() if f.unique_id not in self.excluded_form_ids]
 
     @parse_int([1])
     def get_form(self, i):
@@ -3881,7 +3921,7 @@ class LazyBlobDoc(BlobMixin):
                 # preserve stubs so couch attachments don't get deleted on save
                 stubs = {}
                 for name, value in list(attachments.items()):
-                    if "stub" in value:
+                    if isinstance(value, dict) and "stub" in value:
                         stubs[name] = attachments.pop(name)
                 if stubs:
                     data["_attachments"] = stubs
@@ -4242,6 +4282,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # each language is a key and the value is a list of multimedia referenced in that language
     media_language_map = SchemaDictProperty(MediaList)
 
+    use_j2me_endpoint = BooleanProperty(default=False)
+
+    # Whether or not the Application has had any forms submitted against it
+    has_submissions = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -4386,9 +4430,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def ota_restore_url(self):
-        if use_app_aware_sync(self):
-            return reverse('app_aware_restore', args=[self.domain, self._id])
-        return reverse('ota_restore', args=[self.domain])
+        return reverse('app_aware_restore', args=[self.domain, self._id])
 
     @absolute_url_property
     def form_record_url(self):
@@ -4436,7 +4478,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return spec
 
     def get_jadjar(self):
-        return self.get_build().get_jadjar(self.get_jar_path())
+        return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
 
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
@@ -4614,7 +4656,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
-            if build_profile_id:
+            if build_profile_id is not None:
                 url += '?profile={profile_id}'.format(profile_id=build_profile_id)
             code.add_data(url)
 
@@ -4633,7 +4675,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             if settings.BITLY_LOGIN:
                 view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
-                if build_profile_id:
+                if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
                     )
@@ -4705,6 +4747,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 user.save()
         copy.is_released = False
 
+        if not copy.is_remote_app():
+            copy.update_mm_map()
+
         return copy
 
     def delete_app(self):
@@ -4719,7 +4764,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
-        if not self._id and not domain_has_apps(self.domain):
+        if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
@@ -4735,11 +4780,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             for lang in self.langs:
                 self.media_language_map[lang] = MediaList()
-            for form in self.get_forms(bare=False):
-                xml = XForm(form['form'].source)
+            for form in self.get_forms():
+                xml = form.wrapped_xform()
                 for lang in self.langs:
                     media = []
-                    for path in xml.all_references(lang):
+                    for path in xml.all_media_references(lang):
                         if path is not None:
                             media.append(path)
                             map_item = self.multimedia_map.get(path)
@@ -4751,7 +4796,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.media_language_map = {}
 
     def get_build_langs(self, build_profile_id=None):
-        if build_profile_id:
+        if build_profile_id is not None:
             return self.build_profiles[build_profile_id].langs
         else:
             return self.langs
@@ -5064,7 +5109,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
-        locale = self.langs[0] if not build_profile_id else self.build_profiles[build_profile_id].langs[0]
+        locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5241,6 +5286,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for i,lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
+        for profile in self.build_profiles:
+            for i, lang in enumerate(profile.langs):
+                if lang == old_lang:
+                    profile.langs[i] = new_lang
         for module in self.get_modules():
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
@@ -5564,8 +5613,11 @@ class RemoteApp(ApplicationBase):
 
     def get_build_langs(self):
         if self.build_profiles:
-            # return first profile, generated as part of lazy migration
-            return self.build_profiles[self.build_profiles.keys()[0]].langs
+            if len(self.build_profiles.keys()) > 1:
+                raise AppEditingError('More than one app profile for a remote app')
+            else:
+                # return first profile, generated as part of lazy migration
+                return self.build_profiles[self.build_profiles.keys()[0]].langs
         else:
             return self.langs
 

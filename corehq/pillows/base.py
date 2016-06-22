@@ -1,6 +1,4 @@
 from pillowtop.listener import AliasedElasticPillow
-from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
 
 
 VALUE_TAG = '#value'
@@ -81,12 +79,3 @@ def restore_property_dict(report_dict_item):
 class HQPillow(AliasedElasticPillow):
     es_timeout = 60
     es_meta = DEFAULT_META
-
-    @classmethod
-    @memoized
-    def calc_meta(cls):
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determind md5
-        """
-        return cls.calc_mapping_hash(cls.default_mapping)

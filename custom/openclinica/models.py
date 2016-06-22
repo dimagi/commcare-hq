@@ -1,4 +1,7 @@
 from collections import defaultdict
+import hashlib
+import re
+from lxml import etree
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
 from custom.openclinica.const import (
@@ -8,7 +11,6 @@ from custom.openclinica.const import (
     CC_SEX,
     CC_STUDY_SUBJECT_ID,
     CC_SUBJECT_KEY,
-    SINGLE_EVENT_FORM_EVENT_INDEX,
 )
 from custom.openclinica.utils import (
     OpenClinicaIntegrationError,
@@ -16,42 +18,254 @@ from custom.openclinica.utils import (
     get_question_item,
     get_oc_user,
     get_study_event_name,
+    is_study_event_repeating,
     oc_format_date,
+    oc_format_time,
     originals_first,
 )
+from dimagi.ext.couchdbkit import (
+    Document,
+    DocumentSchema,
+    StringProperty,
+    SchemaProperty,
+    BooleanProperty,
+)
+from dimagi.utils.couch.cache import cache_core
+from suds.client import Client
+from suds.plugin import MessagePlugin
+from suds.wsse import Security, UsernameToken
 
 
 _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
 
 
+class OpenClinicaAPI(object):
+    """
+    We use OpenClinica's SOAP API. because their REST API is limited.
+
+    CommCare subject cases are iterated, and data built up from form
+    submissions. Subjects and their data are then compared with OpenClinica.
+    Missing subjects are created using `StudySubject.create` and missing
+    events are scheduled with `Event.schedule`. Data is then ready to import
+    using `Data.import`.
+
+    This automates a process that would otherwise need to be done manually.
+
+    One manual aspect still remains. The OpenClinica administrator still needs
+    to create users on OpenClinica for all CommCare mobile workers for the
+    study, in order for AuditLog data exported from CommCare to match
+    OpenClinica users.
+
+    +============+==============================+====================+==========================================+
+    | Web        | Method                       | Description        | WSDL Location (Input Value)              |
+    | Service    |                              |                    |                                          |
+    +============+==============================+====================+==========================================+
+    | Create     | StudySubject.create          | Creates a new      | http://${your instance}/OpenClinica-ws/  |
+    | Study      |                              | Study Subject      | ws/studySubject/v1/studySubjectWsdl.wsdl |
+    | Subject    |                              |                    |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | List all   | StudySubject                 | Lists the Subjects | http://${your instance}/OpenClinica-ws/  |
+    | Study      | .listAllByStudy              | in a study         | ws/studySubject/v1/studySubjectWsdl.wsdl |
+    | Subjects   |                              |                    |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | Find if    | StudySubject.isStudySubject  | Find if Study      | http://${your instance}/OpenClinica-ws/  |
+    | Study      |                              | Subject exists     | ws/studySubject/v1/studySubjectWsdl.wsdl |
+    | Subject    |                              |                    |                                          |
+    | exists     |                              |                    |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | Schedule   | Event.schedule               | Schedules an       | http://${your instance}/OpenClinica-ws/  |
+    | Event      |                              | Event for an       | ws/event/v1/eventWsdl.wsdl               |
+    |            |                              | enrolled Study     |                                          |
+    |            |                              | Subject            |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | Import     | Data.import                  | Imports Data onto  | http://${your instance}/OpenClinica-ws/  |
+    | Data       |                              | an OpenClincia     | ws/data/v1/dataWsdl.wsdl                 |
+    |            |                              | CRF for an already |                                          |
+    |            |                              | scheduled study    |                                          |
+    |            |                              | event              |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | Get Study  | Study.getMetadata            | Returns study      | http://${your instance}/OpenClinica-ws/  |
+    | Metadata   |                              | definition         | ws/study/v1/studyWsdl.wsdl               |
+    |            |                              | metadata in        |                                          |
+    |            |                              | CDISC ODM XML      |                                          |
+    |            |                              | format (with       |                                          |
+    |            |                              | OpenClinica        |                                          |
+    |            |                              | extensions)        |                                          |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | List Study | Study.listAll                | Returns a lists of | http://${your instance}/OpenClinica-ws/  |
+    |            |                              | studies and sites  | ws/study/v1/studyWsdl.wsdl               |
+    +------------+------------------------------+--------------------+------------------------------------------+
+    | Study      | StudyEventDefinition.listAll | Lists study event  | http://${your instance}/OpenClinica-ws/  |
+    | Event      |                              | definitions in     | ws/studyEventDefinition/v1/              |
+    | Definition |                              | study              | studyEventDefinitionWsdl.wsdl            |
+    +------------+------------------------------+--------------------+------------------------------------------+
+
+    """
+
+    def __init__(self, base_url, username, password, study_id, prefetch=False):
+        """
+        Initialise OpenClinicaAPI
+
+        :param base_url: Protocol, address (and port) of the server, e.g. "https://openclinica.example.com:8080/"
+        :param username: Username enabled for API authentication
+        :param password: Password
+        :param study_id: Study identifier
+        :param prefetch: Fetch WSDLs on init?
+        """
+        self._base_url = base_url if base_url[-1] == '/' else base_url + '/'
+        self._username = username
+        self._password = password
+        self._study_id = study_id
+        self._clients = {
+            'data': None,
+            'event': None,
+            'study': None,
+            'studyEventDefinition': None,
+            'studySubject': None
+        }
+        if prefetch:
+            for endpoint in self._clients:
+                self.get_client(endpoint)
+
+    def get_client(self, endpoint):
+
+        class FixMimeMultipart(MessagePlugin):
+            """
+            StudySubject.listAllByStudy replies with what looks like part of a multipart MIME message(!?) Fix this.
+            """
+            def received(self, context):
+                reply = context.reply
+                if reply.startswith('------='):
+                    matches = re.search(r'(<SOAP-ENV:Envelope.*</SOAP-ENV:Envelope>)', reply)
+                    context.reply = matches.group(1)
+
+        if endpoint not in self._clients:
+            raise ValueError('Unknown OpenClinica API endpoint')
+        if self._clients[endpoint] is None:
+            client = Client(
+                '{url}OpenClinica-ws/ws/{endpoint}/v1/{endpoint}Wsdl.wsdl'.format(
+                    url=self._base_url,
+                    endpoint=endpoint
+                ),
+                plugins=[FixMimeMultipart()]
+            )
+            security = Security()
+            password = hashlib.sha1(self._password).hexdigest()  # SHA1, not AES as documentation says
+            token = UsernameToken(self._username, password)
+            security.tokens.append(token)
+            client.set_options(wsse=security)
+            self._clients[endpoint] = client
+        return self._clients[endpoint]
+
+    def get_study_metadata_string(self):
+        """
+        Returns study metadata as an XML string
+        """
+        study_client = self.get_client('study')
+        study_client.set_options(retxml=True)  # Don't parse the study metadata; just give us the raw XML
+        resp = study_client.service.getMetadata({'identifier': self._study_id})
+        soap_env = etree.fromstring(resp)
+        nsmap = {
+            'SOAP-ENV': "http://schemas.xmlsoap.org/soap/envelope/",
+            'OC': "http://openclinica.org/ws/study/v1"
+        }
+        odm = soap_env.xpath('./SOAP-ENV:Body/OC:createResponse/OC:odm', namespaces=nsmap)[0]
+        return odm.text
+
+    def get_subject_keys(self):
+        subject_client = self.get_client('studySubject')
+        resp = subject_client.service.listAllByStudy({'identifier': self._study_id})
+        return [s.subject.uniqueIdentifier for s in resp.studySubjects.studySubject] if resp.studySubjects else []
+
+    def create_subject(self, subject):
+        subject_client = self.get_client('studySubject')
+        subject_data = {
+            'label': subject['study_subject_id'],
+            'enrollmentDate': str(subject['enrollment_date']),
+            'subject': {
+                'uniqueIdentifier': subject['subject_key'][3:],  # Drop the initial 'SS_'
+                'gender': {'1': 'm', '2': 'f'}[subject['sex']],
+                'dateOfBirth': str(subject['dob']),
+            },
+            'studyRef': {
+                'identifier': self._study_id,
+            },
+        }
+        resp = subject_client.service.create(subject_data)
+        if resp.result != 'Success':
+            raise OpenClinicaIntegrationError(
+                'Unable to register subject "{}" via OpenClinica webservice'.format(subject['subject_key'])
+            )
+
+    def schedule_event(self, subject, event):
+        event_client = self.get_client('event')
+        event_data = {
+            'studySubjectRef': {
+                'label': subject['study_subject_id'],
+            },
+            'studyRef': {
+                'identifier': self._study_id,
+            },
+            'eventDefinitionOID': event['study_event_oid'],
+            'startDate': event['start_long'].split()[0],  # e.g. 1999-12-31
+            'startTime': event['start_short'].split()[1],  # e.g. 23:59
+            'endDate': event['end_long'].split()[0],
+            'endTime': event['end_short'].split()[1],
+        }
+        resp = event_client.service.schedule(event_data)
+        if resp.result != 'Success':
+            raise OpenClinicaIntegrationError(
+                'Unable to schedule event "{}"  via OpenClinica webservice'.format(event['study_event_oid'])
+            )
+
+
+class StudySettings(DocumentSchema):
+    is_ws_enabled = BooleanProperty()
+    url = StringProperty()
+    username = StringProperty()
+    password = StringProperty()
+    protocol_id = StringProperty()
+    metadata = StringProperty()  # Required when web service is not enabled
+
+
+class OpenClinicaSettings(Document):
+    domain = StringProperty()
+    study = SchemaProperty(StudySettings)  # One study per domain prevents cases from getting mixed up
+
+    @classmethod
+    def for_domain(cls, domain):
+        res = cache_core.cached_view(
+            cls.get_db(),
+            "by_domain_doc_type_date/view",
+            key=[domain, 'OpenClinicaSettings', None],
+            reduce=False,
+            include_docs=True,
+            wrapper=cls.wrap)
+        return res[0] if len(res) > 0 else None
+
+
 class ItemGroup(object):
     """
-    One CommCare form can contribute to multiple item groups. And multiple forms can be required to
-    complete one item group. When a second instance of a form type (identified by xmlns) is added to an
-    item group, then the item group is closed and a new one opened.
+    Corresponds to a question group in CommCare.
+
+    ItemGroups can repeat. To reproduce this behaviour in CommCare we use
+    repeat groups.
     """
 
     def __init__(self, domain, oid):
         self.oid = oid
         self.completed_cc_forms = set([])
-        # self.is_repeating = is_item_group_repeating(domain, oid)  # Unused. We use use CommCare repeat groups
         self.items = defaultdict(dict)
 
 
 class StudyEvent(object):
     """
-    Like item groups, study events can also be repeated. To make things
-    interesting, repeating study events can contain repeating item groups.
-
-    We use SINGLE_EVENT_FORM_EVENT_INDEX to know whether to create a new
-    StudyEvent. In subsequent projects we should us a study_event subcase of
-    the subject case type.
+    Like item groups, study events can also be repeating.
     """
-
-    def __init__(self, domain, oid):
+    def __init__(self, domain, oid, case_id):
         self.oid = oid
-        # Unused. We use SINGLE_EVENT_FORM_EVENT_INDEX in this project.
-        # self.is_repeating = is_study_event_repeating(domain, oid)
+        self.case_id = case_id
+        self.is_repeating = is_study_event_repeating(domain, oid)
         self.forms = defaultdict(lambda: defaultdict(list))  # a dict of forms containing a dict of item groups
         self.name = get_study_event_name(domain, oid)
         self.start_datetime = None
@@ -112,45 +326,40 @@ class Subject(object):
         # Because we are fetching the user for every question, use a dictionary for speed.
         self.mobile_workers = {}
 
-    def get_study_event(self, item, form):
+    def get_study_event(self, item, form, case_id):
         """
         Return the current study event. Opens a new study event if necessary.
         """
-        count = len(self.data[item.study_event_oid])
-        if form.xmlns in SINGLE_EVENT_FORM_EVENT_INDEX:
-            # This is a bad way to determine whether to create a new event because it needs "special cases"
-            # TODO: Use an "event" subcase of subject
-            index = SINGLE_EVENT_FORM_EVENT_INDEX[form.xmlns]
-            if count < index + 1:
-                self.data[item.study_event_oid].extend([None] * (index + 1 - count))
-            if self.data[item.study_event_oid][index] is None:
-                self.data[item.study_event_oid][index] = StudyEvent(self._domain, item.study_event_oid)
-            return self.data[item.study_event_oid][index]
-        if not count:
-            self.data[item.study_event_oid].append(StudyEvent(self._domain, item.study_event_oid))
-        study_event = self.data[item.study_event_oid][-1]
+        if len(self.data[item.study_event_oid]):
+            study_event = self.data[item.study_event_oid][-1]
+            if study_event.is_repeating and study_event.case_id != case_id:
+                study_event = StudyEvent(self._domain, item.study_event_oid, case_id)
+                self.data[item.study_event_oid].append(study_event)
+        else:
+            study_event = StudyEvent(self._domain, item.study_event_oid, case_id)
+            self.data[item.study_event_oid].append(study_event)
         return study_event
 
-    def get_item_group(self, item, form):
+    def get_item_group(self, item, form, case_id):
         """
         Return the current item group and study event. Opens a new item group if necessary.
 
         Item groups are analogous to CommCare question groups. Like question groups, they can repeat.
         """
-        study_event = self.get_study_event(item, form)
+        study_event = self.get_study_event(item, form, case_id)
         oc_form = study_event.forms[item.form_oid]
         if not oc_form[item.item_group_oid]:
             oc_form[item.item_group_oid].append(ItemGroup(self._domain, item.item_group_oid))
         item_group = oc_form[item.item_group_oid][-1]
         return item_group, study_event
 
-    def get_item_dict(self, item, form, question):
+    def get_item_dict(self, item, form, case_id, question):
         """
         Return a dict for storing item data, and current study event.
 
         Return both because both the item dict and study event may be updated by a form or question.
         """
-        item_group, study_event = self.get_item_group(item, form)
+        item_group, study_event = self.get_item_group(item, form, case_id)
         item_dict = item_group.items[item.item_oid]
         self.question_items[form.get_id][question] = (item_dict, study_event)
         return item_dict, study_event
@@ -187,7 +396,9 @@ class Subject(object):
             self.mobile_workers[user_id] = oc_user
         return self.mobile_workers[user_id]
 
-    def add_item(self, item, form, question, answer, audit_log_id_ref):
+    def add_item(self, item, form, case_id, question, answer, audit_log_id_ref):
+        answer = oc_format_date(answer)
+        answer = oc_format_time(answer, self._domain.get_default_timezone())
         oc_user = self._get_oc_user(form.auth_context['user_id'])
         if getattr(form, 'deprecated_form_id', None) and question in self.question_items[form.deprecated_form_id]:
             # This form has been edited on HQ. Fetch original item
@@ -195,7 +406,7 @@ class Subject(object):
             if item_dict['value'] != answer:
                 self.edit_item(item_dict, form, question, answer, audit_log_id_ref, oc_user)
         else:
-            item_dict, study_event = self.get_item_dict(item, form, question)
+            item_dict, study_event = self.get_item_dict(item, form, case_id, question)
             if item_dict and item_dict['value'] != answer:
                 # This form has been submitted more than once for a non-repeating item group. This is an edit.
                 self.edit_item(item_dict, form, question, answer, audit_log_id_ref, oc_user)
@@ -229,46 +440,45 @@ class Subject(object):
         item_group = ItemGroup(self._domain, item.item_group_oid)
         oc_form[item.item_group_oid].append(item_group)
 
-    def add_data(self, data, form, audit_log_id_ref):
-        def get_next_item(question_list):
+    def add_data(self, data, form, event_case, audit_log_id_ref):
+        def get_next_item(event_id, question_list):
             for question_ in question_list:
-                item_ = get_question_item(self._domain, form.xmlns, question_)
+                item_ = get_question_item(self._domain, event_id, question_)
                 if item_:
                     return item_
             return None
 
+        event_id = getattr(event_case, 'event_type')
         # If a CommCare form is an OpenClinica repeating item group, then we would need to add a new item
-        # group. This isn't relevant for this project.
-        # if form.xmlns in REPEATING_ITEM_GROUP_FORMS:
-        #     pass
+        # group.
         for key, value in data.iteritems():
             if key in _reserved_keys:
                 continue
             if isinstance(value, list):
                 # Repeat group
                 # NOTE: We need to assume that repeat groups can't be edited in later form submissions
-                item = get_next_item(value)
+                item = get_next_item(event_id, value)
                 if item is None:
                     # None of the questions in this group are OpenClinica items
                     continue
                 self.add_item_group(item, form)
                 for v in value:
-                    # TODO: More testing
                     if not isinstance(v, dict):
                         raise OpenClinicaIntegrationError(
                             'CommCare question value is an unexpected data type. Form XMLNS: "{}"'.format(
                                 form.xmlns))
-                    self.add_data(v, form, audit_log_id_ref)
+                    self.add_data(v, form, event_case, audit_log_id_ref)
             elif isinstance(value, dict):
                 # Group
-                self.add_data(value, form, audit_log_id_ref)
+                self.add_data(value, form, event_case, audit_log_id_ref)
             else:
                 # key is a question and value is its answer
-                item = get_question_item(self._domain, form.xmlns, key)
+                item = get_question_item(self._domain, event_id, key)
                 if item is None:
                     # This is a CommCare-only question or form
                     continue
-                self.add_item(item, form, key, oc_format_date(value), audit_log_id_ref)
+                case_id = event_case.get_id
+                self.add_item(item, form, case_id, key, value, audit_log_id_ref)
 
     def get_report_events(self):
         """
@@ -313,7 +523,9 @@ class Subject(object):
                     eventslist.append({
                         'study_event_oid': oid,
                         'repeat_key': i + 1,
+                        'start_short': study_event.start_short,
                         'start_long': study_event.start_long,
+                        'end_short': study_event.end_short,
                         'end_long': study_event.end_long,
                         'forms': mkformslist(study_event.forms)
                     })
@@ -327,7 +539,8 @@ class Subject(object):
         subject.enrollment_date = getattr(case, CC_ENROLLMENT_DATE, None)
         subject.sex = getattr(case, CC_SEX, None)
         subject.dob = getattr(case, CC_DOB, None)
-        for form in originals_first(case.get_forms()):
-            # Pass audit log ID by reference to increment it for each audit log
-            subject.add_data(form.form, form, audit_log_id_ref)
+        for event in case.get_subcases():
+            for form in originals_first(event.get_forms()):
+                # Pass audit log ID by reference to increment it for each audit log
+                subject.add_data(form.form, form, getattr(event, 'event_type'), audit_log_id_ref)
         return subject

@@ -4,12 +4,12 @@ from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop, ugettext as _
 from corehq.apps.domain.decorators import login_required
-from corehq.apps.style.views import BaseB3SectionPageView
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.styleguide.examples.simple_crispy_form.forms import ExampleUserLoginForm
 from dimagi.utils.decorators.memoized import memoized
 
 
-class BaseSimpleCrispyFormSectionView(BaseB3SectionPageView):
+class BaseSimpleCrispyFormSectionView(BaseSectionPageView):
     section_name = ugettext_noop("Simple Crispy Form Example")
 
     def section_url(self):

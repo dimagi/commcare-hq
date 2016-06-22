@@ -18,7 +18,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath
+from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath, CaseIDXPath
 from corehq.apps.case_search.models import CALCULATED_DATA, MARK_AS_CLAIMED
 from corehq.util.view_utils import absolute_reverse
 
@@ -58,6 +58,13 @@ class SyncRequestContributor(SuiteContributorByModule):
             sync_request = SyncRequest(
                 post=SyncRequestPost(
                     url=absolute_reverse('claim_case', args=[domain]),
+                    # Check whether the case to be claimed already exists in casedb:
+                    # count(
+                    #   instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]
+                    # ) = 0
+                    relevant=XPath.count(
+                        CaseIDXPath(QuerySessionXPath('case_id').instance()).case()
+                    ) + ' = 0',
                     data=[
                         QueryData(
                             key='case_id',

@@ -8,9 +8,9 @@
 
 {% block js %}
     {{ block.super }}
-    <script src="{% new_static 'app_manager/js/app_manager.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}
@@ -119,7 +119,7 @@
 <nav class="app-manager-content hide">
     <ul class="nav nav-hq-sidebar">
         <li {% if release_manager %}class="active"{% endif %}>
-            <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/#releases" data-toggle="tab">
+            <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/#releases" {% if is_app_view %}data-toggle="tab"{% endif %}>
                 <i class="fa fa-download"></i>
                 {% trans "Deploy" %}
             </a>
@@ -128,21 +128,21 @@
         <li {% if not module and not form and not release_manager %}class="app-name-div
                 {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
             {% endif %}>
-            <a href="{% url "view_app" domain app.id %}#app-settings" data-toggle="tab" data-default="1">
+            <a href="{% url "view_app" domain app.id %}#app-settings" {% if is_app_view %}data-toggle="tab" data-default="1"{% endif %} >
                 <i class="fa fa-cog"></i>
                 {% trans "Settings" %}
             </a>
         </li>
         {% if app.get_doc_type == 'Application' %}
         <li>
-            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia" data-toggle="tab">
+            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia" {% if is_app_view %}data-toggle="tab"{% endif %}>
                 <i class="fa fa-photo"></i>
                 {% trans "Multimedia" %}
             </a>
         </li>
         {% endif %}
         <li>
-            <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" data-toggle="tab">
+            <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" {% if is_app_view %}data-toggle="tab"{% endif %}>
                 <i class="fa fa-globe"></i>
                 {% trans "Languages" %}
             </a>
@@ -290,13 +290,13 @@
     {% endif %}
     <li class="text-hq-nav-header">Actions</li>
     <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
-        <a href="{% url "view_app" domain app.id %}copy/#copy" data-toggle="tab">
+        <a href="{% url "view_app" domain app.id %}copy/#copy" {% if is_app_view %}data-toggle="tab"{% endif %}>
             <i class="fa fa-copy"></i>
             {% trans "Copy Application" %}
         </a>
     </li>
     <li>
-        <a href="{% url "view_app" domain app.id %}delete/#delete" data-toggle="tab">
+        <a href="{% url "view_app" domain app.id %}delete/#delete" {% if is_app_view %}data-toggle="tab"{% endif %}>
             <i class="fa fa-trash"></i>
             {% trans "Delete Application" %}
         </a>

@@ -20,10 +20,10 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
 
 CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
-    "You have a display condition which refers to a case, but cases are not available. Please either remove "
-    "the case reference or (1) make sure that the module is set to display the module first and then form, "
-    "and (2) make sure that all forms in this module update or close a case (which means registration forms "
-    "must go in a different module)."
+    "Your form uses an expression which references a case, but cases are not available. Please go to form "
+    "settings and either remove the case reference or (1) make sure that the module is set to display the "
+    "module first and then form, and (2) make sure that all forms in this module update or close a case "
+    "(which means registration forms must go in a different module)."
 )
 
 
@@ -47,7 +47,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
     ]):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
-        raise CaseXPathValidationError(CASE_REFERENCE_VALIDATION_ERROR, module=module, form=form)
+        raise CaseXPathValidationError(_(CASE_REFERENCE_VALIDATION_ERROR), module=module, form=form)
     replacements = {
         '#user': UserCaseXPath().case(),
         '#session/': session_var('', path=''),

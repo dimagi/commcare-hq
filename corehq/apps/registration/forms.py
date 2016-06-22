@@ -11,6 +11,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
 from corehq.apps.domain.forms import clean_password, max_pwd, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
+from corehq.apps.analytics.tasks import track_workflow
 
 
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
@@ -36,23 +37,44 @@ class DomainRegistrationForm(forms.Form):
                                       widget=forms.TextInput(attrs={'class': 'form-control',
                                         'placeholder': _('My CommCare Project')}))
 
+    use_new_backend = forms.MultipleChoiceField(
+        required=False,
+        choices=(
+            ('yes', _("Opt into beta testing of the new 'scale' backend (Dimagi only)")),
+        ),
+        widget=forms.CheckboxSelectMultiple,
+        help_text=mark_safe(
+            "<p class=\"text-danger\">Read this first: "
+            "<a href=\"https://confluence.dimagi.com/display/ccinternal/Scale+Backend+Beta:+Information+and+Caveats\"  target=\"_blank\">"
+            "Scale Backend Beta: Information and Caveats"
+            "</a></p>"
+        )
+    )
+
     def __init__(self, *args, **kwargs):
+        current_user = kwargs.pop('current_user', None)
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
-        self.helper.layout = crispy.Layout(
+        fields = [
             'hr_name',
             'org',
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Create Project"),
-                    type="submit",
-                    css_class="btn btn-primary btn-lg disable-on-submit",
-                )
+        ]
+        # TODO: revert this once the sharding config is fixed
+        # force_sql_backed = getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False)
+        # if not force_sql_backed and current_user and current_user.is_superuser:
+        #     fields.append('use_new_backend')
+
+        fields.append(hqcrispy.FormActions(
+            twbscrispy.StrictButton(
+                _("Create Project"),
+                type="submit",
+                css_class="btn btn-primary btn-lg disable-on-submit",
             )
-        )
+        ))
+        self.helper.layout = crispy.Layout(*fields)
 
     def clean(self):
         for field in self.cleaned_data:
@@ -120,7 +142,11 @@ class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
         return data
 
     def clean_password(self):
-        return clean_password(self.cleaned_data.get('password'))
+        try:
+            return clean_password(self.cleaned_data.get('password'))
+        except forms.ValidationError:
+            track_workflow(self.cleaned_data.get('email'), 'Password Failure')
+            raise
 
     def clean(self):
         for field in self.cleaned_data:

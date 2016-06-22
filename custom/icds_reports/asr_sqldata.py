@@ -181,7 +181,7 @@ class Annual(ICDSMixin, ASRData):
                         'e',
                         'PW Minority',
                         '#2',
-                        ("delivered_minority_count",)
+                        ("pregnant_minority_count",)
                     ),
                     (
                         'f',

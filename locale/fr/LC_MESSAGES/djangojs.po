@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-05-04 16:00+0000\n"
+"POT-Creation-Date: 2016-06-21 19:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: corehq/apps/accounting/static/accounting/js/accounting.billing_info_handler.js:85
+msgid "Please enter a valid email."
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:78
 msgid "You have unsaved changes"
@@ -36,49 +40,96 @@ msgstr ""
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:474
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:500
 msgid "Select One"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:14
+msgid "You have unsaved changes to your application profiles"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:33
+#: corehq/apps/style/static/style/js/main.js:228
+msgid "There was an error saving"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/password_setter.jquery.js:8
 msgid "Reset"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:23
-msgid "Web Page (Excel Dashboards)"
+#: corehq/apps/app_manager/static/app_manager/js/releases.js:27
+msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:25
-msgid "CSV (Zip file)"
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:93
+msgid "Form successfully saved"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:97
+msgid "Error saving!"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:99
+msgid "Unknown error: "
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:102
+msgid ""
+"This can happen if you loaded CloudCare from a different address than the "
+"server address"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:27
-msgid "Excel (older versions)"
+msgid "Web Page (Excel Dashboards)"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:29
+msgid "CSV (Zip file)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:31
+msgid "Excel (older versions)"
+msgstr ""
+
+#: corehq/apps/export/static/export/js/models.js:33
 msgid "Excel 2007"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:38
+#: corehq/apps/export/static/export/js/models.js:42
 msgid "Create"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:38
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:224
+#: corehq/apps/export/static/export/js/models.js:42
+#: corehq/apps/style/static/style/js/main.js:224
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:211
+#: corehq/apps/export/static/export/js/models.js:215
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:213
+#: corehq/apps/export/static/export/js/models.js:217
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:215
+#: corehq/apps/export/static/export/js/models.js:219
 msgid "None"
+msgstr ""
+
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:12
+msgid "Show All References"
+msgstr ""
+
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:12
+msgid "Show Only Missing References"
+msgstr ""
+
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:209
+msgid "Replace "
+msgstr ""
+
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:209
+msgid "Upload "
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:22
@@ -105,35 +156,98 @@ msgstr ""
 msgid "Show All Dates"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:225
+#: corehq/apps/style/static/style/js/components/multiselect_utils.js:58
+msgid "Add All"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/components/multiselect_utils.js:63
+msgid "Remove All"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/main.js:225
 msgid "Saving..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:226
+#: corehq/apps/style/static/style/js/main.js:226
 msgid "Saved"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:227
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:235
+#: corehq/apps/style/static/style/js/main.js:227
+#: corehq/apps/style/static/style/js/main.js:235
 msgid "Try Again"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:228
-msgid "There was an error saving"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:232
+#: corehq/apps/style/static/style/js/main.js:232
+#: corehq/apps/style/static/style/js/ui-element.js:354
 msgid "Delete"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:233
+#: corehq/apps/style/static/style/js/main.js:233
 msgid "Deleting..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:234
+#: corehq/apps/style/static/style/js/main.js:234
 msgid "Deleted"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/bootstrap3/main.js:236
+#: corehq/apps/style/static/style/js/main.js:236
 msgid "There was an error deleting"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:228
+msgid "Edit"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:236
+msgid "Edit Mapping for "
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:241
+msgid "Add Key &rarr; Value Mapping"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:245
+msgid "Done"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:286
+msgid "Click <strong>Edit</strong> below to add mappings"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:341
+msgid "key"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:342
+msgid "value"
+msgstr ""
+
+#: corehq/apps/style/static/style/ko/components/inline_edit.js:53
+msgid "Error saving, please try again."
+msgstr ""
+
+#: corehq/apps/style/static/style/ko/components/inline_edit.js:66
+msgid "You have unsaved changes."
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:229
+msgid "Choose the property you would like to add as a filter to this report."
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:230
+msgid ""
+"Web users viewing the report will see this display text instead of the "
+"property name. Name your filter something easy for users to understand."
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:231
+msgid ""
+"What type of property is this filter?<br/><br/><strong>Date</strong>: select "
+"this if the property is a date.<br/><strong>Choice</strong>: select this if "
+"the property is text or multiple choice."
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:240
+msgid ""
+"Column format selection will determine how each row's value is calculated."
 msgstr ""

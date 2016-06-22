@@ -9,7 +9,6 @@ from corehq.form_processor.change_providers import SqlCaseChangeProvider
 from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX, CASE_ES_TYPE
 from corehq.pillows.utils import get_user_type
 from dimagi.utils.couch import LockManager
-from dimagi.utils.decorators.memoized import memoized
 from .base import HQPillow
 import logging
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
@@ -42,6 +41,11 @@ class CasePillow(HQPillow):
     es_index = CASE_INDEX
     default_mapping = CASE_MAPPING
 
+    @classmethod
+    def get_unique_id(cls):
+        # TODO: remove this next time the index name changes
+        return '85e1a25ff57c5892b6fa95caf949ae4c'
+
     def change_trigger(self, changes_dict):
         doc_dict, lock = lock_manager(
             super(CasePillow, self).change_trigger(changes_dict)
@@ -52,18 +56,6 @@ class CasePillow(HQPillow):
             return None
         else:
             return LockManager(doc_dict, lock)
-
-    @classmethod
-    @memoized
-    def calc_meta(cls):
-        """
-        override of the meta calculator since we're separating out all the types,
-        so we just do a hash of the "prototype" instead to determined md5
-        """
-        return cls.calc_mapping_hash({
-            'es_meta': cls.es_meta,
-            'mapping': cls.default_mapping,
-        })
 
     def change_transform(self, doc_dict):
         return transform_case_for_elasticsearch(doc_dict)

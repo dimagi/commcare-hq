@@ -45,20 +45,24 @@
 trunk: master
 name: autostaging
 branches:
+  - 2-session-api # sravan 6/17
+  - hqDefine-users  # danny 6/7
+  - demo-user # sravan 6/3
   - vellum-staging # J$ 11/13
-  - notifications-perms-change # j$ 5/11
   - calculatedIcons # Sravan 3/2
   - xform-blobs  # daniel 5/23
-  - j2me-toggle # Nick P 6/1
+  - new-signup  # Biyeun 6/21
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+      - 2.28-jars
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+      - 2.28-jars
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:

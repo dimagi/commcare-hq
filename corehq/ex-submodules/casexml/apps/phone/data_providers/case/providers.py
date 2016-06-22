@@ -1,5 +1,5 @@
 from casexml.apps.phone.data_providers import LongRunningRestoreDataProvider
-from casexml.apps.phone.data_providers.case.clean_owners import get_case_payload
+from casexml.apps.phone.data_providers.case.clean_owners import CleanOwnerCaseSyncOperation
 
 
 class CasePayloadProvider(LongRunningRestoreDataProvider):
@@ -8,4 +8,5 @@ class CasePayloadProvider(LongRunningRestoreDataProvider):
     """
 
     def get_response(self, restore_state):
-        return get_case_payload(restore_state)
+        sync_op = CleanOwnerCaseSyncOperation(self.timing_context, restore_state)
+        return sync_op.get_payload()
