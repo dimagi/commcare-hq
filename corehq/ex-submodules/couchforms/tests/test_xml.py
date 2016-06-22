@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+# coding=utf-8
 import uuid
 import os
 from django.test import TestCase

@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+# coding=utf-8
 from django.test import TestCase
 import unittest
 from corehq.apps.commtrack.util import unicode_slug, generate_code
