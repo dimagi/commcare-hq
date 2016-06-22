@@ -82,6 +82,7 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
             # "admin_data_xml" which come from the study metadata.
             'study_xml': get_study_constant(self.domain, 'study_xml'),
             'admin_data_xml': get_study_constant(self.domain, 'admin_data_xml'),
+            'domain': self.domain,
         }
         return [
             [
@@ -141,6 +142,9 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
             row = [
                 'SS_' + subject.subject_key,  # OpenClinica prefixes subject key with "SS_" to make the OID
                 subject.study_subject_id,
+                subject.enrollment_date,
+                subject.sex,
+                subject.dob,
                 subject.get_export_data(),
             ]
             yield row
