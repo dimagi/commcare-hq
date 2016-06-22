@@ -133,13 +133,6 @@ class _AuthTest(TestCase):
         accepted_response = SubmissionPost.get_success_response(None, None).content
         ignored_response = SubmissionPost.submission_ignored_response().content
 
-        # submissions with 'submit_mode=demo' param should be ignored
-        self._test_post(
-            file_path=self.bare_form,
-            authtype='noauth',
-            submit_mode='demo',
-            expected_response=ignored_response
-        )
         # submissions with 'submit_mode=demo' param by real users should be ignored
         client = django_digest.test.Client()
         client.set_authorization(self.user.username, '1234',
