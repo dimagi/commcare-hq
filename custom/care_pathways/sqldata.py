@@ -383,23 +383,18 @@ class TableCardSqlData(CareSqlData):
     @property
     def domains_with_practices(self):
         practices = self.config.get('practices')
-        if not practices:
-            practices = ('0', )
-
         domains = self.config.get('domains')
-        if not domains:
-            domains = ('0', )
 
         return [
             {
                 'text': element.text,
                 'practices': [
                     practice for practice in element.next
-                    if practices[0] == '0' or practice.val in practices
+                    if not practices or practices[0] == '0' or practice.val in practices
                 ]
             }
             for element in get_domains_with_next(self.domain, value_chain=self.config['value_chain'])
-            if domains[0] == '0' or element.val in domains
+            if not domains or domains[0] == '0' or element.val in domains
         ]
 
     @property

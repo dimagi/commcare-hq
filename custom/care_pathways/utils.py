@@ -8,7 +8,7 @@ from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, Dict
 from corehq.apps.reports.sqlreport import DataFormatter
 
 
-@quickcache([], timeout=5 * 60)
+@quickcache(['domain'], timeout=5 * 60)
 def get_domain_configuration(domain):
     with open(os.path.join(os.path.dirname(__file__), 'resources/%s.json' % (domain))) as f:
         _loaded_configuration = json.loads(f.read())
@@ -268,7 +268,7 @@ class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
         groups = sorted(list(groups), key=lambda r: id_to_name[r])
         result = OrderedDict()
         for group in groups:
-            result[group] = self._init_row(domain, practices)
+            result[group] = self._init_row(practices)
 
         for key, row in data.iteritems():
             formatted_row = self._format.format_row(row)
