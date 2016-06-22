@@ -14,41 +14,44 @@ FLAT_LOCATION_TYPES = [
     ('City', 'city', 'county', True, False),
 ]
 BASIC_LOCATION_TREE = [
-    # ('name', 'site_code', 'parent_code', 'location_id', 'external_id', 'latitude', 'longitude'),
-    ('Massachusetts', 'mass', '', '1234', '', '', ''),
-    ('Suffolk', 'suffolk', 'mass', '2345', '', '', ''),
-    ('Boston', 'boston', 'suffolk', '2346', '', '', ''),
-    ('Middlesex', 'middlesex', 'mass', '3456', '', '', ''),
-    ('Cambridge', 'cambridge', 'middlesex', '3457', '', '', ''),
-    ('Florida', 'florida', '', '5432', '', '', ''),
-    ('Duval', 'duval', 'florida', '5433', '', '', ''),
-    ('Jacksonville', 'jacksonville', 'duval', '5434', '', '', ''),
+    # ('name', 'site_code', 'location_type', 'parent_code', 'location_id',
+    # 'external_id', 'latitude', 'longitude'),
+    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
+    ('Suffolk', 'suffolk', 'county', 'mass', '2345', '', '', ''),
+    ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', ''),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
+    ('Florida', 'florida', 'state', '', '5432', '', '', ''),
+    ('Duval', 'duval', 'county', 'florida', '5433', '', '', ''),
+    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', ''),
 ]
 
 MOVE_SUFFOLK_TO_FLORIDA = [
-    # ('name', 'site_code', 'parent_code', 'location_id', 'external_id', 'latitude', 'longitude'),
-    ('Massachusetts', 'mass', '', '1234', '', '', ''),
-    # this is the only changed line:
-    ('Suffolk', 'suffolk', 'florida', '2345', '', '', ''),
-    ('Boston', 'boston', 'suffolk', '2346', '', '', ''),
-    ('Middlesex', 'middlesex', 'mass', '3456', '', '', ''),
-    ('Cambridge', 'cambridge', 'middlesex', '3457', '', '', ''),
-    ('Florida', 'florida', '', '5432', '', '', ''),
-    ('Duval', 'duval', 'florida', '5433', '', '', ''),
-    ('Jacksonville', 'jacksonville', 'duval', '5434', '', '', ''),
+    # ('name', 'site_code', 'location_type', 'parent_code', 'location_id',
+    # 'external_id', 'latitude', 'longitude'),
+    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
+    # this is the only changed line (parent is changed to florida)
+    ('Suffolk', 'suffolk', 'county', 'florida', '2345', '', '', ''),
+    ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', ''),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
+    ('Florida', 'florida', 'state', '', '5432', '', '', ''),
+    ('Duval', 'duval', 'county', 'florida', '5433', '', '', ''),
+    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', ''),
 ]
 
 DELETE_SUFFOLK = [
-    # ('name', 'site_code', 'parent_code', 'location_id', 'external_id', 'latitude', 'longitude', 'deleted'),
-    ('Massachusetts', 'mass', '', '1234', '', '', ''),
-    # this is the only changed line:
-    ('Suffolk', 'suffolk', 'florida', '2345', '', '', '', 'yes'),
-    ('Boston', 'boston', 'suffolk', '2346', '', '', '', 'yes'),
-    ('Middlesex', 'middlesex', 'mass', '3456', '', '', ''),
-    ('Cambridge', 'cambridge', 'middlesex', '3457', '', '', ''),
-    ('Florida', 'florida', '', '5432', '', '', ''),
-    ('Duval', 'duval', 'florida', '5433', '', '', ''),
-    ('Jacksonville', 'jacksonville', 'duval', '5434', '', '', ''),
+    # ('name', 'site_code', 'location_type', 'parent_code', 'location_id',
+    # 'external_id', 'latitude', 'longitude', 'delete'),
+    ('Massachusetts', 'mass', 'state', '', '1234', '', '', '', ''),
+    # These next two are marked as 'delete'
+    ('Suffolk', 'suffolk', 'county', 'mass', '2345', '', '', '', 'delete'),
+    ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', '', 'delete'),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', '', ''),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', '', ''),
+    ('Florida', 'florida', 'state', '', '5432', '', '', '', ''),
+    ('Duval', 'duval', 'county', 'florida', '5433', '', '', '', ''),
+    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', '', ''),
 ]
 
 
