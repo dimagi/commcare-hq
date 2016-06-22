@@ -47,12 +47,6 @@ class BaseStripePaymentHandler(object):
         """
         raise NotImplementedError("you must implement cost_item_name")
 
-    @property
-    @memoized
-    def core_product(self):
-        domain = Domain.get_by_name(self.domain)
-        return SoftwareProductType.get_type_by_domain(domain)
-
     def create_charge(self, amount, card=None, customer=None):
         """Process the HTTPRequest used to make this payment
 
