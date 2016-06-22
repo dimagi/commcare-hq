@@ -17,7 +17,7 @@ from corehq.apps.export.models import (
     ExportDataSchema,
     PARENT_CASE_TABLE,
 )
-from corehq.apps.export.const import PROPERTY_TAG_UPDATE
+from corehq.apps.export.const import PROPERTY_TAG_UPDATE, DATA_SCHEMA_VERSION
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -424,6 +424,56 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(new_schema._id, schema._id)
         self.assertEqual(new_schema.last_app_versions[app._id], app.version)
         self.assertEqual(len(new_schema.group_schemas), 1)
+
+
+class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
+
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.current_app = Application.wrap(cls.get_json('basic_application'))
+        with drop_connected_signals(app_post_save):
+            cls.current_app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.current_app.delete()
+
+    def tearDown(self):
+        db = ExportDataSchema.get_db()
+        for row in db.view('schemas_by_xmlns_or_case_type/view', reduce=False):
+            doc_id = row['id']
+            safe_delete(db, doc_id)
+
+    def test_rebuild_version_control(self):
+        app = self.current_app
+
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            'my_sweet_xmlns'
+        )
+
+        existing_schema = FormExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            'my_sweet_xmlns'
+        )
+        self.assertEqual(schema._id, existing_schema._id)
+
+        with patch(
+                'corehq.apps.export.models.new.DATA_SCHEMA_VERSION',
+                DATA_SCHEMA_VERSION + 1):
+            rebuilt_schema = FormExportDataSchema.generate_schema_from_builds(
+                app.domain,
+                app._id,
+                'my_sweet_xmlns'
+            )
+        self.assertNotEqual(schema._id, rebuilt_schema._id)
+        self.assertEqual(schema.version, DATA_SCHEMA_VERSION)
+        self.assertEqual(rebuilt_schema.version, DATA_SCHEMA_VERSION + 1)
 
 
 class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):

@@ -48,7 +48,8 @@ from corehq.apps.export.const import (
     DEID_TRANSFORM_FUNCTIONS,
     PROPERTY_TAG_CASE,
     USER_DEFINED_SPLIT_TYPES,
-    PLAIN_USER_DEFINED_SPLIT_TYPE
+    PLAIN_USER_DEFINED_SPLIT_TYPE,
+    DATA_SCHEMA_VERSION,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
@@ -832,6 +833,7 @@ class ExportDataSchema(Document):
     created_on = DateTimeProperty(default=datetime.utcnow)
     group_schemas = SchemaListProperty(ExportGroupSchema)
     app_id = StringProperty()
+    version = IntegerProperty(default=1)
 
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
     last_app_versions = DictProperty()
@@ -852,7 +854,9 @@ class ExportDataSchema(Document):
 
         original_id, original_rev = None, None
         current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
-        if current_schema and not force_rebuild:
+        if (current_schema
+                and not force_rebuild
+                and current_schema.version == DATA_SCHEMA_VERSION):
             original_id, original_rev = current_schema._id, current_schema._rev
         else:
             current_schema = cls()
@@ -882,6 +886,7 @@ class ExportDataSchema(Document):
 
         current_schema.domain = domain
         current_schema.app_id = app_id
+        current_schema.version = DATA_SCHEMA_VERSION
         current_schema._set_identifier(identifier)
         current_schema = cls._save_export_schema(
             current_schema,
