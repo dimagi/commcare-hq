@@ -141,22 +141,8 @@
         <code>main_context</code> here is optional but a good place to insert any section-specific
         template contexts in.
     </p>
-    <h2>Migrating a View to Bootstrap 3</h2>
-    <p>
-        The difference between a Bootstrap 3 view and a Bootstrap 2 view is that the B3 view:
-    </p>
-    <ul>
-        <li>Decorates the <code>dispatch</code> method with <code>@use_bootstrap3</code></li>
-        <li>
-            The template extends a bootstrap3 view,
-            likely <code>style/base_section.html</code>
-        </li>
-    </ul>
-    <pre><code>    @use_bootstrap3
+
+    <pre><code>
     def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)</code></pre>
-    <p>
-        See the <a href="https://docs.google.com/document/d/1jOIrCZlrmECfzo-iyAYjeVFqBv7ilnXjdgDWjGLmqd4/edit">Bootstrap 3 Migration Guide</a> for a more step-by-step
-        process for migrating a page to Bootstrap 3.
-    </p>
 </section>

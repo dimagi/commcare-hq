@@ -6,40 +6,71 @@ function usage() {
         test)
             echo "Run tests"
             echo ""
-            echo "test [OPTIONS]"
+            echo "$0 test [OPTIONS]"
             echo ""
-            echo "All OPTIONS are passed to the selected test runner."
+            echo "OPTIONS are passed to the selected test runner."
             echo ""
             echo "Set TEST environment variable to select a test runner:"
             echo "  TEST=python|python-sharded|javascript"
             echo ""
             echo "The default is python."
             echo ""
+            echo "Tests are run with a project name of 'hqtest', so the"
+            echo "containers and volumes it creates will not interfere with"
+            echo "'hqservice' containers managed by other commands."
+            echo ""
             ;;
         bash)
-            echo "Run bash in web container"
+            echo "Run bash in container"
+            echo ""
+            echo "$0 bash [SERVICE_NAME]"
+            echo ""
+            echo "Run bash in the currently running container if it is up."
+            echo "Otherwise create a new container and run bash inside it."
+            echo "See docker/hq-compose.yml for applicable service names."
+            echo "The default is 'web'."
+            echo ""
+            ;;
+        runserver)
+            echo "Run Django web server on port 8000"
+            echo ""
+            echo "$0 runserver [-d|--bootstrap|COMMAND]"
+            echo ""
+            echo "Options:"
+            echo ""
+            echo "  --bootstrap     Migrate new database and setup demo user."
+            echo "  -d              Run in background."
             echo ""
             ;;
         shell)
             echo "Run Django shell in web container"
             echo ""
             ;;
-        services)
-            echo "Manage CommCare HQ docker services"
+        hqtest)
+            echo "Manage test containers"
             echo ""
-            echo "Start services with ports mapped to the docker host if no"
-            echo "other options are given. This command uses a different base"
-            echo "container name than other commands so the containers and"
-            echo "volumes it creates will not interfere with other commands."
+            echo "$0 hqtest [COMMAND]"
             echo ""
-            echo "$0 services [--bootstrap] [COMMAND]"
+            echo "OPTIONS are passed to the selected test runner."
             echo ""
-            echo "Options:"
+            echo "Examples:"
             echo ""
-            echo "  --bootstrap         Run Django web server on port 8000"
+            echo "  # list test containers"
+            echo "  $0 hqtest ps"
             echo ""
-            echo "Commands:"
-            echo "    All docker-compose commands are supported."
+            echo "  # stop test containers"
+            echo "  $0 hqtest stop"
+            echo ""
+            echo "  # remove all test containers and volumes"
+            echo "  $0 hqtest teardown"
+            echo ""
+            ;;
+        rebuild)
+            echo "Stop, remove, and rebuild image(s)"
+            echo ""
+            echo "$0 rebuild [SERVICES...]"
+            echo ""
+            echo "Existing local images are removed before rebuilding."
             echo ""
             ;;
         teardown)
@@ -50,47 +81,72 @@ function usage() {
             echo "Manage docker services for CommCare HQ"
             echo ""
             echo "$0 COMMAND [OPTIONS]"
-            echo "      -h --help"
-            echo "      test|services|teardown|bash|shell|help"
             echo ""
             echo "$0 help COMMAND"
+            echo ""
+            echo "Commands:"
+            echo "  bash        Run bash in container"
+            echo "  help        Get help on a command"
+            echo "  hqtest      Manage test containers"
+            echo "  rebuild     Stop, remove, and rebuild image(s)"
+            echo "  runserver   Run Django web server on port 8000"
+            echo "  shell       Run Django shell in web container"
+            echo "  teardown    Remove all containers, images and volumes"
+            echo "  test        Run tests"
             echo ""
             echo "All other commands are passed directly to docker-compose."
             echo ""
             echo "Examples:"
             echo ""
-            echo "  # list test containers"
+            echo "  # list service containers"
             echo "  $0 ps"
             echo ""
-            echo "  # list service containers"
-            echo "  $0 services ps"
+            echo "  # stop service containers"
+            echo "  $0 stop"
             echo ""
-            echo "  # run bash in riakcs service container"
-            echo "  $0 services exec riakcs bash"
+            echo "  # run services in background"
+            echo "  $0 up -d"
             echo ""
-            echo "  # run bash in bootstrapped web conatiner"
-            echo "  $0 services --bootstrap bash"
             ;;
     esac
     exit
 }
 
-CMD=$1
+CMD="$1"
 shift
-if [ "$CMD" == "services" ]; then
-    CMD=$1
-    shift
-    if [ "$CMD" == "--bootstrap" ]; then
-        SERVICES="bootstrap"
-        CMD=$1
+if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
+    if [ "$CMD" == "hqtest" ]; then
+        CMD="$1"
         shift
         if [ -z "$CMD" ]; then
-            CMD="run --rm web"
+            CMD=help
+        fi
+    fi
+    export COMPOSE_FILE=docker/hq-compose.yml
+    export COMPOSE_PROJECT_NAME=hqtest
+    if [ -n "$TRAVIS_BUILD_DIR" ]; then
+        export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
+    else
+        export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
+    fi
+else
+    if [[ "$CMD" =~ ^(runserver|bash|shell|ps)$ ]]; then
+        SERVICES="runserver"
+        if [ "$CMD" == "runserver" ]; then
+            CMD="$1"
+            shift
+            if [ "$CMD" == "--bootstrap" ]; then
+                CMD=bootstrap
+            elif [ "$CMD" == "-d" ]; then
+                CMD="up -d"
+            elif [ -z "$CMD" ]; then
+                CMD="up"
+            fi
         fi
     else
         SERVICES="services"
         if [ -z "$CMD" ]; then
-            CMD="up -d"
+            CMD="help"
         fi
     fi
 
@@ -105,35 +161,31 @@ if [ "$CMD" == "services" ]; then
 
     if [ `uname` == 'Darwin' -a "$DOCKER_BETA" != "true" ]; then
         docker-machine ssh $DOCKER_MACHINE_NAME sudo mkdir -p $DOCKER_DATA_HOME
+        KAFKA_ADVERTISED_HOST_NAME=$(docker-machine ip $DOCKER_MACHINE_NAME)
     else
         mkdir -p $DOCKER_DATA_HOME
+        KAFKA_ADVERTISED_HOST_NAME=localhost
     fi
 
     export ES_CLUSTER_NAME="${ES_CLUSTER_NAME:-$(hostname)}"
     export COMPOSE_FILE=docker/hq-compose-${SERVICES}.yml
     export COMPOSE_PROJECT_NAME=hqservice
     export VOLUME_PREFIX="$DOCKER_DATA_HOME/"
-else
-    export COMPOSE_FILE=docker/hq-compose.yml
-    export COMPOSE_PROJECT_NAME=hqtest
-    if [ -n "$TRAVIS_BUILD_DIR" ]; then
-        export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
-    else
-        export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
-    fi
+    export KAFKA_ADVERTISED_HOST_NAME="$KAFKA_ADVERTISED_HOST_NAME"
 fi
 # export variables for compose file (they must be set or it complains)
 export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"
-export TRAVIS="$TRAVIS"
 
-if [ "$TRAVIS" == "true" ]; then
+if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
     # don't mount /mnt/commcare-hq-ro volume read-only on travis
     # overwrite of localsettings.py, etc. doesn't matter here
     export RO=""
+    export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-none}"
 else
     export RO=":ro"
+    export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-aufs}"
 fi
 
 if [ "$DOCKER_BETA" == "true" ]; then
@@ -147,9 +199,9 @@ else
 fi
 
 case $CMD in
-    -h | --help | help | "")
-        if [ "$COMPOSE_PROJECT_NAME" == "hqservice" ]; then
-            usage services
+    -h | --help | help | services | "")
+        if [ "$COMPOSE_PROJECT_NAME" == "hqtest" ]; then
+            usage hqtest
         else
             usage $@
         fi
@@ -166,7 +218,23 @@ if [ "$CMD" == "test" ]; then
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"
 elif [ "$CMD" == "bash" ]; then
-    docker-compose run --rm web $CMD "$@"
+    SERVICE_NAME="${1:-web}"
+    shift
+    CONTAINER="${COMPOSE_PROJECT_NAME}_${SERVICE_NAME}_1"
+    if [ "$(docker inspect -f {{.State.Running}} $CONTAINER 2> /dev/null)" == "true" ]; then
+        docker exec -it $CONTAINER $CMD "$@"
+    else
+        docker-compose run --rm $SERVICE_NAME $CMD "$@"
+    fi
+elif [ "$CMD" == "rebuild" ]; then
+    if [ -z "$1" ]; then
+        docker-compose down --rmi local
+        docker-compose build
+    else
+        docker-compose stop "$@"
+        docker-compose rm "$@"
+        docker-compose build "$@"
+    fi
 else
     docker-compose $CMD "$@"
     if [ "$TEARDOWN" == "yes" ]; then

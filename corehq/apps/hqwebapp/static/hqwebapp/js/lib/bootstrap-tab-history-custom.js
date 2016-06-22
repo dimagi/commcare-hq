@@ -63,8 +63,7 @@ $(function () {
         }
     });
 
-    $('a[data-toggle="tab"]').on('show show.bs.tab', function (event) {
-
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
         // Set the selected tab to be the current state. But don't update the URL.
         var url = event.target.href.split("#")[0];
         var tab = event.target.href.split("#")[1];
@@ -92,6 +91,18 @@ $(function () {
                 event.preventDefault();
                 loadPage(url);
             }
+        }
+    });
+
+    // Handle control-click, middle-click, etc. opening in a new window
+    $("a[data-toggle='tab']").on("click", function(event) {
+        if (event && (event.metaKey || event.ctrlKey || event.which === 2)) {
+            window.open($(event.target).attr("href"), '_blank');
+
+            // Prevent the tab from showing in the current window
+            $(event.target).one("show.bs.tab", function() {
+                return false;
+            });
         }
     });
 });

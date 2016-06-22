@@ -11,6 +11,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
 from corehq.apps.domain.forms import clean_password, max_pwd, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
+from corehq.apps.analytics.tasks import track_workflow
 
 
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
@@ -61,9 +62,10 @@ class DomainRegistrationForm(forms.Form):
             'hr_name',
             'org',
         ]
-        force_sql_backed = getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False)
-        if not force_sql_backed and current_user and current_user.is_superuser:
-            fields.append('use_new_backend')
+        # TODO: revert this once the sharding config is fixed
+        # force_sql_backed = getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False)
+        # if not force_sql_backed and current_user and current_user.is_superuser:
+        #     fields.append('use_new_backend')
 
         fields.append(hqcrispy.FormActions(
             twbscrispy.StrictButton(
@@ -140,7 +142,11 @@ class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
         return data
 
     def clean_password(self):
-        return clean_password(self.cleaned_data.get('password'))
+        try:
+            return clean_password(self.cleaned_data.get('password'))
+        except forms.ValidationError:
+            track_workflow(self.cleaned_data.get('email'), 'Password Failure')
+            raise
 
     def clean(self):
         for field in self.cleaned_data:

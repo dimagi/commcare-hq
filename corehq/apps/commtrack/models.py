@@ -12,7 +12,6 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import ConsumptionConfiguration, ConsumptionHelper
-
 from casexml.apps.stock.models import DocDomainMapping
 from couchexport.models import register_column_type, ComplexExportColumn
 from couchforms.signals import xform_archived, xform_unarchived
@@ -383,6 +382,10 @@ class StockState(models.Model):
     @property
     def entry_id(self):
         return self.product_id
+
+    @property
+    def location_id(self):
+        return self.sql_location.location_id if self.sql_location else None
 
     @property
     def balance(self):

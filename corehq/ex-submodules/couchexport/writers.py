@@ -1,3 +1,4 @@
+from base64 import b64decode
 from codecs import BOM_UTF8
 import os
 import re
@@ -5,6 +6,7 @@ import tempfile
 import zipfile
 import csv
 import json
+import bz2
 from django.template import Context
 from django.template.loader import render_to_string, get_template
 import xlwt
@@ -511,17 +513,7 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
     target_app = 'OpenClinica'  # Export button to say "Export to OpenClinica"
 
     def _init(self):
-        from custom.openclinica.utils import get_study_constant
-
-        # We don't need to keep track of tables because we only have two: "study" contains context, and
-        # "subjects" of which each row is a study subject. Initialise template context instead of tables.
-        self.context = {
-            'subjects': [],
-            # The template accepts XML strings in params "study_xml" and "admin_data_xml" which are
-            # study-specific. We parse these from the study metadata.
-            'study_xml': get_study_constant(domain=None, name='study_xml'),
-            'admin_data_xml': get_study_constant(domain=None, name='admin_data_xml'),
-        }
+        self.context = {'subjects': []}
         # We'll keep the keys from the header rows of both tables, so that we can zip them up with the rest of the
         # rows to create dictionaries for the ODM XML template
         self.study_keys = []
@@ -544,4 +536,27 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
                 self.context['subjects'].append(dict(zip(self.subject_keys, row)))
 
     def _close(self):
+        from custom.openclinica.models import OpenClinicaAPI, OpenClinicaSettings
+
+        # Create the subjects and events that are in the ODM export using the API
+        oc_settings = OpenClinicaSettings.for_domain(self.context['domain'])
+        if oc_settings.study.is_ws_enabled:
+            password = bz2.decompress(b64decode(oc_settings.study.password))
+            api = OpenClinicaAPI(
+                oc_settings.study.url,
+                oc_settings.study.username,
+                password,
+                oc_settings.study.protocol_id
+            )
+            subject_keys = api.get_subject_keys()
+            for subject in self.context['subjects']:
+                if subject['subject_key'][3:] not in subject_keys:
+                    # Skip 'SS_' prefix   ^^ that OpenClinica wants in ODM, but isn't in API's subject keys
+                    api.create_subject(subject)
+                    # NOTE: In the interests of keeping data in OpenClinica tidy, we are only scheduling events for
+                    # subjects who don't yet exist in OpenClinica. New events of existing subjects must be added
+                    # manually, or subjects must be deleted from OpenClinica before a re-import.
+                    for event in subject['events']:
+                        api.schedule_event(subject, event)
+
         self.file.write(render_to_string('couchexport/odm_export.xml', self.context))

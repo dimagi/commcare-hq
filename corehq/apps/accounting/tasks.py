@@ -87,7 +87,9 @@ def activate_subscriptions(based_on_date=None):
         try:
             _activate_subscription(subscription)
         except Exception as e:
-            log_accounting_error(e.message)
+            log_accounting_error(
+                'Error activating subscription %d: %s' % (subscription.id, e.message)
+            )
 
 
 @transaction.atomic
@@ -128,7 +130,7 @@ def deactivate_subscriptions(based_on_date=None):
         try:
             _deactivate_subscription(subscription, ending_date)
         except Exception as e:
-            log_accounting_error(e.message)
+            log_accounting_error('Error deactivating subscription %d: %s' % (subscription.id, e.message))
 
 
 def warn_subscriptions_still_active(based_on_date=None):
@@ -294,7 +296,9 @@ def send_subscription_reminder_emails(num_days):
             if not subscription.is_renewed:
                 subscription.send_ending_reminder_email()
         except Exception as e:
-            log_accounting_error(e.message)
+            log_accounting_error(
+                "Error sending reminder for subscription %d: %s" % (subscription.id, e.message)
+            )
 
 
 def send_subscription_reminder_emails_dimagi_contact(num_days):
@@ -338,7 +342,9 @@ def create_wire_credits_invoice(domain_name,
         try:
             record.send_email(contact_emails=contact_emails)
         except Exception as e:
-            log_accounting_error(e.message)
+            log_accounting_error(
+                "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, e.message)
+            )
     else:
         record.skipped_email = True
         record.save()

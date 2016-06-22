@@ -20,19 +20,23 @@ redis:
     - "6379:6379"
 
 elasticsearch:
-  extends:
-    file: hq-compose.yml
-    service: elasticsearch
+  build: .
+  dockerfile: Dockerfile_es
   command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
   environment:
-    - ES_CLUSTER_NAME
+    ES_CLUSTER_NAME: ES_CLUSTER_NAME
+    ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
   ports:
     - "9200:9200"
+  volumes:
+    - ${DATA_VOLUME_PREFIX}elasticsearch:/usr/share/elasticsearch/data
 
 kafka:
   extends:
     file: hq-compose.yml
     service: kafka
+  environment:
+    ADVERTISED_HOST: ${KAFKA_ADVERTISED_HOST_NAME}
   ports:
     - "2181:2181"
     - "9092:9092"

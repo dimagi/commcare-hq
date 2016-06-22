@@ -72,6 +72,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.xpath import (
+    dot_interpolate,
     interpolate_xpath,
     LocationXpath,
 )
@@ -1547,18 +1548,48 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
     @property
+    def treat_as_expression(self):
+        """
+        Returns if whether the key can be treated as a valid expression that can be included in
+        condition-predicate of an if-clause for e.g. if(<expression>, value, ...)
+        """
+        special_chars = '{}()[]=<>."\'/'
+        return any(special_char in self.key for special_char in special_chars)
+
+    @property
     def key_as_variable(self):
         """
         Return an xml variable name to represent this key.
-        If the key has no spaces, return the key with "k" prepended.
-        If the key does contain spaces, return a hash of the key with "h" prepended.
+
+        If the key contains spaces or a condition-predicate of an if-clause,
+        return a hash of the key with "h" prepended.
+        If not, return the key with "k" prepended.
+
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        if " " not in self.key:
-            return 'k{key}'.format(key=self.key)
-        else:
+        if ' ' in self.key or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+        else:
+            return 'k{key}'.format(key=self.key)
+
+    def key_as_condition(self, property):
+        if self.treat_as_expression:
+            condition = dot_interpolate(self.key, property)
+            return u"{condition}".format(condition=condition)
+        else:
+            return u"{property} = '{key}'".format(
+                property=property,
+                key=self.key
+            )
+
+    def ref_to_key_variable(self, index, sort_or_display):
+        if sort_or_display == "sort":
+            key_as_var = "{}, ".format(index)
+        elif sort_or_display == "display":
+            key_as_var = "${var_name}, ".format(var_name=self.key_as_variable)
+
+        return key_as_var
 
 
 class GraphAnnotations(IndexedSchema):
@@ -1684,6 +1715,18 @@ class DetailColumn(IndexedSchema):
                                   for key, value in data['enum'].items())
 
         return super(DetailColumn, cls).wrap(data)
+
+    @classmethod
+    def from_json(cls, data):
+        from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+
+        to_ret = cls.wrap(data)
+        if to_ret.format == 'enum-image':
+            # interpolate icons-paths
+            for item in to_ret.enum:
+                for lang, path in item.value.iteritems():
+                    item.value[lang] = interpolate_media_path(path)
+        return to_ret
 
 
 class SortElement(IndexedSchema):
@@ -1957,20 +2000,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         from corehq.apps.locations.util import parent_child
         hierarchy = None
         for column in columns:
-            if column.format in ('enum', 'enum-image'):
-                for item in column.enum:
-                    key = item.key
-                    # key cannot contain certain characters because it is used
-                    # to generate an xpath variable name within suite.xml
-                    # (names with spaces will be hashed to form the xpath
-                    # variable name)
-                    if not re.match('^([\w_ -]*)$', key):
-                        yield {
-                            'type': 'invalid id key',
-                            'key': key,
-                            'module': self.get_module_info(),
-                        }
-            elif column.field_type == FIELD_TYPE_LOCATION:
+            if column.field_type == FIELD_TYPE_LOCATION:
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
                     LocationXpath('').validate(column.field_property, hierarchy)
@@ -4254,6 +4284,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     use_j2me_endpoint = BooleanProperty(default=False)
 
+    # Whether or not the Application has had any forms submitted against it
+    has_submissions = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -4624,7 +4656,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
-            if build_profile_id:
+            if build_profile_id is not None:
                 url += '?profile={profile_id}'.format(profile_id=build_profile_id)
             code.add_data(url)
 
@@ -4643,7 +4675,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             if settings.BITLY_LOGIN:
                 view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
-                if build_profile_id:
+                if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
                     )
@@ -4715,6 +4747,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 user.save()
         copy.is_released = False
 
+        if not copy.is_remote_app():
+            copy.update_mm_map()
+
         return copy
 
     def delete_app(self):
@@ -4745,11 +4780,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             for lang in self.langs:
                 self.media_language_map[lang] = MediaList()
-            for form in self.get_forms(bare=False):
-                xml = XForm(form['form'].source)
+            for form in self.get_forms():
+                xml = form.wrapped_xform()
                 for lang in self.langs:
                     media = []
-                    for path in xml.all_references(lang):
+                    for path in xml.all_media_references(lang):
                         if path is not None:
                             media.append(path)
                             map_item = self.multimedia_map.get(path)
@@ -4761,7 +4796,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.media_language_map = {}
 
     def get_build_langs(self, build_profile_id=None):
-        if build_profile_id:
+        if build_profile_id is not None:
             return self.build_profiles[build_profile_id].langs
         else:
             return self.langs
@@ -5074,7 +5109,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
-        locale = self.langs[0] if not build_profile_id else self.build_profiles[build_profile_id].langs[0]
+        locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5251,6 +5286,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for i,lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
+        for profile in self.build_profiles:
+            for i, lang in enumerate(profile.langs):
+                if lang == old_lang:
+                    profile.langs[i] = new_lang
         for module in self.get_modules():
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
@@ -5574,8 +5613,11 @@ class RemoteApp(ApplicationBase):
 
     def get_build_langs(self):
         if self.build_profiles:
-            # return first profile, generated as part of lazy migration
-            return self.build_profiles[self.build_profiles.keys()[0]].langs
+            if len(self.build_profiles.keys()) > 1:
+                raise AppEditingError('More than one app profile for a remote app')
+            else:
+                # return first profile, generated as part of lazy migration
+                return self.build_profiles[self.build_profiles.keys()[0]].langs
         else:
             return self.langs
 

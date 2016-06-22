@@ -100,7 +100,6 @@
         {% if report.slug and report.is_async %}
             var asyncHQReport = new HQAsyncReport({
                 standardReport: standardHQReport,
-                isBootstrap3: true
             });
             asyncHQReport.init();
         {% endif %}

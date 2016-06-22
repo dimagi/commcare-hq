@@ -75,7 +75,6 @@ var RateAsyncManager = function (objClass, options) {
 
     self.utils = {
         sendToAsyncHandler: function (action, data, handleSuccess) {
-            // todo handle errors with the request itself
             data['handler'] = self.handlerSlug;
             data['action'] = action;
             $.ajax({
