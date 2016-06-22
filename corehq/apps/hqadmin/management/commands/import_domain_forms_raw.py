@@ -12,7 +12,10 @@ from couchforms.models import DefaultAuthContext
 
 
 class Command(BaseCommand):
-    help = "Sumbit all forms saved by the ``export_domain_forms_raw`` command."
+    help = "Sumbit all forms saved by the ``export_domain_forms_raw`` command." \
+           "Note that if the domain you are importing into is not the same domain you" \
+           "exported from then there will be some inconsistencies since the new domain" \
+           "won't have the same user ID's or Application / App Build ID's"
     args = "domain folder_path"
 
     def handle(self, domain, folder_path, **options):
