@@ -987,12 +987,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        return self.get_db().view("domain/snapshots",
-            startkey=[self.get_id],
-            endkey=[self.get_id, {}],
-            reduce=True,
-            include_docs=False,
-        ).one()["value"]
+        from corehq.apps.domain.dbaccessors import count_downloads_for_all_snapshots
+        return count_downloads_for_all_snapshots(self.get_id)
 
     @property
     @memoized
