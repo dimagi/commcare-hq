@@ -337,7 +337,7 @@ class ApplicationDataRMIHelper(object):
     def _unknown_forms(self):
         return itertools.chain(self._deleted_app_forms, self._remote_app_forms, self._no_app_forms)
 
-    def _get_app_type_choices(self, as_dict=True):
+    def _get_app_type_choices_for_forms(self, as_dict=True):
         choices = [(_("Applications"), self.APP_TYPE_ALL)]
         if self._remote_app_forms or self._deleted_app_forms:
             choices.append((_("Unknown"), self.APP_TYPE_UNKNOWN))
@@ -345,6 +345,15 @@ class ApplicationDataRMIHelper(object):
         if as_dict:
             choices = map(lambda c: c._asdict(), choices)
         return choices
+
+    def _get_app_type_choices_for_cases(self):
+        choices = [(_("Applications"), self.APP_TYPE_ALL)]
+        choices.append((_("Unknown"), self.APP_TYPE_UNKNOWN))
+        choices = map(
+            lambda choice: RMIDataChoice(id=choice[1], text=choice[0], data={}),
+            choices
+        )
+        return map(lambda choice: choice._asdict(), choices)
 
     @staticmethod
     def _get_unique_choices(choices):
@@ -445,7 +454,7 @@ class ApplicationDataRMIHelper(object):
         to an XForm + app_id pair"""
         modules_by_app, forms_by_app_by_module = self._get_modules_and_forms(self.as_dict)
         response = AppFormRMIResponse(
-            app_types=self._get_app_type_choices(self.as_dict),
+            app_types=self._get_app_type_choices_for_forms(self.as_dict),
             apps_by_type=self._get_applications_by_type(self.as_dict),
             modules_by_app=modules_by_app,
             forms_by_app_by_module=forms_by_app_by_module,
@@ -477,19 +486,19 @@ class ApplicationDataRMIHelper(object):
                         if as_dict:
                             case_types = map(lambda c: c._asdict(), case_types)
                     case_types_by_app[app_choice.id] = case_types
-                else:
-                    all_case_types = CaseAccessors(self.domain).get_case_types()
-                    unknown_case_types = all_case_types.difference(used_case_types)
-                    unknown_case_types = map(lambda c: RMIDataChoice(
-                        id=c,
-                        text=c,
-                        data={
-                            'unknown': True,
-                        }
-                    ), unknown_case_types)
-                    if as_dict:
-                        unknown_case_types = map(lambda c: c._asdict(), unknown_case_types)
-                    case_types_by_app[self.UNKNOWN_SOURCE] = unknown_case_types
+
+        all_case_types = CaseAccessors(self.domain).get_case_types()
+        unknown_case_types = all_case_types.difference(used_case_types)
+        unknown_case_types = map(lambda c: RMIDataChoice(
+            id=c,
+            text=c,
+            data={
+                'unknown': True,
+            }
+        ), unknown_case_types)
+        if as_dict:
+            unknown_case_types = map(lambda c: c._asdict(), unknown_case_types)
+        case_types_by_app[self.UNKNOWN_SOURCE] = unknown_case_types
 
         return case_types_by_app
 
@@ -500,10 +509,15 @@ class ApplicationDataRMIHelper(object):
         """
         apps_by_type = self._get_applications_by_type(as_dict=False)
         case_types_by_app = self._get_cases_for_apps(apps_by_type, self.as_dict)
+        # If there are Unknown case types, ensure that there exists an Unknown Application
+        if case_types_by_app.get(self.UNKNOWN_SOURCE) and not apps_by_type[self.APP_TYPE_UNKNOWN]:
+            apps_by_type[self.APP_TYPE_UNKNOWN].append(
+                RMIDataChoice(self.UNKNOWN_SOURCE, _("Unknown Application"), {})
+            )
         if self.as_dict:
             apps_by_type = self._map_chosen_by_choice_as_dict(apps_by_type)
         response = AppCaseRMIResponse(
-            app_types=self._get_app_type_choices(),
+            app_types=self._get_app_type_choices_for_cases(),
             apps_by_type=apps_by_type,
             case_types_by_app=case_types_by_app,
             placeholders=self.case_placeholders
