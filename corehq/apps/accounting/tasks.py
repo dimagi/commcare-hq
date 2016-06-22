@@ -30,12 +30,14 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     Currency,
     DefaultProductPlan,
+    EntryPoint,
     SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
     SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
     SubscriptionAdjustmentReason,
+    SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
 )
@@ -573,6 +575,7 @@ def assign_explicit_community_subscriptions(from_date):
                 account=BillingAccount.get_or_create_account_by_domain(
                     domain_name,
                     created_by='assign_explicit_community_subscriptions',
+                    entry_point=EntryPoint.SELF_STARTED,
                 )[0],
                 domain=domain_name,
                 plan_version=DefaultProductPlan.get_default_plan(
@@ -580,4 +583,7 @@ def assign_explicit_community_subscriptions(from_date):
                 ).plan.get_version(),
                 date_start=from_date,
                 date_end=end_date,
+                adjustment_method=SubscriptionAdjustmentMethod.TASK,
+                internal_change=True,
+                service_type=SubscriptionType.PRODUCT,
             )
