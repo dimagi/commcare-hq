@@ -49,7 +49,7 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_address_from_invoice,
     get_change_status,
-    get_dimagi_from_email_by_product,
+    get_dimagi_from_email,
     get_privileges,
     is_active_subscription,
     log_accounting_error,
@@ -1506,7 +1506,7 @@ class Subscription(models.Model):
             send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
-                email_from=get_dimagi_from_email_by_product(product),
+                email_from=get_dimagi_from_email(),
                 bcc=bcc,
             )
             log_accounting_info(
@@ -2421,7 +2421,7 @@ class BillingRecord(BillingRecordBase):
         }
 
     def email_from(self):
-        return get_dimagi_from_email_by_product(self.invoice.subscription.plan_version.core_product)
+        return get_dimagi_from_email()
 
     @staticmethod
     def _get_total_balance(credit_lines):
