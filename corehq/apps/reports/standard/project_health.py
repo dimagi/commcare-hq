@@ -243,7 +243,7 @@ class ProjectHealthDashboard(ProjectReport):
                                .group_ids(groupids_param)
                                .values_list("users", flat=True))
         if locationid_param and groupids_param:
-            users_set = set(chain(*users_list_by_group)).intersection(users_lists_by_location)
+            users_set = set(chain(*users_list_by_group)).union(users_lists_by_location)
         elif locationid_param:
                 users_set = set(users_lists_by_location)
         else:
