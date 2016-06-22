@@ -1,7 +1,3 @@
-from django.conf import settings
-from couchdbkit.client import Server
-import logging
-import time
 
 MAX_TRIES = 10
 

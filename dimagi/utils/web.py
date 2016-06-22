@@ -6,7 +6,6 @@ import os
 import re
 import traceback
 import sys
-import warnings
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import RequestContext

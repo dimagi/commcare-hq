@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 import importlib
-import sys
 
 
 def to_function(function_path, failhard=False):

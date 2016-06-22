@@ -1,7 +1,6 @@
 import urllib2
 import logging
 import json
-import smtplib
 from gmailloghandler import TLSSMTPHandler
 
 # this is a simple uptime monitoring script to send alert emails

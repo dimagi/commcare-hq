@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 import os
-from urlparse import urlparse
-import httplib
 import subprocess
 import tempfile
 from subprocess import PIPE

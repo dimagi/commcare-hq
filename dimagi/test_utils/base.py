@@ -6,7 +6,7 @@ if not settings.configured:
     settings.configure(DEBUG=True)
 
 
-from mock import patch, MagicMock, call, NonCallableMock
+from mock import MagicMock, NonCallableMock, patch
 from unittest2 import TestCase
 
 from dimagi.utils.create_unique_filter import create_unique_filter
