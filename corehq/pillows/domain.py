@@ -30,9 +30,7 @@ def transform_domain_for_elasticsearch(doc_dict):
 
 
 def get_domain_kafka_to_elasticsearch_pillow(pillow_id='domain-kafka-to-es'):
-    checkpoint = PillowCheckpoint(
-        pillow_id,
-    )
+    checkpoint = PillowCheckpoint(pillow_id)
     domain_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=DOMAIN_INDEX_INFO,
