@@ -1490,7 +1490,6 @@ class Subscription(models.Model):
         context = {
             'domain': domain_name,
             'plan_name': plan_name,
-            'product': product,
             'ending_on': ending_on,
             'subscription_url': absolute_reverse(
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
