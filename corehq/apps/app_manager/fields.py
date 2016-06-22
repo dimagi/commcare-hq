@@ -346,9 +346,10 @@ class ApplicationDataRMIHelper(object):
             choices = map(lambda c: c._asdict(), choices)
         return choices
 
-    def _get_app_type_choices_for_cases(self):
+    def _get_app_type_choices_for_cases(self, has_unknown_case_types=False):
         choices = [(_("Applications"), self.APP_TYPE_ALL)]
-        choices.append((_("Unknown"), self.APP_TYPE_UNKNOWN))
+        if has_unknown_case_types:
+            choices.append((_("Unknown"), self.APP_TYPE_UNKNOWN))
         choices = map(
             lambda choice: RMIDataChoice(id=choice[1], text=choice[0], data={}),
             choices
@@ -517,7 +518,9 @@ class ApplicationDataRMIHelper(object):
         if self.as_dict:
             apps_by_type = self._map_chosen_by_choice_as_dict(apps_by_type)
         response = AppCaseRMIResponse(
-            app_types=self._get_app_type_choices_for_cases(),
+            app_types=self._get_app_type_choices_for_cases(
+                has_unknown_case_types=bool(case_types_by_app.get(self.UNKNOWN_SOURCE))
+            ),
             apps_by_type=apps_by_type,
             case_types_by_app=case_types_by_app,
             placeholders=self.case_placeholders
