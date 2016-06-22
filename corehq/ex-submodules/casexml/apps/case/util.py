@@ -28,7 +28,7 @@ def validate_phone_datetime(datetime_string, none_ok=False):
             soft_assert('@'.join(['droberts', 'dimagi.com']))(
                 False,
                 'phone datetime should never be empty'
-            )
+            )  # @date_modified is empty if form is edited in HQ
             return None
     try:
         return iso8601.parse_date(datetime_string)
