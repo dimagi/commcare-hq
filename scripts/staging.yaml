@@ -51,18 +51,18 @@ branches:
   - vellum-staging # J$ 11/13
   - calculatedIcons # Sravan 3/2
   - xform-blobs  # daniel 5/23
-  - pillow-to-mark-apps-as-data-submitted  # Ben 6/15
-  - ignore-base-url  # Ben 6/16/16
   - new-signup  # Biyeun 6/21
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+      - 2.28-jars
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches:
+      - 2.28-jars
   submodules/ctable-src:
     branches: []
   submodules/django-digest-src:

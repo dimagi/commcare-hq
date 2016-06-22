@@ -638,7 +638,7 @@ class XForm(WrappedNode):
     def video_references(self):
         return self.media_references(form="video") + self.media_references(form="video-inline")
 
-    def all_references(self, lang):
+    def all_media_references(self, lang):
         images = self.media_references_by_lang(lang=lang, form="image")
         video = self.media_references_by_lang(lang=lang, form="video")
         audio = self.media_references_by_lang(lang=lang, form="audio")
