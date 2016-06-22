@@ -172,7 +172,9 @@ def get_app_and_build_ids(domain, build_or_app_id):
             copy_of = app_json.get('copy_of')
             if copy_of:
                 return copy_of, build_or_app_id
-    return build_or_app_id, None
+            return build_or_app_id, None
+        else:
+            return None, None
 
 
 def determine_authtype(request):
