@@ -1,8 +1,27 @@
 from collections import defaultdict
 
+from celery.schedules import crontab
+from celery.task import periodic_task
+
+from django.core.management import call_command
+
 from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
     parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
     CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
+
+
+@periodic_task(run_every=crontab(day_of_week=[1, 4]))  # every Monday and Thursday
+def fix_xforms_with_missing_xmlns():
+    # Create a log file
+    log_file_name = None
+
+    call_command('fix_xforms_with_undefined_xmlns', log_file_name)
+
+    with open(log_file_name, "r") as f:
+        stats = get_summary_stats_from_stream(f)
+
+    # Email the results to someone
+    # If there are any exceptions while running the task, ensure that someone gets an email with the stack trace (this might happen already)
 
 
 def get_summary_stats_from_stream(stream):
