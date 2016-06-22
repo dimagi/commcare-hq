@@ -200,7 +200,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     fields = [
         'corehq.apps.reports.filters.select.MultiGroupFilter',
-        'corehq.apps.reports.filters.fixtures.OptionalAsyncLocationFilter',
+        'corehq.apps.reports.filters.location.LocationGroupFilter',
     ]
 
     @classmethod
