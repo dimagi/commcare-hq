@@ -3897,10 +3897,8 @@ class LazyBlobDoc(BlobMixin):
     Cache strategy:
     - on fetch, check in local memory, then cache
       - if both are a miss, fetch from couchdb and store in both
-    - before an attachment is committed to couchdb, clear cache
-      (allowing the next fetch to go all the way through).
-      Clear rather than write new value, in case something
-      goes wrong with the save.
+    - after an attachment is committed to the blob db and the
+      save save has succeeded, save the attachment in the cache
     """
 
     migrating_blobs_from_couch = True
@@ -4018,8 +4016,11 @@ class LazyBlobDoc(BlobMixin):
                 for name, info in self._LAZY_ATTACHMENTS.items():
                     if not info['content_type']:
                         info['content_type'] = ';'.join(filter(None, guess_type(name)))
-                    self.__remove_cached_attachment(name)
                     super(LazyBlobDoc, self).put_attachment(name=name, **info)
+            # super_save() has succeeded by now
+            for name, info in self._LAZY_ATTACHMENTS.items():
+                self.__set_cached_attachment(name, info['content'])
+            self._LAZY_ATTACHMENTS.clear()
         else:
             super_save()
 
