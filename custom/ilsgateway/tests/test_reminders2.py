@@ -16,7 +16,6 @@ from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN, prepare_domain, create_products
 from custom.ilsgateway.utils import make_loc
-from custom.logistics.tests import TestScript
 from custom.logistics.tests.utils import bootstrap_user
 
 
