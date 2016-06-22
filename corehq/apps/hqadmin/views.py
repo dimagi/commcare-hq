@@ -577,8 +577,10 @@ def _lookup_id_in_database(doc_id, db_name=None):
         db = _SQL_DBS.get(db_name, None)
         if db:
             dbs = [db]
+        elif db_name == couch_config.get_db(None).dbname:
+            dbs = [couch_config.get_db(None)]
         else:
-            dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
+            dbs = [couch_config.get_db(db_name)]
     else:
         couch_dbs = couch_config.all_dbs_by_slug.values()
         sql_dbs = _SQL_DBS.values()
