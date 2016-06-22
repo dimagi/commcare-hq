@@ -794,10 +794,6 @@ class SoftwarePlanVersion(models.Model):
         }
 
     @property
-    def core_product(self):
-        return self.product_rate.product.product_type
-
-    @property
     def version(self):
         return (self.plan.softwareplanversion_set.count() -
                 self.plan.softwareplanversion_set.filter(
@@ -1453,13 +1449,11 @@ class Subscription(models.Model):
         user_desc = self.plan_version.user_facing_description
         plan_name = user_desc['name']
         domain_name = self.subscriber.domain
-        product = self.plan_version.core_product
         emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
         emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
-            subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
+            subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
                         "ends %(ending_on)s") % {
-                'product': product,
                 'domain': domain_name,
                 'ending_on': ending_on,
             }
@@ -1467,10 +1461,9 @@ class Subscription(models.Model):
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
             subject = _(
-                "%(product)s Alert: %(domain)s's subscription to "
+                "CommCare Alert: %(domain)s's subscription to "
                 "%(plan_name)s ends %(ending_on)s"
             ) % {
-                'product': product,
                 'plan_name': plan_name,
                 'domain': domain_name,
                 'ending_on': ending_on,
