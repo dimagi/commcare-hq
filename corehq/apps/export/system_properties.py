@@ -248,7 +248,7 @@ TOP_MAIN_CASE_TABLE_PROPERTIES = [
     ExportColumn(
         label='name',
         item=ExportItem(path=[PathNode(name='name')]),
-        help_text=_("The id of the case"),
+        help_text=_("The name of the case"),
         selected=True
     ),
 ]
