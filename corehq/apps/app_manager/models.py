@@ -3953,22 +3953,9 @@ class LazyBlobDoc(BlobMixin):
                 self._LAZY_ATTACHMENTS_CACHE[name] = content
         return content
 
-    def __remove_cached_attachment(self, name):
+    def put_attachment(self, content, name=None, *args, **kw):
         cache.delete(self.__attachment_cache_key(name))
         self._LAZY_ATTACHMENTS_CACHE.pop(name, None)
-
-    def __store_lazy_attachment(self, content, name=None, content_type=None,
-                                content_length=None):
-        info = {
-            'content': content,
-            'content_type': content_type,
-            'content_length': content_length,
-        }
-        self._LAZY_ATTACHMENTS[name] = info
-        return info
-
-    def put_attachment(self, content, name=None, *args, **kw):
-        self.__remove_cached_attachment(name)
         return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
 
     def lazy_put_attachment(self, content, name=None, content_type=None,
@@ -3978,7 +3965,11 @@ class LazyBlobDoc(BlobMixin):
         and that upon self.save(), the attachments are put to the doc as well
 
         """
-        self.__store_lazy_attachment(content, name, content_type, content_length)
+        self._LAZY_ATTACHMENTS[name] = {
+            'content': content,
+            'content_type': content_type,
+            'content_length': content_length,
+        }
 
     def lazy_fetch_attachment(self, name):
         # it has been put/lazy-put already during this request
