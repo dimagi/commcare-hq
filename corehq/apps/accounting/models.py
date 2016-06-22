@@ -112,14 +112,6 @@ class SoftwareProductType(object):
         (COMMCONNECT, COMMCONNECT),
     )
 
-    @classmethod
-    def get_type_by_domain(cls, domain):
-        if domain.commtrack_enabled:
-            return cls.COMMTRACK
-        if domain.commconnect_enabled:
-            return cls.COMMCONNECT
-        return cls.COMMCARE
-
 
 class SoftwarePlanEdition(object):
     COMMUNITY = "Community"
