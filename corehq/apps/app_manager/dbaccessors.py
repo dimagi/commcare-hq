@@ -209,6 +209,25 @@ def get_built_app_ids_for_app_id(domain, app_id, version=None):
     return [result['id'] for result in results]
 
 
+def get_built_app_ids_with_submissions_for_app_id(domain, app_id, version=None):
+    """
+    Returns all the built apps for an application id that have submissions.
+    If version is specified returns all apps after that version.
+    """
+    from .models import Application
+    key = [domain, app_id]
+    skip = 1 if version else 0
+    results = Application.get_db().view(
+        'apps_with_submissions/view',
+        startkey=key + [version],
+        endkey=key + [{}],
+        reduce=False,
+        include_docs=False,
+        skip=skip
+    ).all()
+    return [result['id'] for result in results]
+
+
 def get_latest_app_ids_and_versions(domain, app_id=None):
     """
     Returns all the latest app_ids and versions in a dictionary.
