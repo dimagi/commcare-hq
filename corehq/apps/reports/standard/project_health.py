@@ -217,34 +217,37 @@ class ProjectHealthDashboard(ProjectReport):
             params = []
         return params
 
-    def get_users_by_filter(self):
-        param_ids = self.get_group_location_ids()
-        if param_ids:
-            param_ids = param_ids[0].split(',')
-
-        locationid_param = []
+    def parse_param_to_loc_group(self, param_ids):
+        locationids_param = []
         groupids_param = []
 
-        for id in param_ids:
-            if id.startswith("g__"):
-                groupids_param.append(id[3:])
-            elif id.startswith("l__"):
-                loc = SQLLocation.by_location_id(id[3:])
-                if loc.get_descendants():
-                    locationid_param.extend(loc.get_descendants().location_ids())
-                locationid_param.append(id[3:])
+        if param_ids:
+            param_ids = param_ids[0].split(',')
+            for id in param_ids:
+                if id.startswith("g__"):
+                    groupids_param.append(id[3:])
+                elif id.startswith("l__"):
+                    loc = SQLLocation.by_location_id(id[3:])
+                    if loc.get_descendants():
+                        locationids_param.extend(loc.get_descendants().location_ids())
+                    locationids_param.append(id[3:])
+
+        return locationids_param, groupids_param
+
+    def get_users_by_filter(self):
+        locationids_param, groupids_param = self.parse_param_to_loc_group(self.get_group_location_ids())
 
         users_lists_by_location = (UserES()
                                    .domain(self.domain)
-                                   .location(locationid_param)
+                                   .location(locationids_param)
                                    .values_list('_id', flat=True))
         users_list_by_group = (GroupES()
                                .domain(self.domain)
                                .group_ids(groupids_param)
                                .values_list("users", flat=True))
-        if locationid_param and groupids_param:
+        if locationids_param and groupids_param:
             users_set = set(chain(*users_list_by_group)).union(users_lists_by_location)
-        elif locationid_param:
+        elif locationids_param:
                 users_set = set(users_lists_by_location)
         else:
             users_set = set(chain(*users_list_by_group))
