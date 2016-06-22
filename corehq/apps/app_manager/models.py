@@ -3941,12 +3941,21 @@ class LazyBlobDoc(BlobMixin):
 
     def __set_cached_attachment(self, name, content):
         cache.set(self.__attachment_cache_key(name), content, timeout=60 * 60 * 24)
+        self._LAZY_ATTACHMENTS_CACHE[name] = content
 
     def __get_cached_attachment(self, name):
-        return cache.get(self.__attachment_cache_key(name))
+        try:
+            # it has been fetched already during this request
+            content = self._LAZY_ATTACHMENTS_CACHE[name]
+        except KeyError:
+            content = cache.get(self.__attachment_cache_key(name))
+            if content is not None:
+                self._LAZY_ATTACHMENTS_CACHE[name] = content
+        return content
 
     def __remove_cached_attachment(self, name):
         cache.delete(self.__attachment_cache_key(name))
+        self._LAZY_ATTACHMENTS_CACHE.pop(name, None)
 
     def __store_lazy_attachment(self, content, name=None, content_type=None,
                                 content_length=None):
@@ -3973,15 +3982,12 @@ class LazyBlobDoc(BlobMixin):
 
     def lazy_fetch_attachment(self, name):
         # it has been put/lazy-put already during this request
-        if name in self._LAZY_ATTACHMENTS and 'content' in self._LAZY_ATTACHMENTS[name]:
+        if name in self._LAZY_ATTACHMENTS:
             content = self._LAZY_ATTACHMENTS[name]['content']
-        # it has been fetched already during this request
-        elif name in self._LAZY_ATTACHMENTS_CACHE:
-            content = self._LAZY_ATTACHMENTS_CACHE[name]
         else:
             content = self.__get_cached_attachment(name)
 
-            if not content:
+            if content is None:
                 try:
                     content = self.fetch_attachment(name)
                 except ResourceNotFound as e:
@@ -3993,9 +3999,6 @@ class LazyBlobDoc(BlobMixin):
                     raise
                 finally:
                     self.__set_cached_attachment(name, content)
-                    self._LAZY_ATTACHMENTS_CACHE[name] = content
-            else:
-                self._LAZY_ATTACHMENTS_CACHE[name] = content
 
         if isinstance(content, ResourceNotFound):
             raise content
