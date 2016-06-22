@@ -155,7 +155,7 @@ class Command(BaseCommand):
         duplicate_xform.doc_type = XFormInstance.__name__
         duplicate_xform = XFormInstance.wrap(duplicate_xform.to_json())
 
-        self.log_swap(log_file, bad_xform_id, duplicate_xform_id, domain, dry_run)
+        self.log_swap(log_file, bad_xform_id, domain, duplicate_xform_id, dry_run)
 
         if not dry_run:
             duplicate_xform.save()
