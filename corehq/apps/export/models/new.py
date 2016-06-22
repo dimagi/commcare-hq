@@ -1012,7 +1012,7 @@ class FormExportDataSchema(ExportDataSchema):
             xform,
             case_updates,
             app.langs,
-            app.copy_of,
+            app.copy_of or app._id,  # If it's not a copy, must be current
             app.version,
         )
         return FormExportDataSchema._merge_schemas(current_schema, xform_schema)
@@ -1115,18 +1115,18 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
-            app.copy_of,
+            app.copy_of or app._id,  # If not copy, must be current app
             app.version,
         ))
         if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
             case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
-                app.copy_of,
+                app.copy_of or app._id,
                 app.version,
             ))
 
         case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
             case_property_mapping,
-            app.copy_of,
+            app.copy_of or app._id,
             app.version,
         ))
         case_schemas.append(current_schema)
