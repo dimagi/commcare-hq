@@ -25,16 +25,18 @@ def call_center_data_source_configuration_provider():
     domains = [domain.name for domain in get_call_center_domains() if domain.use_fixtures]
     for data_source_path in data_source_paths:
         data_source_json = _get_json(data_source_path)
-        yield StaticDataSourceConfiguration(domains=domains, config=data_source_json), data_source_path
+        ds_conf = StaticDataSourceConfiguration.wrap(deepcopy(data_source_json))
+        ds_conf.domains = domains
+        yield ds_conf, data_source_path
 
 
 def get_data_source_templates():
-    call_center_data_sources = [
+    configs_json = [
         _get_json(FORM_DATA_SOURCE_PATH),
         _get_json(CASE_DATA_SOURCE_PATH),
         _get_json(CASE_ACTION_DATA_SOURCE_PATH),
     ]
-    return call_center_data_sources
+    return [config['config'] for config in configs_json]
 
 
 def get_sql_adapters_for_domain(domain_name):
