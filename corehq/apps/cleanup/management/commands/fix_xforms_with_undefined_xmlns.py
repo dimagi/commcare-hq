@@ -7,6 +7,8 @@ from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_correct_app_class
+from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xmlns import \
+    name_matches
 from corehq.apps.es import FormES
 from corehq.apps.es.filters import NOT, doc_type
 from corehq.util.couch import IterDB
@@ -26,6 +28,8 @@ WARNING = "warning"
 SET_XMLNS = "set-xmlns-on-xfrom"
 ERROR_SAVING = "error-saving-xform"
 MULTI_MATCH = "multiple-possible-forms"
+FORM_HAS_UNDEFINED_XMLNS = "build-has-form-with-undefined-xmlns"
+CANT_MATCH = "cant-match-xform-to-form"
 
 
 class Command(BaseCommand):
@@ -50,6 +54,17 @@ class Command(BaseCommand):
         dry_run = options.get("dry_run", True)
         log_path = args[0].strip()
 
+        if not options.get('no_input', False) and not dry_run:
+            confirm = raw_input(
+                u"""
+                Are you sure you want to fix XFormInstances with "undefined" xmlns?
+                This is NOT a dry run. y/N?
+                """
+            )
+            if confirm != "y":
+                print "\n\t\tSwap duplicates cancelled."
+                return
+
         with open(log_path, "w") as log_file:
             self.fix_xforms(log_file, dry_run)
 
@@ -68,6 +83,12 @@ class Command(BaseCommand):
                         unfixable_builds.add(xform_instance.build_id)
                         print e.message
                     _log(log_file, WARNING, MULTI_MATCH, xform_instance)
+                    continue
+                except CantMatchAForm as e:
+                    _log(log_file, WARNING, CANT_MATCH, xform_instance)
+                    continue
+                except BuildHasFormsWithUndefinedXmlns as e:
+                    _log(log_file, WARNING, FORM_HAS_UNDEFINED_XMLNS, xform_instance)
                     continue
 
                 if xmlns:
@@ -214,6 +235,14 @@ class MultiplePreviouslyFixedForms(Exception):
         super(MultiplePreviouslyFixedForms, self).__init__(template.format(app_id, build_id))
 
 
+class CantMatchAForm(Exception):
+    pass
+
+
+class BuildHasFormsWithUndefinedXmlns(Exception):
+    pass
+
+
 @quickcache(["xform_instance.build_id"], memoize_timeout=ONE_HOUR)
 def get_correct_xmlns(xform_instance):
     if xform_instance.build_id is None:
@@ -224,5 +253,19 @@ def get_correct_xmlns(xform_instance):
     previously_fixed_forms_in_build = get_previously_fixed_forms(build)
     if len(previously_fixed_forms_in_build) == 1:
         return previously_fixed_forms_in_build[0].xmlns
+    elif len(previously_fixed_forms_in_build) == 0:
+        if get_forms_without_xmlns(build):
+            # We don't expect this to ever happen
+            raise BuildHasFormsWithUndefinedXmlns()
+        else:
+            matching_forms = find_matching_forms_by_name(xform_instance, build)
+            if len(matching_forms) == 1:
+                return matching_forms[0].xmlns
+            else:
+                raise CantMatchAForm()
     else:
         raise MultiplePreviouslyFixedForms(xform_instance.build_id, xform_instance.app_id)
+
+
+def find_matching_forms_by_name(xform_instance, build):
+    return [form for form in build.get_forms() if name_matches(xform_instance.name, form.name)]
