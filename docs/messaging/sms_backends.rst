@@ -1,16 +1,16 @@
 SMS Backends
 ============
 
-We have one SMS Backend per SMS Gateway that we make available.
+We have one SMS Backend class per SMS Gateway that we make available.
 
-SMS Backends are defined by creating a new directory under corehq.messaging.smsbackends, and the code for
-each backend has two main parts:
+SMS Backends are defined by creating a new directory under `corehq.messaging.smsbackends <https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/smsbackends>`_,
+and the code for each backend has two main parts:
 
-* The outbound part of the backend which is represented by a class that subclasses SQLSMSBackend
-  (corehq.apps.sms.models).
+* The outbound part of the backend which is represented by a class that subclasses
+  `corehq.apps.sms.models.SQLSMSBackend <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/models.py>`_
 
-* The inbound part of the backend which is represented by a view that subclasses NewIncomingBackendView
-  (corehq.apps.sms.views).
+* The inbound part of the backend which is represented by a view that subclasses
+  `corehq.apps.sms.views.NewIncomingBackendView <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/views.py>`_
 
 
 Outbound
@@ -29,7 +29,9 @@ be shared with other projects as well.
 
 To write the outbound backend code:
 
-#. Create a subclass of SQLSMSBackend (corehq.apps.sms.models) and implement the unimplemented methods:
+#. Create a subclass of `corehq.apps.sms.models.SQLSMSBackend <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/models.py>`_
+   and implement the unimplemented methods:
+
     get_api_id
         should return a string that uniquely identifies the backend type (but is shared across backend instances);
         we choose to not use the class name for this since class names can change but the api id should never
@@ -41,21 +43,21 @@ To write the outbound backend code:
         authenticating with the SMS gateway; list those fields here and they will be accessible via the
         backend's config property
     get_form_class
-        should return a subclass of BackendForm (corehq.apps.sms.forms), which should:
-        * have form fields for each of the fields in get_available_extra_fields, and
-        * implement the gateway_specific_fields property, which should return a crispy forms rendering of those
-          fields
+        should return a subclass of `corehq.apps.sms.forms.BackendForm <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/forms.py>`_,
+        which should:
+         * have form fields for each of the fields in get_available_extra_fields, and
+         * implement the gateway_specific_fields property, which should return a crispy forms rendering of those fields
     send
-        takes a QueuedSMS (corehq.apps.sms.models) object as an argument and is responsible for interfacing with
-        the SMS Gateway's API to send the SMS; if you want the framework to retry the SMS, raise an exception in
-        this method, otherwise if no exception is raised the framework takes that to mean the process was
-        successful
+        takes a `corehq.apps.sms.models.QueuedSMS <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/models.py>`_
+        object as an argument and is responsible for interfacing with the SMS Gateway's API to send the SMS; if you want the
+        framework to retry the SMS, raise an exception in this method, otherwise if no exception is raised the framework takes
+        that to mean the process was successful
 
 #. Add the backend to sms.SMS_LOADED_SQL_BACKENDS
 
-#. Add an outbound test for the backend in corehq.apps.sms.tests.test_backends. This will test that the backend is
-   reachable by the framework, but any testing of the direct API connection with the gateway must be tested
-   manually.
+#. Add an outbound test for the backend in `corehq.apps.sms.tests.test_backends <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/tests/test_backends.py>`_.
+   This will test that the backend is reachable by the framework, but any testing of the direct API connection with the gateway
+   must be tested manually.
 
 Once that's done, you should be able to create instances of the backend by navigating to Messaging -> SMS
 Connectivity (for domain-level backend instances) or Admin -> SMS Connectivity and Billing (for global backend
@@ -89,12 +91,14 @@ Gateway expects so that the gateway can connect to CommCareHQ and notify us of i
 
 To write the inbound backend code:
 
-#. Create a subclass of NewIncomingBackendView (corehq.apps.sms.views), and implement the unimplemented property:
+#. Create a subclass of `corehq.apps.sms.views.NewIncomingBackendView <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/views.py>`_,
+   and implement the unimplemented property:
     backend_class
         should return the subclass of SQLSMSBackend that was written above
 
 #. Implement either the get() or post() method on the view based on the gateway's API. The only requirement of
-   the framework is that this method call the incoming function (corehq.apps.sms.api), but you should also:
+   the framework is that this method call the `corehq.apps.sms.api.incoming <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/api.py>`_
+   function, but you should also:
     * pass self.backend_couch_id as the backend_id kwarg to incoming()
     * if the gateway gives you a unique identifier for the SMS in their system, pass that identifier as the
       backend_message_id kwarg to incoming(); this can help later with debugging
@@ -135,12 +139,12 @@ Load Balancing
 
 If you want to load balance the Outbound SMS traffic automatically across multiple phone numbers, do the following:
 
-#. Make your BackendForm subclass the LoadBalancingBackendFormMixin (corehq.apps.sms.forms)
+#. Make your BackendForm subclass the `corehq.apps.sms.forms.LoadBalancingBackendFormMixin <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/forms.py>`_
 
-#. Make your SQLSMSBackend subclass the PhoneLoadBalancingMixin (corehq.apps.sms.models)
+#. Make your SQLSMSBackend subclass the `corehq.apps.sms.models.PhoneLoadBalancingMixin <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/models.py>`_
 
 #. Make your SQLSMSBackend's send method take a orig_phone_number kwarg. This will be the phone number to use when
-   sending. This is always send to the send() method, even if there is just one phone number to load balance over.
+   sending. This is always sent to the send() method, even if there is just one phone number to load balance over.
 
 From there, the framework will automatically handle managing the phone numbers through the create/edit gateway UI
 and balancing the load across the numbers when sending. A simple round robin approach is taken when balancing the

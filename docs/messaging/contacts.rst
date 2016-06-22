@@ -5,7 +5,7 @@ A contact is a single person that we want to interact with through messaging. In
 writing, contacts can either be users (CommCareUser, WebUser) or cases (CommCareCase).
 
 In order for the messaging frameworks to interact with a contact, the contact must implement the
-CommCareMobileContactMixin found in corehq/apps/sms/mixin.py.
+`corehq.apps.sms.mixin.CommCareMobileContactMixin <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/mixin.py>`_.
 
 Contacts have phone numbers which allows CommCareHQ to interact with them. All phone numbers for contacts
 must be stored in International Format, and the frameworks always assume a phone number is given in
@@ -44,9 +44,10 @@ contact_phone_number_is_verified
 If two cases are registered with the same phone number and both set the verified flag to 1, it will only
 be granted two-way phone number status to the case who registers it first.
 
-If a two-way phone number can be granted for the case, a PhoneNumber entry with verified set to True is
-created for it. This happens automatically by running celery task sync_case_phone_number
-(corehq/apps/sms/tasks.py) for a case each time a case is saved.
+If a two-way phone number can be granted for the case, a `corehq.apps.sms.models.PhoneNumber <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/models.py>`_
+entry with verified set to True is created for it. This happens automatically by running celery task
+`corehq.apps.sms.tasks.sync_case_phone_number <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/tasks.py>`_
+for a case each time a case is saved.
 
 Future State
 ^^^^^^^^^^^^

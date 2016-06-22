@@ -27,7 +27,7 @@ Interactive Voice Response (IVR) Session:
     can change based on those choices
 
 IVR Gateway
-    a third party service that provides and API for handling IVR sessions
+    a third party service that provides an API for handling IVR sessions
 
 International Format (also referred to as E.164 Format) for a Phone Number:
     a format for a phone number which makes it so that it can be reached from any other country; the format
@@ -56,8 +56,9 @@ IVR Backend
 Two-way Phone Number
     a phone number that the system has tied to a single contact in a single domain, so that the system
     can not only send oubound SMS to the contact, but the contact can also send inbound SMS and have
-    the system process them accordingly; the system currently only considers a number to be two-way
-    if there is a PhoneNumber entry for it that as verified = True
+    the system process it accordingly; the system currently only considers a number to be two-way
+    if there is a `corehq.apps.sms.models.PhoneNumber <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/models.py>`_
+    entry for it that has verified = True
 
 One-way Phone Number
     a phone number that has not been tied to a single contact, so that the system can only send outbound
