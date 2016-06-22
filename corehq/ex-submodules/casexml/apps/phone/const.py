@@ -13,5 +13,5 @@ INITIAL_ASYNC_TIMEOUT_THRESHOLD = 10
 # to see if the task is done.
 ASYNC_RETRY_AFTER = 30
 
-ASYNC_RESTORE_CACHE_KEY_PREFIX = "async-restore"
+ASYNC_RESTORE_CACHE_KEY_PREFIX = "async-restore-task"
 RESTORE_CACHE_KEY_PREFIX = "ota-restore"
