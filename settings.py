@@ -1643,7 +1643,7 @@ STATIC_DATA_SOURCES = [
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_provider'
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]
 
 
