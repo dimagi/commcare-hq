@@ -351,7 +351,7 @@ def create_wire_credits_invoice(domain_name,
 
 
 @task(ignore_result=True)
-def send_purchase_receipt(payment_record, core_product, domain,
+def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
                           additional_context):
     username = payment_record.payment_method.web_user
