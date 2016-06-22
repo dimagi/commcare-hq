@@ -5,12 +5,12 @@ from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.export.models.new import MAIN_TABLE, \
     PathNode, _question_path_to_path_nodes
-from dimagi.utils.couch.database import safe_delete
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
 from corehq.apps.app_manager.signals import app_post_save
+from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
@@ -379,10 +379,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         # to circumvent domain.delete()'s recursive deletion that this test doesn't need
 
     def tearDown(self):
-        db = ExportDataSchema.get_db()
-        for row in db.view('schemas_by_xmlns_or_case_type/view', reduce=False):
-            doc_id = row['id']
-            safe_delete(db, doc_id)
+        delete_all_export_data_schemas()
 
     def test_basic_application_schema(self):
         app = self.current_app
@@ -442,10 +439,7 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
         cls.current_app.delete()
 
     def tearDown(self):
-        db = ExportDataSchema.get_db()
-        for row in db.view('schemas_by_xmlns_or_case_type/view', reduce=False):
-            doc_id = row['id']
-            safe_delete(db, doc_id)
+        delete_all_export_data_schemas()
 
     def test_rebuild_version_control(self):
         app = self.current_app
@@ -505,10 +499,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
             app.delete()
 
     def tearDown(self):
-        db = ExportDataSchema.get_db()
-        for row in db.view('schemas_by_xmlns_or_case_type/view', reduce=False):
-            doc_id = row['id']
-            safe_delete(db, doc_id)
+        delete_all_export_data_schemas()
 
     def test_basic_application_schema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(
@@ -581,10 +572,7 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
             app.delete()
 
     def tearDown(self):
-        db = ExportDataSchema.get_db()
-        for row in db.view('schemas_by_xmlns_or_case_type/view', reduce=False):
-            doc_id = row['id']
-            safe_delete(db, doc_id)
+        delete_all_export_data_schemas()
 
     def test_parent_case_table_generation(self):
         """
