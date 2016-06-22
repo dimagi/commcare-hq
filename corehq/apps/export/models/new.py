@@ -862,7 +862,8 @@ class ExportDataSchema(Document):
             app_id,
             current_schema.last_app_versions,
         )
-        app_build_ids.append(app_id)
+        if app_id:
+            app_build_ids.append(app_id)
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             # TODO: Remove this when we mark applications that have been submitted
             if (USE_SQL_BACKEND.enabled(domain) and
@@ -874,7 +875,6 @@ class ExportDataSchema(Document):
             current_schema = cls._process_app_build(
                 current_schema,
                 app,
-                app_id,
                 identifier,
             )
 
@@ -1002,7 +1002,7 @@ class FormExportDataSchema(ExportDataSchema):
         return get_latest_form_export_schema(domain, app_id, form_xmlns)
 
     @staticmethod
-    def _process_app_build(current_schema, app, app_id, form_xmlns):
+    def _process_app_build(current_schema, app, form_xmlns):
         xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
         if not xform:
             return current_schema
@@ -1012,7 +1012,7 @@ class FormExportDataSchema(ExportDataSchema):
             xform,
             case_updates,
             app.langs,
-            app_id,
+            app.copy_of,
             app.version,
         )
         return FormExportDataSchema._merge_schemas(current_schema, xform_schema)
@@ -1101,7 +1101,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_latest_case_export_schema(domain, case_type)
 
     @staticmethod
-    def _process_app_build(current_schema, app, app_id, case_type):
+    def _process_app_build(current_schema, app, case_type):
         case_property_mapping = get_case_properties(
             app,
             [case_type],
@@ -1115,18 +1115,18 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
-            app_id,
+            app.copy_of,
             app.version,
         ))
         if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
             case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
-                app_id,
+                app.copy_of,
                 app.version,
             ))
 
         case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
             case_property_mapping,
-            app_id,
+            app.copy_of,
             app.version,
         ))
         case_schemas.append(current_schema)

@@ -1402,6 +1402,11 @@ class CaseExportListView(BaseExportListView):
             raise ExportFormValidationException()
         case_type = create_form.cleaned_data['case_type']
         app_id = create_form.cleaned_data['application']
+        if app_id == ApplicationDataRMIHelper.UNKNOWN_SOURCE:
+            app_id_param = ''
+        else:
+            app_id_param = '&app_id={}'.format(app_id)
+
         if toggles.NEW_EXPORTS.enabled(self.domain):
             cls = CreateNewCustomCaseExportView
         else:
@@ -1409,9 +1414,9 @@ class CaseExportListView(BaseExportListView):
         return reverse(
             cls.urlname,
             args=[self.domain],
-        ) + ('?export_tag="{export_tag}"&app_id={app_id}'.format(
+        ) + ('?export_tag="{export_tag}"{app_id_param}'.format(
             export_tag=case_type,
-            app_id=app_id,
+            app_id_param=app_id_param,
         ))
 
 
