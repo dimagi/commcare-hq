@@ -632,7 +632,7 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
     @property
     @memoized
     def product(self):
-        return SoftwareProductType.get_type_by_domain(self.domain_object)
+        return SoftwareProductType.COMMCARE
 
     @property
     @memoized
