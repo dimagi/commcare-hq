@@ -24,7 +24,7 @@ class TestDemoUser(TestCase):
         factory.create_case(owner_id=cls.user._id, update={'custom_prop': 'custom_value'})
 
     def _raw_restore_response(self):
-        streaming_response = get_restore_response(self.domain, self.user, version='2.0')
+        streaming_response, _ = get_restore_response(self.domain, self.user, version='2.0')
         return list(streaming_response.streaming_content)[0]
 
     def _assert_restore(self, should_change=True):
