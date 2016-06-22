@@ -331,7 +331,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         )
 
     def _humanized_features(self):
-        return [{'type': get_feature_name(feature['type'], self.core_product),
+        return [{'type': get_feature_name(feature['type'], SoftwareProductType.COMMCARE),
                  'amount': fmt_dollar_amount(feature['amount'])}
                 for feature in self.features]
 
