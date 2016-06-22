@@ -16,6 +16,7 @@ class AllCommCareUsersTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AllCommCareUsersTest, cls).setUpClass()
         delete_all_users()
         cls.ccdomain = Domain(name='cc_user_domain')
         cls.ccdomain.save()
@@ -50,6 +51,7 @@ class AllCommCareUsersTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_users()
+        super(AllCommCareUsersTest, cls).tearDownClass()
 
     def test_get_all_commcare_users_by_domain(self):
         expected_users = [self.ccuser_2, self.ccuser_1]

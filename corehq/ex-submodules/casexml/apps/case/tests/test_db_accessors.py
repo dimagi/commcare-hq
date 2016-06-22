@@ -1,25 +1,29 @@
 import uuid
 
 from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
-from casexml.apps.case.dbaccessors.related import get_extension_case_ids, \
-    get_indexed_case_ids, get_reverse_indexed_cases, get_reverse_indices_json
+from casexml.apps.case.dbaccessors.related import get_reverse_indexed_cases, get_reverse_indices_json
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.case.tests.util import delete_all_cases
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from django.test import TestCase
 
 
 class TestExtensionCaseIds(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        delete_all_cases()
-
     def setUp(self):
+        super(TestExtensionCaseIds, self).setUp()
         self.domain = 'domain'
+        FormProcessorTestUtils.delete_all_cases()
         self.factory = CaseFactory(self.domain)
 
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
+        super(TestExtensionCaseIds, self).tearDown()
+
+    @run_with_all_backends
     def test_no_extensions(self):
         """ Returns empty when there are other index types """
         parent_id = uuid.uuid4().hex
@@ -34,9 +38,10 @@ class TestExtensionCaseIds(TestCase):
                 ]
             )
         )
-        returned_cases = get_extension_case_ids(self.domain, [parent_id])
+        returned_cases = CaseAccessors(self.domain).get_extension_case_ids([parent_id])
         self.assertEqual(returned_cases, [])
 
+    @run_with_all_backends
     def test_simple_extension_returned(self):
         """ Should return extension if it exists """
         host_id = uuid.uuid4().hex
@@ -51,9 +56,10 @@ class TestExtensionCaseIds(TestCase):
                 ]
             )
         )
-        returned_cases = get_extension_case_ids(self.domain, [host_id])
+        returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
         self.assertItemsEqual(returned_cases, [extension_id])
 
+    @run_with_all_backends
     def test_extension_of_multiple_hosts_returned(self):
         """ Should return an extension from any host if there are multiple indices """
         host_id = uuid.uuid4().hex
@@ -75,11 +81,12 @@ class TestExtensionCaseIds(TestCase):
             )
         )
 
-        returned_cases = get_extension_case_ids(self.domain, [host_2_id])
+        returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_2_id])
         self.assertItemsEqual(returned_cases, [extension_id])
-        returned_cases = get_extension_case_ids(self.domain, [host_id])
+        returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
         self.assertItemsEqual(returned_cases, [extension_id])
 
+    @run_with_all_backends
     def test_host_with_multiple_extensions(self):
         """ Return all extensions from a single host """
         host_id = uuid.uuid4().hex
@@ -104,9 +111,10 @@ class TestExtensionCaseIds(TestCase):
         ]
         )
 
-        returned_cases = get_extension_case_ids(self.domain, [host_id])
+        returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
         self.assertItemsEqual(returned_cases, [extension_id, extension_2_id])
 
+    @run_with_all_backends
     def test_extensions_from_list(self):
         """ Given a list of hosts, should return all extensions """
         host_id = uuid.uuid4().hex
@@ -132,20 +140,23 @@ class TestExtensionCaseIds(TestCase):
                 ]
             )
         )
-        returned_cases = get_extension_case_ids(self.domain, [host_id, host_2_id])
+        returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id, host_2_id])
         self.assertItemsEqual(returned_cases, [extension_id, extension_2_id])
 
 
 class TestIndexedCaseIds(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        delete_all_cases()
-
     def setUp(self):
+        super(TestIndexedCaseIds, self).setUp()
         self.domain = 'domain'
         self.factory = CaseFactory(self.domain)
 
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
+        super(TestIndexedCaseIds, self).tearDown()
+
+    @run_with_all_backends
     def test_indexed_case_ids_returns_extensions(self):
         """ When getting indices, also return extensions """
         host_id = uuid.uuid4().hex
@@ -160,17 +171,14 @@ class TestIndexedCaseIds(TestCase):
                 ]
             )
         )
-        returned_cases = get_indexed_case_ids(self.domain, [extension_id])
+        returned_cases = CaseAccessors(self.domain).get_indexed_case_ids([extension_id])
         self.assertItemsEqual(returned_cases, [host_id])
 
 
 class TestReverseIndexedCases(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        delete_all_cases()
-
     def setUp(self):
+        super(TestReverseIndexedCases, self).setUp()
         self.domain = 'domain'
         self.factory = CaseFactory(self.domain)
         self.indexed_case_id = uuid.uuid4().hex
@@ -182,6 +190,11 @@ class TestReverseIndexedCases(TestCase):
         )
         self.case = CommCareCase(domain=self.domain, indices=[self.index])
         self.case.save()
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases()
+        FormProcessorTestUtils.delete_all_xforms()
+        super(TestReverseIndexedCases, self).tearDown()
 
     def _delete_relationship(self):
         del self.case.indices[0].relationship

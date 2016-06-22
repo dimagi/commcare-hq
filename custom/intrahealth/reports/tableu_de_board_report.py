@@ -1,11 +1,7 @@
-from corehq.apps.locations.models import Location
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
-from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.style.decorators import use_nvd3
-from dimagi.utils.decorators.memoized import memoized
 from custom.intrahealth.filters import LocationFilter
 from custom.intrahealth.reports import IntraHealtMixin
 from custom.intrahealth.sqldata import *
@@ -19,8 +15,8 @@ class MultiReport(CustomProjectReport, IntraHealtMixin, ProjectReportParametersM
     export_format_override = 'csv'
 
     @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(MultiReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(MultiReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     @memoized

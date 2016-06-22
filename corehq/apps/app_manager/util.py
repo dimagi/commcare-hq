@@ -260,8 +260,8 @@ class ParentCasePropertyBuilder(object):
             for relationship, types in rel_map.items():
                 if len(types) > 1:
                     logger.error(
-                        "Case Type '%s' has multiple parents for relationship '%s': %s",
-                        case_type, relationship, types
+                        "Case Type '%s' in app '%s' has multiple parents for relationship '%s': %s",
+                        case_type, self.app.id, relationship, types
                     )
                 parent_map[case_type][relationship] = types[0]
 
@@ -672,13 +672,6 @@ def _app_callout_templates():
     while True:
         yield data
 app_callout_templates = _app_callout_templates()
-
-
-def use_app_aware_sync(app):
-    """
-    Determines whether OTA restore should sync only cases/ledgers/fixtures of the given app where possible
-    """
-    return toggles.APP_AWARE_SYNC.enabled(app.domain)
 
 
 def purge_report_from_mobile_ucr(report_config):

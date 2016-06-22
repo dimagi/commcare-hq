@@ -15,9 +15,9 @@ from corehq.apps.domain.decorators import domain_admin_required, login_or_digest
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
-from corehq.apps.ota.tasks import prime_restore
-from corehq.apps.style.views import BaseB3SectionPageView
+from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
@@ -26,7 +26,7 @@ from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
-from soil import DownloadBase
+from soil import MultipleTaskDownload
 
 from .utils import demo_user_restore_response
 
@@ -40,7 +40,8 @@ def restore(request, domain, app_id=None):
     """
     user = request.user
     couch_user = CouchUser.from_django_user(user)
-    return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    response, _ = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    return response
 
 
 @json_error
@@ -152,10 +153,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             overwrite_cache=overwrite_cache
         ),
     )
-    return restore_config.get_response()
+    return restore_config.get_response(), restore_config.timing_context
 
 
-class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
+class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
     page_title = ugettext_noop("Speed up 'Sync with Server'")
     section_name = ugettext_noop("Project Settings")
     urlname = 'prime_restore_cache'
@@ -213,8 +214,7 @@ class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
         return self.get(request, *args, **kwargs)
 
     def form_valid(self):
-        download = DownloadBase()
-        res = prime_restore.delay(
+        res = queue_prime_restore(
             self.domain,
             CommCareUser.ids_by_domain(self.domain),
             version=V2,
@@ -222,7 +222,9 @@ class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
             overwrite_cache=True,
             check_cache_only=False
         )
+        download = MultipleTaskDownload()
         download.set_task(res)
+        download.save()
 
         return redirect('hq_soil_download', self.domain, download.download_id)
 
@@ -244,8 +246,7 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
         else:
             user_ids = self.form.user_ids
 
-        download = DownloadBase()
-        res = prime_restore.delay(
+        res = queue_prime_restore(
             self.domain,
             user_ids,
             version=V2,
@@ -253,6 +254,8 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
             overwrite_cache=self.form.cleaned_data['overwrite_cache'],
             check_cache_only=self.form.cleaned_data['check_cache_only']
         )
+        download = MultipleTaskDownload()
         download.set_task(res)
+        download.save()
 
         return redirect('hq_soil_download', self.domain, download.download_id)

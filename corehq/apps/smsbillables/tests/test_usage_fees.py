@@ -19,6 +19,8 @@ from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 class TestUsageFee(TestCase):
 
     def setUp(self):
+        super(TestUsageFee, self).setUp()
+
         # Must remove existing data populated in migrations
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
@@ -152,3 +154,5 @@ class TestUsageFee(TestCase):
             SQLMobileBackend.load(backend_id, is_couch_id=True).delete()
 
         FakeTwilioMessageFactory.backend_message_id_to_price = {}
+
+        super(TestUsageFee, self).tearDown()

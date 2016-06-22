@@ -1,0 +1,44 @@
+body, html {
+    height: 100%;
+}
+
+.hq-container {
+    min-height: 100%;
+    height: auto !important;
+    margin-bottom: -@navbar-footer-height;
+    padding-bottom: @navbar-footer-height;
+
+    &.molly {
+        background-image: url(/static/hqwebapp/img/molly.jpg);
+        background-size: cover;
+
+        > .container {
+            width: 50%;
+            margin: 50px 0 50px calc(~"50% - 50px");
+            background-color: white;
+            border-radius: @border-radius-base;
+            box-shadow: 0px 0px 15px rgba(.5, .5, .5, .5);
+
+            fieldset {
+                padding: 0 10px;
+            }
+        }
+    }
+}
+
+
+.container.ui-widget {
+  border: none;
+}
+
+.footer-mobile {
+  font-size: 10px;
+  text-align: center;
+  border-top: 1px solid @cc-neutral-hi;
+  padding-top: 8px;
+  margin-top:10px;
+
+  p {
+    margin: 0;
+  }
+}

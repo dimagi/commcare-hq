@@ -1,0 +1,19 @@
+import logging
+from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
+from corehq.apps.app_manager.models import Application
+
+logger = logging.getLogger('app_migration')
+logger.setLevel('DEBUG')
+
+class Command(AppMigrationCommandBase):
+    help = "find case errrors"
+
+    include_builds = False
+
+    def migrate_app(self, app_doc):
+        app = Application.wrap(app_doc)
+        metadata = app.get_case_metadata()
+        for case_type in metadata.case_types:
+            if case_type.has_errors:
+                logger.error('app {} has issue'.format(app._id))
+        return None

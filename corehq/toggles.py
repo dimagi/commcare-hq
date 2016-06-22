@@ -62,6 +62,8 @@ def deterministic_random(input_string):
     Returns a deterministically random number between 0 and 1 based on the
     value of the string. The same input should always produce the same output.
     """
+    if isinstance(input_string, unicode):
+        input_string = input_string.encode('utf-8')
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
 
@@ -193,14 +195,6 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
-APP_AWARE_SYNC = PredictablyRandomToggle(
-    'app_aware_sync',
-    'App-aware Sync',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=0.6
-)
-
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
@@ -241,13 +235,6 @@ DEMO_REPORTS = StaticToggle(
     'Access to map-based demo reports',
     TAG_PREVIEW,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-SUPPLY_REPORTS = StaticToggle(
-    'supply_reports',
-    "Early stages reports for CommCare Supply",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TABS = StaticToggle(
@@ -606,6 +593,13 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+OPENCLINICA = StaticToggle(
+    'openclinica',
+    'Offer OpenClinica settings and CDISC ODM export',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
@@ -849,6 +843,22 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     'Ability to make a mobile worker into Demo only mobile worker',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+
+EXPORT_ZIPPED_APPS = StaticToggle(
+    'export-zipped-apps',
+    'Export+Import Zipped Applications',
+    TAG_UNKNOWN,
+    [NAMESPACE_USER]
+)
+
+
+SEND_UCR_REBUILD_INFO = StaticToggle(
+    'send_ucr_rebuild_info',
+    'Notify when UCR rebuilds finish or error.',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_USER]
 )
 
 

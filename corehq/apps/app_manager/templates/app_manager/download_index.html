@@ -4,7 +4,7 @@
 
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
-        <link type="text/css" rel="stylesheet" href="{% new_static 'app_manager/css/diff.css' %}"/>
+        <link type="text/css" rel="stylesheet" href="{% static 'app_manager/css/diff.css' %}"/>
     {% endcompress %}
 {% endblock stylesheets %} 
 
@@ -55,7 +55,7 @@
 
 {% block js %}{{ block.super }}
     {% compress js %}
-        <script src="{% new_static 'app_manager/js/download_async_modal.js' %}"></script>
+        <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 

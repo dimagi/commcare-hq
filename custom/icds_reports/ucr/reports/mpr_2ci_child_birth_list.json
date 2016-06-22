@@ -1,0 +1,255 @@
+{
+  "domains": [
+    "icds-test",
+    "icds-sql",
+    "icds-cas"
+  ],
+  "report_id": "static-mpr_2ci_child_birth_list",
+  "data_source_table": "static-child_health_cases",
+  "config": {
+    "title": "MPR - 2ci - Child Birth List (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Date of Birth",
+        "field": "dob",
+        "type": "date",
+        "slug": "dob"
+      },
+      {
+        "compare_as_string": false,
+        "display": "List Type",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Births",
+            "value": "1"
+          }
+        ],
+        "field": "open_count",
+        "type": "choice_list",
+        "slug": "open_count"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "awc_id",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by AWW"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "owner_id",
+        "field": "owner_id",
+        "choice_provider": {
+          "type": "owner"
+        },
+        "display": "Owner Name"
+      }
+    ],
+    "columns": [
+      {
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "person_name",
+        "field": "person_name",
+        "type": "field",
+        "display": {
+          "mar": "नांव",
+          "tel": "పేరు",
+          "hin": "नाम",
+          "en": "Name"
+        }
+      },
+      {
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "birth_weight",
+        "field": "birth_weight",
+        "type": "field",
+        "display": {
+          "mar": "मुलाचे जन्म वजन आहे",
+          "tel": "బిడ్డ యొక్క బరువు",
+          "hin": "जन्म के समय बच्चे का वज़न",
+          "en": "Birth Weight"
+        }
+      },
+      {
+        "format": "default",
+        "transform": {
+          "type": "translation",
+          "translations": {
+            "M": [
+              [
+                "mar",
+                "पुरुष"
+              ],
+              [
+                "tel",
+                "పురుషుడు"
+              ],
+              [
+                "hin",
+                "पुरुष"
+              ],
+              [
+                "en",
+                "M"
+              ]
+            ],
+            "O": [
+              [
+                "mar",
+                "अन्य"
+              ],
+              [
+                "tel",
+                "ఇతరులు"
+              ],
+              [
+                "hin",
+                "अन्य"
+              ],
+              [
+                "en",
+                "O"
+              ]
+            ],
+            "F": [
+              [
+                "mar",
+                "स्त्री"
+              ],
+              [
+                "tel",
+                "మహిళ"
+              ],
+              [
+                "hin",
+                "महिला"
+              ],
+              [
+                "en",
+                "F"
+              ]
+            ]
+          }
+        },
+        "column_id": "sex",
+        "field": "sex",
+        "type": "field",
+        "display": {
+          "mar": "लिंग",
+          "tel": "లింగం",
+          "hin": "लिंग",
+          "en": "Sex"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "dob",
+        "field": "dob",
+        "type": "field",
+        "display": {
+          "mar": "जन्म तारीख",
+          "tel": "పుట్టిన తేదీ",
+          "hin": "जन्म तिथि",
+          "en": "Date of Birth"
+        }
+      },
+      {
+        "format": "default",
+        "transform": {
+          "type": "translation",
+          "translations": {
+            "yes": [
+              [
+                "mar",
+                "होय"
+              ],
+              [
+                "tel",
+                "అవును"
+              ],
+              [
+                "hin",
+                "हाँ"
+              ],
+              [
+                "en",
+                "Yes"
+              ]
+            ],
+            "no": [
+              [
+                "mar",
+                "नाही"
+              ],
+              [
+                "tel",
+                "కాదు"
+              ],
+              [
+                "hin",
+                "नहीं"
+              ],
+              [
+                "en",
+                "No"
+              ]
+            ]
+          }
+        },
+        "column_id": "resident",
+        "field": "resident",
+        "type": "field",
+        "display": {
+          "mar": "निवासी",
+          "tel": "నివాసితుడు",
+          "hin": "निवासी",
+          "en": "Resident"
+        },
+        "aggregation": "simple"
+      }
+    ],
+    "sort_expression": [
+      {
+        "field": "date_death",
+        "order": "DESC"
+      }
+    ],
+    "configured_charts": []
+  }
+}

@@ -10,6 +10,7 @@ from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
 from couchforms.models import DefaultAuthContext
 import couchforms
+from django.http import Http404
 
 
 def get_submit_url(domain, app_id=None):
@@ -61,7 +62,7 @@ def get_version_from_build_id(domain, build_id):
 
     try:
         build = get_app(domain, build_id)
-    except ResourceNotFound:
+    except (ResourceNotFound, Http404):
         return None
     if not build.copy_of:
         return None

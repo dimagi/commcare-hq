@@ -25,6 +25,7 @@ class TestUrgentAlerts(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestUrgentAlerts, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
         cls.district = make_loc(code="district", name="Test District", type="district", domain=TEST_DOMAIN)
@@ -57,6 +58,7 @@ class TestUrgentAlerts(EWSTestCase):
         SMS.objects.all().delete()
         StockReport.objects.all().delete()
         StockState.objects.all().delete()
+        super(TestUrgentAlerts, self).tearDown()
 
     def test_get_products_function(self):
         urgent_stockout_alert = UrgentStockoutAlert(TEST_DOMAIN)

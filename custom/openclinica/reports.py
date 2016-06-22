@@ -1,8 +1,9 @@
 from datetime import datetime
 from casexml.apps.case.models import CommCareCase
+from corehq import toggles
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView
-from corehq.apps.reports.standard import CustomProjectReport
+from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.elastic import SIZE_LIMIT
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -17,7 +18,7 @@ from custom.openclinica.models import Subject
 from custom.openclinica.utils import get_study_constant
 
 
-class OdmExportReport(CustomProjectReport, CaseListMixin, GenericReportView):
+class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
     """
     An XML-based export report for OpenClinica integration
 
@@ -28,10 +29,14 @@ class OdmExportReport(CustomProjectReport, CaseListMixin, GenericReportView):
     exportable_all = True
     emailable = True
     asynchronous = True
-    name = "ODM Export"
+    name = "Clinical Study Data"
     slug = "odm_export"
 
     export_format_override = Format.CDISC_ODM
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return toggles.OPENCLINICA.enabled(domain)
 
     @property
     def headers(self):
@@ -73,6 +78,10 @@ class OdmExportReport(CustomProjectReport, CaseListMixin, GenericReportView):
             'protocol_name': get_study_constant(self.domain, 'protocol_name'),
             'study_oid': get_study_constant(self.domain, 'study_oid'),
             'audit_logs': AUDIT_LOGS,
+            # The template accepts XML strings in params "study_xml" and
+            # "admin_data_xml" which come from the study metadata.
+            'study_xml': get_study_constant(self.domain, 'study_xml'),
+            'admin_data_xml': get_study_constant(self.domain, 'admin_data_xml'),
         }
         return [
             [

@@ -5,8 +5,8 @@
 {% load djangular_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'users/js/roles.js' %}"></script>
-    <script src="{% new_static 'users/js/web_users_list.ng.js' %}"></script>
+    <script src="{% static 'users/js/roles.js' %}"></script>
+    <script src="{% static 'users/js/web_users_list.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -89,7 +89,7 @@
         });
 
         var $userRolesTable = $('#user-roles-table');
-        $userRolesTable.userRoles({
+        hqImport('users/js/roles.js').initUserRoles($userRolesTable, {
             userRoles: {{ user_roles|JSON }},
             defaultRole: {{ default_role|JSON }},
             saveUrl: '{% url "post_user_role" domain %}',

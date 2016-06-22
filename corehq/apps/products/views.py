@@ -1,7 +1,6 @@
 import json
 from django.http.response import HttpResponseServerError
 from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
-from corehq.apps.style.decorators import use_bootstrap3
 from corehq.util.files import file_extention_from_filename
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
@@ -129,10 +128,6 @@ class ProductListView(BaseCommTrackManageView):
             'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)
         }
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProductListView, self).dispatch(request, *args, **kwargs)
-
 
 class FetchProductListView(ProductListView):
     urlname = 'commtrack_product_fetch'
@@ -259,10 +254,6 @@ class NewProductView(BaseCommTrackManageView):
             return HttpResponseRedirect(reverse(ProductListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(NewProductView, self).dispatch(request, *args, **kwargs)
-
 
 class UploadProductView(BaseCommTrackManageView):
     urlname = 'commtrack_upload_products'
@@ -318,18 +309,10 @@ class UploadProductView(BaseCommTrackManageView):
             )
         )
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(UploadProductView, self).dispatch(request, *args, **kwargs)
-
 
 class ProductImportStatusView(BaseCommTrackManageView):
     urlname = 'product_import_status'
     page_title = ugettext_noop('Product Import Status')
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProductImportStatusView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         context = super(ProductImportStatusView, self).main_context

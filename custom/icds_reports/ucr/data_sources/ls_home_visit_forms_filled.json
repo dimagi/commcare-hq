@@ -1,0 +1,139 @@
+{
+  "domains": [
+    "icds-sql",
+    "icds-test",
+    "icds-cas"
+  ],
+  "config": {
+    "table_id": "static-ls_home_visit_forms_filled",
+    "display_name": "LS Forms - Beneficiary Feedback (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": "http://openrosa.org/formdesigner/327e11f3c04dfc0a7fea9ee57d7bb7be83475309"
+    },
+    "configured_indicators": [
+      {
+        "display_name": "User ID",
+        "datatype": "string",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "user_id"
+      },
+      {
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "location_id",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "user_data",
+              "commcare_location_id"
+            ]
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareUser",
+          "doc_id_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "userID"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "display_name": "BLOCK ID",
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "user_data",
+                "commcare_location_id"
+              ]
+            },
+            "type": "related_doc",
+            "related_doc_type": "CommCareUser",
+            "doc_id_expression": {
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "userID"
+                ]
+              },
+              "type": "root_doc"
+            }
+          },
+          "type": "location_parent_id"
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "block_id"
+      },
+      {
+        "display_name": "Submission Date",
+        "datatype": "date",
+        "expression": {
+          "datatype": "date",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "submitted_on"
+      },
+      {
+        "type": "count",
+        "display_name": "Count",
+        "column_id": "home_visit_count"
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {},
+    "engine_id": "ucr"
+  }
+}

@@ -1,4 +1,6 @@
+import json
 import uuid
+
 from mock import patch
 
 from django.test import TestCase
@@ -12,7 +14,8 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import ConfigurableReport, \
+    UCR_EXPORT_TO_EXCEL_ROW_LIMIT
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 
@@ -45,7 +48,7 @@ class ConfigurableReportTestMixin(object):
 class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
-    def _build_report(cls):
+    def _build_report_and_view(cls):
 
         # Create Cases
         cls._new_case({'fruit': 'apple', 'num1': 4, 'num2': 6}).save()
@@ -134,29 +137,30 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
             ],
         )
         report_config.save()
-        return report_config
 
-    @classmethod
-    def tearDown(cls):
-        cls._delete_everything()
+        view = ConfigurableReport()
+        view._domain = cls.domain
+        view._lang = "en"
+        view._report_config_id = report_config._id
+
+        return report_config, view
+
+    def tearDown(self):
+        self._delete_everything()
         # todo: understand why this is necessary. the view call uses the session and the
         # signal doesn't fire to kill it.
         Session.remove()
+        super(ConfigurableReportViewTest, self).tearDown()
 
-    @classmethod
-    def setUp(cls):
-        cls._delete_everything()
+    def setUp(self):
+        super(ConfigurableReportViewTest, self).setUp()
+        self._delete_everything()
 
     def test_export_table(self):
         """
         Test the output of ConfigurableReport.export_table()
         """
-        report = self._build_report()
-        # Create a configurable report
-        view = ConfigurableReport()
-        view._domain = self.domain
-        view._lang = "en"
-        view._report_config_id = report._id
+        report, view = self._build_report_and_view()
 
         expected = [
             [
@@ -169,18 +173,31 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         ]
         self.assertEqual(view.export_table, expected)
 
+    def test_export_to_excel_size_under_limit(self):
+        report, view = self._build_report_and_view()
+
+        response = json.loads(view.export_size_check_response.content)
+        self.assertEqual(response['export_allowed'], True)
+
+    def test_export_to_excel_size_over_limit(self):
+        report, view = self._build_report_and_view()
+
+        with patch(
+            'corehq.apps.userreports.reports.data_source.ConfigurableReportDataSource.get_total_records',
+            return_value=UCR_EXPORT_TO_EXCEL_ROW_LIMIT + 1
+        ):
+            response = json.loads(view.export_size_check_response.content)
+        self.assertEqual(response['export_allowed'], False)
+
+        self.assertEqual(view.export_response.status_code, 400)
+
     def test_paginated_build_table(self):
         """
         Simulate building a report where chunking occurs
         """
 
         with patch('corehq.apps.userreports.tasks.ID_CHUNK_SIZE', 1):
-            report = self._build_report()
-
-        view = ConfigurableReport()
-        view._domain = self.domain
-        view._lang = "en"
-        view._report_config_id = report._id
+            report, view = self._build_report_and_view()
 
         expected = [
             [

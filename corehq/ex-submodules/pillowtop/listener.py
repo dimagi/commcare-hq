@@ -504,23 +504,12 @@ class AliasedElasticPillow(BasicPillow):
     def send_bulk(self, payload):
         self.get_es_new().bulk(payload)
 
-    @staticmethod
-    def calc_mapping_hash(mapping):
-        return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
-
     @classmethod
     def get_unique_id(cls):
         """
         a unique identifier for the pillow - typically the hash associated with the index
         """
-        # for legacy reasons this is the default until we remove it.
-        return cls.calc_meta()
-
-    @classmethod
-    def calc_meta(cls):
-        # todo: we should get rid of this and have subclasses override get_unique_id
-        # instead of calc_meta
-        raise NotImplementedError("Need to either override get_unique_id or implement your own meta calculator")
+        return cls.es_index
 
     def bulk_builder(self, changes):
         """
@@ -544,7 +533,7 @@ class AliasedElasticPillow(BasicPillow):
                                 }
                             }
                             yield tr
-            except Exception, ex:
+            except Exception as ex:
                 pillow_logging.error(
                     "Error on change: %s, %s" % (change['id'], ex)
                 )

@@ -7,7 +7,7 @@ import pytz
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.style.decorators import use_bootstrap3, use_datatables, use_jquery_ui, \
+from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_timepicker, use_select2
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -88,7 +88,6 @@ class ScheduledRemindersCalendarView(BaseMessagingSectionView):
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(reminders_framework_permission)
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
@@ -154,7 +153,6 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     ui_type = UI_SIMPLE_FIXED
 
     @method_decorator(reminders_framework_permission)
-    @use_bootstrap3
     @use_jquery_ui
     @use_timepicker
     @use_select2
@@ -495,7 +493,6 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
     process_structured_message = True
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
@@ -701,7 +698,6 @@ class CreateBroadcastView(BaseMessagingSectionView):
     force_create_new_broadcast = False
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @use_bootstrap3
     @use_jquery_ui
     @use_timepicker
     def dispatch(self, *args, **kwargs):
@@ -869,7 +865,6 @@ class RemindersListView(BaseMessagingSectionView):
     page_title = ugettext_noop("Reminder Definitions")
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @use_bootstrap3
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
@@ -964,7 +959,6 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     DELETE_BROADCAST = 'delete_broadcast'
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @use_bootstrap3
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
@@ -1063,7 +1057,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     loading_message = ugettext_noop("Loading keywords...")
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
