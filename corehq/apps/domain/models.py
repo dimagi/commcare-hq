@@ -166,8 +166,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     goal_followup_rate = DecimalProperty()
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
-    performance_threshold = IntegerProperty(default=15)
-    experienced_threshold = IntegerProperty(default=3)
+    performance_threshold = IntegerProperty()
+    experienced_threshold = IntegerProperty()
     amplifies_workers = StringProperty(
         choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
         default=AMPLIFIES_NOT_SET

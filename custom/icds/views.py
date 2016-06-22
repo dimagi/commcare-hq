@@ -27,15 +27,9 @@ def tableau(request, domain, workbook, worksheet):
         'view_by_value': location_name,
     })
 
-    # set Tableau access URL
-    if request.GET.get('login_less', False):
-        # generate a login free access URL
-        # This doesn't work on local as this header is added only by ngnix proxy
-        client_ip = request.META.get('X-Forwarded-For', '')
-        tableau_access_url = get_tableau_trusted_url(client_ip)
-    else:
-        # TABLEAU_VIEW_URL requires user to login before accessing views
-        tableau_access_url = settings.TABLEAU_VIEW_URL
+    # the header is added by nginx
+    client_ip = request.META.get('X-Forwarded-For', '')
+    tableau_access_url = get_tableau_trusted_url(client_ip)
 
     context.update({
         'tableau_access_url': tableau_access_url,

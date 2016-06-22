@@ -308,7 +308,7 @@ def get_form_unique_id(xform_instance):
     if len(forms_without_xmlns) != 1:
         raise MultipleFormsMissingXmlns(xform_instance.build_id)
     form = forms_without_xmlns[0]
-    if not _name_matches(xform_instance.name, form.name):
+    if not name_matches(xform_instance.name, form.name):
         raise FormNameMismatch(
             xform_instance._id,
             xform_instance.build_id,
@@ -333,7 +333,7 @@ def get_xmlns(form_unique_id, app_id, domain):
     return generate_random_xmlns()
 
 
-def _name_matches(xform_name, form_names):
+def name_matches(xform_name, form_names):
     if xform_name in form_names.values():
         return True
     if xform_name in [u"{} [{}]".format(v, k) for k, v in form_names.iteritems()]:

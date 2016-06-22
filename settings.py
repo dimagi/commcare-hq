@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 import importlib
 from collections import defaultdict
 
@@ -1644,7 +1643,7 @@ STATIC_DATA_SOURCES = [
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_provider'
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]
 
 
