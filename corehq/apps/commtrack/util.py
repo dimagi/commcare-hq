@@ -224,7 +224,7 @@ def location_map_case_id(user):
         user_id = user.user_id
         if isinstance(user_id, unicode):
             user_id = user_id.encode('utf8')
-        return uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id)
+        return uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
     return 'user-owner-mapping-' + user.user_id
 
 
