@@ -93,7 +93,7 @@ class InternalLocationResource(LocationResource):
         return Resource.dispatch(self, request_type, request, **kwargs)
 
     class Meta(CustomResourceMeta):
-        authentication = LoginAndDomainAuthentication()
+        authentication = LoginAndDomainAuthentication(allow_session_auth=True)
         object_class = Location
         resource_name = 'location_internal'
         limit = 0
