@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
             name='DemoUserRestore',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('demo_user_id', models.CharField(default=None, max_length=255, db_index=True)),
+                ('demo_user_id', models.CharField(default=None, max_length=255)),
                 ('restore_blob_id', models.CharField(default=None, max_length=255)),
                 ('content_length', models.IntegerField(null=True)),
                 ('timestamp_created', models.DateTimeField(auto_now=True)),
