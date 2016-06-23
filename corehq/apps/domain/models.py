@@ -931,12 +931,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return most_restrictive(licenses)
 
     @classmethod
-    def hit_sort(cls, domains):
-        domains = list(domains)
-        domains = sorted(domains, key=lambda domain: domain.download_count, reverse=True)
-        return domains
-
-    @classmethod
     def get_module_by_name(cls, domain_name):
         """
         import and return the python module corresponding to domain_name, or
