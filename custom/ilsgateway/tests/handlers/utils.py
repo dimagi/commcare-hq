@@ -1,5 +1,5 @@
-from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
+from corehq.apps.accounting.tests import generator
 from corehq.apps.commtrack.models import CommtrackActionConfig
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
@@ -8,9 +8,9 @@ from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
+from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.utils import make_loc
 from custom.logistics.tests.test_script import TestScript
-from custom.ilsgateway.models import ILSGatewayConfig
 from custom.logistics.tests.utils import bootstrap_user
 from casexml.apps.stock.models import DocDomainMapping
 
@@ -132,7 +132,7 @@ def prepare_domain(domain_name):
             administrative=administrative,
         )
 
-    generator.instantiate_accounting_for_tests()
+    generator.instantiate_accounting()
     account = BillingAccount.get_or_create_account_by_domain(
         domain.name,
         created_by="automated-test",

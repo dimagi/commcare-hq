@@ -7,7 +7,7 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 from couchforms.models import XFormInstance
 
-from corehq.apps.accounting import generator
+from corehq.apps.accounting.tests import generator
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point

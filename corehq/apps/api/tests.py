@@ -1,28 +1,23 @@
 import json
 import uuid
 from datetime import datetime
-
 import dateutil.parser
 
-from django.utils.http import urlencode
-from django.test import TestCase
+from django.conf import settings
 from django.core.urlresolvers import reverse
-from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.tests import run_with_all_backends
-from django_prbac.models import Role
+from django.test import TestCase
+from django.utils.http import urlencode
+
+from tastypie import fields
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
-from tastypie import fields
 
-from corehq.apps.api.util import get_obj
-from corehq.apps.groups.models import Group
-from corehq.pillows.reportxform import ReportXFormPillow
-
-from couchforms.models import XFormInstance
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
 
-from corehq.apps.accounting import generator
+from django_prbac.models import Role
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -30,16 +25,21 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment
 )
-from corehq.pillows.xform import XFormPillow
-from corehq.pillows.case import CasePillow
-from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.domain.models import Domain
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
-from corehq.apps.api.resources import v0_4, v0_5
-from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
+from corehq.apps.accounting.tests import generator
 from corehq.apps.api.es import ElasticAPIQuerySet
+from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
+from corehq.apps.api.resources import v0_4, v0_5
+from corehq.apps.api.util import get_obj
+from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.users.analytics import update_analytics_indexes
-from django.conf import settings
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.tests import run_with_all_backends
+from corehq.pillows.case import CasePillow
+from corehq.pillows.reportxform import ReportXFormPillow
+from corehq.pillows.xform import XFormPillow
 from custom.hope.models import CC_BIHAR_PREGNANCY
 
 
@@ -90,7 +90,7 @@ class APIResourceTest(TestCase):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting_for_tests()
+        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.list_endpoint = reverse('api_dispatch_list',
                 kwargs=dict(domain=cls.domain.name,
@@ -1365,7 +1365,7 @@ class TestBulkUserAPI(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting_for_tests()
+        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
