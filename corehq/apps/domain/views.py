@@ -632,7 +632,7 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
     @property
     @memoized
     def product(self):
-        return SoftwareProductType.get_type_by_domain(self.domain_object)
+        return SoftwareProductType.COMMCARE
 
     @property
     @memoized
@@ -1126,9 +1126,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         return json_response({'success': True})
 
     def _get_items(self, request):
-        product_type = SoftwareProductType.get_type_by_domain(Domain.get_by_name(self.domain))
-
-        features = [{'type': get_feature_name(feature_type[0], product_type),
+        features = [{'type': get_feature_name(feature_type[0], SoftwareProductType.COMMCARE),
                      'amount': Decimal(request.POST.get(feature_type[0], 0))}
                     for feature_type in FeatureType.CHOICES
                     if Decimal(request.POST.get(feature_type[0], 0)) > 0]

@@ -41,7 +41,7 @@ from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
-    get_dimagi_from_email_by_product,
+    get_dimagi_from_email,
     has_subscription_already_ended,
     log_accounting_error,
     log_accounting_info,
@@ -351,7 +351,7 @@ def create_wire_credits_invoice(domain_name,
 
 
 @task(ignore_result=True)
-def send_purchase_receipt(payment_record, core_product, domain,
+def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
                           additional_context):
     username = payment_record.payment_method.web_user
@@ -372,7 +372,6 @@ def send_purchase_receipt(payment_record, core_product, domain,
         'amount': fmt_dollar_amount(payment_record.amount),
         'project': domain,
         'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
-        'product': core_product,
         'transaction_id': payment_record.public_transaction_id,
     }
     context.update(additional_context)
@@ -383,7 +382,7 @@ def send_purchase_receipt(payment_record, core_product, domain,
     send_HTML_email(
         ugettext("Payment Received - Thank You!"), email, email_html,
         text_content=email_plaintext,
-        email_from=get_dimagi_from_email_by_product(core_product),
+        email_from=get_dimagi_from_email(),
     )
 
 
@@ -418,7 +417,7 @@ def send_autopay_failed(invoice, payment_method):
         recipient=recipient,
         html_content=render_to_string(template_html, context),
         text_content=render_to_string(template_plaintext, context),
-        email_from=get_dimagi_from_email_by_product(subscription.plan_version.product_rate.product.product_type),
+        email_from=get_dimagi_from_email(),
     )
 
 
