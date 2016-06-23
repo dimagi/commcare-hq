@@ -273,6 +273,7 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
     if filename is None:
         dirpath = mkdtemp()
         filename = os.path.join(dirpath, "export.txt")
+    print("Migration log: {}".format(filename))
 
     def encode_content(data):
         if isinstance(data, unicode):

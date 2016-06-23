@@ -1,5 +1,7 @@
 import logging
+import os
 import sys
+from datetime import datetime
 from optparse import make_option
 from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import MIGRATIONS
@@ -21,7 +23,7 @@ class Command(BaseCommand):
     """
     help = USAGE
     option_list = BaseCommand.option_list + (
-        make_option('--file', help="Migration intermediate storage file."),
+        make_option('--log-dir', help="Migration log directory."),
         make_option('--reset', action="store_true", default=False,
             help="Discard any existing migration state."),
         make_option('--chunk-size', type="int", default=100,
@@ -30,12 +32,19 @@ class Command(BaseCommand):
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
-    def handle(self, slug=None, file=None, reset=False, chunk_size=100,
+    def handle(self, slug=None, log_dir=None, reset=False, chunk_size=100,
                **options):
         try:
             migrator = MIGRATIONS[slug]
         except KeyError:
             raise CommandError(USAGE)
+        if log_dir is None:
+            file = None
+        else:
+            file = os.path.join(log_dir, "{}-blob-migration-{}.txt".format(
+                slug, datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            ))
+            assert not os.path.exists(file), file
         total, skips = migrator.migrate(file, reset=reset, chunk_size=chunk_size)
         if skips:
             sys.exit(skips)
