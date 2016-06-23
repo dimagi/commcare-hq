@@ -11,9 +11,7 @@ class DomainSubscriptionMixin(object):
     def setup_subscription(cls, domain_name, software_plan):
         generator.instantiate_accounting()
 
-        plan = DefaultProductPlan.get_default_plan_by_domain(
-            domain_name, edition=software_plan
-        )
+        plan = DefaultProductPlan.get_default_plan(edition=software_plan)
         cls.account = BillingAccount.get_or_create_account_by_domain(
             domain_name, created_by="automated-test" + cls.__name__
         )[0]

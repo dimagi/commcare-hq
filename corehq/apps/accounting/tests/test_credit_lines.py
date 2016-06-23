@@ -301,11 +301,11 @@ class TestCreditTransfers(BaseAccountingTest):
         return transferred_credits
 
     def test_transfers(self):
-        advanced_plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain, edition=SoftwarePlanEdition.ADVANCED
+        advanced_plan = DefaultProductPlan.get_default_plan(
+            edition=SoftwarePlanEdition.ADVANCED
         )
-        standard_plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain, edition=SoftwarePlanEdition.STANDARD
+        standard_plan = DefaultProductPlan.get_default_plan(
+            edition=SoftwarePlanEdition.STANDARD
         )
         first_sub = Subscription.new_domain_subscription(
             self.account, self.domain, advanced_plan

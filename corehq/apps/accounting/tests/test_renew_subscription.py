@@ -28,8 +28,7 @@ class TestRenewSubscriptions(BaseAccountingTest):
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name, created_by=self.admin_user.username)[0]
 
-        self.standard_plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain.name, edition=SoftwarePlanEdition.STANDARD)
+        self.standard_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.STANDARD)
 
         today = datetime.date.today()
         yesterday = today + datetime.timedelta(days=-1)
@@ -61,7 +60,7 @@ class TestRenewSubscriptions(BaseAccountingTest):
 
     def test_change_plan_on_renewal(self):
         new_edition = SoftwarePlanEdition.ADVANCED
-        new_plan = DefaultProductPlan.get_default_plan_by_domain(self.domain.name, new_edition)
+        new_plan = DefaultProductPlan.get_default_plan(new_edition)
 
         self.renewed_subscription = self.subscription.renew_subscription(
             new_version=new_plan
