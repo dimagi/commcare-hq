@@ -277,14 +277,10 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
 
     total = sum(get_doc_count_by_type(couchdb, doc_type)
                 for doc_type in doc_type_map)
-    print("Migrating {} documents: {}...".format(
-        total,
-        ", ".join(sorted(doc_type_map))
-    ))
     migrated = 0
     skipped = 0
     visited = 0
-    start = datetime.now()
+    previously_visited = 0
     doc_migrator = doc_migrator_class()
     load_attachments = doc_migrator.load_attachments
     blobs_key = doc_migrator.blobs_key
@@ -292,10 +288,26 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
     docs_by_type = ResumableDocsByTypeIterator(couchdb, doc_type_map, iter_key)
     if reset:
         docs_by_type.discard_state()
+    elif docs_by_type.progress_info:
+        info = docs_by_type.progress_info
+        old_total = info["total"]
+        # Estimate already visited based on difference of old/new
+        # totals. The theory is that new or deleted records will be
+        # evenly distributed across the entire set.
+        visited = int(round(float(total) / old_total * info["visited"]))
+        previously_visited = visited
+    print("Migrating {} documents{}: {}...".format(
+        total,
+        " (~{} already migrated)".format(visited) if visited else "",
+        ", ".join(sorted(doc_type_map))
+    ))
 
     with open(filename, 'wb') as f:
+        start = datetime.now()
         for doc in docs_by_type:
             visited += 1
+            if visited % 100 == 0:
+                docs_by_type.progress_info = {"visited": visited, "total": total}
             if doc.get(blobs_key):
                 if load_attachments:
                     obj = BlobHelper(doc, couchdb)
@@ -330,7 +342,12 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
                         skipped += 1
                 if (migrated + skipped) % 100 == 0:
                     elapsed = datetime.now() - start
-                    remaining = elapsed / visited * total
+                    session_visited = visited - previously_visited
+                    session_total = total - previously_visited
+                    if session_visited > session_total:
+                        remaining = "?"
+                    else:
+                        remaining = elapsed / session_visited * session_total
                     print("Migrated {}/{} of {} documents in {} ({} remaining)"
                           .format(migrated, visited, total, elapsed, remaining))
 
