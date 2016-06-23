@@ -135,7 +135,7 @@ class DataSourceProperty(namedtuple(
 
     Class attributes:
 
-    type -- either "case_property", "form", or "meta"
+    type -- either "case_property", "question", or "meta"
     id -- A string that uniquely identifies this property. For question based
         properties this is the question id, for case based properties this is
         the case property name.
