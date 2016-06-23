@@ -244,7 +244,7 @@ MIGRATIONS = {m.slug: m for m in [
 
 
 def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
-            max_retry=2):
+            max_retry=2, chunk_size=100):
     """Migrate blobs
 
     :param slug: Migration name.
@@ -259,6 +259,10 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
     flag, which is set when the migration completes successfully.
     :param max_retry: Number of times to retry migrating a document
     before giving up.
+    :param chunk_size: Maximum number of records to read from couch at
+    one time. It may be necessary to use a smaller chunk size if the
+    records being migrated are very large and the default chunk size of
+    100 would exceed available memory.
     :returns: A tuple `(<num migrated>, <num skipped>)`
     """
     couchdb = next(iter(doc_type_map.values())).get_db()
@@ -285,7 +289,8 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
     load_attachments = doc_migrator.load_attachments
     blobs_key = doc_migrator.blobs_key
     iter_key = slug + "-blob-migration"
-    docs_by_type = ResumableDocsByTypeIterator(couchdb, doc_type_map, iter_key)
+    docs_by_type = ResumableDocsByTypeIterator(couchdb, doc_type_map, iter_key,
+                                               chunk_size=chunk_size)
     if reset:
         docs_by_type.discard_state()
     elif docs_by_type.progress_info:
@@ -306,7 +311,7 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
         start = datetime.now()
         for doc in docs_by_type:
             visited += 1
-            if visited % 100 == 0:
+            if visited % chunk_size == 0:
                 docs_by_type.progress_info = {"visited": visited, "total": total}
             if doc.get(blobs_key):
                 if load_attachments:
@@ -340,7 +345,7 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
                     except TooManyRetries:
                         print("Skip: {doc_type} {_id}".format(**doc))
                         skipped += 1
-                if (migrated + skipped) % 100 == 0:
+                if (migrated + skipped) % chunk_size == 0:
                     elapsed = datetime.now() - start
                     session_visited = visited - previously_visited
                     session_total = total - previously_visited
