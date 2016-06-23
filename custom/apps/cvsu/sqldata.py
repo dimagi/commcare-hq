@@ -251,7 +251,6 @@ class ChildProtectionData(AgeGenderFilteredReport):
     title = 'Number and Type of Incidents of Abuse Reported at CVSU'
     chart_x_label = 'CVSU Location'
     chart_y_label = 'Number of incidents'
-    table_name = make_ctable_table_name('cvsulive_UnicefMalawiFluff')
 
     @property
     def filters(self):
@@ -285,7 +284,6 @@ class ChildrenInHouseholdData(AgeGenderFilteredReport):
     title = 'Number of Children in Survivor Household'
     chart_x_label = 'CVSU Location'
     chart_y_label = 'Number of children'
-    table_name = make_ctable_table_name('cvsulive_UnicefMalawiFluff')
     has_total_column = False
 
     @property
@@ -318,7 +316,6 @@ class CVSUActivityData(FilterMixin, BaseSqlData):
     title = 'Activities Performed'
     chart_x_label = 'CVSU Location'
     chart_y_label = 'Number of reports'
-    table_name = make_ctable_table_name('cvsulive_UnicefMalawiFluff')
 
     @property
     def engine_id(self):
@@ -358,7 +355,6 @@ class CVSUServicesData(FilterMixin, BaseSqlData):
     title = 'Services Provided'
     chart_x_label = 'CVSU Location'
     chart_y_label = 'Number of incidents'
-    table_name = make_ctable_table_name('cvsulive_UnicefMalawiFluff')
 
     @property
     def engine_id(self):
@@ -418,7 +414,6 @@ class CVSUIncidentResolutionData(FilterMixin, BaseSqlData):
     title = 'Incident Resolution'
     chart_x_label = 'CVSU Location'
     chart_y_label = 'Number of incidents'
-    table_name = make_ctable_table_name('cvsulive_UnicefMalawiFluff')
 
     @property
     def engine_id(self):
