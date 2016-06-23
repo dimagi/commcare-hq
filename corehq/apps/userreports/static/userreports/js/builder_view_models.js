@@ -12,9 +12,11 @@ hqDefine('userreports/js/builder_view_models.js', function () {
 
     /**
      * Knockout view model representing a row in the filter property list
+     * @param {function} getDefaultDisplayText - a function that takes a property
+     *  as an arguemnt, and returns the default display text for that property.
      * @constructor
      */
-    var PropertyListItem = function() {
+    var PropertyListItem = function(getDefaultDisplayText) {
         var self = this;
 
         this.property = ko.observable("");
@@ -41,7 +43,8 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.inheritDisplayText = ko.observable(!this.displayText());
         this.property.subscribe(function(newValue) {
             if (self.inheritDisplayText()){
-                self.displayText(newValue);
+                var newDisplayText = getDefaultDisplayText(newValue);
+                self.displayText(newDisplayText);
             }
         });
         this.displayText.subscribe(function(value){
@@ -105,16 +108,6 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             return Boolean(self.property() && self.existsInCurrentVersion() && self.displayText());
         });
     };
-    PropertyListItem.wrap = function(o){
-        var i = new PropertyListItem();
-        i.existsInCurrentVersion(o.exists_in_current_version);
-        i.property(getOrDefault(o, 'property', ""));
-        i.dataSourceField(getOrDefault(o, 'data_source_field', null));
-        i.displayText(o.display_text);
-        i.calculation(o.calculation);
-        i.format(o.format);
-        return i;
-    };
     /**
      * Return a "plain" javascript object representing this view model
      * suitable for sending to the server.
@@ -144,6 +137,17 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         var self = this;
         options = options || {};
 
+        var wrapListItem = function (item) {
+            var i = new PropertyListItem(self.getDefaultDisplayText.bind(self));
+            i.existsInCurrentVersion(item.exists_in_current_version);
+            i.property(getOrDefault(item, 'property', ""));
+            i.dataSourceField(getOrDefault(item, 'data_source_field', null));
+            i.displayText(item.display_text);
+            i.calculation(item.calculation);
+            i.format(item.format);
+            return i;
+        };
+
         this.propertyOptions = options.propertyOptions;
         this.reportType = options.reportType;
         this.buttonText = getOrDefault(options, 'buttonText', 'Add property');
@@ -162,7 +166,9 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
         this.hasCalculationCol = getOrDefault(options, 'hasCalculationCol', false);
 
-        this.columns = ko.observableArray(getOrDefault(options, 'initialCols', []));
+        this.columns = ko.observableArray(_.map(getOrDefault(options, 'initialCols', []), function(i) {
+            return wrapListItem(i);
+        }));
         this.serializedProperties = ko.computed(function(){
             return JSON.stringify(
                 _.map(self.columns(), function(c){return c.toJS();})
@@ -186,22 +192,27 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         return columnsValid && columnLengthValid;
     };
     PropertyList.prototype.buttonHandler = function () {
-        this.columns.push(new PropertyListItem());
+        this.columns.push(new PropertyListItem(this.getDefaultDisplayText.bind(this)));
         if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
             window.analytics.usage("Report Builder", this.analyticsAction, this.analyticsLabel);
             window.analytics.workflow("Clicked " + this.analyticsAction + " in Report Builder");
         }
     };
+    /**
+     * Return the default display text for this property. For questions, it is
+     * the question label.
+     * @param {string} property_id
+     * @returns {string}
+     */
+    PropertyList.prototype.getDefaultDisplayText = function (property_id) {
+        var property = _.find(this.propertyOptions, function (opt) {return opt.value === property_id;});
+        if (property !== undefined) {
+            return property.label || property_id;
+        }
+        return property_id;
+    };
 
     var ConfigForm = function(reportType, sourceType, columns, filters, dataSourceIndicators, reportColumnOptions){
-
-        var initialFilters = _.map(filters, function(i){
-            return PropertyListItem.wrap(i);
-        });
-        var initialColumns = _.map(columns, function(i){
-            return PropertyListItem.wrap(i);
-        });
-
         this.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
             return o.type === 'question';
         });
@@ -243,7 +254,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.filtersList = new PropertyList({
             hasFormatCol: sourceType === "case",
             hasCalculationCol: false,
-            initialCols: initialFilters,
+            initialCols: filters,
             buttonText: 'Add Filter',
             analyticsAction: 'Add Filter',
             propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
@@ -255,7 +266,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.columnsList = new PropertyList({
             hasFormatCol: false,
             hasCalculationCol: reportType === "table" || reportType === "worker",
-            initialCols: initialColumns,
+            initialCols: columns,
             buttonText: 'Add Column',
             analyticsAction: 'Add Column',
             calcHelpText: django.gettext("Column format selection will determine how each row's value is calculated."),
