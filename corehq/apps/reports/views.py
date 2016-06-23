@@ -2,6 +2,7 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
+from uuid import uuid4
 
 from django.views.generic.base import TemplateView
 
@@ -1745,6 +1746,16 @@ class EditFormInstance(View):
             url = reverse('render_form_data', args=[domain, instance_id])
             return HttpResponseRedirect(url)
 
+        def get_non_parents(caseblocks):
+            return filter(lambda cb: cb.path == [], caseblocks)
+
+        def is_subcase(caseblock):
+            return 'create' in caseblock.caseblock
+
+        def get_matching_datum(caseblock, datums_):
+            datum = filter(lambda d: d.datum.id.endswith(caseblock.caseblock['path'][0]), datums_)
+            return datum[0] if len(datum) == 1 else None
+
         if not (has_privilege(request, privileges.DATA_CLEANUP)) or not instance_id:
             raise Http404()
 
@@ -1765,21 +1776,22 @@ class EditFormInstance(View):
             edit_session_data[USERCASE_ID] = usercase_id
 
         case_blocks = extract_case_blocks(instance, include_path=True)
-        if form.form_type == 'advanced_form':
-            datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
-            for case_block in case_blocks:
+        datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
+        for case_block in case_blocks:
+            if form.form_type == 'advanced_form':
                 path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
                 matching_datums = [datum for datum in datums if datum.action.form_element_name == path]
                 if len(matching_datums) == 1:
                     edit_session_data[matching_datums[0].datum.id] = case_block.caseblock.get(const.CASE_ATTR_ID)
-        else:
-            # a bit hacky - the app manager puts the main case directly in the form, so it won't have
-            # any other path associated with it. This allows us to differentiate from parent cases.
-            # You might think that you need to populate other session variables like parent_id, but those
-            # are never actually used in the form.
-            non_parents = filter(lambda cb: cb.path == [], case_blocks)
-            if len(non_parents) == 1:
-                edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
+            else:
+                if case_block.path == [] and len(get_non_parents(case_blocks)) == 1:
+                    # a bit hacky - the app manager puts the main case directly in the form, so it won't have
+                    # any other path associated with it. This allows us to differentiate from parent cases.
+                    edit_session_data['case_id'] = case_block.caseblock.get(const.CASE_ATTR_ID)
+                elif is_subcase(case_block) and not case_block.caseblock.get(const.CASE_ATTR_ID):
+                    # We need to populate child case IDs if this form can create new child cases
+                    datum = get_matching_datum(case_block, datums)
+                    edit_session_data[datum.id] = uuid4().hex
 
         edit_session_data['is_editing'] = True
         edit_session_data['function_context'] = {
