@@ -209,7 +209,7 @@ def get_built_app_ids_for_app_id(domain, app_id, version=None):
     return [result['id'] for result in results]
 
 
-def get_latest_built_app_ids_and_versions(domain, app_id=None):
+def get_latest_app_ids_and_versions(domain, app_id=None):
     """
     Returns all the latest app_ids and versions in a dictionary.
     :param domain: The domain to get the app from
@@ -218,21 +218,23 @@ def get_latest_built_app_ids_and_versions(domain, app_id=None):
     :returns: {app_id: latest_version}
     """
     from .models import Application
-    key = [domain, app_id] if app_id else [domain]
+    key = [domain]
 
     results = Application.get_db().view(
-        'app_manager/saved_app',
+        'app_manager/applications_brief',
         startkey=key + [{}],
         endkey=key,
         descending=True,
         reduce=False,
-        include_docs=False,
+        include_docs=True,
     ).all()
 
     latest_ids_and_versions = {}
+    if app_id:
+        results = filter(lambda r: r['value']['_id'] == app_id, results)
     for result in results:
-        app_id = result['key'][1]
-        version = result['key'][2]
+        app_id = result['value']['_id']
+        version = result['value']['version']
 
         # Since we have sorted, we know the first instance is the latest version
         if app_id not in latest_ids_and_versions:

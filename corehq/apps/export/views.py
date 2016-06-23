@@ -1401,6 +1401,12 @@ class CaseExportListView(BaseExportListView):
         if not create_form.is_valid():
             raise ExportFormValidationException()
         case_type = create_form.cleaned_data['case_type']
+        app_id = create_form.cleaned_data['application']
+        if app_id == ApplicationDataRMIHelper.UNKNOWN_SOURCE:
+            app_id_param = ''
+        else:
+            app_id_param = '&app_id={}'.format(app_id)
+
         if toggles.NEW_EXPORTS.enabled(self.domain):
             cls = CreateNewCustomCaseExportView
         else:
@@ -1408,8 +1414,9 @@ class CaseExportListView(BaseExportListView):
         return reverse(
             cls.urlname,
             args=[self.domain],
-        ) + ('?export_tag="{export_tag}"'.format(
+        ) + ('?export_tag="{export_tag}"{app_id_param}'.format(
             export_tag=case_type,
+            app_id_param=app_id_param,
         ))
 
 
@@ -1482,9 +1489,11 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
+        app_id = request.GET.get('app_id')
 
         schema = CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
+            app_id,
             case_type,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
