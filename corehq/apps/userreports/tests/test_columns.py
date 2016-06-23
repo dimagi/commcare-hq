@@ -270,7 +270,7 @@ class TestExpandedColumn(TestCase):
         """
         field_name = 'my_field'
         submitted_vals = [None, None, 'foo']
-        data_source, column = self._build_report(submitted_vals, field=field_name)
+        data_source, _ = self._build_report(submitted_vals, field=field_name)
 
         headers = [column.header for column in data_source.columns]
         self.assertEqual(set(headers), {"{}-{}".format(field_name, x) for x in submitted_vals})
