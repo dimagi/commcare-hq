@@ -116,14 +116,17 @@ def _expand_column(report_column, distinct_values, lang):
     """
     columns = []
     for index, val in enumerate(distinct_values):
+        alias = u"{}-{}".format(report_column.column_id, index)
+        if val is None:
+            sql_agg_col = SumWhen(
+                whens={"{} is NULL".format(report_column.field): 1}, else_=0, alias=alias
+            )
+        else:
+            sql_agg_col = SumWhen(report_column.field, whens={val: 1}, else_=0, alias=alias)
+
         columns.append(DatabaseColumn(
             u"{}-{}".format(report_column.get_header(lang), val),
-            SumWhen(
-                report_column.field,
-                whens={val: 1},
-                else_=0,
-                alias=u"{}-{}".format(report_column.column_id, index),
-            ),
+            sql_agg_col,
             sortable=False,
             data_slug=u"{}-{}".format(report_column.column_id, index),
             format_fn=report_column.get_format_fn(),
