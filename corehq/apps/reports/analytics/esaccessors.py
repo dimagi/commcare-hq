@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime
+from dateutil.parser import parse
 
 from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations, LedgerES
 from corehq.apps.es.aggregations import (
@@ -537,3 +538,32 @@ def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
         terms=terms,
         bottom_level_aggregation=SumAggregation('balance', 'balance'),
     ).get_data()
+
+
+def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate):
+    # TODO: Remove references to _attachments once all forms have been migrated to Riak
+    query = (FormES()
+             .domain(domain)
+             .app(app_id)
+             .xmlns(xmlns)
+             .submitted(gte=parse(startdate), lte=parse(enddate))
+             .remove_default_filter("has_user")
+             .source(['_attachments', '_id', 'external_blobs']))
+    form_ids = set()
+    for form in query.scroll():
+        try:
+            for attachment in _get_attachment_dicts_from_form(form):
+                if attachment['content_type'] != "text/xml":
+                    form_ids.add(form['_id'])
+                    continue
+        except AttributeError:
+            pass
+    return form_ids
+
+
+def _get_attachment_dicts_from_form(form):
+    if 'external_blobs' in form:
+        return form['external_blobs'].values()
+    elif '_attachments' in form:
+        return form['_attachments'].values()
+    return []
