@@ -207,8 +207,21 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         });
         this.dataSourceIndicators = dataSourceIndicators;
         this.reportColumnOptions = reportColumnOptions;
+
         if (this.optionsContainQuestions) {
-            var transformPropertyOptions = function (options) {
+            var transformColumnOptions = function (options) {
+                return _.compact(_.map(options, function (o) {
+                    if (o.question_source) {
+                        return o.question_source;
+                    } else {
+                        return {
+                            value: o.id,
+                            label: o.display,
+                        };
+                    }
+                }));
+            };
+            var transformDataSourceIndicators = function (options) {
                 return _.compact(_.map(options, function (o) {
                     if (o.type === 'question') {
                         return o.source;
@@ -221,9 +234,10 @@ hqDefine('userreports/js/builder_view_models.js', function () {
                     }
                 }));
             };
+
             // Transform the property_options into the form expected by the questionsSelect binding.
-            this.dataSourceIndicators = transformPropertyOptions(this.dataSourceIndicators);
-            this.reportColumnOptions = transformPropertyOptions(this.reportColumnOptions);
+            this.dataSourceIndicators = transformDataSourceIndicators(this.dataSourceIndicators);
+            this.reportColumnOptions = transformColumnOptions(this.reportColumnOptions);
         }
 
         this.filtersList = new PropertyList({

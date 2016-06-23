@@ -826,6 +826,21 @@ class ConfigureNewReportBase(forms.Form):
             data_source_field=filter['field'] if not exists else None
         )
 
+    def _get_column_option_id_by_indicator_id(self, indicator_column_id):
+        """
+        Return the id of the ColumnOption corresponding to the given indicator
+        id.
+        NOTE: This currently assumes that there is a one-to-one mapping between
+        ColumnOptions and data source indicators, but we may want to remove
+        this assumption as we add functionality to the report builder.
+        :param indicator_column_id: The column_id field of a data source
+            indicator configuration.
+        :return: The id of the coresponding ColumnOption
+        """
+        for column_option_id, column_option in self.report_column_options.iteritems():
+            if column_option.indicator_id == indicator_column_id:
+                return column_option_id
+
     def _get_property_id_by_indicator_id(self, indicator_column_id):
         """
         Return the data source property id corresponding to the given data
@@ -1104,7 +1119,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     ColumnViewModel(
                         display_text=c['display'],
                         exists_in_current_version=exists,
-                        property=self._get_property_id_by_indicator_id(c['field']) if exists else None,
+                        property=self._get_column_option_id_by_indicator_id(c['field']) if exists else None,
                         data_source_field=c['field'] if not exists else None,
                         calculation=reverse_agg_map.get(c.get('aggregation'), _('Count per Choice'))
                     )
@@ -1120,16 +1135,11 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
-        def _make_column(conf, index):
-            return {
-                "format": "default",
-                "aggregation": "simple",
-                "field": self.data_source_properties[conf['property']].column_id,
-                "column_id": "column_{}".format(index),
-                "type": "field",
-                "display": conf['display_text']
-            }
-        return [_make_column(conf, i) for i, conf in enumerate(self.cleaned_data['columns'])]
+        return [
+            self.report_column_options[conf['property']].to_column_dict(
+                i, conf['display_text'], "simple"
+            ) for i, conf in enumerate(self.cleaned_data['columns'])
+        ]
 
     @property
     def _report_aggregation_cols(self):
@@ -1174,21 +1184,12 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         agg_field_id = self.data_source_properties[self.aggregation_field].column_id
         agg_field_text = self.data_source_properties[self.aggregation_field].text
 
-        def _make_column(conf, index):
-            aggregation_map = {'Count per Choice': 'simple',
-                                'Sum': 'sum',
-                                'Average': 'avg'}
-            return {
-                "format": "default",
-                "aggregation": aggregation_map[conf['calculation']],
-                "field": self.data_source_properties[conf['property']].column_id,
-                "column_id": "column_{}".format(index),
-                "type": "field",
-                "display": conf['display_text'],
-                "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'}
-            }
-
-        columns = [_make_column(conf, i) for i, conf in enumerate(self.cleaned_data['columns'])]
+        columns = [
+            self.report_column_options[conf['property']].to_column_dict(
+                i, conf['display_text'], conf['calculation']
+            )
+            for i, conf in enumerate(self.cleaned_data['columns'])
+        ]
 
         # Add the aggregation indicator to the columns if it's not already present.
         displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])
@@ -1200,11 +1201,11 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                 'field': agg_field_id,
                 'display': agg_field_text
             }] + columns
-
-        # Expand all columns except for the column being used for aggregation.
-        for c in columns:
-            if c['field'] != agg_field_id and c['aggregation'] == 'simple':
-                c['aggregation'] = "expand"
+        else:
+            # Don't expand the aggregation column
+            for c in columns:
+                if c['field'] == agg_field_id:
+                    c['aggregation'] = "simple"
         return columns
 
     @property
