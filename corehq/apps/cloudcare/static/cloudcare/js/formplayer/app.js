@@ -67,6 +67,7 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
 });
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
+    debugger;
     FormplayerFrontend.request("clearMenu");
 
     data.onLoading = tfLoading;

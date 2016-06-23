@@ -20,5 +20,14 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         template: "#grid-template",
         childView: AppList.GridItem,
         childViewContainer: ".application-container",
+
+        events: {
+            'click #syncItem': 'syncClick',
+        },
+        syncClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("sessions");
+        },
     });
-});
+})
+;

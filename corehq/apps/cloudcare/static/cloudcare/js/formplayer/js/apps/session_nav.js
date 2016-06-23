@@ -6,6 +6,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             "apps": "listApps", // list all apps available to this user
             "apps/:id": "selectApp", // select the app under :id and list root commands
             "apps/:id/menu": "listMenus", // select the app under :id, make session steps in params, display screen
+            "apps/sessions": "listSessions", //list all this user's current sessions (incomplete forms)
         },
     });
 
@@ -31,6 +32,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         },
         showDetail: function (model) {
             SessionNavigate.MenuList.Controller.showDetail(model);
+        },
+        listSessions: function() {
+            SessionNavigate.SessionList.Controller.listSessions();
+        },
+
+        getIncompleteForm: function(sessionId) {
+            SessionNavigate.SessionList.Controller.startForm(sessionId);
         },
     };
 
@@ -68,6 +76,14 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
     FormplayerFrontend.on("menu:show:detail", function (model) {
         API.showDetail(model);
+    });
+
+    FormplayerFrontend.on("sessions", function () {
+        API.listSessions();
+    });
+
+    FormplayerFrontend.on("getIncompleteForm", function (sessionId) {
+        API.getIncompleteForm(sessionId);
     });
 
     SessionNavigate.on("start", function () {
