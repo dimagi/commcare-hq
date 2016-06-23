@@ -26,7 +26,6 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
 
     domains = WORLD_VISION_DOMAINS
     group_by = ('domain', 'user_id')
-    save_direct_to_sql = True
     kafka_topic = topics.CASE
 
     name = flat_field(lambda case: case.name)
@@ -124,7 +123,6 @@ class WorldVisionHierarchyFluff(fluff.IndicatorDocument):
     document_class = CommCareUser
     domains = WORLD_VISION_DOMAINS
     group_by = ('domain',)
-    save_direct_to_sql = True
     kafka_topic = topics.META
 
     numerator = Numerator()
@@ -145,7 +143,6 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
 
     domains = WORLD_VISION_DOMAINS
     group_by = ('domain', 'user_id')
-    save_direct_to_sql = True
     kafka_topic = topics.CASE
 
     name = flat_field(lambda case: case.name)
