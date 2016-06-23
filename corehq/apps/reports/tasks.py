@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from dateutil.parser import parse
 import hashlib
 import os
 import tempfile
@@ -393,6 +394,8 @@ def _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, e
     """
     if not export_is_legacy:
         fetch_fn = es_get_form_ids_having_multimedia
+        startdate = parse(startdate)
+        enddate = parse(enddate)
     else:
         fetch_fn = couch_get_form_ids_having_multimedia
 

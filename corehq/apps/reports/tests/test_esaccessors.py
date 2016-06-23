@@ -44,6 +44,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     guess_form_name_from_submissions_using_xmlns,
     get_all_user_ids_submitted,
     get_username_in_last_form_user_id_submitted,
+    get_form_ids_having_multimedia,
 )
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
@@ -73,7 +74,8 @@ class TestFormESAccessors(BaseESAccessorsTest):
     pillow_class = XFormPillow
     es_index = XFORM_INDEX
 
-    def _send_form_to_es(self, domain=None, completion_time=None, received_on=None, **metadata_kwargs):
+    def _send_form_to_es(self, domain=None, completion_time=None, received_on=None, attachment_dict=None, **metadata_kwargs):
+        attachment_dict = attachment_dict or {}
         metadata = TestFormMetadata(
             domain=domain or self.domain,
             time_end=completion_time or datetime.utcnow(),
@@ -83,6 +85,8 @@ class TestFormESAccessors(BaseESAccessorsTest):
             setattr(metadata, attr, value)
 
         form_pair = make_es_ready_form(metadata)
+        form_pair.wrapped_form._attachments.update(attachment_dict)
+        form_pair.json_form['_attachments'].update(attachment_dict)
         self._pillow_process_form(form_pair)
         es = get_es_new()
         es.indices.refresh(XFORM_INDEX)
@@ -117,6 +121,43 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(paged_result.hits[0]['xmlns'], xmlns)
         self.assertEqual(paged_result.hits[0]['form']['meta']['userID'], user_id)
         self.assertEqual(paged_result.hits[0]['received_on'], '2013-07-02T00:00:00.000000Z')
+
+    def test_get_form_ids_having_multimedia(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns = 'http://a.b.org'
+        app_id = '1234'
+        user_id = 'abc'
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+            attachment_dict={
+                'my_image': {
+                    'content_type': 'image/jpg',
+                    'data': 'abc'
+                }
+            }
+        )
+
+        # Decoy form
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+
+        form_ids = get_form_ids_having_multimedia(
+            self.domain,
+            app_id,
+            xmlns,
+            start,
+            end
+        )
+        self.assertEqual(len(form_ids), 1)
 
     def test_get_forms_multiple_apps_xmlnss(self):
         start = datetime(2013, 7, 1)

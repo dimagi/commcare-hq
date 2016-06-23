@@ -1,6 +1,5 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime
-from dateutil.parser import parse
 
 from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations, LedgerES
 from corehq.apps.es.aggregations import (
@@ -546,7 +545,7 @@ def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate):
              .domain(domain)
              .app(app_id)
              .xmlns(xmlns)
-             .submitted(gte=parse(startdate), lte=parse(enddate))
+             .submitted(gte=startdate, lte=enddate)
              .remove_default_filter("has_user")
              .source(['_attachments', '_id', 'external_blobs']))
     form_ids = set()
