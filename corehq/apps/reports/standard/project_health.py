@@ -52,7 +52,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users, has_filters, performance_threshold, previous_summary=None):
+    def __init__(self, domain, month, users, has_filter, performance_threshold, previous_summary=None):
         self._previous_summary = previous_summary
         self._next_summary = None
         base_queryset = MALTRow.objects.filter(
@@ -60,7 +60,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
-        if has_filters:
+        if has_filter:
             base_queryset = base_queryset.filter(
                 user_id__in=users,
             )
@@ -268,7 +268,7 @@ class ProjectHealthDashboard(ProjectReport):
                 month=month_as_date,
                 previous_summary=last_month_summary,
                 users=filtered_users,
-                has_filters=bool(self.get_group_location_ids()),
+                has_filter=bool(self.get_group_location_ids()),
             )
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:

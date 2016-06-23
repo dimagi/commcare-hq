@@ -33,7 +33,7 @@ class MonthlyPerformanceSummaryTests(TestCase):
             month=cls.prev_month_as_date,
             previous_summary=None,
             users=users_in_group,
-            has_group_filter=False,
+            has_filter=False,
         )
         cls.month = MonthlyPerformanceSummary(
             domain=cls.DOMAIN_NAME,
@@ -41,7 +41,7 @@ class MonthlyPerformanceSummaryTests(TestCase):
             month=cls.month_as_date,
             previous_summary=cls.prev_month,
             users=users_in_group,
-            has_group_filter=False,
+            has_filter=False,
         )
 
     @classmethod
