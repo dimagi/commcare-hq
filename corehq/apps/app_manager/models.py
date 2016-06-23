@@ -52,6 +52,7 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.util.timezones.utils import get_timezone_for_request
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -3511,7 +3512,9 @@ class CustomDatespanFilter(ReportAppFilter):
     date_number2 = StringProperty()
 
     def get_filter_value(self, user, ui_filter):
-        today = datetime.date.today()
+        # this won't work for primed restore because it doesn't have access to request
+        timezone = get_timezone_for_request()
+        today = ServerTime(datetime.datetime.utcnow()).user_time(timezone).done().date()
         start_date = end_date = None
         days = int(self.date_number)
         if self.operator == 'between':
