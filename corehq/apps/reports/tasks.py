@@ -381,6 +381,13 @@ def _get_export_properties(export_id, export_is_legacy):
                         properties.add("-".join(path_parts))
     return properties
 
+def _get_attachment_dicts_from_form(form):
+    if 'external_blobs' in form:
+        return form['external_blobs'].values()
+    elif '_attachments' in form:
+        return form['_attachments'].values()
+    return []
+
 
 def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
     """
@@ -388,17 +395,18 @@ def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
     Each form has a multimedia attachment and meets the given filters.
     """
     if not export_is_legacy:
+        # TODO: Remove references to _attachments once all forms have been migrated to Riak
         query = (FormES()
                  .domain(domain)
                  .app(app_id)
                  .xmlns(xmlns)
                  .submitted(gte=parse(startdate), lte=parse(enddate))
                  .remove_default_filter("has_user")
-                 .source(['_attachments', '_id']))
+                 .source(['_attachments', '_id', 'external_blobs']))
         form_ids = set()
         for form in query.scroll():
             try:
-                for attachment in form['_attachments'].values():
+                for attachment in _get_attachment_dicts_from_form(form):
                     if attachment['content_type'] != "text/xml":
                         form_ids.add(form['_id'])
                         continue
