@@ -3897,10 +3897,8 @@ class LazyBlobDoc(BlobMixin):
     Cache strategy:
     - on fetch, check in local memory, then cache
       - if both are a miss, fetch from couchdb and store in both
-    - before an attachment is committed to couchdb, clear cache
-      (allowing the next fetch to go all the way through).
-      Clear rather than write new value, in case something
-      goes wrong with the save.
+    - after an attachment is committed to the blob db and the
+      save save has succeeded, save the attachment in the cache
     """
 
     migrating_blobs_from_couch = True
@@ -3943,25 +3941,21 @@ class LazyBlobDoc(BlobMixin):
 
     def __set_cached_attachment(self, name, content):
         cache.set(self.__attachment_cache_key(name), content, timeout=60 * 60 * 24)
+        self._LAZY_ATTACHMENTS_CACHE[name] = content
 
     def __get_cached_attachment(self, name):
-        return cache.get(self.__attachment_cache_key(name))
-
-    def __remove_cached_attachment(self, name):
-        cache.delete(self.__attachment_cache_key(name))
-
-    def __store_lazy_attachment(self, content, name=None, content_type=None,
-                                content_length=None):
-        info = {
-            'content': content,
-            'content_type': content_type,
-            'content_length': content_length,
-        }
-        self._LAZY_ATTACHMENTS[name] = info
-        return info
+        try:
+            # it has been fetched already during this request
+            content = self._LAZY_ATTACHMENTS_CACHE[name]
+        except KeyError:
+            content = cache.get(self.__attachment_cache_key(name))
+            if content is not None:
+                self._LAZY_ATTACHMENTS_CACHE[name] = content
+        return content
 
     def put_attachment(self, content, name=None, *args, **kw):
-        self.__remove_cached_attachment(name)
+        cache.delete(self.__attachment_cache_key(name))
+        self._LAZY_ATTACHMENTS_CACHE.pop(name, None)
         return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
 
     def lazy_put_attachment(self, content, name=None, content_type=None,
@@ -3971,19 +3965,20 @@ class LazyBlobDoc(BlobMixin):
         and that upon self.save(), the attachments are put to the doc as well
 
         """
-        self.__store_lazy_attachment(content, name, content_type, content_length)
+        self._LAZY_ATTACHMENTS[name] = {
+            'content': content,
+            'content_type': content_type,
+            'content_length': content_length,
+        }
 
     def lazy_fetch_attachment(self, name):
         # it has been put/lazy-put already during this request
-        if name in self._LAZY_ATTACHMENTS and 'content' in self._LAZY_ATTACHMENTS[name]:
+        if name in self._LAZY_ATTACHMENTS:
             content = self._LAZY_ATTACHMENTS[name]['content']
-        # it has been fetched already during this request
-        elif name in self._LAZY_ATTACHMENTS_CACHE:
-            content = self._LAZY_ATTACHMENTS_CACHE[name]
         else:
             content = self.__get_cached_attachment(name)
 
-            if not content:
+            if content is None:
                 try:
                     content = self.fetch_attachment(name)
                 except ResourceNotFound as e:
@@ -3995,9 +3990,6 @@ class LazyBlobDoc(BlobMixin):
                     raise
                 finally:
                     self.__set_cached_attachment(name, content)
-                    self._LAZY_ATTACHMENTS_CACHE[name] = content
-            else:
-                self._LAZY_ATTACHMENTS_CACHE[name] = content
 
         if isinstance(content, ResourceNotFound):
             raise content
@@ -4018,8 +4010,11 @@ class LazyBlobDoc(BlobMixin):
                 for name, info in self._LAZY_ATTACHMENTS.items():
                     if not info['content_type']:
                         info['content_type'] = ';'.join(filter(None, guess_type(name)))
-                    self.__remove_cached_attachment(name)
                     super(LazyBlobDoc, self).put_attachment(name=name, **info)
+            # super_save() has succeeded by now
+            for name, info in self._LAZY_ATTACHMENTS.items():
+                self.__set_cached_attachment(name, info['content'])
+            self._LAZY_ATTACHMENTS.clear()
         else:
             super_save()
 
