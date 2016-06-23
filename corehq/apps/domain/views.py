@@ -630,7 +630,6 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
     @property
-    @memoized
     def product(self):
         return SoftwareProductType.COMMCARE
 
