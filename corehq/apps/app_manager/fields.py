@@ -7,6 +7,7 @@ from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.analytics import get_exports_by_form
 from dimagi.utils.decorators.memoized import memoized
@@ -474,10 +475,16 @@ class ApplicationDataRMIHelper(object):
                     app = get_app(self.domain, app_choice.id)
                     case_types = []
                     if hasattr(app, 'modules'):
+                        # Add regular case types
                         case_types = set([
                             module.case_type
                             for module in app.modules if module.case_type
                         ])
+
+                        # Add user case if any module uses it
+                        if any(map(lambda module: module.uses_usercase(), app.modules)):
+                            case_types.add(USERCASE_TYPE)
+
                         used_case_types = used_case_types.union(case_types)
                         case_types = map(lambda c: RMIDataChoice(
                             id=c,
