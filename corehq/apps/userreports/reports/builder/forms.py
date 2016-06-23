@@ -12,6 +12,8 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
+from corehq.apps.userreports.reports.builder.columns import \
+    QuestionColumnOption, ColumnOption, CountColumn
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -617,6 +619,18 @@ class ConfigureNewReportBase(forms.Form):
             ))
 
     @property
+    @memoized
+    def report_column_options(self):
+        options = OrderedDict()
+        for id_, prop in self.data_source_properties.iteritems():
+            if prop.type == "question":
+                option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric, prop.source)
+            else:
+                option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
+            options[id_] = option
+        return options
+
+    @property
     def column_config_template(self):
         return render_to_string('userreports/partials/property_list_configuration.html')
 
@@ -803,7 +817,7 @@ class ConfigureNewReportBase(forms.Form):
             'date': 'Date',
             'numeric': 'Numeric'
         }
-        exists = self._column_exists(filter['field'])
+        exists = self._data_source_prop_exists(filter['field'])
         return FilterViewModel(
             exists_in_current_version=exists,
             display_text=filter['display'],
@@ -834,7 +848,16 @@ class ConfigureNewReportBase(forms.Form):
 
         column_id is a string like "data_date_q_d1b3693e"
         """
-        return column_id in self._properties_by_column
+        return column_id in [c.indicator_id for c in self.report_column_options.values()]
+
+    def _data_source_prop_exists(self, indicator_id):
+        """
+        Return True if there exists a DataSourceProperty corresponding to the
+        given data source indicator id.
+        :param indicator_id:
+        :return:
+        """
+        return indicator_id in self._properties_by_column
 
     @property
     def _report_aggregation_cols(self):
@@ -1137,6 +1160,14 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
     def _report_charts(self):
         # Override the behavior inherited from ConfigureBarChartReportForm
         return []
+
+    @property
+    @memoized
+    def report_column_options(self):
+        options = super(ConfigureTableReportForm, self).report_column_options
+        count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
+        options[count_col.id] = count_col
+        return options
 
     @property
     def _report_columns(self):
