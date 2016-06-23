@@ -345,6 +345,8 @@ class HqdbContext(DatabaseContext):
                 return  # skip remaining setup
 
         sys.__stdout__.write("\n")  # newline for creating database message
+        if "REUSE_DB" in os.environ:
+            sys.__stdout__.write("REUSE_DB={REUSE_DB!r} ".format(**os.environ))
         super(HqdbContext, self).setup()
 
     def teardown(self):
