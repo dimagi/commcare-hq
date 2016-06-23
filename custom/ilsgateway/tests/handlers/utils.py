@@ -27,7 +27,12 @@ def create_products(cls, domain_name, codes):
 class ILSTestScript(TestScript):
 
     @classmethod
+    def bypass_setUpClass(cls):
+        super(ILSTestScript, cls).setUpClass()
+
+    @classmethod
     def setUpClass(cls):
+        super(ILSTestScript, cls).setUpClass()
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         domain = prepare_domain(TEST_DOMAIN)
         mohsw = make_loc(code="moh1", name="Test MOHSW 1", type="MOHSW", domain=domain.name)
@@ -81,6 +86,7 @@ class ILSTestScript(TestScript):
         create_products(cls, domain.name, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
 
     def setUp(self):
+        super(ILSTestScript, self).setUp()
         self.domain = Domain.get_by_name(TEST_DOMAIN)
         self.loc1 = Location.by_site_code(TEST_DOMAIN, 'loc1')
         self.loc2 = Location.by_site_code(TEST_DOMAIN, 'loc2')
@@ -93,25 +99,42 @@ class ILSTestScript(TestScript):
     @classmethod
     def tearDownClass(cls):
         delete_domain_phone_numbers(TEST_DOMAIN)
-        cls.sms_backend_mapping.delete()
-        cls.sms_backend.delete()
-        CommCareUser.get_by_username('stella').delete()
-        CommCareUser.get_by_username('bella').delete()
-        CommCareUser.get_by_username('trella').delete()
-        CommCareUser.get_by_username('msd_person').delete()
+        if cls.sms_backend_mapping.id is not None:
+            cls.sms_backend_mapping.delete()
+        if cls.sms_backend.id is not None:
+            cls.sms_backend.delete()
+        for username in [
+            'stella',
+            'bella',
+            'trella',
+            'msd_person',
+        ]:
+            user = CommCareUser.get_by_username(username)
+            if user:
+                user.delete()
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
         SQLProduct.objects.all().delete()
-        ILSGatewayConfig.for_domain(TEST_DOMAIN).delete()
+        ils_gateway_config = ILSGatewayConfig.for_domain(TEST_DOMAIN)
+        if ils_gateway_config:
+            ils_gateway_config.delete()
         DocDomainMapping.objects.all().delete()
-        Location.by_site_code(TEST_DOMAIN, 'loc1').delete()
-        Location.by_site_code(TEST_DOMAIN, 'loc2').delete()
-        Location.by_site_code(TEST_DOMAIN, 'dis1').delete()
-        Location.by_site_code(TEST_DOMAIN, 'reg1').delete()
-        Location.by_site_code(TEST_DOMAIN, 'moh1').delete()
+        for site_code in [
+            'loc1',
+            'loc2',
+            'dis1',
+            'reg1',
+            'moh1',
+        ]:
+            location = Location.by_site_code(TEST_DOMAIN, site_code)
+            if location:
+                location.delete()
         SQLLocation.objects.all().delete()
         generator.delete_all_subscriptions()
-        Domain.get_by_name(TEST_DOMAIN).delete()
+        test_domain = Domain.get_by_name(TEST_DOMAIN)
+        if test_domain:
+            test_domain.delete()
+        super(ILSTestScript, cls).tearDownClass()
 
 
 def prepare_domain(domain_name):
