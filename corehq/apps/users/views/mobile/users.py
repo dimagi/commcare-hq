@@ -461,7 +461,7 @@ def reset_demo_user_restore(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     if not user.is_demo_user:
         warning = _("The user is not a demo user.")
-        messages.warning(require_POST, warning)
+        messages.warning(request, warning)
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
     download = DownloadBase()
