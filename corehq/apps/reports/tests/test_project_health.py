@@ -1,19 +1,20 @@
 from django.test import TestCase
 import datetime
 from dimagi.utils.dates import add_months
-from corehq.apps.reports.standard.project_health import MonthlyPerformanceSummary
+from corehq.apps.reports.standard.project_health import MonthlyPerformanceSummary, ProjectHealthDashboard, get_performance_threshold
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.const import MISSING_APP_ID
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from django.test import RequestFactory
 
 
-class MonthlyPerformanceSummaryTests(TestCase):
-    DOMAIN_NAME = "test"
-    USERNAME = "testuser"
-    USERNAME1 = "testuser1"
-    USERNAME2 = "testuser2"
+class SetupMonthlyPerformanceMixin(object):
+    DOMAIN_NAME = "test_domain"
+    USERNAME = "testing_user"
+    USERNAME1 = "testing_user1"
+    USERNAME2 = "testing_user2"
     USER_TYPE = "CommCareUser"
     now = datetime.datetime.utcnow()
     year, month = add_months(now.year, now.month, 1)
@@ -21,34 +22,10 @@ class MonthlyPerformanceSummaryTests(TestCase):
     prev_month_as_date = datetime.date(year, month - 1, 1)
 
     @classmethod
-    def setUpClass(cls):
-        super(MonthlyPerformanceSummaryTests, cls).setUpClass()
+    def class_setup(cls):
         cls._setup_domain()
         cls._setup_users()
         cls._setup_malt_tables()
-        users_in_group = []
-        cls.prev_month = MonthlyPerformanceSummary(
-            domain=cls.DOMAIN_NAME,
-            performance_threshold=15,
-            month=cls.prev_month_as_date,
-            previous_summary=None,
-            users=users_in_group,
-            has_filter=False,
-        )
-        cls.month = MonthlyPerformanceSummary(
-            domain=cls.DOMAIN_NAME,
-            performance_threshold=15,
-            month=cls.month_as_date,
-            previous_summary=cls.prev_month,
-            users=users_in_group,
-            has_filter=False,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        super(MonthlyPerformanceSummaryTests, cls).tearDownClass()
-        delete_all_users()
-        MALTRow.objects.all().delete()
 
     @classmethod
     def _setup_users(cls):
@@ -56,6 +33,7 @@ class MonthlyPerformanceSummaryTests(TestCase):
         cls.user.save()
         cls.user1 = CommCareUser.create(cls.DOMAIN_NAME, cls.USERNAME1, '*****')
         cls.user1.save()
+        cls.web_user = WebUser.create(cls.DOMAIN_NAME, cls.USERNAME2, '*****')
 
     @classmethod
     def _setup_domain(cls):
@@ -94,6 +72,37 @@ class MonthlyPerformanceSummaryTests(TestCase):
             app_id=MISSING_APP_ID,
         )
         malt_user_prev.save()
+
+
+class MonthlyPerformanceSummaryTests(SetupMonthlyPerformanceMixin, TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(MonthlyPerformanceSummaryTests, cls).setUpClass()
+        cls.class_setup()
+        users_in_group = []
+        cls.prev_month = MonthlyPerformanceSummary(
+            domain=cls.DOMAIN_NAME,
+            performance_threshold=15,
+            month=cls.prev_month_as_date,
+            previous_summary=None,
+            users=users_in_group,
+            has_filter=False,
+        )
+        cls.month = MonthlyPerformanceSummary(
+            domain=cls.DOMAIN_NAME,
+            performance_threshold=15,
+            month=cls.month_as_date,
+            previous_summary=cls.prev_month,
+            users=users_in_group,
+            has_filter=False,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        super(MonthlyPerformanceSummaryTests, cls).tearDownClass()
+        delete_all_users()
+        MALTRow.objects.all().delete()
 
     def test_delta_active_additional_user(self):
         """
@@ -136,3 +145,43 @@ class MonthlyPerformanceSummaryTests(TestCase):
         get_all_user_stubs() should contain two users from this month
         """
         self.assertEqual(len(self.month.get_all_user_stubs().keys()), 2)
+
+
+class ProjectHealthDashboardTest(SetupMonthlyPerformanceMixin, TestCase):
+    dependent_apps = ['corehq.apps.reports.filters.location.LocationGroupFilter']
+    request = RequestFactory().get('/project_health')
+
+    @classmethod
+    def setUpClass(cls):
+        super(ProjectHealthDashboardTest, cls).setUpClass()
+        cls.class_setup()
+        cls.request.couch_user = cls.web_user
+        cls.dashboard = ProjectHealthDashboard(cls.request)
+        cls.dashboard.domain = cls.DOMAIN_NAME
+
+    @classmethod
+    def tearDownClass(cls):
+        super(ProjectHealthDashboardTest, cls).tearDownClass()
+        delete_all_users()
+        MALTRow.objects.all().delete()
+
+    def test_previous_six_months(self):
+        """
+        previous_six_month() should return six months of MALT rows
+        """
+        six_months = self.dashboard.previous_six_months()
+        self.assertEqual(len(six_months), 6)
+
+    def test_get_users_by_location_filter(self):
+        """
+        get_users_by_location_filter() should return a list of users based on location id
+        """
+        users_by_location = self.dashboard.get_users_by_location_filter([])
+        self.assertEqual(users_by_location, [])
+
+    def test_get_users_by_group_filter(self):
+        """
+        get_users_by_group_filter() should return a list of users based on group id
+        """
+        users_by_group = self.dashboard.get_users_by_group_filter([])
+        self.assertEqual(users_by_group, [])

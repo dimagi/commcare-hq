@@ -217,7 +217,7 @@ class ProjectHealthDashboard(ProjectReport):
             params = []
         return params
 
-    def parse_param_to_loc_group(self, param_ids):
+    def parse_params(self, param_ids):
         locationids_param = []
         groupids_param = []
 
@@ -234,23 +234,27 @@ class ProjectHealthDashboard(ProjectReport):
 
         return locationids_param, groupids_param
 
-    def get_users_by_filter(self):
-        locationids_param, groupids_param = self.parse_param_to_loc_group(self.get_group_location_ids())
+    def get_users_by_location_filter(self, location_ids):
+        return UserES().domain(self.domain).location(location_ids).values_list('_id', flat=True)
 
-        users_lists_by_location = (UserES()
-                                   .domain(self.domain)
-                                   .location(locationids_param)
-                                   .values_list('_id', flat=True))
-        users_list_by_group = (GroupES()
-                               .domain(self.domain)
-                               .group_ids(groupids_param)
-                               .values_list("users", flat=True))
-        if locationids_param and groupids_param:
-            users_set = set(chain(*users_list_by_group)).union(users_lists_by_location)
-        elif locationids_param:
-                users_set = set(users_lists_by_location)
+    def get_users_by_group_filter(self, group_ids):
+        return GroupES().domain(self.domain).group_ids(group_ids).values_list("users", flat=True)
+
+    def get_unique_users(self, users_loc, users_group):
+        if users_loc and users_group:
+            return set(chain(*users_group)).union(users_loc)
+        elif users_loc:
+            return set(users_loc)
         else:
-            users_set = set(chain(*users_list_by_group))
+            return set(chain(*users_group))
+
+    def get_users_by_filter(self):
+        locationids_param, groupids_param = self.parse_params(self.get_group_location_ids())
+
+        users_list_by_location = self.get_users_by_location_filter(locationids_param)
+        users_list_by_group = self.get_users_by_group_filter(groupids_param)
+
+        users_set = self.get_unique_users(users_list_by_location, users_list_by_group)
         return users_set
 
     def previous_six_months(self):
