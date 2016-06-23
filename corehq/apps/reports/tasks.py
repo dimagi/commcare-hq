@@ -280,7 +280,7 @@ def _store_excel_in_redis(file):
 def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
                               export_id, zip_name, download_id, export_is_legacy):
 
-    form_ids = _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
+    form_ids = _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
     properties = _get_export_properties(export_id, export_is_legacy)
 
     if not app_id:
@@ -389,7 +389,7 @@ def _get_attachment_dicts_from_form(form):
     return []
 
 
-def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
+def _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
     """
     Return a list of form ids.
     Each form has a multimedia attachment and meets the given filters.
