@@ -74,7 +74,13 @@ class TestFormESAccessors(BaseESAccessorsTest):
     pillow_class = XFormPillow
     es_index = XFORM_INDEX
 
-    def _send_form_to_es(self, domain=None, completion_time=None, received_on=None, attachment_dict=None, **metadata_kwargs):
+    def _send_form_to_es(
+            self,
+            domain=None,
+            completion_time=None,
+            received_on=None,
+            attachment_dict=None,
+            **metadata_kwargs):
         attachment_dict = attachment_dict or {}
         metadata = TestFormMetadata(
             domain=domain or self.domain,
