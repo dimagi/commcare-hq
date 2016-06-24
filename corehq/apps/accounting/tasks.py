@@ -585,6 +585,7 @@ def assign_explicit_community_subscription(domain_name, start_date):
         ).plan.get_version(),
         date_start=start_date,
         date_end=end_date,
+        skip_invoicing_if_no_feature_charges=True,
         adjustment_method=SubscriptionAdjustmentMethod.TASK,
         internal_change=True,
         service_type=SubscriptionType.PRODUCT,

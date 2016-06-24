@@ -57,6 +57,7 @@ class TestExplicitCommunitySubscriptions(TestCase):
         self.assertEqual(subscription.date_start, self.from_date)
         self.assertIsNone(subscription.date_end)
         self.assertEqual(subscription.plan_version, self._most_recently_created_community_plan_version)
+        self.assertTrue(subscription.skip_invoicing_if_no_feature_charges)
 
     def test_preexisting_current_subscription(self):
         preexisting_subscription = Subscription.new_domain_subscription(
@@ -89,6 +90,7 @@ class TestExplicitCommunitySubscriptions(TestCase):
             date_start=self.from_date,
             date_end=future_subscription_start_date,
             plan_version=self._most_recently_created_community_plan_version,
+            skip_invoicing_if_no_feature_charges=True,
         ))
         self.assertIsNotNone(Subscription.objects.get(
             date_start=future_subscription_start_date,
@@ -115,6 +117,7 @@ class TestExplicitCommunitySubscriptions(TestCase):
             date_start=self.from_date,
             date_end=None,
             plan_version=self._most_recently_created_community_plan_version,
+            skip_invoicing_if_no_feature_charges=True,
         ))
         self.assertIsNotNone(Subscription.objects.get(
             date_start=past_subscription_start_date,
