@@ -7,8 +7,6 @@ from corehq.const import MISSING_APP_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
 from corehq.apps.groups.models import Group
-from corehq.apps.groups.tests.test_utils import delete_all_groups
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from django.test import RequestFactory
 import mock
 from corehq.apps.es.fake.groups_fake import GroupESFake
@@ -18,10 +16,10 @@ from corehq.apps.es.fake.users_fake import UserESFake
 @mock.patch('corehq.apps.reports.standard.project_health.UserES', UserESFake)
 class SetupProjectPerformanceMixin(object):
     DOMAIN_NAME = "test_domain"
-    USERNAME = "user"
-    USERNAME1 = "user1"
-    USERNAME2 = "user2"
-    WEB_USER = "user_web"
+    USERNAME = "testuser"
+    USERNAME1 = "testuser1"
+    USERNAME2 = "testuser2"
+    WEB_USER = "webuser"
     USER_TYPE = "CommCareUser"
     now = datetime.datetime.utcnow()
     year, month = add_months(now.year, now.month, 1)
@@ -36,9 +34,8 @@ class SetupProjectPerformanceMixin(object):
 
     @classmethod
     def class_teardown(cls):
-        delete_all_groups()
-        delete_all_users()
         UserESFake.reset_docs()
+        cls.domain.delete()
 
     @classmethod
     def make_mobile_worker(cls, username, domain=None):
@@ -187,7 +184,6 @@ class ProjectHealthDashboardTest(SetupProjectPerformanceMixin, TestCase):
     def tearDownClass(cls):
         super(ProjectHealthDashboardTest, cls).tearDownClass()
         cls.class_teardown()
-        cls.web_user.delete()
         GroupESFake.reset_docs()
 
     @classmethod
