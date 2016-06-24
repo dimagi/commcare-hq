@@ -6,7 +6,7 @@ from urllib import urlencode
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -29,11 +29,15 @@ from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     Currency,
+    DefaultProductPlan,
+    EntryPoint,
+    SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
     SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
     SubscriptionAdjustmentReason,
+    SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
 )
@@ -541,3 +545,45 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
             })
     except Exception as e:
         log_accounting_error("Error updating exchange rates: %s" % e.message)
+
+
+def assign_explicit_community_subscriptions(from_date):
+    consistent_dates_check = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
+
+    all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
+    for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
+        domain_name = domain_doc['name']
+        if not Subscription.objects.filter(
+            consistent_dates_check
+        ).filter(
+            Q(date_end__gt=from_date) | Q(date_end__isnull=True),
+            date_start__lte=from_date,
+            subscriber__domain=domain_name,
+        ).exists():
+            future_subscriptions = Subscription.objects.filter(
+                consistent_dates_check
+            ).filter(
+                date_start__gt=from_date,
+                subscriber__domain=domain_name,
+            )
+            if future_subscriptions.exists():
+                end_date = future_subscriptions.latest('date_start').date_start
+            else:
+                end_date = None
+
+            Subscription.new_domain_subscription(
+                account=BillingAccount.get_or_create_account_by_domain(
+                    domain_name,
+                    created_by='assign_explicit_community_subscriptions',
+                    entry_point=EntryPoint.SELF_STARTED,
+                )[0],
+                domain=domain_name,
+                plan_version=DefaultProductPlan.get_default_plan(
+                    SoftwarePlanEdition.COMMUNITY
+                ).plan.get_version(),
+                date_start=from_date,
+                date_end=end_date,
+                adjustment_method=SubscriptionAdjustmentMethod.TASK,
+                internal_change=True,
+                service_type=SubscriptionType.PRODUCT,
+            )
