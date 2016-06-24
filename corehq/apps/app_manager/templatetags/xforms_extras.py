@@ -75,7 +75,6 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
             saveValueName: '{}',
             readOnlyClass: '{}',
             postSave: {},
-            decode: 1,
         "></inline-edit>
     '''.format(url, saveValueName, readOnlyClass, postSave)
     return _input_trans(template, name, langs=langs, allow_blank=False)
