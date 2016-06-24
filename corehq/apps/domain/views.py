@@ -259,9 +259,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
 
     @property
     def required_plan_name(self):
-        return DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain_object, [self.missing_privilege]
-        )
+        return DefaultProductPlan.get_lowest_edition([self.missing_privilege])
 
     def get(self, request, *args, **kwargs):
         self.request = request
@@ -1653,8 +1651,8 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         context = super(SubscriptionRenewalView, self).page_context
 
         current_privs = get_privileges(self.subscription.plan_version)
-        plan = DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain, current_privs, return_plan=False,
+        plan = DefaultProductPlan.get_lowest_edition(
+            current_privs, return_plan=False,
         ).lower()
 
         context['current_edition'] = (plan

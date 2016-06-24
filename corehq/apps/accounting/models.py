@@ -749,8 +749,7 @@ class DefaultProductPlan(models.Model):
             )
 
     @classmethod
-    def get_lowest_edition_by_domain(cls, domain, requested_privileges,
-                                     return_plan=False):
+    def get_lowest_edition(cls, requested_privileges, return_plan=False):
         for edition in SoftwarePlanEdition.SELF_SERVICE_ORDER:
             plan_version = cls.get_default_plan(
                 edition=edition
@@ -1355,9 +1354,8 @@ class Subscription(models.Model):
 
         if new_version is None:
             current_privileges = get_privileges(self.plan_version)
-            new_version = DefaultProductPlan.get_lowest_edition_by_domain(
-                self.subscriber.domain, current_privileges,
-                return_plan=True,
+            new_version = DefaultProductPlan.get_lowest_edition(
+                current_privileges, return_plan=True,
             )
 
         if new_version is None:
