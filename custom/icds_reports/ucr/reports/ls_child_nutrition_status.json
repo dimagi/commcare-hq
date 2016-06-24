@@ -1,0 +1,108 @@
+{
+  "domains": [
+    "icds-test",
+    "icds-sql",
+    "icds-cas"
+  ],
+  "report_id": "static-ls_child_nutrition_status",
+  "data_source_table": "static-child_health_cases",
+  "config": {
+    "title": "LS - Child Nutrition Status (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": true,
+        "datatype": "string",
+        "required": false,
+        "slug": "modified_on",
+        "field": "modified_on",
+        "type": "date",
+        "display": "Modified Date"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by Supervisor",
+        "field": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "slug": "supervisor_id"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "owner_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "norm_mal_open_count",
+        "field": "norm_mal_open_count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "norm_mal_open_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "mod_mal_open_count",
+        "field": "mod_mal_open_count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "mod_mal_open_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "sev_mal_open_count",
+        "field": "sev_mal_open_count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "sev_mal_open_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "open_not_weighed_count",
+        "field": "open_not_weighed_count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "open_not_weighed_count"
+      }
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}
