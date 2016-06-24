@@ -23,7 +23,6 @@ from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.logging import notify_exception
@@ -46,6 +45,12 @@ from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
 
+from .analytics.couchaccessors import (
+    get_form_ids_having_multimedia as couch_get_form_ids_having_multimedia
+)
+from .analytics.esaccessors import (
+    get_form_ids_having_multimedia as es_get_form_ids_having_multimedia
+)
 from .dbaccessors import get_all_hq_group_export_configs
 from .export import save_metadata_export_to_tempfile
 from .models import (
@@ -280,7 +285,7 @@ def _store_excel_in_redis(file):
 def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
                               export_id, zip_name, download_id, export_is_legacy):
 
-    form_ids = _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
+    form_ids = _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
     properties = _get_export_properties(export_id, export_is_legacy)
 
     if not app_id:
@@ -369,7 +374,7 @@ def _get_export_properties(export_id, export_is_legacy):
             for table in schema.tables:
                 # - in question id is replaced by . in excel exports
                 properties |= {c.display.replace('.', '-') for c in
-                               table.columns}
+                               table.columns if c.display}
         else:
             from corehq.apps.export.models import FormExportInstance
             export = FormExportInstance.get(export_id)
@@ -382,7 +387,7 @@ def _get_export_properties(export_id, export_is_legacy):
     return properties
 
 
-def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
+def _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
     """
     Return a list of form ids.
     Each form has a multimedia attachment and meets the given filters.
@@ -408,17 +413,15 @@ def _get_form_ids(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
                 if attachment['content_type'] != "text/xml":
                     form_ids.add(form['_id'])
     else:
-        key = [domain, app_id, xmlns]
-        form_ids = {
-            f['id'] for f in
-            XFormInstance.get_db().view(
-                "attachments/attachments",
-                start_key=key + [startdate],
-                end_key=key + [enddate, {}],
-                reduce=False
-            )
-        }
-    return form_ids
+        fetch_fn = couch_get_form_ids_having_multimedia
+
+    return fetch_fn(
+        domain,
+        app_id,
+        xmlns,
+        startdate,
+        enddate,
+    )
 
 
 def _extract_form_attachment_info(form, properties):

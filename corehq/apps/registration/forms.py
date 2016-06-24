@@ -11,6 +11,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
 from corehq.apps.domain.forms import clean_password, max_pwd, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
+from corehq.apps.analytics.tasks import track_workflow
 
 
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
@@ -141,7 +142,11 @@ class NewWebUserRegistrationForm(NoAutocompleteMixin, DomainRegistrationForm):
         return data
 
     def clean_password(self):
-        return clean_password(self.cleaned_data.get('password'))
+        try:
+            return clean_password(self.cleaned_data.get('password'))
+        except forms.ValidationError:
+            track_workflow(self.cleaned_data.get('email'), 'Password Failure')
+            raise
 
     def clean(self):
         for field in self.cleaned_data:

@@ -1,18 +1,18 @@
-import os
 import json
+import os
+
+from django_prbac.models import Role, Grant
 
 from corehq import privileges
-from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, \
     SoftwarePlanEdition, Subscription, SoftwarePlan, SoftwarePlanVersion, \
     SubscriptionType, ProBonoStatus, SoftwarePlanVisibility, SoftwareProduct, \
     SoftwareProductType
-from corehq.apps.accounting.tests import BaseAccountingTest
+from corehq.apps.accounting.tests import BaseAccountingTest, generator
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     ReportConfiguration, ReportMeta, get_datasource_config
-from django_prbac.models import Role, Grant
 
 
 class TestSubscriptionPermissionsChanges(BaseAccountingTest):
@@ -31,8 +31,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.project.name, created_by=self.admin_user.username)[0]
-        self.advanced_plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.project.name, edition=SoftwarePlanEdition.ADVANCED)
+        self.advanced_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
         self._init_pro_with_rb_plan_and_version()
 
     def _init_pro_with_rb_plan_and_version(self):

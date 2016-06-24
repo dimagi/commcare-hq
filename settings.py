@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 import importlib
 from collections import defaultdict
 
@@ -819,7 +818,6 @@ IVR_OUTBOUND_RETRY_INTERVAL = 10
 # deprecated - use IndicatorDocument.save_direct_to_sql
 FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
-    'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
     'OpmUserFluff': 'SQL',
 }
@@ -1330,8 +1328,8 @@ EMAIL_HOST = EMAIL_SMTP_HOST
 EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
-# EMAIL_USE_TLS and SEND_BROKEN_LINK_EMAILS are set above
-# so they can be overridden in localsettings (e.g. in a dev environment)
+# EMAIL_USE_TLS is set above
+# so it can be overridden in localsettings (e.g. in a dev environment)
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
@@ -1410,18 +1408,6 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {
     "FRI": "fri/chat.html",
-}
-
-SELENIUM_APP_SETTING_DEFAULTS = {
-    'cloudcare': {
-        # over-generous defaults for now
-        'OPEN_FORM_WAIT_TIME': 20,
-        'SUBMIT_FORM_WAIT_TIME': 20
-    },
-    'reports': {
-        'MAX_PRELOAD_TIME': 20,
-        'MAX_LOAD_TIME': 30,
-    },
 }
 
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
@@ -1540,7 +1526,6 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
-        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1644,7 +1629,7 @@ STATIC_DATA_SOURCES = [
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_provider'
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]
 
 

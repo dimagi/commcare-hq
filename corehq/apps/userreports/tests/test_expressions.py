@@ -5,7 +5,8 @@ from decimal import Decimal
 from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from simpleeval import InvalidExpression
-from casexml.apps.case.mock import CaseStructure, CaseFactory
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.mock import CaseStructure, CaseFactory, CaseIndex
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -917,6 +918,64 @@ class TestFormsExpressionSpec(TestCase):
         context = EvaluationContext({"domain": "wrong-domain"}, 0)
         forms = self.expression(self.case.to_json(), context)
         self.assertEqual(forms, [])
+
+
+class TestGetSubcasesExpression(TestCase):
+
+    def setUp(self):
+        super(TestGetSubcasesExpression, self).setUp()
+        self.domain = uuid.uuid4().hex
+        self.factory = CaseFactory(domain=self.domain)
+        self.expression = ExpressionFactory.from_spec({
+            "type": "get_subcases",
+            "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            },
+        })
+        self.context = EvaluationContext({"domain": self.domain})
+
+    def tearDown(self):
+        delete_all_xforms()
+        delete_all_cases()
+        super(TestGetSubcasesExpression, self).tearDown()
+
+    @run_with_all_backends
+    def test_no_subcases(self):
+        case = self.factory.create_case()
+        subcases = self.expression(case.to_json(), self.context)
+        self.assertEqual(len(subcases), 0)
+
+    @run_with_all_backends
+    def test_single_child(self):
+        parent_id = uuid.uuid4().hex
+        child_id = uuid.uuid4().hex
+        [child, parent] = self.factory.create_or_update_case(CaseStructure(
+            case_id=child_id,
+            indices=[
+                CaseIndex(CaseStructure(case_id=parent_id, attrs={'create': True}))
+            ]
+        ))
+        subcases = self.expression(parent.to_json(), self.context)
+        self.assertEqual(len(subcases), 1)
+        self.assertEqual(child.case_id, subcases[0]['_id'])
+
+    @run_with_all_backends
+    def test_single_extension(self):
+        host_id = uuid.uuid4().hex
+        extension_id = uuid.uuid4().hex
+        [extension, host] = self.factory.create_or_update_case(CaseStructure(
+            case_id=extension_id,
+            indices=[
+                CaseIndex(
+                    CaseStructure(case_id=host_id, attrs={'create': True}),
+                    relationship=CASE_INDEX_EXTENSION
+                )
+            ]
+        ))
+        subcases = self.expression(host.to_json(), self.context)
+        self.assertEqual(len(subcases), 1)
+        self.assertEqual(extension.case_id, subcases[0]['_id'])
 
 
 class TestIterationNumberExpression(SimpleTestCase):

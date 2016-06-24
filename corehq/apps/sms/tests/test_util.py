@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.util import (clean_phone_number,
     get_contact, ContactNotFoundException)

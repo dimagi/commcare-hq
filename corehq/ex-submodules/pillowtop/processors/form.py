@@ -13,7 +13,7 @@ class AppFormSubmissionTrackerProcessor(PillowProcessor):
     """
 
     def process_change(self, pillow_instance, change):
-        if change.deleted:
+        if change.deleted or change.metadata is None:
             return
 
         doc = change.get_document()
@@ -24,6 +24,10 @@ class AppFormSubmissionTrackerProcessor(PillowProcessor):
         domain = change.metadata.domain
 
         if build_id and domain:
+            # Marks if a build has a submission. The function is cached based on domain
+            # and build_id so that there is no need to fetch the app again after this
+            # is called. Any subsequent calls with the same arguments will result in
+            # the same effect, an app having has_submissions set to True.
             self._mark_has_submission(domain, build_id)
 
     @quickcache(['domain', 'build_id'], timeout=60 * 60)

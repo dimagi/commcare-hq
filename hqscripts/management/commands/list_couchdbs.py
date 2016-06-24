@@ -3,9 +3,6 @@ from corehq.util.couchdb_management import couch_config
 
 
 class Command(BaseCommand):
-    """
-    Deletes sofabed cruft from couchlog.
-    """
     help = "List names of active couchdb dbs"
     args = ""
     label = ""

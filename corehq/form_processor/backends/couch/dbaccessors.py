@@ -3,7 +3,7 @@ from datetime import datetime
 
 from casexml.apps.case.dbaccessors import get_extension_case_ids, \
     get_indexed_case_ids, get_all_reverse_indices_info, get_open_case_ids_in_domain, \
-    get_reverse_indexed_case_ids
+    get_reverse_indexed_cases
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.stock.models import StockTransaction
@@ -154,7 +154,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
     @staticmethod
     def get_reverse_indexed_cases(domain, case_ids):
-        return get_reverse_indexed_case_ids(domain, case_ids)
+        return get_reverse_indexed_cases(domain, case_ids)
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):

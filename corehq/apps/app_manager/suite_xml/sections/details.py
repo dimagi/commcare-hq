@@ -227,15 +227,7 @@ class DetailContributor(SectionContributor):
                         if source_meta.case_type == target_meta.case_type
                     ]
                 except ValueError:
-                    message = _(
-                        "The '{form}' form selected as the case list registration form "
-                        "for the '{module}' module requires a '{case_type}' case. "
-                        "The '{module}' must load a case of this type.").format(
-                        form=form.default_name(),
-                        module=module.default_name(),
-                        case_type=target_meta.case_type
-                    )
-                    raise SuiteValidationError(message)
+                    pass
                 else:
                     frame.add_datum(StackDatum(
                         id=target_meta.datum.id,

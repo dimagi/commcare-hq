@@ -3,6 +3,7 @@ from lxml import etree
 import HTMLParser
 import json
 import socket
+import csv
 from datetime import timedelta, date
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
@@ -50,15 +51,14 @@ from corehq.util.supervisord.api import (
     pillow_supervisor_status
 )
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.models import MALTRow, GIRRow
+from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
@@ -73,7 +73,6 @@ from . import service_checks, escheck
 from .forms import AuthenticateAsForm, BrokenBuildsForm
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
-from .multimech import GlobalConfig
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
 
@@ -536,91 +535,6 @@ def admin_reports_stats_data(request):
     return stats_data(request)
 
 
-class LoadtestReportView(BaseAdminSectionView):
-    urlname = 'loadtest_report'
-    template_name = 'hqadmin/loadtest.html'
-    page_title = ugettext_lazy("Loadtest Results")
-
-    @method_decorator(require_superuser)
-    @use_nvd3_v3
-    @use_jquery_ui
-    @use_datatables
-    def dispatch(self, request, *args, **kwargs):
-        return super(LoadtestReportView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        # The multimech results api is kinda all over the place.
-        # the docs are here: http://testutils.org/multi-mechanize/datastore.html
-
-        scripts = ['submit_form.py', 'ota_restore.py']
-
-        tests = []
-        # datetime info seems to be buried in GlobalConfig.results[0].run_id,
-        # which makes ORM-level sorting problematic
-        for gc in Session.query(GlobalConfig).all()[::-1]:
-            gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
-            if gc.results:
-                for script, uc in gc.scripts.items():
-                    uc.results = filter(
-                        lambda res: res.user_group_name == uc.user_group,
-                        gc.results
-                    )
-                test = {
-                    'datetime': gc.results[0].run_id,
-                    'run_time': gc.run_time,
-                    'results': gc.results,
-                }
-                for script in scripts:
-                    test[script.split('.')[0]] = gc.scripts.get(script)
-                tests.append(test)
-
-        context = get_hqadmin_base_context(self.request)
-        context.update({
-            "tests": tests,
-            "hide_filters": True,
-        })
-
-        date_axis = Axis(label="Date", dateFormat="%m/%d/%Y")
-        tests_axis = Axis(label="Number of Tests in 30s")
-        chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
-        submit_data = []
-        ota_data = []
-        total_data = []
-        max_val = 0
-        max_date = None
-        min_date = None
-        for test in tests:
-            date = test['datetime']
-            total = len(test['results'])
-            max_val = total if total > max_val else max_val
-            max_date = date if not max_date or date > max_date else max_date
-            min_date = date if not min_date or date < min_date else min_date
-            submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
-            ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
-            total_data.append({'x': date, 'y': total})
-
-        deployments = [row['key'][1] for row in HqDeploy.get_list(
-            settings.SERVER_ENVIRONMENT, min_date, max_date
-        )]
-        deploy_data = [{'x': min_date, 'y': 0}]
-        for date in deployments:
-            deploy_data.extend([
-                {'x': date, 'y': 0},
-                {'x': date, 'y': max_val},
-                {'x': date, 'y': 0},
-            ])
-        deploy_data.append({'x': max_date, 'y': 0})
-
-        chart.add_dataset("Deployments", deploy_data)
-        chart.add_dataset("Form Submission Count", submit_data)
-        chart.add_dataset("OTA Restore Count", ota_data)
-        chart.add_dataset("Total Count", total_data)
-
-        context['charts'] = [chart]
-        return context
-
-
 class _Db(object):
     """
     Light wrapper for providing interface like Couchdbkit's Database objects.
@@ -652,6 +566,15 @@ _SQL_DBS = OrderedDict((db.dbname, db) for db in [
 ])
 
 
+def _get_db_from_db_name(db_name):
+    if db_name in _SQL_DBS:
+        return _SQL_DBS[db_name]
+    elif db_name == couch_config.get_db(None).dbname:  # primary db
+        return couch_config.get_db(None)
+    else:
+        return couch_config.get_db(db_name)
+
+
 def _lookup_id_in_database(doc_id, db_name=None):
     db_result = namedtuple('db_result', 'dbname result status')
     STATUSES = defaultdict(lambda: 'warning', {
@@ -660,11 +583,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
     })
 
     if db_name:
-        db = _SQL_DBS.get(db_name, None)
-        if db:
-            dbs = [db]
-        else:
-            dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
+        dbs = [_get_db_from_db_name(db_name)]
     else:
         couch_dbs = couch_config.all_dbs_by_slug.values()
         sql_dbs = _SQL_DBS.values()
@@ -862,6 +781,43 @@ def _malt_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     queryset = MALTRow.objects.filter(month=query_month)
     return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)
+
+
+class DownloadGIRView(BaseAdminSectionView):
+    urlname = 'download_gir'
+    page_title = ugettext_lazy("Download GIR")
+    template_name = "hqadmin/gir_downloader.html"
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadGIRView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if 'year_month' in request.GET:
+            try:
+                year, month = request.GET['year_month'].split('-')
+                year, month = int(year), int(month)
+                return _gir_csv_response(month, year)
+            except (ValueError, ValidationError):
+                messages.error(
+                    request,
+                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                )
+        return super(DownloadGIRView, self).get(request, *args, **kwargs)
+
+
+def _gir_csv_response(month, year):
+    query_month = "{year}-{month}-01".format(year=year, month=month)
+    queryset = GIRRow.objects.filter(month=query_month)
+    field_names = GIR_FIELDS
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = u'attachment; filename=gir.csv'
+    writer = csv.writer(response)
+    writer.writerow(list(field_names))
+    for obj in queryset:
+        writer.writerow(obj.export_row)
+    return response
 
 
 @require_superuser
