@@ -1,5 +1,6 @@
 from django.conf import settings
 
+from corehq.apps.domain.models import Domain
 from corehq.toggles import USE_SQL_BACKEND
 
 
@@ -9,7 +10,7 @@ def should_use_sql_backend(domain):
         if override is not None:
             return override
 
-    return USE_SQL_BACKEND.enabled(domain)
+    return USE_SQL_BACKEND.enabled(domain) or Domain.get_by_name(domain).use_sql_backend
 
 
 def is_commcarecase(obj):
