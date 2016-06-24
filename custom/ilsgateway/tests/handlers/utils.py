@@ -160,8 +160,8 @@ def prepare_domain(domain_name):
         domain.name,
         created_by="automated-test",
     )[0]
-    plan = DefaultProductPlan.get_default_plan_by_domain(
-        domain, edition=SoftwarePlanEdition.ADVANCED
+    plan = DefaultProductPlan.get_default_plan(
+        edition=SoftwarePlanEdition.ADVANCED
     )
     commtrack = domain.commtrack_settings
     commtrack.actions.append(
