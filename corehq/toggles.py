@@ -860,9 +860,3 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
 )
-
-
-def enable_toggles_for_scale_beta(domain):
-    USE_SQL_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
-    NEW_EXPORTS.set(domain, True, namespace=NAMESPACE_DOMAIN)
-    TF_USES_SQLITE_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
