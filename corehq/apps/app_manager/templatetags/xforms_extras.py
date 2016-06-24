@@ -102,7 +102,7 @@ def _input_trans(template, name, langs=None, allow_blank=True):
                 options['placeholder'] = name[lang] if (allow_blank or name[lang] != '') else placeholder
                 options['lang'] = lang
             break
-    options = {key: html.escape(json.dumps(html.escape(value))[1:-1]) for (key, value) in options.iteritems()}
+    options = {key: html.escapejs(value) for (key, value) in options.iteritems()}
     return mark_safe(template % options)
 
 
