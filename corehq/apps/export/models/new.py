@@ -9,6 +9,7 @@ from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
+from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -26,7 +27,6 @@ from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from corehq.toggles import USE_SQL_BACKEND
 from corehq.util.global_request import get_request
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
@@ -870,7 +870,7 @@ class ExportDataSchema(Document):
             app_build_ids.append(app_id)
         for app_doc in iter_docs(Application.get_db(), app_build_ids):
             # TODO: Remove this when we mark applications that have been submitted
-            if (USE_SQL_BACKEND.enabled(domain) and
+            if (should_use_sql_backend(domain) and
                     not app_doc.get('is_released', False) and
                     app_doc.get('copy_of')):
                 continue
