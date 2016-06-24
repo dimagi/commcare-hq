@@ -900,10 +900,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return session_data
 
     def delete(self):
-        from corehq.apps.ota.utils import delete_demo_restore_for_user
-        # clear demo restore objects if any
-        delete_demo_restore_for_user(self)
-
         self.clear_quickcache_for_user()
         try:
             user = self.get_django_user()
@@ -1380,6 +1376,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                     message="Error occured while syncing user %s: %s" %
                             (self.username, repr(result[1]))
                 )
+
+    def delete(self):
+        from corehq.apps.ota.utils import delete_demo_restore_for_user
+        # clear demo restore objects if any
+        delete_demo_restore_for_user(self)
+
+        super(CommCareUser, self).delete()
 
     @property
     @memoized
