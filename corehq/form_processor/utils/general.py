@@ -9,6 +9,8 @@ def should_use_sql_backend(domain_name):
         override = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', None)
         if override is not None:
             return override
+        elif not getattr(settings, 'DB_ENABLED', True):
+            return False
 
     toggle_enabled = USE_SQL_BACKEND.enabled(domain_name)
     if toggle_enabled:
