@@ -10,7 +10,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
-from corehq.apps.accounting.tasks import assign_explicit_community_subscriptions
+from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
 from corehq.apps.domain.models import Domain
 
 
@@ -123,7 +123,7 @@ class TestExplicitCommunitySubscriptions(TestCase):
         ))
 
     def _assign_community_subscriptions(self):
-        assign_explicit_community_subscriptions(self.from_date)
+        ensure_explicit_community_subscription(self.domain.name, self.from_date)
 
     @property
     def _most_recently_created_community_plan_version(self):
