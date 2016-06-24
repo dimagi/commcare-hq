@@ -118,10 +118,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     # not a view just a view util
     if couch_user.is_commcare_user() and domain != couch_user.domain:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
-                            status=401)
+                            status=401), None
     elif couch_user.is_web_user() and domain not in couch_user.domains:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
-                            status=401)
+                            status=401), None
 
     if couch_user.is_commcare_user():
         restore_user = couch_user.to_ota_restore_user()
