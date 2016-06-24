@@ -1596,6 +1596,7 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     def get_export_schema(self, export_instance):
         return CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
+            self.request.GET.get('app_id'),
             export_instance.case_type,
         )
 
