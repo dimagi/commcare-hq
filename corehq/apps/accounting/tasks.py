@@ -107,7 +107,8 @@ def _deactivate_subscription(subscription, ending_date):
         next_subscription.is_active = True
         next_subscription.save()
     else:
-        new_plan_version = None
+        next_subscription = assign_explicit_community_subscription(subscription.subscriber.domain, ending_date)
+        new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
     if next_subscription and subscription.account == next_subscription.account:
         subscription.transfer_credits(subscription=next_subscription)
