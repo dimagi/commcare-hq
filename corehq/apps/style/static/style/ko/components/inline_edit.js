@@ -27,6 +27,14 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 throw "Inline edit widget requires a url";
             }
 
+            if (params.decode) {
+                var textarea = document.createElement("textarea");
+                _.each(['value', 'placeholder', 'lang'], function(key) {
+                    textarea.innerHTML = params[key];
+                    params[key] = textarea.value;
+                });
+            }
+
             // Attributes passed on to the input
             self.name = params.name || '';
             self.id = params.id || '';

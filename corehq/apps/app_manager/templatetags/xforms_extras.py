@@ -67,14 +67,15 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
     template = '''
         <inline-edit params="
             name: 'name',
-            value: %(value)s,
-            placeholder: %(placeholder)s,
+            value: '%(value)s',
+            placeholder: '%(placeholder)s',
             rows: 1,
-            lang: %(lang)s,
+            lang: '%(lang)s',
             url: '{}',
             saveValueName: '{}',
             readOnlyClass: '{}',
             postSave: {},
+            decode: 1,
         "></inline-edit>
     '''.format(url, saveValueName, readOnlyClass, postSave)
     return _input_trans(template, name, langs=langs, allow_blank=False)
@@ -101,7 +102,7 @@ def _input_trans(template, name, langs=None, allow_blank=True):
                 options['placeholder'] = name[lang] if (allow_blank or name[lang] != '') else placeholder
                 options['lang'] = lang
             break
-    options = {key: '&quot;' + json.dumps(value)[1:-1] + '&quot;' for (key, value) in options.iteritems()}
+    options = {key: html.escape(json.dumps(html.escape(value))[1:-1]) for (key, value) in options.iteritems()}
     return mark_safe(template % options)
 
 
