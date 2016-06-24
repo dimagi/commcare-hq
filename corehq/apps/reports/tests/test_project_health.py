@@ -1,20 +1,27 @@
 from django.test import TestCase
 import datetime
 from dimagi.utils.dates import add_months
-from corehq.apps.reports.standard.project_health import MonthlyPerformanceSummary, ProjectHealthDashboard, get_performance_threshold
+from corehq.apps.reports.standard.project_health import MonthlyPerformanceSummary, ProjectHealthDashboard
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.const import MISSING_APP_ID
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
+from corehq.apps.groups.models import Group
+from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from django.test import RequestFactory
+import mock
+from corehq.apps.es.fake.groups_fake import GroupESFake
+from corehq.apps.es.fake.users_fake import UserESFake
 
 
-class SetupMonthlyPerformanceMixin(object):
+@mock.patch('corehq.apps.reports.standard.project_health.UserES', UserESFake)
+class SetupProjectPerformanceMixin(object):
     DOMAIN_NAME = "test_domain"
-    USERNAME = "testing_user"
-    USERNAME1 = "testing_user1"
-    USERNAME2 = "testing_user2"
+    USERNAME = "user"
+    USERNAME1 = "user1"
+    USERNAME2 = "user2"
+    WEB_USER = "user_web"
     USER_TYPE = "CommCareUser"
     now = datetime.datetime.utcnow()
     year, month = add_months(now.year, now.month, 1)
@@ -28,12 +35,26 @@ class SetupMonthlyPerformanceMixin(object):
         cls._setup_malt_tables()
 
     @classmethod
+    def class_teardown(cls):
+        delete_all_groups()
+        delete_all_users()
+        UserESFake.reset_docs()
+
+    @classmethod
+    def make_mobile_worker(cls, username, domain=None):
+        domain = domain or cls.domain
+        user = CommCareUser(username=username, domain=domain)
+        user.domain_membership = DomainMembership(domain=domain)
+        doc = user._doc
+        doc['username.exact'] = doc['username']
+        UserESFake.save_doc(doc)
+        return user
+
+    @classmethod
     def _setup_users(cls):
-        cls.user = CommCareUser.create(cls.DOMAIN_NAME, cls.USERNAME, '*****')
-        cls.user.save()
-        cls.user1 = CommCareUser.create(cls.DOMAIN_NAME, cls.USERNAME1, '*****')
-        cls.user1.save()
-        cls.web_user = WebUser.create(cls.DOMAIN_NAME, cls.USERNAME2, '*****')
+        cls.user = cls.make_mobile_worker(cls.USERNAME, cls.DOMAIN_NAME)
+        cls.user1 = cls.make_mobile_worker(cls.USERNAME1, cls.DOMAIN_NAME)
+        cls.user2 = cls.make_mobile_worker(cls.USERNAME2, cls.DOMAIN_NAME)
 
     @classmethod
     def _setup_domain(cls):
@@ -74,7 +95,7 @@ class SetupMonthlyPerformanceMixin(object):
         malt_user_prev.save()
 
 
-class MonthlyPerformanceSummaryTests(SetupMonthlyPerformanceMixin, TestCase):
+class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -101,7 +122,7 @@ class MonthlyPerformanceSummaryTests(SetupMonthlyPerformanceMixin, TestCase):
     @classmethod
     def tearDownClass(cls):
         super(MonthlyPerformanceSummaryTests, cls).tearDownClass()
-        delete_all_users()
+        cls.class_teardown()
         MALTRow.objects.all().delete()
 
     def test_delta_active_additional_user(self):
@@ -147,41 +168,53 @@ class MonthlyPerformanceSummaryTests(SetupMonthlyPerformanceMixin, TestCase):
         self.assertEqual(len(self.month.get_all_user_stubs().keys()), 2)
 
 
-class ProjectHealthDashboardTest(SetupMonthlyPerformanceMixin, TestCase):
-    dependent_apps = ['corehq.apps.reports.filters.location.LocationGroupFilter']
+@mock.patch('corehq.apps.reports.standard.project_health.GroupES', GroupESFake)
+class ProjectHealthDashboardTest(SetupProjectPerformanceMixin, TestCase):
     request = RequestFactory().get('/project_health')
+
+    GROUP_NAME = 'group'
 
     @classmethod
     def setUpClass(cls):
         super(ProjectHealthDashboardTest, cls).setUpClass()
         cls.class_setup()
-        cls.request.couch_user = cls.web_user
-        cls.dashboard = ProjectHealthDashboard(cls.request)
-        cls.dashboard.domain = cls.DOMAIN_NAME
+        cls._setup_group()
+        cls._assign_user_to_group()
+        cls._setup_web_user()
+        cls._setup_dashboard()
 
     @classmethod
     def tearDownClass(cls):
         super(ProjectHealthDashboardTest, cls).tearDownClass()
-        delete_all_users()
-        MALTRow.objects.all().delete()
+        cls.class_teardown()
+        cls.web_user.delete()
+        GroupESFake.reset_docs()
 
-    def test_previous_six_months(self):
-        """
-        previous_six_month() should return six months of MALT rows
-        """
-        six_months = self.dashboard.previous_six_months()
-        self.assertEqual(len(six_months), 6)
+    @classmethod
+    def _setup_group(cls):
+        group = Group(name=cls.GROUP_NAME, domain=cls.DOMAIN_NAME)
+        GroupESFake.save_doc(group._doc)
+        cls.group = group
 
-    def test_get_users_by_location_filter(self):
-        """
-        get_users_by_location_filter() should return a list of users based on location id
-        """
-        users_by_location = self.dashboard.get_users_by_location_filter([])
-        self.assertEqual(users_by_location, [])
+    @classmethod
+    def _assign_user_to_group(cls):
+        cls.group.add_user(cls.user)
+
+    @classmethod
+    def _setup_web_user(cls):
+        cls.web_user = WebUser.create(cls.DOMAIN_NAME, cls.WEB_USER, '*****')
+        cls.web_user.save()
+        cls.request.couch_user = cls.web_user
+
+    @classmethod
+    def _setup_dashboard(cls):
+        cls.dashboard = ProjectHealthDashboard(cls.request)
+        cls.dashboard.domain = cls.DOMAIN_NAME
 
     def test_get_users_by_group_filter(self):
         """
-        get_users_by_group_filter() should return a list of users based on group id
+        get_users_by_group_filter() should return 1 user based on group_id provided
         """
-        users_by_group = self.dashboard.get_users_by_group_filter([])
-        self.assertEqual(users_by_group, [])
+        group_id = self.group.get_id
+        users_by_group = self.dashboard.get_users_by_group_filter([group_id])
+        self.assertEqual(len(users_by_group), 1)
