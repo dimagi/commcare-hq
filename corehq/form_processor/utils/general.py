@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from corehq.toggles import USE_SQL_BACKEND, NAMESPACE_DOMAIN, NEW_EXPORTS
+from corehq.toggles import USE_SQL_BACKEND, NAMESPACE_DOMAIN, NEW_EXPORTS, TF_USES_SQLITE_BACKEND
 from dimagi.utils.logging import notify_exception
 
 
@@ -45,6 +45,10 @@ def _should_use_sql_backend_in_tests(domain_name):
 
 def use_new_exports(domain_name):
     return NEW_EXPORTS.enabled(domain_name) or should_use_sql_backend(domain_name)
+
+
+def use_sqlite_backend(domain_name):
+    return TF_USES_SQLITE_BACKEND.enabled(domain_name) or should_use_sql_backend(domain_name)
 
 
 def is_commcarecase(obj):

@@ -20,6 +20,7 @@ from casexml.apps.case.models import CASE_STATUS_OPEN
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.utils.general import use_sqlite_backend
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
@@ -203,6 +204,7 @@ class CloudcareMain(View):
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
+            'use_sqlite_backend': use_sqlite_backend(domain),
         }
         context.update(_url_context())
         if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
