@@ -137,6 +137,16 @@ class DomainInvoiceFactory(object):
             )
             return
 
+        if (
+            subscription.skip_invoicing_if_no_feature_charges
+            and not subscription.plan_version.feature_charges_exist_for_domain(self.domain)
+        ):
+            log_accounting_info(
+                "Skipping invoicing for Subscription %s because there are no feature charges."
+                % subscription.pk
+            )
+            return
+
         invoice_start = _get_invoice_start(subscription, self.date_start)
         invoice_end = _get_invoice_end(subscription, self.date_end)
 
