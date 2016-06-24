@@ -1,10 +1,10 @@
 from django.conf import settings
 
-from corehq.apps.domain.models import Domain
 from corehq.toggles import USE_SQL_BACKEND, NAMESPACE_DOMAIN
 
 
 def should_use_sql_backend(domain_name):
+    from corehq.apps.domain.models import Domain
     if settings.UNIT_TESTING:
         override = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', None)
         if override is not None:

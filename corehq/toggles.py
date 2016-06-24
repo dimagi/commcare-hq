@@ -757,7 +757,7 @@ VIEW_BUILD_SOURCE = StaticToggle(
 
 USE_SQL_BACKEND = StaticToggle(
     'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing (beta)',
+    'Uses a sql backend instead of a couch backend for form processing (deprecated)',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
