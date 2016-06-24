@@ -1,5 +1,7 @@
 from django.utils.translation import ugettext_noop, ugettext_lazy
+
 from corehq.apps.reports.dbaccessors import stale_get_export_count
+from corehq.form_processor.utils import use_new_exports
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
@@ -88,7 +90,8 @@ class DeidExportReport(FormExportReportBase):
         context = super(DeidExportReport, self).report_context
         context.update(
             ExcelExportReport_name=ugettext_noop("Export Forms"),
-            is_deid_form_report=True
+            is_deid_form_report=True,
+            use_new_exports=use_new_exports(self.domain)
         )
         return context
 

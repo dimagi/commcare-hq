@@ -864,5 +864,4 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
 
 
 def enable_toggles_for_scale(domain):
-    NEW_EXPORTS.set(domain, True, namespace=NAMESPACE_DOMAIN)
     TF_USES_SQLITE_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
