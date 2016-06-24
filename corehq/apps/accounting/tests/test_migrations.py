@@ -23,6 +23,12 @@ class TestExplicitCommunitySubscriptions(TestCase):
     def setUpClass(cls):
         super(TestExplicitCommunitySubscriptions, cls).setUpClass()
 
+        # TODO - remove once messy tests are cleaned up
+        for domain in Domain.get_all():
+            domain.delete()
+
+        assert len(list(Domain.get_all())) == 0
+
         cls.domain = Domain(name='test')
         cls.domain.save()
         cls.from_date = date.today()
