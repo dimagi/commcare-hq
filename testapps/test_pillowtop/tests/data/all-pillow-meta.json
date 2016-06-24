@@ -301,22 +301,6 @@
         "include_docs": true,
         "name": "MVPFormIndicatorPillow"
     },
-    "MalariaConsortiumFluffPillow": {
-        "advertised_name": "fluff.MalariaConsortiumFluffPillow.testhq",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.MalariaConsortiumFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "mc-inscale"
-        },
-        "full_class_name": "custom.reports.mc.models.MalariaConsortiumFluffPillow",
-        "include_docs": false,
-        "name": "MalariaConsortiumFluffPillow"
-    },
     "McctMonthlyAggregateFormFluffPillow": {
         "advertised_name": "fluff.McctMonthlyAggregateFormFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",

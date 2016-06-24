@@ -4,12 +4,13 @@ import datetime
 
 from dimagi.utils.dates import add_months_to_date
 
-from corehq.apps.accounting import tasks, utils, generator
+from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.models import (
     CreditLine, CreditAdjustment, FeatureType, SoftwareProductType,
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount, Subscription,
     CreditAdjustmentReason,
 )
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
@@ -300,11 +301,11 @@ class TestCreditTransfers(BaseAccountingTest):
         return transferred_credits
 
     def test_transfers(self):
-        advanced_plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain, edition=SoftwarePlanEdition.ADVANCED
+        advanced_plan = DefaultProductPlan.get_default_plan(
+            edition=SoftwarePlanEdition.ADVANCED
         )
-        standard_plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain, edition=SoftwarePlanEdition.STANDARD
+        standard_plan = DefaultProductPlan.get_default_plan(
+            edition=SoftwarePlanEdition.STANDARD
         )
         first_sub = Subscription.new_domain_subscription(
             self.account, self.domain, advanced_plan

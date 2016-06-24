@@ -713,10 +713,9 @@ class HQMediaMixin(Document):
         found_missing_mm = False
         filter_multimedia = languages and self.media_language_map
         if filter_multimedia:
-            media_list = []
+            requested_media = set()
             for lang in languages:
-                media_list += self.media_language_map[lang].media_refs
-            requested_media = set(media_list)
+                requested_media.update(self.media_language_map[lang].media_refs)
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]

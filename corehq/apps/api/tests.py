@@ -1,28 +1,23 @@
 import json
 import uuid
 from datetime import datetime
-
 import dateutil.parser
 
-from django.utils.http import urlencode
-from django.test import TestCase
+from django.conf import settings
 from django.core.urlresolvers import reverse
-from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.tests import run_with_all_backends
-from django_prbac.models import Role
+from django.test import TestCase
+from django.utils.http import urlencode
+
+from tastypie import fields
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
-from tastypie import fields
 
-from corehq.apps.api.util import get_obj
-from corehq.apps.groups.models import Group
-from corehq.pillows.reportxform import ReportXFormPillow
-
-from couchforms.models import XFormInstance
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
 
-from corehq.apps.accounting import generator
+from django_prbac.models import Role
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -30,20 +25,26 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment
 )
-from corehq.pillows.xform import XFormPillow
-from corehq.pillows.case import CasePillow
-from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.domain.models import Domain
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
+from corehq.apps.accounting.tests import generator
+from corehq.apps.api.es import ElasticAPIQuerySet
+from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.resources import v0_4, v0_5
+from corehq.apps.api.util import get_obj
+from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.locations.resources.v0_1 import InternalLocationResource
 from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
-from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
-from corehq.apps.api.es import ElasticAPIQuerySet
+
 from corehq.apps.users.analytics import update_analytics_indexes
-from django.conf import settings
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.tests import run_with_all_backends
+from corehq.pillows.case import CasePillow
+from corehq.pillows.reportxform import ReportXFormPillow
+from corehq.pillows.xform import XFormPillow
 from custom.hope.models import CC_BIHAR_PREGNANCY
 
 
@@ -76,7 +77,7 @@ class FakeXFormES(object):
 
 def set_up_subscription(cls):
     cls.account = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by="automated-test")[0]
-    plan = DefaultProductPlan.get_default_plan_by_domain(cls.domain.name, edition=SoftwarePlanEdition.ADVANCED)
+    plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
     cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan)
     cls.subscription.is_active = True
     cls.subscription.save()
@@ -94,7 +95,7 @@ class APIResourceTest(TestCase):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting_for_tests()
+        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.list_endpoint = reverse('api_dispatch_list',
                 kwargs=dict(domain=cls.domain.name,
@@ -1257,8 +1258,7 @@ class TestSingleSignOnResource(APIResourceTest):
         # have to set up subscription for the bad domain or it will fail on authorization
         new_account = BillingAccount.get_or_create_account_by_domain(wrong_domain.name,
                                                                      created_by="automated-test")[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(wrong_domain.name,
-                                                             edition=SoftwarePlanEdition.ADVANCED)
+        plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
         new_subscription = Subscription.new_domain_subscription(new_account, wrong_domain.name, plan)
         new_subscription.is_active = True
         new_subscription.save()
@@ -1400,7 +1400,7 @@ class TestBulkUserAPI(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting_for_tests()
+        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'

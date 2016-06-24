@@ -131,6 +131,7 @@ class FarmerRecordFluff(fluff.IndicatorDocument):
     group_leadership = flat_field(get_group_leadership)
     real_or_test = flat_field(lambda c: c.get_case_property('test_or_real'))
     schedule = flat_field(lambda c: (c.get_case_property('farmer_social_category') or '').lower())
+    group_case_id = flat_field(lambda c: c.get_case_property('group_case_id'))
     prop = Property()
 
 

@@ -12,7 +12,8 @@ from corehq.apps.data_analytics.esaccessors import (
 )
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import (
-    TEST_COUCH_TO_SQL_MAP, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET, BU_MAPPING, NO_BU
+    TEST_COUCH_TO_SQL_MAP, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET, BU_MAPPING, NO_BU,
+    DEFAULT_EXPERIENCED_THRESHOLD, DEFAULT_PERFORMANCE_THRESHOLD
 )
 
 
@@ -43,14 +44,17 @@ class GIRTableGenerator(object):
         performing_users = []
         experienced_users = []
         all_users, user_forms, sms = active_mobile_users(domain, monthspan.startdate, monthspan.enddate)
-        user_query = MALTRow.objects.filter(domain_name=domain).values('user_id', 'month').distinct()
+        user_query = MALTRow.objects.filter(domain_name=domain).filter(month__lte=monthspan.startdate)\
+            .values('user_id', 'month').distinct()
         user_months = defaultdict(int)
         for entry in user_query:
             user_months[entry['user_id']] += 1
         for user in all_users:
-            if user_forms.get(user, 0) > domain.internal.performance_threshold:
+            if user_forms.get(user, 0) >= \
+                    (domain.internal.performance_threshold or DEFAULT_PERFORMANCE_THRESHOLD):
                 performing_users.append(user)
-            if user_months.get(user, 0) >= domain.internal.experienced_threshold:
+            if user_months.get(user, 0) >= \
+                    (domain.internal.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD):
                 experienced_users.append(user)
         return UserCategories(set(user_forms.keys()), set(performing_users),
                               set(experienced_users), all_users, sms)
@@ -66,7 +70,7 @@ class GIRTableGenerator(object):
 
     @staticmethod
     def get_active_recent(domain, monthspan):
-        months = domain.internal.experienced_threshold - 1
+        months = (domain.internal.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD) - 1
         threshold_month = add_months(monthspan.startdate.year, monthspan.startdate.month, -months)
         first_month = datetime.date(day=1, year=threshold_month[0], month=threshold_month[1])
         all_users, users_dict, sms = active_mobile_users(domain, first_month, monthspan.enddate)

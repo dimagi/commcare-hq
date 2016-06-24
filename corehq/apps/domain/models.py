@@ -166,8 +166,8 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     goal_followup_rate = DecimalProperty()
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
-    performance_threshold = IntegerProperty(default=15)
-    experienced_threshold = IntegerProperty(default=3)
+    performance_threshold = IntegerProperty()
+    experienced_threshold = IntegerProperty()
     amplifies_workers = StringProperty(
         choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
         default=AMPLIFIES_NOT_SET
@@ -931,12 +931,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return most_restrictive(licenses)
 
     @classmethod
-    def hit_sort(cls, domains):
-        domains = list(domains)
-        domains = sorted(domains, key=lambda domain: domain.download_count, reverse=True)
-        return domains
-
-    @classmethod
     def get_module_by_name(cls, domain_name):
         """
         import and return the python module corresponding to domain_name, or
@@ -987,12 +981,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        return self.get_db().view("domain/snapshots",
-            startkey=[self.get_id],
-            endkey=[self.get_id, {}],
-            reduce=True,
-            include_docs=False,
-        ).one()["value"]
+        from corehq.apps.domain.dbaccessors import count_downloads_for_all_snapshots
+        return count_downloads_for_all_snapshots(self.get_id)
 
     @property
     @memoized

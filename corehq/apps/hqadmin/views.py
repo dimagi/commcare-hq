@@ -566,6 +566,15 @@ _SQL_DBS = OrderedDict((db.dbname, db) for db in [
 ])
 
 
+def _get_db_from_db_name(db_name):
+    if db_name in _SQL_DBS:
+        return _SQL_DBS[db_name]
+    elif db_name == couch_config.get_db(None).dbname:  # primary db
+        return couch_config.get_db(None)
+    else:
+        return couch_config.get_db(db_name)
+
+
 def _lookup_id_in_database(doc_id, db_name=None):
     db_result = namedtuple('db_result', 'dbname result status')
     STATUSES = defaultdict(lambda: 'warning', {
@@ -574,11 +583,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
     })
 
     if db_name:
-        db = _SQL_DBS.get(db_name, None)
-        if db:
-            dbs = [db]
-        else:
-            dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
+        dbs = [_get_db_from_db_name(db_name)]
     else:
         couch_dbs = couch_config.all_dbs_by_slug.values()
         sql_dbs = _SQL_DBS.values()

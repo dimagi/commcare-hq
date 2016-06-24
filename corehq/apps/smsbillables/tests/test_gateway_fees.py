@@ -4,9 +4,8 @@ from random import choice, randint
 from django.apps import apps
 from django.test import TestCase
 
-from corehq.apps.accounting.generator import init_default_currency
+from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SMS, SQLMobileBackend
-from corehq.apps.smsbillables import generator
 from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import bootstrap_usage_fees
 from corehq.apps.smsbillables.models import (
     add_twilio_gateway_fee,
@@ -16,6 +15,7 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFee,
     SmsUsageFeeCriteria
 )
+from corehq.apps.smsbillables.tests import generator
 from corehq.apps.smsbillables.tests.utils import FakeTwilioMessageFactory
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
