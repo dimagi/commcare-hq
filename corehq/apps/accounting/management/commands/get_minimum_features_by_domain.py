@@ -21,7 +21,7 @@ class Command(BaseCommand):
                 for priv in privileges
             }
             using_privileges = [priv for (priv, is_in_use) in is_privilege_being_used.items() if is_in_use]
-            minimum_plan = DefaultProductPlan.get_lowest_edition_by_domain(domain.name, using_privileges)
+            minimum_plan = DefaultProductPlan.get_lowest_edition(using_privileges)
             print ','.join(
                 [domain.name] +
                 ['X' if is_privilege_being_used[priv] else '' for priv in privileges] +
