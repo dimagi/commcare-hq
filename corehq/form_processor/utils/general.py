@@ -36,7 +36,7 @@ def _should_use_sql_backend_in_tests(domain_name):
     override = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', None)
     if override is not None:
         return override
-    elif getattr(settings, 'DB_ENABLED', True):
+    elif domain_name and getattr(settings, 'DB_ENABLED', True):
         domain = Domain.get_by_name(domain_name)
         return domain and domain.use_sql_backend
     else:
