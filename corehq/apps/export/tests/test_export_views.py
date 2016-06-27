@@ -137,3 +137,31 @@ class ExportViewTest(TestCase):
             content_type="application/json",
         )
         self.assertEqual(resp.status_code, 200)
+
+    def test_wrong_domain_save(self):
+        export_post_data = json.dumps({
+            "doc_type": "CaseExportInstance",
+            "domain": 'wrong-domain',
+            "xmlns": "http://openrosa.org/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
+            "last_updated": None,
+            "legacy_saved_export_schema_id": None,
+            "is_daily_saved_export": False,
+            "tables": [],
+            "transform_dates": True,
+            "last_accessed": None,
+            "app_id": "6a48b8838d06febeeabb28c8c9516ab6",
+            "is_deidentified": False,
+            "split_multiselects": False,
+            "external_blobs": {},
+            "export_format": "csv",
+            "include_errors": False,
+            "type": "form",
+            "name": "A Villager's Health > Registrationaa > Reg form: 2016-06-27"
+        })
+        resp = self.client.post(
+            reverse(CreateNewCustomCaseExportView.urlname, args=[self.domain.name]),
+            export_post_data,
+            content_type="application/json",
+            follow=True
+        )
+        self.assertEqual(resp.status_code, 500)  # This is an ajax call which handles the 500
