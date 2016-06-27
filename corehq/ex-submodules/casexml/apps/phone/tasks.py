@@ -36,7 +36,14 @@ def get_async_restore_payload(restore_config):
     restore_config.restore_state.start_sync()
     response = restore_config.generate_payload(async_task=current_task)
     restore_config.restore_state.finish_sync()
-    restore_config.set_cached_payload_if_necessary(response, restore_config.restore_state.duration)
-    # cache sync
+    restore_config.set_cached_payload_if_necessary(
+        response,
+        restore_config.restore_state.duration,
+        force=True,
+    )
+
+    # delete the task id from the task, since the cached_payload can be fetched from the cache
+    # TODO: figure out how to do this properly
+    # restore_config.cache.delete(restore_config._async_cache_key)
 
     return response

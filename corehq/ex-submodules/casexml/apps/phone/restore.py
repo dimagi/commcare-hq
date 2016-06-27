@@ -545,6 +545,14 @@ class RestoreConfig(object):
     def sync_log(self):
         return self.restore_state.last_sync_log
 
+    @property
+    def _async_cache_key(self):
+        return restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id)
+
+    @property
+    def _initial_cache_key(self):
+        return restore_cache_key(RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id, self.version)
+
     def validate(self):
         try:
             self.restore_state.validate_state()
@@ -558,28 +566,35 @@ class RestoreConfig(object):
 
     def get_payload(self):
         self.validate()
-
-        cached_response = self.get_cached_payload()
+        cached_response = self._get_cached_payload()
+        # TODO: Figure out how to properly save good synclogs without relying on celery
+        # if cached_response and self.async:
+        #     # remove task key from cache if it exists
+        #     self.cache.delete(self._async_cache_key)
         if cached_response:
             return cached_response
-
         # Start new sync
         if self.async:
-            print "ASYNC"
             response = self._get_asynchronous_payload()
         else:
-            print "SYNC"
             self.restore_state.start_sync()
-            response = self.generate_payload()
+            response = self._generate_payload()
             self.restore_state.finish_sync()
-
             self.set_cached_payload_if_necessary(response, self.restore_state.duration)
 
         return response
 
-    @property
-    def _async_cache_key(self):
-        return restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id)
+    def _get_cached_payload(self):
+        if self.overwrite_cache:
+            return CachedResponse(None)
+
+        if self.sync_log:
+            payload = CachedPayload(self.sync_log.get_cached_payload(self.version, stream=True), is_initial=False)
+        else:
+            payload = CachedPayload(self.cache.get(self._initial_cache_key), is_initial=True)
+
+        payload.finalize()
+        return CachedResponse(payload)
 
     def _get_asynchronous_payload(self):
         task_id = self.cache.get(self._async_cache_key)
@@ -609,7 +624,7 @@ class RestoreConfig(object):
 
         return response
 
-    def generate_payload(self, async_task=None):
+    def _generate_payload(self, async_task=None):
         """
         This function returns a RestoreResponse class that encapsulates the response.
         """
@@ -653,41 +668,33 @@ class RestoreConfig(object):
             return HttpResponse(response, content_type="text/xml",
                                 status=412)  # precondition failed
 
-    def _initial_cache_key(self):
-        return restore_cache_key(RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id, self.version)
-
-    def get_cached_payload(self):
-        if self.overwrite_cache:
-            return CachedResponse(None)
-
-        if self.sync_log:
-            payload = CachedPayload(self.sync_log.get_cached_payload(self.version, stream=True), is_initial=False)
-        else:
-            payload = CachedPayload(self.cache.get(self._initial_cache_key()), is_initial=True)
-
-        payload.finalize()
-        return CachedResponse(payload)
 
     def set_cached_payload_if_necessary(self, resp, duration):
         cache_payload = resp.get_cache_payload(bool(self.sync_log))
         if self.sync_log:
             # if there is a sync token, always cache
-            try:
-                data = cache_payload['data']
-                self.sync_log.last_cached = datetime.utcnow()
-                self.sync_log.hash_at_last_cached = str(self.sync_log.get_state_hash())
-                self.sync_log.save()
-                self.sync_log.set_cached_payload(data, self.version)
-                try:
-                    data.close()
-                except AttributeError:
-                    pass
-            except ResourceConflict:
-                # if one sync takes a long time and another one updates the sync log
-                # this can fail. in this event, don't fail to respond, since it's just
-                # a caching optimization
-                pass
+            self._set_cache_on_synclog(cache_payload)
         else:
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
-                self.cache.set(self._initial_cache_key(), cache_payload, self.cache_timeout)
+                self._set_initial_cache(cache_payload)
+
+    def _set_initial_cache(self, cache_payload):
+        self.cache.set(self._initial_cache_key, cache_payload, self.cache_timeout)
+
+    def _set_cache_on_synclog(self, cache_payload):
+        try:
+            data = cache_payload['data']
+            self.sync_log.last_cached = datetime.utcnow()
+            self.sync_log.hash_at_last_cached = str(self.sync_log.get_state_hash())
+            self.sync_log.save()
+            self.sync_log.set_cached_payload(data, self.version)
+            try:
+                data.close()
+            except AttributeError:
+                pass
+        except ResourceConflict:
+            # if one sync takes a long time and another one updates the sync log
+            # this can fail. in this event, don't fail to respond, since it's just
+            # a caching optimization
+            pass

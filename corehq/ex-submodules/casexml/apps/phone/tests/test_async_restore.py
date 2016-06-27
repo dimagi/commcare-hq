@@ -19,10 +19,7 @@ from casexml.apps.phone.restore import (
     FileRestoreResponse,
     restore_cache_key,
 )
-from casexml.apps.phone.const import(
-    ASYNC_RESTORE_CACHE_KEY_PREFIX,
-    ASYNC_RETRY_AFTER,
-)
+from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users

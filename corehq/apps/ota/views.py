@@ -134,6 +134,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
+    async_restore = toggles.ASYNC_RESTORE.enabled(domain)
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -145,11 +146,11 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             app=app,
         ),
         cache_settings=RestoreCacheSettings(
-            force_cache=force_cache,
+            force_cache=force_cache or async_restore,
             cache_timeout=cache_timeout,
             overwrite_cache=overwrite_cache
         ),
-        async=toggles.ASYNC_RESTORE.enabled(domain)
+        async=async_restore
     )
     return restore_config.get_response(), restore_config.timing_context
 
