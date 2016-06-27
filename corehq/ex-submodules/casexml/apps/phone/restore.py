@@ -577,11 +577,15 @@ class RestoreConfig(object):
         if self.async:
             response = self._get_asynchronous_payload()
         else:
-            self.restore_state.start_sync()
-            response = self._generate_payload()
-            self.restore_state.finish_sync()
-            self.set_cached_payload_if_necessary(response, self.restore_state.duration)
+            response = self.generate_payload()
 
+        return response
+
+    def generate_payload(self):
+        self.restore_state.start_sync()
+        response = self._generate_restore_response()
+        self.restore_state.finish_sync()
+        self.set_cached_payload_if_necessary(response, self.restore_state.duration)
         return response
 
     def _get_cached_payload(self):
@@ -624,7 +628,7 @@ class RestoreConfig(object):
 
         return response
 
-    def _generate_payload(self, async_task=None):
+    def _generate_restore_response(self, async_task=None):
         """
         This function returns a RestoreResponse class that encapsulates the response.
         """
