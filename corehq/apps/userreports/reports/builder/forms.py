@@ -808,14 +808,21 @@ class ConfigureNewReportBase(forms.Form):
             exists_in_current_version=exists,
             display_text=filter['display'],
             format=filter_type_map[filter['type']],
-            property=self._get_property_from_column(filter['field']) if exists else None,
+            property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
             data_source_field=filter['field'] if not exists else None
         )
 
-    def _get_property_from_column(self, col):
-        column = self._properties_by_column.get(col)
-        if column:
-            return column.id
+    def _get_property_id_by_indicator_id(self, indicator_column_id):
+        """
+        Return the data source property id corresponding to the given data
+        source indicator column id.
+        :param indicator_column_id: The column_id field of a data source indicator
+            configuration dictionary
+        :return: A DataSourceProperty property id, e.g. "/data/question1"
+        """
+        data_source_property = self._properties_by_column.get(indicator_column_id)
+        if data_source_property:
+            return data_source_property.id
 
     def _column_exists(self, column_id):
         """
@@ -924,7 +931,7 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
             existing_agg_cols = existing_report.aggregation_columns
             assert len(existing_agg_cols) < 2
             if existing_agg_cols:
-                self.fields['group_by'].initial = self._get_property_from_column(existing_agg_cols[0])
+                self.fields['group_by'].initial = self._get_property_id_by_indicator_id(existing_agg_cols[0])
 
     @property
     def container_fieldset(self):
@@ -1074,7 +1081,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     ColumnViewModel(
                         display_text=c['display'],
                         exists_in_current_version=exists,
-                        property=self._get_property_from_column(c['field']) if exists else None,
+                        property=self._get_property_id_by_indicator_id(c['field']) if exists else None,
                         data_source_field=c['field'] if not exists else None,
                         calculation=reverse_agg_map.get(c.get('aggregation'), _('Count per Choice'))
                     )
@@ -1179,7 +1186,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         # but we don't want it to appear in the builder.
         if self.existing_report:
             agg_properties = [
-                self._get_property_from_column(c)
+                self._get_property_id_by_indicator_id(c)
                 for c in self.existing_report.aggregation_columns
             ]
             return [c for c in columns if c.property not in agg_properties]
@@ -1262,7 +1269,7 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         # Set initial value of location
         if self.existing_report and existing_report.location_column_id:
             existing_loc_col = existing_report.location_column_id
-            self.fields['location'].initial = self._get_property_from_column(existing_loc_col)
+            self.fields['location'].initial = self._get_property_id_by_indicator_id(existing_loc_col)
 
     @property
     def _location_choices(self):
@@ -1293,7 +1300,7 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         # but we don't want it to appear in the builder.
         if self.existing_report and self.existing_report.location_column_id:
             col_id = self.existing_report.location_column_id
-            location_property = self._get_property_from_column(col_id)
+            location_property = self._get_property_id_by_indicator_id(col_id)
             return [c for c in columns if c.property != location_property]
         return columns
 
