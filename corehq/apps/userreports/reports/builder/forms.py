@@ -1109,7 +1109,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             reverse_agg_map = {
                 'avg': 'Average',
                 'sum': 'Sum',
-                'simple': 'Count per Choice'
+                'expand': 'Count per Choice'
             }
             cols = []
             for c in self.existing_report.columns:
