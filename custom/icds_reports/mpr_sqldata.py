@@ -6,7 +6,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from django.utils.translation import ugettext as _
 
 from custom.icds_reports.sqldata import BaseIdentification, BaseOperationalization, BasePopulation
-from custom.icds_reports.utils import ICDSMixin, MPRData
+from custom.icds_reports.utils import ICDSMixin, MPRData, ICDSDataTableColumn
 
 
 class MPRIdentification(BaseIdentification):
@@ -33,7 +33,7 @@ class MPROperationalization(BaseOperationalization, MPRData):
 
 class MPRSectors(object):
 
-    title = 'No of Sectors'
+    title = 'd. No of Sectors'
     slug = 'sectors'
     has_sections = False
     subtitle = []
@@ -69,12 +69,12 @@ class MPRSectors(object):
 
 class MPRPopulation(BasePopulation, MPRData):
 
-    title = 'Total Population of Project'
+    title = 'e. Total Population of Project'
 
 
 class MPRBirthsAndDeaths(ICDSMixin, MPRData):
 
-    title = 'Details of Births and Deaths during the month'
+    title = '2. Details of Births and Deaths during the month'
     slug = 'births_and_deaths'
 
     @property
@@ -84,13 +84,13 @@ class MPRBirthsAndDeaths(ICDSMixin, MPRData):
             DataTablesColumn(_('Categories')),
             DataTablesColumnGroup(
                 _('Among Permanent Residents'),
-                DataTablesColumn(_('Girls/Women'), sortable=False),
-                DataTablesColumn(_('Boys'), sortable=False),
+                ICDSDataTableColumn(_('Girls/Women'), sortable=False, span=1),
+                ICDSDataTableColumn(_('Boys'), sortable=False, span=1),
             ),
             DataTablesColumnGroup(
                 _('Among Permanent Residents'),
-                DataTablesColumn(_('Girls/Women'), sortable=False),
-                DataTablesColumn(_('Boys'), sortable=False),
+                ICDSDataTableColumn(_('Girls/Women'), sortable=False, span=1),
+                ICDSDataTableColumn(_('Boys'), sortable=False, span=1),
             )
         )
 
@@ -215,7 +215,7 @@ class MPRBirthsAndDeaths(ICDSMixin, MPRData):
 
 class MPRAWCDetails(ICDSMixin, MPRData):
 
-    title = 'Details of new registrations at AWC during the month'
+    title = '3. Details of new registrations at AWC during the month'
     slug = 'awc_details'
 
     @property
@@ -224,13 +224,13 @@ class MPRAWCDetails(ICDSMixin, MPRData):
             DataTablesColumn(_('Category')),
             DataTablesColumnGroup(
                 _('Among permanent residents of AWC area'),
-                DataTablesColumn(_('Girls/Women'), sortable=False),
-                DataTablesColumn(_('Boys'), sortable=False),
+                ICDSDataTableColumn(_('Girls/Women'), sortable=False, span=1),
+                ICDSDataTableColumn(_('Boys'), sortable=False, span=1),
             ),
             DataTablesColumnGroup(
                 _('Among temporary residents of AWC area'),
-                DataTablesColumn(_('Girls/Women'), sortable=False),
-                DataTablesColumn(_('Boys'), sortable=False),
+                ICDSDataTableColumn(_('Girls/Women'), sortable=False, span=1),
+                ICDSDataTableColumn(_('Boys'), sortable=False, span=1),
             )
         )
 
@@ -282,7 +282,7 @@ class MPRAWCDetails(ICDSMixin, MPRData):
 
 class MPRSupplementaryNutrition(ICDSMixin, MPRData):
 
-    title = 'Delivery of Supplementary Nutrition and Pre-School Education (PSE)'
+    title = '4. Delivery of Supplementary Nutrition and Pre-School Education (PSE)'
     slug = 'supplementary_nutrition'
 
     def __init__(self, config):
@@ -291,8 +291,8 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
 
     @property
     def subtitle(self):
-        return 'Average no. days AWCs were open during the month? {}'.format(
-            div(self.awc_open_count, (self.awc_number or 1))
+        return 'Average no. days AWCs were open during the month? %.1f' % div(
+            self.awc_open_count, float(self.awc_number or 1)
         ),
 
     @property
@@ -321,9 +321,9 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
                         else:
                             denom = data.get(cell['second_value'], 1)
                         if 'format' in cell:
-                            cell_data = '%.2f%%' % (cell['func'](num, float(denom or 1)) * 100)
+                            cell_data = '%.1f%%' % (cell['func'](num, float(denom or 1)) * 100)
                         else:
-                            cell_data = '%.2f' % cell['func'](num, float(denom or 1))
+                            cell_data = '%.1f' % cell['func'](num, float(denom or 1))
                         row_data.append(cell_data)
                     else:
                         row_data.append(data.get(cell, cell if cell == '--' or idx == 0 else 0))
@@ -420,7 +420,7 @@ class MPRUsingSalt(ICDSMixin, MPRData):
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             use_salt = data.get('use_salt', 0)
 
-            return "Number of AWCs using Iodized Salt: {0}  % of AWCs: {0}/{1}".format(
+            return "5. Number of AWCs using Iodized Salt: {0}  % of AWCs: {0}/{1}".format(
                 use_salt,
                 self.awc_number
             )
@@ -428,7 +428,7 @@ class MPRUsingSalt(ICDSMixin, MPRData):
 
 class MPRProgrammeCoverage(ICDSMixin, MPRData):
 
-    title = 'Programme Coverage'
+    title = '6. Programme Coverage'
     slug = 'programme_coverage'
     has_sections = True
 
@@ -475,9 +475,9 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
                                 denom = data.get(cell['second_value'], 1)
                                 alias_data = cell['func'](num, float(denom or 1))
                                 if "format" in cell:
-                                    cell_data = "%.2f%%" % (cell['func'](num, float(denom or 1)) * 100)
+                                    cell_data = "%.1f%%" % (cell['func'](num, float(denom or 1)) * 100)
                                 else:
-                                    cell_data = "%.2f" % cell['func'](num, float(denom or 1))
+                                    cell_data = "%.1f" % cell['func'](num, float(denom or 1))
                             else:
                                 cell_data = num
                                 alias_data = num
@@ -505,7 +505,7 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
     def row_config(self):
         return [
             {
-                'title': "Supplementary Nutrition beneficiaries (number of those among "
+                'title': "a. Supplementary Nutrition beneficiaries (number of those among "
                          "residents who were given supplementary nutrition for 21+ days "
                          "during the reporting month)",
                 'slug': 'programme_coverage_1',
@@ -614,7 +614,7 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
                 )
             },
             {
-                'title': 'Feeding Efficiency',
+                'title': 'b. Feeding Efficiency',
                 'slug': 'programme_coverage_2',
                 'rows_config': (
                     (
@@ -793,7 +793,7 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
                 )
             },
             {
-                'title': 'Temporary Residents who received supplementary food during the month',
+                'title': 'c. Temporary Residents who received supplementary food during the month',
                 'slug': 'programme_coverage_3',
                 'rows_config': (
                     (
@@ -824,7 +824,7 @@ class MPRProgrammeCoverage(ICDSMixin, MPRData):
 
 class MPRPreschoolEducation(ICDSMixin, MPRData):
 
-    title = 'Pre-school Education conducted for children 3-6 years'
+    title = '7. Pre-school Education conducted for children 3-6 years'
     slug = 'preschool'
     has_sections = True
 
@@ -846,7 +846,7 @@ class MPRPreschoolEducation(ICDSMixin, MPRData):
                             if 'second_value' in cell:
                                 denom = data.get(cell['second_value'], 1)
                                 alias_data = cell['func'](num, float(denom or 1))
-                                cell_data = "%.2f" % cell['func'](num, float(denom or 1))
+                                cell_data = "%.1f" % cell['func'](num, float(denom or 1))
                             else:
                                 cell_data = num
                                 alias_data = num
@@ -874,7 +874,7 @@ class MPRPreschoolEducation(ICDSMixin, MPRData):
     def row_config(self):
         return [
             {
-                'title': 'Average attendance of children for 16 or more days '
+                'title': 'a. Average attendance of children for 16 or more days '
                          'in the reporting month by different categories',
                 'slug': 'preschool_1',
                 'headers': DataTablesHeader(
@@ -933,7 +933,7 @@ class MPRPreschoolEducation(ICDSMixin, MPRData):
 
             },
             {
-                'title': 'Total Daily Attendance of Children by age category',
+                'title': 'b. Total Daily Attendance of Children by age category',
                 'slug': 'preschool_2',
                 'headers': DataTablesHeader(
                     DataTablesColumn('Age Category'),
@@ -990,7 +990,7 @@ class MPRPreschoolEducation(ICDSMixin, MPRData):
                 )
             },
             {
-                'title': 'PSE Attendance Efficiency',
+                'title': 'c. PSE Attendance Efficiency',
                 'slug': 'preschool_3',
                 'headers': DataTablesHeader(
                     DataTablesColumn(''),
@@ -1097,7 +1097,7 @@ class MPRPreschoolEducation(ICDSMixin, MPRData):
                 )
             },
             {
-                'title': 'PSE Activities',
+                'title': 'd. PSE Activities',
                 'slug': 'preschool_4',
                 'headers': [],
                 'rows_config': (
@@ -1116,7 +1116,7 @@ class MPRPreschoolEducation(ICDSMixin, MPRData):
 
 class MPRGrowthMonitoring(ICDSMixin, MPRData):
 
-    title = 'Growth Monitoring and Classification of Nutritional Status of Children ' \
+    title = '8. Growth Monitoring and Classification of Nutritional Status of Children ' \
             '(as per growth chart based on the WHO Child Growth Standards)'
     slug = 'growth_monitoring'
 
@@ -1135,7 +1135,7 @@ class MPRGrowthMonitoring(ICDSMixin, MPRData):
                                 num += data.get(c, 0)
                             denom = data.get(cell['second_value'], 1)
                             alias_data = cell['func'](num, float(denom or 1))
-                            cell_data = "%.2f" % cell['func'](num, float(denom or 1))
+                            cell_data = "%.1f" % cell['func'](num, float(denom or 1))
                         else:
                             for c in cell['columns']:
                                 if 'func' in cell:
@@ -1579,22 +1579,27 @@ class MPRImmunizationCoverage(ICDSMixin, MPRData):
     slug = 'immunization_coverage'
 
     @property
+    def rows(self):
+        data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
+        children_completing = data.get('open_child_count', 0)
+        vaccination = data.get('open_child_1yr_immun_complete', 1)
+        immunization = "%.1f%%" % ((children_completing / float(vaccination or 1)) * 100)
+        return [
+            ['(I)', 'Children Completing 12 months during the month:',  children_completing],
+            ['(II)', 'Of this, number of children who have received all vaccinations:', vaccination],
+            ['(III)', 'Completed timely immunization coverage (%):', immunization]
+        ]
+
+    @property
     def subtitle(self):
         if self.config['location_id']:
-            data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
-            children_completing = data.get('open_child_count', 0)
-            vaccination = data.get('open_child_1yr_immun_complete', 1)
-            immunization = "%.2f%%" % ((children_completing / float(vaccination or 1)) * 100)
-            return (
-                '(I) Children Completing 12 months during the month: {0}'.format(children_completing),
-                '(II) Of this, number of children who have received all vaccinations: {0}'.format(vaccination),
-                '(III) Completed timely immunization coverage (%): {0}'.format(immunization)
-            )
+
+            return
 
 
 class MPRVhnd(ICDSMixin, MPRData):
 
-    title = 'Village Health and Nutrition Day (VHND) activity summary'
+    title = '10. Village Health and Nutrition Day (VHND) activity summary'
     slug = 'vhnd'
 
     @property
@@ -1615,7 +1620,7 @@ class MPRVhnd(ICDSMixin, MPRData):
                 for idx, cell in enumerate(row):
                     if isinstance(cell, dict):
                         num = data.get(cell['column'], 0)
-                        row_data.append("%.2f%%" % cell['func'](num, float(self.awc_number or 1)))
+                        row_data.append("%.1f%%" % cell['func'](num, float(self.awc_number or 1)))
                     else:
                         row_data.append(data.get(cell, cell if not cell or idx == 0 else 0))
                 rows.append(row_data)
@@ -1769,7 +1774,7 @@ class MPRVhnd(ICDSMixin, MPRData):
 
 class MPRReferralServices(ICDSMixin, MPRData):
 
-    title = 'Referral Services'
+    title = '11. Referral Services'
     slug = 'referral_services'
 
     @property
@@ -1804,9 +1809,9 @@ class MPRReferralServices(ICDSMixin, MPRData):
                                 denom = data.get(cell['second_value'], 1)
                             alias_data = cell['func'](num, float(denom or 1))
                             if 'format' in cell:
-                                cell_data = "%.2f%%" % (alias_data * 100)
+                                cell_data = "%.1f%%" % (alias_data * 100)
                             else:
-                                cell_data = "%.2f" % cell['func'](num, float(denom or 1))
+                                cell_data = "%.1f" % cell['func'](num, float(denom or 1))
                         else:
                             values = []
                             for c in cell['columns']:
@@ -2193,7 +2198,7 @@ class MPRReferralServices(ICDSMixin, MPRData):
 
 class MPRMonitoring(ICDSMixin, MPRData):
 
-    title = 'Monitoring and Supervision During the Month'
+    title = '12. Monitoring and Supervision During the Month'
     subtitle = '(I) Visits to AWCs',
     slug = 'monitoring'
 
@@ -2217,7 +2222,7 @@ class MPRMonitoring(ICDSMixin, MPRData):
                         num = 0
                         for c in cell['columns']:
                             num += data.get(c, 0)
-                        row_data.append("%.2f%%" % cell['func'](num, float(self.awc_number or 1)))
+                        row_data.append("%.1f%%" % cell['func'](num, float(self.awc_number or 1)))
                     else:
                         row_data.append(data.get(cell, cell if not cell or idx == 0 else 0))
                 rows.append(row_data)

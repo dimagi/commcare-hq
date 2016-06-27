@@ -9,7 +9,7 @@
         {% else %}
             <tr>
                 {% for header in report_table.headers %}
-                    <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}class="{{ header.css_class }}"{% endif %}>
+                    <th {% if not report_table.pagination.is_on %}data-sort="{{ header.sort_type }}" data-sortdir="{{ header.sort_direction }}"{% endif %} {% if header.css_class %}style="width: 150px !important"{% endif %}>
                         <i class="icon-white fa dt-sort-icon"></i>
                         {% if header.html %}{{ header.html }}{% else %}{{ header|linebreaksbr }}{% endif %}
                         {% if header.help_text %}
