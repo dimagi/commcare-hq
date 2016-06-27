@@ -814,11 +814,6 @@ MESSAGE_LOG_OPTIONS = {
 IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
-# List of Fluff pillow classes that ctable should process diffs for
-# deprecated - use IndicatorDocument.save_direct_to_sql
-FLUFF_PILLOW_TYPES_TO_SQL = {
-}
-
 PREVIEWER_RE = '^$'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
