@@ -109,6 +109,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
             },
         });
     };
+    data.formplayerEnabled = true;
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
 });
