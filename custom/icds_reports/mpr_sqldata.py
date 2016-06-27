@@ -1585,16 +1585,10 @@ class MPRImmunizationCoverage(ICDSMixin, MPRData):
         vaccination = data.get('open_child_1yr_immun_complete', 1)
         immunization = "%.1f%%" % ((children_completing / float(vaccination or 1)) * 100)
         return [
-            ['(I)', 'Children Completing 12 months during the month:',  children_completing],
+            ['(I)', 'Children Completing 12 months during the month:', children_completing],
             ['(II)', 'Of this, number of children who have received all vaccinations:', vaccination],
             ['(III)', 'Completed timely immunization coverage (%):', immunization]
         ]
-
-    @property
-    def subtitle(self):
-        if self.config['location_id']:
-
-            return
 
 
 class MPRVhnd(ICDSMixin, MPRData):
