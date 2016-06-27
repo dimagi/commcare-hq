@@ -668,7 +668,6 @@ class RestoreConfig(object):
             return HttpResponse(response, content_type="text/xml",
                                 status=412)  # precondition failed
 
-
     def set_cached_payload_if_necessary(self, resp, duration):
         cache_payload = resp.get_cache_payload(bool(self.sync_log))
         if self.sync_log:
@@ -677,10 +676,7 @@ class RestoreConfig(object):
         else:
             # on initial sync, only cache if the duration was longer than the threshold
             if self.force_cache or duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD):
-                self._set_initial_cache(cache_payload)
-
-    def _set_initial_cache(self, cache_payload):
-        self.cache.set(self._initial_cache_key, cache_payload, self.cache_timeout)
+                self._set_cache_in_redis(cache_payload)
 
     def _set_cache_on_synclog(self, cache_payload):
         try:
@@ -698,3 +694,6 @@ class RestoreConfig(object):
             # this can fail. in this event, don't fail to respond, since it's just
             # a caching optimization
             pass
+
+    def _set_cache_in_redis(self, cache_payload):
+        self.cache.set(self._initial_cache_key, cache_payload, self.cache_timeout)
