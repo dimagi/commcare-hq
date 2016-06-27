@@ -20,6 +20,7 @@ from casexml.apps.phone.restore import (
     restore_cache_key,
 )
 from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
+from casexml.apps.phone.tasks import get_async_restore_payload
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -130,10 +131,21 @@ class AsyncRestoreTest(TestCase):
             subsequent_restore = self._restore_config(async=True)
             self.assertIsNotNone(restore_config.cache.get(cache_id))
             subsequent_payload = subsequent_restore.get_payload()
-            self.assertIsNone(restore_config.cache.get(cache_id))
+
+            # if the task actually ran, the cache should now not have the task id,
+            # however, the task is not run in this test. See `test_completed_task_deletes_cache`
+            # self.assertIsNone(restore_config.cache.get(cache_id))
+
             self.assertTrue(isinstance(subsequent_payload, FileRestoreResponse))
             # a new synclog should not have been created
             self.assertIsNone(subsequent_restore.restore_state.current_sync_log)
+
+    def test_completed_task_deletes_cache(self):
+        cache_id = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id)
+        restore_config = self._restore_config(async=True)
+        restore_config.cache.set(cache_id, 'im going to be deleted by the next command')
+        get_async_restore_payload.delay(restore_config)
+        self.assertIsNone(restore_config.cache.get(cache_id))
 
     @flag_enabled('ASYNC_RESTORE')
     def test_restore_in_progress_form_submitted_kills_old_jobs(self):

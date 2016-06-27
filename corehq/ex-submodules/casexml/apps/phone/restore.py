@@ -566,11 +566,8 @@ class RestoreConfig(object):
 
     def get_payload(self):
         self.validate()
+
         cached_response = self._get_cached_payload()
-        # TODO: Figure out how to properly save good synclogs without relying on celery
-        # if cached_response and self.async:
-        #     # remove task key from cache if it exists
-        #     self.cache.delete(self.async_cache_key)
         if cached_response:
             return cached_response
         # Start new sync
