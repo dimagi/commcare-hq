@@ -73,13 +73,16 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
-            active=self._distinct_user_ids.count(), # must reconsider this calculation
+            active=self._distinct_user_ids.count(),
             inactive=0,
             performing=num_performing_user,
         )
 
     def set_next_month_summary(self, next_month_summary):
         self._next_summary = next_month_summary
+
+    def set_num_of_inactive(self, num_inactive_user):
+        self.inactive = num_inactive_user
 
     @property
     def number_of_performing_users(self):
@@ -139,11 +142,12 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def delta_inactive(self):
-        return 0
+        return self.inactive - self._previous_summary.inactive if self._previous_summary else self.inactive
 
     @property
     def delta_inactive_pct(self):
-        return 0
+        if self.delta_inactive and self._previous_summary and self._previous_summary.number_of_inactive_users:
+            return float(self.delta_inactive / float(self._previous_summary.number_of_inactive_users)) * 100.
 
     @memoized
     def get_all_user_stubs(self):
@@ -157,14 +161,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 next_stub=None,
             ) for row in self._distinct_user_ids
         }
-
-    @memoized
-    def get_all_inactive_users(self):
-        inactive_users = filter(
-            lambda stub: not stub.is_active,
-            self.get_all_user_stubs_with_extra_data()
-        )
-        return inactive_users
 
     @memoized
     def get_all_user_stubs_with_extra_data(self):
@@ -279,6 +275,7 @@ class ProjectHealthDashboard(ProjectReport):
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
+                this_month_summary.set_num_of_inactive(len(this_month_summary.get_dropouts()))
             last_month_summary = this_month_summary
         return six_month_summary
 

@@ -28,8 +28,10 @@
         var performingSeries = {
             'key': 'performing',
             values: _.map(data, function(item) {
+                var date = new Date(item.month);
+                var month_year = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth()));
                 return {
-                    'x': item.month,
+                    'x': month_year,
                     'y': item.performing
                 };
             })
@@ -37,8 +39,10 @@
         var activeNonPerformingSeries = {
             'key': 'active',
             values: _.map(data, function(item) {
+                var date = new Date(item.month);
+                var month_year = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth()));
                 return {
-                    'x': item.month,
+                    'x': month_year,
                     'y': item.active - item.performing
                 };
             })
@@ -49,11 +53,48 @@
               .stacked(true)
             ;
             chart.yAxis.tickFormat(d3.format(',.0f'));
-            d3.select('#chart svg')
+            d3.select('#perform_chart svg')
                 .datum([performingSeries, activeNonPerformingSeries])
                 .call(chart);
             nv.utils.windowResize(chart.update);
             return chart;
+        });
+    }
+
+    function setupLineChart(){
+        var data = {{ six_months_reports|JSON }};
+
+        var inactiveSeries = [{
+            'key': 'inactive',
+            values: _.map(data, function(item) {
+                var date = new Date(item.month);
+                var month_year = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth()));
+                return {
+                    x: month_year,
+                    y: item.inactive
+                };
+            })
+        }];
+        nv.addGraph(function() {
+            var chart = nv.models.lineChart()
+                                .showYAxis(true)
+                                .showXAxis(true);
+
+            chart.xScale(d3.time.scale());
+            chart.xAxis.ticks(d3.time.month)
+                       .tickFormat(function(d){
+                            return d3.time.format('%B %Y')(d);
+                        })
+            d3.select('#inactive_lineChart svg')
+                .datum(inactiveSeries)
+                .call(chart);
+
+            nv.utils.windowResize(function() {
+                chart.update()
+            });
+
+            return chart;
+
         });
     }
 
@@ -85,6 +126,7 @@
     $(function() {
         setupCharts();
         setupPopovers();
+        setupLineChart();
     });
 </script>
 {% endblock %}
@@ -136,7 +178,7 @@
             {% trans "Inactive Users" %}
             <p class="text-muted"><small>{% blocktrans %}Users who submitted no forms last month.{% endblocktrans %}</small></p>
         </td>
-        <td>{{ last_month.inactive }}</td>
+        <td>{{ last_month.number_of_inactive_users }}</td>
         <td>
             {% chevron last_month.delta_inactive_pct %}
             {{ last_month.delta_inactive_pct|floatformat }} %
@@ -147,7 +189,8 @@
     <p class="lead">
         {% trans "How the counts of performing and active users have changed in the last six months." %}
     </p>
-<div id="chart"><svg></svg></div>
+<div id="perform_chart"><svg></svg></div>
+<div id="inactive_lineChart"><svg></svg></div>
 <div class="col-md-4">
     <h2>{% trans "Active, Non-Performing Users" %}</h2>
     <p class="lead">
