@@ -899,8 +899,16 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
             $('#sync-button').disableButton();
             showLoading();
             resp.done(function (data) {
-                tfSyncComplete(data.status === "error");
+                var hasError = data.status === "error"
+                tfSyncComplete(hasError);
+                if (hasError) {
+                    console.error(data.message);
+                }
                 $('#sync-button').enableButton();
+            })
+            resp.error(function(data) {
+                tfSyncComplete(true);
+                console.error(data.responseJSON);
             });
 
         },
