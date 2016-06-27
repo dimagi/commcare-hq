@@ -1,10 +1,11 @@
-from corehq.apps.domain.models import Domain
 from django.test import SimpleTestCase
-from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.accounting import generator
+
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
     Subscriber)
+from corehq.apps.accounting.tests import generator
+from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
     Permissions, UserRole, UserRolePresets, WebUser, CommCareUser,
 )
@@ -61,8 +62,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,created_by=self.admin_user.username)[0]
-        self.advanced_plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain.name,edition=SoftwarePlanEdition.ADVANCED)
+        self.advanced_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
 
     def test_cancellation(self):
         subscription = Subscription.new_domain_subscription(
