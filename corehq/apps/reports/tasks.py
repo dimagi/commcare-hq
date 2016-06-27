@@ -392,10 +392,26 @@ def _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, e
     Return a list of form ids.
     Each form has a multimedia attachment and meets the given filters.
     """
+    def iter_attachments(form):
+        if form.get('_attachments'):
+            for value in form['_attachments'].values():
+                yield value
+        if form.get('external_blobs'):
+            for value in form['external_blobs'].values():
+                yield value
     if not export_is_legacy:
-        fetch_fn = es_get_form_ids_having_multimedia
-        startdate = parse(startdate)
-        enddate = parse(enddate)
+        query = (FormES()
+                 .domain(domain)
+                 .app(app_id)
+                 .xmlns(xmlns)
+                 .submitted(gte=parse(startdate), lte=parse(enddate))
+                 .remove_default_filter("has_user")
+                 .source(['_attachments', 'external_blobs', '_id']))
+        form_ids = set()
+        for form in query.scroll():
+            for attachment in iter_attachments(form):
+                if attachment['content_type'] != "text/xml":
+                    form_ids.add(form['_id'])
     else:
         fetch_fn = couch_get_form_ids_having_multimedia
 
