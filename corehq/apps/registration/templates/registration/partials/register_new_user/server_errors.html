@@ -1,0 +1,24 @@
+{% load i18n %}
+
+<div class="server-errors" data-bind="visible: hasServerError">
+  <h2>{% trans "Oh, no!" %}</h2>
+  <p class="lead">{% trans "Well, this is embarrassing..." %}</p>
+  <p>
+    {% blocktrans %}
+      It seems our servers are having issues processing new accounts
+      right now.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      It's most definitely our fault, and we sincerely apologize.
+      Our best developers are already on the case, don't worry.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      Please try back in an hour and hopefully everything will be fixed.
+      We are very sorry for the inconvenience.
+    {% endblocktrans %}
+  </p>
+</div>
