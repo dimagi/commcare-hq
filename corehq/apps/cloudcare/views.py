@@ -128,7 +128,7 @@ class CloudcareMain(View):
         def _default_lang():
             if apps:
                 # unfortunately we have to go back to the DB to find this
-                return Application.get(apps[0]["_id"]).langs[0]
+                return Application.get(apps[0]["_id"]).default_language
             else:
                 return "en"
 
@@ -530,12 +530,14 @@ def sync_db_api(request, domain):
     auth_cookie = request.COOKIES.get('sessionid')
     username = request.GET.get('username')
     try:
-        sync_db(username, domain, DjangoAuth(auth_cookie))
-        return json_response({
-            'status': 'OK'
-        })
+        response = sync_db(username, domain, DjangoAuth(auth_cookie))
     except Exception, e:
-        return HttpResponse(e, status=500, content_type="text/plain")
+        return json_response(
+            {'status': 'error', 'message': unicode(e)},
+            status_code=500
+        )
+    else:
+        return json_response(response)
 
 
 @cloudcare_api

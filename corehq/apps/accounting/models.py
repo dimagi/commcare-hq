@@ -49,7 +49,7 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_address_from_invoice,
     get_change_status,
-    get_dimagi_from_email_by_product,
+    get_dimagi_from_email,
     get_privileges,
     is_active_subscription,
     log_accounting_error,
@@ -111,14 +111,6 @@ class SoftwareProductType(object):
         (COMMTRACK, COMMTRACK),
         (COMMCONNECT, COMMCONNECT),
     )
-
-    @classmethod
-    def get_type_by_domain(cls, domain):
-        if domain.commtrack_enabled:
-            return cls.COMMTRACK
-        if domain.commconnect_enabled:
-            return cls.COMMCONNECT
-        return cls.COMMCARE
 
 
 class SoftwarePlanEdition(object):
@@ -744,13 +736,11 @@ class DefaultProductPlan(models.Model):
         app_label = 'accounting'
 
     @classmethod
-    def get_default_plan_by_domain(cls, domain, edition=None, is_trial=False):
-        domain = ensure_domain_instance(domain)
+    def get_default_plan(cls, edition=None, is_trial=False):
         edition = edition or SoftwarePlanEdition.COMMUNITY
-        product_type = SoftwareProductType.get_type_by_domain(domain)
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
-                product_type=product_type, edition=edition, is_trial=is_trial
+                product_type=SoftwareProductType.COMMCARE, edition=edition, is_trial=is_trial
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
@@ -759,11 +749,10 @@ class DefaultProductPlan(models.Model):
             )
 
     @classmethod
-    def get_lowest_edition_by_domain(cls, domain, requested_privileges,
-                                     return_plan=False):
+    def get_lowest_edition(cls, requested_privileges, return_plan=False):
         for edition in SoftwarePlanEdition.SELF_SERVICE_ORDER:
-            plan_version = cls.get_default_plan_by_domain(
-                domain, edition=edition
+            plan_version = cls.get_default_plan(
+                edition=edition
             )
             privileges = get_privileges(plan_version) - REPORT_BUILDER_ADD_ON_PRIVS
             if privileges.issuperset(requested_privileges):
@@ -794,10 +783,6 @@ class SoftwarePlanVersion(models.Model):
             'plan_name': self.plan.name,
             'version_num': self.version,
         }
-
-    @property
-    def core_product(self):
-        return self.product_rate.product.product_type
 
     @property
     def version(self):
@@ -954,7 +939,7 @@ class Subscriber(models.Model):
         upgraded_privileges is the list of privileges that should be added
         """
         if new_plan_version is None:
-            new_plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain)
+            new_plan_version = DefaultProductPlan.get_default_plan()
 
         if downgraded_privileges is None or upgraded_privileges is None:
             change_status_result = get_change_status(None, new_plan_version)
@@ -1020,6 +1005,7 @@ class Subscription(models.Model):
     do_not_email_reminder = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
+    skip_invoicing_if_no_feature_charges = models.BooleanField(default=False)
     service_type = models.CharField(
         max_length=25,
         choices=SubscriptionType.CHOICES,
@@ -1368,9 +1354,8 @@ class Subscription(models.Model):
 
         if new_version is None:
             current_privileges = get_privileges(self.plan_version)
-            new_version = DefaultProductPlan.get_lowest_edition_by_domain(
-                self.subscriber.domain, current_privileges,
-                return_plan=True,
+            new_version = DefaultProductPlan.get_lowest_edition(
+                current_privileges, return_plan=True,
             )
 
         if new_version is None:
@@ -1455,13 +1440,11 @@ class Subscription(models.Model):
         user_desc = self.plan_version.user_facing_description
         plan_name = user_desc['name']
         domain_name = self.subscriber.domain
-        product = self.plan_version.core_product
         emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
         emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
-            subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
+            subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
                         "ends %(ending_on)s") % {
-                'product': product,
                 'domain': domain_name,
                 'ending_on': ending_on,
             }
@@ -1469,10 +1452,9 @@ class Subscription(models.Model):
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
             subject = _(
-                "%(product)s Alert: %(domain)s's subscription to "
+                "CommCare Alert: %(domain)s's subscription to "
                 "%(plan_name)s ends %(ending_on)s"
             ) % {
-                'product': product,
                 'plan_name': plan_name,
                 'domain': domain_name,
                 'ending_on': ending_on,
@@ -1492,7 +1474,6 @@ class Subscription(models.Model):
         context = {
             'domain': domain_name,
             'plan_name': plan_name,
-            'product': product,
             'ending_on': ending_on,
             'subscription_url': absolute_reverse(
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
@@ -1508,7 +1489,7 @@ class Subscription(models.Model):
             send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
-                email_from=get_dimagi_from_email_by_product(product),
+                email_from=get_dimagi_from_email(),
                 bcc=bcc,
             )
             log_accounting_info(
@@ -1598,7 +1579,7 @@ class Subscription(models.Model):
         subscriber = Subscriber.objects.safe_get(domain=domain.name)
         plan_version, subscription = cls._get_plan_by_subscriber(subscriber) if subscriber else (None, None)
         if plan_version is None:
-            plan_version = DefaultProductPlan.get_default_plan_by_domain(domain)
+            plan_version = DefaultProductPlan.get_default_plan()
         return plan_version, subscription
 
     @classmethod
@@ -2423,7 +2404,7 @@ class BillingRecord(BillingRecordBase):
         }
 
     def email_from(self):
-        return get_dimagi_from_email_by_product(self.invoice.subscription.plan_version.core_product)
+        return get_dimagi_from_email()
 
     @staticmethod
     def _get_total_balance(credit_lines):

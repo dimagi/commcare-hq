@@ -60,6 +60,7 @@ from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.elastic import parse_args_for_es, run_query, ES_META
+from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
@@ -425,6 +426,7 @@ class AdminRestoreView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(AdminRestoreView, self).get_context_data(**kwargs)
         response, timing_context = self._get_restore_response()
+        timing_context = timing_context or TimingContext(self.user.username)
         string_payload = ''.join(response.streaming_content)
         xml_payload = etree.fromstring(string_payload)
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
@@ -566,6 +568,15 @@ _SQL_DBS = OrderedDict((db.dbname, db) for db in [
 ])
 
 
+def _get_db_from_db_name(db_name):
+    if db_name in _SQL_DBS:
+        return _SQL_DBS[db_name]
+    elif db_name == couch_config.get_db(None).dbname:  # primary db
+        return couch_config.get_db(None)
+    else:
+        return couch_config.get_db(db_name)
+
+
 def _lookup_id_in_database(doc_id, db_name=None):
     db_result = namedtuple('db_result', 'dbname result status')
     STATUSES = defaultdict(lambda: 'warning', {
@@ -574,11 +585,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
     })
 
     if db_name:
-        db = _SQL_DBS.get(db_name, None)
-        if db:
-            dbs = [db]
-        else:
-            dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
+        dbs = [_get_db_from_db_name(db_name)]
     else:
         couch_dbs = couch_config.all_dbs_by_slug.values()
         sql_dbs = _SQL_DBS.values()
