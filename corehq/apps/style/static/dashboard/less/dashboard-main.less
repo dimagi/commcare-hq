@@ -19,10 +19,17 @@
 
 .dashboard-icon-medium {
   @icon-size: 230px;
-  width: @icon-size;
+  width: 100%;
   height: @icon-size;
   margin: 0 auto;
   font-size: 170px;
+  @media(max-width: @screen-md-max) {
+    font-size: 140px;
+    padding-top: 15px;
+  }
+  @media(max-width: @screen-sm-max) {
+    font-size: 170px;
+  }
 }
 
 .dashboard-icon-bg {
