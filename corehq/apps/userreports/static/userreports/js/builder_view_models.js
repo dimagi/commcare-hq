@@ -14,21 +14,15 @@ hqDefine('userreports/js/builder_view_models.js', function () {
      * Knockout view model representing a row in the filter property list
      * @param {function} getDefaultDisplayText - a function that takes a property
      *  as an arguemnt, and returns the default display text for that property.
+     * @param {function} getPropertyObject - a function that takes a property
+     *  as an argument, and returns the full object representing that property.
      * @constructor
      */
-    var PropertyListItem = function(getDefaultDisplayText) {
+    var PropertyListItem = function(getDefaultDisplayText, getPropertyObject) {
         var self = this;
 
         this.property = ko.observable("");
-
-        // True if the selected property is known to contain non numeric
-        // data. This would be true for numeric form questions, false
-        // for text questions and hidden value questions, and false for case
-        // properties (because we don't know what type of data they might
-        // contain)
-        this.propertyIsNonNumeric = ko.pureComputed(function(){
-            return ReportBuilder.IS_NON_NUMERIC_MAP[self.property()];
-        });
+        this.getPropertyObject = getPropertyObject;
 
         // True if the property exists in the current version of the app
         this.existsInCurrentVersion = ko.observable(true);
@@ -88,9 +82,10 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // the PropertyListItem represents columns in a non-aggregated report
         // or a filter
         this.calculation = ko.observable("Count per Choice");
-        this.calculationOptions = ko.pureComputed(function(){
-            if (self.propertyIsNonNumeric()) {
-                return hqImport('userreports/js/constants.js').NON_NUMERIC_PROPERTY_CALCULATION_OPTIONS;
+        this.calculationOptions = ko.pureComputed(function() {
+            var propObject = self.getPropertyObject(self.property());
+            if (propObject) {
+                return propObject.aggregation_options;
             }
             return hqImport('userreports/js/constants.js').DEFAULT_CALCULATION_OPTIONS;
         });
@@ -138,7 +133,10 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         options = options || {};
 
         var wrapListItem = function (item) {
-            var i = new PropertyListItem(self.getDefaultDisplayText.bind(self));
+            var i = new PropertyListItem(
+                self.getDefaultDisplayText.bind(self),
+                self.getPropertyObject.bind(self)
+            );
             i.existsInCurrentVersion(item.exists_in_current_version);
             i.property(getOrDefault(item, 'property', ""));
             i.dataSourceField(getOrDefault(item, 'data_source_field', null));
@@ -192,7 +190,10 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         return columnsValid && columnLengthValid;
     };
     PropertyList.prototype.buttonHandler = function () {
-        this.columns.push(new PropertyListItem(this.getDefaultDisplayText.bind(this)));
+        this.columns.push(new PropertyListItem(
+            this.getDefaultDisplayText.bind(this),
+            this.getPropertyObject.bind(this)
+        ));
         if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
             window.analytics.usage("Report Builder", this.analyticsAction, this.analyticsLabel);
             window.analytics.workflow("Clicked " + this.analyticsAction + " in Report Builder");
@@ -205,11 +206,20 @@ hqDefine('userreports/js/builder_view_models.js', function () {
      * @returns {string}
      */
     PropertyList.prototype.getDefaultDisplayText = function (property_id) {
-        var property = _.find(this.propertyOptions, function (opt) {return opt.value === property_id;});
+        var property = this.getPropertyObject(property_id);
         if (property !== undefined) {
             return property.label || property_id;
         }
         return property_id;
+    };
+    /**
+     * Return the object representing the property corresponding to the given
+     * property_id.
+     * @param {string} property_id
+     * @returns {object}
+     */
+    PropertyList.prototype.getPropertyObject = function(property_id) {
+        return _.find(this.propertyOptions, function (opt) {return opt.value === property_id;});
     };
 
     var ConfigForm = function(reportType, sourceType, columns, filters, dataSourceIndicators, reportColumnOptions){
@@ -223,11 +233,14 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             var transformColumnOptions = function (options) {
                 return _.compact(_.map(options, function (o) {
                     if (o.question_source) {
-                        return o.question_source;
+                        var ret = Object.assign({}, o.question_source);
+                        ret.aggregation_options = o.aggregation_options;
+                        return ret;
                     } else {
                         return {
                             value: o.id,
                             label: o.display,
+                            aggregation_options: o.aggregation_options,
                         };
                     }
                 }));
