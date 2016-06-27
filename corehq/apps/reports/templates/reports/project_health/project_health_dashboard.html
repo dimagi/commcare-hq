@@ -29,9 +29,11 @@
             'key': 'performing',
             values: _.map(data, function(item) {
                 var date = new Date(item.month);
-                var month_year = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth()));
+                var month_year = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1));
+                var month_year_string = d3.time.format("%B %Y")(month_year);
+                debugger
                 return {
-                    'x': month_year,
+                    'x': month_year_string,
                     'y': item.performing
                 };
             })
@@ -40,9 +42,10 @@
             'key': 'active',
             values: _.map(data, function(item) {
                 var date = new Date(item.month);
-                var month_year = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth()));
+                var month_year = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1));
+                var month_year_string = d3.time.format("%B %Y")(month_year);
                 return {
-                    'x': month_year,
+                    'x': month_year_string,
                     'y': item.active - item.performing
                 };
             })
@@ -68,7 +71,7 @@
             'key': 'inactive',
             values: _.map(data, function(item) {
                 var date = new Date(item.month);
-                var month_year = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth()));
+                var month_year = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1));
                 return {
                     x: month_year,
                     y: item.inactive
@@ -81,8 +84,7 @@
                                 .showXAxis(true);
 
             chart.xScale(d3.time.scale());
-            chart.xAxis.ticks(d3.time.month)
-                       .tickFormat(function(d){
+            chart.xAxis.tickFormat(function(d){
                             return d3.time.format('%B %Y')(d);
                         })
             d3.select('#inactive_lineChart svg')
