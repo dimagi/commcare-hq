@@ -248,8 +248,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     duration = IntegerProperty()  # in seconds
     log_format = StringProperty()
 
-    async_task_id = StringProperty()  # the ID of the task that this sync was carried out in
-
     # owner_ids_on_phone stores the ids the phone thinks it's the owner of.
     # This typically includes the user id,
     # as well as all groups that that user is a member of.
