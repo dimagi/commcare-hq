@@ -34,9 +34,6 @@
 [submodule "submodules/couchdbkit-aggregate"]
 	path = submodules/couchdbkit-aggregate
 	url = git://github.com/dimagi/couchdbkit-aggregate.git
-[submodule "submodules/ctable-src"]
-	path = submodules/ctable-src
-	url = git://github.com/dimagi/ctable.git
 [submodule "submodules/django-no-exceptions"]
 	path = submodules/django-no-exceptions
 	url = git://github.com/dimagi/django-no-exceptions.git
