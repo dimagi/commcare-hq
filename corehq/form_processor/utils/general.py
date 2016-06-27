@@ -4,31 +4,37 @@ from corehq.toggles import USE_SQL_BACKEND, NAMESPACE_DOMAIN, NEW_EXPORTS, TF_US
 from dimagi.utils.logging import notify_exception
 
 
-def should_use_sql_backend(domain_name):
+def should_use_sql_backend(domain_object_or_name):
     from corehq.apps.domain.models import Domain
     if settings.UNIT_TESTING:
-        return _should_use_sql_backend_in_tests(domain_name)
+        return _should_use_sql_backend_in_tests(domain_object_or_name)
 
     # TODO: remove toggle once all domains have been migrated
+    if isinstance(domain_object_or_name, Domain):
+        domain_name = domain_object_or_name.name
+        domain_object = domain_object_or_name
+    else:
+        domain_name = domain_object_or_name
+        domain_object = Domain.get_by_name(domain_name)
+
     toggle_enabled = USE_SQL_BACKEND.enabled(domain_name)
     if toggle_enabled:
         try:
             # migrate domains in toggle
-            domain = Domain.get_by_name(domain_name)
-            if not domain.use_sql_backend:
-                domain.use_sql_backend = True
-                domain.save()
+            if not domain_object.use_sql_backend:
+                domain_object.use_sql_backend = True
+                domain_object.save()
                 USE_SQL_BACKEND.set(domain_name, enabled=False, namespace=NAMESPACE_DOMAIN)
         except Exception:
             notify_exception(None, "Error migrating SQL BACKEND toggle", {
                 'domain': domain_name
             })
         return True
+    else:
+        return domain_object.use_sql_backend
 
-    return toggle_enabled or Domain.get_by_name(domain_name).use_sql_backend
 
-
-def _should_use_sql_backend_in_tests(domain_name):
+def _should_use_sql_backend_in_tests(domain_object_or_name):
     """The default return value is False unless the ``TESTS_SHOULD_USE_SQL_BACKEND`` setting
     has been set or a Domain object with the same name exists."""
     assert settings.UNIT_TESTING
@@ -36,9 +42,12 @@ def _should_use_sql_backend_in_tests(domain_name):
     override = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', None)
     if override is not None:
         return override
-    elif domain_name and getattr(settings, 'DB_ENABLED', True):
-        domain = Domain.get_by_name(domain_name)
-        return domain and domain.use_sql_backend
+
+    if domain_object_or_name and getattr(settings, 'DB_ENABLED', True):
+        domain_object = domain_object_or_name \
+            if isinstance(domain_object_or_name, Domain) \
+            else Domain.get_by_name(domain_object_or_name)
+        return domain_object and domain_object.use_sql_backend
     else:
         return False
 
