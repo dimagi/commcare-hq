@@ -10,7 +10,7 @@ from corehq.apps.accounting.models import (
 DESC_BY_EDITION = {
     Edition.COMMUNITY: {
         'name': _("Community"),
-        'description': _("For projects in a pilot phase with a small group (up to 50) of "
+        'description': _("For projects in a pilot phase with a small group (up to 10) of "
                          "mobile users that only need very basic CommCare features."),
     },
     Edition.STANDARD: {
