@@ -73,7 +73,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
-            active=self._distinct_user_ids.count(),
+            active=self._distinct_user_ids.count(), # must reconsider this calculation
+            inactive=0,
             performing=num_performing_user,
         )
 
@@ -85,8 +86,16 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         return self.performing
 
     @property
+    def number_of_low_performing_users(self):
+        return self.active - self.performing
+
+    @property
     def number_of_active_users(self):
         return self.active
+
+    @property
+    def number_of_inactive_users(self):
+        return self.inactive
 
     @property
     def previous_month(self):
@@ -106,6 +115,20 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
 
     @property
+    def delta_low_performing(self):
+        if self._previous_summary:
+            return self.number_of_low_performing_users - self._previous_summary.number_of_low_performing_users
+        else:
+            return self.number_of_low_performing_users
+
+    @property
+    def delta_low_performing_pct(self):
+        if self.delta_low_performing and self._previous_summary \
+                and self._previous_summary.number_of_low_performing_users:
+            return float(self.delta_low_performing /
+                         float(self._previous_summary.number_of_low_performing_users)) * 100.
+
+    @property
     def delta_active(self):
         return self.active - self._previous_summary.active if self._previous_summary else self.active
 
@@ -113,6 +136,14 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_active_pct(self):
         if self.delta_active and self._previous_summary and self._previous_summary.active:
             return float(self.delta_active / float(self._previous_summary.active)) * 100.
+
+    @property
+    def delta_inactive(self):
+        return 0
+
+    @property
+    def delta_inactive_pct(self):
+        return 0
 
     @memoized
     def get_all_user_stubs(self):
@@ -126,6 +157,14 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 next_stub=None,
             ) for row in self._distinct_user_ids
         }
+
+    @memoized
+    def get_all_inactive_users(self):
+        inactive_users = filter(
+            lambda stub: not stub.is_active,
+            self.get_all_user_stubs_with_extra_data()
+        )
+        return inactive_users
 
     @memoized
     def get_all_user_stubs_with_extra_data(self):
