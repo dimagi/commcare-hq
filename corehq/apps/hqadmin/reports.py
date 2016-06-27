@@ -494,6 +494,7 @@ DOMAIN_FACETS = [
     "published",
     "sub_area",
     "survey_management_enabled",
+    "use_sql_backend",
     "tags",
 ]
 
@@ -529,6 +530,7 @@ FACET_MAPPING = [
         {"facet": "survey_management_enabled", "name": "Survey Management", "expanded": False},
         {"facet": "cp_sms_ever", "name": "Used Messaging Ever", "expanded": False},
         {"facet": "cp_sms_30_d", "name": "Used Messaging Last 30 days", "expanded": False},
+        {"facet": "use_sql_backend", "name": "Uses 'scale' backend", "expanded": False},
     ]),
     ("Plans", False, [
         {"facet": "project_type", "name": "Project Type", "expanded": False},
