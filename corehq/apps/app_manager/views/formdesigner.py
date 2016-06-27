@@ -199,7 +199,7 @@ def get_form_data_schema(request, domain, form_unique_id):
     try:
         data.append(get_session_schema(form))
         if form and form.requires_case():
-            data.append(get_casedb_schema(app))  # TODO use domain instead of app
+            data.append(get_casedb_schema(app, form.get_module().case_type))  # TODO use domain instead of app
     except Exception as e:
         return HttpResponseBadRequest(e)
 

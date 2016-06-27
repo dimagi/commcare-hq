@@ -243,7 +243,7 @@ class ParentCasePropertyBuilder(object):
     def get_case_updates(self, form, case_type):
         return form.get_case_updates(case_type)
 
-    def get_parent_type_map(self, case_types):
+    def get_parent_type_map(self, case_types, allow_multiple_parents=False):
         """
         :returns: A dict
         ```
@@ -258,12 +258,15 @@ class ParentCasePropertyBuilder(object):
                 rel_map[relationship].append(parent_type)
 
             for relationship, types in rel_map.items():
-                if len(types) > 1:
+                if allow_multiple_parents:
+                    parent_map[case_type][relationship] = types
+                elif len(types) > 1:
                     logger.error(
                         "Case Type '%s' in app '%s' has multiple parents for relationship '%s': %s",
                         case_type, self.app.id, relationship, types
                     )
-                parent_map[case_type][relationship] = types[0]
+                else:
+                    parent_map[case_type][relationship] = types[0]
 
         return parent_map
 
@@ -318,7 +321,7 @@ def get_all_case_properties(app):
     return get_case_properties(app, app.get_case_types(), defaults=('name',))
 
 
-def get_casedb_schema(app):
+def get_casedb_schema(app, base_case_type):
     """Get case database schema definition
 
     This lists all case types and their properties for the given app.
@@ -326,8 +329,20 @@ def get_casedb_schema(app):
     case_types = app.get_case_types()
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
-    related = builder.get_parent_type_map(case_types)
+    related = builder.get_parent_type_map(case_types, allow_multiple_parents=True)
     map = builder.get_case_property_map(case_types, include_parent_properties=False)
+
+    def _ancestors_for(ctype, types, generation):
+        if generation > 0:
+            types[generation - 1].add(ctype)
+            for parent in related.get(ctype, {}).get('parent', []):
+                types = _ancestors_for(parent, types, generation - 1)
+        return types
+
+    generations = ['case', 'parent', 'grandparent']
+    ctype_generations = _ancestors_for(base_case_type, [set([]) for g in generations], len(generations))
+    ctype_generations.reverse()
+
     return {
         "id": "casedb",
         "uri": "jr://instance/casedb",
@@ -335,11 +350,12 @@ def get_casedb_schema(app):
         "path": "/casedb/case",
         "structure": {},
         "subsets": [{
-            "id": ctype,
+            "id": generations[i],
+            "name": "{} ({})".format(generations[i], " or ".join(ctypes)),
             "key": "@case_type",
-            "structure": {p: {} for p in props},
-            "related": related.get(ctype),  # {<relationship>: <parent_type>, ...}
-        } for ctype, props in sorted(map.iteritems())],
+            "structure": {p: {} for type in [map[t] for t in ctypes] for p in type},
+            "related": {"parent": generations[i]} if i > 0 else None,
+        } for i, ctypes in enumerate(ctype_generations)],
     }
 
 
