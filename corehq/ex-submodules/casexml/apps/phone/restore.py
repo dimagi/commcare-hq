@@ -546,7 +546,7 @@ class RestoreConfig(object):
         return self.restore_state.last_sync_log
 
     @property
-    def _async_cache_key(self):
+    def async_cache_key(self):
         return restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id)
 
     @property
@@ -570,7 +570,7 @@ class RestoreConfig(object):
         # TODO: Figure out how to properly save good synclogs without relying on celery
         # if cached_response and self.async:
         #     # remove task key from cache if it exists
-        #     self.cache.delete(self._async_cache_key)
+        #     self.cache.delete(self.async_cache_key)
         if cached_response:
             return cached_response
         # Start new sync
@@ -581,9 +581,9 @@ class RestoreConfig(object):
 
         return response
 
-    def generate_payload(self):
+    def generate_payload(self, async_task=None):
         self.restore_state.start_sync()
-        response = self._generate_restore_response()
+        response = self._generate_restore_response(async_task=async_task)
         self.restore_state.finish_sync()
         self.set_cached_payload_if_necessary(response, self.restore_state.duration)
         return response
@@ -601,7 +601,7 @@ class RestoreConfig(object):
         return CachedResponse(payload)
 
     def _get_asynchronous_payload(self):
-        task_id = self.cache.get(self._async_cache_key)
+        task_id = self.cache.get(self.async_cache_key)
         if task_id:
             # a running task exists
             # TODO: the task might actually have been deleted somewhere...
@@ -612,7 +612,7 @@ class RestoreConfig(object):
             task = get_async_restore_payload.delay(self)
             new_task = True
             # store the task id in cache
-            self.cache.set(self._async_cache_key, task.id, timeout=None)
+            self.cache.set(self.async_cache_key, task.id, timeout=None)
 
         try:
             # if this is a new task, wait for INITIAL_ASYNC_TIMEOUT in case
@@ -622,9 +622,6 @@ class RestoreConfig(object):
         except TimeoutError:
             # return a 202 with progress
             response = AsyncRestoreResponse(task, self.restore_user.username)
-        else:
-            # task is done, unset task id
-            self.cache.delete(self._async_cache_key)
 
         return response
 
