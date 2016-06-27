@@ -110,6 +110,7 @@
                 instanceViewerEnabled = true;
         {% endif %}
         var username = "{{ request.user.username }}";
+        var domain = "{{ domain }}";
         var cloudCare = hqImport('cloudcare/js/backbone/apps.js');
         window.mainView = new cloudCare.AppMainView({
             apps: apps,
@@ -126,6 +127,7 @@
             renderFormRoot: renderFormRoot,
             instanceViewerEnabled: instanceViewerEnabled,
             username: username,
+            domain: domain,
             syncDbUrl: syncDbUrl
         });
 
