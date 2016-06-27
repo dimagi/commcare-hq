@@ -54,6 +54,9 @@ branches:
   - new-signup  # Biyeun 6/21
   - np/buckets/explicit-comm # Nick P 6/24
 submodules:
+  deployment/commcare-hq-deploy:
+    branches:
+      - br/refactor-operations  # Ben
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
