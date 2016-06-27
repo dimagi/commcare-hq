@@ -826,20 +826,19 @@ class ConfigureNewReportBase(forms.Form):
             data_source_field=filter['field'] if not exists else None
         )
 
-    def _get_column_option_id_by_indicator_id(self, indicator_column_id):
+    def _get_column_option_by_indicator_id(self, indicator_column_id):
         """
-        Return the id of the ColumnOption corresponding to the given indicator
-        id.
+        Return the ColumnOption corresponding to the given indicator id.
         NOTE: This currently assumes that there is a one-to-one mapping between
         ColumnOptions and data source indicators, but we may want to remove
         this assumption as we add functionality to the report builder.
         :param indicator_column_id: The column_id field of a data source
             indicator configuration.
-        :return: The id of the coresponding ColumnOption
+        :return: The corresponding ColumnOption
         """
-        for column_option_id, column_option in self.report_column_options.iteritems():
+        for column_option in self.report_column_options.values():
             if column_option.indicator_id == indicator_column_id:
-                return column_option_id
+                return column_option
 
     def _get_property_id_by_indicator_id(self, indicator_column_id):
         """
@@ -1119,7 +1118,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     ColumnViewModel(
                         display_text=c['display'],
                         exists_in_current_version=exists,
-                        property=self._get_column_option_id_by_indicator_id(c['field']) if exists else None,
+                        property=self._get_column_option_by_indicator_id(c['field']).id if exists else None,
                         data_source_field=c['field'] if not exists else None,
                         calculation=reverse_agg_map.get(c.get('aggregation'), _('Count per Choice'))
                     )
@@ -1194,13 +1193,11 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         # Add the aggregation indicator to the columns if it's not already present.
         displaying_agg_column = bool([c for c in columns if c['field'] == agg_field_id])
         if not displaying_agg_column:
-            columns = [{
-                'format': 'default',
-                'aggregation': 'simple',
-                "type": "field",
-                'field': agg_field_id,
-                'display': agg_field_text
-            }] + columns
+            columns = [
+                self._get_column_option_by_indicator_id(agg_field_id).to_column_dict(
+                    "agg", agg_field_text, 'simple'
+                )
+            ] + columns
         else:
             # Don't expand the aggregation column
             for c in columns:
