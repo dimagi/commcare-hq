@@ -58,7 +58,7 @@ class ExportViewTest(TestCase):
     def test_commit_form_export(self):
         export_post_data = json.dumps({
             "doc_type": "FormExportInstance",
-            "domain": "aspace",
+            "domain": self.domain.name,
             "xmlns": "http://openrosa.org/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
             "last_updated": None,
             "legacy_saved_export_schema_id": None,
@@ -82,7 +82,7 @@ class ExportViewTest(TestCase):
             follow=True
         )
         self.assertEqual(resp.status_code, 200)
-        exports = get_form_export_instances('aspace')
+        exports = get_form_export_instances(self.domain.name)
         self.assertEqual(len(exports), 1)
         export = exports[0]
 
@@ -99,7 +99,7 @@ class ExportViewTest(TestCase):
     def test_edit_case_export(self):
         export_post_data = json.dumps({
             "doc_type": "CaseExportInstance",
-            "domain": "aspace",
+            "domain": self.domain.name,
             "xmlns": "http://openrosa.org/formdesigner/237B85C0-78B1-4034-8277-5D37E3EA7FD1",
             "last_updated": None,
             "legacy_saved_export_schema_id": None,
@@ -124,7 +124,7 @@ class ExportViewTest(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-        exports = get_case_export_instances('aspace')
+        exports = get_case_export_instances(self.domain.name)
         self.assertEqual(len(exports), 1)
         export = exports[0]
 
