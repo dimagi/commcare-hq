@@ -91,8 +91,9 @@ class TestFormESAccessors(BaseESAccessorsTest):
             setattr(metadata, attr, value)
 
         form_pair = make_es_ready_form(metadata)
-        form_pair.wrapped_form._attachments.update(attachment_dict)
-        form_pair.json_form['_attachments'].update(attachment_dict)
+        if attachment_dict:
+            setattr(form_pair.wrapped_form, 'external_blobs', attachment_dict)
+            form_pair.json_form['external_blobs'] = attachment_dict
         self._pillow_process_form(form_pair)
         es = get_es_new()
         es.indices.refresh(XFORM_INDEX)
