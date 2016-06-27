@@ -896,7 +896,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                 dataType: "json",
                 data: {
                     "username": username,
-                    "domain": domain
+                    "domain": domain,
                 },
             });
             $('#sync-button').disableButton();
