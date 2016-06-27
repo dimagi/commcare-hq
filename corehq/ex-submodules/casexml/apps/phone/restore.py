@@ -528,11 +528,11 @@ class RestoreConfig(object):
         self.version = self.params.version
         self.restore_state = RestoreState(self.project, self.restore_user, self.params, async)
 
-        self.force_cache = self.cache_settings.force_cache
+        self.asyc = async
+
+        self.force_cache = self.cache_settings.force_cache or self.async
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
-
-        self.asyc = async
 
         self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
 

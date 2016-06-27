@@ -147,6 +147,10 @@ class AsyncRestoreTest(TestCase):
         get_async_restore_payload.delay(restore_config)
         self.assertIsNone(restore_config.cache.get(cache_id))
 
+    def test_force_cache_on_async(self):
+        restore_config = self._restore_config(async=True)
+        self.assertTrue(restore_config.force_cache)
+
     @flag_enabled('ASYNC_RESTORE')
     def test_restore_in_progress_form_submitted_kills_old_jobs(self):
         """If the user submits a form somehow while a job is running, the job should be terminated
