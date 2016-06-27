@@ -517,7 +517,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
             });
 
             cloudCare.dispatch.on("sync-db", function () {
-                self.syncDb(self.options.username);
+                self.syncDb(self.options.username, self.options.domain);
             });
 
             cloudCare.dispatch.on("form:selected", function (form) {
@@ -889,12 +889,15 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
             this.caseSelectionView.model.set("parentCase", null);
             this.caseSelectionView.model.set("childCase", null);
         },
-        syncDb: function (username) {
+        syncDb: function (username, domain) {
             var self = this;
             var resp = $.ajax({
                 url: self.options.syncDbUrl,
                 dataType: "json",
-                data: {"username": username},
+                data: {
+                    "username": username,
+                    "domain": domain
+                },
             });
             $('#sync-button').disableButton();
             showLoading();
@@ -972,6 +975,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                 instanceViewerEnabled: self.options.instanceViewerEnabled,
                 username: self.options.username,
                 syncDbUrl: self.options.syncDbUrl,
+                domain: self.options.domain,
             });
 
             // fetch session list here
