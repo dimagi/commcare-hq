@@ -626,6 +626,7 @@ class ConfigureNewReportBase(forms.Form):
             if prop.type == "question":
                 option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric, prop.source)
             else:
+                # meta properties
                 option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
             options[id_] = option
         return options
@@ -1208,6 +1209,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
     @property
     @memoized
     def initial_columns(self):
+        # columns are ColumnViewModels (not ColumnOptions)
         columns = super(ConfigureTableReportForm, self).initial_columns
 
         # Remove the aggregation indicator from the columns.
