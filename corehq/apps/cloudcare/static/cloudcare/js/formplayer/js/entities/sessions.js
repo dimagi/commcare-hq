@@ -69,7 +69,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var user = FormplayerFrontend.request('currentUser');
             var formplayerUrl = user.formplayer_url;
 
-            var menus = new Entities.FormEntrySessionCollection({
+            var menus = new Entities.MenuSelectCollection({
 
                 fetch: function (options) {
 
