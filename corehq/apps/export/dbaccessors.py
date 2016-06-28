@@ -1,3 +1,5 @@
+from dimagi.utils.couch.database import safe_delete
+from corehq.util.test_utils import unit_testing_only
 
 
 def get_latest_case_export_schema(domain, case_type):
@@ -79,3 +81,23 @@ def _properly_wrap_export_instance(doc):
         "CaseExportInstance": CaseExportInstance,
     }.get(doc['doc_type'], ExportInstance)
     return class_.wrap(doc)
+
+
+@unit_testing_only
+def delete_all_export_data_schemas():
+    from .models import ExportDataSchema
+
+    db = ExportDataSchema.get_db()
+    for row in db.view('schemas_by_xmlns_or_case_type/view', reduce=False):
+        doc_id = row['id']
+        safe_delete(db, doc_id)
+
+
+@unit_testing_only
+def delete_all_export_instances():
+    from .models import ExportInstance
+
+    db = ExportInstance.get_db()
+    for row in db.view('export_instances_by_domain/view', reduce=False):
+        doc_id = row['id']
+        safe_delete(db, doc_id)

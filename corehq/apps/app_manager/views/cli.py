@@ -18,7 +18,6 @@ from ..dbaccessors import (
     get_latest_released_app_doc,
     wrap_app,
 )
-from ..models import Application
 
 
 @json_error

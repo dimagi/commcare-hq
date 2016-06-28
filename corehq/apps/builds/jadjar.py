@@ -14,8 +14,8 @@ from dimagi.utils.subprocess_manager import subprocess_context
 CONVERTED_PATHS = set(['profile.xml', 'media_profile.xml', 'media_profile.ccpr', 'profile.ccpr'])
 
 
-def _make_address_j2me_safe(address):
-    if settings.J2ME_ADDRESS:
+def _make_address_j2me_safe(address, use_j2me_endpoint):
+    if settings.J2ME_ADDRESS and use_j2me_endpoint:
         return address.replace(
             settings.BASE_ADDRESS, settings.J2ME_ADDRESS, 1
         ).replace(
@@ -26,10 +26,13 @@ def _make_address_j2me_safe(address):
 
 class JadDict(dict):
 
+    use_j2me_endpoint = False
+
     @classmethod
-    def from_jad(cls, jad_contents):
+    def from_jad(cls, jad_contents, use_j2me_endpoint=False):
         sep = ": "
         jd = cls()
+        jd.use_j2me_endpoint = use_j2me_endpoint
         if '\r\n' in jad_contents:
             jd.line_ending = '\r\n'
         else:
@@ -52,14 +55,14 @@ class JadDict(dict):
                         'MIDlet-Certificate-1-4']
         unordered = [key for key in self.keys() if key not in ordered_start and key not in ordered_end]
         props = itertools.chain(ordered_start, sorted(unordered), ordered_end)
-        self["MIDlet-Jar-URL"] = _make_address_j2me_safe(self["MIDlet-Jar-URL"])
+        self["MIDlet-Jar-URL"] = _make_address_j2me_safe(self["MIDlet-Jar-URL"], self.use_j2me_endpoint)
         lines = ['%s: %s%s' % (key, self[key], self.line_ending) for key in props if self.get(key) is not None]
         return "".join(lines)
 
 
-def sign_jar(jad, jar):
+def sign_jar(jad, jar, use_j2me_endpoint=False):
     if not (hasattr(jad, 'update') and hasattr(jad, 'render')):
-        jad = JadDict.from_jad(jad)
+        jad = JadDict.from_jad(jad, use_j2me_endpoint=use_j2me_endpoint)
 
     ''' run jadTool on the newly created JAR '''
     key_store   = settings.JAR_SIGN['key_store']
@@ -101,7 +104,7 @@ def sign_jar(jad, jar):
 
             with open(jad_file.name) as f:
                 txt = f.read()
-                jad = JadDict.from_jad(txt)
+                jad = JadDict.from_jad(txt, use_j2me_endpoint=use_j2me_endpoint)
             
             try:
                 os.unlink(jad_file.name)
@@ -126,11 +129,11 @@ def sign_jar(jad, jar):
     return jad.render()
 
 
-def convert_XML_To_J2ME(file, path):
+def convert_XML_To_J2ME(file, path, use_j2me_endpoint):
     if path in CONVERTED_PATHS:
         tree = etree.fromstring(file)
 
-        tree.set('update', _make_address_j2me_safe(tree.attrib['update']))
+        tree.set('update', _make_address_j2me_safe(tree.attrib['update'], use_j2me_endpoint))
 
         properties = [
             'ota-restore-url',
@@ -142,10 +145,10 @@ def convert_XML_To_J2ME(file, path):
         for prop in properties:
             prop_elem = tree.find("property[@key='" + prop + "']")
             if prop_elem is not None:
-                prop_elem.set('value', _make_address_j2me_safe(prop_elem.get('value')))
+                prop_elem.set('value', _make_address_j2me_safe(prop_elem.get('value'), use_j2me_endpoint))
 
         for remote in tree.findall("suite/resource/location[@authority='remote']"):
-            remote.text = _make_address_j2me_safe(remote.text)
+            remote.text = _make_address_j2me_safe(remote.text, use_j2me_endpoint)
 
         return etree.tostring(tree)
     return file
@@ -153,13 +156,14 @@ def convert_XML_To_J2ME(file, path):
 
 class JadJar(object):
 
-    def __init__(self, jad, jar, version=None, build_number=None, signed=False):
+    def __init__(self, jad, jar, version=None, build_number=None, signed=False, use_j2me_endpoint=False):
         jad, jar = [j.read() if hasattr(j, 'read') else j for j in (jad, jar)]
         self._jad = jad
         self._jar = jar
         self.version = version
         self.build_number = build_number
         self.signed = signed
+        self.use_j2me_endpoint = use_j2me_endpoint
 
     @property
     def jad(self):
@@ -176,7 +180,7 @@ class JadJar(object):
         buffer = StringIO(self.jar)
         with ZipFile(buffer, 'a', ZIP_DEFLATED) as zipper:
             for path, f in files.items():
-                zipper.writestr(path, convert_XML_To_J2ME(f, path))
+                zipper.writestr(path, convert_XML_To_J2ME(f, path, self.use_j2me_endpoint))
         buffer.flush()
         jar = buffer.getvalue()
         buffer.close()
@@ -184,17 +188,18 @@ class JadJar(object):
         # update and sign jad
         signed = False
         if self.jad:
-            jad = JadDict.from_jad(self.jad)
+            jad = JadDict.from_jad(self.jad, use_j2me_endpoint=self.use_j2me_endpoint)
             jad.update({
                 'MIDlet-Jar-Size': len(jar),
             })
             jad.update(jad_properties)
             if hasattr(settings, 'JAR_SIGN'):
-                jad = sign_jar(jad, jar)
+                jad = sign_jar(jad, jar, use_j2me_endpoint=self.use_j2me_endpoint)
                 signed = True
             else:
                 jad = jad.render()
         else:
             jad = None
 
-        return JadJar(jad, jar, self.version, self.build_number, signed=signed)
+        return JadJar(jad, jar, self.version, self.build_number,
+                      signed=signed, use_j2me_endpoint=self.use_j2me_endpoint)

@@ -260,8 +260,8 @@ class ParentCasePropertyBuilder(object):
             for relationship, types in rel_map.items():
                 if len(types) > 1:
                     logger.error(
-                        "Case Type '%s' has multiple parents for relationship '%s': %s",
-                        case_type, relationship, types
+                        "Case Type '%s' in app '%s' has multiple parents for relationship '%s': %s",
+                        case_type, self.app.id, relationship, types
                     )
                 parent_map[case_type][relationship] = types[0]
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 import importlib
 from collections import defaultdict
 
@@ -228,7 +227,7 @@ DEFAULT_APPS = (
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
-CRISPY_TEMPLATE_PACK = 'bootstrap'
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
@@ -332,6 +331,7 @@ HQ_APPS = (
     'corehq.tabs',
     'custom.apps.wisepill',
     'custom.fri',
+    'custom.openclinica',
     'fluff',
     'fluff.fluff_filter',
     'soil',
@@ -385,7 +385,6 @@ HQ_APPS = (
     'custom.common',
 
     'custom.dhis2',
-    'custom.openclinica',
     'custom.icds_reports',
 )
 
@@ -819,7 +818,6 @@ IVR_OUTBOUND_RETRY_INTERVAL = 10
 # deprecated - use IndicatorDocument.save_direct_to_sql
 FLUFF_PILLOW_TYPES_TO_SQL = {
     'UnicefMalawiFluff': 'SQL',
-    'MalariaConsortiumFluff': 'SQL',
     'CareSAFluff': 'SQL',
     'OpmUserFluff': 'SQL',
 }
@@ -1241,6 +1239,7 @@ COUCHDB_APPS = [
     'grapevine',
     'uth',
     'dhis2',
+    'openclinica',
 
     # custom reports
     'care_benin',
@@ -1329,8 +1328,8 @@ EMAIL_HOST = EMAIL_SMTP_HOST
 EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
-# EMAIL_USE_TLS and SEND_BROKEN_LINK_EMAILS are set above
-# so they can be overridden in localsettings (e.g. in a dev environment)
+# EMAIL_USE_TLS is set above
+# so it can be overridden in localsettings (e.g. in a dev environment)
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
@@ -1411,18 +1410,6 @@ CUSTOM_CHAT_TEMPLATES = {
     "FRI": "fri/chat.html",
 }
 
-SELENIUM_APP_SETTING_DEFAULTS = {
-    'cloudcare': {
-        # over-generous defaults for now
-        'OPEN_FORM_WAIT_TIME': 20,
-        'SUBMIT_FORM_WAIT_TIME': 20
-    },
-    'reports': {
-        'MAX_PRELOAD_TIME': 20,
-        'MAX_LOAD_TIME': 30,
-    },
-}
-
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
@@ -1459,6 +1446,11 @@ PILLOWTOPS = {
             'name': 'KafkaDomainPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'AppFormSubmissionTrackerPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_app_form_submission_tracker_pillow',
         },
     ],
     'core_ext': [
@@ -1534,7 +1526,6 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
-        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1638,7 +1629,7 @@ STATIC_DATA_SOURCES = [
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_provider'
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]
 
 
@@ -1742,6 +1733,7 @@ DOMAIN_MODULE_MAP = {
 
     'ipm-senegal': 'custom.intrahealth',
     'icds-test': 'custom.icds_reports',
+    'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
@@ -1755,8 +1747,6 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
-    'kemri': 'custom.openclinica',
-    'novartis': 'custom.openclinica',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

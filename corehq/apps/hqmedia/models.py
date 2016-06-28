@@ -10,7 +10,6 @@ from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.decorators.memoized import memoized
-from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from PIL import Image
@@ -534,6 +533,20 @@ class HQMediaMixin(Document):
                         media_class=CommCareImage,
                         **media_kwargs)
                     )
+                # Icons in case-details
+                for column in details.get_columns():
+                    if column.format == 'enum-image':
+                        for map_item in column.enum:
+                            # iterate over icons of each lang
+                            icons = map_item.value.values()
+                            media.extend([ApplicationMediaReference(
+                                icon,
+                                media_class=CommCareImage,
+                                is_menu_media=True,
+                                **media_kwargs)
+                                for icon in icons
+                                if icon]
+                            )
 
             if module.case_list_form.form_id:
                 _add_menu_media(module.case_list_form, **media_kwargs)
@@ -700,10 +713,9 @@ class HQMediaMixin(Document):
         found_missing_mm = False
         filter_multimedia = languages and self.media_language_map
         if filter_multimedia:
-            media_list = []
+            requested_media = set()
             for lang in languages:
-                media_list += self.media_language_map[lang].media_refs
-            requested_media = set(media_list)
+                requested_media.update(self.media_language_map[lang].media_refs)
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]

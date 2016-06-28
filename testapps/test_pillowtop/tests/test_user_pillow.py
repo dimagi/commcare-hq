@@ -29,6 +29,7 @@ TEST_DOMAIN = 'user-pillow-test'
 
 class UserPillowTestBase(TestCase):
     def setUp(self):
+        super(UserPillowTestBase, self).setUp()
         self.index_info = USER_INDEX_INFO
         self.elasticsearch = get_es_new()
         delete_all_users()
@@ -37,10 +38,12 @@ class UserPillowTestBase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(UserPillowTestBase, cls).setUpClass()
         create_domain(TEST_DOMAIN)
 
     def tearDown(self):
         ensure_index_deleted(self.index_info.index)
+        super(UserPillowTestBase, self).tearDown()
 
 
 class UserPillowTest(UserPillowTestBase):

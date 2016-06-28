@@ -400,6 +400,9 @@ class SubscriptionForm(forms.Form):
     auto_generate_credits = forms.BooleanField(
         label=ugettext_lazy("Auto-generate Plan Credits"), required=False
     )
+    skip_invoicing_if_no_feature_charges = forms.BooleanField(
+        label=ugettext_lazy("Skip invoicing if no feature charges"), required=False
+    )
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscription To"),
         required=False,
@@ -494,6 +497,7 @@ class SubscriptionForm(forms.Form):
             self.fields['do_not_email_invoice'].initial = subscription.do_not_email_invoice
             self.fields['do_not_email_reminder'].initial = subscription.do_not_email_reminder
             self.fields['auto_generate_credits'].initial = subscription.auto_generate_credits
+            self.fields['skip_invoicing_if_no_feature_charges'].initial = subscription.skip_invoicing_if_no_feature_charges
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
             self.fields['funding_source'].initial = subscription.funding_source
@@ -567,6 +571,7 @@ class SubscriptionForm(forms.Form):
                 hqcrispy.B3MultiField(
                     "Invoice Options",
                     crispy.Field('do_not_invoice', data_bind="checked: noInvoice"),
+                    'skip_invoicing_if_no_feature_charges',
                 ),
                 crispy.Div(
                     crispy.Field(
@@ -648,6 +653,7 @@ class SubscriptionForm(forms.Form):
             do_not_email_invoice=self.cleaned_data['do_not_email_invoice'],
             do_not_email_reminder=self.cleaned_data['do_not_email_reminder'],
             auto_generate_credits=self.cleaned_data['auto_generate_credits'],
+            skip_invoicing_if_no_feature_charges=self.cleaned_data['skip_invoicing_if_no_feature_charges'],
             salesforce_contract_id=self.cleaned_data['salesforce_contract_id'],
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],

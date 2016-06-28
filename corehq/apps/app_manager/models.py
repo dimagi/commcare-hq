@@ -72,6 +72,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.xpath import (
+    dot_interpolate,
     interpolate_xpath,
     LocationXpath,
 )
@@ -1102,7 +1103,7 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
         errors = []
         try:
             valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[])}
+                           for question in self.get_questions(langs=[], include_triggers=True)}
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
@@ -1547,18 +1548,48 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
     @property
+    def treat_as_expression(self):
+        """
+        Returns if whether the key can be treated as a valid expression that can be included in
+        condition-predicate of an if-clause for e.g. if(<expression>, value, ...)
+        """
+        special_chars = '{}()[]=<>."\'/'
+        return any(special_char in self.key for special_char in special_chars)
+
+    @property
     def key_as_variable(self):
         """
         Return an xml variable name to represent this key.
-        If the key has no spaces, return the key with "k" prepended.
-        If the key does contain spaces, return a hash of the key with "h" prepended.
+
+        If the key contains spaces or a condition-predicate of an if-clause,
+        return a hash of the key with "h" prepended.
+        If not, return the key with "k" prepended.
+
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        if " " not in self.key:
-            return 'k{key}'.format(key=self.key)
-        else:
+        if ' ' in self.key or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+        else:
+            return 'k{key}'.format(key=self.key)
+
+    def key_as_condition(self, property):
+        if self.treat_as_expression:
+            condition = dot_interpolate(self.key, property)
+            return u"{condition}".format(condition=condition)
+        else:
+            return u"{property} = '{key}'".format(
+                property=property,
+                key=self.key
+            )
+
+    def ref_to_key_variable(self, index, sort_or_display):
+        if sort_or_display == "sort":
+            key_as_var = "{}, ".format(index)
+        elif sort_or_display == "display":
+            key_as_var = "${var_name}, ".format(var_name=self.key_as_variable)
+
+        return key_as_var
 
 
 class GraphAnnotations(IndexedSchema):
@@ -1685,6 +1716,18 @@ class DetailColumn(IndexedSchema):
 
         return super(DetailColumn, cls).wrap(data)
 
+    @classmethod
+    def from_json(cls, data):
+        from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+
+        to_ret = cls.wrap(data)
+        if to_ret.format == 'enum-image':
+            # interpolate icons-paths
+            for item in to_ret.enum:
+                for lang, path in item.value.iteritems():
+                    item.value[lang] = interpolate_media_path(path)
+        return to_ret
+
 
 class SortElement(IndexedSchema):
     field = StringProperty()
@@ -1707,11 +1750,17 @@ class SortOnlyDetailColumn(DetailColumn):
 
 class CaseListLookupMixin(DocumentSchema):
     """
-        Allows for the addition of Android Callouts to do lookups from the CaseList
+    Allows for the addition of Android Callouts to do lookups from the CaseList
+
         <lookup action="" image="" name="">
-            <extra key="" value = "" />
-            <response key ="" />
+            <extra key="" value="" />
+            <response key="" />
+            <field>
+                <header><text><locale id=""/></text></header>
+                <template><text><xpath function=""/></text></template>
+            </field>
         </lookup>
+
     """
     lookup_enabled = BooleanProperty(default=False)
     lookup_action = StringProperty()
@@ -1720,6 +1769,10 @@ class CaseListLookupMixin(DocumentSchema):
 
     lookup_extras = SchemaListProperty()
     lookup_responses = SchemaListProperty()
+
+    lookup_display_results = BooleanProperty(default=False)  # Display callout results in case list?
+    lookup_field_header = DictProperty()
+    lookup_field_template = StringProperty()
 
 
 class Detail(IndexedSchema, CaseListLookupMixin):
@@ -1947,20 +2000,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         from corehq.apps.locations.util import parent_child
         hierarchy = None
         for column in columns:
-            if column.format in ('enum', 'enum-image'):
-                for item in column.enum:
-                    key = item.key
-                    # key cannot contain certain characters because it is used
-                    # to generate an xpath variable name within suite.xml
-                    # (names with spaces will be hashed to form the xpath
-                    # variable name)
-                    if not re.match('^([\w_ -]*)$', key):
-                        yield {
-                            'type': 'invalid id key',
-                            'key': key,
-                            'module': self.get_module_info(),
-                        }
-            elif column.field_type == FIELD_TYPE_LOCATION:
+            if column.field_type == FIELD_TYPE_LOCATION:
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
                     LocationXpath('').validate(column.field_property, hierarchy)
@@ -3857,10 +3897,8 @@ class LazyBlobDoc(BlobMixin):
     Cache strategy:
     - on fetch, check in local memory, then cache
       - if both are a miss, fetch from couchdb and store in both
-    - before an attachment is committed to couchdb, clear cache
-      (allowing the next fetch to go all the way through).
-      Clear rather than write new value, in case something
-      goes wrong with the save.
+    - after an attachment is committed to the blob db and the
+      save save has succeeded, save the attachment in the cache
     """
 
     migrating_blobs_from_couch = True
@@ -3903,25 +3941,21 @@ class LazyBlobDoc(BlobMixin):
 
     def __set_cached_attachment(self, name, content):
         cache.set(self.__attachment_cache_key(name), content, timeout=60 * 60 * 24)
+        self._LAZY_ATTACHMENTS_CACHE[name] = content
 
     def __get_cached_attachment(self, name):
-        return cache.get(self.__attachment_cache_key(name))
-
-    def __remove_cached_attachment(self, name):
-        cache.delete(self.__attachment_cache_key(name))
-
-    def __store_lazy_attachment(self, content, name=None, content_type=None,
-                                content_length=None):
-        info = {
-            'content': content,
-            'content_type': content_type,
-            'content_length': content_length,
-        }
-        self._LAZY_ATTACHMENTS[name] = info
-        return info
+        try:
+            # it has been fetched already during this request
+            content = self._LAZY_ATTACHMENTS_CACHE[name]
+        except KeyError:
+            content = cache.get(self.__attachment_cache_key(name))
+            if content is not None:
+                self._LAZY_ATTACHMENTS_CACHE[name] = content
+        return content
 
     def put_attachment(self, content, name=None, *args, **kw):
-        self.__remove_cached_attachment(name)
+        cache.delete(self.__attachment_cache_key(name))
+        self._LAZY_ATTACHMENTS_CACHE.pop(name, None)
         return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
 
     def lazy_put_attachment(self, content, name=None, content_type=None,
@@ -3931,19 +3965,20 @@ class LazyBlobDoc(BlobMixin):
         and that upon self.save(), the attachments are put to the doc as well
 
         """
-        self.__store_lazy_attachment(content, name, content_type, content_length)
+        self._LAZY_ATTACHMENTS[name] = {
+            'content': content,
+            'content_type': content_type,
+            'content_length': content_length,
+        }
 
     def lazy_fetch_attachment(self, name):
         # it has been put/lazy-put already during this request
-        if name in self._LAZY_ATTACHMENTS and 'content' in self._LAZY_ATTACHMENTS[name]:
+        if name in self._LAZY_ATTACHMENTS:
             content = self._LAZY_ATTACHMENTS[name]['content']
-        # it has been fetched already during this request
-        elif name in self._LAZY_ATTACHMENTS_CACHE:
-            content = self._LAZY_ATTACHMENTS_CACHE[name]
         else:
             content = self.__get_cached_attachment(name)
 
-            if not content:
+            if content is None:
                 try:
                     content = self.fetch_attachment(name)
                 except ResourceNotFound as e:
@@ -3955,9 +3990,6 @@ class LazyBlobDoc(BlobMixin):
                     raise
                 finally:
                     self.__set_cached_attachment(name, content)
-                    self._LAZY_ATTACHMENTS_CACHE[name] = content
-            else:
-                self._LAZY_ATTACHMENTS_CACHE[name] = content
 
         if isinstance(content, ResourceNotFound):
             raise content
@@ -3978,8 +4010,11 @@ class LazyBlobDoc(BlobMixin):
                 for name, info in self._LAZY_ATTACHMENTS.items():
                     if not info['content_type']:
                         info['content_type'] = ';'.join(filter(None, guess_type(name)))
-                    self.__remove_cached_attachment(name)
                     super(LazyBlobDoc, self).put_attachment(name=name, **info)
+            # super_save() has succeeded by now
+            for name, info in self._LAZY_ATTACHMENTS.items():
+                self.__set_cached_attachment(name, info['content'])
+            self._LAZY_ATTACHMENTS.clear()
         else:
             super_save()
 
@@ -4242,6 +4277,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # each language is a key and the value is a list of multimedia referenced in that language
     media_language_map = SchemaDictProperty(MediaList)
 
+    use_j2me_endpoint = BooleanProperty(default=False)
+
+    # Whether or not the Application has had any forms submitted against it
+    has_submissions = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -4434,7 +4473,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return spec
 
     def get_jadjar(self):
-        return self.get_build().get_jadjar(self.get_jar_path())
+        return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
 
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
@@ -4612,7 +4651,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
-            if build_profile_id:
+            if build_profile_id is not None:
                 url += '?profile={profile_id}'.format(profile_id=build_profile_id)
             code.add_data(url)
 
@@ -4631,7 +4670,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             if settings.BITLY_LOGIN:
                 view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
-                if build_profile_id:
+                if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
                     )
@@ -4703,6 +4742,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 user.save()
         copy.is_released = False
 
+        if not copy.is_remote_app():
+            copy.update_mm_map()
+
         return copy
 
     def delete_app(self):
@@ -4733,11 +4775,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             for lang in self.langs:
                 self.media_language_map[lang] = MediaList()
-            for form in self.get_forms(bare=False):
-                xml = XForm(form['form'].source)
+            for form in self.get_forms():
+                xml = form.wrapped_xform()
                 for lang in self.langs:
                     media = []
-                    for path in xml.all_references(lang):
+                    for path in xml.all_media_references(lang):
                         if path is not None:
                             media.append(path)
                             map_item = self.multimedia_map.get(path)
@@ -4749,7 +4791,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.media_language_map = {}
 
     def get_build_langs(self, build_profile_id=None):
-        if build_profile_id:
+        if build_profile_id is not None:
             return self.build_profiles[build_profile_id].langs
         else:
             return self.langs
@@ -5062,7 +5104,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
-        locale = self.langs[0] if not build_profile_id else self.build_profiles[build_profile_id].langs[0]
+        locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5239,6 +5281,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for i,lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
+        for profile in self.build_profiles:
+            for i, lang in enumerate(profile.langs):
+                if lang == old_lang:
+                    profile.langs[i] = new_lang
         for module in self.get_modules():
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
@@ -5562,8 +5608,11 @@ class RemoteApp(ApplicationBase):
 
     def get_build_langs(self):
         if self.build_profiles:
-            # return first profile, generated as part of lazy migration
-            return self.build_profiles[self.build_profiles.keys()[0]].langs
+            if len(self.build_profiles.keys()) > 1:
+                raise AppEditingError('More than one app profile for a remote app')
+            else:
+                # return first profile, generated as part of lazy migration
+                return self.build_profiles[self.build_profiles.keys()[0]].langs
         else:
             return self.langs
 

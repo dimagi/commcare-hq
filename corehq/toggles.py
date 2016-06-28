@@ -593,6 +593,13 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+OPENCLINICA = StaticToggle(
+    'openclinica',
+    'Offer OpenClinica settings and CDISC ODM export',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
@@ -829,6 +836,21 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'Allow unlimited reports created in report builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+MOBILE_USER_DEMO_MODE = StaticToggle(
+    'mobile_user_demo_mode',
+    'Ability to make a mobile worker into Demo only mobile worker',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+EXPORT_ZIPPED_APPS = StaticToggle(
+    'export-zipped-apps',
+    'Export+Import Zipped Applications',
+    TAG_UNKNOWN,
+    [NAMESPACE_USER]
 )
 
 

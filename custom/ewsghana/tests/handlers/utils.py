@@ -7,7 +7,7 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 from couchforms.models import XFormInstance
 
-from corehq.apps.accounting import generator
+from corehq.apps.accounting.tests import generator
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
@@ -32,6 +32,7 @@ class EWSTestCase(TestCase):
         cls.sms_backend_mapping.delete()
         cls.backend.delete()
         generator.delete_all_subscriptions()
+        super(EWSTestCase, cls).tearDownClass()
 
 
 class EWSScriptTest(EWSTestCase, TestScript):
@@ -60,6 +61,7 @@ class EWSScriptTest(EWSTestCase, TestScript):
         stock_transaction.save()
 
     def setUp(self):
+        super(EWSScriptTest, self).setUp()
         Product.get_by_code(TEST_DOMAIN, 'mc')
         Product.get_by_code(TEST_DOMAIN, 'lf')
 
@@ -68,9 +70,11 @@ class EWSScriptTest(EWSTestCase, TestScript):
         StockReport.objects.all().delete()
         StockState.objects.all().delete()
         DocDomainMapping.objects.all().delete()
+        super(EWSScriptTest, self).tearDown()
 
     @classmethod
     def setUpClass(cls):
+        super(EWSScriptTest, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         domain = prepare_domain(TEST_DOMAIN)
 
@@ -194,10 +198,8 @@ class EWSScriptTest(EWSTestCase, TestScript):
         SQLProduct.objects.all().delete()
         EWSGhanaConfig.for_domain(TEST_DOMAIN).delete()
         DocDomainMapping.objects.all().delete()
-        generator.delete_all_subscriptions()
-        cls.sms_backend_mapping.delete()
-        cls.backend.delete()
         Domain.get_by_name(TEST_DOMAIN).delete()
+        super(EWSScriptTest, cls).tearDownClass()
 
 
 def assign_products_to_location():

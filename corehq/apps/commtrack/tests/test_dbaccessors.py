@@ -10,6 +10,7 @@ from corehq.apps.commtrack.tests.util import make_loc, bootstrap_domain
 class SupplyPointDBAccessorsTest(TestCase):
 
     def setUp(self):
+        super(SupplyPointDBAccessorsTest, self).setUp()
         self.domain = 'supply-point-dbaccessors'
         self.project = bootstrap_domain(self.domain)
         self.interface = SupplyInterface(self.domain)
@@ -25,6 +26,7 @@ class SupplyPointDBAccessorsTest(TestCase):
             location.delete()
         delete_all_cases()
         self.project.delete()
+        super(SupplyPointDBAccessorsTest, self).tearDown()
 
     def test_get_supply_point_ids_in_domain_by_location(self):
         actual = get_supply_point_ids_in_domain_by_location(self.domain)

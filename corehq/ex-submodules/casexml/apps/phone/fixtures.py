@@ -45,7 +45,7 @@ class FixtureGenerator(object):
                     to_function(func_path) for func_path in func_paths
                 ])
 
-    def _get_fixtures(self, group, fixture_id, user, version, last_sync, app):
+    def get_providers(self, user, version, group=None, fixture_id=None):
         if version == V1:
             return []  # V1 phones will never use or want fixtures
 
@@ -55,7 +55,7 @@ class FixtureGenerator(object):
         if group:
             providers = self._generator_providers.get(group, [])
         else:
-            providers = itertools.chain(*self._generator_providers.values())
+            providers = list(itertools.chain(*self._generator_providers.values()))
 
         if fixture_id:
             full_id = fixture_id
@@ -68,6 +68,10 @@ class FixtureGenerator(object):
 
             providers = [provider for provider in providers if provider_matches(provider)]
 
+        return providers
+
+    def _get_fixtures(self, group, fixture_id, user, version, last_sync, app):
+        providers = self.get_providers(user, version, group, fixture_id)
         return itertools.chain(*[provider(user, version, last_sync, app)
                                  for provider in providers])
 

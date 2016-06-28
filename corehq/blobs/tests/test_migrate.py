@@ -29,6 +29,7 @@ NOT_SET = object()
 class BaseMigrationTest(TestCase):
 
     def setUp(self):
+        super(BaseMigrationTest, self).setUp()
         self.discard_migration_state(self.slug)
         self._old_flags = {}
         self.docs_to_delete = []
@@ -45,6 +46,7 @@ class BaseMigrationTest(TestCase):
                 del model.migrating_blobs_from_couch
             else:
                 model.migrating_blobs_from_couch = flag
+        super(BaseMigrationTest, self).tearDown()
 
     @staticmethod
     def discard_migration_state(slug):
