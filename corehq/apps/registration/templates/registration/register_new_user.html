@@ -17,6 +17,11 @@
   <script type="text/javascript">
     $(function () {
       var reg = hqImport('registration/js/new_user.ko.js');
+      reg.onModuleLoad = function () {
+        $('.loading-form-step').fadeOut(500, function () {
+              $('.step-1').fadeIn(500);
+          });
+      };
       reg.initRMI('{% url 'process_registration' %}');
       {% if not hide_password_feedback %}
         reg.showPasswordFeedback();
@@ -77,6 +82,12 @@
               action=""
               autocomplete="off"
               class="form form-with-steps form-with-steps-primary form-with-steps-centered">
+          <div class="form-step loading-form-step">
+            <h2>{% trans 'Loading...just a second!' %}</h2>
+            <p class="commcare-icon">
+              <i class="fcc fcc-flower fa-spin"></i>
+            </p>
+          </div>
           {% crispy reg_form   %}
           <div class="form-step final-step" style="display: none;">
 
