@@ -215,6 +215,7 @@
         {% endif %}
     </head>
     <body>
+        <div class="bg-container">{% block background_content %}{% endblock %}</div>
         {% maintenance_alert %}
         <!-- .hide used for A/B test of account creation page -->
         <div class="hq-container{% if is_register_user %} molly{% endif %}">
@@ -508,6 +509,23 @@
         <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
         <script src="{% static 'style/js/components/multiselect_utils.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+        {% if request.use_blazy %}
+        {# Blazy for async loading images #}
+        {% compress js %}
+            <script type="text/javascript" src="{% static 'blazy/blazy.js' %}"></script>
+        {% endcompress %}
+        <script type="text/javascript">
+          var hqLazy = new Blazy({
+            container: 'body',
+          });
+        </script>
+        {% endif %}
+
+        {% if request.use_ko_validation %}
+          <script type="text/javascript" src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
+          <script type="text/javascript" src="{% static 'style/ko/validators.ko.js' %}"></script>
         {% endif %}
 
         {% block js %}{% endblock js %}
