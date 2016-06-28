@@ -106,10 +106,11 @@ class SchemaTest(SimpleTestCase):
 
     def test_get_casedb_schema_with_form(self):
         self.add_form("village")
-        schema = util.get_casedb_schema(self.factory.app)
+        schema = util.get_casedb_schema(self.factory.app, "village")
         self.assertEqual(len(schema["subsets"]), 1, schema["subsets"])
         self.assert_has_kv_pairs(schema["subsets"][0], {
-            'id': 'village',
+            'id': 'case',
+            'name': 'village',
             'key': '@case_type',
             'structure': {'case_name': {}},
             'related': None,
@@ -119,10 +120,10 @@ class SchemaTest(SimpleTestCase):
         self.add_form("family")
         village = self.add_form("village")
         self.factory.form_opens_case(village, case_type='family', is_subcase=True)
-        schema = util.get_casedb_schema(self.factory.app)
+        schema = util.get_casedb_schema(self.factory.app, "family")
         subsets = {s["id"]: s for s in schema["subsets"]}
-        self.assertEqual(subsets["village"]["related"], None)
-        self.assertDictEqual(subsets["family"]["related"], {"parent": "village"})
+        self.assertEqual(subsets["parent"]["related"], None)
+        self.assertDictEqual(subsets["case"]["related"], {"parent": "parent"})
 
     def test_get_session_schema_for_module_with_no_case_type(self):
         form = self.add_form()
