@@ -1,4 +1,4 @@
-{% extends "settings/bootstrap3/base_template.html" %}
+{% extends "settings/base_template.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -260,13 +260,14 @@
                                         {% endif %}
                                         {% if helper.allow_deid %}
                                         <td class="deid-column" data-bind="visible: $root.showDeidColumn()">
+                                            <!-- ko if: (index() !== 'id' || transform()) && !isCaseName() -->
                                             <select class="form-control" data-bind="
                                                 value: transform || '',
                                                 foreach: $root.deid_options,
-                                                visible: (index() !== 'id' || transform()) && !isCaseName()
                                             ">
                                                 <option data-bind="value: value, text: label"></option>
                                             </select>
+                                            <!-- /ko -->
 
                                             <span class="label label-info"
                                                   data-bind="visible: $root.custom_export.is_safe() && isCaseName()">

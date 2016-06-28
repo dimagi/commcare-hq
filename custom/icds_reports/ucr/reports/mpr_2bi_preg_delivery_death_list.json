@@ -1,0 +1,255 @@
+{
+  "domains": [
+    "icds-test",
+    "icds-sql",
+    "icds-cas"
+  ],
+  "report_id": "static-mpr_2bi_preg_delivery_death_list",
+  "data_source_table": "static-person_cases",
+  "config": {
+    "title": "MPR - 2bi - Preg & Delivery Death List (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Date of Death",
+        "field": "date_death",
+        "type": "date",
+        "slug": "date_death"
+      },
+      {
+        "compare_as_string": false,
+        "display": "List Type",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Female deaths during preg or 42 days after delivery",
+            "value": "1"
+          }
+        ],
+        "field": "dead_preg_count",
+        "type": "choice_list",
+        "slug": "dead_preg_count"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "awc_id",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by AWW"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "owner_id",
+        "field": "owner_id",
+        "choice_provider": {
+          "type": "owner"
+        },
+        "display": "Owner Name"
+      }
+    ],
+    "columns": [
+      {
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "name",
+        "field": "name",
+        "type": "field",
+        "display": {
+          "mar": "नांव",
+          "tel": "పేరు",
+          "hin": "नाम",
+          "en": "Name"
+        }
+      },
+      {
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "age_at_death_yrs",
+        "field": "age_at_death_yrs",
+        "type": "field",
+        "display": {
+          "mar": "वय",
+          "tel": "వయస్సు",
+          "hin": "उम्र",
+          "en": "Age"
+        }
+      },
+      {
+        "format": "default",
+        "transform": {
+          "type": "translation",
+          "translations": {
+            "delivery": [
+              [
+                "mar",
+                "प्रसूति"
+              ],
+              [
+                "tel",
+                "కాన్పు వివరాలు "
+              ],
+              [
+                "hin",
+                "प्रसव"
+              ],
+              [
+                "en",
+                "Delivery"
+              ]
+            ],
+            "pnc": [
+              [
+                "mar",
+                "प्रसुतीनंतरची देखभाल"
+              ],
+              [
+                "tel",
+                "కాన్పు తరువాత సంరక్షణ "
+              ],
+              [
+                "hin",
+                "प्रसव के बाद देख-रेख"
+              ],
+              [
+                "en",
+                "PNC"
+              ]
+            ],
+            "pregnant": [
+              [
+                "mar",
+                "गरोदर"
+              ],
+              [
+                "tel",
+                "గర్భవతా"
+              ],
+              [
+                "hin",
+                "गर्भवती"
+              ],
+              [
+                "en",
+                "Pregnant"
+              ]
+            ]
+          }
+        },
+        "column_id": "female_death_type",
+        "field": "female_death_type",
+        "type": "field",
+        "display": {
+          "mar": "प्रकार",
+          "tel": "రకం",
+          "hin": "प्रकार",
+          "en": "Type"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "format": "default",
+        "transform": {
+          "type": "translation",
+          "translations": {
+            "yes": [
+              [
+                "mar",
+                "होय"
+              ],
+              [
+                "tel",
+                "అవును"
+              ],
+              [
+                "hin",
+                "हाँ"
+              ],
+              [
+                "en",
+                "Yes"
+              ]
+            ],
+            "no": [
+              [
+                "mar",
+                "नाही"
+              ],
+              [
+                "tel",
+                "కాదు"
+              ],
+              [
+                "hin",
+                "नहीं"
+              ],
+              [
+                "en",
+                "No"
+              ]
+            ]
+          }
+        },
+        "column_id": "resident",
+        "field": "resident",
+        "type": "field",
+        "display": {
+          "mar": "निवासी",
+          "tel": "నివాసితుడు",
+          "hin": "निवासी",
+          "en": "Resident"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "date_death",
+        "field": "date_death",
+        "type": "field",
+        "display": {
+          "mar": "मृत्युची  तारीख",
+          "tel": "మరణించిన తేదీ",
+          "hin": "मृत्यु की तारीख",
+          "en": "Date Death"
+        }
+      }
+    ],
+    "sort_expression": [
+      {
+        "field": "date_death",
+        "order": "DESC"
+      }
+    ],
+    "configured_charts": []
+  }
+}

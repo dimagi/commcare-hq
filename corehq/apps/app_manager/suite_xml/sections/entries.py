@@ -21,6 +21,10 @@ from corehq.apps.app_manager.suite_xml.xml_models import *
 
 class FormDatumMeta(namedtuple('FormDatumMeta', 'datum case_type requires_selection action')):
 
+    @property
+    def is_new_case_id(self):
+        return self.datum.function == 'uuid()'
+
     def __repr__(self):
         return 'FormDataumMeta(datum=<SessionDatum(id={})>, case_type={}, requires_selection={}, action={})'.format(
             self.datum.id, self.case_type, self.requires_selection, self.action
@@ -691,16 +695,15 @@ class EntriesHelper(object):
             index = 0
             changed_ids_by_case_tag = defaultdict(list)
             for this_datum_meta, parent_datum_meta in list(izip_longest(datums, parent_datums)):
-                if not this_datum_meta:
-                    continue
-                update_refs(this_datum_meta, changed_ids_by_case_tag)
+                if this_datum_meta:
+                    update_refs(this_datum_meta, changed_ids_by_case_tag)
                 if not parent_datum_meta:
                     continue
-                if this_datum_meta.datum.id != parent_datum_meta.datum.id:
+                if not this_datum_meta or this_datum_meta.datum.id != parent_datum_meta.datum.id:
                     if not parent_datum_meta.requires_selection:
                         # Add parent datums of opened subcases and automatically-selected cases
                         datums.insert(index, parent_datum_meta)
-                    elif this_datum_meta.case_type == parent_datum_meta.case_type:
+                    elif this_datum_meta and this_datum_meta.case_type == parent_datum_meta.case_type:
                         append_update(changed_ids_by_case_tag,
                                       rename_other_id(this_datum_meta, parent_datum_meta, datum_ids))
                         append_update(changed_ids_by_case_tag,

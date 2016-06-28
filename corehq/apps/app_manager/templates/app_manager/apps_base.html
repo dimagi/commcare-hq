@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_section.html' %}
+{% extends 'style/base_section.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -11,10 +11,10 @@
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
     {# Explicitly include these because app manager doesn't really do class-based views, can't use the decorators #}
-    <link type="text/css" rel="stylesheet" media="screen" href="{% new_static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
-    <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'select2-3.5.2-legacy/select2.css' %}" />
-    <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
-    <link type="text/less" rel="stylesheet" media="all" href="{% new_static 'app_manager/less/app_manager.less' %}"/>
+    <link type="text/css" rel="stylesheet" media="screen" href="{% static 'jquery-ui/themes/redmond/jquery-ui.min.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2-3.5.2-legacy/select2-bootstrap.css' %}" />
+    <link type="text/less" rel="stylesheet" media="all" href="{% static 'app_manager/less/app_manager.less' %}"/>
     {% endcompress %}
 {% endblock %}
 
@@ -25,23 +25,23 @@
         @use_jquery_ui decorator, but app manager doesn't, so instead include only the pieces
         actually used in app manager (no tooltip).
     -->
-    <script src="{% new_static 'jquery-ui/ui/minified/core.min.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/ui/minified/widget.min.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/ui/minified/mouse.min.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/ui/minified/position.min.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/ui/minified/autocomplete.min.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/ui/minified/draggable.min.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/ui/minified/droppable.min.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/ui/minified/menu.min.js' %}"></script>
-    <script src="{% new_static 'jquery-ui/ui/minified/sortable.min.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/minified/core.min.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/minified/widget.min.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/minified/mouse.min.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/minified/position.min.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/minified/autocomplete.min.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/minified/draggable.min.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/minified/droppable.min.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/minified/menu.min.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/minified/sortable.min.js' %}"></script>
 
-    <script src="{% new_static 'select2-3.5.2-legacy/select2.js' %}"></script>
-    <script src="{% new_static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
-    <script src="{% new_static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
+    <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
+    <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
+    <script src="{% static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
 
-    <script src="{% new_static 'hqwebapp/js/ui-element.js' %}"></script>
-    <script src="{% new_static 'langcodes/js/langcodes.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    <script src="{% static 'style/js/ui-element.js' %}"></script>
+    <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

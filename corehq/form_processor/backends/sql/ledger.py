@@ -1,6 +1,3 @@
-from itertools import groupby
-from operator import attrgetter
-
 from corehq.apps.commtrack.processing import compute_ledger_values
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.change_publishers import publish_ledger_v2_saved
@@ -37,14 +34,14 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
             for deprecated_transaction in deprecated_helper.transactions
         }
 
-        updated_ledgers = []
+        updated_ledgers = {}
         for helper in stock_report_helpers:
             for stock_trans in helper.transactions:
                 ledger_value = self._process_transaction(helper, stock_trans, ledger_db)
-                updated_ledgers.append(ledger_value)
+                updated_ledgers[ledger_value.ledger_reference] = ledger_value
 
-        for ledger_value in updated_ledgers:
-            if ledger_value.ledger_reference in ledgers_needing_rebuild:
+        for ledger_reference, ledger_value in updated_ledgers.items():
+            if ledger_reference in ledgers_needing_rebuild:
                 rebuilt_ledger_value = self._rebuild_ledger(form_id, ledger_value)
                 result.to_save.append(rebuilt_ledger_value)
             else:
@@ -66,7 +63,6 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         ledger_value = ledger_db.get_ledger(stock_trans.ledger_reference)
         if not ledger_value:
             ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
-            ledger_value.location_id = stock_trans.location_id
             ledger_value.domain = stock_report_helper.domain
             ledger_db.set_ledger(ledger_value)
         transaction = _get_ledger_transaction(

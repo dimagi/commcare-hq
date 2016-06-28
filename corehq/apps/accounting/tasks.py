@@ -6,7 +6,7 @@ from urllib import urlencode
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -29,11 +29,15 @@ from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     Currency,
+    DefaultProductPlan,
+    EntryPoint,
+    SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
     SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
     SubscriptionAdjustmentReason,
+    SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
 )
@@ -41,7 +45,7 @@ from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
-    get_dimagi_from_email_by_product,
+    get_dimagi_from_email,
     has_subscription_already_ended,
     log_accounting_error,
     log_accounting_info,
@@ -87,7 +91,9 @@ def activate_subscriptions(based_on_date=None):
         try:
             _activate_subscription(subscription)
         except Exception as e:
-            log_accounting_error(e.message)
+            log_accounting_error(
+                'Error activating subscription %d: %s' % (subscription.id, e.message)
+            )
 
 
 @transaction.atomic
@@ -101,7 +107,8 @@ def _deactivate_subscription(subscription, ending_date):
         next_subscription.is_active = True
         next_subscription.save()
     else:
-        new_plan_version = None
+        next_subscription = assign_explicit_community_subscription(subscription.subscriber.domain, ending_date)
+        new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
     if next_subscription and subscription.account == next_subscription.account:
         subscription.transfer_credits(subscription=next_subscription)
@@ -128,7 +135,7 @@ def deactivate_subscriptions(based_on_date=None):
         try:
             _deactivate_subscription(subscription, ending_date)
         except Exception as e:
-            log_accounting_error(e.message)
+            log_accounting_error('Error deactivating subscription %d: %s' % (subscription.id, e.message))
 
 
 def warn_subscriptions_still_active(based_on_date=None):
@@ -294,7 +301,9 @@ def send_subscription_reminder_emails(num_days):
             if not subscription.is_renewed:
                 subscription.send_ending_reminder_email()
         except Exception as e:
-            log_accounting_error(e.message)
+            log_accounting_error(
+                "Error sending reminder for subscription %d: %s" % (subscription.id, e.message)
+            )
 
 
 def send_subscription_reminder_emails_dimagi_contact(num_days):
@@ -338,14 +347,16 @@ def create_wire_credits_invoice(domain_name,
         try:
             record.send_email(contact_emails=contact_emails)
         except Exception as e:
-            log_accounting_error(e.message)
+            log_accounting_error(
+                "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, e.message)
+            )
     else:
         record.skipped_email = True
         record.save()
 
 
 @task(ignore_result=True)
-def send_purchase_receipt(payment_record, core_product, domain,
+def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
                           additional_context):
     username = payment_record.payment_method.web_user
@@ -366,7 +377,6 @@ def send_purchase_receipt(payment_record, core_product, domain,
         'amount': fmt_dollar_amount(payment_record.amount),
         'project': domain,
         'date_paid': payment_record.date_created.strftime(USER_DATE_FORMAT),
-        'product': core_product,
         'transaction_id': payment_record.public_transaction_id,
     }
     context.update(additional_context)
@@ -377,7 +387,7 @@ def send_purchase_receipt(payment_record, core_product, domain,
     send_HTML_email(
         ugettext("Payment Received - Thank You!"), email, email_html,
         text_content=email_plaintext,
-        email_from=get_dimagi_from_email_by_product(core_product),
+        email_from=get_dimagi_from_email(),
     )
 
 
@@ -412,7 +422,7 @@ def send_autopay_failed(invoice, payment_method):
         recipient=recipient,
         html_content=render_to_string(template_html, context),
         text_content=render_to_string(template_plaintext, context),
-        email_from=get_dimagi_from_email_by_product(subscription.plan_version.product_rate.product.product_type),
+        email_from=get_dimagi_from_email(),
     )
 
 
@@ -536,3 +546,48 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
             })
     except Exception as e:
         log_accounting_error("Error updating exchange rates: %s" % e.message)
+
+
+CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
+
+
+def ensure_explicit_community_subscription(domain_name, from_date):
+    if not Subscription.objects.filter(
+        CONSISTENT_DATES_CHECK
+    ).filter(
+        Q(date_end__gt=from_date) | Q(date_end__isnull=True),
+        date_start__lte=from_date,
+        subscriber__domain=domain_name,
+    ).exists():
+        assign_explicit_community_subscription(domain_name, from_date)
+
+
+def assign_explicit_community_subscription(domain_name, start_date):
+    future_subscriptions = Subscription.objects.filter(
+        CONSISTENT_DATES_CHECK
+    ).filter(
+        date_start__gt=start_date,
+        subscriber__domain=domain_name,
+    )
+    if future_subscriptions.exists():
+        end_date = future_subscriptions.latest('date_start').date_start
+    else:
+        end_date = None
+
+    return Subscription.new_domain_subscription(
+        account=BillingAccount.get_or_create_account_by_domain(
+            domain_name,
+            created_by='assign_explicit_community_subscriptions',
+            entry_point=EntryPoint.SELF_STARTED,
+        )[0],
+        domain=domain_name,
+        plan_version=DefaultProductPlan.get_default_plan(
+            SoftwarePlanEdition.COMMUNITY
+        ).plan.get_version(),
+        date_start=start_date,
+        date_end=end_date,
+        skip_invoicing_if_no_feature_charges=True,
+        adjustment_method=SubscriptionAdjustmentMethod.TASK,
+        internal_change=True,
+        service_type=SubscriptionType.PRODUCT,
+    )

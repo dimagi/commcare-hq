@@ -22,7 +22,6 @@ class Migration(migrations.Migration):
             "DROP FUNCTION IF EXISTS get_all_reverse_indices(TEXT[])",
             "SELECT 1"
         ),
-        migrator.get_migration('get_all_reverse_indices.sql'),
         HqRunSQL(
             "DROP FUNCTION IF EXISTS get_case_form_ids(TEXT)",
             "SELECT 1"

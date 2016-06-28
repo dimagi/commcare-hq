@@ -1,8 +1,10 @@
 # coding: utf-8
+import doctest
 from django.test import SimpleTestCase
 import re
 from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.app_manager.xform_builder import XFormBuilder
+import corehq.apps.app_manager.xform_builder
 
 
 class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
@@ -93,11 +95,14 @@ class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
     def test_data_types(self):
         self.xform.new_question('name', 'Child name')
         self.xform.new_question('dob', 'Child date of birth', 'date')
-        self.xform.new_question('with_mother', 'Does child live with mother?', 'boolean')
+        self.xform.new_question('with_mother', 'Does child live with mother?', 'boolean',
+                                value='true')
         self.xform.new_question('height', 'Child height (cm)', 'int')
         self.xform.new_question('weight', 'Child weight (metric tonnes)', 'decimal')
         self.xform.new_question('time', 'Arrival time', 'time')
         self.xform.new_question('now', 'Current timestamp', 'dateTime')
+        self.xform.new_question('mothers_name', None, None,  # Hidden values have no data type
+                                calculate="concat('Jane', ' ', 'Smith')")
         self.assertXmlEqual(
             self.replace_xmlns(self.get_xml('data_types'), self.xform.xmlns),
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
@@ -113,3 +118,24 @@ class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
             self.replace_xmlns(self.get_xml('xform_title'), self.xform.xmlns),
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
         )
+
+    def test_question_params(self):
+        self.xform = XFormBuilder('Built by XFormBuilder')
+        params = {
+            'constraint': ". != 'Ford Prefect'",
+            'jr:constraintMsg': 'That name is not as inconspicuous as you think.'
+        }
+        self.xform.new_question('name', 'What is your name?', **params)
+        self.assertXmlEqual(
+            self.replace_xmlns(self.get_xml('question_params'), self.xform.xmlns),
+            self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
+        )
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(corehq.apps.app_manager.xform_builder)
+        # Note: XFormBuilder has doctests for functions defined inside methods. Those doctests are for
+        # illustration only; they can't be executed. XFormBuilderTests test those functions.
+        self.assertEqual(results.failed, 0)

@@ -5,8 +5,9 @@ from corehq.apps.app_manager.const import AMPLIFIES_NOT_SET
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.data_analytics.esaccessors import get_app_submission_breakdown_es
 from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.const import AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET
 from corehq.apps.domain.models import Domain
-from corehq.apps.sofabed.models import MISSING_APP_ID
+from corehq.const import MISSING_APP_ID
 from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
 from corehq.util.quickcache import quickcache
 
@@ -72,8 +73,8 @@ class MALTTableGenerator(object):
                 'num_of_forms': num_of_forms,
                 'app_id': app_id or MISSING_APP_ID,
                 'device_id': app_row.device_id,
-                'wam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.wam, MALTRow.NOT_SET),
-                'pam': MALTRow.AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.pam, MALTRow.NOT_SET),
+                'wam': AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.wam, NOT_SET),
+                'pam': AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.pam, NOT_SET),
                 'use_threshold': app_data.use_threshold,
                 'experienced_threshold': app_data.experienced_threshold,
                 'is_app_deleted': app_data.is_app_deleted,

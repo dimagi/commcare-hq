@@ -4,19 +4,8 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'accounting/js/stay-on-tab.js' %}"></script>
-    <script src="{% new_static 'accounting/ko/accounting.software_plan_version_handler.js' %}"></script>
-{% endblock %}
-
-{% block stylesheets %}{{ block.super }}
-    <style type="text/css">
-        .ui-multiselect li a.action {
-            width: 40px;
-        }
-        .ui-multiselect li a.action span {
-            margin: 0 auto;
-        }
-    </style>
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+    <script src="{% static 'accounting/ko/accounting.software_plan_version_handler.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

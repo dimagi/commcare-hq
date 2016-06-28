@@ -53,39 +53,64 @@ class ProjectReportsTab(UITab):
 
     @property
     def sidebar_items(self):
+        tools = self._get_tools_items()
+        report_builder_nav = self._get_report_builder_items()
+        project_reports = ProjectReportDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
+        custom_reports = CustomProjectReportDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
+        sidebar_items = tools + report_builder_nav + project_reports + custom_reports
+        return self._filter_sidebar_items(sidebar_items)
 
+    def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
-
-        tools = [(_("Tools"), [
+        return [(_("Tools"), [
             {'title': MySavedReportsView.page_title,
              'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
              'icon': 'icon-tasks fa fa-tasks',
              'show_in_dropdown': True}
         ])]
 
+    def _get_report_builder_items(self):
         user_reports = []
         if self.couch_user.can_edit_data():
-            if has_report_builder_access(self._request):
-                create_report_url = reverse("report_builder_select_type", args=[self.domain])
-            else:
-                from corehq.apps.userreports.views import paywall_home
-                create_report_url = paywall_home(self.domain)
-
             user_reports = [(
                 _("Create Reports"),
                 [{
                     "title": _('Create new report'),
-                    "url": create_report_url,
+                    "url": self._get_create_report_url(),
                     "icon": "icon-plus fa fa-plus",
                     "id": "create-new-report-left-nav",
                 }]
             )]
+        return user_reports
 
-        project_reports = ProjectReportDispatcher.navigation_sections(
-            request=self._request, domain=self.domain)
-        custom_reports = CustomProjectReportDispatcher.navigation_sections(
-            request=self._request, domain=self.domain)
-        return tools + user_reports + project_reports + custom_reports
+    def _get_create_report_url(self):
+        """
+        Return the url for the start of the report builder, or the paywall.
+        """
+        if has_report_builder_access(self._request):
+            url = reverse("report_builder_select_type", args=[self.domain])
+        else:
+            from corehq.apps.userreports.views import paywall_home
+            url = paywall_home(self.domain)
+        return url
+
+    @staticmethod
+    def _filter_sidebar_items(sidebar_items):
+        """
+        Exclude sidebar items where `item["show_in_navigation"] == False`
+        """
+        filtered_sidebar_items = []
+        for section, items in sidebar_items:
+            filtered_items = []
+            for item in items:
+                if not item.get("show_in_navigation", True):
+                    continue
+                filtered_items.append(item)
+            if filtered_items:
+                filtered_sidebar_items.append((section, filtered_items))
+        return filtered_sidebar_items
 
     @property
     def dropdown_items(self):
@@ -1120,6 +1145,13 @@ class ProjectSettingsTab(UITab):
                 'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
             })
 
+        if toggles.OPENCLINICA.enabled(self.domain):
+            from corehq.apps.domain.views import EditOpenClinicaSettingsView
+            project_info.append({
+                'title': _(EditOpenClinicaSettingsView.page_title),
+                'url': reverse(EditOpenClinicaSettingsView.urlname, args=[self.domain])
+            })
+
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
@@ -1470,10 +1502,12 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
-                {'title': _('Loadtest Report'),
-                 'url': reverse('loadtest_report')},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
+                {'title': _('Download Global Impact Report'),
+                 'url': reverse('download_gir')},
+                {'title': _('CommCare Version'),
+                 'url': reverse('admin_report_dispatcher', args=('commcare_version', ))}
             ]),
             (_('Administrative Operations'), admin_operations),
             (_('CommCare Reports'), [

@@ -16,16 +16,14 @@ from celery.task import periodic_task
 from celery.task import task
 from celery.utils.log import get_task_logger
 
-from casexml.apps.case.xform import extract_case_blocks
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.es import FormES
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime
@@ -47,6 +45,12 @@ from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
 
+from .analytics.couchaccessors import (
+    get_form_ids_having_multimedia as couch_get_form_ids_having_multimedia
+)
+from .analytics.esaccessors import (
+    get_form_ids_having_multimedia as es_get_form_ids_having_multimedia
+)
 from .dbaccessors import get_all_hq_group_export_configs
 from .export import save_metadata_export_to_tempfile
 from .models import (
@@ -209,11 +213,14 @@ def update_calculated_properties():
                 "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
                 "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
                 "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
+                "cp_300th_form": CALC_FNS["300th_form_submission"](dom)
             }
             if calced_props['cp_first_form'] is None:
                 del calced_props['cp_first_form']
             if calced_props['cp_last_form'] is None:
                 del calced_props['cp_last_form']
+            if calced_props['cp_300th_form'] is None:
+                del calced_props['cp_300th_form']
             send_to_elasticsearch("domains", calced_props)
         except Exception, e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
@@ -275,118 +282,41 @@ def _store_excel_in_redis(file):
 
 
 @task
-def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_id, zip_name, download_id):
+def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id,
+                              export_id, zip_name, download_id, export_is_legacy):
 
-    def find_question_id(form, value):
-        for k, v in form.iteritems():
-            if isinstance(v, dict):
-                ret = find_question_id(v, value)
-                if ret:
-                    return [k] + ret
-            else:
-                if v == value:
-                    return [k]
-
-        return None
-
-    def filename(form_info, question_id, extension):
-        fname = u"%s-%s-%s-%s%s"
-        if form_info['cases']:
-            fname = u'-'.join(form_info['cases']) + u'-' + fname
-        return fname % (form_info['name'],
-                        unidecode(question_id),
-                        form_info['user'],
-                        form_info['id'], extension)
-
-    case_ids = set()
-
-    def extract_form_info(form, properties=None, case_ids=case_ids):
-        unknown_number = 0
-        meta = form['form'].get('meta', dict())
-        # get case ids
-        case_blocks = extract_case_blocks(form)
-        cases = {c['@case_id'] for c in case_blocks}
-        case_ids |= cases
-
-        form_info = {
-            'form': form,
-            'attachments': list(),
-            'name': form['form'].get('@name', 'unknown form'),
-            'user': meta.get('username', 'unknown_user'),
-            'cases': cases,
-            'id': form['_id']
-        }
-        for k, v in form['_attachments'].iteritems():
-            if v['content_type'] == 'text/xml':
-                continue
-            try:
-                question_id = unicode(u'-'.join(find_question_id(form['form'], k)))
-            except TypeError:
-                question_id = unicode(u'unknown' + unicode(unknown_number))
-                unknown_number += 1
-
-            if not properties or question_id in properties:
-                extension = unicode(os.path.splitext(k)[1])
-                form_info['attachments'].append({
-                    'size': v['length'],
-                    'name': k,
-                    'question_id': question_id,
-                    'extension': extension,
-                    'timestamp': parse(form['received_on']).timetuple(),
-                })
-
-        return form_info
-
-    key = [domain, app_id, xmlns]
-    form_ids = {f['id'] for f in XFormInstance.get_db().view("attachments/attachments",
-                                                             start_key=key + [startdate],
-                                                             end_key=key + [enddate, {}],
-                                                             reduce=False)}
-
-    properties = set()
-    if export_id:
-        schema = FormExportSchema.get(export_id)
-        for table in schema.tables:
-            # - in question id is replaced by . in excel exports
-            properties |= {c.display.replace('.', '-') for c in table.columns}
+    form_ids = _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy)
+    properties = _get_export_properties(export_id, export_is_legacy)
 
     if not app_id:
         zip_name = 'Unrelated Form'
     forms_info = list()
-    for form in iter_docs(XFormInstance.get_db(), form_ids):
+    for form in FormAccessors(domain).iter_forms(form_ids):
         if not zip_name:
-            zip_name = unidecode(form['form'].get('@name', 'unknown form'))
-        forms_info.append(extract_form_info(form, properties))
+            zip_name = unidecode(form.name or 'unknown form')
+        forms_info.append(_extract_form_attachment_info(form, properties))
 
     num_forms = len(forms_info)
     DownloadBase.set_progress(build_form_multimedia_zip, 0, num_forms)
 
-    # get case names
-    case_id_to_name = {c: c for c in case_ids}
-    for case in iter_docs(CommCareCase.get_db(), case_ids):
-        if case['name']:
-            case_id_to_name[case['_id']] = case['name']
-
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     if use_transfer:
-        params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
-        fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
-        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
+        fpath = _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms)
     else:
         _, fpath = tempfile.mkstemp()
 
-    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
-        with open(fpath, 'wb') as zfile:
-            with zipfile.ZipFile(zfile, 'w') as z:
-                for form_number, form_info in enumerate(forms_info):
-                    f = XFormInstance.wrap(form_info['form'])
-                    form_info['cases'] = {case_id_to_name[case_id] for case_id in form_info['cases']}
-                    for a in form_info['attachments']:
-                        fname = filename(form_info, a['question_id'], a['extension'])
-                        zi = zipfile.ZipInfo(fname, a['timestamp'])
-                        z.writestr(zi, f.fetch_attachment(a['name'], stream=True).read(), zipfile.ZIP_STORED)
-                    DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
+    _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info)
+    _expose_download(fpath, use_transfer, zip_name, download_id, num_forms)
 
+
+def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_forms):
+    params = '_'.join(map(str, [xmlns, startdate, enddate, export_id, num_forms]))
+    fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
+    fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
+    return fpath
+
+
+def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
     common_kwargs = dict(
         mimetype='application/zip',
         content_disposition='attachment; filename="{fname}.zip"'.format(fname=zip_name),
@@ -408,3 +338,130 @@ def build_form_multimedia_zip(domain, xmlns, startdate, enddate, app_id, export_
         )
 
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
+
+
+def _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info):
+
+    def filename(form_info, question_id, extension):
+        return u"{}-{}-{}{}".format(
+            unidecode(question_id),
+            form_info['user'],
+            form_info['id'],
+            extension
+        )
+
+    if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
+        with open(fpath, 'wb') as zfile:
+            with zipfile.ZipFile(zfile, 'w') as z:
+                for form_number, form_info in enumerate(forms_info):
+                    f = form_info['form']
+                    for a in form_info['attachments']:
+                        fname = filename(form_info, a['question_id'], a['extension'])
+                        zi = zipfile.ZipInfo(fname, a['timestamp'])
+                        z.writestr(zi, f.get_attachment(a['name']), zipfile.ZIP_STORED)
+                    DownloadBase.set_progress(build_form_multimedia_zip, form_number + 1, num_forms)
+
+
+def _get_export_properties(export_id, export_is_legacy):
+    """
+    Return a list of strings corresponding to form questions that are
+    included in the export.
+    """
+    properties = set()
+    if export_id:
+        if export_is_legacy:
+            schema = FormExportSchema.get(export_id)
+            for table in schema.tables:
+                # - in question id is replaced by . in excel exports
+                properties |= {c.display.replace('.', '-') for c in
+                               table.columns if c.display}
+        else:
+            from corehq.apps.export.models import FormExportInstance
+            export = FormExportInstance.get(export_id)
+            for table in export.tables:
+                for column in table.columns:
+                    if column.item:
+                        path_parts = [n.name for n in column.item.path]
+                        path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
+                        properties.add("-".join(path_parts))
+    return properties
+
+
+def _get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate, export_is_legacy):
+    """
+    Return a list of form ids.
+    Each form has a multimedia attachment and meets the given filters.
+    """
+    if not export_is_legacy:
+        fetch_fn = es_get_form_ids_having_multimedia
+        startdate = parse(startdate)
+        enddate = parse(enddate)
+    else:
+        fetch_fn = couch_get_form_ids_having_multimedia
+
+    return fetch_fn(
+        domain,
+        app_id,
+        xmlns,
+        startdate,
+        enddate,
+    )
+
+
+def _extract_form_attachment_info(form, properties):
+    """
+    This is a helper function for build_form_multimedia_zip.
+    Return a dict containing information about the given form and its relevant
+    attachments
+    """
+    def find_question_id(form, value):
+        for k, v in form.iteritems():
+            if isinstance(v, dict):
+                ret = find_question_id(v, value)
+                if ret:
+                    return [k] + ret
+            else:
+                if v == value:
+                    return [k]
+
+        return None
+
+    unknown_number = 0
+
+    form_info = {
+        'form': form,
+        'attachments': list(),
+        'name': form.name or "unknown form",
+        'user': form.user_id or "unknown_user",
+        'id': form.form_id,
+    }
+
+    for attachment_name, attachment in form.attachments.iteritems():
+        try:
+            content_type = attachment.content_type
+        except AttributeError:
+            content_type = attachment['content_type']
+        if content_type == 'text/xml':
+            continue
+        try:
+            question_id = unicode(
+                u'-'.join(find_question_id(form.form_data, attachment_name)))
+        except TypeError:
+            question_id = u'unknown' + unicode(unknown_number)
+            unknown_number += 1
+
+        if not properties or question_id in properties:
+            extension = unicode(os.path.splitext(attachment_name)[1])
+            try:
+                size = attachment.content_length
+            except AttributeError:
+                size = attachment['length']
+            form_info['attachments'].append({
+                'size': size,
+                'name': attachment_name,
+                'question_id': question_id,
+                'extension': extension,
+                'timestamp': form.received_on.timetuple(),
+            })
+
+    return form_info

@@ -1,7 +1,7 @@
 from collections import defaultdict
-from datetime import date, datetime, timedelta, time
+from datetime import datetime, timedelta, time
 from couchforms.models import XFormInstance
-from ..constants import InvalidRow, CFU1_XMLNS
+from ..constants import CFU1_XMLNS
 from .case_reports import OPMCaseReportTestBase, OPMCase, MockCaseRow, \
     offset_date, MockDataProvider
 from dimagi.utils.dates import add_months_to_date

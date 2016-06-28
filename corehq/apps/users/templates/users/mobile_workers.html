@@ -1,4 +1,4 @@
-{% extends "style/bootstrap3/base_section.html" %}
+{% extends "style/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -6,9 +6,9 @@
 
 {% block js %}
 <script type="text/javascript"
-        src="{% new_static 'style/js/pagination.ng.js' %}"></script>
+        src="{% static 'style/js/pagination.ng.js' %}"></script>
 <script type="text/javascript"
-        src="{% new_static 'users/js/mobile_workers.ng.js' %}"></script>
+        src="{% static 'users/js/mobile_workers.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -185,7 +185,7 @@ $(function () {
                                 <h3 class="modal-title">{% trans "Create New Mobile Worker" %}</h3>
                             </div>
                             <div class="modal-body">
-                                <div class="alert">
+                                <div class="alert alert-info">
                                     {% url 'domain_select_plan' domain as change_plan_url %}
                                     <p>
                                     {% blocktrans with request.plan.user_limit as u %}

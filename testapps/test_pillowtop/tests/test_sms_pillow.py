@@ -1,5 +1,6 @@
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
+from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.es.sms import SMSES
 from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
 from corehq.elastic import get_es_new
@@ -10,7 +11,6 @@ from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
 from mock import patch
-from testapps.test_pillowtop.utils import get_test_kafka_consumer
 
 
 @patch('corehq.apps.sms.change_publishers.do_publish')
@@ -20,6 +20,7 @@ class SqlSMSPillowTest(TestCase):
     domain = 'sms-pillow-test-domain'
 
     def setUp(self):
+        super(SqlSMSPillowTest, self).setUp()
         self.elasticsearch = get_es_new()
         ensure_index_deleted(SMS_INDEX_INFO.index)
 
@@ -28,6 +29,7 @@ class SqlSMSPillowTest(TestCase):
         SMS.objects.filter(domain=self.domain).delete()
         MessagingSubEvent.objects.filter(parent__domain=self.domain).delete()
         MessagingEvent.objects.filter(domain=self.domain).delete()
+        super(SqlSMSPillowTest, self).tearDown()
 
     def _create_sms(self):
         event = MessagingEvent.objects.create(

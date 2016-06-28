@@ -8,7 +8,6 @@ import urllib
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -57,13 +56,19 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
 )
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_angular_js,
-)
+    use_select2)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
-from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
-                                     UpdateUserPermissionForm, UpdateUserRoleForm)
+
+from corehq.apps.users.forms import (
+    BaseUserInfoForm,
+    CommtrackUserForm,
+    DomainRequestForm,
+    UpdateUserPermissionForm,
+    UpdateUserRoleForm,
+    SetUserPasswordForm,
+)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, Invitation,
                                       DomainMembershipError)
@@ -140,6 +145,10 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 class BaseEditUserView(BaseUserSettingsView):
     user_update_form_class = None
 
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
+    
     @property
     @memoized
     def page_url(self):
@@ -338,7 +347,6 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
-    @use_bootstrap3
     @use_angular_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
@@ -473,10 +481,16 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
-        messages.success(request, 'You have successfully removed {username} from your domain. <a href="{url}" class="post-link">Undo</a>'.format(
-            username=user.username,
-            url=reverse('undo_remove_web_user', args=[domain, record.get_id])
-        ), extra_tags="html")
+        if record:
+            message = _('You have successfully removed {username} from your '
+                        'domain. <a href="{url}" class="post-link">Undo</a>')
+            messages.success(request, message.format(
+                username=user.username,
+                url=reverse('undo_remove_web_user', args=[domain, record.get_id])
+            ), extra_tags="html")
+        else:
+            message = _('It appears {username} has already been removed from your domain.')
+            messages.success(request, message.format(username=user.username))
 
     return HttpResponseRedirect(
         reverse(ListWebUsersView.urlname, args=[domain]))
@@ -960,13 +974,13 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
-        form = SetPasswordForm(user=django_user, data=request.POST)
+        form = SetUserPasswordForm(domain, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
-            form = SetPasswordForm(user=django_user)
+            form = SetUserPasswordForm(domain, login_id, user='')
     else:
-        form = SetPasswordForm(user=django_user)
+        form = SetUserPasswordForm(domain, login_id, user=django_user)
     context = _users_context(request, domain)
     context.update({
         'reset_password_form': form,

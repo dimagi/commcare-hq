@@ -1,3 +1,4 @@
+import urllib
 from celery.task import task
 
 from corehq.apps.export.export import get_export_file, rebuild_export
@@ -19,6 +20,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     file_format = Format.from_format(export_file.format)
     filename = filename or export_instances[0].name
     escaped_filename = escape_quotes('%s.%s' % (filename, file_format.extension))
+    escaped_filename = urllib.quote(escaped_filename.encode('utf8'))
 
     payload = export_file.file.payload
     expose_cached_download(

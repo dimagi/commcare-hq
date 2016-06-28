@@ -1,4 +1,4 @@
-{% extends "style/bootstrap3/base_section.html" %}
+{% extends "style/base_section.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -75,7 +75,13 @@
         });
     });
 
-    $("#id_countries").width(600).height(200).multiselect();
+    var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+    multiselect_utils.createFullMultiselectWidget(
+        'id_countries',
+        django.gettext("Available Countries"),
+        django.gettext("Active Countries"),
+        django.gettext("Search Countries...")
+    );
 
     </script>
 {% endblock %}

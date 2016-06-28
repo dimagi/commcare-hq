@@ -5,7 +5,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfig
 from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tests import doc_to_change
+from corehq.apps.userreports.tests.utils import doc_to_change
 
 
 ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number'])
@@ -15,6 +15,7 @@ class ReportDataTest(TestCase):
     dependent_apps = ['pillowtop']
 
     def setUp(self):
+        super(ReportDataTest, self).setUp()
         # Create report
         self.domain = 'test-ucr-report-data'
         self.data_source = DataSourceConfiguration(

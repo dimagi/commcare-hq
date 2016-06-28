@@ -8,7 +8,7 @@ from django.core.management import call_command
 from django.test import SimpleTestCase
 from nose.plugins.attrib import attr
 
-B3_BASE = 'style/bootstrap3/base.html'
+B3_BASE = 'style/base.html'
 
 BLOCK_JS = ' block js '
 BLOCK_CSS = ' block stylesheets '
@@ -78,7 +78,7 @@ class TestDjangoCompressOffline(SimpleTestCase):
 
         for filename in filenames:
             if self._is_b3(filename):
-                with open(filename, 'r+') as f:
+                with open(filename, 'r') as f:
                     for line in f.readlines():
                         has_start_tag = BLOCK_JS in line or BLOCK_CSS in line
                         has_start_tag = has_start_tag or COMPRESS_JS in line or COMPRESS_CSS in line

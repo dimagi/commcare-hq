@@ -1,8 +1,22 @@
+from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed import data_sources
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.signals import sql_case_post_save
 from pillowtop.feed.interface import ChangeMeta
+
+
+def republish_all_changes_for_form(domain, form_id):
+    """
+    Publishes all changes for the form and any touched cases/ledgers.
+
+    """
+    form = FormAccessors(domain=domain).get_form(form_id)
+    publish_form_saved(form)
+    for case in _get_cases_from_form(domain, form):
+        publish_case_saved(case, send_post_save_signal=False)
+    _publish_ledgers_from_form(domain, form)
 
 
 def publish_form_saved(form):
@@ -17,7 +31,7 @@ def change_meta_from_sql_form(form):
         document_type=form.state,
         document_subtype=form.xmlns,
         domain=form.domain,
-        is_deletion=False,
+        is_deletion=form.is_deleted,
     )
 
 
@@ -38,7 +52,7 @@ def change_meta_from_sql_case(case):
         document_type='CommCareCaseSql',  # todo: should this be the same as the couch models?
         document_subtype=case.type,
         domain=case.domain,
-        is_deletion=False,
+        is_deletion=case.is_deleted,
     )
 
 
@@ -78,5 +92,32 @@ def change_meta_from_ledger_v1(stock_state):
         data_source_type=data_sources.LEDGER_V1,
         data_source_name='ledger',  # todo: this isn't really needed.
         domain=stock_state.domain,
+        is_deletion=False,
+    )
+
+
+def _get_cases_from_form(domain, form):
+    from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
+    case_ids = get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form)
+    return CaseAccessors(domain).get_cases(list(case_ids))
+
+
+def _publish_ledgers_from_form(domain, form):
+    from corehq.form_processor.parsers.ledgers.form import get_all_stock_report_helpers_from_form
+    unique_references = {
+        transaction.ledger_reference
+        for helper in get_all_stock_report_helpers_from_form(form)
+        for transaction in helper.transactions
+    }
+    for ledger_reference in unique_references:
+        producer.send_change(topics.LEDGER, _change_meta_from_ledger_reference(domain, ledger_reference))
+
+
+def _change_meta_from_ledger_reference(domain, ledger_reference):
+    return ChangeMeta(
+        document_id=ledger_reference.as_id(),
+        data_source_type=data_sources.LEDGER_V2,
+        data_source_name='ledger-v2',  # todo: this isn't really needed.
+        domain=domain,
         is_deletion=False,
     )

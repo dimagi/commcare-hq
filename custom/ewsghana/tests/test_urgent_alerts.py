@@ -4,9 +4,8 @@ from casexml.apps.stock.models import StockReport
 
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import Product
-from corehq.apps.sms.mixin import VerifiedNumber
 from corehq.apps.sms.models import SMS
-from corehq.apps.sms.tests.util import setup_default_sms_test_backend
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.urgent_alerts import UrgentStockoutAlert, UrgentNonReporting
@@ -26,6 +25,7 @@ class TestUrgentAlerts(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestUrgentAlerts, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
         cls.district = make_loc(code="district", name="Test District", type="district", domain=TEST_DOMAIN)
@@ -58,6 +58,7 @@ class TestUrgentAlerts(EWSTestCase):
         SMS.objects.all().delete()
         StockReport.objects.all().delete()
         StockState.objects.all().delete()
+        super(TestUrgentAlerts, self).tearDown()
 
     def test_get_products_function(self):
         urgent_stockout_alert = UrgentStockoutAlert(TEST_DOMAIN)
@@ -117,6 +118,5 @@ class TestUrgentAlerts(EWSTestCase):
     @classmethod
     def tearDownClass(cls):
         cls.user1.delete()
-        for vn in VerifiedNumber.by_domain(TEST_DOMAIN):
-            vn.delete()
+        delete_domain_phone_numbers(TEST_DOMAIN)
         super(TestUrgentAlerts, cls).tearDownClass()

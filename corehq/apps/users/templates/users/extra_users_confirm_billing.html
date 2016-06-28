@@ -4,30 +4,22 @@
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
-{% endblock %}
-
-{% block head %}{{ block.super }}
-    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var billingInfoHandler = new BillingContactInfoHandler(
-            "{% trans "Please enter a valid email." %}"
-        );
-        billingInfoHandler.init();
+        hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
         $(function () {
             $('#id_confirm_product_agreement').click(function () {
                 var $submit = $('#submit-button-pa'),
                     $helpText = $('#submit-button-help-qa');
-                if ($(this).attr('checked')) {
-                    $submit.removeAttr('disabled');
+                if ($(this).prop('checked')) {
+                    $submit.removeProp('disabled');
                     $submit.removeClass('disabled');
                     $helpText.addClass('hide');
                 } else {
-                    $submit.attr('disabled', 'disabled');
+                    $submit.prop('disabled', true);
                     $submit.addClass('disabled');
                     $helpText.removeClass('hide');
                 }
@@ -36,7 +28,7 @@
     </script>
 {% endblock %}
 
-{% block main_column %}
+{% block page_content %}
     <div class="alert alert-info">
         <h3>{% trans 'Notice of Additional Monthly Charges for Mobile Workers' %}</h3>
         <p>

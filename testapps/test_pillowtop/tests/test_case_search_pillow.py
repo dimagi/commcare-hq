@@ -6,6 +6,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import \
     change_meta_from_kafka_message
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer, get_current_kafka_seq
 from corehq.apps.es import CaseSearchES
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
@@ -17,8 +18,6 @@ from corehq.util.elastic import ensure_index_deleted
 from django.test import TestCase, override_settings
 from mock import MagicMock, patch
 from pillowtop.es_utils import initialize_index_and_mapping
-from testapps.test_pillowtop.utils import get_current_kafka_seq, \
-    get_test_kafka_consumer
 from corehq.util.test_utils import create_and_save_a_case
 
 
@@ -44,7 +43,7 @@ class CaseSearchPillowTest(TestCase):
         kafka_seq = self._get_kafka_seq()
 
         case = self._make_case(case_properties={'foo': 'bar'})
-        producer.send_change(topics.CASE, doc_to_change(case).metadata)
+        producer.send_change(topics.CASE, doc_to_change(case.to_json()).metadata)
         # confirm change made it to kafka
         message = consumer.next()
         change_meta = change_meta_from_kafka_message(message.value)

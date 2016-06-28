@@ -31,7 +31,9 @@
 {% else %}
     {% for thisreport in reports %}
         <br/>
-        <h4 class="media-heading">{{ thisreport.report_table.title }}</h4><br/>
+        <br/>
+        <br/>
+        <h2 class="media-heading">{{ thisreport.report_table.title }}</h2><br/>
             {% for subtitle in thisreport.report_table.subtitle %}
                 <h4>{{ subtitle }}</h4>
             {% endfor %}
@@ -49,4 +51,21 @@
 {% endif %}
 {% endblock %}
 {% block posttable %}{% endblock %}
+{% endblock %}
+
+{% block js-inline %} {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('#fieldset_location_async').on('change', 'select', function(e) {
+                e.stopPropagation();
+                var state = $('select.form-control')[0].selectedIndex;
+                var applyBtn = $('#apply-filters');
+                if (state == 0) {
+                    applyBtn.disableButtonNoSpinner();
+                } else {
+                    applyBtn.enableButton();
+                }
+            })
+        })
+    </script>
 {% endblock %}

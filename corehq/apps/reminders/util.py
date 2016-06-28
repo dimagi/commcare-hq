@@ -199,22 +199,6 @@ def can_use_survey_reminders(request):
     return has_privilege(request, privileges.INBOUND_SMS)
 
 
-def get_verified_number_for_recipient_old(recipient):
-    """
-    The old methodology: return the first verified number,
-                         sorted by number
-    The new methodology: return the verified number that's
-                         first in the user's list of numbers
-    This is the old methodology so that we can fix the small number
-    of users that are using the old one.
-    """
-    if hasattr(recipient, "get_verified_numbers"):
-        contact_verified_numbers = recipient.get_verified_numbers(False)
-        if len(contact_verified_numbers) > 0:
-            return sorted(contact_verified_numbers.iteritems())[0][1]
-    return None
-
-
 def get_verified_number_for_recipient(recipient):
     if hasattr(recipient, "get_verified_numbers"):
         contact_verified_numbers = recipient.get_verified_numbers(False)
@@ -225,7 +209,7 @@ def get_verified_number_for_recipient(recipient):
                 for phone in recipient.phone_numbers:
                     if phone in contact_verified_numbers:
                         return contact_verified_numbers[phone]
-                raise Exception("Phone numbers and VerifiedNumbers are out "
+                raise Exception("Phone number list and PhoneNumber entries are out "
                     "of sync for user %s" % recipient.get_id)
             else:
                 raise Exception("Expected a CouchUser")

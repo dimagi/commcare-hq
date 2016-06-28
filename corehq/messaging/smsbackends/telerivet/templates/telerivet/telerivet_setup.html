@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_section.html' %}
+{% extends 'style/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load djangular_tags %}
@@ -6,7 +6,7 @@
 
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'style/js/bootstrap2/main.js' %}"></script>
+    <script src="{% static 'style/js/main.js' %}"></script>
 {% endblock %}
 
 

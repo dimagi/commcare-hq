@@ -71,6 +71,7 @@ def get_docs_in_domain_by_class(domain, doc_class):
         'CommtrackConfig',
         'HQGroupExportConfiguration',
         'Group',
+        'UserRole',
         'Invitation',
         'PerformanceConfiguration',
         'ReportConfiguration',
@@ -95,3 +96,21 @@ def get_domain_ids_by_names(names):
         reduce=False,
         include_docs=False
     )]
+
+
+def count_downloads_for_all_snapshots(domain_id):
+    """
+    domain_id should represent an actual (non-snapshot) domain for this to make sense
+    but that is not checked. It'll just be 0 otherwise.
+    """
+
+    try:
+        return Domain.get_db().view(
+            'domain/snapshots',
+            startkey=[domain_id],
+            endkey=[domain_id, {}],
+            reduce=True,
+            include_docs=False,
+        ).one()["value"]
+    except TypeError:
+        return 0

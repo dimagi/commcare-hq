@@ -1,8 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.css" %}">
-<link rel="stylesheet" type="text/css" href="{% static "case/js/lib/jquery-treetable/jquery.treetable.theme.default.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "jquery-treetable/css/jquery.treetable.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "case/css/jquery.treetable.css" %}">
 
 <style>
     .touchforms-inline.webforms #form {
@@ -37,7 +37,7 @@
 
 <script>
     $.when(
-        $.getScript('{% static "case/js/lib/jquery-treetable/jquery.treetable.js" %}')
+        $.getScript('{% static "jquery-treetable/jquery.treetable.js" %}')
     ).done(function () {
         var tree = $("#related_cases").treetable({
             expandable: true,

@@ -146,8 +146,7 @@ class SubmissionPost(object):
                     raise
 
             elif instance.is_duplicate:
-                self.formdb.save_new_form(instance)
-
+                self.interface.save_processed_models([instance])
             elif not instance.is_error:
                 try:
                     case_stock_result = self.process_xforms_for_cases(xforms)
@@ -265,6 +264,15 @@ class SubmissionPost(object):
                 status=201,
             ).response()
         return response
+
+    @staticmethod
+    def submission_ignored_response():
+        return OpenRosaResponse(
+            # would have done ✓ but our test Nokias' fonts don't have that character
+            message=u'√ (this submission was ignored)',
+            nature=ResponseNature.SUBMIT_SUCCESS,
+            status=201,
+        ).response()
 
     @staticmethod
     def get_failure_response(doc):

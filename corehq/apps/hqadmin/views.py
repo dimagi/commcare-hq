@@ -1,21 +1,23 @@
+from lxml import etree
+
 import HTMLParser
 import json
 import socket
+import csv
 from datetime import timedelta, date
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
 from django.utils.datastructures import SortedDict
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
-from django.core.urlresolvers import reverse
 from django.shortcuts import render
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.http import (
@@ -30,13 +32,17 @@ from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.es import CaseES, aggregations
+from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
-    use_bootstrap3, use_nvd3_v3
-from corehq.apps.style.utils import set_bootstrap_version3
-from corehq.apps.style.views import BaseB3SectionPageView
+    use_nvd3_v3
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
+from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
+    CommCareCaseSQLRawDocSerializer
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
 from corehq.util.supervisord.api import (
     PillowtopSupervisorApi,
@@ -45,16 +51,16 @@ from corehq.util.supervisord.api import (
     pillow_supervisor_status
 )
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.data_analytics.models import MALTRow
+from corehq.apps.data_analytics.models import MALTRow, GIRRow
+from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
 from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.reports.graph_models import Axis, LineChart
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
-from corehq.sql_db.connections import Session
 from corehq.elastic import parse_args_for_es, run_query, ES_META
+from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.django.management import export_as_csv_action
@@ -68,7 +74,6 @@ from . import service_checks, escheck
 from .forms import AuthenticateAsForm, BrokenBuildsForm
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
-from .multimech import GlobalConfig
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
 
@@ -99,7 +104,7 @@ def get_hqadmin_base_context(request):
     }
 
 
-class BaseAdminSectionView(BaseB3SectionPageView):
+class BaseAdminSectionView(BaseSectionPageView):
     section_name = ugettext_lazy("Admin Reports")
 
     @property
@@ -117,7 +122,6 @@ class AuthenticateAs(BaseAdminSectionView):
     template_name = 'hqadmin/authenticate_as.html'
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(AuthenticateAs, self).dispatch(*args, **kwargs)
 
@@ -147,7 +151,6 @@ class RecentCouchChangesView(BaseAdminSectionView):
     template_name = 'hqadmin/couch_changes.html'
     page_title = ugettext_lazy("Recent Couch Changes")
 
-    @use_bootstrap3
     @use_nvd3_v3
     @use_datatables
     @use_jquery_ui
@@ -387,24 +390,52 @@ def pillow_operation_api(request):
         return get_response("No pillow found with name '{}'".format(pillow_name))
 
 
-@require_superuser
-@require_GET
-def admin_restore(request, app_id=None):
-    full_username = request.GET.get('as', '')
-    if not full_username or '@' not in full_username:
-        return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
+class AdminRestoreView(TemplateView):
+    template_name = 'hqadmin/admin_restore.html'
 
-    username, domain = full_username.split('@')
-    if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
-        full_username = format_username(username, domain)
+    @method_decorator(require_superuser)
+    def get(self, request, *args, **kwargs):
+        full_username = request.GET.get('as', '')
+        if not full_username or '@' not in full_username:
+            return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
 
-    user = CommCareUser.get_by_username(full_username)
-    if not user:
-        return HttpResponseNotFound('User %s not found.' % full_username)
+        username, domain = full_username.split('@')
+        if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
+            full_username = format_username(username, domain)
 
-    overwrite_cache = request.GET.get('ignore_cache') == 'true'
-    return get_restore_response(user.domain, user, overwrite_cache=overwrite_cache, app_id=app_id,
-                                **get_restore_params(request))
+        self.user = CommCareUser.get_by_username(full_username)
+        if not self.user:
+            return HttpResponseNotFound('User %s not found.' % full_username)
+
+        self.overwrite_cache = request.GET.get('ignore_cache') == 'true'
+        self.app_id = kwargs.get('app_id', None)
+
+        raw = request.GET.get('raw') == 'true'
+        if raw:
+            response, _ = self._get_restore_response()
+            return response
+
+        return super(AdminRestoreView, self).get(request, *args, **kwargs)
+
+    def _get_restore_response(self):
+        return get_restore_response(
+            self.user.domain, self.user, overwrite_cache=self.overwrite_cache, app_id=self.app_id,
+            **get_restore_params(self.request)
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super(AdminRestoreView, self).get_context_data(**kwargs)
+        response, timing_context = self._get_restore_response()
+        timing_context = timing_context or TimingContext(self.user.username)
+        string_payload = ''.join(response.streaming_content)
+        xml_payload = etree.fromstring(string_payload)
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        context.update({
+            'payload': formatted_payload,
+            'status_code': response.status_code,
+            'timing_data': timing_context.to_list()
+        })
+        return context
 
 
 class ManagementCommandsView(BaseAdminSectionView):
@@ -506,92 +537,47 @@ def admin_reports_stats_data(request):
     return stats_data(request)
 
 
-class LoadtestReportView(BaseAdminSectionView):
-    urlname = 'loadtest_report'
-    template_name = 'hqadmin/loadtest.html'
-    page_title = ugettext_lazy("Loadtest Results")
+class _Db(object):
+    """
+    Light wrapper for providing interface like Couchdbkit's Database objects.
+    """
 
-    @method_decorator(require_superuser)
-    @use_nvd3_v3
-    @use_jquery_ui
-    @use_datatables
-    def dispatch(self, request, *args, **kwargs):
-        return super(LoadtestReportView, self).dispatch(request, *args, **kwargs)
+    def __init__(self, dbname, getter, doc_type):
+        self.dbname = dbname
+        self._getter = getter
+        self.doc_type = doc_type
 
-    @property
-    def page_context(self):
-        # The multimech results api is kinda all over the place.
-        # the docs are here: http://testutils.org/multi-mechanize/datastore.html
-
-        scripts = ['submit_form.py', 'ota_restore.py']
-
-        tests = []
-        # datetime info seems to be buried in GlobalConfig.results[0].run_id,
-        # which makes ORM-level sorting problematic
-        for gc in Session.query(GlobalConfig).all()[::-1]:
-            gc.scripts = dict((uc.script, uc) for uc in gc.user_group_configs)
-            if gc.results:
-                for script, uc in gc.scripts.items():
-                    uc.results = filter(
-                        lambda res: res.user_group_name == uc.user_group,
-                        gc.results
-                    )
-                test = {
-                    'datetime': gc.results[0].run_id,
-                    'run_time': gc.run_time,
-                    'results': gc.results,
-                }
-                for script in scripts:
-                    test[script.split('.')[0]] = gc.scripts.get(script)
-                tests.append(test)
-
-        context = get_hqadmin_base_context(self.request)
-        context.update({
-            "tests": tests,
-            "hide_filters": True,
-        })
-
-        date_axis = Axis(label="Date", dateFormat="%m/%d/%Y")
-        tests_axis = Axis(label="Number of Tests in 30s")
-        chart = LineChart("HQ Load Test Performance", date_axis, tests_axis)
-        submit_data = []
-        ota_data = []
-        total_data = []
-        max_val = 0
-        max_date = None
-        min_date = None
-        for test in tests:
-            date = test['datetime']
-            total = len(test['results'])
-            max_val = total if total > max_val else max_val
-            max_date = date if not max_date or date > max_date else max_date
-            min_date = date if not min_date or date < min_date else min_date
-            submit_data.append({'x': date, 'y': len(test['submit_form'].results)})
-            ota_data.append({'x': date, 'y': len(test['ota_restore'].results)})
-            total_data.append({'x': date, 'y': total})
-
-        deployments = [row['key'][1] for row in HqDeploy.get_list(
-            settings.SERVER_ENVIRONMENT, min_date, max_date
-        )]
-        deploy_data = [{'x': min_date, 'y': 0}]
-        for date in deployments:
-            deploy_data.extend([
-                {'x': date, 'y': 0},
-                {'x': date, 'y': max_val},
-                {'x': date, 'y': 0},
-            ])
-        deploy_data.append({'x': max_date, 'y': 0})
-
-        chart.add_dataset("Deployments", deploy_data)
-        chart.add_dataset("Form Submission Count", submit_data)
-        chart.add_dataset("OTA Restore Count", ota_data)
-        chart.add_dataset("Total Count", total_data)
-
-        context['charts'] = [chart]
-        return context
+    def get(self, record_id):
+        try:
+            return self._getter(record_id)
+        except (XFormNotFound, CaseNotFound):
+            raise ResourceNotFound("missing")
 
 
-def _lookup_id_in_couch(doc_id, db_name=None):
+_SQL_DBS = OrderedDict((db.dbname, db) for db in [
+    _Db(
+        XFormInstanceSQL._meta.db_table,
+        lambda id_: XFormInstanceSQLRawDocSerializer(XFormInstanceSQL.get_obj_by_id(id_)).data,
+        XFormInstanceSQL.__name__
+    ),
+    _Db(
+        CommCareCaseSQL._meta.db_table,
+        lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data,
+        CommCareCaseSQL.__name__
+    ),
+])
+
+
+def _get_db_from_db_name(db_name):
+    if db_name in _SQL_DBS:
+        return _SQL_DBS[db_name]
+    elif db_name == couch_config.get_db(None).dbname:  # primary db
+        return couch_config.get_db(None)
+    else:
+        return couch_config.get_db(db_name)
+
+
+def _lookup_id_in_database(doc_id, db_name=None):
     db_result = namedtuple('db_result', 'dbname result status')
     STATUSES = defaultdict(lambda: 'warning', {
         'missing': 'default',
@@ -599,9 +585,11 @@ def _lookup_id_in_couch(doc_id, db_name=None):
     })
 
     if db_name:
-        dbs = [couch_config.get_db(None if db_name == 'commcarehq' else db_name)]
+        dbs = [_get_db_from_db_name(db_name)]
     else:
-        dbs = couch_config.all_dbs_by_slug.values()
+        couch_dbs = couch_config.all_dbs_by_slug.values()
+        sql_dbs = _SQL_DBS.values()
+        dbs = couch_dbs + sql_dbs
 
     db_results = []
     response = {"doc_id": doc_id}
@@ -614,7 +602,7 @@ def _lookup_id_in_couch(doc_id, db_name=None):
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({
                 "doc": json.dumps(doc, indent=4, sort_keys=True),
-                "doc_type": doc.get('doc_type', 'Unknown'),
+                "doc_type": doc.get('doc_type', getattr(db, 'doc_type', 'Unknown')),
                 "dbname": db.dbname,
             })
 
@@ -625,7 +613,6 @@ def _lookup_id_in_couch(doc_id, db_name=None):
 @require_superuser
 def web_user_lookup(request):
     template = "hqadmin/web_user_lookup.html"
-    set_bootstrap_version3()
     web_user_email = request.GET.get("q")
     if not web_user_email:
         return render(request, template, {})
@@ -666,20 +653,26 @@ def doc_in_es(request):
             "doc_type": es_doc_type,
             "found_indices": found_indices,
         },
-        "couch_info": _lookup_id_in_couch(doc_id),
+        "couch_info": _lookup_id_in_database(doc_id),
     }
     return render(request, "hqadmin/doc_in_es.html", context)
 
 
 @require_superuser
 def raw_couch(request):
+    get_params = dict(request.GET.iteritems())
+    return HttpResponseRedirect(reverse("raw_doc", params=get_params))
+
+
+@require_superuser
+def raw_doc(request):
     doc_id = request.GET.get("id")
     db_name = request.GET.get("db_name", None)
     if db_name and "__" in db_name:
         db_name = db_name.split("__")[-1]
-    context = _lookup_id_in_couch(doc_id, db_name) if doc_id else {}
-    other_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
-    context['all_databases'] = ['commcarehq'] + other_dbs
+    context = _lookup_id_in_database(doc_id, db_name) if doc_id else {}
+    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
+    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
     return render(request, "hqadmin/raw_couch.html", context)
 
 
@@ -737,6 +730,7 @@ def callcenter_test(request):
 
     if user or user_case:
         custom_cache = None if enable_caching else cache.caches['dummy']
+        override_case = CallCenterCase.from_case(user_case)
         cci = CallCenterIndicators(
             domain.name,
             domain.default_timezone,
@@ -744,7 +738,7 @@ def callcenter_test(request):
             user,
             custom_cache=custom_cache,
             override_date=query_date,
-            override_cases=[user_case] if user_case else None
+            override_cases=[override_case] if override_case else None
         )
         data = {case_id: view_data(case_id, values) for case_id, values in cci.get_data().items()}
     else:
@@ -767,7 +761,6 @@ class DownloadMALTView(BaseAdminSectionView):
     template_name = "hqadmin/malt_downloader.html"
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DownloadMALTView, self).dispatch(request, *args, **kwargs)
 
@@ -790,6 +783,48 @@ def _malt_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     queryset = MALTRow.objects.filter(month=query_month)
     return export_as_csv_action(exclude=['id'])(MALTRowAdmin, None, queryset)
+
+
+class DownloadGIRView(BaseAdminSectionView):
+    urlname = 'download_gir'
+    page_title = ugettext_lazy("Download GIR")
+    template_name = "hqadmin/gir_downloader.html"
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(DownloadGIRView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if 'year_month' in request.GET:
+            try:
+                year, month = request.GET['year_month'].split('-')
+                year, month = int(year), int(month)
+                return _gir_csv_response(month, year)
+            except (ValueError, ValidationError):
+                messages.error(
+                    request,
+                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                )
+        return super(DownloadGIRView, self).get(request, *args, **kwargs)
+
+
+def _gir_csv_response(month, year):
+    query_month = "{year}-{month}-01".format(year=year, month=month)
+    prev_month = "{year}-{month}-01".format(year=year, month=month - 1)
+    two_ago = "{year}-{month}-01".format(year=year, month=month - 2)
+    queryset = GIRRow.objects.filter(month__in=[query_month, prev_month, two_ago]).order_by('-month')
+    domain_months = defaultdict(list)
+    for item in queryset:
+        domain_months[item.domain_name].append(item)
+    field_names = GIR_FIELDS
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = u'attachment; filename=gir.csv'
+    writer = csv.writer(response)
+    writer.writerow(list(field_names))
+    for months in domain_months.values():
+        writer.writerow(months[0].export_row(months[1:]))
+    return response
 
 
 @require_superuser
@@ -852,7 +887,6 @@ class CallcenterUCRCheck(BaseAdminSectionView):
     template_name = "hqadmin/call_center_ucr_check.html"
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(CallcenterUCRCheck, self).dispatch(request, *args, **kwargs)
 
@@ -877,4 +911,12 @@ class CallcenterUCRCheck(BaseAdminSectionView):
             'domain': domain
         }
 
+        return context
+
+
+class DimagisphereView(TemplateView):
+
+    def get_context_data(self, **kwargs):
+        context = super(DimagisphereView, self).get_context_data(**kwargs)
+        context['tvmode'] = 'tvmode' in self.request.GET
         return context

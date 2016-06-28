@@ -15,9 +15,9 @@ from corehq.apps.domain.decorators import domain_admin_required, login_or_digest
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
-from corehq.apps.ota.tasks import prime_restore
-from corehq.apps.style.views import BaseB3SectionPageView
+from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
@@ -26,19 +26,22 @@ from corehq.util.view_utils import json_error
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
-from soil import DownloadBase
+from soil import MultipleTaskDownload
+
+from .utils import demo_user_restore_response
 
 
 @json_error
 @login_or_digest_or_basic_or_apikey()
 def restore(request, domain, app_id=None):
     """
-    We override restore because we have to supply our own 
+    We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
     user = request.user
     couch_user = CouchUser.from_django_user(user)
-    return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    response, _ = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    return response
 
 
 @json_error
@@ -115,18 +118,27 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None):
     # not a view just a view util
-    if not couch_user.is_commcare_user():
-        return HttpResponse("No linked chw found for %s" % couch_user.username,
-                            status=401)  # Authentication Failure
-    elif domain != couch_user.domain:
+    if couch_user.is_commcare_user() and domain != couch_user.domain:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
-                            status=401)
+                            status=401), None
+    elif couch_user.is_web_user() and domain not in couch_user.domains:
+        return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
+                            status=401), None
+
+    if couch_user.is_commcare_user():
+        restore_user = couch_user.to_ota_restore_user()
+    elif couch_user.is_web_user():
+        restore_user = couch_user.to_ota_restore_user(domain)
+
+    if couch_user.is_commcare_user() and couch_user.is_demo_user:
+        # if user is in demo-mode, return demo restore
+        return demo_user_restore_response(couch_user), None
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
-        user=couch_user.to_casexml_user(),
+        restore_user=restore_user,
         params=RestoreParams(
             sync_log_id=since,
             version=version,
@@ -141,10 +153,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             overwrite_cache=overwrite_cache
         ),
     )
-    return restore_config.get_response()
+    return restore_config.get_response(), restore_config.timing_context
 
 
-class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
+class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
     page_title = ugettext_noop("Speed up 'Sync with Server'")
     section_name = ugettext_noop("Project Settings")
     urlname = 'prime_restore_cache'
@@ -202,8 +214,7 @@ class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
         return self.get(request, *args, **kwargs)
 
     def form_valid(self):
-        download = DownloadBase()
-        res = prime_restore.delay(
+        res = queue_prime_restore(
             self.domain,
             CommCareUser.ids_by_domain(self.domain),
             version=V2,
@@ -211,7 +222,9 @@ class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
             overwrite_cache=True,
             check_cache_only=False
         )
+        download = MultipleTaskDownload()
         download.set_task(res)
+        download.save()
 
         return redirect('hq_soil_download', self.domain, download.download_id)
 
@@ -233,8 +246,7 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
         else:
             user_ids = self.form.user_ids
 
-        download = DownloadBase()
-        res = prime_restore.delay(
+        res = queue_prime_restore(
             self.domain,
             user_ids,
             version=V2,
@@ -242,6 +254,8 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
             overwrite_cache=self.form.cleaned_data['overwrite_cache'],
             check_cache_only=self.form.cleaned_data['check_cache_only']
         )
+        download = MultipleTaskDownload()
         download.set_task(res)
+        download.save()
 
         return redirect('hq_soil_download', self.domain, download.download_id)

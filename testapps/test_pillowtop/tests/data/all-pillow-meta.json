@@ -91,19 +91,6 @@
         "include_docs": false,
         "name": "CareBiharFluffPillow"
     },
-    "CaseDataPillow": {
-        "advertised_name": "corehq.pillows.sofabed.CaseDataPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.sofabed.CaseDataPillow.testhq",
-        "couch_filter": "case/casedocs",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "CommCareCase",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.sofabed.CaseDataPillow",
-        "include_docs": false,
-        "name": "CaseDataPillow"
-    },
     "CasePillow": {
         "advertised_name": "corehq.pillows.case.CasePillow.85e1a25ff57c5892b6fa95caf949ae4c.testhq",
         "change_feed_type": "CouchChangeFeed",
@@ -173,19 +160,6 @@
         "full_class_name": "custom.care_pathways.models.FarmerRecordFluffPillow",
         "include_docs": false,
         "name": "FarmerRecordFluffPillow"
-    },
-    "FormDataPillow": {
-        "advertised_name": "corehq.pillows.sofabed.FormDataPillow.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.sofabed.FormDataPillow.testhq",
-        "couch_filter": "couchforms/xforms",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.sofabed.FormDataPillow",
-        "include_docs": false,
-        "name": "FormDataPillow"
     },
     "GeographyFluffPillow": {
         "advertised_name": "fluff.GeographyFluffPillow.testhq",
@@ -326,22 +300,6 @@
         "full_class_name": "mvp_docs.pillows.MVPFormIndicatorPillow",
         "include_docs": true,
         "name": "MVPFormIndicatorPillow"
-    },
-    "MalariaConsortiumFluffPillow": {
-        "advertised_name": "fluff.MalariaConsortiumFluffPillow.testhq",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.MalariaConsortiumFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "mc-inscale"
-        },
-        "full_class_name": "custom.reports.mc.models.MalariaConsortiumFluffPillow",
-        "include_docs": false,
-        "name": "MalariaConsortiumFluffPillow"
     },
     "McctMonthlyAggregateFormFluffPillow": {
         "advertised_name": "fluff.McctMonthlyAggregateFormFluffPillow.testhq",
@@ -609,21 +567,28 @@
         "name": "WorldVisionMotherFluffPillow"
     },
     "XFormPillow": {
-        "advertised_name": "corehq.pillows.xform.XFormPillow.test_xforms_2016-03-02.testhq",
+        "advertised_name": "corehq.pillows.xform.XFormPillow.test_xforms_2016-06-09.testhq",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.xform.XFormPillow.test_xforms_2016-03-02.testhq",
+        "checkpoint_id": "corehq.pillows.xform.XFormPillow.test_xforms_2016-06-09.testhq",
         "couch_filter": "couchforms/xforms",
         "couchdb_type": "Database",
         "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
         "document_class": "XFormInstance",
         "es_alias": "xforms",
-        "es_index": "test_xforms_2016-03-02",
+        "es_index": "test_xforms_2016-06-09",
         "es_type": "xform",
         "extra_args": {},
         "full_class_name": "corehq.pillows.xform.XFormPillow",
         "include_docs": false,
         "name": "XFormPillow",
-        "unique_id": "test_xforms_2016-03-02"
+        "unique_id": "test_xforms_2016-06-09"
+    },
+    "AppFormSubmissionTrackerPillow": {
+        "advertised_name": "AppFormSubmissionTrackerPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "app-form-submission-tracker",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "AppFormSubmissionTrackerPillow"
     },
     "kafka-ucr-main": {
         "advertised_name": "kafka-ucr-main",

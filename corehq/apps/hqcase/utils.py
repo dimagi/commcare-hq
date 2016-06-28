@@ -4,7 +4,6 @@ from xml.etree import ElementTree
 import xml.etree.ElementTree as ET
 import re
 
-from couchdbkit import ResourceNotFound
 from django.core.files.uploadedfile import UploadedFile
 from django.template.loader import render_to_string
 
@@ -14,13 +13,13 @@ from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
 from dimagi.utils.parsing import json_format_datetime
-from casexml.apps.case.xml import V2
 from casexml.apps.phone.caselogic import get_related_cases
 from corehq.apps.hqcase.exceptions import CaseAssignmentError
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from casexml.apps.case import const
 
+SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
     "contact_phone_number",
@@ -29,7 +28,7 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id="",
-                       xmlns='http://commcarehq.org/case', attachments=None,
+                       xmlns=SYSTEM_FORM_XMLNS, attachments=None,
                        form_id=None):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.

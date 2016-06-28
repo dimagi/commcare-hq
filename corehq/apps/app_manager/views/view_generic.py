@@ -30,7 +30,7 @@ from corehq.apps.app_manager.util import (
     get_commcare_versions,
     get_usercase_properties,
 )
-from corehq.apps.style.decorators import use_bootstrap3
+from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -42,7 +42,6 @@ from corehq.apps.app_manager.models import (
 from django_prbac.utils import has_privilege
 
 
-@use_bootstrap3
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                  copy_app_form=None):
@@ -146,6 +145,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=lang),
             }
         }
+
         if module and module.uses_media():
             def _make_name(suffix):
                 return "{default_name}_{suffix}_{lang}".format(
@@ -205,8 +205,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     # Pass form for Copy Application to template
     domain_names = [d.name for d in Domain.active_for_user(request.couch_user)]
     domain_names.sort()
+    if copy_app_form is None:
+        toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
+        copy_app_form = CopyApplicationForm(app_id, export_zipped_apps_enabled=toggle_enabled)
     context.update({
-        'copy_app_form': copy_app_form if copy_app_form is not None else CopyApplicationForm(app_id),
+        'copy_app_form': copy_app_form,
         'domain_names': domain_names,
     })
 

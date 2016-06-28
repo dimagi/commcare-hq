@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -27,7 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.tour import tours
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
@@ -48,7 +48,6 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_ba
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_select2,
     use_daterangepicker,
     use_datatables,
@@ -69,6 +68,8 @@ from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,
     get_datasource_config,
     get_report_config,
+    is_report_config_id_static,
+    id_is_static,
 )
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigurePieChartReportForm,
@@ -129,30 +130,107 @@ def swallow_programming_errors(fn):
     return decorated
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def configurable_reports_home(request, domain):
-    return render(request, 'userreports/configurable_reports_home.html', _shared_context(domain))
+class BaseUserConfigReportsView(BaseDomainView):
+    section_name = ugettext_lazy("Configurable Reports")
+
+    @property
+    def main_context(self):
+        static_reports = list(StaticReportConfiguration.by_domain(self.domain))
+        static_data_sources = list(StaticDataSourceConfiguration.by_domain(self.domain))
+        context = super(BaseUserConfigReportsView, self).main_context
+        context.update({
+            'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
+            'data_sources': DataSourceConfiguration.by_domain(self.domain) + static_data_sources,
+        })
+        return context
+
+    @property
+    def section_url(self):
+        return reverse(UserConfigReportsHomeView.urlname, args=(self.domain,))
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseUserConfigReportsView, self).dispatch(request, *args, **kwargs)
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def edit_report(request, domain, report_id):
-    config, is_static = get_report_config_or_404(report_id, domain)
-    return _edit_report_shared(request, domain, config, read_only=is_static)
+class UserConfigReportsHomeView(BaseUserConfigReportsView):
+    urlname = 'configurable_reports_home'
+    template_name = 'userreports/configurable_reports_home.html'
+    page_title = ugettext_lazy("Reports Home")
+
+    @property
+    def page_context(self):
+        return {}
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def create_report(request, domain):
-    return _edit_report_shared(request, domain, ReportConfiguration(domain=domain))
+class BaseEditConfigReportView(BaseUserConfigReportsView):
+    template_name = 'userreports/edit_report_config.html'
+
+    @property
+    def report_id(self):
+        return self.kwargs.get('report_id')
+
+    @property
+    def page_url(self):
+        if self.report_id:
+            return reverse(self.urlname, args=(self.domain, self.report_id,))
+        return super(BaseEditConfigReportView, self).page_url
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.edit_form,
+            'report': self.config,
+        }
+
+    @property
+    @memoized
+    def config(self):
+        if self.report_id is None:
+            return ReportConfiguration(domain=self.domain)
+        return get_report_config_or_404(self.report_id, self.domain)[0]
+
+    @property
+    def read_only(self):
+        return is_report_config_id_static(self.report_id) if self.report_id is not None else False
+
+    @property
+    @memoized
+    def edit_form(self):
+        if self.request.method == 'POST':
+            return ConfigurableReportEditForm(
+                self.domain, self.config, self.read_only,
+                data=self.request.POST)
+        return ConfigurableReportEditForm(self.domain, self.config, self.read_only)
+
+    def post(self, request, *args, **kwargs):
+        if self.edit_form.is_valid():
+            self.edit_form.save(commit=True)
+            messages.success(request, _(u'Report "{}" saved!').format(self.config.title))
+            return HttpResponseRedirect(reverse(
+                'edit_configurable_report', args=[self.domain, self.config._id])
+            )
+        return self.get(request, *args, **kwargs)
+
+
+class EditConfigReportView(BaseEditConfigReportView):
+    urlname = 'edit_configurable_report'
+    page_title = ugettext_lazy("Edit Report")
+
+
+class CreateConfigReportView(BaseEditConfigReportView):
+    urlname = 'create_configurable_report'
+    page_title = ugettext_lazy("Create Report")
 
 
 class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
-    @use_bootstrap3
     @use_select2
     @use_daterangepicker
     @use_datatables
@@ -192,10 +270,6 @@ def paywall_home(domain):
 
 class ReportBuilderPaywallBase(BaseDomainView):
     page_title = ugettext_lazy('Subscribe')
-
-    @use_bootstrap3
-    def dispatch(self, *args, **kwargs):
-        return super(ReportBuilderPaywallBase, self).dispatch(*args, **kwargs)
 
     @property
     def section_name(self):
@@ -531,20 +605,59 @@ class ConfigureChartReport(ReportBuilderView):
 
     @property
     def page_context(self):
+        try:
+            report_form = self.report_form
+        except Exception as e:
+            self.template_name = 'userreports/report_error.html'
+            error_response = {
+                'report_id': self.existing_report.get_id,
+                'is_static': self.existing_report.is_static,
+                'error_message': '',
+                'details': unicode(e)
+            }
+            return self._handle_exception(error_response, e)
+
         return {
             'report': {
                 "title": self.page_name
             },
             'report_type': self.report_type,
-            'form': self.report_form,
+            'form': report_form,
             'editing_existing_report': bool(self.existing_report),
-            'property_options': [p._asdict() for p in self.report_form.data_source_properties.values()],
-            'initial_filters': [f._asdict() for f in self.report_form.initial_filters],
+            'property_options': [p._asdict() for p in report_form.data_source_properties.values()],
+            'initial_filters': [f._asdict() for f in report_form.initial_filters],
             'initial_columns': [
-                c._asdict() for c in getattr(self.report_form, 'initial_columns', [])
+                c._asdict() for c in getattr(report_form, 'initial_columns', [])
             ],
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
+
+    def _handle_exception(self, response, exception):
+        if self.existing_report and self.existing_report.report_meta.edited_manually:
+            error_message_base = _(
+                'It looks like this report was edited by hand and is no longer editable in report builder.'
+            )
+            if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
+                error_message = '{} {}'.format(error_message_base, _(
+                    'You can edit the report manually using the <a href="{}">advanced UI</a>.'
+                ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
+            else:
+                error_message = '{} {}'.format(
+                    error_message_base,
+                    _('You can delete and recreate this report using the button below, or '
+                      'report an issue if you believe you are seeing this page in error.')
+                )
+            response['error_message'] = error_message
+            return response
+        elif isinstance(exception, DataSourceConfigurationNotFoundError):
+            response['details'] = None
+            response['error_message'] = '{} {}'.format(
+                str(exception),
+                DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+            )
+            return response
+        else:
+            raise
 
     @property
     @memoized
@@ -689,23 +802,6 @@ class ConfigureMapReport(ConfigureChartReport):
         return ConfigureMapReportForm
 
 
-def _edit_report_shared(request, domain, config, read_only=False):
-    if request.method == 'POST':
-        form = ConfigurableReportEditForm(domain, config, read_only, data=request.POST)
-        if form.is_valid():
-            form.save(commit=True)
-            messages.success(request, _(u'Report "{}" saved!').format(config.title))
-            return HttpResponseRedirect(reverse('edit_configurable_report', args=[domain, config._id]))
-    else:
-        form = ConfigurableReportEditForm(domain, config, read_only)
-    context = _shared_context(domain)
-    context.update({
-        'form': form,
-        'report': config
-    })
-    return render(request, "userreports/edit_report_config.html", context)
-
-
 def delete_report(request, domain, report_id):
     if not (toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
             or toggle_enabled(request, toggles.REPORT_BUILDER)
@@ -716,15 +812,15 @@ def delete_report(request, domain, report_id):
     config = get_document_or_404(ReportConfiguration, domain, report_id)
 
     # Delete the data source too if it's not being used by any other reports.
-    data_source, __ = get_datasource_config_or_404(config.config_id, domain)
-    if data_source.get_report_count() <= 1:
-        # No other reports reference this data source.
-        try:
+    try:
+        data_source, __ = get_datasource_config(config.config_id, domain)
+    except DataSourceConfigurationNotFoundError:
+        # It's possible the data source has already been deleted, but that's fine with us.
+        pass
+    else:
+        if data_source.get_report_count() <= 1:
+            # No other reports reference this data source.
             data_source.deactivate()
-        except Http404:
-            # It's possible the data source has already been deleted, but
-            # that's fine with us.
-            pass
 
     config.delete()
     did_purge_something = purge_report_from_mobile_ucr(config)
@@ -742,28 +838,39 @@ def delete_report(request, domain, report_id):
     return HttpResponseRedirect(redirect)
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def import_report(request, domain):
-    if request.method == "POST":
-        spec = request.POST['report_spec']
+class ImportConfigReportView(BaseUserConfigReportsView):
+    page_title = ugettext_lazy("Import Report")
+    template_name = "userreports/import_report.html"
+    urlname = 'import_configurable_report'
+
+    @property
+    def spec(self):
+        if self.request.method == "POST":
+            return self.request.POST['report_spec']
+        return ''
+
+    def post(self, request, *args, **kwargs):
         try:
-            json_spec = json.loads(spec)
+            json_spec = json.loads(self.spec)
             if '_id' in json_spec:
                 del json_spec['_id']
-            json_spec['domain'] = domain
+            json_spec['domain'] = self.domain
             report = ReportConfiguration.wrap(json_spec)
             report.validate()
             report.save()
             messages.success(request, _('Report created!'))
-            return HttpResponseRedirect(reverse('edit_configurable_report', args=[domain, report._id]))
+            return HttpResponseRedirect(reverse(
+                EditConfigReportView.urlname, args=[self.domain, report._id]
+            ))
         except (ValueError, BadSpecError) as e:
             messages.error(request, _('Bad report source: {}').format(e))
-    else:
-        spec = _('paste report source here')
-    context = _shared_context(domain)
-    context['spec'] = spec
-    return render(request, "userreports/import_report.html", context)
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'spec': self.spec,
+        }
 
 
 @login_and_domain_required
@@ -774,27 +881,21 @@ def report_source_json(request, domain, report_id):
     return json_response(config)
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def edit_data_source(request, domain, config_id):
-    config, is_static = get_datasource_config_or_404(config_id, domain)
-    return _edit_data_source_shared(request, domain, config, read_only=is_static)
+class CreateDataSourceFromAppView(BaseUserConfigReportsView):
+    urlname = 'create_configurable_data_source_from_app'
+    template_name = "userreports/data_source_from_app.html"
+    page_title = ugettext_lazy("Create Data Source from Application")
 
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return ConfigurableDataSourceFromAppForm(self.domain, self.request.POST)
+        return ConfigurableDataSourceFromAppForm(self.domain)
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def create_data_source(request, domain):
-    return _edit_data_source_shared(request, domain, DataSourceConfiguration(domain=domain), create=True)
-
-
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-def create_data_source_from_app(request, domain):
-    if request.method == 'POST':
-        form = ConfigurableDataSourceFromAppForm(domain, request.POST)
-        if form.is_valid():
-            # save config
-            app_source = form.app_source_helper.get_app_source(form.cleaned_data)
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            app_source = self.form.app_source_helper.get_app_source(self.form.cleaned_data)
             app = Application.get(app_source.application)
             if app_source.source_type == 'case':
                 data_source = get_case_data_source(app, app_source.source)
@@ -807,40 +908,100 @@ def create_data_source_from_app(request, domain):
                 data_source.save()
                 messages.success(request, _(u"Data source created for '{}'".format(xform.default_name())))
 
-            return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, data_source._id]))
-    else:
-        form = ConfigurableDataSourceFromAppForm(domain)
-    context = _shared_context(domain)
-    context['sources_map'] = form.app_source_helper.all_sources
-    context['form'] = form
-    return render(request, 'userreports/data_source_from_app.html', context)
+            return HttpResponseRedirect(reverse(
+                EditDataSourceView.urlname, args=[self.domain, data_source._id]
+            ))
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'sources_map': self.form.app_source_helper.all_sources,
+            'form': self.form,
+        }
 
 
-def _edit_data_source_shared(request, domain, config, read_only=False, create=False):
-    if request.method == 'POST':
-        form = ConfigurableDataSourceEditForm(domain, config, read_only, data=request.POST)
-        if form.is_valid():
-            config = form.save(commit=True)
-            messages.success(request, _(u'Data source "{}" saved!').format(config.display_name))
-            if create:
-                # if we just created a data source, redirect to the edit view to avoid creating a new one
-                return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
-    else:
-        form = ConfigurableDataSourceEditForm(domain, config, read_only)
-    context = _shared_context(domain)
-    context.update({
-        'form': form,
-        'data_source': config,
-        'read_only': read_only
-    })
-    if config.is_deactivated:
-        messages.info(
-            request, _(
-                'Data source "{}" has no associated table.\n'
-                'Click "Rebuild Data Source" to recreate the table.'
-            ).format(config.display_name)
+class BaseEditDataSourceView(BaseUserConfigReportsView):
+    template_name = 'userreports/edit_data_source.html'
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.edit_form,
+            'data_source': self.config,
+            'read_only': self.read_only
+        }
+
+    @property
+    def page_url(self):
+        if self.config_id:
+            return reverse(self.urlname, args=(self.domain, self.config_id,))
+        return super(BaseEditDataSourceView, self).page_url
+
+    @property
+    def config_id(self):
+        return self.kwargs.get('config_id')
+
+    @property
+    def read_only(self):
+        return id_is_static(self.config_id) if self.config_id is not None else False
+
+    @property
+    @memoized
+    def config(self):
+        if self.config_id is None:
+            return DataSourceConfiguration(domain=self.domain)
+        return get_datasource_config_or_404(self.config_id, self.domain)[0]
+
+    @property
+    @memoized
+    def edit_form(self):
+        if self.request.method == 'POST':
+            return ConfigurableDataSourceEditForm(
+                self.domain,
+                self.config,
+                self.read_only,
+                data=self.request.POST
+            )
+        return ConfigurableDataSourceEditForm(
+            self.domain, self.config, self.read_only
         )
-    return render(request, "userreports/edit_data_source.html", context)
+
+    def post(self, request, *args, **kwargs):
+        if self.edit_form.is_valid():
+            config = self.edit_form.save(commit=True)
+            messages.success(request, _(u'Data source "{}" saved!').format(
+                config.display_name
+            ))
+            if self.config_id is None:
+                return HttpResponseRedirect(reverse(
+                    EditDataSourceView.urlname, args=[self.domain, config._id])
+                )
+        return self.get(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        if self.config.is_deactivated:
+            messages.info(
+                request, _(
+                    'Data source "{}" has no associated table.\n'
+                    'Click "Rebuild Data Source" to recreate the table.'
+                ).format(self.config.display_name)
+            )
+        return super(BaseEditDataSourceView, self).get(request, *args, **kwargs)
+
+
+class CreateDataSourceView(BaseEditDataSourceView):
+    urlname = 'create_configurable_data_source'
+    page_title = ugettext_lazy("Create Data Source")
+
+
+class EditDataSourceView(BaseEditDataSourceView):
+    urlname = 'edit_configurable_data_source'
+    page_title = ugettext_lazy("Edit Data Source")
+
+    @property
+    def page_name(self):
+        return "Edit {}".format(self.config.display_name)
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -877,8 +1038,10 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id)
-    return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
+    rebuild_indicators.delay(config_id, request.user.username)
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -905,8 +1068,10 @@ def resume_building_data_source(request, domain, config_id):
             request,
             _(u'Resuming rebuilding table "{}".').format(config.display_name)
         )
-        resume_building_indicators.delay(config_id)
-    return HttpResponseRedirect(reverse('edit_configurable_data_source', args=[domain, config._id]))
+        resume_building_indicators.delay(config_id, request.user.username)
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
 
 
 @login_and_domain_required
@@ -917,21 +1082,34 @@ def data_source_json(request, domain, config_id):
     return json_response(config)
 
 
-@login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-@swallow_programming_errors
-def preview_data_source(request, domain, config_id):
-    config, is_static = get_datasource_config_or_404(config_id, domain)
-    adapter = IndicatorSqlAdapter(config)
-    q = adapter.get_query_object()
-    context = _shared_context(domain)
-    context.update({
-        'data_source': config,
-        'columns': q.column_descriptions,
-        'data': q[:20],
-        'total_rows': q.count(),
-    })
-    return render(request, "userreports/preview_data.html", context)
+class PreviewDataSourceView(BaseUserConfigReportsView):
+    urlname = 'preview_configurable_data_source'
+    template_name = "userreports/preview_data.html"
+    page_title = ugettext_lazy("Preview Data Source")
+
+    @method_decorator(swallow_programming_errors)
+    def dispatch(self, request, *args, **kwargs):
+        return super(PreviewDataSourceView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def config_id(self):
+        return self.kwargs['config_id']
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.config_id,))
+
+    @property
+    def page_context(self):
+        config, is_static = get_datasource_config_or_404(self.config_id, self.domain)
+        adapter = IndicatorSqlAdapter(config)
+        q = adapter.get_query_object()
+        return {
+            'data_source': config,
+            'columns': q.column_descriptions,
+            'data': q[:20],
+            'total_rows': q.count(),
+        }
 
 
 ExportParameters = namedtuple('ExportParameters',

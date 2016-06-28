@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.forms.forms import NON_FIELD_ERRORS
-from django.forms.util import ErrorList
+from django.forms.utils import ErrorList
 from django.core.urlresolvers import reverse
 from django.http import (
     HttpResponse,
@@ -18,8 +18,11 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.encoders import LazyEncoder
-from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
-    use_jquery_ui, use_jquery_ui_multiselect
+from corehq.apps.style.decorators import (
+    use_select2,
+    use_jquery_ui,
+    use_multiselect,
+)
 from corehq.util.translation import localize
 
 from dimagi.utils.decorators.memoized import memoized
@@ -87,10 +90,7 @@ class AccountingSectionView(BaseSectionPageView):
         return reverse('accounting_default')
 
     @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
-    @use_bootstrap3
-    @use_jquery_ui
     @use_select2
-    @use_jquery_ui_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)
 
@@ -230,6 +230,10 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         Select2BillingInfoHandler,
     ]
 
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewSubscriptionView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def account_id(self):
@@ -298,6 +302,10 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     async_handlers = [
         Select2BillingInfoHandler,
     ]
+
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditSubscriptionView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -504,6 +512,10 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         FeatureRateAsyncHandler,
         SoftwareProductRateAsyncHandler,
     ]
+
+    @use_multiselect
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditSoftwarePlanView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

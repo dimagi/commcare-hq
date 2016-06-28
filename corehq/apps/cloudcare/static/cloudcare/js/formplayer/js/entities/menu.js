@@ -50,6 +50,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
             var domain = user.domain;
+            var formplayerUrl = user.formplayer_url;
             var trimmedUsername = username.substring(0, username.indexOf("@"));
 
             var menus = new Entities.MenuSelectCollection({
@@ -72,7 +73,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         options.data.selections = stepList;
                     }
 
-                    options.url = 'http://localhost:8090/navigate_menu';
+                    options.url = formplayerUrl + '/navigate_menu';
                     options.type = 'POST';
                     options.dataType = "json";
                     options.crossDomain = { crossDomain: true};

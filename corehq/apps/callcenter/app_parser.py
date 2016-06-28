@@ -46,9 +46,10 @@ def get_indicators_used_in_app(app):
 def _get_indicators_used_in_modules(app):
     indicators = set()
     for module in app.get_modules():
-        details = module.case_details
-        indicators = indicators.union(_get_indicators_in_detail(details.short))
-        indicators = indicators.union(_get_indicators_in_detail(details.long))
+        details = getattr(module, 'case_details', None)
+        if details:
+            indicators = indicators.union(_get_indicators_in_detail(details.short))
+            indicators = indicators.union(_get_indicators_in_detail(details.long))
 
     return indicators
 

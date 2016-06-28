@@ -31,7 +31,7 @@
 {% endblock %}
 {% block filter_js %}
     <script type="text/javascript">
-        $.getScript("{% new_static 'm4change/javascripts/daterangepicker.js' %}", function () {
+        $.getScript("{% static 'm4change/javascripts/daterangepicker.js' %}", function () {
             var separator = '{{ separator }}';
             var report_labels = JSON.parse('{{ report_labels|safe }}');
 

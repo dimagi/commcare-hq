@@ -5,7 +5,6 @@ import time
 from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
     get_case_ids_in_domain
 import sys
-import gevent
 from restkit.session import set_session
 set_session("gevent")
 from gevent.pool import Pool

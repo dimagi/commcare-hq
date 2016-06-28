@@ -1,8 +1,13 @@
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
-from corehq.apps.style.decorators import use_bootstrap3, use_datatables, \
-    use_nvd3, use_jquery_ui
+
+from corehq.apps.builds.utils import get_all_versions
+from corehq.apps.es import FormES
+from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm
+from corehq.apps.style.decorators import (
+    use_nvd3,
+)
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
@@ -650,8 +655,8 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
     base_template = "hqadmin/domain_faceted_report.html"
 
     @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(AdminDomainStatsReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(AdminDomainStatsReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def template_context(self):
@@ -700,6 +705,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             DataTablesColumn(_("# Form Submissions in last 30 days"), sort_type=DTSortType.NUMERIC,
                              prop_name="cp_n_forms_30_d"),
             DataTablesColumn(_("First Form Submission"), prop_name="cp_first_form"),
+            DataTablesColumn(_("300th Form Submission"), prop_name="cp_300th_form"),
             DataTablesColumn(_("Last Form Submission"), prop_name="cp_last_form"),
             DataTablesColumn(_("# Web Users"), sort_type=DTSortType.NUMERIC,
                              prop_name="cp_n_web_users",
@@ -751,13 +757,13 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             11: "cp_n_cases",
             12: "cp_n_forms",
             13: "cp_n_forms_30_d",
-            16: "cp_n_web_users",
-            29: "cp_n_out_sms",
-            30: "cp_n_in_sms",
-            31: "cp_n_sms_ever",
-            32: "cp_n_sms_in_30_d",
-            33: "cp_n_sms_out_30_d",
-            36: "cp_j2me_90_d_bool",
+            17: "cp_n_web_users",
+            30: "cp_n_out_sms",
+            31: "cp_n_in_sms",
+            32: "cp_n_sms_ever",
+            33: "cp_n_sms_in_30_d",
+            34: "cp_n_sms_out_30_d",
+            35: "cp_j2me_90_d_bool",
         }
 
         def stat_row(name, what_to_get, type='float'):
@@ -807,6 +813,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
                     dom.get("cp_n_forms", _("Not yet calculated")),
                     dom.get("cp_n_forms_30_d", _("Not yet calculated")),
                     format_date(dom.get("cp_first_form"), first_form_default_message),
+                    format_date(dom.get('cp_300th_form'), _('No 300th form')),
                     format_date(dom.get("cp_last_form"), _("No forms")),
                     dom.get("cp_n_web_users", _("Not yet calculated")),
                     dom.get('internal', {}).get('notes') or _('No notes'),
@@ -1166,3 +1173,52 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
         row = super(DeviceLogSoftAssertReport, self)._create_row(log, *args, **kwargs)
         row.append(log.domain)
         return row
+
+
+class CommCareVersionReport(AdminFacetedReport):
+    slug = "commcare_version"
+    name = ugettext_lazy("CommCare Version")
+    es_facet_list = DOMAIN_FACETS
+    es_facet_mapping = FACET_MAPPING
+    facet_title = ugettext_noop("Project Facets")
+
+    @property
+    def headers(self):
+        versions = get_all_versions()
+        headers = DataTablesHeader(
+            DataTablesColumn(_("Project"))
+        )
+        for version in versions:
+            headers.add_column(DataTablesColumn(version))
+        return headers
+
+    def es_query(self, params=None, size=None):
+        size = size if size is not None else self.pagination.count
+        return es_domain_query(params, self.es_facet_list, sort=self.get_sorting_block(),
+                               start_at=self.pagination.start, size=size, fields=['name'])
+
+    @property
+    def rows(self):
+        versions = get_all_versions()
+        now = datetime.utcnow()
+        days = now - timedelta(days=90)
+
+        def get_data(domains):
+            terms = [
+                AggregationTerm('domain', 'domain'),
+                AggregationTerm('commcare_version', 'form.meta.commcare_version')
+            ]
+            query = FormES().submitted(gte=days, lte=now).domain(domains).size(0)
+            return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
+        rows = {}
+        for domain in self.es_results.get('hits', {}).get('hits', []):
+            domain_name = domain['fields']['name']
+            rows.update({domain_name: [domain_name] + [0] * len(versions)})
+
+        for data in get_data(rows.keys()):
+            row = rows.get(data.domain, None)
+            if row and data.commcare_version in versions:
+                version_index = versions.index(data.commcare_version)
+                row[version_index + 1] = data.doc_count
+
+        return rows.values()
