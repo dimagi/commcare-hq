@@ -99,7 +99,8 @@ class RegisterNewWebUserForm(forms.Form):
                         data_bind="click: nextStep, disable: disableNextStepOne"
                     )
                 ),
-                css_class="form-step step-1"
+                css_class="form-step step-1",
+                style="display: none;"
             ),
             crispy.Div(
                 crispy.Fieldset(

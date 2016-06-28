@@ -47,8 +47,15 @@ hqDefine('registration/js/new_user.ko.js', function () {
         _private.showPasswordFeedback = true;
     };
 
+    module.onModuleLoad = function () {
+        throw "overwrite onModule load to remove loading indicators";
+    };
+
     module.FormViewModel = function (defaults, containerSelector, steps) {
         var self = this;
+        
+        module.onModuleLoad();
+
         // add a short delay to some of the validators so that
         var _rateLimit = { rateLimit: { method: "notifyWhenChangesStop", timeout: 400 } };
 
