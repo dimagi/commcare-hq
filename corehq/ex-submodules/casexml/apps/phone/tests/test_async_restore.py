@@ -10,7 +10,7 @@ from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.tests.util import (
     delete_all_cases,
     delete_all_sync_logs,
- )
+)
 from corehq.apps.domain.models import Domain
 from casexml.apps.phone.restore import (
     RestoreConfig,

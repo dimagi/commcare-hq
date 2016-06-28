@@ -513,7 +513,7 @@ class RestoreConfig(object):
     :param restore_user:    The restore user requesting the restore
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
-    :param async:			Whether to get the restore response using a celery task
+    :param async:           Whether to get the restore response using a celery task
     """
 
     def __init__(self, project=None, restore_user=None, params=None, cache_settings=None, async=False):
