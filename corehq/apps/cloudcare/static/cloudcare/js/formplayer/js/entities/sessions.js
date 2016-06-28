@@ -2,6 +2,7 @@
 
 /**
  * Backbone model for listing and selecting FormEntrySessions
+ * TODO Shares too much logic with menu.js which should be refactored
  */
 
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
