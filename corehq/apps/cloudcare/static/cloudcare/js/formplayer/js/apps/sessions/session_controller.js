@@ -14,13 +14,5 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function(SessionList, F
                 FormplayerFrontend.regions.main.show(sessionListView);
             });
         },
-
-        startForm: function(sessionId){
-            var fetchingForm = FormplayerFrontend.request("getIncompleteForm", sessionId);
-            $.when(fetchingForm).done(function (response) {
-                FormplayerFrontend.request('startForm', response, this.app_id);
-            });
-
-        },
     };
 });

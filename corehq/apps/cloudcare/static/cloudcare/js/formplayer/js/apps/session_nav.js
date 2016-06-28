@@ -38,7 +38,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         },
 
         getIncompleteForm: function(sessionId) {
-            SessionNavigate.SessionList.Controller.startForm(sessionId);
+            FormplayerFrontend.request("getIncompleteForm", sessionId);
         },
     };
 
