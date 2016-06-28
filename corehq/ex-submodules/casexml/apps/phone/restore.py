@@ -16,7 +16,7 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException,
 )
-from casexml.apps.phone.tasks import get_async_restore_payload
+from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
@@ -598,16 +598,17 @@ class RestoreConfig(object):
         return CachedResponse(payload)
 
     def _get_asynchronous_payload(self):
+        new_task = False
+        # fetch the task from celery
         task_id = self.cache.get(self.async_cache_key)
-        if task_id:
-            # a running task exists
-            # TODO: the task might actually have been deleted somewhere...
-            task = AsyncResult(task_id)
-            new_task = False
-        else:
+        task = AsyncResult(task_id)
+        task_exists = task.status == ASYNC_RESTORE_SENT
+
+        if not task_exists:
             # start a new task
             task = get_async_restore_payload.delay(self)
             new_task = True
+
             # store the task id in cache
             self.cache.set(self.async_cache_key, task.id, timeout=None)
 

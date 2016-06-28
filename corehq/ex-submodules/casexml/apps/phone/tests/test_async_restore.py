@@ -20,7 +20,7 @@ from casexml.apps.phone.restore import (
     restore_cache_key,
 )
 from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
-from casexml.apps.phone.tasks import get_async_restore_payload
+from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -126,19 +126,19 @@ class AsyncRestoreTest(TestCase):
             self.assertIsNone(restore_config.restore_state.current_sync_log)
 
         # Second sync, don't timeout (can't use AsyncResult in tests, so mock
-        # the return value). Ensure that the synclog is updated properly
-        with mock.patch.object(AsyncResult, 'get', mock.MagicMock(return_value=FileRestoreResponse())):
-            subsequent_restore = self._restore_config(async=True)
-            self.assertIsNotNone(restore_config.cache.get(cache_id))
-            subsequent_payload = subsequent_restore.get_payload()
+        # the return value).
+        file_restore_response = mock.MagicMock(return_value=FileRestoreResponse())
+        with mock.patch.object(AsyncResult, 'get', file_restore_response) as get_result:
+            with mock.patch.object(AsyncResult, 'status', ASYNC_RESTORE_SENT):
+                subsequent_restore = self._restore_config(async=True)
+                self.assertIsNotNone(restore_config.cache.get(cache_id))
+                subsequent_restore.get_payload()
 
-            # if the task actually ran, the cache should now not have the task id,
-            # however, the task is not run in this test. See `test_completed_task_deletes_cache`
-            # self.assertIsNone(restore_config.cache.get(cache_id))
+                # if the task actually ran, the cache should now not have the task id,
+                # however, the task is not run in this test. See `test_completed_task_deletes_cache`
+                # self.assertIsNone(restore_config.cache.get(cache_id))
 
-            self.assertTrue(isinstance(subsequent_payload, FileRestoreResponse))
-            # a new synclog should not have been created
-            self.assertIsNone(subsequent_restore.restore_state.current_sync_log)
+                get_result.assert_called_with(timeout=1)
 
     def test_completed_task_deletes_cache(self):
         cache_id = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id)

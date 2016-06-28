@@ -1,10 +1,12 @@
-from celery import current_task
+from celery import current_task, current_app
 from celery.schedules import crontab
 from celery.task import periodic_task, task
+from celery.signals import after_task_publish
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
 
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
+ASYNC_RESTORE_SENT = "SENT"
 
 
 @periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="1"),
@@ -38,3 +40,15 @@ def get_async_restore_payload(restore_config):
     restore_config.cache.delete(restore_config.async_cache_key)
 
     return response
+
+
+@after_task_publish.connect
+def update_celery_state(sender=None, body=None, **kwargs):
+    """Used to update celery state so we know if an async restore made it to celery
+    """
+    # http://stackoverflow.com/questions/9824172/find-out-whether-celery-task-exists/10089358
+
+    task = current_app.tasks.get(sender)
+    backend = task.backend if task else current_app.backend
+
+    backend.store_result(body['id'], None, ASYNC_RESTORE_SENT)
