@@ -8,6 +8,9 @@ from corehq import toggles
 
 
 class LocationGroupFilter(ExpandedMobileWorkerFilter):
+    """
+    Displays a list of locations and groups to select from to filter report
+    """
     slug = "grouplocationfilter"
     label = ugettext_lazy("Groups or Locations")
     default_options = None
