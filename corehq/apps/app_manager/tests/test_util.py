@@ -94,20 +94,9 @@ class SchemaTest(SimpleTestCase):
     def setUp(self):
         self.factory = AppFactory()
 
-    def test_get_casedb_schema_empty_app(self):
-        schema = util.get_casedb_schema(self.factory.app)
-        self.assert_has_kv_pairs(schema, {
-            "id": "casedb",
-            "uri": "jr://instance/casedb",
-            "name": "case",
-            "path": "/casedb/case",
-            "structure": {},
-            "subsets": [],
-        })
-
     def test_get_casedb_schema_with_form(self):
-        self.add_form("village")
-        schema = util.get_casedb_schema(self.factory.app, "village")
+        village = self.add_form("village")
+        schema = util.get_casedb_schema(village)
         self.assertEqual(len(schema["subsets"]), 1, schema["subsets"])
         self.assert_has_kv_pairs(schema["subsets"][0], {
             'id': 'case',
@@ -118,21 +107,21 @@ class SchemaTest(SimpleTestCase):
         })
 
     def test_get_casedb_schema_with_related_case_types(self):
-        self.add_form("family")
+        family = self.add_form("family")
         village = self.add_form("village")
         self.factory.form_opens_case(village, case_type='family', is_subcase=True)
-        schema = util.get_casedb_schema(self.factory.app, "family")
+        schema = util.get_casedb_schema(family)
         subsets = {s["id"]: s for s in schema["subsets"]}
         self.assertEqual(subsets["parent"]["related"], None)
         self.assertDictEqual(subsets["case"]["related"], {"parent": "parent"})
 
     def test_get_casedb_schema_with_multiple_parent_case_types(self):
-        self.add_form("referral")
+        referral = self.add_form("referral")
         child = self.add_form("child")
         self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
         pregnancy = self.add_form("pregnancy")
         self.factory.form_opens_case(pregnancy, case_type='referral', is_subcase=True)
-        schema = util.get_casedb_schema(self.factory.app, 'referral')
+        schema = util.get_casedb_schema(referral)
         subsets = {s["id"]: s for s in schema["subsets"]}
         self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$',
                         subsets["parent"]["name"]))

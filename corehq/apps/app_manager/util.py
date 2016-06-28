@@ -321,12 +321,13 @@ def get_all_case_properties(app):
     return get_case_properties(app, app.get_case_types(), defaults=('name',))
 
 
-# TODO: pass in form instead of app
-def get_casedb_schema(app, base_case_type=None):
+def get_casedb_schema(form):
     """Get case database schema definition for vellum to display as an external data source.
 
     This lists all case types and their properties for the given app.
     """
+    app = form.get_app()
+    base_case_type = form.get_module().case_type
     case_types = app.get_case_types()
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
