@@ -811,8 +811,8 @@ class DownloadGIRView(BaseAdminSectionView):
 
 def _gir_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
-    prev_month = "{year}-{month}-01".format(year=year, month=month-1)
-    two_ago = "{year}-{month}-01".format(year=year, month=month-2)
+    prev_month = "{year}-{month}-01".format(year=year, month=month - 1)
+    two_ago = "{year}-{month}-01".format(year=year, month=month - 2)
     queryset = GIRRow.objects.filter(month__in=[query_month, prev_month, two_ago]).order_by('-month')
     domain_months = defaultdict(list)
     for item in queryset:
