@@ -147,6 +147,11 @@ class AsyncRestoreTest(TestCase):
         get_async_restore_payload.delay(restore_config)
         self.assertIsNone(restore_config.cache.get(cache_id))
 
+    def test_completed_task_creates_sync_log(self):
+        restore_config = self._restore_config(async=True)
+        get_async_restore_payload.delay(restore_config)
+        self.assertIsNotNone(restore_config.restore_state.current_sync_log)
+
     def test_force_cache_on_async(self):
         restore_config = self._restore_config(async=True)
         self.assertTrue(restore_config.force_cache)
