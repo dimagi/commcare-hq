@@ -8,7 +8,13 @@
   background-color: lighten(@cc-text, 10%);
   min-height: 100%;
   width: 100%;
-  position: fixed;
+
+  opacity: 0;
+  .transition(opacity .2s ease-in-out);
+}
+
+.bg-full-cover-fixed.b-loaded {
+  opacity: 1.0;
 }
 
 .bg-primary {
@@ -18,4 +24,11 @@
 .bg-rounded {
   .border-top-radius(5px);
   .border-bottom-radius(5px);
+}
+
+.bg-container {
+  height: 100%;
+  width: 100%;
+  background-color: lighten(@cc-text, 10%);
+  position: fixed;
 }
