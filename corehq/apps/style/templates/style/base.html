@@ -519,12 +519,6 @@
         <script type="text/javascript">
           var hqLazy = new Blazy({
             container: 'body',
-            success: function(element) {
-                setTimeout(function(){
-                var parent = element.parentNode;
-                parent.className = parent.className.replace(/\bloading\b/,'');
-              }, 200);
-            }
           });
         </script>
         {% endif %}
