@@ -148,7 +148,10 @@ class PactFormAPI(DomainAPI):
 #                if data_row['script_case_id'] not in active_patients:
 #                    continue
                 try:
-                    xml_str = BlobHelper(data_row, db).fetch_attachment('form.xml').replace("<?xml version=\'1.0\' ?>", '').replace("<?xml version='1.0' encoding='UTF-8' ?>", '')
+                    xml_str = (BlobHelper(data_row, db)
+                        .fetch_attachment('form.xml')
+                        .replace("<?xml version=\'1.0\' ?>", '')
+                        .replace("<?xml version='1.0' encoding='UTF-8' ?>", ''))
                     yield xml_str
                 except Exception, ex:
                     logging.error("for downloader: error fetching attachment: %s" % ex)

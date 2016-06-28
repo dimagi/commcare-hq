@@ -33,7 +33,7 @@ def save(transform, database):
     def save():
         try:
             database.save_doc(transform.doc, force_update=True)
-        except ResourceNotFound, e:
+        except ResourceNotFound:
             # this is likely a document that was deleted locally that
             # you later want to copy back over there is a wacky hack
             # that you can use to handle this
@@ -41,7 +41,7 @@ def save(transform, database):
             transform.doc['_rev'] = rev
             database.save_doc(transform.doc)
     if transform.attachments:
-        obj = BlobHelper(doc, database)
+        obj = BlobHelper(transform.doc, database)
         with obj.atomic_blobs(save):
             for name, attach in transform.attachments.items():
                 content_type = transform._attachments[name]["content_type"]
