@@ -54,6 +54,7 @@ branches:
   - new-signup  # Biyeun 6/21
   - np/buckets/explicit-comm # Nick P 6/24
   - np/update-ui # Nick P 6/27
+  - np/update-user-buckets # Nick P 6/28
 submodules:
   deployment/commcare-hq-deploy:
     branches:
@@ -77,6 +78,7 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: []
+    branches:
+      - update-community-user-numbers # Nick P 6/28
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
