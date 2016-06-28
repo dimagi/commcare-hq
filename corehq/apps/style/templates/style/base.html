@@ -215,7 +215,7 @@
         {% endif %}
     </head>
     <body>
-        <div class="bg-container">{% block background_content %}{% endblock %}</div>
+        {% block background_content %}{% endblock %}
         {% maintenance_alert %}
         <!-- .hide used for A/B test of account creation page -->
         <div class="hq-container{% if is_register_user %} molly{% endif %}">
