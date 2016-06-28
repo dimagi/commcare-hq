@@ -135,7 +135,7 @@ class SchemaTest(SimpleTestCase):
         schema = util.get_casedb_schema(self.factory.app, 'referral')
         subsets = {s["id"]: s for s in schema["subsets"]}
         self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$', subsets["parent"]["name"]))
-        self.assertEqual(subsets["parent"]["structure"], {"case_name":{}})
+        self.assertEqual(subsets["parent"]["structure"], {"case_name": {}})
 
     def test_get_session_schema_for_module_with_no_case_type(self):
         form = self.add_form()
