@@ -79,12 +79,11 @@ class GIRRow(models.Model):
 
     class Meta:
         unique_together = ('month', 'domain_name')
+        index_together = ['domain_name', 'month']
 
-    @property
-    def export_row(self):
-        past_months = GIRRow.objects.filter(domain_name=self.domain_name, month__lt=self.month).order_by('-month')
+    def export_row(self, past_months):
         last_month = past_months[0] if past_months else None
-        two_months_ago = past_months[1] if len(past_months) > 1 else None
+        two_months_ago = past_months[1]  if len(past_months) > 1 else None
         wams_current = self.wams_current if self.wam else 0
         wams_1_prior = last_month.wams_current if last_month and self.wam else 0
         wams_2_prior = two_months_ago.wams_current if two_months_ago and self.wam else 0
