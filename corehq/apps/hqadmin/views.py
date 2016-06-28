@@ -822,7 +822,6 @@ def _gir_csv_response(month, year):
     response['Content-Disposition'] = u'attachment; filename=gir.csv'
     writer = csv.writer(response)
     writer.writerow(list(field_names))
-    import ipdb; ipdb.set_trace()
     for months in domain_months.values():
         writer.writerow(months[0].export_row(months[1:]))
     return response
