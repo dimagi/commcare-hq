@@ -1,5 +1,6 @@
-// From http://stackoverflow.com/questions/10523433/how-do-i-keep-the-current-tab-active-with-twitter-bootstrap-after-a-page-reload
+// hqDefine intentionally not used
 
+// From http://stackoverflow.com/questions/10523433/how-do-i-keep-the-current-tab-active-with-twitter-bootstrap-after-a-page-reload
 $(function() {
     $('a[data-toggle="tab"]').on('shown', function(e){
         //save the latest tab using a cookie:

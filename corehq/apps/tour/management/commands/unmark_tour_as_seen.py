@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from django.core.management.base import LabelCommand
-import sys
 from corehq.apps.tour.models import GuidedTour
 
 CONFIRM_SINGLE_USER = """Unmark Tour {tour_slug} as seen for User {username}?

@@ -139,7 +139,7 @@ class ReportDispatcher(View):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:
-                report.bootstrap3_dispatcher(
+                report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
                 return getattr(report, '%s_response' % render_as)

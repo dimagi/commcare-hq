@@ -6,7 +6,7 @@ import json
 from django.views.generic.base import TemplateView
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from corehq.apps.domain.views import BaseDomainView, LoginAndDomainMixin
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
@@ -26,7 +26,7 @@ from urllib2 import URLError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.base import ContentFile
 from django.core.servers.basehttp import FileWrapper
 from django.http import (
@@ -43,7 +43,7 @@ from django.http.response import (
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, get_language
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, get_language
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import (
     require_GET,
@@ -54,7 +54,6 @@ from django.views.generic import View
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
-from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -162,7 +161,6 @@ from .util import (
     users_matching_filter,
 )
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_jquery_ui,
     use_select2,
     use_datatables,
@@ -216,7 +214,6 @@ def old_saved_reports(request, domain):
 class BaseProjectReportSectionView(BaseDomainView):
     section_name = ugettext_lazy("Project Reports")
 
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         request.project = Domain.get_by_name(self.domain)
         if not hasattr(request, 'couch_user'):
@@ -792,31 +789,28 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
     config.filters = filters
 
-    report_id = None
-    if config.report and hasattr(config.report, '_id'):
-        report_id = config.report._id
-
-    body = _render_report_configs(request, [config],
-                                  domain,
-                                  user_id, request.couch_user,
-                                  True,
-                                  lang=request.couch_user.language,
-                                  notes=form.cleaned_data['notes'],
-                                  once=once,
-                                  report_id=report_id)[0].content
-
     subject = form.cleaned_data['subject'] or _("Email report from CommCare HQ")
+    content = _render_report_configs(
+        request, [config], domain, user_id, request.couch_user, True, lang=request.couch_user.language,
+        notes=form.cleaned_data['notes'], once=once
+    )[0]
 
     if form.cleaned_data['send_to_owner']:
-        send_html_email_async.delay(subject, request.couch_user.get_email(), body,
-                                    email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                                    ga_tracking_info={'project_space_id': request.domain})
+        email = request.couch_user.get_email()
+        body = render_full_report_notification(request, content).content
+
+        send_html_email_async.delay(
+            subject, email, body,
+            email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+            ga_tracking_info={'cd4': request.domain})
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
-            send_html_email_async.delay(subject, recipient, body,
-                                        email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                                        ga_tracking_info={'project_space_id': request.domain})
+            body = render_full_report_notification(request, content).content
+            send_html_email_async.delay(
+                subject, recipient, body,
+                email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+                ga_tracking_info={'cd4': request.domain})
 
     return HttpResponse()
 
@@ -1037,39 +1031,62 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class ReportNotificationUnsubscribeView(LoginAndDomainMixin, TemplateView):
+class ReportNotificationUnsubscribeView(TemplateView):
     template_name = 'reports/notification_unsubscribe.html'
     urlname = 'notification_unsubscribe'
+    not_found_error = ugettext_noop('Could not find the requested Scheduled Report')
+    broken_link_error = ugettext_noop('Invalid unsubscribe link')
     report = None
 
-    @use_bootstrap3
     def get(self, request, *args, **kwargs):
-        self.domain = request.domain
-        try:
-            self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
-            user_email = request.couch_user.get_email()
-            if user_email not in self.report.all_recipient_emails:
-                messages.error(request, _('You are already unsubscribed from this report.'))
-            else:
-                return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
-        except ResourceNotFound:
-            pass
-        return HttpResponseRedirect(reverse('homepage'))
+        if 'success' not in kwargs and 'error' not in kwargs:
+            try:
+                self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
+                email = kwargs.pop('user_email')
+
+                if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
+                    raise ValidationError(self.broken_link_error)
+                if email not in self.report.all_recipient_emails:
+                    raise ValidationError(ugettext_noop('This email address has already been unsubscribed.'))
+            except ResourceNotFound:
+                kwargs['error'] = self.not_found_error
+            except ValidationError as err:
+                kwargs['error'] = err.message
+
+        if 'error' in kwargs:
+            messages.error(request, ugettext_lazy(kwargs['error']))
+        elif 'success' in kwargs:
+            messages.success(request, ugettext_lazy(kwargs['success']))
+
+        return super(ReportNotificationUnsubscribeView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(ReportNotificationUnsubscribeView, self).get_context_data(**kwargs)
-        context.update({'domain': self.domain, 'report': self.report})
+        context.update({'report': self.report})
         return context
 
     def post(self, request, *args, **kwargs):
         try:
-            report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
-            report.remove_recipient(request.couch_user.get_email())
-            report.save()
-            messages.info(request, _('Successfully unsubscribed from report notification.'))
+            self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
+            email = kwargs.pop('user_email')
+
+            if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
+                raise ValidationError(self.broken_link_error)
+
+            self.report.remove_recipient(email)
+
+            if len(self.report.recipient_emails) > 0 or self.report.send_to_owner:
+                self.report.save()
+            else:
+                self.report.delete()
+
+            kwargs['success'] = ugettext_noop('Successfully unsubscribed from report notification.')
         except ResourceNotFound:
-            messages.error(request, _('Could not unsubscribe from report notification.'))
-        return HttpResponseRedirect(reverse('homepage'))
+            kwargs['error'] = self.not_found_error
+        except ValidationError as err:
+            kwargs['error'] = err.message
+
+        return self.get(request, *args, **kwargs)
 
 
 @login_and_domain_required
@@ -1110,8 +1127,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
 
-def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
-                                  email=True, attach_excel=False):
+def get_scheduled_report_response(couch_user, domain, scheduled_report_id, email=True, attach_excel=False):
     """
     This function somewhat confusingly returns a tuple of: (response, excel_files)
     If attach_excel is false, excel_files will always be an empty list.
@@ -1135,17 +1151,20 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
         email,
         attach_excel=attach_excel,
         lang=notification.language,
-        report_id=scheduled_report_id
     )
 
 
 def _render_report_configs(request, configs, domain, owner_id, couch_user, email,
-                           notes=None, attach_excel=False, once=False, lang=None, report_id=None):
+                           notes=None, attach_excel=False, once=False, lang=None):
+    """
+    Renders only notification's main content, which then may be used to generate full notification body.
+    """
     from dimagi.utils.web import get_url_base
 
     report_outputs = []
     excel_attachments = []
     format = Format.from_format(request.GET.get('format') or Format.XLS_2007)
+
     for config in configs:
         content, excel_file = config.get_report_content(lang, attach_excel=attach_excel)
         if excel_file:
@@ -1164,7 +1183,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
             "enddate": date_range.get("enddate") if date_range else "",
         })
 
-    return render(request, "reports/report_email.html", {
+    return render(request, "reports/report_email_content.html", {
         "reports": report_outputs,
         "domain": domain,
         "couch_user": owner_id,
@@ -1172,18 +1191,39 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "owner_name": couch_user.full_name or couch_user.get_email(),
         "email": email,
         "notes": notes,
-        "unsub_link": get_url_base() + reverse('notification_unsubscribe', kwargs={
-            'scheduled_report_id': report_id, 'domain': domain}) if report_id else None,
         "report_type": _("once off report") if once else _("scheduled report"),
-    }), excel_attachments
+    }).content, excel_attachments
+
+
+def render_full_report_notification(request, content, email=None, report_notification=None):
+    """
+    Renders full notification body with provided main content.
+    """
+    from dimagi.utils.web import get_url_base
+    from django.http import HttpRequest
+
+    if request is None:
+        request = HttpRequest()
+
+    unsub_link = None
+    if report_notification and email:
+        unsub_link = get_url_base() + reverse('notification_unsubscribe', kwargs={
+            'scheduled_report_id': report_notification._id,
+            'user_email': email,
+            'scheduled_report_secret': report_notification.get_secret(email)
+        })
+
+    return render(request, "reports/report_email.html", {
+        'email_content': content,
+        'unsub_link': unsub_link
+    })
 
 
 @login_and_domain_required
 @permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
-    return get_scheduled_report_response(
-        request.couch_user, domain, scheduled_report_id, email=False
-    )[0]
+    content = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
+    return render_full_report_notification(request, content)
 
 
 class CaseDetailsView(BaseProjectReportSectionView):
@@ -1211,7 +1251,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
     def case_instance(self):
         try:
             case = CaseAccessors(self.domain).get_case(self.case_id)
-            if case.domain != self.domain:
+            if case.domain != self.domain or case.is_deleted:
                 return None
             return case
         except CaseNotFound:
@@ -1227,17 +1267,14 @@ class CaseDetailsView(BaseProjectReportSectionView):
 
     @property
     def page_context(self):
-        if not should_use_sql_backend(self.domain):
-            # TODO: make this work for SQL
-            create_actions = filter(lambda a: a.action_type == CASE_ACTION_CREATE,
-                                    self.case_instance.actions)
-            if not create_actions:
-                messages.error(self.request, _(
-                    "The case creation form could not be found. "
-                    "Usually this happens if the form that created the case is archived "
-                    "but there are other forms that updated the case. "
-                    "To fix this you can archive the other forms listed here."
-                ))
+        opening_transactions = self.case_instance.get_opening_transactions()
+        if not opening_transactions:
+            messages.error(self.request, _(
+                "The case creation form could not be found. "
+                "Usually this happens if the form that created the case is archived "
+                "but there are other forms that updated the case. "
+                "To fix this you can archive the other forms listed here."
+            ))
         return {
             "case_id": self.case_id,
             "case": self.case_instance,
@@ -1673,7 +1710,6 @@ def download_form(request, domain, instance_id):
 
 class EditFormInstance(View):
 
-    @use_bootstrap3
     @method_decorator(require_form_view_permission)
     @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, request, *args, **kwargs):

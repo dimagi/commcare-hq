@@ -1,4 +1,5 @@
 from datetime import datetime
+import subprocess
 import time
 from optparse import make_option
 import sys
@@ -80,6 +81,11 @@ class PtopReindexer(NoArgsCommand):
     indexing_pillow_class = None
     file_prefix = "ptop_fast_reindex_"
     default_chunk_size = CHUNK_SIZE
+    # a function to sort view rows by before running reindex
+    sort_key = None
+    # set to true if sort_key function requires row['docs']
+    # (but pillow_class.include_docs is False)
+    sort_key_include_docs = False
 
     def __init__(self):
         super(PtopReindexer, self).__init__()
@@ -127,7 +133,8 @@ class PtopReindexer(NoArgsCommand):
         return paginate_view(*args, **kwargs)
 
     def full_couch_view_iter(self):
-        view_kwargs = {"include_docs": self.pillow.include_docs}
+        view_kwargs = {
+            "include_docs": self.pillow.include_docs or self.sort_key_include_docs}
         if self.couch_key is not None:
             view_kwargs["key"] = self.couch_key
 
@@ -159,13 +166,52 @@ class PtopReindexer(NoArgsCommand):
             fout.write(str(current_db_seq))
 
         # Load entire view to disk
+        if self.sort_key:
+            self._load_from_view_and_sort()
+        else:
+            self._load_from_view()
+        self.log("View and sequence written to disk: %s" % datetime.utcnow().isoformat())
+
+    def _load_from_view_and_sort(self):
+        """
+        load view rows, sorted as specified by sort_key, into a file
+        via a temporary file with the '.presort.tmp' suffix
+
+        implementation walkthrough:
+            - dumps sort-key-prefixed rows into  *.presort.tmp using the line format:
+                <sort key> <TAB> <row json>
+            - uses POSIX sort the lines in descending order (by sort key since that begins lines)
+            - uses POSIX cut to remove the sort key column (and the <TAB>)
+            - writes the result to the file
+
+            this has the result of producing a file with the same format as _load_from_view
+            but with the rows sorted by sort_key
+
+        """
+        dump_filename = self.get_dump_filename()
+        dump_presort_filename = dump_filename + '.presort.tmp'
+        self.log('Writing dump file to disk: {}, starting at {}'.format(
+            dump_presort_filename, datetime.utcnow().isoformat()))
+        with open(dump_presort_filename, 'w') as fout:
+            for row in self.full_couch_view_iter():
+                sort_key = self.sort_key(row)
+                assert (isinstance(sort_key, basestring)
+                        and not any(c in sort_key for c in '\t\n\r')), repr(sort_key)
+                if self.sort_key_include_docs and not self.pillow_class.include_docs:
+                    del row['doc']
+                fout.write('{}\t{}\n'.format(sort_key, json.dumps(row)))
+        self.log('Sorting dump file and writing to: {}, starting at {}'.format(
+            dump_filename, datetime.utcnow().isoformat()))
+        with open(dump_filename, 'w') as fout, open(dump_presort_filename, 'r') as fin:
+            subprocess.check_call('sort -r | cut -f2', stdin=fin, stdout=fout, shell=True)
+
+    def _load_from_view(self):
         dump_filename = self.get_dump_filename()
         self.log('Writing dump file to disk: {}, starting at {}'.format(
             dump_filename, datetime.utcnow().isoformat()))
         with open(dump_filename, 'w') as fout:
             for row in self.full_couch_view_iter():
                 fout.write('{}\n'.format(json.dumps(row)))
-        self.log("View and sequence written to disk: %s" % datetime.utcnow().isoformat())
 
     def _load_seq_from_disk(self):
         self.log("Loading from disk: %s" % datetime.utcnow().isoformat())

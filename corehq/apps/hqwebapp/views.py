@@ -60,7 +60,6 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
-from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
@@ -382,7 +381,9 @@ def logout(req):
 
 @login_and_domain_required
 def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
-    return soil_views.retrieve_download(req, download_id, template, extra_context={'domain': domain})
+    next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
+    return soil_views.retrieve_download(req, download_id, template,
+                                        extra_context={'domain': domain, 'next_url': next_url})
 
 
 def dropbox_next_url(request, download_id):
@@ -1028,7 +1029,6 @@ class MaintenanceAlertsView(BasePageView):
     template_name = 'style/maintenance_alerts.html'
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(MaintenanceAlertsView, self).dispatch(request, *args, **kwargs)
 

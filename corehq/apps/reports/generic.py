@@ -18,7 +18,6 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_jquery_ui,
     use_datatables,
     use_select2,
@@ -697,12 +696,11 @@ class GenericReportView(object):
         """
         return []
 
-    @use_bootstrap3
     @use_jquery_ui
     @use_select2
     @use_datatables
     @use_daterangepicker
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+    def decorator_dispatcher(self, request, *args, **kwargs):
         """
         Decorate this method in your report subclass and call super to make sure
         appropriate decorators are used to render the page and its javascript
@@ -714,8 +712,8 @@ class GenericReportView(object):
             ...
 
             @use_nvd3
-            def bootstrap3_dispatcher(self, request, *args, **kwargs):
-                super(MyNewReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+            def decorator_dispatcher(self, request, *args, **kwargs):
+                super(MyNewReport, self).decorator_dispatcher(request, *args, **kwargs)
 
         """
         pass

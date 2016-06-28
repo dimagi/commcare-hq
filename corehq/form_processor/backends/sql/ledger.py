@@ -1,6 +1,3 @@
-from itertools import groupby
-from operator import attrgetter
-
 from corehq.apps.commtrack.processing import compute_ledger_values
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.change_publishers import publish_ledger_v2_saved
@@ -66,7 +63,6 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         ledger_value = ledger_db.get_ledger(stock_trans.ledger_reference)
         if not ledger_value:
             ledger_value = LedgerValue(**stock_trans.ledger_reference._asdict())
-            ledger_value.location_id = stock_trans.location_id
             ledger_value.domain = stock_report_helper.domain
             ledger_db.set_ledger(ledger_value)
         transaction = _get_ledger_transaction(

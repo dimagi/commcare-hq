@@ -14,10 +14,12 @@ class EWSTestReminders(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(EWSTestReminders, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
 
     def setUp(self):
+        super(EWSTestReminders, self).setUp()
         self.facility = make_loc('test-faciity', 'Test Facility', TEST_DOMAIN, 'Polyclinic')
         self.commodity = Product(domain=TEST_DOMAIN, name='Drug A', code_='ab', unit='cycle')
         self.commodity.save()

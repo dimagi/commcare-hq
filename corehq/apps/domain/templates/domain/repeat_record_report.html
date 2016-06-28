@@ -3,14 +3,14 @@
 {% load compress %}
 {% load i18n %}
 {% block stylesheets %}
-<link rel="stylesheet" href="{% new_static 'codemirror/lib/codemirror.css' %}"
+<link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"
 />{% endblock stylesheets %}
 
 {% compress js %}
 {% block js %}{{ block.super }}
-<script src="{% new_static 'codemirror/lib/codemirror.js' %}"></script>
-<script src="{% new_static 'codemirror/mode/xml/xml.js' %}"></script>
-<script src="{% new_static 'codemirror/mode/javascript/javascript.js' %}"></script>
+<script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+<script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
+<script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
 {% endblock js %}
 {% endcompress %}
 

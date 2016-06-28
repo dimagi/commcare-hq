@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations
 from corehq.doctypemigrations.djangomigrations import assert_initial_complete
 from corehq.doctypemigrations.migrator_instances import fixtures_migration
 from corehq.sql_db.operations import HqRunPython

@@ -163,13 +163,17 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def archive_form(form, user_id=None):
+        from corehq.form_processor.change_publishers import publish_form_saved
         FormAccessorSQL._archive_unarchive_form(form, user_id, True)
         form.state = XFormInstanceSQL.ARCHIVED
+        publish_form_saved(form)
 
     @staticmethod
     def unarchive_form(form, user_id=None):
+        from corehq.form_processor.change_publishers import publish_form_saved
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
         form.state = XFormInstanceSQL.NORMAL
+        publish_form_saved(form)
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
@@ -318,10 +322,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         # sort and add additional limit in memory in case the sharded setup returns more than
         # the requested number of cases
         return sorted(results, key=lambda form: form.received_on)[:limit]
-
-    @staticmethod
-    def forms_have_multimedia(domain, app_id, xmlns):
-        raise NotImplementedError
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -768,13 +768,6 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                     raise LedgerSaveError(e)
 
             ledger_value.clear_tracked_models()
-
-    @staticmethod
-    def get_ledger_values_for_product_ids(product_ids):
-        return RawQuerySetWrapper(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_product_ids(%s)',
-            [product_ids]
-        ))
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):

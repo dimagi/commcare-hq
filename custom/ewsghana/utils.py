@@ -1,23 +1,25 @@
 from collections import namedtuple
+from datetime import timedelta, datetime
 from decimal import Decimal
+
+from dateutil import rrule
 from dateutil.relativedelta import relativedelta
+from dateutil.rrule import MO
+
 from django.db.models.query_utils import Q
-from corehq.apps.accounting import generator
+from django.utils import html
+
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
+from corehq.apps.accounting.tests import generator
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType, Location
-from datetime import timedelta, datetime
-from dateutil import rrule
-from dateutil.rrule import MO
-from django.utils import html
-from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.util.quickcache import quickcache
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.sms.api import add_msg_tags, send_sms_to_verified_number, send_sms as core_send_sms
+from corehq.apps.sms.api import send_sms_to_verified_number, send_sms as core_send_sms
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import set_domain_default_backend_to_test_backend
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
+from corehq.util.quickcache import quickcache
 from custom.ewsghana.models import EWSGhanaConfig, EWSExtension
 from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 
@@ -136,13 +138,13 @@ def prepare_domain(domain_name):
     _make_loc_type(name="Polyclinic", parent_type=district)
     _make_loc_type(name="facility", parent_type=district)
 
-    generator.instantiate_accounting_for_tests()
+    generator.instantiate_accounting()
     account = BillingAccount.get_or_create_account_by_domain(
         domain.name,
         created_by="automated-test",
     )[0]
-    plan = DefaultProductPlan.get_default_plan_by_domain(
-        domain, edition=SoftwarePlanEdition.ADVANCED
+    plan = DefaultProductPlan.get_default_plan(
+        edition=SoftwarePlanEdition.ADVANCED
     )
     subscription = Subscription.new_domain_subscription(
         account,

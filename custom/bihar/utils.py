@@ -1,7 +1,5 @@
-from operator import attrgetter
 from django.utils.translation import ugettext_noop
 from corehq.apps.groups.models import Group
-from dimagi.utils.couch.cache import cache_core
 
 ASHA_ROLE = ugettext_noop('ASHA')
 AWW_ROLE = ugettext_noop('AWW')

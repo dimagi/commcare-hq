@@ -1,0 +1,507 @@
+{
+  "domains": [
+    "icds-sql",
+    "icds-test",
+    "icds-cas"
+  ],
+  "config": {
+    "table_id": "static-daily_feeding_forms",
+    "display_name": "Forms - Daily Feeding (Static)",
+    "referenced_doc_type": "XFormInstance",
+    "description": "The number of AWC Management forms Supervisors in an Area have filled in the last 30 days",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "type": "boolean_expression",
+      "property_value": "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
+    },
+    "configured_indicators": [
+      {
+        "display_name": "AWC ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "user_data",
+              "commcare_location_id"
+            ]
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareUser",
+          "doc_id_expression": {
+            "expression": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "userID"
+              ]
+            },
+            "type": "root_doc"
+          }
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "awc_id",
+        "type": "expression"
+      },
+      {
+        "display_name": "Supervisor ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "user_data",
+                "commcare_location_id"
+              ]
+            },
+            "type": "related_doc",
+            "related_doc_type": "CommCareUser",
+            "doc_id_expression": {
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "userID"
+                ]
+              },
+              "type": "root_doc"
+            }
+          },
+          "type": "location_parent_id"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "supervisor_id",
+        "type": "expression"
+      },
+      {
+        "display_name": "Block ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "_id"
+            },
+            "type": "related_doc",
+            "related_doc_type": "Location",
+            "doc_id_expression": {
+              "location_id_expression": {
+                "value_expression": {
+                  "datatype": null,
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "commcare_location_id"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "meta",
+                      "userID"
+                    ]
+                  },
+                  "type": "root_doc"
+                }
+              },
+              "type": "location_parent_id"
+            }
+          },
+          "type": "location_parent_id"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "block_id",
+        "type": "expression"
+      },
+      {
+        "display_name": "District ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "_id"
+            },
+            "type": "related_doc",
+            "related_doc_type": "Location",
+            "doc_id_expression": {
+              "location_id_expression": {
+                "value_expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "_id"
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                  "location_id_expression": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_path",
+                      "property_path": [
+                        "user_data",
+                        "commcare_location_id"
+                      ]
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                      "expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                          "form",
+                          "meta",
+                          "userID"
+                        ]
+                      },
+                      "type": "root_doc"
+                    }
+                  },
+                  "type": "location_parent_id"
+                }
+              },
+              "type": "location_parent_id"
+            }
+          },
+          "type": "location_parent_id"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "district_id",
+        "type": "expression"
+      },
+      {
+        "display_name": "State ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id_expression": {
+            "value_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "_id"
+            },
+            "type": "related_doc",
+            "related_doc_type": "Location",
+            "doc_id_expression": {
+              "location_id_expression": {
+                "value_expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "_id"
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                  "location_id_expression": {
+                    "value_expression": {
+                      "datatype": null,
+                      "type": "property_name",
+                      "property_name": "_id"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "Location",
+                    "doc_id_expression": {
+                      "location_id_expression": {
+                        "value_expression": {
+                          "datatype": null,
+                          "type": "property_path",
+                          "property_path": [
+                            "user_data",
+                            "commcare_location_id"
+                          ]
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareUser",
+                        "doc_id_expression": {
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_path",
+                            "property_path": [
+                              "form",
+                              "meta",
+                              "userID"
+                            ]
+                          },
+                          "type": "root_doc"
+                        }
+                      },
+                      "type": "location_parent_id"
+                    }
+                  },
+                  "type": "location_parent_id"
+                }
+              },
+              "type": "location_parent_id"
+            }
+          },
+          "type": "location_parent_id"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "state_id",
+        "type": "expression"
+      },
+      {
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "date",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        },
+        "column_id": "submitted_on"
+      },
+      {
+        "filter": {
+          "type": "named",
+          "name": "awc_open"
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "awc_open_count"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "awc_open"
+            },
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "breakfast_served"
+                ]
+              },
+              "property_value": "yes"
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "open_bfast_count"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "awc_open"
+            },
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meal_served"
+                ]
+              },
+              "property_value": "cooked_served_hot"
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "open_hotcooked_count"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "awc_open"
+            },
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "thr_provided"
+                ]
+              },
+              "property_value": "yes"
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "days_thr_provided_count"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "awc_open"
+            },
+            {
+              "operator": "gte",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "integer",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "num_attended_children"
+                ]
+              },
+              "property_value": 0
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "open_pse_count"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "awc_open"
+            },
+            {
+              "operator": "gte",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "integer",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "num_activities"
+                ]
+              },
+              "property_value": 4
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "open_four_acts_count"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "awc_open"
+            },
+            {
+              "operator": "gte",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "integer",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "num_activities"
+                ]
+              },
+              "property_value": 1
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "open_one_acts_count"
+      },
+      {
+        "type": "count",
+        "display_name": "Count",
+        "column_id": "count"
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {
+      "awc_open": {
+        "type": "or",
+        "filters": [
+          {
+            "operator": "eq",
+            "expression": {
+              "datatype": "string",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "awc_opened_aww"
+              ]
+            },
+            "type": "boolean_expression",
+            "property_value": "yes"
+          },
+          {
+            "operator": "eq",
+            "expression": {
+              "datatype": "string",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "awc_opened_someone_else"
+              ]
+            },
+            "type": "boolean_expression",
+            "property_value": "yes"
+          }
+        ]
+      }
+    },
+    "engine_id": "ucr"
+  }
+}

@@ -3,7 +3,7 @@
 {% load compress %}
 {% load i18n %}
 {% block stylesheets %}
-    <link rel="stylesheet" href="{% new_static 'codemirror/lib/codemirror.css' %}"/>
+    <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"/>
     <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
 {% endblock stylesheets %}
 {% compress js %}

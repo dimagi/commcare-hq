@@ -269,10 +269,6 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         return self.indices or self.reverse_indices
 
     @property
-    def closed_transactions(self):
-        return filter(lambda action: action.action_type == const.CASE_ACTION_CLOSE, self.actions)
-
-    @property
     def deletion_id(self):
         return getattr(self, '-deletion_id', None)
 
@@ -358,6 +354,12 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
             return getattr(self, property)
         except Exception:
             return None
+
+    def get_closing_transactions(self):
+        return filter(lambda action: action.action_type == const.CASE_ACTION_CLOSE, reversed(self.actions))
+
+    def get_opening_transactions(self):
+        return filter(lambda action: action.action_type == const.CASE_ACTION_CREATE, self.actions)
 
     def case_properties(self):
         return self.to_json()

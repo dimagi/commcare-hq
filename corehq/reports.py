@@ -12,7 +12,7 @@ from corehq.apps.hqadmin.reports import (
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
-)
+    CommCareVersionReport)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
@@ -27,6 +27,7 @@ from corehq.apps.userreports.reports.view import (
     ConfigurableReport,
     CustomConfigurableReportDispatcher,
 )
+from corehq.form_processor.utils import should_use_sql_backend
 import phonelog.reports as phonelog
 from corehq.apps.reports import commtrack
 from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
@@ -53,6 +54,7 @@ from corehq.apps.smsbillables.interface import (
     SMSGatewayFeeCriteriaInterface,
 )
 from corehq.apps.domain.views import DomainForwardingRepeatRecords
+from custom.openclinica.reports import OdmExportReport
 
 
 def REPORTS(project):
@@ -76,7 +78,7 @@ def REPORTS(project):
             ProjectHealthDashboard,
         )),
         (ugettext_lazy("Inspect Data"), (
-            inspect.SubmitHistory, CaseListReport,
+            inspect.SubmitHistory, CaseListReport, OdmExportReport,
         )),
         (ugettext_lazy("Manage Deployments"), (
             deployments.ApplicationStatusReport,
@@ -91,15 +93,18 @@ def REPORTS(project):
     ])
 
     if project.commtrack_enabled:
-        reports.insert(0, (ugettext_lazy("CommCare Supply"), (
+        supply_reports = (
             commtrack.SimplifiedInventoryReport,
             commtrack.InventoryReport,
             commtrack.CurrentStockStatusReport,
             commtrack.StockStatusMapReport,
-            commtrack.ReportingRatesReport,
-            commtrack.ReportingStatusMapReport,
-            commtrack.LedgersByLocationReport,
-        )))
+        )
+        if not should_use_sql_backend(project.name):
+            supply_reports = supply_reports + (
+                commtrack.ReportingRatesReport,
+                commtrack.ReportingStatusMapReport,
+            )
+        reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
 
     if project.has_careplan:
         from corehq.apps.app_manager.models import CareplanConfig
@@ -344,6 +349,7 @@ ADMIN_REPORTS = (
         CommConnectProjectSpacesReport,
         CommTrackProjectSpacesReport,
         DeviceLogSoftAssertReport,
+        CommCareVersionReport,
     )),
 )
 

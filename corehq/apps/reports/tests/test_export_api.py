@@ -72,6 +72,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
             XFormInstance.wrap(form).delete()
 
     def setUp(self):
+        super(ExportTest, self).setUp()
         self._clear_docs()
         self.domain = create_domain(DOMAIN)
         self.setup_subscription(self.domain.name, SoftwarePlanEdition.ADVANCED)
