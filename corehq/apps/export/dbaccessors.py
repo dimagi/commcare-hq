@@ -91,3 +91,13 @@ def delete_all_export_data_schemas():
     for row in db.view('schemas_by_xmlns_or_case_type/view', reduce=False):
         doc_id = row['id']
         safe_delete(db, doc_id)
+
+
+@unit_testing_only
+def delete_all_export_instances():
+    from .models import ExportInstance
+
+    db = ExportInstance.get_db()
+    for row in db.view('export_instances_by_domain/view', reduce=False):
+        doc_id = row['id']
+        safe_delete(db, doc_id)
