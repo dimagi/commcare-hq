@@ -53,9 +53,9 @@ branches:
   - np/update-ui # Nick P 6/27
   - np/update-user-buckets # Nick P 6/28
 submodules:
-  deployment/commcare-hq-deploy:
-    branches:
-      - br/refactor-operations  # Ben
+  #deployment/commcare-hq-deploy:
+  #  branches:
+  #    - br/refactor-operations  # Ben
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
