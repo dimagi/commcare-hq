@@ -22,9 +22,9 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         childViewContainer: ".application-container",
 
         events: {
-            'click #syncItem': 'syncClick',
+            'click #incompleteSessionsItem': 'incompleteSessionsClick',
         },
-        syncClick: function (e) {
+        incompleteSessionsClick: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("sessions");
         },
