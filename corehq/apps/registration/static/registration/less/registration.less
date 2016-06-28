@@ -1,3 +1,13 @@
+// Specific Mixins from Bootstrap
+.transition(@transition) {
+  -webkit-transition: @transition;
+       -o-transition: @transition;
+          transition: @transition;
+}
+
+// --------------------------------
+// Registration form styles
+// --------------------------------
 
 .box-shadow(@shadow) {
   -moz-box-shadow: @shadow;
@@ -123,4 +133,12 @@ p.validation-message-block {
 .server-errors,
 .submit-success {
   text-align: left;
+}
+
+.animate-height {
+  .transition(min-height .3s ease-in-out);
+}
+
+.initial-padding {
+  padding-top: 20px;
 }
