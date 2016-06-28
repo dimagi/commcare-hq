@@ -212,9 +212,7 @@ class ProjectHealthDashboard(ProjectReport):
         super(ProjectHealthDashboard, self).decorator_dispatcher(request, *args, **kwargs)
 
     def get_group_location_ids(self):
-        params = self.request.GET.getlist('grouplocationfilter')
-        if params == [u'']:
-            params = []
+        params = filter(None, self.request.GET.getlist('grouplocationfilter'))
         return params
 
     def parse_params(self, param_ids):
