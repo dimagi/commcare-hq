@@ -321,8 +321,9 @@ def get_all_case_properties(app):
     return get_case_properties(app, app.get_case_types(), defaults=('name',))
 
 
+# TODO: pass in form instead of app
 def get_casedb_schema(app, base_case_type=None):
-    """Get case database schema definition
+    """Get case database schema definition for vellum to display as an external data source.
 
     This lists all case types and their properties for the given app.
     """
@@ -333,19 +334,24 @@ def get_casedb_schema(app, base_case_type=None):
     map = builder.get_case_property_map(case_types, include_parent_properties=False)
 
     if base_case_type:
-        def _ancestors_for(ctype, types, generation):
-            if generation > 0:
-                types[generation - 1].append(ctype)
-                for parent in related.get(ctype, {}).get('parent', []):
-                    types = _ancestors_for(parent, types, generation - 1)
-            return types
+        # Generate hierarchy of case types, represented as a list of lists of strings:
+        # [[base_case_type], [parent_type1, parent_type2...], [grandparent_type1, grandparent_type2...]]
+        # Vellum case management only supports three levels
+        generation_names = ['case', 'parent', 'grandparent']
+        generations = [[] for g in generation_names]
 
-        generations = ['case', 'parent', 'grandparent']
-        ctype_generations = _ancestors_for(base_case_type, [[] for g in generations], len(generations))
-        ctype_generations = [set(g) for g in ctype_generations if len(g)]
-        ctype_generations.reverse()
+        def _add_ancestors(ctype, generation):
+            if generation < len(generation_names):
+                generations[generation].append(ctype)
+                for parent in related.get(ctype, {}).get('parent', []):
+                    _add_ancestors(parent, generation + 1)
+
+        _add_ancestors(base_case_type, 0)
+
+        # Remove any duplicate types or empty generations
+        generations = [set(g) for g in generations if len(g)]
     else:
-        ctype_generations = []
+        generations = []
 
     return {
         "id": "casedb",
@@ -354,12 +360,12 @@ def get_casedb_schema(app, base_case_type=None):
         "path": "/casedb/case",
         "structure": {},
         "subsets": [{
-            "id": generations[i],
-            "name": "{} ({})".format(generations[i], " or ".join(ctypes)) if i > 0 else base_case_type,
+            "id": generation_names[i],
+            "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
             "key": "@case_type",
             "structure": {p: {} for type in [map[t] for t in ctypes] for p in type},
-            "related": {"parent": generations[i + 1]} if i < len(ctype_generations) - 1 else None,
-        } for i, ctypes in enumerate(ctype_generations)],
+            "related": {"parent": generation_names[i + 1]} if i < len(generations) - 1 else None,
+        } for i, ctypes in enumerate(generations)],
     }
 
 
