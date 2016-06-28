@@ -135,7 +135,7 @@ def _get_existing_cluster_config(cluster_name):
     proxy_db = PartitionConfig().get_proxy_db()
     with connections[proxy_db].cursor() as cursor:
         cursor.execute('SELECT * from pg_foreign_server where srvname = %s', [cluster_name])
-        results = fetchall_as_namedtuple(cursor)
+        results = list(fetchall_as_namedtuple(cursor))
         if results:
             return results[0]
 

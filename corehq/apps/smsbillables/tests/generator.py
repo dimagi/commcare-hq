@@ -1,15 +1,19 @@
+import calendar
 import random
 import datetime
 import string
 import uuid
 from collections import namedtuple
 from decimal import Decimal
-from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
 from dimagi.utils.data import generator as data_gen
+
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
 from corehq.apps.sms.util import get_sms_backend_classes
+from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
+from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
+from corehq.util.test_utils import unit_testing_only
 
 
 # arbitrarily generated once from http://www.generatedata.com/
@@ -37,14 +41,17 @@ DIRECTIONS = [INCOMING, OUTGOING]
 CountryPrefixPair = namedtuple('CountryPrefixPair', ['country_code', 'prefix'])
 
 
+@unit_testing_only
 def arbitrary_message():
     return random.choice(SMS_MESSAGE_CONTENT)
 
 
+@unit_testing_only
 def arbitrary_fee():
     return Decimal(str(round(random.uniform(0.0, 1.0), 4)))
 
 
+@unit_testing_only
 def _generate_prefixes(country_code, max_prefix_length, num_prefixes_per_size):
     def _generate_prefix(cc, existing_prefixes, i):
         while True:
@@ -59,6 +66,7 @@ def _generate_prefixes(country_code, max_prefix_length, num_prefixes_per_size):
     return prefixes
 
 
+@unit_testing_only
 def arbitrary_country_code_and_prefixes(
     max_prefix_length, num_prefixes_per_size,
     country_codes=TEST_COUNTRY_CODES
@@ -70,6 +78,7 @@ def arbitrary_country_code_and_prefixes(
     ]
 
 
+@unit_testing_only
 def _available_gateway_fee_backends():
     return filter(
         lambda backend: backend.get_api_id() != SQLTwilioBackend.get_api_id(),
@@ -77,6 +86,7 @@ def _available_gateway_fee_backends():
     )
 
 
+@unit_testing_only
 def arbitrary_fees_by_prefix(backend_ids, country_codes_and_prefixes):
     fees = {}
     for direction in DIRECTIONS:
@@ -96,14 +106,17 @@ def arbitrary_fees_by_prefix(backend_ids, country_codes_and_prefixes):
     return fees
 
 
+@unit_testing_only
 def arbitrary_phone_number(country_codes=TEST_COUNTRY_CODES):
     return str(random.choice(country_codes)) + str(random.randint(10**9, 10**10 - 1))
 
 
+@unit_testing_only
 def arbitrary_domain(length=25):
     return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
 
 
+@unit_testing_only
 def arbitrary_fees_by_direction():
     fees = {}
     for direction in DIRECTIONS:
@@ -111,6 +124,7 @@ def arbitrary_fees_by_direction():
     return fees
 
 
+@unit_testing_only
 def arbitrary_fees_by_direction_and_domain():
     domains = [arbitrary_domain() for i in range(10)]
     fees = {}
@@ -122,6 +136,7 @@ def arbitrary_fees_by_direction_and_domain():
     return fees
 
 
+@unit_testing_only
 def arbitrary_fees_by_direction_and_backend():
     fees = {}
     for direction in DIRECTIONS:
@@ -132,6 +147,7 @@ def arbitrary_fees_by_direction_and_backend():
     return fees
 
 
+@unit_testing_only
 def arbitrary_fees_by_country():
     fees = {}
     for direction in DIRECTIONS:
@@ -145,6 +161,7 @@ def arbitrary_fees_by_country():
     return fees
 
 
+@unit_testing_only
 def arbitrary_fees_by_backend_instance(backend_ids):
     fees = {}
     for direction in DIRECTIONS:
@@ -155,6 +172,7 @@ def arbitrary_fees_by_backend_instance(backend_ids):
     return fees
 
 
+@unit_testing_only
 def arbitrary_fees_by_all(backend_ids):
     fees = {}
     for direction in DIRECTIONS:
@@ -168,6 +186,7 @@ def arbitrary_fees_by_all(backend_ids):
     return fees
 
 
+@unit_testing_only
 def arbitrary_backend_ids():
     backend_ids = {}
     for backend in _available_gateway_fee_backends():
@@ -182,6 +201,7 @@ def arbitrary_backend_ids():
     return backend_ids
 
 
+@unit_testing_only
 def arbitrary_messages_by_backend_and_direction(backend_ids,
                                                 phone_number=None,
                                                 domain=None,
@@ -207,6 +227,7 @@ def arbitrary_messages_by_backend_and_direction(backend_ids,
     return messages
 
 
+@unit_testing_only
 def arbitrary_currency():
     return Currency.objects.get_or_create(
         code='OTH',
@@ -216,6 +237,7 @@ def arbitrary_currency():
     )[0]
 
 
+@unit_testing_only
 def arbitrary_phone_numbers_and_prefixes(country_code_and_prefixes):
     country_code_to_prefixes = {}
     for country_code, prefix in country_code_and_prefixes:
@@ -243,3 +265,30 @@ def arbitrary_phone_numbers_and_prefixes(country_code_and_prefixes):
                     prefix
                 )
                 break
+
+
+@unit_testing_only
+def arbitrary_sms_billables_for_domain(domain, message_month_date, num_sms, direction=None, multipart_count=1):
+    direction = direction or random.choice(DIRECTIONS)
+
+    gateway_fee = SmsGatewayFee.create_new('MACH', direction, Decimal(0.5))
+    usage_fee = SmsUsageFee.create_new(direction, Decimal(0.25))
+
+    _, last_day_message = calendar.monthrange(message_month_date.year, message_month_date.month)
+
+    billables = []
+    for _ in range(0, num_sms):
+        sms_billable = SmsBillable(
+            gateway_fee=gateway_fee,
+            usage_fee=usage_fee,
+            log_id=data_gen.arbitrary_unique_name()[:50],
+            phone_number=data_gen.random_phonenumber(),
+            domain=domain,
+            direction=direction,
+            date_sent=datetime.date(message_month_date.year, message_month_date.month,
+                                    random.randint(1, last_day_message)),
+            multipart_count=multipart_count,
+        )
+        sms_billable.save()
+        billables.append(sms_billable)
+    return billables

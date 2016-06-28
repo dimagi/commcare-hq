@@ -270,6 +270,16 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     @property
     @memoized
+    def serialized_attachments(self):
+        from couchforms.const import ATTACHMENT_NAME
+        from .serializers import XFormAttachmentSQLSerializer
+        return {
+            att.name: XFormAttachmentSQLSerializer(att).data
+            for att in self.get_attachments() if att.name != ATTACHMENT_NAME
+        }
+
+    @property
+    @memoized
     def form_data(self):
         from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
@@ -299,9 +309,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
         self.state |= self.DELETED
 
-    def to_json(self):
+    def to_json(self, include_attachments=False):
         from .serializers import XFormInstanceSQLSerializer
-        serializer = XFormInstanceSQLSerializer(self)
+        serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
         return serializer.data
 
     def _get_attachment_from_db(self, attachment_name):

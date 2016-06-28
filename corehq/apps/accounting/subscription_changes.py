@@ -14,6 +14,7 @@ from corehq.apps.accounting.utils import (
     get_privileges,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
+from corehq.apps.app_manager.models import Application
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
@@ -185,9 +186,10 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         """
         try:
             for app in get_all_apps(domain.name):
-                has_archived = app.archive_logos()
-                if has_archived:
-                    app.save()
+                if isinstance(app, Application):
+                    has_archived = app.archive_logos()
+                    if has_archived:
+                        app.save()
             return True
         except Exception:
             log_accounting_error(

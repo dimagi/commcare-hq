@@ -97,8 +97,8 @@ def _iterator_expression(spec, context):
 def _nested_expression(spec, context):
     wrapped = NestedExpressionSpec.wrap(spec)
     wrapped.configure(
-        argument_expression=ExpressionFactory.from_spec(wrapped.argument_expression),
-        value_expression=ExpressionFactory.from_spec(wrapped.value_expression),
+        argument_expression=ExpressionFactory.from_spec(wrapped.argument_expression, context),
+        value_expression=ExpressionFactory.from_spec(wrapped.value_expression, context),
     )
     return wrapped
 

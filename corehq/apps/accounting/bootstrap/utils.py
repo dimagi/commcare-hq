@@ -57,28 +57,28 @@ def ensure_plans(edition_to_role, edition_to_product_rate, edition_to_feature_ra
                     if verbose:
                         logger.info("Creating Software Plan: %s" % software_plan.name)
 
-                    software_plan_version.plan = software_plan
+                software_plan_version.plan = software_plan
 
-                    # must save before assigning many-to-many relationship
-                    if hasattr(SoftwarePlanVersion, 'product_rates'):
-                        software_plan_version.save()
-
-                    product_rate.save()
-                    if hasattr(SoftwarePlanVersion, 'product_rates'):
-                        software_plan_version.product_rates.add(product_rate)
-                    elif hasattr(SoftwarePlanVersion, 'product_rate'):
-                        software_plan_version.product_rate = product_rate
-                    else:
-                        raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
-
-                    # must save before assigning many-to-many relationship
-                    if hasattr(SoftwarePlanVersion, 'product_rate'):
-                        software_plan_version.save()
-
-                    for feature_rate in feature_rates:
-                        feature_rate.save()
-                        software_plan_version.feature_rates.add(feature_rate)
+                # must save before assigning many-to-many relationship
+                if hasattr(SoftwarePlanVersion, 'product_rates'):
                     software_plan_version.save()
+
+                product_rate.save()
+                if hasattr(SoftwarePlanVersion, 'product_rates'):
+                    software_plan_version.product_rates.add(product_rate)
+                elif hasattr(SoftwarePlanVersion, 'product_rate'):
+                    software_plan_version.product_rate = product_rate
+                else:
+                    raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
+
+                # must save before assigning many-to-many relationship
+                if hasattr(SoftwarePlanVersion, 'product_rate'):
+                    software_plan_version.save()
+
+                for feature_rate in feature_rates:
+                    feature_rate.save()
+                    software_plan_version.feature_rates.add(feature_rate)
+                software_plan_version.save()
 
             if edition == SoftwarePlanEdition.ADVANCED:
                 trials = [True, False]

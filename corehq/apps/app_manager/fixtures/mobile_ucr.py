@@ -38,7 +38,7 @@ class ReportFixturesProvider(object):
         if not report_configs:
             return []
 
-        root = E.fixture(id=self.id)
+        root = E.fixture(id=self.id, user_id=restore_user.user_id)
         reports_elem = E.reports(last_sync=datetime.utcnow().isoformat())
         for report_config in report_configs:
             try:

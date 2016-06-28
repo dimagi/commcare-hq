@@ -142,7 +142,8 @@ class TestExpandedColumn(TestCase):
 
         # Create Cases
         for v in vals:
-            self._new_case({field: v}).save()
+            update_props = {field: v} if v is not None else {}
+            self._new_case(update_props).save()
 
         # Create report
         data_source_config = DataSourceConfiguration(
@@ -259,6 +260,35 @@ class TestExpandedColumn(TestCase):
         self.assertEqual(len(cols), 2)
         self.assertEqual(type(cols[0].view), SumWhen)
         self.assertEqual(cols[1].view.whens, {'negative': 1})
+
+    def test_none_in_values(self):
+        """
+        Confirm that expanded columns work when one of the distinct values is None.
+        This is an edge case because postgres uses different operators for comparing
+        columns to null than it does for comparing to non-null values. e.g.
+            "my_column = 4" vs "my_column is NULL"
+        """
+        field_name = 'my_field'
+        submitted_vals = [None, None, 'foo']
+        data_source, _ = self._build_report(submitted_vals, field=field_name)
+
+        headers = [column.header for column in data_source.columns]
+        self.assertEqual(set(headers), {"{}-{}".format(field_name, x) for x in submitted_vals})
+
+        def get_expected_row(submitted_value, distinct_values):
+            # The headers looks like "my_field-foo", but the rows are dicts with
+            # keys like "my_field-1". So, we need use the index of the headers to
+            # to determine which keys in the rows correspond to which values.
+            row = {}
+            for value in distinct_values:
+                header_index = headers.index("{}-{}".format(field_name, value))
+                row_key = "{}-{}".format(field_name, header_index)
+                row[row_key] = 1 if submitted_value == value else 0
+            return row
+
+        expected_rows = [get_expected_row(v, set(submitted_vals)) for v in submitted_vals]
+        data = data_source.get_data()
+        self.assertEqual(sorted(expected_rows), sorted(data))
 
 
 class TestAggregateDateColumn(SimpleTestCase):

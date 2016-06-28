@@ -1,3 +1,5 @@
+import uuid
+
 COMMTRACK_USERNAME = 'commtrack-system'
 
 COMMTRACK_SUPPLY_POINT_XMLNS = 'http://commtrack.org/supply_point'
@@ -5,6 +7,9 @@ COMMTRACK_SUPPLY_POINT_XMLNS = 'http://commtrack.org/supply_point'
 META_XMLNS = 'http://openrosa.org/jr/xforms'
 
 SMS_XMLNS = 'http://commtrack.org/sms_submission'
+
+
+MOBILE_WORKER_UUID_NS = uuid.UUID(uuid.uuid5(uuid.NAMESPACE_URL, 'www.commcarehq.org/mobile_worker').hex)
 
 
 def is_supply_point_form(form):

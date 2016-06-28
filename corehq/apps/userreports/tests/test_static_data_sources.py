@@ -29,7 +29,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
             for config in all[:2]:
                 self.assertEqual('all_candidates', config.table_id)
 
-            for config in all[3:]:
+            for config in all[2:]:
                 self.assertEqual('cc1', config.domain)
 
     def test_is_static_positive(self):
