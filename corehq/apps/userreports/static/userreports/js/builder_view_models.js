@@ -81,7 +81,9 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // The aggregation type for this column. This field is not used if
         // the PropertyListItem represents columns in a non-aggregated report
         // or a filter
-        this.calculation = ko.observable("Count per Choice");
+        this.calculation = ko.observable(
+            hqImport('userreports/js/constants.js').DEFAULT_CALCULATION_OPTIONS[0]
+        );
         this.calculationOptions = ko.pureComputed(function() {
             var propObject = self.getPropertyObject(self.property());
             if (propObject) {
