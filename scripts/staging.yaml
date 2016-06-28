@@ -50,7 +50,7 @@ branches:
   - demo-user # sravan 6/3
   - vellum-staging # J$ 11/13
   - calculatedIcons # Sravan 3/2
-  - xform-blobs  # daniel 5/23
+  - dm/xform-blobs  # daniel 5/23
   - new-signup  # Biyeun 6/21
   - np/buckets/explicit-comm # Nick P 6/24
   - np/update-ui # Nick P 6/27
