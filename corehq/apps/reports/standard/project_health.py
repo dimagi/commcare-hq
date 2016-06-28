@@ -12,6 +12,7 @@ from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es.groups import GroupES
 from itertools import chain
+from corehq.apps.users.models import CommCareUser
 
 
 def get_performance_threshold(domain_name):
@@ -68,21 +69,21 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                                .filter(num_of_forms__gte=performance_threshold)
                                .distinct('user_id')
                                .count())
-
+        all_users = Domain.get_by_name(domain).all_users()
+        date = datetime.datetime(month.year, month.month + 1, month.day)
+        all_users_created_before_date = filter(lambda user: user.created_on < date, all_users)
+        percent_active = float(self._distinct_user_ids.count()) / float(len(all_users_created_before_date))
         super(MonthlyPerformanceSummary, self).__init__(
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
             active=self._distinct_user_ids.count(),
-            inactive=0,
+            percent_active=percent_active,
             performing=num_performing_user,
         )
 
     def set_next_month_summary(self, next_month_summary):
         self._next_summary = next_month_summary
-
-    def set_num_of_inactive(self, num_inactive_user):
-        self.inactive = num_inactive_user
 
     @property
     def number_of_performing_users(self):
@@ -275,7 +276,6 @@ class ProjectHealthDashboard(ProjectReport):
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
-                this_month_summary.set_num_of_inactive(len(this_month_summary.get_dropouts()))
             last_month_summary = this_month_summary
         return six_month_summary
 
