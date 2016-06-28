@@ -79,7 +79,6 @@ class GIRRow(models.Model):
 
     class Meta:
         unique_together = ('month', 'domain_name')
-        index_together = ['domain_name', 'month']
 
     def export_row(self, past_months):
         last_month = past_months[0] if past_months else None
