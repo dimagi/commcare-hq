@@ -2,7 +2,7 @@
   "operationalization": {
     "data_source": [
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -24,7 +24,7 @@
   "population": {
     "data_source": [
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -46,7 +46,7 @@
   "annual": {
     "data_source": [
       {
-        "id": "static-icds-sql-static-asr_2_pregnancies",
+        "id": "static-{domain}-static-asr_2_pregnancies",
         "columns": [
           {
             "column_name": "pregnant_st_count",
@@ -67,7 +67,7 @@
         ]
       },
       {
-        "id": "static-icds-sql-static-asr_2_lactating",
+        "id": "static-{domain}-static-asr_2_lactating",
         "filter": [
           {
             "type": "daterange",
@@ -96,7 +96,7 @@
         ]
       },
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -141,7 +141,7 @@
         ]
       },
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -195,7 +195,7 @@
         ]
       },
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -249,7 +249,7 @@
         ]
       },
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -303,7 +303,7 @@
         ]
       },
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -357,7 +357,7 @@
         ]
       },
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -411,7 +411,7 @@
         ]
       },
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "columns": [
           {
             "column_name": "M_st_count",
@@ -461,7 +461,7 @@
   "disabled_children": {
     "data_source": [
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -494,7 +494,7 @@
         ]
       },
       {
-        "id": "static-icds-sql-static-asr_2_3_person_cases",
+        "id": "static-{domain}-static-asr_2_3_person_cases",
         "filter": [
           {
             "type": "daterange",
@@ -537,7 +537,7 @@
   "infrastructure": {
     "data_source": [
       {
-        "id": "static-icds-sql-static-asr_4_6_infrastructure",
+        "id": "static-{domain}-static-asr_4_6_infrastructure",
         "columns": [
           {
             "column_name": "where_housed",
@@ -777,7 +777,7 @@
   "equipment": {
     "data_source": [
       {
-        "id": "static-icds-sql-static-asr_4_6_infrastructure",
+        "id": "static-{domain}-static-asr_4_6_infrastructure",
         "columns": [
           {
             "column_name": "medicine_kits_available",

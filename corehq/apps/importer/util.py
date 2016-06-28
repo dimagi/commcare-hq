@@ -517,11 +517,12 @@ def get_case_properties_for_case_type(domain, case_type):
         from corehq.apps.export.models.new import MAIN_TABLE
         schema = CaseExportDataSchema.generate_schema_from_builds(
             domain,
+            None,
             case_type,
         )
         group_schemas = [gs for gs in schema.group_schemas if gs.path == MAIN_TABLE]
         if group_schemas:
-            return sorted(set([item.path[0] for item in group_schemas[0].items]))
+            return sorted(set([item.path[0].name for item in group_schemas[0].items]))
     else:
         from corehq.apps.hqcase.dbaccessors import get_case_properties
         return get_case_properties(domain, case_type)
