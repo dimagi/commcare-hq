@@ -127,6 +127,24 @@ class SchemaTest(SimpleTestCase):
                         subsets["parent"]["name"]))
         self.assertEqual(subsets["parent"]["structure"], {"case_name": {}})
 
+    def test_get_casedb_schema_with_deep_hierarchy(self):
+        child = self.add_form("child")
+        parent = self.add_form("parent")
+        self.factory.form_opens_case(parent, case_type='child', is_subcase=True)
+        grandparent = self.add_form("grandparent")
+        self.factory.form_opens_case(grandparent, case_type='parent', is_subcase=True)
+        greatgrandparent = self.add_form("greatgrandparent")
+        self.factory.form_opens_case(greatgrandparent, case_type='grandparent', is_subcase=True)
+        schema = util.get_casedb_schema(child)
+        self.assertEqual([s["name"] for s in schema["subsets"]],
+                         ["child", "parent (parent)", "grandparent (grandparent)"])
+        schema = util.get_casedb_schema(parent)
+        self.assertEqual([s["name"] for s in schema["subsets"]],
+                         ["parent", "parent (grandparent)", "grandparent (greatgrandparent)"])
+        schema = util.get_casedb_schema(grandparent)
+        self.assertEqual([s["name"] for s in schema["subsets"]],
+                         ["grandparent", "parent (greatgrandparent)"])
+
     def test_get_session_schema_for_module_with_no_case_type(self):
         form = self.add_form()
         schema = util.get_session_schema(form)
