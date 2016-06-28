@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests import TestXmlMixin, AppFactory
 from django.test.testcases import SimpleTestCase
 from mock import patch, MagicMock
+import re
 
 
 @patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
@@ -124,6 +125,17 @@ class SchemaTest(SimpleTestCase):
         subsets = {s["id"]: s for s in schema["subsets"]}
         self.assertEqual(subsets["parent"]["related"], None)
         self.assertDictEqual(subsets["case"]["related"], {"parent": "parent"})
+
+    def test_get_casedb_schema_with_multiple_parent_case_types(self):
+        self.add_form("referral")
+        child = self.add_form("child")
+        self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
+        pregnancy = self.add_form("pregnancy")
+        self.factory.form_opens_case(pregnancy, case_type='referral', is_subcase=True)
+        schema = util.get_casedb_schema(self.factory.app, 'referral')
+        subsets = {s["id"]: s for s in schema["subsets"]}
+        self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$', subsets["parent"]["name"]))
+        self.assertEqual(subsets["parent"]["structure"], {"case_name":{}})
 
     def test_get_session_schema_for_module_with_no_case_type(self):
         form = self.add_form()
