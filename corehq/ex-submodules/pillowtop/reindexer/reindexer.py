@@ -93,7 +93,7 @@ class PillowReindexProcessor(BaseDocProcessor):
 
 class ResumableElasticPillowReindexer(PillowReindexer):
     can_be_reset = True
-    
+
     def __init__(self, pillow, doc_types, elasticsearch, index_info):
         super(ResumableElasticPillowReindexer, self).__init__(pillow)
         self.es = elasticsearch
