@@ -269,13 +269,15 @@ class Migrator(object):
         if len(doc_types) != len(self.doc_type_map):
             raise ValueError("Invalid (duplicate?) doc types")
 
-    def migrate(self, filename=None, *args, **kw):
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         doc_migrator = self.doc_migrator_class(self.slug, filename)
         processor = CouchDocumentProcessor(
             self.slug,
             self.doc_type_map,
             doc_migrator,
-            *args, **kw
+            reset,
+            max_retry,
+            chunk_size
         )
         return processor.run()
 
