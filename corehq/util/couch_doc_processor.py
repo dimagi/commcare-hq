@@ -237,7 +237,7 @@ def process_docs(slug, doc_type_map, doc_migrator, reset=False, max_retry=2, chu
 
     total = sum(get_doc_count_by_type(couchdb, doc_type)
                 for doc_type in doc_type_map)
-    migrated = 0
+    processed = 0
     skipped = 0
     visited = 0
     previously_visited = 0
@@ -269,14 +269,14 @@ def process_docs(slug, doc_type_map, doc_migrator, reset=False, max_retry=2, chu
             if doc_migrator.filter(doc):
                 ok = doc_migrator.migrate(doc, couchdb)
                 if ok:
-                    migrated += 1
+                    processed += 1
                 else:
                     try:
                         docs_by_type.retry(doc, max_retry)
                     except TooManyRetries:
                         print("Skip: {doc_type} {_id}".format(**doc))
                         skipped += 1
-                if (migrated + skipped) % chunk_size == 0:
+                if (processed + skipped) % chunk_size == 0:
                     elapsed = datetime.now() - start
                     session_visited = visited - previously_visited
                     session_total = total - previously_visited
@@ -286,19 +286,19 @@ def process_docs(slug, doc_type_map, doc_migrator, reset=False, max_retry=2, chu
                         session_remaining = session_total - session_visited
                         remaining = elapsed / session_visited * session_remaining
                     print("Processed {}/{} of {} documents in {} ({} remaining)"
-                          .format(migrated, visited, total, elapsed, remaining))
+                          .format(processed, visited, total, elapsed, remaining))
 
     doc_migrator.after_migration(skipped)
 
     print("Processed {}/{} of {} documents ({} previously processed, {} filtered out)."
         .format(
-            migrated,
+            processed,
             visited,
             total,
             total - visited,
-            visited - (migrated + skipped)
+            visited - (processed + skipped)
         ))
     if skipped:
         print(DOCS_SKIPPED_WARNING.format(skipped))
-    return migrated, skipped
+    return processed, skipped
 
