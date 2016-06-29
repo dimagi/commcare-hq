@@ -80,6 +80,9 @@
                 return {
                     x: parseToUTCDate(item.month),
                     y: item.percent_active,
+                    z: item.inactive,
+                    u: item.total_users_by_month,
+                    a: item.active,
                 };
             })
         }];
@@ -95,7 +98,17 @@
                         .tickFormat(function(d){
                             return d3.time.format('%B %Y')(d);
                         });
-
+            chart.tooltipContent(function(key, x, y, e, graph){
+                var d = e.series.values[e.pointIndex];
+                return '<h3>' + key + '</h3>' +
+                       '<p>' +  y + ' in ' + x + '</p>' +
+                       '<p>' + 'number of active users: ' + d.a +
+                       '</p>' +
+                       '<p>' + 'number of inactive users: ' + d.z +
+                       '</p>' +
+                       '<p>' + 'number of total users: ' + d.u +
+                       '</p>'
+            })
             chart.xScale(d3.time.scale.utc());
             d3.select('#active_linechart svg')
                 .datum(proportionActiveSeries)
@@ -181,7 +194,7 @@
         </td>
         <td>{{ last_month.number_of_low_performing_users }}</td>
         <td>
-            {% chevron last_month.delta_low_performing_pct %}
+            {% reverse_chevron last_month.delta_low_performing_pct %}
             {{ last_month.delta_low_performing_pct|floatformat }} %
         </td>
     </tr>
@@ -192,7 +205,7 @@
         </td>
         <td>{{ last_month.number_of_inactive_users }}</td>
         <td>
-            {% chevron last_month.delta_inactive_pct %}
+            {% reverse_chevron last_month.delta_inactive_pct %}
             {{ last_month.delta_inactive_pct|floatformat }} %
         </td>
     </tr>

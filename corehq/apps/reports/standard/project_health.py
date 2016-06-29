@@ -12,7 +12,6 @@ from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es.groups import GroupES
 from itertools import chain
-from corehq.apps.users.models import CommCareUser
 
 
 def get_performance_threshold(domain_name):
@@ -69,18 +68,15 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                                .filter(num_of_forms__gte=performance_threshold)
                                .distinct('user_id')
                                .count())
-        all_users = Domain.get_by_name(domain).all_users()
-        date = datetime.datetime(month.year, month.month + 1, month.day)
-        all_users_created_before_date = filter(lambda user: user.created_on < date, all_users)
-        percent_active = float(self._distinct_user_ids.count()) / float(len(all_users_created_before_date))
+
         super(MonthlyPerformanceSummary, self).__init__(
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
             active=self._distinct_user_ids.count(),
             inactive=0,
-            total_users_by_month=len(all_users_created_before_date),
-            percent_active=percent_active,
+            total_users_by_month=0,
+            percent_active=0,
             performing=num_performing_user,
         )
 
@@ -89,6 +85,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     def set_num_inactive_users(self, num_inactive_users):
         self.inactive = num_inactive_users
+
+    def set_percent_active(self):
+        self.total_users_by_month = self.number_of_inactive_users + self.number_of_active_users
+        self.percent_active = float(self.number_of_active_users) / float(self.total_users_by_month)
 
     @property
     def number_of_performing_users(self):
@@ -152,7 +152,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     @property
     def delta_inactive_pct(self):
-        if self.delta_inactive and self._previous_summary and self._previous_summary.number_of_inactive_users:
+        if self.delta_inactive and self._previous_summary:
+            if self._previous_summary.number_of_inactive_users == 0:
+                return self.delta_inactive * 100.
             return float(self.delta_inactive / float(self._previous_summary.number_of_inactive_users)) * 100.
 
     @memoized
@@ -282,6 +284,7 @@ class ProjectHealthDashboard(ProjectReport):
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
                 this_month_summary.set_num_inactive_users(len(this_month_summary.get_dropouts()))
+            this_month_summary.set_percent_active()
             last_month_summary = this_month_summary
         return six_month_summary
 
