@@ -264,6 +264,31 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def user_ids(self):
         return self.users_by_id.keys()
 
+    def _format_row(self, row):
+        cells = [row.header()]
+        total_touched = row.total_touched_count()
+
+        for landmark_key, landmark in self.landmarks:
+            modified = row.modified_count(landmark_key)
+            active = row.active_count(landmark_key)
+            closed = row.closed_count(landmark_key)
+
+            try:
+                p_val = float(modified) * 100. / float(total_touched)
+                proportion = '%.f%%' % p_val
+            except ZeroDivisionError:
+                p_val = None
+                proportion = '--'
+
+            cells.append(modified)
+            cells.append(active)
+            cells.append(closed)
+            cells.append(proportion)
+
+        cells.append(row.total_active_count())
+        cells.append(row.total_inactive_count())
+        return cells
+
     @property
     def rows(self):
         es_results = self.es_queryset()
@@ -275,41 +300,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             bucket = buckets.get(user_id, None)
             rows.append(self.Row(self, user, bucket))
 
-        def format_row(row):
-            cells = [row.header()]
-            total_touched = row.total_touched_count()
-
-            def add_numeric_cell(text, value=None):
-                if value is None:
-                    try:
-                        value = int(text)
-                    except ValueError:
-                        value = text
-                cells.append(util.format_datatables_data(text=text, sort_key=value))
-
-            for landmark_key, landmark in self.landmarks:
-                modified = row.modified_count(landmark_key)
-                active = row.active_count(landmark_key)
-                closed = row.closed_count(landmark_key)
-
-                try:
-                    p_val = float(modified) * 100. / float(total_touched)
-                    proportion = '%.f%%' % p_val
-                except ZeroDivisionError:
-                    p_val = None
-                    proportion = '--'
-
-                add_numeric_cell(modified, modified)
-                add_numeric_cell(active, active)
-                add_numeric_cell(closed, closed)
-                add_numeric_cell(proportion, p_val)
-
-            add_numeric_cell(row.total_active_count())
-            add_numeric_cell(row.total_inactive_count())
-            return cells
-
-        self.total_row = format_row(self.TotalRow(es_results, _("All Users")))
-        return map(format_row, rows)
+        self.total_row = self._format_row(self.TotalRow(es_results, _("All Users")))
+        return map(self._format_row, rows)
 
     @property
     @memoized
