@@ -12,16 +12,22 @@ from django.core.urlresolvers import reverse
 
 from tastypie import fields
 from tastypie.bundle import Bundle
-from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication, AdminAuthentication
+from corehq.apps.api.resources.v0_1 import (
+    RequirePermissionAuthentication,
+    AdminAuthentication,
+    CustomResourceMeta,
+)
 from corehq.apps.api.util import get_obj
 from corehq.apps.es import UserES
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
+from corehq.util import get_document_or_404
 
-from . import v0_1, v0_4
+from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
 
@@ -489,3 +495,30 @@ class StockTransactionResource(HqBaseResource, ModelResource):
         bundle.data['product_name'] = bundle.obj.sql_product.name
         bundle.data['transaction_date'] = bundle.obj.report.date
         return bundle
+
+
+class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+    id = fields.CharField(attribute='get_id', readonly=True, unique=True)
+    filters = fields.ListField(readonly=True)
+    columns = fields.ListField(readonly=True)
+
+    def dehydrate_filters(self, bundle):
+        obj_filters = bundle.obj.filters
+        return [{
+            "datatype": f["datatype"],
+            "field": f["field"]
+        } for f in obj_filters]
+
+    def dehydrate_columns(self, bundle):
+        obj_columns = bundle.obj.columns
+        return [c['column_id'] for c in obj_columns]
+
+    def obj_get(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        pk = kwargs['pk']
+        report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
+        return report_configuration
+
+    class Meta(CustomResourceMeta):
+        list_allowed_methods = []
+        detail_allowed_methods = ["get"]
