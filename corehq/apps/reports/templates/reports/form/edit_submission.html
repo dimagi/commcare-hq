@@ -11,11 +11,7 @@
     $(function () {
         GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is a global variable depended on by touchforms
         var edit_context = {{ edit_context|JSON }};
-        {% if request|toggle_enabled:"TF_USES_SQLITE_BACKEND" %}
-            var uses_sql_backend = true;
-        {% else %}
-            var uses_sql_backend = false;
-        {% endif %}
+        var uses_sql_backend = {{ use_sqlite_backend|JSON }};
         $('#edit-container').inlineTouchform({
             formUrl: edit_context.formUrl,
             submitUrl: edit_context.submitUrl,
