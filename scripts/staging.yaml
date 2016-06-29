@@ -52,6 +52,7 @@ branches:
   - new-signup  # Biyeun 6/21
   - np/update-ui # Nick P 6/27
   - np/update-user-buckets # Nick P 6/28
+  - nc/report-builder # Noah 6/29
 submodules:
   #deployment/commcare-hq-deploy:
   #  branches:
