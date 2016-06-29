@@ -107,7 +107,8 @@ def _deactivate_subscription(subscription, ending_date):
         next_subscription.is_active = True
         next_subscription.save()
     else:
-        new_plan_version = None
+        next_subscription = assign_explicit_community_subscription(subscription.subscriber.domain, ending_date)
+        new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
     if next_subscription and subscription.account == next_subscription.account:
         subscription.transfer_credits(subscription=next_subscription)
@@ -547,43 +548,46 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
         log_accounting_error("Error updating exchange rates: %s" % e.message)
 
 
-def assign_explicit_community_subscriptions(from_date):
-    consistent_dates_check = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
+CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
 
-    all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
-    for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
-        domain_name = domain_doc['name']
-        if not Subscription.objects.filter(
-            consistent_dates_check
-        ).filter(
-            Q(date_end__gt=from_date) | Q(date_end__isnull=True),
-            date_start__lte=from_date,
-            subscriber__domain=domain_name,
-        ).exists():
-            future_subscriptions = Subscription.objects.filter(
-                consistent_dates_check
-            ).filter(
-                date_start__gt=from_date,
-                subscriber__domain=domain_name,
-            )
-            if future_subscriptions.exists():
-                end_date = future_subscriptions.latest('date_start').date_start
-            else:
-                end_date = None
 
-            Subscription.new_domain_subscription(
-                account=BillingAccount.get_or_create_account_by_domain(
-                    domain_name,
-                    created_by='assign_explicit_community_subscriptions',
-                    entry_point=EntryPoint.SELF_STARTED,
-                )[0],
-                domain=domain_name,
-                plan_version=DefaultProductPlan.get_default_plan(
-                    SoftwarePlanEdition.COMMUNITY
-                ).plan.get_version(),
-                date_start=from_date,
-                date_end=end_date,
-                adjustment_method=SubscriptionAdjustmentMethod.TASK,
-                internal_change=True,
-                service_type=SubscriptionType.PRODUCT,
-            )
+def ensure_explicit_community_subscription(domain_name, from_date):
+    if not Subscription.objects.filter(
+        CONSISTENT_DATES_CHECK
+    ).filter(
+        Q(date_end__gt=from_date) | Q(date_end__isnull=True),
+        date_start__lte=from_date,
+        subscriber__domain=domain_name,
+    ).exists():
+        assign_explicit_community_subscription(domain_name, from_date)
+
+
+def assign_explicit_community_subscription(domain_name, start_date):
+    future_subscriptions = Subscription.objects.filter(
+        CONSISTENT_DATES_CHECK
+    ).filter(
+        date_start__gt=start_date,
+        subscriber__domain=domain_name,
+    )
+    if future_subscriptions.exists():
+        end_date = future_subscriptions.latest('date_start').date_start
+    else:
+        end_date = None
+
+    return Subscription.new_domain_subscription(
+        account=BillingAccount.get_or_create_account_by_domain(
+            domain_name,
+            created_by='assign_explicit_community_subscriptions',
+            entry_point=EntryPoint.SELF_STARTED,
+        )[0],
+        domain=domain_name,
+        plan_version=DefaultProductPlan.get_default_plan(
+            SoftwarePlanEdition.COMMUNITY
+        ).plan.get_version(),
+        date_start=start_date,
+        date_end=end_date,
+        skip_invoicing_if_no_feature_charges=True,
+        adjustment_method=SubscriptionAdjustmentMethod.TASK,
+        internal_change=True,
+        service_type=SubscriptionType.PRODUCT,
+    )

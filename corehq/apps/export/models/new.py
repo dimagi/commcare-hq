@@ -846,7 +846,7 @@ class ExportDataSchema(Document):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
-        :param app_id: The app_id that the export belongs to
+        :param app_id: The app_id that the export belongs to (or None if export is not associated with an app.
         :param identifier: The unique identifier of the schema being exported.
             case_type for Case Exports and xmlns for Form Exports
         :returns: Returns a FormExportDataSchema instance

@@ -9,6 +9,8 @@ from custom.icds_reports.utils import ASRData, ICDSMixin
 
 class ASRIdentification(BaseIdentification):
 
+    title = '1. Identification and Basic Information'
+
     @property
     def rows(self):
         if self.config['location_id']:
@@ -36,591 +38,57 @@ class ASRIdentification(BaseIdentification):
 
 
 class ASROperationalization(BaseOperationalization, ASRData):
-    pass
+    title = '2. Status of operationalization of AWCs'
 
 
 class ASRPopulation(BasePopulation, ASRData):
 
-    title = 'Details of Annual Family Survey'
+    title = '3. Details of Annual Family Survey'
 
 
 class Annual(ICDSMixin, ASRData):
 
-    title = 'Annual Population Summary'
+    title = 'd. Annual Population Summary'
     slug = 'annual'
-    has_sections = True
-
-    @property
-    def rows(self):
-        if self.config['location_id']:
-            sections = []
-            rows = [
-                ['ST'],
-                ['SC'],
-                ['Others'],
-                ['Total'],
-                ['Minority']
-            ]
-            one_letter = [''.join(p) for p in itertools.product(string.ascii_lowercase, repeat=1)]
-            two_letters = [''.join(p) for p in itertools.product(string.ascii_lowercase, repeat=2)]
-            all_letters = one_letter + two_letters
-
-            for i in range(0, 15):
-                for row in rows:
-                    row.append(all_letters[0])
-                    del all_letters[0]
-            rows.insert(0, range(1, 17))
-            sections.append(dict(
-                title=self.row_config[0]['title'],
-                headers=self.row_config[0]['headers'],
-                slug=self.row_config[0]['slug'],
-                rows=rows,
-                posttitle='(this table above shows the format, the letters '
-                          'a-o represent the data, which appears in the table below)'
-            ))
-            data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
-            rr = []
-            for row in self.row_config[1]['rows_config']:
-                row_data = []
-                for idx, cell in enumerate(row):
-                    if 0 <= idx <= 2:
-                        row_data.append(cell)
-                    else:
-                        num = 0
-                        for c in cell:
-                            num += data.get(c, 0)
-                        row_data.append(num)
-                rr.append(row_data)
-            sections.append(dict(
-                title=self.row_config[1]['title'],
-                headers=self.row_config[1]['headers'],
-                slug=self.row_config[1]['slug'],
-                rows=rr,
-                posttitle=None
-            ))
-            return sections
-
-    @property
-    def row_config(self):
-        return [
-            {
-                'title': '',
-                'slug': 'annual_1',
-                'headers': DataTablesHeader(
-                    DataTablesColumn('Category'),
-                    DataTablesColumn('PW'),
-                    DataTablesColumn('LM'),
-                    DataTablesColumnGroup(
-                        'Children 0-5 months',
-                        DataTablesColumn('B'),
-                        DataTablesColumn('G')
-                    ),
-                    DataTablesColumnGroup(
-                        'Children 6-11 months',
-                        DataTablesColumn('B'),
-                        DataTablesColumn('G')
-                    ),
-                    DataTablesColumnGroup(
-                        'Children 12-35 months',
-                        DataTablesColumn('B'),
-                        DataTablesColumn('G')
-                    ),
-                    DataTablesColumnGroup(
-                        'Children 36-59 months',
-                        DataTablesColumn('B'),
-                        DataTablesColumn('G')
-                    ),
-                    DataTablesColumnGroup(
-                        'Children 60-71 months',
-                        DataTablesColumn('B'),
-                        DataTablesColumn('G')
-                    ),
-                    DataTablesColumnGroup(
-                        'All Children 0-71 months',
-                        DataTablesColumn('B'),
-                        DataTablesColumn('G')
-                    ),
-                    DataTablesColumn('AG')
-                )
-            },
-            {
-                'title': '',
-                'slug': 'annual_2',
-                'headers': DataTablesHeader(
-                    DataTablesColumn('Diagram Reference #'),
-                    DataTablesColumn('Diagram Reference label'),
-                    DataTablesColumn('Report Reference #'),
-                    DataTablesColumn('Value')
-                ),
-                'rows_config': (
-                    (
-                        'a',
-                        'PW ST',
-                        '#2',
-                        ('pregnant_st_count',)
-                    ),
-                    (
-                        'b',
-                        'PW SC',
-                        '#2',
-                        ('pregnant_sc_count',)
-                    ),
-                    (
-                        'c',
-                        'PW Other',
-                        '#2',
-                        ('pregnant_other_count',)
-                    ),
-                    (
-                        'd',
-                        'PW Total',
-                        '--',
-                        ('pregnant_st_count', 'pregnant_sc_count', 'pregnant_other_count')
-                    ),
-                    (
-                        'e',
-                        'PW Minority',
-                        '#2',
-                        ("pregnant_minority_count",)
-                    ),
-                    (
-                        'f',
-                        'LM ST',
-                        '#3',
-                        ("delivered_st_count",)
-                    ),
-                    (
-                        'g',
-                        'LM SC',
-                        '#3',
-                        ("delivered_sc_count",)
-                    ),
-                    (
-                        'h',
-                        'LM Others',
-                        '#3',
-                        ("delivered_other_count",)
-                    ),
-                    (
-                        'i',
-                        'LM Total',
-                        '--',
-                        ('delivered_st_count', 'delivered_sc_count', 'delivered_other_count')
-                    ),
-                    (
-                        'j',
-                        'LM Minority',
-                        '#3',
-                        ("delivered_minority_count",)
-                    ),
-                    (
-                        'k',
-                        '0-5 months B ST',
-                        '#4',
-                        ("M_st_count",)
-                    ),
-                    (
-                        'l',
-                        '0-5 months B SC',
-                        '#4',
-                        ("M_sc_count",)
-                    ),
-                    (
-                        'm',
-                        '0-5 months B Others',
-                        '#4',
-                        ("M_other_count",)
-                    ),
-                    (
-                        'n',
-                        '0-5 months B Total',
-                        '--',
-                        ('M_st_count', 'M_sc_count', 'M_other_count')
-                    ),
-                    (
-                        'o',
-                        '0-5 months B Minority',
-                        '#4',
-                        ("M_minority_count",)
-                    ),
-                    (
-                        'p',
-                        '0-5 months G ST',
-                        '#4',
-                        ("F_st_count",)
-                    ),
-                    (
-                        'q',
-                        '0-5 months G SC',
-                        '#4',
-                        ("F_sc_count",)
-                    ),
-                    (
-                        'r',
-                        '0-5 months G Others',
-                        '#4',
-                        ("F_other_count",)
-                    ),
-                    (
-                        's',
-                        '0-5 months G Total',
-                        '--',
-                        ('F_st_count', 'F_sc_count', 'F_other_count')
-                    ),
-                    (
-                        't',
-                        '0-5 months G Minority',
-                        '#4',
-                        ("F_minority_count",)
-                    ),
-                    (
-                        'u',
-                        '6-11 months B ST',
-                        '#5',
-                        ("M_st_count_1",)
-                    ),
-                    (
-                        'v',
-                        '6-11 months B SC',
-                        '#5',
-                        ("M_sc_count_1",)
-                    ),
-                    (
-                        'w',
-                        '6-11 months B Others',
-                        '#5',
-                        ("M_other_count_1",)
-                    ),
-                    (
-                        'x',
-                        '6-11 months B Total',
-                        '--',
-                        ('M_st_count_1', 'M_sc_count_1', 'M_other_count_1')
-                    ),
-                    (
-                        'y',
-                        '6-11 months B Minority',
-                        '#5',
-                        ("M_minority_count_1",)
-                    ),
-                    (
-                        'z',
-                        '6-11 months G ST',
-                        '#5',
-                        ("F_st_count_1",)
-                    ),
-                    (
-                        'aa',
-                        '6-11 months G SC',
-                        '#5',
-                        ("F_sc_count_1",)
-                    ),
-                    (
-                        'ab',
-                        '6-11 months G Others',
-                        '#5',
-                        ("F_other_count_1",)
-                    ),
-                    (
-                        'ac',
-                        '6-11 months G Total',
-                        '--',
-                        ('F_st_count_1', 'F_sc_count_1', 'F_other_count_1')
-                    ),
-                    (
-                        'ad',
-                        '6-11 months G Minority',
-                        '#5',
-                        ("F_minority_count_1",)
-                    ),
-                    (
-                        'ae',
-                        '12-35 months B ST',
-                        '#6',
-                        ("M_st_count_2",)
-                    ),
-                    (
-                        'af',
-                        '12-35 months B SC',
-                        '#6',
-                        ("M_sc_count_2",)
-                    ),
-                    (
-                        'ag',
-                        '12-35 months B Others',
-                        '#6',
-                        ("M_other_count_2",)
-                    ),
-                    (
-                        'ah',
-                        '12-35 months G Total',
-                        '--',
-                        ('M_st_count_2', 'M_sc_count_2', 'M_other_count_2')
-                    ),
-                    (
-                        'ai',
-                        '12-35 months B Minority',
-                        '#6',
-                        ("M_minority_count_2",)
-                    ),
-                    (
-                        'aj',
-                        '12-35 months G ST',
-                        '#6',
-                        ("F_st_count_2",)
-                    ),
-                    (
-                        'ak',
-                        '12-35 months G SC',
-                        '#6',
-                        ("F_sc_count_2",)
-                    ),
-                    (
-                        'al',
-                        '12-35 months G Others',
-                        '#6',
-                        ("F_other_count_2",)
-                    ),
-                    (
-                        'am',
-                        '12-35 months G Total',
-                        '--',
-                        ('F_st_count_2', 'F_sc_count_2', 'F_other_count_2')
-                    ),
-                    (
-                        'an',
-                        '12-35 months G Minority',
-                        '#6',
-                        ("F_minority_count_2",)
-                    ),
-                    (
-                        'ao',
-                        '36-59 months B ST',
-                        '#7',
-                        ("M_st_count_3",)
-                    ),
-                    (
-                        'ap',
-                        '36-59 months B SC',
-                        '#7',
-                        ("M_sc_count_3",)
-                    ),
-                    (
-                        'aq',
-                        '36-59 months B Others',
-                        '#7',
-                        ("M_other_count_3",)
-                    ),
-                    (
-                        'ar',
-                        '36-59 months G Total',
-                        '--',
-                        ('M_st_count_3', 'M_sc_count_3', 'M_other_count_3')
-                    ),
-                    (
-                        'as',
-                        '36-59 months B Minority',
-                        '#7',
-                        ("M_minority_count_3",)
-                    ),
-                    (
-                        'at',
-                        '36-59 months G ST',
-                        '#7',
-                        ("F_st_count_3",)
-                    ),
-                    (
-                        'au',
-                        '36-59 months G SC',
-                        '#7',
-                        ("F_sc_count_3",)
-                    ),
-                    (
-                        'av',
-                        '36-59 months G Others',
-                        '#7',
-                        ("F_other_count_3",)
-                    ),
-                    (
-                        'aw',
-                        '36-59 months G Total',
-                        '--',
-                        ('F_st_count_3', 'F_sc_count_3', 'F_other_count_3')
-                    ),
-                    (
-                        'ax',
-                        '36-59 months G Minority',
-                        '#7',
-                        ("F_minority_count_3",)
-                    ),
-                    (
-                        'ay',
-                        '60-71 months B ST',
-                        '#8',
-                        ("M_st_count_4",)
-                    ),
-                    (
-                        'az',
-                        '60-71 months B SC',
-                        '#8',
-                        ("M_sc_count_4",)
-                    ),
-                    (
-                        'ba',
-                        '60-71 months B Others',
-                        '#8',
-                        ("M_other_count_4",)
-                    ),
-                    (
-                        'bb',
-                        '60-71 months G Total',
-                        '--',
-                        ('M_st_count_4', 'M_sc_count_4', 'M_other_count_4')
-                    ),
-                    (
-                        'bc',
-                        '60-71 months B Minority',
-                        '#8',
-                        ("M_minority_count_4",)
-                    ),
-                    (
-                        'bd',
-                        '60-71 months G ST',
-                        '#8',
-                        ("F_st_count_4",)
-                    ),
-                    (
-                        'be',
-                        '60-71 months G SC',
-                        '#8',
-                        ("F_sc_count_4",)
-                    ),
-                    (
-                        'bf',
-                        '60-71 months G Others',
-                        '#8',
-                        ("F_other_count_4",)
-                    ),
-                    (
-                        'bg',
-                        '60-71 months G Total',
-                        '--',
-                        ('F_st_count_4', 'F_sc_count_4', 'F_other_count_4')
-                    ),
-                    (
-                        'bh',
-                        '60-71 months G Minority',
-                        '#8',
-                        ("F_minority_count_4",)
-                    ),
-                    (
-                        'bi',
-                        '0-71 months B ST',
-                        '#9',
-                        ("M_st_count_all",)
-                    ),
-                    (
-                        'bj',
-                        '0-71 months B SC',
-                        '#9',
-                        ("M_sc_count_all",)
-                    ),
-                    (
-                        'bk',
-                        '0-71 months B Others',
-                        '#9',
-                        ("M_other_count_all",)
-                    ),
-                    (
-                        'bl',
-                        '0-71 months G Total',
-                        '--',
-                        ('M_st_count_all', 'M_sc_count_all', 'M_other_count_all')
-                    ),
-                    (
-                        'bm',
-                        '0-71 months B Minority',
-                        '#9',
-                        ("M_minority_count_all",)
-                    ),
-                    (
-                        'bn',
-                        '0-71 months G ST',
-                        '#9',
-                        ("F_st_count_all",)
-                    ),
-                    (
-                        'bo',
-                        '0-71 months G SC',
-                        '#9',
-                        ("F_sc_count_all",)
-                    ),
-                    (
-                        'bp',
-                        '0-71 months G Others',
-                        '#9',
-                        ("F_other_count_all",)
-                    ),
-                    (
-                        'bq',
-                        '0-71 months G Total',
-                        '--',
-                        ('F_st_count_all', 'F_sc_count_all', 'F_other_count_all')
-                    ),
-                    (
-                        'br',
-                        '0-71 months G Minority',
-                        '#9',
-                        ("F_minority_count_all",)
-                    ),
-                    (
-                        'bs',
-                        'AG ST',
-                        '#10',
-                        ("M_st_count_ag",)
-                    ),
-                    (
-                        'bt',
-                        'AG SC',
-                        '#10',
-                        ("M_sc_count_ag",)
-                    ),
-                    (
-                        'bu',
-                        'AG Other',
-                        '#10',
-                        ("M_other_count_ag",)
-                    ),
-                    (
-                        'bv',
-                        'AG Total',
-                        '--',
-                        ('M_st_count_ag', 'M_sc_count_ag', 'M_other_count_ag')
-                    ),
-                    (
-                        'bw',
-                        'AG minority',
-                        '#10',
-                        ("M_minority_count_ag",)
-                    )
-                )
-            }
-        ]
-
-
-class DisabledChildren(ICDSMixin, ASRData):
-
-    title = 'Identification of disabled children'
-    slug = 'disabled_children'
+    has_sections = False
 
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn('#'),
             DataTablesColumn('Category'),
-            DataTablesColumn('SubCategory'),
-            DataTablesColumn('Reports'),
-            DataTablesColumn('Report Variable')
+            DataTablesColumn('PW'),
+            DataTablesColumn('LM'),
+            DataTablesColumnGroup(
+                'Children 0-5 months',
+                DataTablesColumn('B'),
+                DataTablesColumn('G')
+            ),
+            DataTablesColumnGroup(
+                'Children 6-11 months',
+                DataTablesColumn('B'),
+                DataTablesColumn('G')
+            ),
+            DataTablesColumnGroup(
+                'Children 12-35 months',
+                DataTablesColumn('B'),
+                DataTablesColumn('G')
+            ),
+            DataTablesColumnGroup(
+                'Children 36-59 months',
+                DataTablesColumn('B'),
+                DataTablesColumn('G')
+            ),
+            DataTablesColumnGroup(
+                'Children 60-71 months',
+                DataTablesColumn('B'),
+                DataTablesColumn('G')
+            ),
+            DataTablesColumnGroup(
+                'All Children 0-71 months',
+                DataTablesColumn('B'),
+                DataTablesColumn('G')
+            ),
+            DataTablesColumn('AG')
         )
 
     @property
@@ -631,7 +99,138 @@ class DisabledChildren(ICDSMixin, ASRData):
             for row in self.row_config:
                 row_data = []
                 for idx, cell in enumerate(row):
-                    if 0 <= idx <= 3:
+                    if idx == 0:
+                        row_data.append(cell)
+                    else:
+                        num = 0
+                        for c in cell:
+                            num += data.get(c, 0)
+                        row_data.append(num)
+                rows.append(row_data)
+            return rows
+
+    @property
+    def row_config(self):
+        return (
+                    (
+                        'ST',
+                        ('pregnant_st_count',),
+                        ("delivered_st_count",),
+                        ("M_st_count",),
+                        ("F_st_count",),
+                        ("M_st_count_1",),
+                        ("F_st_count_1",),
+                        ("M_st_count_2",),
+                        ("F_st_count_2",),
+                        ("M_st_count_3",),
+                        ("F_st_count_3",),
+                        ("M_st_count_4",),
+                        ("F_st_count_4",),
+                        ("M_st_count_all",),
+                        ("F_st_count_all",),
+                        ("M_st_count_ag",)
+                    ),
+                    (
+                        'SC',
+                        ('pregnant_sc_count',),
+                        ("delivered_sc_count",),
+                        ("M_sc_count",),
+                        ("F_sc_count",),
+                        ("M_sc_count_1",),
+                        ("F_sc_count_1",),
+                        ("M_sc_count_2",),
+                        ("F_sc_count_2",),
+                        ("M_sc_count_3",),
+                        ("F_sc_count_3",),
+                        ("M_sc_count_4",),
+                        ("F_sc_count_4",),
+                        ("M_sc_count_all",),
+                        ("F_sc_count_all",),
+                        ("M_sc_count_ag",)
+                    ),
+                    (
+                        'Other',
+                        ('pregnant_other_count',),
+                        ("delivered_other_count",),
+                        ("M_other_count",),
+                        ("F_other_count",),
+                        ("M_other_count_1",),
+                        ("F_other_count_1",),
+                        ("M_other_count_2",),
+                        ("F_other_count_2",),
+                        ("M_other_count_3",),
+                        ("F_other_count_3",),
+                        ("M_other_count_4",),
+                        ("F_other_count_4",),
+                        ("M_other_count_all",),
+                        ("F_other_count_all",),
+                        ("M_other_count_ag",)
+                    ),
+                    (
+                        'Total',
+                        ('pregnant_st_count', 'pregnant_sc_count', 'pregnant_other_count'),
+                        ('delivered_st_count', 'delivered_sc_count', 'delivered_other_count'),
+                        ('M_st_count', 'M_sc_count', 'M_other_count'),
+                        ('F_st_count', 'F_sc_count', 'F_other_count'),
+                        ('M_st_count_1', 'M_sc_count_1', 'M_other_count_1'),
+                        ('F_st_count_1', 'F_sc_count_1', 'F_other_count_1'),
+                        ('M_st_count_2', 'M_sc_count_2', 'M_other_count_2'),
+                        ('F_st_count_2', 'F_sc_count_2', 'F_other_count_2'),
+                        ('M_st_count_3', 'M_sc_count_3', 'M_other_count_3'),
+                        ('F_st_count_3', 'F_sc_count_3', 'F_other_count_3'),
+                        ('M_st_count_4', 'M_sc_count_4', 'M_other_count_4'),
+                        ('F_st_count_4', 'F_sc_count_4', 'F_other_count_4'),
+                        ('M_st_count_all', 'M_sc_count_all', 'M_other_count_all'),
+                        ('F_st_count_all', 'F_sc_count_all', 'F_other_count_all'),
+                        ('M_st_count_ag', 'M_sc_count_ag', 'M_other_count_ag')
+                    ),
+                    (
+                        'Minority',
+                        ("pregnant_minority_count",),
+                        ("delivered_minority_count",),
+                        ("M_minority_count",),
+                        ("F_minority_count",),
+                        ("M_minority_count_1",),
+                        ("F_minority_count_1",),
+                        ("M_minority_count_2",),
+                        ("F_minority_count_2",),
+                        ("M_minority_count_3",),
+                        ("F_minority_count_3",),
+                        ("M_minority_count_4",),
+                        ("F_minority_count_4",),
+                        ("M_minority_count_all",),
+                        ("F_minority_count_all",),
+                        ("M_minority_count_ag",)
+                    )
+                )
+
+
+class DisabledChildren(ICDSMixin, ASRData):
+
+    title = '4. Identification of disabled children'
+    slug = 'disabled_children'
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(''),
+            DataTablesColumn('Movement'),
+            DataTablesColumn('Mental'),
+            DataTablesColumn('Seeing'),
+            DataTablesColumn('Hearing'),
+            DataTablesColumn('Speaking'),
+            DataTablesColumn('Total')
+        )
+
+    @property
+    def rows(self):
+        if self.config['location_id']:
+            data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
+            rows = []
+            for row in self.row_config:
+                row_data = []
+                for idx, cell in enumerate(row):
+                    if idx == 0:
                         row_data.append(cell)
                     else:
                         num = 0
@@ -645,45 +244,12 @@ class DisabledChildren(ICDSMixin, ASRData):
     def row_config(self):
         return (
             (
-                'a',
                 'No. of children 0-3 yrs',
-                'Movement',
-                '#4 + #5 + #6',
-                ('disabled_movement_count',)
-            ),
-            (
-                'b',
-                '',
-                'Mental',
-                '#4 + #5 + #6',
-                ('disabled_mental_count',)
-            ),
-            (
-                'c',
-                '',
-                'Seeing',
-                '#4 + #5 + #6',
-                ('disabled_seeing_count',)
-            ),
-            (
-                'd',
-                '',
-                'Hearing',
-                '#4 + #5 + #6',
-                ('disabled_hearing_count',)
-            ),
-            (
-                'e',
-                '',
-                'Speaking',
-                '#4 + #5 + #6',
-                ('disabled_speaking_count',)
-            ),
-            (
-                'f',
-                '',
-                'Total',
-                'na',
+                ('disabled_movement_count',),
+                ('disabled_mental_count',),
+                ('disabled_seeing_count',),
+                ('disabled_hearing_count',),
+                ('disabled_speaking_count',),
                 (
                     'disabled_movement_count',
                     'disabled_mental_count',
@@ -693,45 +259,12 @@ class DisabledChildren(ICDSMixin, ASRData):
                 )
             ),
             (
-                'g',
                 'No. of children 3-6 yrs',
-                'Movement',
-                '#7 + #8',
-                ('disabled_movement_count_1',)
-            ),
-            (
-                'h',
-                '',
-                'Mental',
-                '#7 + #8',
-                ('disabled_mental_count_1',)
-            ),
-            (
-                'i',
-                '',
-                'Seeing',
-                '#7 + #8',
-                ('disabled_seeing_count_1',)
-            ),
-            (
-                'j',
-                '',
-                'Hearing',
-                '#7 + #8',
-                ('disabled_hearing_count_1',)
-            ),
-            (
-                'k',
-                '',
-                'Speaking',
-                '#7 + #8',
-                ('disabled_speaking_count_1',)
-            ),
-            (
-                'l',
-                '',
-                'Total',
-                'na',
+                ('disabled_movement_count_1',),
+                ('disabled_mental_count_1',),
+                ('disabled_seeing_count_1',),
+                ('disabled_hearing_count_1',),
+                ('disabled_speaking_count_1',),
                 (
                     'disabled_movement_count_1',
                     'disabled_mental_count_1',
@@ -741,45 +274,12 @@ class DisabledChildren(ICDSMixin, ASRData):
                 )
             ),
             (
-                'm',
                 'Total',
-                'Movement',
-                'na',
-                ('disabled_movement_count', 'disabled_movement_count_1')
-            ),
-            (
-                'n',
-                '',
-                'Mental',
-                'na',
-                ('disabled_mental_count', 'disabled_mental_count_1')
-            ),
-            (
-                'i',
-                '',
-                'Seeing',
-                'na',
-                ('disabled_seeing_count', 'disabled_seeing_count_1')
-            ),
-            (
-                'j',
-                '',
-                'Hearing',
-                'na',
-                ('disabled_hearing_count', 'disabled_hearing_count_1')
-            ),
-            (
-                'k',
-                '',
-                'Speaking',
-                'na',
-                ('disabled_speaking_count', 'disabled_speaking_count_1')
-            ),
-            (
-                'l',
-                '',
-                'Total',
-                'na',
+                ('disabled_movement_count', 'disabled_movement_count_1'),
+                ('disabled_mental_count', 'disabled_mental_count_1'),
+                ('disabled_seeing_count', 'disabled_seeing_count_1'),
+                ('disabled_hearing_count', 'disabled_hearing_count_1'),
+                ('disabled_speaking_count', 'disabled_speaking_count_1'),
                 (
                     'disabled_movement_count',
                     'disabled_mental_count',
@@ -798,7 +298,7 @@ class DisabledChildren(ICDSMixin, ASRData):
 
 class Infrastructure(ICDSMixin, ASRData):
 
-    title = 'Infrastructure Status'
+    title = '6. Infrastructure Status'
     slug = 'infrastructure'
     has_sections = True
 
@@ -829,7 +329,7 @@ class Infrastructure(ICDSMixin, ASRData):
     def row_config(self):
         return [
             {
-                'title': 'Status of AWC buildings',
+                'title': 'a. Status of AWC buildings',
                 'slug': 'infrastructure_1',
                 'static_cell': 1,
                 'headers': DataTablesHeader(
@@ -848,7 +348,7 @@ class Infrastructure(ICDSMixin, ASRData):
                 )
             },
             {
-                'title': 'If NOT in own building, number of AWCs housed in:',
+                'title': 'b. If NOT in own building, number of AWCs housed in:',
                 'slug': 'infrastructure_2',
                 'headers': [],
                 'static_cell': 2,
@@ -886,7 +386,7 @@ class Infrastructure(ICDSMixin, ASRData):
                 )
             },
             {
-                'title': 'Type of AWC building',
+                'title': 'c. Type of AWC building',
                 'slug': 'infrastructure_3',
                 'static_cell': 1,
                 'headers': DataTablesHeader(
@@ -905,7 +405,7 @@ class Infrastructure(ICDSMixin, ASRData):
                 )
             },
             {
-                'title': 'Toilet facilities at the AWC',
+                'title': 'd. Toilet facilities at the AWC',
                 'slug': 'infrastructure_4',
                 'static_cell': 1,
                 'headers': DataTablesHeader(
@@ -928,7 +428,7 @@ class Infrastructure(ICDSMixin, ASRData):
                 )
             },
             {
-                'title': 'Source of potable water at the AWC',
+                'title': 'e. Source of potable water at the AWC',
                 'slug': 'infrastructure_5',
                 'static_cell': 1,
                 'headers': DataTablesHeader(
@@ -949,7 +449,7 @@ class Infrastructure(ICDSMixin, ASRData):
                 )
             },
             {
-                'title': 'Source of potable water at the AWC',
+                'title': 'f. Source of potable water at the AWC',
                 'slug': 'infrastructure_5',
                 'static_cell': 2,
                 'headers': DataTablesHeader(
@@ -990,7 +490,8 @@ class Infrastructure(ICDSMixin, ASRData):
 
 class Equipment(ICDSMixin, ASRData):
 
-    title = 'No. of AWCs where the following equipment and materials are available/usable:'
+    title = '7. Equipment and Materials'
+    subtitle = ('(III) No. of AWCs where the following equipment and materials are available/usable:',)
     slug = 'equipment'
 
     @property

@@ -353,7 +353,8 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
                     if session_visited > session_total:
                         remaining = "?"
                     else:
-                        remaining = elapsed / session_visited * session_total
+                        session_remaining = session_total - session_visited
+                        remaining = elapsed / session_visited * session_remaining
                     print("Migrated {}/{} of {} documents in {} ({} remaining)"
                           .format(migrated, visited, total, elapsed, remaining))
 

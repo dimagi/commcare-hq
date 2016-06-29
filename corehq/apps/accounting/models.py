@@ -1169,7 +1169,8 @@ class Subscription(models.Model):
                             do_not_email_reminder=None, salesforce_contract_id=None,
                             auto_generate_credits=None,
                             web_user=None, note=None, adjustment_method=None,
-                            service_type=None, pro_bono_status=None, funding_source=None):
+                            service_type=None, pro_bono_status=None, funding_source=None,
+                            skip_invoicing_if_no_feature_charges=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1180,6 +1181,7 @@ class Subscription(models.Model):
         self._update_properties(
             do_not_invoice=do_not_invoice,
             no_invoice_reason=no_invoice_reason,
+            skip_invoicing_if_no_feature_charges=skip_invoicing_if_no_feature_charges,
             do_not_email_invoice=do_not_email_invoice,
             do_not_email_reminder=do_not_email_reminder,
             auto_generate_credits=auto_generate_credits,
@@ -1221,6 +1223,7 @@ class Subscription(models.Model):
         property_names = {
             'do_not_invoice',
             'no_invoice_reason',
+            'skip_invoicing_if_no_feature_charges',
             'do_not_email_invoice',
             'do_not_email_reminder',
             'auto_generate_credits',

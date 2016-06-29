@@ -37,6 +37,7 @@ from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
     ExportAppException,
+    BadExportConfiguration,
     ExportFormValidationException,
     ExportAsyncException,
 )
@@ -1445,6 +1446,9 @@ class BaseNewExportView(BaseExportView):
 
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body))
+        if self.domain != export.domain:
+            raise BadExportConfiguration()
+
         export.save()
         messages.success(
             request,
