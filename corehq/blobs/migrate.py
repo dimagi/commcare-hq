@@ -68,10 +68,12 @@ That's it, you're done!
 import json
 import os
 import traceback
+from abc import ABCMeta, abstractmethod
 from base64 import b64encode
 from datetime import datetime
 from tempfile import mkdtemp
 
+import six as six
 from django.conf import settings
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
@@ -123,7 +125,7 @@ message.
 """
 
 
-class BaseDocMigrator(object):
+class BaseDocMigrator(six.with_metaclass(ABCMeta)):
 
     #blobs_key = None  # Abstract: doc key to be tested for migration status.
     # If this key contains a falsy value the document will not be migrated.
@@ -131,6 +133,7 @@ class BaseDocMigrator(object):
     # If true, load attachment content before migrating.
     load_attachments = False
 
+    @abstractmethod
     def migrate(self, doc, couchdb):
         """Migrate a single document
 
@@ -139,7 +142,7 @@ class BaseDocMigrator(object):
         :returns: True if doc was migrated else False. If this returns False
         the document migration will be retried later.
         """
-        raise NotImplementedError("abstract method")
+        raise NotImplementedError
 
     def after_migration(self):
         pass
