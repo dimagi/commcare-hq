@@ -217,8 +217,8 @@ class CouchDocumentProcessor(object):
 
     :param slug: process name.
     :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
-    :param doc_migrator: A `BaseDocProcessor` object used to
-    migrate documents.
+    :param doc_processor: A `BaseDocProcessor` object used to
+    process documents.
     :param reset: Reset existing processor state (if any), causing all
     documents to be reconsidered for processing, if this is true.
     :param max_retry: Number of times to retry processing a document
@@ -228,9 +228,9 @@ class CouchDocumentProcessor(object):
     records being processed are very large and the default chunk size of
     100 would exceed available memory.
     """
-    def __init__(self, doc_type_map, doc_migrator, reset=False, max_retry=2, chunk_size=100):
+    def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2, chunk_size=100):
         self.doc_type_map = doc_type_map
-        self.doc_migrator = doc_migrator
+        self.doc_processor = doc_processor
         self.reset = reset
         self.max_retry = max_retry
         self.chunk_size = chunk_size
@@ -239,7 +239,7 @@ class CouchDocumentProcessor(object):
         assert all(m.get_db() is self.couchdb for m in doc_type_map.values()), \
             "documents must live in same couch db: %s" % repr(doc_type_map)
 
-        iter_key = doc_migrator.slug + DOC_PROCESSOR_ITERATION_KEY_PREFIX
+        iter_key = doc_processor.slug + DOC_PROCESSOR_ITERATION_KEY_PREFIX
         self.docs_by_type = ResumableDocsByTypeIterator(self.couchdb, doc_type_map, iter_key,
                                                    chunk_size=chunk_size)
 
@@ -275,14 +275,14 @@ class CouchDocumentProcessor(object):
             ", ".join(sorted(self.doc_type_map))
         ))
 
-        with self.doc_migrator:
+        with self.doc_processor:
             start = datetime.now()
             for doc in self.docs_by_type:
                 visited += 1
                 if visited % self.chunk_size == 0:
                     self.docs_by_type.progress_info = {"visited": visited, "total": total}
-                if self.doc_migrator.filter(doc):
-                    ok = self.doc_migrator.migrate(doc, self.couchdb)
+                if self.doc_processor.filter(doc):
+                    ok = self.doc_processor.process_doc(doc, self.couchdb)
                     if ok:
                         processed += 1
                     else:
@@ -303,7 +303,7 @@ class CouchDocumentProcessor(object):
                         print("Processed {}/{} of {} documents in {} ({} remaining)"
                               .format(processed, visited, total, elapsed, remaining))
 
-        self.doc_migrator.after_migration(skipped)
+        self.doc_processor.processing_complete(skipped)
 
         print("Processed {}/{} of {} documents ({} previously processed, {} filtered out)."
             .format(
