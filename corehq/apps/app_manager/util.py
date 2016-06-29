@@ -382,7 +382,7 @@ def get_session_schema(form):
             structure[session_var] = {
                 "reference": {
                     "source": "casedb",
-                    "subset": datum.case_type,
+                    "subset": "case",
                     "key": "@case_id",
                 },
             }
