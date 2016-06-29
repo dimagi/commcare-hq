@@ -212,7 +212,7 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
         return True
 
 
-def process_docs(slug, doc_type_map, doc_migrator, reset=False, max_retry=2, chunk_size=100):
+class CouchDocumentProcessor(object):
     """Process Couch Docs
 
     :param slug: process name.
@@ -227,78 +227,94 @@ def process_docs(slug, doc_type_map, doc_migrator, reset=False, max_retry=2, chu
     one time. It may be necessary to use a smaller chunk size if the
     records being processed are very large and the default chunk size of
     100 would exceed available memory.
-    :returns: A tuple `(<num processed>, <num skipped>)`
     """
-    from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
+    def __init__(self, slug, doc_type_map, doc_migrator, reset=False, max_retry=2, chunk_size=100):
+        self.slug = slug
+        self.doc_type_map = doc_type_map
+        self.doc_migrator = doc_migrator
+        self.reset = reset
+        self.max_retry = max_retry
+        self.chunk_size = chunk_size
 
-    couchdb = next(iter(doc_type_map.values())).get_db()
-    assert all(m.get_db() is couchdb for m in doc_type_map.values()), \
-        "documents must live in same couch db: %s" % repr(doc_type_map)
+        self.couchdb = next(iter(doc_type_map.values())).get_db()
+        assert all(m.get_db() is self.couchdb for m in doc_type_map.values()), \
+            "documents must live in same couch db: %s" % repr(doc_type_map)
 
-    total = sum(get_doc_count_by_type(couchdb, doc_type)
-                for doc_type in doc_type_map)
-    processed = 0
-    skipped = 0
-    visited = 0
-    previously_visited = 0
-    iter_key = slug + DOC_PROCESSOR_ITERATION_KEY_PREFIX
-    docs_by_type = ResumableDocsByTypeIterator(couchdb, doc_type_map, iter_key,
-                                               chunk_size=chunk_size)
-    if reset:
-        docs_by_type.discard_state()
-    elif docs_by_type.progress_info:
-        info = docs_by_type.progress_info
-        old_total = info["total"]
-        # Estimate already visited based on difference of old/new
-        # totals. The theory is that new or deleted records will be
-        # evenly distributed across the entire set.
-        visited = int(round(float(total) / old_total * info["visited"]))
-        previously_visited = visited
-    print("Processing {} documents{}: {}...".format(
-        total,
-        " (~{} already processed)".format(visited) if visited else "",
-        ", ".join(sorted(doc_type_map))
-    ))
+        iter_key = slug + DOC_PROCESSOR_ITERATION_KEY_PREFIX
+        self.docs_by_type = ResumableDocsByTypeIterator(self.couchdb, doc_type_map, iter_key,
+                                                   chunk_size=chunk_size)
 
-    with doc_migrator:
-        start = datetime.now()
-        for doc in docs_by_type:
-            visited += 1
-            if visited % chunk_size == 0:
-                docs_by_type.progress_info = {"visited": visited, "total": total}
-            if doc_migrator.filter(doc):
-                ok = doc_migrator.migrate(doc, couchdb)
-                if ok:
-                    processed += 1
-                else:
-                    try:
-                        docs_by_type.retry(doc, max_retry)
-                    except TooManyRetries:
-                        print("Skip: {doc_type} {_id}".format(**doc))
-                        skipped += 1
-                if (processed + skipped) % chunk_size == 0:
-                    elapsed = datetime.now() - start
-                    session_visited = visited - previously_visited
-                    session_total = total - previously_visited
-                    if session_visited > session_total:
-                        remaining = "?"
-                    else:
-                        session_remaining = session_total - session_visited
-                        remaining = elapsed / session_visited * session_remaining
-                    print("Processed {}/{} of {} documents in {} ({} remaining)"
-                          .format(processed, visited, total, elapsed, remaining))
+    def has_started(self):
+        return bool(self.docs_by_type.progress_info)
 
-    doc_migrator.after_migration(skipped)
+    def run(self):
+        """
+        :returns: A tuple `(<num processed>, <num skipped>)`
+        """
+        from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
 
-    print("Processed {}/{} of {} documents ({} previously processed, {} filtered out)."
-        .format(
-            processed,
-            visited,
+        total = sum(get_doc_count_by_type(self.couchdb, doc_type)
+                    for doc_type in self.doc_type_map)
+        processed = 0
+        skipped = 0
+        visited = 0
+        previously_visited = 0
+
+        if self.reset:
+            self.docs_by_type.discard_state()
+        elif self.docs_by_type.progress_info:
+            info = self.docs_by_type.progress_info
+            old_total = info["total"]
+            # Estimate already visited based on difference of old/new
+            # totals. The theory is that new or deleted records will be
+            # evenly distributed across the entire set.
+            visited = int(round(float(total) / old_total * info["visited"]))
+            previously_visited = visited
+        print("Processing {} documents{}: {}...".format(
             total,
-            total - visited,
-            visited - (processed + skipped)
+            " (~{} already processed)".format(visited) if visited else "",
+            ", ".join(sorted(self.doc_type_map))
         ))
-    if skipped:
-        print(DOCS_SKIPPED_WARNING.format(skipped))
-    return processed, skipped
+
+        with self.doc_migrator:
+            start = datetime.now()
+            for doc in self.docs_by_type:
+                visited += 1
+                if visited % self.chunk_size == 0:
+                    self.docs_by_type.progress_info = {"visited": visited, "total": total}
+                if self.doc_migrator.filter(doc):
+                    ok = self.doc_migrator.migrate(doc, self.couchdb)
+                    if ok:
+                        processed += 1
+                    else:
+                        try:
+                            self.docs_by_type.retry(doc, self.max_retry)
+                        except TooManyRetries:
+                            print("Skip: {doc_type} {_id}".format(**doc))
+                            skipped += 1
+                    if (processed + skipped) % self.chunk_size == 0:
+                        elapsed = datetime.now() - start
+                        session_visited = visited - previously_visited
+                        session_total = total - previously_visited
+                        if session_visited > session_total:
+                            remaining = "?"
+                        else:
+                            session_remaining = session_total - session_visited
+                            remaining = elapsed / session_visited * session_remaining
+                        print("Processed {}/{} of {} documents in {} ({} remaining)"
+                              .format(processed, visited, total, elapsed, remaining))
+
+        self.doc_migrator.after_migration(skipped)
+
+        print("Processed {}/{} of {} documents ({} previously processed, {} filtered out)."
+            .format(
+                processed,
+                visited,
+                total,
+                total - visited,
+                visited - (processed + skipped)
+            ))
+        if skipped:
+            print(DOCS_SKIPPED_WARNING.format(skipped))
+        return processed, skipped
 

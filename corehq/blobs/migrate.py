@@ -79,7 +79,7 @@ from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
-from corehq.util.couch_doc_processor import BaseDocProcessor, process_docs, DOCS_SKIPPED_WARNING
+from corehq.util.couch_doc_processor import BaseDocProcessor, DOCS_SKIPPED_WARNING, CouchDocumentProcessor
 from couchdbkit import ResourceConflict
 
 # models to be migrated
@@ -271,12 +271,13 @@ class Migrator(object):
 
     def migrate(self, filename=None, *args, **kw):
         doc_migrator = self.doc_migrator_class(self.slug, filename)
-        return process_docs(
+        processor = CouchDocumentProcessor(
             self.slug,
             self.doc_type_map,
             doc_migrator,
             *args, **kw
         )
+        return processor.run()
 
 
 MIGRATIONS = {m.slug: m for m in [
