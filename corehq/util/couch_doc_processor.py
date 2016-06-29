@@ -228,8 +228,7 @@ class CouchDocumentProcessor(object):
     records being processed are very large and the default chunk size of
     100 would exceed available memory.
     """
-    def __init__(self, slug, doc_type_map, doc_migrator, reset=False, max_retry=2, chunk_size=100):
-        self.slug = slug
+    def __init__(self, doc_type_map, doc_migrator, reset=False, max_retry=2, chunk_size=100):
         self.doc_type_map = doc_type_map
         self.doc_migrator = doc_migrator
         self.reset = reset
@@ -240,7 +239,7 @@ class CouchDocumentProcessor(object):
         assert all(m.get_db() is self.couchdb for m in doc_type_map.values()), \
             "documents must live in same couch db: %s" % repr(doc_type_map)
 
-        iter_key = slug + DOC_PROCESSOR_ITERATION_KEY_PREFIX
+        iter_key = doc_migrator.slug + DOC_PROCESSOR_ITERATION_KEY_PREFIX
         self.docs_by_type = ResumableDocsByTypeIterator(self.couchdb, doc_type_map, iter_key,
                                                    chunk_size=chunk_size)
 

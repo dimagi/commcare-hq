@@ -272,7 +272,6 @@ class Migrator(object):
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         doc_migrator = self.doc_migrator_class(self.slug, filename)
         processor = CouchDocumentProcessor(
-            self.slug,
             self.doc_type_map,
             doc_migrator,
             reset,
