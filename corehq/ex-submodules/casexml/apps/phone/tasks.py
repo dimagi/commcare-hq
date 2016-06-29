@@ -44,9 +44,19 @@ def get_async_restore_payload(restore_config):
 
 @after_task_publish.connect
 def update_celery_state(sender=None, body=None, **kwargs):
-    """Used to update celery state so we know if an async restore made it to celery
+    """Updates the celery task progress to "SENT"
+
+    When fetching an task from celery using the form AsyncResponse(task_id), if
+    task_id never exists, celery will not throw an error, it will just hang.
+    This function updates each task sent to celery to have a progress value of "SENT",
+    which means we can check that a task exists with the following pattern:
+    `AsyncResponse(task_id).status == "SENT"`
+
+    See
+    http://stackoverflow.com/questions/9824172/find-out-whether-celery-task-exists/10089358
+    for more info
+
     """
-    # http://stackoverflow.com/questions/9824172/find-out-whether-celery-task-exists/10089358
 
     task = current_app.tasks.get(sender)
     backend = task.backend if task else current_app.backend

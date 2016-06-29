@@ -11,6 +11,7 @@ from casexml.apps.phone.data_providers.case.load_testing import get_xml_for_resp
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, CaseStub
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, IndexTree
+from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.apps.users.cases import get_owner_id
 from dimagi.utils.decorators.memoized import memoized
 
@@ -209,7 +210,7 @@ class AsyncCleanOwnerPayload(CleanOwnerSyncPayload):
 
     def _update_progress(self, done=0, total=0):
         self.current_task.update_state(
-            state="PROGRESS",
+            state=ASYNC_RESTORE_SENT,
             meta={
                 'done': done,
                 'total': total,
