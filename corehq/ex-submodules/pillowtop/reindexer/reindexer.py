@@ -72,6 +72,55 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
         _prepare_index_for_usage(self.es, self.index_info)
 
 
+class PillowReindexProcessor(BaseDocProcessor):
+    def __init__(self, slug, pillow):
+        super(PillowReindexProcessor, self).__init__(slug)
+        self.pillow = pillow
+
+    def process_doc(self, doc, couchdb):
+        change = self._doc_to_change(doc, couchdb)
+        self.pillow.process_change(change)
+        return True
+
+    def _doc_to_change(self, doc, couchdb):
+        return Change(
+            id=doc['_id'], sequence_id=None, document=doc, deleted=False,
+            document_store=CouchDocumentStore(couchdb)
+        )
+
+
+class ResumableElasticPillowReindexer(PillowReindexer):
+
+    def __init__(self, pillow, doc_types, elasticsearch, index_info):
+        super(ResumableElasticPillowReindexer, self).__init__(pillow)
+        self.es = elasticsearch
+        self.index_info = index_info
+
+        self.doc_type_map = dict(
+            t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
+        if len(doc_types) != len(self.doc_type_map):
+            raise ValueError("Invalid (duplicate?) doc types")
+
+    def clean(self):
+        _clean_index(self.es, self.index_info)
+
+    def reindex(self, reset=False):
+        doc_migrator = PillowReindexProcessor(self.index_info.index, self.pillow)
+        processor = CouchDocumentProcessor(
+            self.doc_type_map,
+            doc_migrator,
+            reset
+        )
+
+        if reset or not processor.has_started():
+            # when not resuming force delete and create the index
+            _prepare_index_for_reindex(self.es, self.index_info)
+
+        processor.run()
+
+        _prepare_index_for_usage(self.es, self.index_info)
+
+
 def get_default_reindexer_for_elastic_pillow(pillow, change_provider):
     return ElasticPillowReindexer(
         pillow=pillow,
