@@ -109,14 +109,12 @@ def get_restore_params(request):
         'version': request.GET.get('version', "1.0"),
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
-        'force_restore_mode': request.GET.get('mode')
     }
 
 
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
-                         cache_timeout=None, overwrite_cache=False,
-                         force_restore_mode=None):
+                         cache_timeout=None, overwrite_cache=False):
     # not a view just a view util
     if couch_user.is_commcare_user() and domain != couch_user.domain:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
@@ -136,6 +134,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
+    async_restore = toggles.ASYNC_RESTORE.enabled(domain)
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -144,14 +143,14 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             version=version,
             state_hash=state,
             include_item_count=items,
-            force_restore_mode=force_restore_mode,
             app=app,
         ),
         cache_settings=RestoreCacheSettings(
-            force_cache=force_cache,
+            force_cache=force_cache or async_restore,
             cache_timeout=cache_timeout,
             overwrite_cache=overwrite_cache
         ),
+        async=async_restore
     )
     return restore_config.get_response(), restore_config.timing_context
 

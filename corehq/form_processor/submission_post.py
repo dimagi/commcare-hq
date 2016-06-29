@@ -15,6 +15,7 @@ from django.http import (
 import sys
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals
+from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.tzmigration import timezone_migration_in_progress
 from corehq.form_processor.exceptions import CouchSaveAborted
@@ -22,6 +23,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
+from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
@@ -30,6 +32,8 @@ from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception
 from phonelog.utils import process_device_log
 
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from celery.task.control import revoke as revoke_celery_task
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
@@ -117,10 +121,23 @@ class SubmissionPost(object):
             found_old = scrub_meta(xform)
             legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
+    def _invalidate_async_tasks(self, user_id):
+        from casexml.apps.phone.restore import restore_cache_key
+        cache = get_redis_default_cache()
+        cache_key = restore_cache_key(ASYNC_RESTORE_CACHE_KEY_PREFIX, user_id)
+        task_id = cache.get(cache_key)
+
+        if task_id is not None:
+            revoke_celery_task(task_id)
+            cache.delete(cache_key)
+
     def run(self):
         failure_result = self._handle_basic_failure_modes()
         if failure_result:
             return failure_result
+
+        if ASYNC_RESTORE.enabled(self.domain):
+            self._invalidate_async_tasks(self.auth_context.user_id)
 
         result = process_xform_xml(self.domain, self.instance, self.attachments)
         submitted_form = result.submitted_form
