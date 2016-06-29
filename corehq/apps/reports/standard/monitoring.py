@@ -300,7 +300,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             bucket = buckets.get(user_id, None)
             rows.append(self.Row(self, user, bucket))
 
-        self.total_row = self._format_row(self.TotalRow(es_results, _("All Users")))
+        self.total_row = self._total_row
         return map(self._format_row, rows)
 
     @property
@@ -329,6 +329,30 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 filters.date_range('modified_on', lt=self.milestone_start),
                 filters.term('closed', False))
         )
+
+    @property
+    def _total_row(self):
+        query = (
+            case_es.CaseES()
+            .domain(self.domain)
+            .user_ids_handle_unknown(self.user_ids)
+            .size(0)
+        )
+        if self.case_type:
+            query = query.filter(case_es.case_type(self.case_type))
+        else:
+            query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
+
+        query = (
+            query
+            .aggregation(self._touched_total_aggregation)
+            .aggregation(self._active_total_aggregation)
+            .aggregation(self._inactive_total_aggregation)
+        )
+
+        query = self.add_landmark_aggregations(query, self.end_date)
+
+        return self._format_row(self.TotalRow(query.run(), _("All Users")))
 
     @property
     @memoized
@@ -375,15 +399,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             )
             missing_aggregation = self.add_landmark_aggregations(missing_aggregation, self.end_date)
             query = query.aggregation(missing_aggregation)
-
-        query = (
-            query
-            .aggregation(self._touched_total_aggregation)
-            .aggregation(self._active_total_aggregation)
-            .aggregation(self._inactive_total_aggregation)
-        )
-
-        query = self.add_landmark_aggregations(query, self.end_date)
 
         return query.run()
 
