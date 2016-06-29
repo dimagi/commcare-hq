@@ -308,17 +308,15 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
     def _apply_attachments_action(self, attachment_action, xform=None):
         """
 
-        if xform is provided, attachments will be looked for
-        in the xform's _attachments.
-        They should be base64 encoded under _attachments[name]['data']
-
+        if xform is provided it will be used to fetch attachments
         """
-        # the actions and _attachment must be added before the first saves can happen
+        # the actions and attachment must be added before the first saves can happen
         # todo attach cached attachment info
-        def fetch_attachment(name, _form=[]):
-            if not _form:
-                _form.append(XFormInstance.get(attachment_action.xform_id))
-            return _form[0].fetch_attachment(name)
+        def fetch_attachment(name):
+            if fetch_attachment.form is None:
+                fetch_attachment.form = XFormInstance.get(attachment_action.xform_id)
+            return fetch_attachment.form.fetch_attachment(name)
+        fetch_attachment.form = xform
 
         attach_dict = {}
         # cache all attachment streams from xform
