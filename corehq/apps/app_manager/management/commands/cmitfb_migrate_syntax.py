@@ -1,12 +1,11 @@
 import logging
 import re
 
-from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 from corehq.toggles import all_toggles
 from corehq.apps.domain.models import Domain
-from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import ParentCasePropertyBuilder, save_xform
 
 logger = logging.getLogger('cmitfb_migrate_syntax')
@@ -30,7 +29,8 @@ class Command(BaseCommand):
             return
         if affix_index < len(self.affixes):
             #logger.info("Replacing #case/{}/ with #case/{}".format(case_type, self.affixes[affix_index]))
-            form.source = form.source.replace("#case/{}/".format(case_type), "#case/{}".format(self.affixes[affix_index]))
+            form.source = form.source.replace("#case/{}/".format(case_type),
+                                              "#case/{}".format(self.affixes[affix_index]))
             parents = relationships[case_type].get("parent", [])
             if len(parents) > 1:
                 self._form_error(form, "Multiple parents: {}".format(", ".join(parents)))
