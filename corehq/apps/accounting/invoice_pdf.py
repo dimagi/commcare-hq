@@ -416,7 +416,6 @@ class InvoiceTemplate(object):
 
         payment_description = (
             "Payment Options:<br />"
-            "<br />"
             "<strong>Credit card payments</strong> are preferred and can be made online here: "
             "<link href='%(payment_page)s' color='blue'>%(payment_page)s</link><br />"
             "<br />"

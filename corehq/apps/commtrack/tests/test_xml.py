@@ -227,7 +227,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.assertEqual(section_id, latest_trans.section_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
 
-        if should_use_sql_backend(self.domain.name):
+        if should_use_sql_backend(self.domain):
             if latest_trans.type == LedgerTransaction.TYPE_TRANSFER:
                 self.assertEqual(int(expected_qty), latest_trans.delta)
         else:
@@ -268,7 +268,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in final_amounts:
             self.check_product_stock(self.sp, product, amt, 0)
             inferred = amt - initial
-            if should_use_sql_backend(self.domain.name):
+            if should_use_sql_backend(self.domain):
                 sql_txn = LedgerAccessors(self.domain.name).get_latest_transaction(
                     self.sp.case_id, 'stock', product
                 )
@@ -458,7 +458,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         get processed
         """
         def _assert_no_stock_transactions():
-            if should_use_sql_backend(self.domain.name):
+            if should_use_sql_backend(self.domain):
                 self.assertEqual(0, LedgerTransaction.objects.count())
             else:
                 self.assertEqual(0, StockTransaction.objects.count())
@@ -600,7 +600,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         ledger_accessors = LedgerAccessors(self.domain.name)
         def _assert_initial_state():
-            if should_use_sql_backend(self.domain.name):
+            if should_use_sql_backend(self.domain):
                 self.assertEqual(3, LedgerTransaction.objects.filter(form_id=second_form_id).count())
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
@@ -624,7 +624,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
             form.archive()
 
-        if should_use_sql_backend(self.domain.name):
+        if should_use_sql_backend(self.domain):
             self.assertEqual(0, LedgerTransaction.objects.filter(form_id=second_form_id).count())
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
@@ -655,7 +655,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         # check that we made stuff
         def _assert_initial_state():
-            if should_use_sql_backend(self.domain.name):
+            if should_use_sql_backend(self.domain):
                 self.assertEqual(3, LedgerTransaction.objects.filter(form_id=form_id).count())
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=form_id).count())
@@ -672,7 +672,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         form = FormAccessors(self.domain.name).get_form(form_id)
         form.archive()
         self.assertEqual(0, len(ledger_accessors.get_ledger_values_for_case(self.sp.case_id)))
-        if should_use_sql_backend(self.domain.name):
+        if should_use_sql_backend(self.domain):
             self.assertEqual(0, LedgerTransaction.objects.filter(form_id=form_id).count())
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=form_id).count())
