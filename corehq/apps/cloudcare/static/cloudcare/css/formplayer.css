@@ -5,3 +5,22 @@
 .module-icon {
     max-height: 100px;
 }
+
+body {
+    margin: 4px;
+}
+
+.grid-wrapper {
+    display: grid;
+    grid-template-columns: repeat(12, 60px) min-content 60px;
+    grid-template-rows: repeat(6, 60px) min-content 60px;
+    background-color: #fff;
+    color: #444;
+    border-color: #444;
+}
+
+.box {
+    border-color: #444;
+    color: #444;
+    font-size: 100%;
+}
