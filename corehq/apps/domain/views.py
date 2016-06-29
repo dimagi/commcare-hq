@@ -259,9 +259,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
 
     @property
     def required_plan_name(self):
-        return DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain_object, [self.missing_privilege]
-        )
+        return DefaultProductPlan.get_lowest_edition([self.missing_privilege])
 
     def get(self, request, *args, **kwargs):
         self.request = request
@@ -552,7 +550,7 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
     def page_context(self):
         return {'openclinica_settings_form': self.openclinica_settings_form}
 
-    @sensitive_post_parameters('username', 'password')
+    @method_decorator(sensitive_post_parameters('username', 'password'))
     def post(self, request, *args, **kwargs):
         if self.openclinica_settings_form.is_valid():
             if self.openclinica_settings_form.save(self.domain_object):
@@ -630,9 +628,8 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
     @property
-    @memoized
     def product(self):
-        return SoftwareProductType.get_type_by_domain(self.domain_object)
+        return SoftwareProductType.COMMCARE
 
     @property
     @memoized
@@ -1126,9 +1123,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         return json_response({'success': True})
 
     def _get_items(self, request):
-        product_type = SoftwareProductType.get_type_by_domain(Domain.get_by_name(self.domain))
-
-        features = [{'type': get_feature_name(feature_type[0], product_type),
+        features = [{'type': get_feature_name(feature_type[0], SoftwareProductType.COMMCARE),
                      'amount': Decimal(request.POST.get(feature_type[0], 0))}
                     for feature_type in FeatureType.CHOICES
                     if Decimal(request.POST.get(feature_type[0], 0)) > 0]
@@ -1494,7 +1489,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     @memoized
     def selected_plan_version(self):
-        return DefaultProductPlan.get_default_plan_by_domain(self.domain, self.edition).plan.get_version()
+        return DefaultProductPlan.get_default_plan(self.edition).plan.get_version()
 
     @property
     def downgrade_messages(self):
@@ -1656,8 +1651,8 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         context = super(SubscriptionRenewalView, self).page_context
 
         current_privs = get_privileges(self.subscription.plan_version)
-        plan = DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain, current_privs, return_plan=False,
+        plan = DefaultProductPlan.get_lowest_edition(
+            current_privs, return_plan=False,
         ).lower()
 
         context['current_edition'] = (plan
@@ -1682,7 +1677,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def next_plan_version(self):
-        plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, self.new_edition)
+        plan_version = DefaultProductPlan.get_default_plan(self.new_edition)
         if plan_version is None:
             log_accounting_error(
                 "Could not find a matching renewable plan "
@@ -2469,6 +2464,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'phone_model',
             'commtrack_domain',
             'performance_threshold',
+            'experienced_threshold',
+            'amplifies_workers',
+            'amplifies_project',
             'business_unit',
             'workshop_region',
         ]

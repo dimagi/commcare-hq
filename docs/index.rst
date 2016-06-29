@@ -36,6 +36,7 @@ Welcome to CommCareHQ's documentation!
    advanced_app_features
    nfs
    forms_and_cases
+   messaging/messaging
 
 Tips for documenting
 --------------------

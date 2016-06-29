@@ -27,6 +27,7 @@ from corehq.apps.userreports.reports.view import (
     ConfigurableReport,
     CustomConfigurableReportDispatcher,
 )
+from corehq.form_processor.utils import should_use_sql_backend
 import phonelog.reports as phonelog
 from corehq.apps.reports import commtrack
 from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
@@ -92,14 +93,18 @@ def REPORTS(project):
     ])
 
     if project.commtrack_enabled:
-        reports.insert(0, (ugettext_lazy("CommCare Supply"), (
+        supply_reports = (
             commtrack.SimplifiedInventoryReport,
             commtrack.InventoryReport,
             commtrack.CurrentStockStatusReport,
             commtrack.StockStatusMapReport,
-            commtrack.ReportingRatesReport,
-            commtrack.ReportingStatusMapReport,
-        )))
+        )
+        if not should_use_sql_backend(project):
+            supply_reports = supply_reports + (
+                commtrack.ReportingRatesReport,
+                commtrack.ReportingStatusMapReport,
+            )
+        reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
 
     if project.has_careplan:
         from corehq.apps.app_manager.models import CareplanConfig

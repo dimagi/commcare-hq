@@ -26,6 +26,7 @@ from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
+from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
 from corehq.toggles import OPENLMIS
@@ -450,7 +451,7 @@ class ProjectDataTab(UITab):
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
             )
-            if toggles.NEW_EXPORTS.enabled(self.domain):
+            if use_new_exports(self.domain):
                 create_case_cls = CreateNewCustomCaseExportView
                 create_form_cls = CreateNewCustomFormExportView
                 edit_form_cls = EditNewCustomFormExportView
@@ -1502,10 +1503,10 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
-                {'title': _('Loadtest Report'),
-                 'url': reverse('loadtest_report')},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
+                {'title': _('Download Global Impact Report'),
+                 'url': reverse('download_gir')},
                 {'title': _('CommCare Version'),
                  'url': reverse('admin_report_dispatcher', args=('commcare_version', ))}
             ]),

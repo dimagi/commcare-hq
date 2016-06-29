@@ -7,14 +7,14 @@ Initial setup
    * Install [Docker](https://docs.docker.com/engine/installation/)
    * Install [Docker Compose](https://docs.docker.com/compose/install/) (Note you can also install in a virtualenv with `$ pip install docker-compose`)
 * OS X
-   * Install [Docker Toolbox](https://docs.docker.com/mac/step_one/). Go through the full tutorial, which will create a default machine.
+   * Install [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_mac/). Go through the full tutorial, which will create a default machine.
    * To create a new VM manually, run `docker-machine create default --driver=virtualbox` (not necessary if you followed the Docker Toolbox tutorial).
    * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
 * If you have any HQ services currently running (couch, postgres, redis, etc.), you should stop them now. 
 * Bootstrap the setup:
 
     ```
-      $ ./scripts/docker services --bootstrap
+      $ ./scripts/docker runserver --bootstrap
     ```
     
     This will do the following:
@@ -57,9 +57,9 @@ General usage
 
 **The services (couch, postgres, elastic, redis, zookeeper, kafka)**
 ```
-  $ ./scripts/docker services  # start docker services
-  $ ./scripts/docker services stop
-  $ ./scripts/docker services logs postgres
+  $ ./scripts/docker up -d  # start docker services in background
+  $ ./scripts/docker stop
+  $ ./scripts/docker logs postgres
 ```
 The following services are included. Their ports are mapped to the local host so you can connect to them
 directly.
@@ -74,10 +74,8 @@ directly.
 
 **Run the django server**
 
-Assumes that you have updated your localsettings as described above.
-
 ```
-  $ ./scripts/docker services --bootstrap
+  $ ./scripts/docker runserver
 ```
 
 Notes

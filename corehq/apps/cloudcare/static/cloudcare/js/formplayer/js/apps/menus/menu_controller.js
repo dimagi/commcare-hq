@@ -2,9 +2,9 @@
 
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
     MenuList.Controller = {
-        selectMenu: function (appId, stepList, page) {
+        selectMenu: function (appId, stepList, page, search) {
 
-            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", appId, stepList, page);
+            var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", appId, stepList, page, search);
 
             /*
              Determine the next screen to display.  Could be

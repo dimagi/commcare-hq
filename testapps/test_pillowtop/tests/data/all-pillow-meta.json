@@ -301,22 +301,6 @@
         "include_docs": true,
         "name": "MVPFormIndicatorPillow"
     },
-    "MalariaConsortiumFluffPillow": {
-        "advertised_name": "fluff.MalariaConsortiumFluffPillow.testhq",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.MalariaConsortiumFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "mc-inscale"
-        },
-        "full_class_name": "custom.reports.mc.models.MalariaConsortiumFluffPillow",
-        "include_docs": false,
-        "name": "MalariaConsortiumFluffPillow"
-    },
     "McctMonthlyAggregateFormFluffPillow": {
         "advertised_name": "fluff.McctMonthlyAggregateFormFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",
@@ -598,6 +582,13 @@
         "include_docs": false,
         "name": "XFormPillow",
         "unique_id": "test_xforms_2016-06-09"
+    },
+    "AppFormSubmissionTrackerPillow": {
+        "advertised_name": "AppFormSubmissionTrackerPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "app-form-submission-tracker",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "AppFormSubmissionTrackerPillow"
     },
     "kafka-ucr-main": {
         "advertised_name": "kafka-ucr-main",

@@ -51,6 +51,7 @@
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
                 var detailScreenConfig = DetailScreenConfig.init({
+                    module_id: '{{ module.id }}',
                     state: {
                         type: detail.type,
                         short: detail.short,
@@ -67,8 +68,10 @@
                     fixture_columns_by_type: fixture_columns_by_type,
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
+                    contextVariables: state,
+                    multimedia: {{multimedia.object_map|JSON}},
                     searchProperties: searchProperties,
-                    contextVariables: state
+                    contextVariables: state,
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
                 $list_home.koApplyBindings(detailScreenConfig);

@@ -481,10 +481,16 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
-        messages.success(request, 'You have successfully removed {username} from your domain. <a href="{url}" class="post-link">Undo</a>'.format(
-            username=user.username,
-            url=reverse('undo_remove_web_user', args=[domain, record.get_id])
-        ), extra_tags="html")
+        if record:
+            message = _('You have successfully removed {username} from your '
+                        'domain. <a href="{url}" class="post-link">Undo</a>')
+            messages.success(request, message.format(
+                username=user.username,
+                url=reverse('undo_remove_web_user', args=[domain, record.get_id])
+            ), extra_tags="html")
+        else:
+            message = _('It appears {username} has already been removed from your domain.')
+            messages.success(request, message.format(username=user.username))
 
     return HttpResponseRedirect(
         reverse(ListWebUsersView.urlname, args=[domain]))

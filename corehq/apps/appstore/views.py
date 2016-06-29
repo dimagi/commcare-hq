@@ -145,7 +145,9 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
     @memoized
     def results(self):
         start_at = (self.page - 1) * self.page_length
-        return es_snapshot_query(self.params, SNAPSHOT_FACETS, start_at=start_at, size=self.page_length)
+        sort_by_property = 'snapshot_time' if self.sort_by == 'newest' else 'full_downloads'
+        return es_snapshot_query(self.params, SNAPSHOT_FACETS, start_at=start_at,
+                                 size=self.page_length, sort_by=sort_by_property)
 
     @property
     def total_results(self):
@@ -153,17 +155,17 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
 
     @property
     @memoized
-    def d_results(self):
+    def selected_snapshots(self):
         hits = self.results.get('hits', {}).get('hits', [])
         hits = deduplicate(hits)
-        d_results = []
+        domains = []
         for res in hits:
             try:
                 domain = Domain.wrap(res['_source'])
                 if domain.copied_from is not None:
                     # this avoids putting in snapshots in the list where the
                     # copied_from domain has been deleted.
-                    d_results.append(domain)
+                    domains.append(domain)
             except CopiedFromDeletedException as e:
                 notify_exception(
                     self.request,
@@ -173,16 +175,13 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
                             e.message, res['_source']['_id'])
                     )
                 )
-        if self.sort_by == 'newest':
-            pass
-        else:
-            d_results = Domain.hit_sort(d_results)
-        return d_results
+
+        return domains
 
     @property
     def page_context(self):
         return {
-            'apps': self.d_results,
+            'apps': self.selected_snapshots,
             'page': self.page,
             'prev_page': (self.page - 1),
             'next_page': (self.page + 1),

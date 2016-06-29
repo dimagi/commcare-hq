@@ -47,6 +47,7 @@ class SyncWebUserTestCase(TestCase):
 class SyncCommCareUserTestCase(TestCase):
 
     def setUp(self):
+        super(SyncCommCareUserTestCase, self).setUp()
         self.domain = 'test'
         self.username = "mr-danny@test.commcarehq.org"
         self.password = "s3cr3t"
@@ -89,3 +90,4 @@ class SyncCommCareUserTestCase(TestCase):
     def tearDown(self):
         CommCareUser.get_by_user_id(self.commcare_user.user_id).delete()
         self.domain_obj.delete()
+        super(SyncCommCareUserTestCase, self).tearDown()

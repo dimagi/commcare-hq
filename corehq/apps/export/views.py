@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET
 from corehq.apps.export.export import get_export_download
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.utils import use_new_exports
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -25,6 +25,7 @@ from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
+from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, \
     login_or_digest_or_basic_or_apikey
@@ -36,6 +37,7 @@ from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
     ExportAppException,
+    BadExportConfiguration,
     ExportFormValidationException,
     ExportAsyncException,
 )
@@ -52,6 +54,7 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
+    ExportInstance,
 )
 from corehq.apps.export.const import (
     FORM_EXPORT,
@@ -788,10 +791,14 @@ class DownloadFormExportView(BaseDownloadExportView):
         """
         try:
             export_object = self._get_export(self.domain, self.export_id)
-            has_multimedia = FormAccessors(self.domain).forms_have_multimedia(
-                export_object.app_id,
-                getattr(export_object, 'xmlns', '')
-            )
+            if isinstance(export_object, ExportInstance):
+                has_multimedia = export_object.has_multimedia
+            else:
+                has_multimedia = forms_have_multimedia(
+                    self.domain,
+                    export_object.app_id,
+                    getattr(export_object, 'xmlns', '')
+                )
         except Exception as e:
             return format_angular_error(e.message)
         return format_angular_success({
@@ -1202,7 +1209,7 @@ class FormExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = FormExportSchema.get_stale_exports(self.domain)
         new_exports = get_form_export_instances(self.domain)
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        if use_new_exports(self.domain):
             exports += new_exports
         else:
             exports += revert_new_exports(new_exports)
@@ -1228,7 +1235,7 @@ class FormExportListView(BaseExportListView):
         return _("Select a Form to Export")
 
     def fmt_export_data(self, export):
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        if use_new_exports(self.domain):
             edit_view = EditNewCustomFormExportView
         else:
             edit_view = EditCustomFormExportView
@@ -1283,7 +1290,7 @@ class FormExportListView(BaseExportListView):
 
         app_id = create_form.cleaned_data['application']
         form_xmlns = create_form.cleaned_data['form']
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        if use_new_exports(self.domain):
             cls = CreateNewCustomFormExportView
         else:
             cls = CreateCustomFormExportView
@@ -1327,7 +1334,7 @@ class CaseExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = CaseExportSchema.get_stale_exports(self.domain)
         new_exports = get_case_export_instances(self.domain)
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        if use_new_exports(self.domain):
             exports += new_exports
         else:
             exports += revert_new_exports(new_exports)
@@ -1345,7 +1352,7 @@ class CaseExportListView(BaseExportListView):
         return _("Select a Case Type to Export")
 
     def fmt_export_data(self, export):
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        if use_new_exports(self.domain):
             edit_view = EditNewCustomCaseExportView
         else:
             edit_view = EditCustomCaseExportView
@@ -1395,15 +1402,22 @@ class CaseExportListView(BaseExportListView):
         if not create_form.is_valid():
             raise ExportFormValidationException()
         case_type = create_form.cleaned_data['case_type']
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        app_id = create_form.cleaned_data['application']
+        if app_id == ApplicationDataRMIHelper.UNKNOWN_SOURCE:
+            app_id_param = ''
+        else:
+            app_id_param = '&app_id={}'.format(app_id)
+
+        if use_new_exports(self.domain):
             cls = CreateNewCustomCaseExportView
         else:
             cls = CreateCustomCaseExportView
         return reverse(
             cls.urlname,
             args=[self.domain],
-        ) + ('?export_tag="{export_tag}"'.format(
+        ) + ('?export_tag="{export_tag}"{app_id_param}'.format(
             export_tag=case_type,
+            app_id_param=app_id_param,
         ))
 
 
@@ -1427,10 +1441,14 @@ class BaseNewExportView(BaseExportView):
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
             'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
+            'use_new_exports': use_new_exports(self.domain)
         }
 
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body))
+        if self.domain != export.domain:
+            raise BadExportConfiguration()
+
         export.save()
         messages.success(
             request,
@@ -1463,7 +1481,6 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
             self.domain,
             app_id,
             xmlns,
-            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -1477,11 +1494,12 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
+        app_id = request.GET.get('app_id')
 
         schema = CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
+            app_id,
             case_type,
-            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -1583,6 +1601,7 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     def get_export_schema(self, export_instance):
         return CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
+            self.request.GET.get('app_id'),
             export_instance.case_type,
         )
 

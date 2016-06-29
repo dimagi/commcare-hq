@@ -53,6 +53,7 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
 class IndicatorPillowTestBase(TestCase):
 
     def setUp(self):
+        super(IndicatorPillowTestBase, self).setUp()
         self.config = get_sample_data_source()
         self.config.save()
         self.adapter = IndicatorSqlAdapter(self.config)
@@ -61,6 +62,7 @@ class IndicatorPillowTestBase(TestCase):
     def tearDown(self):
         self.config.delete()
         self.adapter.drop_table()
+        super(IndicatorPillowTestBase, self).tearDown()
 
     @patch('corehq.apps.userreports.specs.datetime')
     def _check_sample_doc_state(self, expected_indicators, datetime_mock):

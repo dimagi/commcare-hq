@@ -1513,6 +1513,20 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
 .label-datanode-external:hover .close {
   color: #d6d6d4;
 }
+.label-datanode-external-unknown {
+  color: #685300;
+  border-color: #eed161;
+  background-color: #f6e5a6;
+}
+.label-datanode-external-unknown .close {
+  color: #685300;
+}
+.label-datanode-external-unknown:hover {
+  background-color: #f9c700;
+}
+.label-datanode-external-unknown:hover .close {
+  color: #f8ecbd;
+}
 .label-datanode-unknown {
   color: #812627;
   border-color: #c6948e;
