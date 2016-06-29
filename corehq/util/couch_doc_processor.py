@@ -191,7 +191,7 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
         pass
 
     @abstractmethod
-    def migrate(self, doc, couchdb):
+    def process_doc(self, doc, couchdb):
         """Migrate a single document
 
         :param doc: The document dict to be migrated.
@@ -201,7 +201,7 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
         """
         raise NotImplementedError
 
-    def after_migration(self, skipped):
+    def processing_complete(self, skipped):
         pass
 
     def filter(self, doc):

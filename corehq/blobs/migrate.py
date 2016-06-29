@@ -168,7 +168,7 @@ class BaseDocMigrator(BaseDocProcessor):
         self.backup_file.write('{}\n'.format(json.dumps(backup_doc)))
         self.backup_file.flush()
 
-    def migrate(self, doc, couchdb):
+    def process_doc(self, doc, couchdb):
         """Migrate a single document
 
         :param doc: The document dict to be migrated.
@@ -184,7 +184,7 @@ class BaseDocMigrator(BaseDocProcessor):
     def _do_migration(self, doc, couchdb):
         raise NotImplementedError
 
-    def after_migration(self, skipped):
+    def processing_complete(self, skipped):
         if self.dirpath is not None:
             os.remove(self.filename)
             os.rmdir(self.dirpath)
@@ -245,8 +245,8 @@ class BlobDbBackendMigrator(BaseDocMigrator):
                     self.db.copy_blob(content, meta.info, bucket)
         return True
 
-    def after_migration(self, skipped):
-        super(BlobDbBackendMigrator, self).after_migration(skipped)
+    def processing_complete(self, skipped):
+        super(BlobDbBackendMigrator, self).processing_complete(skipped)
         if self.not_found:
             print("{} of {} blobs were not found in the old blob database. It "
                   "is possible that some blobs were deleted as part of normal "
