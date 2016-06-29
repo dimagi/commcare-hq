@@ -1,8 +1,11 @@
 from abc import ABCMeta
 
 from corehq.elastic import get_es_new
+from corehq.util.couch_doc_processor import BaseDocProcessor, CouchDocumentProcessor
+from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
+from pillowtop.feed.interface import Change
 
 import six
 
@@ -32,35 +35,41 @@ class PillowChangeProviderReindexer(PillowReindexer):
             self.pillow.process_change(change)
 
 
-class ElasticPillowReindexer(PillowReindexer):
+def _clean_index(es, index_info):
+    if es.indices.exists(index_info.index):
+        es.indices.delete(index=index_info.index)
+
+
+def _prepare_index_for_reindex(es, index_info):
+    if not es.indices.exists(index_info.index):
+        es.indices.create(index=index_info.index, body=index_info.meta)
+    initialize_mapping_if_necessary(es, index_info)
+    set_index_reindex_settings(es, index_info.index)
+
+
+def _prepare_index_for_usage(es, index_info):
+    set_index_normal_settings(es, index_info.index)
+    es.indices.refresh(index_info.index)
+        
+
+class ElasticPillowReindexer(PillowChangeProviderReindexer):
 
     def __init__(self, pillow, change_provider, elasticsearch, index_info):
         super(ElasticPillowReindexer, self).__init__(pillow, change_provider)
         self.es = elasticsearch
         self.index_info = index_info
 
-    def clean_index(self):
-        if self.es.indices.exists(self.index_info.index):
-            self.es.indices.delete(index=self.index_info.index)
+    def clean(self):
+        _clean_index(self.es, self.index_info)
 
     def reindex(self, start_from=None):
         if not start_from:
             # when not resuming force delete and create the index
-            self._prepare_index_for_reindex()
+            _prepare_index_for_reindex(self.es, self.index_info)
 
         super(ElasticPillowReindexer, self).reindex(start_from)
 
-        self._prepare_index_for_usage()
-
-    def _prepare_index_for_reindex(self):
-        if not self.es.indices.exists(self.index_info.index):
-            self.es.indices.create(index=self.index_info.index, body=self.index_info.meta)
-        initialize_mapping_if_necessary(self.es, self.index_info)
-        set_index_reindex_settings(self.es, self.index_info.index)
-
-    def _prepare_index_for_usage(self):
-        set_index_normal_settings(self.es, self.index_info.index)
-        self.es.indices.refresh(self.index_info.index)
+        _prepare_index_for_usage(self.es, self.index_info)
 
 
 def get_default_reindexer_for_elastic_pillow(pillow, change_provider):
