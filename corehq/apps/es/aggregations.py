@@ -102,7 +102,7 @@ class BucketResult(AggregationResult):
 
     @property
     def buckets_list(self):
-        return {Bucket(b, self._aggregations) for b in self.normalized_buckets}
+        return [Bucket(b, self._aggregations) for b in self.normalized_buckets]
 
     @property
     def raw_buckets(self):
