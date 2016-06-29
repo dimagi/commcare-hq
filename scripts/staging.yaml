@@ -53,9 +53,11 @@ branches:
   - np/update-ui # Nick P 6/27
   - np/update-user-buckets # Nick P 6/28
   - nc/report-builder # Noah 6/29
+  - fr/async-restore  # 29/6
 submodules:
-  #deployment/commcare-hq-deploy:
-  #  branches:
+  deployment/commcare-hq-deploy:
+   branches:
+     - fr/async-restore-queue
   #    - br/refactor-operations  # Ben
   submodules/touchforms-src:
     # let's leave this here even when empty
