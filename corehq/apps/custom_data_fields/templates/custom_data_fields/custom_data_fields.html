@@ -6,8 +6,8 @@
 
 {% block js %}
 {{ block.super }}
-    <script type="text/javascript" src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'custom_data_fields/js/custom_data_fields.js' %}"></script>
+    <script type="text/javascript" src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script type="text/javascript" src="{% static 'custom_data_fields/js/custom_data_fields.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}

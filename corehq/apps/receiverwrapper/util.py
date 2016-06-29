@@ -6,8 +6,11 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.auth import determine_authtype_from_request
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.submission_post import SubmissionPost
+from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
 from couchforms.models import DefaultAuthContext
+import couchforms
+from django.http import Http404
 
 
 def get_submit_url(domain, app_id=None):
@@ -59,7 +62,7 @@ def get_version_from_build_id(domain, build_id):
 
     try:
         build = get_app(domain, build_id)
-    except ResourceNotFound:
+    except (ResourceNotFound, Http404):
         return None
     if not build.copy_of:
         return None
@@ -179,3 +182,30 @@ def determine_authtype(request):
         return request.GET['authtype']
 
     return determine_authtype_from_request(request)
+
+
+def from_demo_user(form_json):
+    """
+    Whether the form is submitted by demo_user
+    """
+    from corehq.apps.users.util import DEMO_USER_ID
+    try:
+        # require new-style meta/userID (reject Meta/chw_id)
+        if form_json['meta']['userID'] == DEMO_USER_ID:
+            return True
+    except (KeyError, ValueError):
+        return False
+
+
+def should_ignore_submission(request):
+    """
+    If submission request.GET has `submit_mode=demo` and submitting user is not demo_user,
+    the submissions should be ignored
+    """
+    if not request.GET.get('submit_mode') == 'demo':
+        return False
+
+    instance, _ = couchforms.get_instance_and_attachment(request)
+    form_json = convert_xform_to_json(instance)
+
+    return False if from_demo_user(form_json) else True

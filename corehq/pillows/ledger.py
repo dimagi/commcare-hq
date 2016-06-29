@@ -1,16 +1,26 @@
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.locations.models import SQLLocation
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import (
     LedgerV2ChangeProvider, _ledger_v1_to_change
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
+from corehq.util.quickcache import quickcache
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
+
+
+@quickcache(['case_id'])
+def _location_id_for_case(case_id):
+    try:
+        return SQLLocation.objects.get(supply_point_id=case_id).location_id
+    except SQLLocation.DoesNotExist:
+        return None
 
 
 def _prepare_ledger_for_es(ledger):
@@ -20,6 +30,9 @@ def _prepare_ledger_for_es(ledger):
     if commtrack_config and commtrack_config.use_auto_consumption:
         daily_consumption = _get_daily_consumption_for_ledger(ledger)
         ledger['daily_consumption'] = daily_consumption
+
+    if not ledger.get('location_id') and ledger.get('case_id'):
+        ledger['location_id'] = _location_id_for_case(ledger['case_id'])
 
     return ledger
 

@@ -11,6 +11,7 @@ class UserAnalyticsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(UserAnalyticsTest, cls).setUpClass()
         delete_all_users()
         cls.domain = create_domain('test')
         cls.active_user = CommCareUser.create(
@@ -42,6 +43,7 @@ class UserAnalyticsTest(TestCase):
     def tearDownClass(cls):
         delete_all_users()
         cls.domain.delete()
+        super(UserAnalyticsTest, cls).tearDownClass()
 
     def test_get_count_of_active_commcare_users_in_domain(self):
         self.assertEqual(2, get_count_of_active_commcare_users_in_domain('test'))

@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -27,7 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.tour import tours
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
@@ -48,7 +48,6 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_ba
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_select2,
     use_daterangepicker,
     use_datatables,
@@ -69,7 +68,6 @@ from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,
     get_datasource_config,
     get_report_config,
-    get_report_configs,
     is_report_config_id_static,
     id_is_static,
 )
@@ -154,7 +152,6 @@ class BaseUserConfigReportsView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
 
-    @use_bootstrap3
     @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(BaseUserConfigReportsView, self).dispatch(request, *args, **kwargs)
@@ -234,7 +231,6 @@ class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
-    @use_bootstrap3
     @use_select2
     @use_daterangepicker
     @use_datatables
@@ -274,10 +270,6 @@ def paywall_home(domain):
 
 class ReportBuilderPaywallBase(BaseDomainView):
     page_title = ugettext_lazy('Subscribe')
-
-    @use_bootstrap3
-    def dispatch(self, *args, **kwargs):
-        return super(ReportBuilderPaywallBase, self).dispatch(*args, **kwargs)
 
     @property
     def section_name(self):
@@ -616,28 +608,14 @@ class ConfigureChartReport(ReportBuilderView):
         try:
             report_form = self.report_form
         except Exception as e:
-            if self.existing_report and self.existing_report.report_meta.edited_manually:
-                error_message_base = _(
-                    'It looks like this report was edited by hand and is no longer editable in report builder.'
-                )
-                if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
-                    error_message = '{} {}'.format(error_message_base, _(
-                        'You can edit the report manually using the <a href="{}">advanced UI</a>.'
-                    ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
-                else:
-                    error_message = '{} {}'.format(error_message_base, _(
-                        'You can delete and recreate this report using the button below, or '
-                        'report an issue if you believe you are seeing this page in error.'
-                    ))
-                self.template_name = 'userreports/report_error.html'
-                return {
-                    'report_id': self.existing_report.get_id,
-                    'is_static': self.existing_report.is_static,
-                    'error_message': error_message,
-                    'details': unicode(e)
-                }
-            else:
-                raise
+            self.template_name = 'userreports/report_error.html'
+            error_response = {
+                'report_id': self.existing_report.get_id,
+                'is_static': self.existing_report.is_static,
+                'error_message': '',
+                'details': unicode(e)
+            }
+            return self._handle_exception(error_response, e)
 
         return {
             'report': {
@@ -653,6 +631,33 @@ class ConfigureChartReport(ReportBuilderView):
             ],
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
+
+    def _handle_exception(self, response, exception):
+        if self.existing_report and self.existing_report.report_meta.edited_manually:
+            error_message_base = _(
+                'It looks like this report was edited by hand and is no longer editable in report builder.'
+            )
+            if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
+                error_message = '{} {}'.format(error_message_base, _(
+                    'You can edit the report manually using the <a href="{}">advanced UI</a>.'
+                ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
+            else:
+                error_message = '{} {}'.format(
+                    error_message_base,
+                    _('You can delete and recreate this report using the button below, or '
+                      'report an issue if you believe you are seeing this page in error.')
+                )
+            response['error_message'] = error_message
+            return response
+        elif isinstance(exception, DataSourceConfigurationNotFoundError):
+            response['details'] = None
+            response['error_message'] = '{} {}'.format(
+                str(exception),
+                DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+            )
+            return response
+        else:
+            raise
 
     @property
     @memoized

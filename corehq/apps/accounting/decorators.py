@@ -23,9 +23,7 @@ def requires_privilege_with_fallback(slug, **assignment):
                     and request.subscription.is_trial
                     and request.subscription.date_end is not None
                 ):
-                    edition_req = DefaultProductPlan.get_lowest_edition_by_domain(
-                        request.domain, [slug]
-                    )
+                    edition_req = DefaultProductPlan.get_lowest_edition([slug])
                     plan_name = request.subscription.plan_version.user_facing_description['name']
                     feature_name = privileges.Titles.get_name_from_privilege(slug)
                     request.show_trial_notice = True
@@ -90,7 +88,6 @@ def requires_privilege_json_response(slug, http_status_code=None,
         'message': error_message
     }
     ```
-    todo accounting for API requests
     """
     http_status_code = http_status_code or 401
     if get_response is None:

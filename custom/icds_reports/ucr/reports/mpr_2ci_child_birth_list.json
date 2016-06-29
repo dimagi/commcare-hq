@@ -85,8 +85,8 @@
         "field": "person_name",
         "type": "field",
         "display": {
-          "mar": "Name",
-          "tel": "Name",
+          "mar": "नांव",
+          "tel": "పేరు",
           "hin": "नाम",
           "en": "Name"
         }
@@ -98,9 +98,9 @@
         "field": "birth_weight",
         "type": "field",
         "display": {
-          "mar": "Birth Weight",
-          "tel": "Birth Weight",
-          "hin": "Birth Weight",
+          "mar": "मुलाचे जन्म वजन आहे",
+          "tel": "బిడ్డ యొక్క బరువు",
+          "hin": "जन्म के समय बच्चे का वज़न",
           "en": "Birth Weight"
         }
       },
@@ -112,15 +112,15 @@
             "M": [
               [
                 "mar",
-                "M"
+                "पुरुष"
               ],
               [
                 "tel",
-                "M"
+                "పురుషుడు"
               ],
               [
                 "hin",
-                "M"
+                "पुरुष"
               ],
               [
                 "en",
@@ -130,15 +130,15 @@
             "O": [
               [
                 "mar",
-                "O"
+                "अन्य"
               ],
               [
                 "tel",
-                "O"
+                "ఇతరులు"
               ],
               [
                 "hin",
-                "O"
+                "अन्य"
               ],
               [
                 "en",
@@ -148,15 +148,15 @@
             "F": [
               [
                 "mar",
-                "F"
+                "स्त्री"
               ],
               [
                 "tel",
-                "F"
+                "మహిళ"
               ],
               [
                 "hin",
-                "F"
+                "महिला"
               ],
               [
                 "en",
@@ -169,8 +169,8 @@
         "field": "sex",
         "type": "field",
         "display": {
-          "mar": "Sex",
-          "tel": "Sex",
+          "mar": "लिंग",
+          "tel": "లింగం",
           "hin": "लिंग",
           "en": "Sex"
         },
@@ -183,8 +183,8 @@
         "field": "dob",
         "type": "field",
         "display": {
-          "mar": "Date of Birth",
-          "tel": "Date of Birth",
+          "mar": "जन्म तारीख",
+          "tel": "పుట్టిన తేదీ",
           "hin": "जन्म तिथि",
           "en": "Date of Birth"
         }
@@ -197,7 +197,7 @@
             "yes": [
               [
                 "mar",
-                "हो"
+                "होय"
               ],
               [
                 "tel",
@@ -219,7 +219,7 @@
               ],
               [
                 "tel",
-                "లేదు"
+                "కాదు"
               ],
               [
                 "hin",
@@ -236,8 +236,8 @@
         "field": "resident",
         "type": "field",
         "display": {
-          "mar": "Resident",
-          "tel": "Resident",
+          "mar": "निवासी",
+          "tel": "నివాసితుడు",
           "hin": "निवासी",
           "en": "Resident"
         },

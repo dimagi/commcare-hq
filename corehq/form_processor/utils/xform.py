@@ -5,11 +5,11 @@ import xml2json
 from datetime import datetime
 
 from dimagi.ext import jsonobject
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.tzmigration import phone_timezones_should_be_processed
-from corehq.form_processor.models import Attachment
-
+from corehq.form_processor.models import Attachment, XFormInstanceSQL
 
 # The functionality below to create a simple wrapped XForm is used in production code (repeaters) and so is
 # not in the test utils
@@ -166,8 +166,13 @@ def adjust_datetimes(data, parent=None, key=None):
 def add_couch_properties_to_sql_form_json(sql_form_json):
     sql_form_json['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
     sql_form_json['_id'] = sql_form_json['form_id']
+    if 'attachments' in sql_form_json:
+        sql_form_json['external_blobs'] = sql_form_json['attachments']
+        del sql_form_json['attachments']
     return sql_form_json
 
 
 def _get_doc_type_from_state(state):
+    if state & XFormInstanceSQL.DELETED == XFormInstanceSQL.DELETED:
+        return 'XFormIntance' + DELETED_SUFFIX
     return {v: k for k, v in doc_type_to_state.items()}.get(state, 'XFormInstance')

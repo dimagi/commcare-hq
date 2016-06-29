@@ -115,3 +115,17 @@ class TestResumableDocsByTypeIterator(TestCase):
                              self.sorted_keys)
         finally:
             self.create_doc("Bar", 0)
+
+    def test_iteration_with_progress_info(self):
+        itr = iter(self.itr)
+        self.assertEqual([next(itr)["_id"] for i in range(6)], self.sorted_keys[:6])
+        self.assertEqual(self.itr.progress_info, None)
+        self.itr.progress_info = {"visited": 6}
+        # stop/resume iteration
+        self.itr = self.get_iterator()
+        self.assertEqual(self.itr.progress_info, {"visited": 6})
+        self.itr.progress_info = {"visited": "six"}
+        # stop/resume iteration
+        self.itr = self.get_iterator()
+        self.assertEqual(self.itr.progress_info, {"visited": "six"})
+        self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[4:])

@@ -1,17 +1,15 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 from StringIO import StringIO
 import base64
 from datetime import datetime, timedelta, time
 import re
 import json
-from couchdbkit import ResourceNotFound
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.hqadmin.views import BaseAdminSectionView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
@@ -30,7 +28,6 @@ from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_timepicker,
     use_typeahead,
     use_select2,
@@ -150,7 +147,6 @@ class ComposeMessageView(BaseMessagingSectionView):
 
     @method_decorator(require_permission(Permissions.edit_data))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @use_bootstrap3
     @use_typeahead
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
@@ -354,7 +350,6 @@ class TestSMSMessageView(BaseDomainView):
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(TestSMSMessageView, self).dispatch(request, *args, **kwargs)
 
@@ -488,7 +483,6 @@ def api_send_sms(request, domain):
 class BaseForwardingRuleView(BaseDomainView):
     section_name = ugettext_noop("Messaging")
 
-    @use_bootstrap3
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
@@ -638,7 +632,6 @@ class GlobalBackendMap(BaseAdminSectionView):
         }
         return BackendMapForm(initial=initial, backends=self.backends)
 
-    @use_bootstrap3
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(GlobalBackendMap, self).dispatch(request, *args, **kwargs)
@@ -692,7 +685,6 @@ class ChatOverSMSView(BaseMessagingSectionView):
     page_title = _("Chat over SMS")
 
     @method_decorator(require_permission(Permissions.edit_data))
-    @use_bootstrap3
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ChatOverSMSView, self).dispatch(*args, **kwargs)
@@ -1043,7 +1035,6 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     page_title = ugettext_noop("SMS Connectivity")
     strict_domain_fetching = True
 
-    @use_bootstrap3
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
@@ -1330,7 +1321,6 @@ class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
     def redirect_to_gateway_list(self):
         return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
 
-    @use_bootstrap3
     @use_select2
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -1414,7 +1404,6 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     urlname = 'list_global_backends'
     page_title = ugettext_noop("SMS Connectivity")
 
-    @use_bootstrap3
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(GlobalSmsGatewayListView, self).dispatch(request, *args, **kwargs)
@@ -1564,7 +1553,6 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
     def redirect_to_gateway_list(self):
         return HttpResponseRedirect(reverse(GlobalSmsGatewayListView.urlname))
 
-    @use_bootstrap3
     @use_select2
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
@@ -1644,7 +1632,6 @@ class SubscribeSMSView(BaseMessagingSectionView):
     page_title = ugettext_noop("Subscribe SMS")
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(SubscribeSMSView, self).dispatch(*args, **kwargs)
 
@@ -1692,7 +1679,6 @@ class SMSLanguagesView(BaseMessagingSectionView):
     template_name = "sms/languages.html"
     page_title = ugettext_noop("Languages")
 
-    @use_bootstrap3
     @use_jquery_ui
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
@@ -1985,7 +1971,6 @@ class SMSSettingsView(BaseMessagingSectionView):
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @use_bootstrap3
     @use_timepicker
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
@@ -2000,10 +1985,6 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     empty_notification = ugettext_noop("No registration invitations sent yet.")
     loading_message = ugettext_noop("Loading invitations...")
     strict_domain_fetching = True
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(ManageRegistrationInvitationsView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

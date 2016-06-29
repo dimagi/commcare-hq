@@ -1,5 +1,5 @@
 from django.contrib import admin
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, LedgerValue
 
 
 # note: these require ALLOW_FORM_PROCESSING_QUERIES = True in your localsettings.py to work
@@ -17,3 +17,11 @@ class CommCareCaseSQLAdmin(admin.ModelAdmin):
     list_display = ('case_id', 'domain', 'type', 'name', 'server_modified_on')
     list_filter = ('domain', 'closed', 'type')
     ordering = ('server_modified_on',)
+
+
+@admin.register(LedgerValue)
+class LedgerValueAdmin(admin.ModelAdmin):
+    date_hierarchy = 'last_modified'
+    list_display = ('domain', 'section_id', 'case_id', 'entry_id', 'balance', 'last_modified')
+    list_filter = ('domain', 'section_id', 'last_modified')
+    ordering = ('last_modified',)
