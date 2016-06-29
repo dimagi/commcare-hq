@@ -86,7 +86,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                     continue;
                 }
                 var fontSize = this.tiles[i].fontSize;
-                var fontString = "font-size: " + fontSize + ";"
+                var fontString = "font-size: " + fontSize + ";";
                 var styleString = getGridAttributes(tile);
                 var tileId = "grid-style-" + i;
                 var formattedString = "." + tileId + " { " + styleString + " " + fontString + " } ";
@@ -112,7 +112,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 tiles: this.options.tiles,
                 resolveUri: function (uri) {
                     return FormplayerFrontend.request('resourceMap', uri, appId);
-                }
+                },
             };
         },
     });
