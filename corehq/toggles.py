@@ -757,9 +757,10 @@ VIEW_BUILD_SOURCE = StaticToggle(
 
 USE_SQL_BACKEND = StaticToggle(
     'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing (beta)',
+    'Uses a sql backend instead of a couch backend for form processing',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    description="This flag is deprecated. All new domains now use the sql backend."
 )
 
 
@@ -860,9 +861,3 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
 )
-
-
-def enable_toggles_for_scale_beta(domain):
-    USE_SQL_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
-    NEW_EXPORTS.set(domain, True, namespace=NAMESPACE_DOMAIN)
-    TF_USES_SQLITE_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
