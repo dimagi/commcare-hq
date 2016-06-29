@@ -127,9 +127,6 @@ message.
 
 class BaseDocMigrator(six.with_metaclass(ABCMeta)):
 
-    #blobs_key = None  # Abstract: doc key to be tested for migration status.
-    # If this key contains a falsy value the document will not be migrated.
-
     # If true, load attachment content before migrating.
     load_attachments = False
 
@@ -147,10 +144,17 @@ class BaseDocMigrator(six.with_metaclass(ABCMeta)):
     def after_migration(self):
         pass
 
+    @abstractmethod
+    def filter(self, doc):
+        """
+        :param doc: the document to filter
+        :return: True if this doc should be migrated
+        """
+        raise NotImplementedError
+
 
 class CouchAttachmentMigrator(BaseDocMigrator):
 
-    blobs_key = "_attachments"
     load_attachments = True
 
     def migrate(self, doc, couchdb):
@@ -171,10 +175,11 @@ class CouchAttachmentMigrator(BaseDocMigrator):
             return False
         return True
 
+    def filter(self, doc):
+        return doc.get("_attachments")
+
 
 class BlobDbBackendMigrator(BaseDocMigrator):
-
-    blobs_key = "external_blobs"
 
     def __init__(self):
         self.db = get_blob_db()
@@ -208,6 +213,8 @@ class BlobDbBackendMigrator(BaseDocMigrator):
                   "the total number of migrated blobs were not found."
                   .format(self.not_found, self.total_blobs))
 
+    def filter(self, doc):
+        return doc.get("external_blobs")
 
 class Migrator(object):
 
@@ -291,7 +298,6 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
     previously_visited = 0
     doc_migrator = doc_migrator_class()
     load_attachments = doc_migrator.load_attachments
-    blobs_key = doc_migrator.blobs_key
     iter_key = slug + "-blob-migration"
     docs_by_type = ResumableDocsByTypeIterator(couchdb, doc_type_map, iter_key,
                                                chunk_size=chunk_size)
@@ -317,7 +323,7 @@ def migrate(slug, doc_type_map, doc_migrator_class, filename=None, reset=False,
             visited += 1
             if visited % chunk_size == 0:
                 docs_by_type.progress_info = {"visited": visited, "total": total}
-            if doc.get(blobs_key):
+            if doc_migrator.filter(doc):
                 if load_attachments:
                     obj = BlobHelper(doc, couchdb)
                     doc["_attachments"] = {
