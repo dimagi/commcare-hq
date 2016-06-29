@@ -40,6 +40,14 @@ logger = logging.getLogger(__name__)
 
 @require_can_edit_apps
 def form_designer(request, domain, app_id, module_id=None, form_id=None):
+    def _form_uses_case(module, form):
+        return module and module.case_type and form.requires_case()
+
+    def _form_too_large(app, form):
+        # form less than 0.1MB, anything larger starts to have
+        # performance issues with fullstory
+        return app.blobs['{}.xml'.format(form.unique_id)]['content_length'] > 102400
+
     meta = get_meta(request)
     track_entered_form_builder_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
 
@@ -65,18 +73,20 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         return back_to_main(request, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
 
+    include_fullstory = False
     vellum_plugins = ["modeliteration", "itemset", "atwho"]
     if (toggles.COMMTRACK.enabled(domain)):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
     if ((app.vellum_case_management or toggles.VELLUM_EXPERIMENTAL_UI.enabled(domain)) and
-            module and module.case_type and form.requires_case()):
+            _form_uses_case(module, form)):
         vellum_plugins.append("databrowser")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
     vellum_features.update(feature_previews.previews_dict(domain))
+    include_fullstory = not _form_too_large(app, form)
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,
         'image_resize': app.enable_image_resize,
@@ -118,6 +128,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'app_callout_templates': next(app_callout_templates),
         'scheduler_data_nodes': scheduler_data_nodes,
         'no_header': True,
+        'include_fullstory': include_fullstory
     })
     return render(request, 'app_manager/form_designer.html', context)
 

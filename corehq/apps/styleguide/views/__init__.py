@@ -2,7 +2,6 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic import *
-from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.styleguide.palette import (
     PaletteColor,
     PaletteColorGroup,
@@ -22,10 +21,6 @@ class MainStyleGuideView(TemplateView):
 
 class BaseStyleGuideArticleView(TemplateView):
     template_name = 'styleguide/base_section.html'
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseStyleGuideArticleView, self).dispatch(request, *args, **kwargs)
 
     @property
     def sections(self):

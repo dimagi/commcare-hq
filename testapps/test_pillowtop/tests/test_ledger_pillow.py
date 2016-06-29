@@ -22,11 +22,13 @@ class LedgerPillowTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(LedgerPillowTest, cls).setUpClass()
         from corehq.apps.commtrack.helpers import make_product
         product = make_product(cls.domain, 'Product A', 'prod_a')
         cls.product_id = product._id
 
     def setUp(self):
+        super(LedgerPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases(self.domain)
         FormProcessorTestUtils.delete_all_ledgers(self.domain)
         with trap_extra_setup(ConnectionError):
@@ -37,6 +39,7 @@ class LedgerPillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(LEDGER_INDEX_INFO.index)
+        super(LedgerPillowTest, self).tearDown()
 
     @run_with_all_backends
     def test_ledger_pillow_sql(self):

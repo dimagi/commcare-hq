@@ -10,6 +10,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 class OutOfOrderCaseTest(TestCase):
 
     def setUp(self):
+        super(OutOfOrderCaseTest, self).setUp()
         delete_all_cases()
 
     def testOutOfOrderSubmissions(self):

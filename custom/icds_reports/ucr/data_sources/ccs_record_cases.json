@@ -535,6 +535,16 @@
         "type": "boolean",
         "display_name": null,
         "column_id": "open_has_complications"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "date",
+        "is_primary_key": false,
+        "column_id": "last_date_thr",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "last_date_thr"
       }
     ],
     "named_expressions": {
@@ -1177,6 +1187,6 @@
         "property_value": "st"
       }
     },
-    "engine_id": "default"
+    "engine_id": "ucr"
   }
 }

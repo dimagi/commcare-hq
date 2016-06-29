@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% new_static 'crud/js/crud.admin.js' %}"></script>
+    <script type="text/javascript" src="{% static 'crud/js/crud.admin.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}

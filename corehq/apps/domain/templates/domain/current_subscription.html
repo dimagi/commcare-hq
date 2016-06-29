@@ -12,29 +12,30 @@
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         Stripe.setPublishableKey('{{ stripe_public_key }}');
-
-        var paymentHandler = new PaymentMethodHandler(
-            "add-credit-form",
-            {
-                submitBtnText: "{% trans "Buy Credits" %}",
-                errorMessages: {{ payment_error_messages|JSON }},
-                credit_card_url: "{{ credit_card_url }}",
-                wire_url: "{{ wire_url }}",
-                wire_email: "{{ user_email }}",
-            }
-        );
-        {% if plan.cards %}
-            paymentHandler.loadCards({{ plan.cards|JSON }});
-        {% endif %}
         $(function () {
-            $('#paymentModal').koApplyBindings(paymentHandler);
-        });
+            var CreditsManager = hqImport('accounting/ko/accounting.credits.js').CreditsManager;
+            var PaymentMethodHandler = hqImport('accounting/ko/accounting.payment_method_handler.js').PaymentMethodHandler;
+            var paymentHandler = new PaymentMethodHandler(
+                "add-credit-form",
+                {
+                    submitBtnText: "{% trans "Buy Credits" %}",
+                    errorMessages: {{ payment_error_messages|JSON }},
+                    credit_card_url: "{{ credit_card_url }}",
+                    wire_url: "{{ wire_url }}",
+                    wire_email: "{{ user_email }}",
+                }
+            );
+            {% if plan.cards %}
+                paymentHandler.loadCards({{ plan.cards|JSON }});
+            {% endif %}
+            $(function () {
+                $('#paymentModal').koApplyBindings(paymentHandler);
+            });
 
-        var creditsHandler = new CreditsManager(
-            {{ plan.products|JSON }}, {{ plan.features|JSON }},
-            paymentHandler, {{ can_purchase_credits|BOOL }}, {{ plan.is_trial|BOOL }}
-        );
-        $(function () {
+            var creditsHandler = new CreditsManager(
+                {{ plan.products|JSON }}, {{ plan.features|JSON }},
+                paymentHandler, {{ can_purchase_credits|BOOL }}, {{ plan.is_trial|BOOL }}
+            );
             $('#subscriptionSummary').koApplyBindings(creditsHandler);
             creditsHandler.init();
         });
@@ -195,7 +196,7 @@
                                 class="btn btn-success"
                                 data-toggle="modal"
                                 data-target="#paymentModal"
-                                data-bind="click: function(){triggerPayment(paymentHandler.CREDIT_CARD)}"
+                                data-bind="click: function(){triggerPayment($root.paymentHandler.CREDIT_CARD)}"
                                 >
                                 {% trans 'Prepay by Credit Card' %}
                                 </button>
@@ -203,7 +204,7 @@
                                 class="btn btn-success"
                                 data-toggle="modal"
                                 data-target="#paymentModal"
-                                data-bind="click: function(){triggerPayment(paymentHandler.WIRE)}"
+                                data-bind="click: function(){triggerPayment($root.paymentHandler.WIRE)}"
                                 >
                                 {% trans 'Prepay by Wire' %}
                                 </button>
@@ -376,19 +377,19 @@
     </script>
 
     <script type="text/html" id="payment-method-modal-title">
-        <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.CREDIT_CARD -->
+        <!-- ko if: $root.paymentMethod() === $root.CREDIT_CARD -->
         {% trans 'Prepay by Credit Card' %}
         <!-- /ko -->
-        <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.WIRE -->
+        <!-- ko if: $root.paymentMethod() === $root.WIRE -->
         {% trans 'Prepay by Wire' %}
         <!-- /ko -->
     </script>
 
     <script type="text/html" id="payment-complete-template">
-        <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.CREDIT_CARD -->
+        <!-- ko if: $root.paymentMethod() === $root.CREDIT_CARD -->
         {% trans "Thank you for your payment!" %}
         <!-- /ko -->
-        <!-- ko if: paymentHandler.paymentMethod() === paymentHandler.WIRE -->
+        <!-- ko if: $root.paymentMethod() === $root.WIRE -->
         {% blocktrans %}
         Thank you! You will receive an invoice via email with instructions for wire payment.
         Please include the invoice ID in the wire payment details.

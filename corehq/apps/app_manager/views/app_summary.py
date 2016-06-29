@@ -11,7 +11,7 @@ from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
+from corehq.apps.style.decorators import use_angular_js
 
 
 class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
@@ -19,7 +19,6 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
     page_title = ugettext_noop("Summary")
     template_name = 'app_manager/summary.html'
 
-    @use_bootstrap3
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         return super(AppSummaryView, self).dispatch(request, *args, **kwargs)

@@ -67,7 +67,7 @@ fi
 
 if [[ $deploy = 'y' && $no_push != 'y' ]]
 then
-    rebuildstaging $args && git checkout autostaging && fab staging awesome_deploy:confirm=no
+    rebuildstaging $args && git checkout autostaging && git submodule update --init --recursive && fab staging awesome_deploy:confirm=no
 else
     rebuildstaging $args
 fi

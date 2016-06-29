@@ -45,7 +45,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqdomains",
-        "index": "test_hqdomains_20160531_1131",
+        "index": "test_hqdomains_20160622_0645",
         "type": "hqdomain"
     },
     {

@@ -286,6 +286,21 @@ class ResumableDocsByTypeIterator(object):
         self.state["retry"][doc_id] = retries
         self._save_state()
 
+    @property
+    def progress_info(self):
+        """Extra progress information
+
+        This property can be used to store and retrieve extra progress
+        information associated with the iteration. The information is
+        persisted with the iteration state in couch.
+        """
+        return self.state.get("progress_info")
+
+    @progress_info.setter
+    def progress_info(self, info):
+        self.state["progress_info"] = info
+        self._save_state()
+
     def _save_state(self):
         self.state["timestamp"] = datetime.datetime.utcnow().isoformat()
         self.db.save_doc(self.state)

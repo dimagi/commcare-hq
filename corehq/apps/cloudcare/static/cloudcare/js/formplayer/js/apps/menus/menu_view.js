@@ -136,17 +136,25 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         ui: {
-            button: '#double-management',
+            actionButton: '#double-management',
+            searchButton: '#case-list-search-button',
             paginators: '.page-link',
         },
 
         events: {
-            'click @ui.button': 'caseListAction',
+            'click @ui.actionButton': 'caseListAction',
+            'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
         },
 
         caseListAction: function () {
             FormplayerFrontend.trigger("menu:select", "action 0", this.options.collection.appId);
+        },
+
+        caseListSearch: function (e) {
+            e.preventDefault();
+            var searchText = $('#searchText').val();
+            FormplayerFrontend.trigger("menu:search", searchText, this.options.collection.appId);
         },
 
         paginateAction: function (e) {

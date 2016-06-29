@@ -1,7 +1,15 @@
 from django import forms
 from django.forms.fields import MultiValueField, CharField
 from django.forms.utils import flatatt
-from django.forms.widgets import CheckboxInput, HiddenInput, Input, RadioSelect, RadioFieldRenderer, RadioInput, TextInput, MultiWidget
+from django.forms.widgets import (
+    CheckboxInput,
+    Input,
+    RadioSelect,
+    RadioFieldRenderer,
+    RadioInput,
+    TextInput,
+    MultiWidget,
+)
 from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
@@ -203,7 +211,7 @@ class DateRangePickerWidget(Input):
                 $(function () {
                     var separator = '%(separator)s';
                     var report_labels = JSON.parse('%(range_labels_json)s');
-                    $('#%(elem_id)s').createBootstrap3DateRangePicker(
+                    $('#%(elem_id)s').createDateRangePicker(
                         report_labels, separator, '%(startdate)s',
                         '%(enddate)s'
                     );

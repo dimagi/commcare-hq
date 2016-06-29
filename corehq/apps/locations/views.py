@@ -11,7 +11,6 @@ from django.views.decorators.http import require_POST, require_http_methods
 
 from couchdbkit import ResourceNotFound
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_jquery_ui,
     use_multiselect,
 )
@@ -83,7 +82,6 @@ class LocationsListView(BaseLocationView):
     page_title = ugettext_noop("Organization Structure")
     template_name = 'locations/manage/locations.html'
 
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(LocationsListView, self).dispatch(request, *args, **kwargs)
@@ -125,7 +123,6 @@ class LocationTypesView(BaseLocationView):
     template_name = 'locations/location_types.html'
 
     @method_decorator(can_edit_location_types)
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
@@ -300,7 +297,6 @@ class NewLocationView(BaseLocationView):
     creates_new_location = True
     form_tab = 'basic'
 
-    @use_bootstrap3
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
@@ -639,7 +635,6 @@ class FacilitySyncView(BaseSyncView):
     template_name = 'locations/facility_sync.html'
     source = 'openlmis'
 
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(FacilitySyncView, self).dispatch(request, *args, **kwargs)
@@ -649,10 +644,6 @@ class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
     template_name = 'style/soil_status_full.html'
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(LocationImportStatusView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         context = super(LocationImportStatusView, self).main_context
@@ -676,7 +667,6 @@ class LocationImportView(BaseLocationView):
     template_name = 'locations/manage/import.html'
 
     @method_decorator(can_edit_any_location)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(LocationImportView, self).dispatch(request, *args, **kwargs)
 
@@ -829,7 +819,6 @@ class DowngradeLocationsView(BaseDomainView):
     section_name = ugettext_lazy("Project Settings")
     page_title = ugettext_lazy("Project Access")
 
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         if not users_have_locations(self.domain):  # irrelevant, redirect
             redirect_url = reverse('users_default', args=[self.domain])

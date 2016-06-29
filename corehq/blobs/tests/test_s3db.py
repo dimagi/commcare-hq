@@ -122,6 +122,12 @@ class TestS3BlobDB(TestCase):
         with self.assertRaises(mod.NotFound):
             self.db.get(info.identifier)
 
+    def test_put_with_double_dotted_name(self):
+        name = "nations..mp3"
+        info = self.db.put(StringIO(b"content"), name)
+        with self.db.get(info.identifier) as fh:
+            self.assertEqual(fh.read(), b"content")
+
     def test_delete(self):
         name = "test.4"
         bucket = "doc.4"

@@ -4,10 +4,9 @@ OpenClinica integration
 Getting Started
 ---------------
 
-If you are an OpenClinica administrator, this part is for you. If you
-are a Dimagi/CommCare project manager, field manager or developer, this
-is useful to know, but you should not miss the next sections,
-:ref:`important_assumptions` and :ref:`required_case_properties`.
+This section is addressed to OpenClinica administrators, but it is
+useful for project managers and field managers to know how studies are
+managed with CommCare.
 
 1. In OpenClinica, create the study, import the CRFs, and add all the
    users who will be using CommCare.
@@ -23,97 +22,93 @@ is useful to know, but you should not miss the next sections,
    **here**". Give this to the Dimagi/CommCare developer or project
    manager.
 
-   They will save the Study Metadata to CommCare, and add CommCare
-   mobile workers with the same usernames, first names and last names.
+   They will store the Study Metadata in the project settings in
+   CommCare, and add CommCare mobile workers with the same usernames,
+   first names and last names.
 
 3. Using CommCare, users will register subjects, and enter study data
    throughout the project.
 
 4. In CommCareHQ, go to Reports > View All > Custom Reports: ODM Export.
    The report will list all the study subjects and their study events.
-   Add all the subjects and schedule their events in OpenClinica. This
-   is necessary because OpenClinica does not import subjects or events
-   via ODM.
+
+   If you do not have OpenClinica web services enabled for this
+   project, you will need to add all the subjects and schedule their
+   events in OpenClinica. This is necessary because OpenClinica does
+   not import subjects or events via CDISC ODM.
 
 5. Click the "Export to OpenClinica" button on the report. This will
-   create an ODM document. Import the ODM document into OpenClinica.
+   create a CDISC ODM document.
+
+   If you have OpenClinica web services enabled for this project, this
+   will also create the subjects for you and schedule the events of
+   newly-created subjects. (You will need to schedule new events of
+   existing subjects in OpenClinica due to limitations in event
+   management in OpenClinica web services.)
+
+   You can now import the CDISC ODM document into OpenClinica.
 
 
-.. _important_assumptions:
+CommCare Integration with OpenClinica
+-------------------------------------
 
-Important Assumptions
----------------------
-
-OpenClinica Study Events can be repeating. In other words, they can have
-multiple instances for the same subject. Study Events can contain Item Groups
-which are also repeating. When multiple CommCare forms of the same type are
-exported to OpenClinica, the export process needs to determine whether to
-create new Item Groups for the new forms, or whether to create new Study
-Events instead. The choice is based on the date!
-
-.. IMPORTANT:: If the date that the form was started is different, then it is
-               considered a new Study Event.
-
-If the date has not changed, it is considered the same Study Event, and a new
-Item Group is created instead.
+CommCare integration with OpenClinica is bidirectional, in that
+CommCare can import CDISC ODM-formatted study metadata to create an app,
+and can export data using OpenClinica's Web Service, and as a CDISC ODM
+document for OpenClinica to import.
 
 
-.. _required_case_properties:
+Creating a CommCare app from Study Metadata
+-------------------------------------------
 
-Required Case Properties
-------------------------
+Apps are created using a management command: ::
 
-* Each subject must have a "subject key" property. This can potentially be
-  generated from the subject's name, but must be unique within the OpenClinica
-  instance.
+    $ python manage.py odm_to_app <domain> <app-slug> <odm-doc>
 
-* Each subject must have one "study subject ID" for each study they are
-  enrolled in. This needs to be unique within the study.
+Generated apps have two case types, "subject" for study subjects, and a
+child case type, "event" for the subject's study events. Questions will
+have the name assigned to them in the study metadata.
 
-The following constants are retrieved from study metadata, which is available
-from OpenClinica. To retrieve:
+Apps include a module for registering subjects. Subject screening is
+out of the scope of the CRF documents that define a study, and so
+subject registration introduces an important aspect of using CommCare
+for clinical studies: CommCare can be used to manage workflow in a way
+that OpenClinica cannot.
 
-1. Log into OpenClinica
-2. Navigate to the study by clicking the study name at the top left of the
-   page
-3. Download the study metadata by clicking on "Download the study metadata
-   **here**."
-4. For this first OpenClinica integration project, study metadata is simply
-   saved in `custom/openclinica/study_metadata.xml`, but future projects will
-   need to be more generic, and save study metadata for each project in a
-   database.
-
-The project partner will be able to furnish you with this document from their
-production OpenClinica instance.
-
-
-Integration Methods
--------------------
-
-Integration has two possible routes:
-
-* OpenClinica Web Service (SOAP)
-* ODM-formatted export
+App builders can modify the generated app to include workflow processes,
+and edit and split up forms in a way that makes them more useable. As
+long as forms remain in modules of "event" case type and question names
+match their CDSIC ODM IDs, the export will be able to build a CDISC ODM
+document with all the necessary data.
 
 
 OpenClinica Web Service
 -----------------------
 
-This allows forms to be forwarded on submission. The benefit is that
-data is immediately available in OpenClinica. The disadvantage is that
-OpenClinica must be configured in such a way that an OpenClinica "Event"
-maps one-to-one to a CommCare form. This makes the project vulnerable to
-the precise configuration of OpenClinica, and the timing of changing a
-previous, working configuration to match the CommCare app.
+The OpenClinica web service is different from many other CommCare
+integrations with third-party services in that the web service is best
+suited to the end of a project, instead of as data arrives.
 
-For more information, see:
+There are two reasons for this. The first is that the web service
+accepts data in CDISC ODM format, which does not allow CommCare forms
+to be submitted to OpenClinica as they arrive. It is best suited to
+submitting complete data for a study subject. The second is that the
+the web service has a limited ability to manage study events. (All data
+for a subject is organised by study event.)
+
+As a result, web service integration is associated with data export
+instead of form submission. As mentioned before, we use the web service
+to create subjects and schedule their study events in OpenClinica in
+preparation for importing the CDISC ODM document.
+
+For more information about the OpenClinica web service, see:
 https://docs.openclinica.com/3.1/technical-documents/openclinica-web-services-guide
 
 
-ODM Export
-----------
+CDISC ODM Export
+----------------
 
-ODM is an XML-based format for exchanging clinical trial data. The
+CDISC ODM is an XML-based format for exchanging clinical trial data. The
 disadvantage of using an export is that the process is manual. But the
 benefit is that building the export can be done entirely on the CommCare
 side to meet the OpenClinica configuration, without any changes to
@@ -121,16 +116,7 @@ OpenClinica required.
 
 For more information, see: http://www.cdisc.org/odm
 
-.. NOTE:: This integration is written for OpenClinica 3.5, because that
-          is the version that KEMRI currently uses. From version 3.6,
+.. NOTE:: This integration is written for OpenClinica 3.5. From version 3.6,
           the ``UpsertOn`` XML tag is available to perform imports of
           existing data.
 
-
-Chosen Approach
----------------
-
-For this project we have chosen to implement the ODM export. For a
-future project we may look at changing the OpenClinica configuration to
-match the CommCare app, and implement web service integration once that
-has been done.

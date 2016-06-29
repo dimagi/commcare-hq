@@ -42,8 +42,8 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
     default_aggregation = "clinic"
 
     @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(GSIDSQLReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(GSIDSQLReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         self.is_map = kwargs.pop('map', False)
@@ -725,8 +725,8 @@ class PatientMapReport(GenericMapReport, CustomProjectReport):
 
     @maps_prefer_canvas
     @use_maps
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(PatientMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(PatientMapReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def display_config(self):

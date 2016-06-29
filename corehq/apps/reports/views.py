@@ -13,6 +13,7 @@ from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
     REPORT_BUILDER_ACCESS
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
+from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.tabs.tabclasses import ProjectReportsTab
 import langcodes
 import os
@@ -161,7 +162,6 @@ from .util import (
     users_matching_filter,
 )
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_jquery_ui,
     use_select2,
     use_datatables,
@@ -215,7 +215,6 @@ def old_saved_reports(request, domain):
 class BaseProjectReportSectionView(BaseDomainView):
     section_name = ugettext_lazy("Project Reports")
 
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         request.project = Domain.get_by_name(self.domain)
         if not hasattr(request, 'couch_user'):
@@ -1040,7 +1039,6 @@ class ReportNotificationUnsubscribeView(TemplateView):
     broken_link_error = ugettext_noop('Invalid unsubscribe link')
     report = None
 
-    @use_bootstrap3
     def get(self, request, *args, **kwargs):
         if 'success' not in kwargs and 'error' not in kwargs:
             try:
@@ -1713,7 +1711,6 @@ def download_form(request, domain, instance_id):
 
 class EditFormInstance(View):
 
-    @use_bootstrap3
     @method_decorator(require_form_view_permission)
     @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, request, *args, **kwargs):
@@ -1797,6 +1794,7 @@ class EditFormInstance(View):
             'domain': domain,
             'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
             'form_name': _('Edit Submission'),  # used in breadcrumbs
+            'use_sqlite_backend': use_sqlite_backend(domain),
             'edit_context': {
                 'formUrl': self._form_instance_to_context_url(domain, instance),
                 'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
