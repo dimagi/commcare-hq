@@ -172,7 +172,7 @@ class TooManyRetries(Exception):
     pass
 
 
-DOCS_SKIPPED_WARNING = """"
+DOCS_SKIPPED_WARNING = """
         WARNING {} documents were not processed due to concurrent modification
         during migration. Run the migration again until you do not see this
         message.
