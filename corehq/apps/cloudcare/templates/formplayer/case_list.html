@@ -1,7 +1,20 @@
 {% load hq_shared_tags %}
 
 <script type="text/template" id="case-view-list-template">
-    <h2 id="title"><%= title %></h2>
+    <div>
+        <div class="col-sm-8">
+            <h2 id="title"><%= title %></h2>
+        </div>
+        <div class="input-group col-sm-4">
+            <input type="text" class="form-control" placeholder="Search" id="searchText">
+
+            <div class="input-group-btn">
+                <button class="btn btn-default" type="button" id="case-list-search-button">
+                    <i class="fa fa-search fa-4x" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </div>
     <table class="table table-hover table-striped table-bordered">
         <thead>
         <tr>

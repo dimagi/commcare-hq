@@ -45,7 +45,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (appId, stepList, page) {
+        getMenus: function (appId, stepList, page, search) {
 
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
@@ -68,6 +68,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "locale": language,
                         "selections": stepList,
                         "offset": page * 10,
+                        "search_text": search,
                     });
 
                     if (stepList) {
@@ -100,7 +101,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, stepList, page) {
-        return API.getMenus(appId, stepList, page);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, stepList, page, search) {
+        return API.getMenus(appId, stepList, page, search);
     });
 });
