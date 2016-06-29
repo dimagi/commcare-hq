@@ -53,6 +53,6 @@ class Command(BaseCommand):
 
         reindexer = reindex_fns[index]()
         if cleanup and (noinput or confirm()):
-            reindexer.clean_index()
+            reindexer.clean()
 
         reindexer.reindex()

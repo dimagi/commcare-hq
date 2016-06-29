@@ -1,22 +1,31 @@
+from abc import ABCMeta
+
 from corehq.elastic import get_es_new
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 
+import six
 
-class PillowReindexer(object):
+
+class PillowReindexer(six.with_metaclass(ABCMeta)):
+    def __init__(self, pillow):
+        self.pillow = pillow
+
+    def clean(self):
+        """
+            Cleans the index.
+
+            This can be called prior to reindex to ensure starting from a clean slate.
+            Should be overridden on a case-by-case basis by subclasses.
+            """
+        pass
+
+
+class PillowChangeProviderReindexer(PillowReindexer):
 
     def __init__(self, pillow, change_provider):
-        self.pillow = pillow
+        super(PillowChangeProviderReindexer, self).__init__(pillow)
         self.change_provider = change_provider
-
-    def clean_index(self):
-        """
-        Cleans the index.
-
-        This can be called prior to reindex to ensure starting from a clean slate.
-        Should be overridden on a case-by-case basis by subclasses.
-        """
-        pass
 
     def reindex(self, start_from=None):
         for change in self.change_provider.iter_all_changes(start_from=start_from):

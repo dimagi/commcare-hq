@@ -8,7 +8,7 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEven
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import PillowReindexer
+from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer
 
 
 class GroupsToUsersProcessor(PillowProcessor):
@@ -82,7 +82,7 @@ def stream_user_sources(user_ids):
 
 
 def get_groups_to_user_reindexer():
-    return PillowReindexer(
+    return PillowChangeProviderReindexer(
         pillow=get_group_to_user_pillow(),
         change_provider=CouchViewChangeProvider(
             couch_db=Group.get_db(),
