@@ -1570,7 +1570,6 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         )
         cls.report_configuration.save()
 
-
     def test_get_detail(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(
