@@ -16,7 +16,7 @@ Util.getQueryParams = function (qs) {
 
 /** Given a URL, return the parameters (can be 'step' or 'page) in a map:
  * @param queryString - the URL
- * @returns {{steps: [1, 2, 3], page: [int]}}
+ * @returns {{steps: [1, 2, 3], page: [int], search: [string]}}
  */
 Util.getSteps = function (queryString) {
     var urlParams = Util.getQueryParams(queryString);
@@ -27,6 +27,8 @@ Util.getSteps = function (queryString) {
             steps.push(urlParams[i].v);
         } else if(urlParams[i].k.indexOf('page') > -1) {
             paramMap.page = (urlParams[i].v);
+        } else if(urlParams[i].k.indexOf('search') > -1) {
+            paramMap.search = (urlParams[i].v);
         }
     }
     paramMap.steps = steps;
