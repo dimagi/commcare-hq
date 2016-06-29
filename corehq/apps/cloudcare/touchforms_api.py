@@ -5,6 +5,8 @@ import json
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from django.core.urlresolvers import reverse
 from corehq.apps.users.models import CouchUser
+from corehq import toggles
+from django.conf import settings
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -59,10 +61,12 @@ class BaseSessionDataHelper(object):
         # always tell touchforms to include footprinted cases in its case db
         session_data["additional_filters"] = {"footprint": True}
         session_data.update(session_extras)
-        online_url = reverse("xform_player_proxy")
+        xform_url = reverse("xform_player_proxy")
+        if session_data.get('domain') and toggles.USE_FORMPLAYER.enabled(session_data.get('domain')):
+            xform_url = settings.FORMPLAYER_URL
         ret = {
             "session_data": session_data,
-            "xform_url": online_url,
+            "xform_url": xform_url,
         }
         ret.update(root_extras)
         return ret
