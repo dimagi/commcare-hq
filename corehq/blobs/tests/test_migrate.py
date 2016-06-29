@@ -124,12 +124,12 @@ class BaseMigrationTest(TestCase):
         migrator = mod.MIGRATIONS[self.slug]
 
         class ConcurrentModify(migrator.doc_migrator_class):
-            def migrate(self, doc, couchdb):
+            def _do_migration(self, doc, couchdb):
                 if doc["_id"] not in modified and doc["_id"] in docs_by_id:
                     # do concurrent modification
                     modify_doc(docs_by_id[doc["_id"]])
                     modified.add(doc["_id"])
-                return super(ConcurrentModify, self).migrate(doc, couchdb)
+                return super(ConcurrentModify, self)._do_migration(doc, couchdb)
 
         with replattr(migrator, "doc_migrator_class", ConcurrentModify):
             # do migration
