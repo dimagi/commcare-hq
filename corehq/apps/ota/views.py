@@ -114,7 +114,7 @@ def get_restore_params(request):
 
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
-                         cache_timeout=None, overwrite_cache=False,):
+                         cache_timeout=None, overwrite_cache=False):
     # not a view just a view util
     if couch_user.is_commcare_user() and domain != couch_user.domain:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
