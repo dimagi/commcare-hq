@@ -52,7 +52,7 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
-from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -3516,7 +3516,7 @@ class CustomDatespanFilter(ReportAppFilter):
             "CustomDatespanFilter.get_filter_value must be called "
             "with an OTARestoreUser object, not None")
 
-        timezone = get_timezone_for_user(user.user_id, user.domain)
+        timezone = get_timezone_for_domain(user.user_id, user.domain)
         today = ServerTime(datetime.datetime.utcnow()).user_time(timezone).done().date()
         start_date = end_date = None
         days = int(self.date_number)
