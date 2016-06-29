@@ -14,6 +14,8 @@ from tastypie.resources import Resource
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.userreports.models import ReportConfiguration, \
+    DataSourceConfiguration
 from couchforms.models import XFormInstance
 
 from django_prbac.models import Role
@@ -95,7 +97,7 @@ class APIResourceTest(TestCase):
         cls.list_endpoint = reverse('api_dispatch_list',
                 kwargs=dict(domain=cls.domain.name,
                             api_name=cls.api_name,
-                            resource_name=cls.resource.Meta.resource_name))
+                            resource_name=cls.resource._meta.resource_name))
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
@@ -122,7 +124,7 @@ class APIResourceTest(TestCase):
     def single_endpoint(self, id):
         return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
                                                           api_name=self.api_name,
-                                                          resource_name=self.resource.Meta.resource_name,
+                                                          resource_name=self.resource._meta.resource_name,
                                                           pk=id))
 
 
@@ -1514,3 +1516,91 @@ class TestApiKey(APIResourceTest):
 
         other_api_key.delete()
         other_user.delete()
+
+
+class TestSimpleReportConfigurationResource(APIResourceTest):
+    resource = v0_5.SimpleReportConfigurationResource
+    api_name = "v0.5"
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestSimpleReportConfigurationResource, cls).setUpClass()
+
+        cls.report_columns = [
+            {
+                "column_id": 'foo',
+                "type": "field",
+                "field": "my_field",
+                "aggregation": "simple",
+            },
+            {
+                "column_id": 'bar',
+                "type": "field",
+                "field": "my_field",
+                "aggregation": "simple",
+            }
+        ]
+        cls.report_filters = [
+            {
+                'datatype': 'integer',
+                'field': 'my_field',
+                'type': 'dynamic_choice_list',
+                'slug': 'my_field_filter',
+            },
+            {
+                'datatype': 'string',
+                'field': 'my_other_field',
+                'type': 'dynamic_choice_list',
+                'slug': 'my_other_field_filter',
+            }
+        ]
+
+        cls.data_source = DataSourceConfiguration(
+            domain=cls.domain.name,
+            referenced_doc_type="XFormInstance",
+            table_id=uuid.uuid4().hex,
+        )
+        cls.data_source.save()
+
+        cls.report_configuration = ReportConfiguration(
+            domain=cls.domain.name,
+            config_id=cls.data_source._id,
+            columns=cls.report_columns,
+            filters=cls.report_filters
+        )
+        cls.report_configuration.save()
+
+
+    def test_get_detail(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id))
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+        filters = response_dict['filters']
+        columns = response_dict['columns']
+
+        self.assertEqual(
+            set(response_dict.keys()),
+            {'resource_uri', 'filters', 'columns', 'id'}
+        )
+
+        self.assertEqual(
+            [c['column_id'] for c in self.report_columns],
+            columns
+        )
+        self.assertEqual(
+            [{'datatype': x['datatype'], 'field': x['field']} for x in self.report_filters],
+            filters
+        )
+
+    def test_disallowed_methods(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.single_endpoint(self.report_configuration._id),
+            {}
+        )
+        self.assertEqual(response.status_code, 405)
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 405)
