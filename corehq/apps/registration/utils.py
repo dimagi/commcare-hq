@@ -64,12 +64,13 @@ def request_new_domain(request, form, is_new_user=True):
         dom_req.request_ip = get_ip(request)
         dom_req.activation_guid = uuid.uuid1().hex
 
-    name = name_to_url(form.cleaned_data['hr_name'], "project")
+    project_name = form.cleaned_data.get('hr_name') or form.cleaned_data.get('project_name')
+    name = name_to_url(project_name, "project")
     with CriticalSection(['request_domain_name_{}'.format(name)]):
         name = Domain.generate_name(name)
         new_domain = Domain(
             name=name,
-            hr_name=form.cleaned_data['hr_name'],
+            hr_name=project_name,
             is_active=False,
             date_created=datetime.utcnow(),
             creating_user=current_user.username,
