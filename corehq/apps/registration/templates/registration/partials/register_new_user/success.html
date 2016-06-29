@@ -1,0 +1,23 @@
+{% load i18n %}
+
+<div class="submit-success" data-bind="visible: isSubmitSuccess">
+  <h2><i class="fa fa-check"></i> {% trans "Success!" %}</h2>
+  <p class="lead">
+    {% trans "An email was just sent to" %}
+    <span data-bind="text: email"></span>.
+  </p>
+  <p>
+    {% blocktrans %}
+      <strong>Please visit the link provided in the email to activate your account,</strong>
+      so you can start using your new CommCare HQ project!
+    {% endblocktrans %}
+  </p>
+  <hr />
+  <p>
+    {% url "registration_resend_domain_confirmation" as resend_url %}
+    {% blocktrans %}
+    If you can't find the email, you may
+    <a href="{{ resend_url }}">resend the confirmation email</a>.
+    {% endblocktrans %}
+  </p>
+</div>
