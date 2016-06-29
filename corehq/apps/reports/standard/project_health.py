@@ -78,12 +78,17 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             domain=domain,
             performance_threshold=performance_threshold,
             active=self._distinct_user_ids.count(),
+            inactive=0,
+            total_users_by_month=len(all_users_created_before_date),
             percent_active=percent_active,
             performing=num_performing_user,
         )
 
     def set_next_month_summary(self, next_month_summary):
         self._next_summary = next_month_summary
+
+    def set_num_inactive_users(self, num_inactive_users):
+        self.inactive = num_inactive_users
 
     @property
     def number_of_performing_users(self):
@@ -276,6 +281,7 @@ class ProjectHealthDashboard(ProjectReport):
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
+                this_month_summary.set_num_inactive_users(len(this_month_summary.get_dropouts()))
             last_month_summary = this_month_summary
         return six_month_summary
 
