@@ -22,6 +22,7 @@
     "angular-cookies": "1.4.4",
     "angular-sanitize": "1.4.4",
     "knockout": "3.3.0",
+    "knockout-validation": "2.0.3",
     "select2-3.4.5-legacy": "select2#3.4.5",
     "select2-3.5.2-legacy": "select2#3.5.2",
     "select2": "4.0.0",
