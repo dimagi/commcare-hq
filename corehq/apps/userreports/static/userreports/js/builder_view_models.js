@@ -224,6 +224,73 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         return _.find(this.propertyOptions, function (opt) {return opt.value === property_id;});
     };
 
+    /**
+     * Return an object representing the given DataSourceProperty object
+     * in the format expected by the select2 binding.
+     * @param {object} dataSourceProperty - A js object representation of a
+     *  DataSourceProperty python object.
+     * @returns {object} - A js object in the format expected by the select2
+     *  knockout binding.
+     */
+    var convertDataSourcePropertyToSelect2Format = function (dataSourceProperty) {
+        return dataSourceProperty;
+    };
+    /**
+     * Return an object representing the given DataSourceProperty object
+     * in the format expected by the questionsSelect binding.
+     * @param {object} dataSourceProperty - A js object representation of a
+     *  DataSourceProperty python object.
+     * @returns {object} - A js object in the format expected by the questionsSelect
+     *  knockout binding.
+     */
+    var convertDataSourcePropertyToQuestionsSelectFormat = function (dataSourceProperty) {
+        if (dataSourceProperty.type === 'question') {
+            return dataSourceProperty.source;
+        } else if (dataSourceProperty.type === 'meta') {
+            return {
+                value: dataSourceProperty.source[0],
+                label: dataSourceProperty.text,
+                type: dataSourceProperty.type,
+            };
+        }
+    };
+    /**
+     * Return an object representing the given ColumnOption object in the format
+     * expected by the select2 binding.
+     * @param {object} columnOption - A js object representation of a
+     *  ColumnOption python object.
+     * @returns {object} - A js object in the format expected by the select2
+     *  knockout binding.
+     */
+    var convertReportColumnOptionToSelect2Format = function (columnOption) {
+        return {
+            id: columnOption.id,
+            text: columnOption.display,
+        };
+    };
+    /**
+     * Return an object representing the given ColumnOption object in the format
+     * expected by the questionsSelect binding.
+     * @param {object} columnOption - A js object representation of a
+     *  ColumnOption python object.
+     * @returns {object} - A js object in the format expected by the questionsSelect
+     *  knockout binding.
+     */
+    var convertReportColumnOptionToQuestionsSelectFormat = function (columnOption) {
+        var questionSelectRepresentation;
+        if (columnOption.question_source) {
+            questionSelectRepresentation = Object.assign({}, columnOption.question_source);
+        } else {
+            questionSelectRepresentation = {
+                value: columnOption.id,
+                label: columnOption.display,
+            };
+        }
+        questionSelectRepresentation.aggregation_options = columnOption.aggregation_options;
+        return questionSelectRepresentation;
+    };
+
+
     var ConfigForm = function(reportType, sourceType, columns, filters, dataSourceIndicators, reportColumnOptions){
         this.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
             return o.type === 'question';
@@ -231,39 +298,23 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.dataSourceIndicators = dataSourceIndicators;
         this.reportColumnOptions = reportColumnOptions;
 
+        // Convert the DataSourceProperty and ColumnOption passed through the template
+        // context into objects with the correct format for the select2 and
+        // questionsSelect knockout bindings.
         if (this.optionsContainQuestions) {
-            var transformColumnOptions = function (options) {
-                return _.compact(_.map(options, function (o) {
-                    if (o.question_source) {
-                        var ret = Object.assign({}, o.question_source);
-                        ret.aggregation_options = o.aggregation_options;
-                        return ret;
-                    } else {
-                        return {
-                            value: o.id,
-                            label: o.display,
-                            aggregation_options: o.aggregation_options,
-                        };
-                    }
-                }));
-            };
-            var transformDataSourceIndicators = function (options) {
-                return _.compact(_.map(options, function (o) {
-                    if (o.type === 'question') {
-                        return o.source;
-                    } else if (o.type === 'meta') {
-                        return {
-                            value: o.source[0],
-                            label: o.text,
-                            type: o.type,
-                        };
-                    }
-                }));
-            };
-
-            // Transform the property_options into the form expected by the questionsSelect binding.
-            this.dataSourceIndicators = transformDataSourceIndicators(this.dataSourceIndicators);
-            this.reportColumnOptions = transformColumnOptions(this.reportColumnOptions);
+            this.dataSourceIndicators = _.compact(_.map(
+                this.dataSourceIndicators, convertDataSourcePropertyToQuestionsSelectFormat
+            ));
+            this.reportColumnOptions = _.compact(_.map(
+                this.reportColumnOptions, convertReportColumnOptionToQuestionsSelectFormat
+            ));
+        } else {
+            this.dataSourceIndicators = _.compact(_.map(
+                this.dataSourceIndicators, convertDataSourcePropertyToSelect2Format
+            ));
+            this.reportColumnOptions = _.compact(_.map(
+                this.reportColumnOptions, convertReportColumnOptionToSelect2Format
+            ));
         }
 
         this.filtersList = new PropertyList({
