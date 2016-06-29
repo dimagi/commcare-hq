@@ -7,7 +7,7 @@
 ├── XMLWriter#ab8760d6e0
 ├── chai#3.5.0
 ├── equivalent-xml-js#7de21be295
-├── fuse.js#2.0.2 (latest is 2.2.0)
+├── fuse.js#12bb2279d2
 ├── jquery#1.11.3 (latest is 3.0.0)
 ├── jsdiff#2.2.2
 ├─┬ jstree#3.2.1 (latest is 3.3.1)
