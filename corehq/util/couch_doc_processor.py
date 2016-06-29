@@ -303,6 +303,10 @@ class CouchDocumentProcessor(object):
                         print("Processed {}/{} of {} documents in {} ({} remaining)"
                               .format(processed, visited, total, elapsed, remaining))
 
+        session_visited = visited - previously_visited
+        if session_visited:
+            self.docs_by_type.progress_info = {"visited": visited, "total": total}
+
         self.doc_processor.processing_complete(skipped)
 
         print("Processed {}/{} of {} documents ({} previously processed, {} filtered out)."
@@ -310,8 +314,8 @@ class CouchDocumentProcessor(object):
                 processed,
                 visited,
                 total,
-                total - visited,
-                visited - (processed + skipped)
+                previously_visited,
+                session_visited - (processed + skipped)
             ))
         if skipped:
             print(DOCS_SKIPPED_WARNING.format(skipped))
