@@ -1,4 +1,4 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
 /**
  * Backbone model for listing and selecting FormEntrySessions
@@ -42,11 +42,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     });
 
                     options.url = formplayerUrl + '/get_sessions';
-                    options.type = 'POST';
-                    options.dataType = "json";
-                    options.crossDomain = {crossDomain: true};
-                    options.xhrFields = {withCredentials: true};
-                    options.contentType = "application/json";
+                    Util.setCrossDomainAjaxOptions(options);
                     return Backbone.Collection.prototype.fetch.call(this, options);
                 },
 
@@ -79,11 +75,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     });
 
                     options.url = formplayerUrl + '/incomplete-form';
-                    options.type = 'POST';
-                    options.dataType = "json";
-                    options.crossDomain = {crossDomain: true};
-                    options.xhrFields = {withCredentials: true};
-                    options.contentType = "application/json";
+                    Util.setCrossDomainAjaxOptions(options);
                     return Backbone.Collection.prototype.fetch.call(this, options);
                 },
 

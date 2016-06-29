@@ -1,4 +1,4 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
@@ -73,11 +73,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     }
 
                     options.url = formplayerUrl + '/navigate_menu';
-                    options.type = 'POST';
-                    options.dataType = "json";
-                    options.crossDomain = { crossDomain: true};
-                    options.xhrFields = { withCredentials: true};
-                    options.contentType = "application/json";
+                    Util.setCrossDomainAjaxOptions(options);
                     return Backbone.Collection.prototype.fetch.call(this, options);
                 },
 
