@@ -94,6 +94,18 @@ class SchemaTest(SimpleTestCase):
     def setUp(self):
         self.factory = AppFactory()
 
+    def test_get_casedb_schema_form_without_cases(self):
+        survey = self.add_form()
+        schema = util.get_casedb_schema(survey)
+        self.assert_has_kv_pairs(schema, {
+            "id": "casedb",
+            "uri": "jr://instance/casedb",
+            "name": "case",
+            "path": "/casedb/case",
+            "structure": {},
+            "subsets": [],
+        })
+
     def test_get_casedb_schema_with_form(self):
         village = self.add_form("village")
         schema = util.get_casedb_schema(village)
