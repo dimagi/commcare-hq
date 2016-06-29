@@ -68,12 +68,10 @@ That's it, you're done!
 import json
 import os
 import traceback
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from base64 import b64encode
-from datetime import datetime
 from tempfile import mkdtemp
 
-import six as six
 from django.conf import settings
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
@@ -81,10 +79,7 @@ from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
-from corehq.util.couch_helpers import (
-    ResumableDocsByTypeIterator,
-    TooManyRetries,
-)
+from corehq.util.couch_doc_processor import BaseDocProcessor, process_docs, DOCS_SKIPPED_WARNING
 from couchdbkit import ResourceConflict
 
 # models to be migrated
@@ -118,12 +113,6 @@ It should be set to a real directory. Update localsettings.py and
 retry the migration.
 """
 
-MIGRATIONS_SKIPPED_WARNING = """
-WARNING {} documents were not migrated due to concurrent modification
-during migration. Run the migration again until you do not see this
-message.
-"""
-
 
 def encode_content(data):
     if isinstance(data, unicode):
@@ -131,13 +120,13 @@ def encode_content(data):
     return b64encode(data)
 
 
-class BaseDocMigrator(six.with_metaclass(ABCMeta)):
+class BaseDocMigrator(BaseDocProcessor):
 
     # If true, load attachment content before migrating.
     load_attachments = False
 
     def __init__(self, slug, filename=None):
-        self.slug = slug
+        super(BaseDocMigrator, self).__init__(slug)
         self.dirpath = None
         self.filename = filename
         if filename is None:
@@ -202,14 +191,6 @@ class BaseDocMigrator(six.with_metaclass(ABCMeta)):
 
         if not skipped:
             BlobMigrationState.objects.get_or_create(slug=self.slug)[0].save()
-
-    @abstractmethod
-    def filter(self, doc):
-        """
-        :param doc: the document to filter
-        :return: True if this doc should be migrated
-        """
-        raise NotImplementedError
 
 
 class CouchAttachmentMigrator(BaseDocMigrator):
@@ -290,7 +271,7 @@ class Migrator(object):
 
     def migrate(self, filename=None, *args, **kw):
         doc_migrator = self.doc_migrator_class(self.slug, filename)
-        return migrate(
+        return process_docs(
             self.slug,
             self.doc_type_map,
             doc_migrator,
@@ -314,97 +295,6 @@ MIGRATIONS = {m.slug: m for m in [
         hqmedia.CommCareMultimedia,
     ], CouchAttachmentMigrator),
 ]}
-
-
-def migrate(slug, doc_type_map, doc_migrator, reset=False, max_retry=2, chunk_size=100):
-    """Migrate blobs
-
-    :param slug: Migration name.
-    :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
-    :param doc_migrator: A `BaseDocMigrator` object used to
-    migrate documents.
-    :param reset: Reset existing migration state (if any), causing all
-    documents to be reconsidered for migration, if this is true. This
-    does not reset the django migration flag.
-    flag, which is set when the migration completes successfully.
-    :param max_retry: Number of times to retry migrating a document
-    before giving up.
-    :param chunk_size: Maximum number of records to read from couch at
-    one time. It may be necessary to use a smaller chunk size if the
-    records being migrated are very large and the default chunk size of
-    100 would exceed available memory.
-    :returns: A tuple `(<num migrated>, <num skipped>)`
-    """
-    couchdb = next(iter(doc_type_map.values())).get_db()
-    assert all(m.get_db() is couchdb for m in doc_type_map.values()), \
-        "documents must live in same couch db: %s" % repr(doc_type_map)
-
-    total = sum(get_doc_count_by_type(couchdb, doc_type)
-                for doc_type in doc_type_map)
-    migrated = 0
-    skipped = 0
-    visited = 0
-    previously_visited = 0
-    iter_key = slug + "-blob-migration"
-    docs_by_type = ResumableDocsByTypeIterator(couchdb, doc_type_map, iter_key,
-                                               chunk_size=chunk_size)
-    if reset:
-        docs_by_type.discard_state()
-    elif docs_by_type.progress_info:
-        info = docs_by_type.progress_info
-        old_total = info["total"]
-        # Estimate already visited based on difference of old/new
-        # totals. The theory is that new or deleted records will be
-        # evenly distributed across the entire set.
-        visited = int(round(float(total) / old_total * info["visited"]))
-        previously_visited = visited
-    print("Migrating {} documents{}: {}...".format(
-        total,
-        " (~{} already migrated)".format(visited) if visited else "",
-        ", ".join(sorted(doc_type_map))
-    ))
-
-    with doc_migrator:
-        start = datetime.now()
-        for doc in docs_by_type:
-            visited += 1
-            if visited % chunk_size == 0:
-                docs_by_type.progress_info = {"visited": visited, "total": total}
-            if doc_migrator.filter(doc):
-                ok = doc_migrator.migrate(doc, couchdb)
-                if ok:
-                    migrated += 1
-                else:
-                    try:
-                        docs_by_type.retry(doc, max_retry)
-                    except TooManyRetries:
-                        print("Skip: {doc_type} {_id}".format(**doc))
-                        skipped += 1
-                if (migrated + skipped) % chunk_size == 0:
-                    elapsed = datetime.now() - start
-                    session_visited = visited - previously_visited
-                    session_total = total - previously_visited
-                    if session_visited > session_total:
-                        remaining = "?"
-                    else:
-                        session_remaining = session_total - session_visited
-                        remaining = elapsed / session_visited * session_remaining
-                    print("Migrated {}/{} of {} documents in {} ({} remaining)"
-                          .format(migrated, visited, total, elapsed, remaining))
-
-    doc_migrator.after_migration(skipped)
-
-    print("Migrated {}/{} of {} documents ({} previously migrated, {} had no attachments)."
-        .format(
-            migrated,
-            visited,
-            total,
-            total - visited,
-            visited - (migrated + skipped)
-        ))
-    if skipped:
-        print(MIGRATIONS_SKIPPED_WARNING.format(skipped))
-    return migrated, skipped
 
 
 def assert_migration_complete(slug):
@@ -439,7 +329,7 @@ def assert_migration_complete(slug):
         # just do the migration if the number of documents is small
         migrated, skipped = migrator.migrate()
         if skipped:
-            raise MigrationNotComplete(MIGRATIONS_SKIPPED_WARNING.format(skipped))
+            raise MigrationNotComplete(DOCS_SKIPPED_WARNING.format(skipped))
 
     def reverse(apps, schema_editor):
         # NOTE: this does not move blobs back into couch. It only

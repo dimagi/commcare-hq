@@ -1,7 +1,8 @@
 from django.test import TestCase
 
 from couchdbkit import ResourceConflict, ResourceNotFound
-from corehq.util.couch_helpers import ResumableDocsByTypeIterator, TooManyRetries
+
+from corehq.util.couch_doc_processor import ResumableDocsByTypeIterator, TooManyRetries
 from dimagi.utils.couch.database import get_db
 
 
