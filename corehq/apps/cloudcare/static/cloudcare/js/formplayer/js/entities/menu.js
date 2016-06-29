@@ -50,6 +50,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
             var domain = user.domain;
+            var language = user.language;
             var formplayerUrl = user.formplayer_url;
             var trimmedUsername = username.substring(0, username.indexOf("@"));
 
@@ -64,6 +65,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "username": trimmedUsername,
                         "domain": domain,
                         "app_id": collection.appId,
+                        "locale": language,
                         "selections": stepList,
                         "offset": page * 10,
                         "search_text": search,
