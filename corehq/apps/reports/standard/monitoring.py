@@ -304,9 +304,44 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return map(self._format_row, rows)
 
     @property
+    def _touched_total_aggregation(self):
+        return FilterAggregation(
+            'touched_total',
+            filters.AND(
+                filters.date_range('modified_on', gte=self.milestone_start, lt=self.end_date),
+            )
+        )
+
+    @property
+    def _active_total_aggregation(self):
+        return FilterAggregation(
+            'active_total',
+            filters.AND(
+                filters.date_range('modified_on', gte=self.milestone_start, lt=self.end_date),
+                filters.term('closed', False))
+        )
+
+    @property
+    def _inactive_total_aggregation(self):
+        return FilterAggregation(
+            'inactive_total',
+            filters.AND(
+                filters.date_range('modified_on', lt=self.milestone_start),
+                filters.term('closed', False))
+        )
+
+    @property
     @memoized
     def missing_users(self):
         return None in self.user_ids
+
+    @property
+    def end_date(self):
+        return ServerTime(self.utc_now).phone_time(self.timezone).done()
+
+    @property
+    def milestone_start(self):
+        return ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
 
     def es_queryset(self):
         end_date = ServerTime(self.utc_now).phone_time(self.timezone).done()
