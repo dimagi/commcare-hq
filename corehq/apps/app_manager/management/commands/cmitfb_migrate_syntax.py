@@ -2,6 +2,7 @@ import logging
 import re
 
 from django.core.management.base import BaseCommand
+from optparse import make_option
 
 from corehq.toggles import all_toggles
 from corehq.apps.domain.models import Domain
@@ -16,7 +17,16 @@ class Command(BaseCommand):
     help = '''
         Migrate apps using vellum case management from the old
         #case/type/property syntax to the new #case/relationship/property syntax.
+
+        Pass --save to actually save changes.
     '''
+
+    option_list = BaseCommand.option_list + (
+        make_option('--save',
+                    action='store_true',
+                    dest='save',
+                    help='Save changes to forms.'),
+    )
 
     affixes = ["", "parent/", "grandparent/"]
 
@@ -61,8 +71,9 @@ class Command(BaseCommand):
                                 for p in prefixes:
                                     if p != "#case/parent/" and p != "#case/grandparent/":
                                         self._form_error(form, "Unknown prefix remaining: {}".format(p))
-                                save_xform(form.get_app(), form, form.source)
-                                app_dirty = True
+                                if options['save']:
+                                    save_xform(form.get_app(), form, form.source)
+                                    app_dirty = True
                     if app_dirty:
                         app.save()
         logger.info('done with cmitfb_migrate_syntax')
