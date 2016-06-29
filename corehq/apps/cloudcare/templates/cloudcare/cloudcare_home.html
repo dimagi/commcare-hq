@@ -161,7 +161,7 @@
         <nav id="sessions"></nav>
 {% endif %}
     </section>
-{% if request|toggle_enabled:"TF_USES_SQLITE_BACKEND" %}
+{% if use_sqlite_backend %}
     <div class="nav-input" id="sync-container">
         <button
             class="btn btn-block btn-info"

@@ -37,6 +37,7 @@ from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
+from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -487,6 +488,7 @@ def bug_report(req):
     report['feature_flags'] = toggles.toggles_dict(username=report['username'],
                                                    domain=report['domain']).keys()
     report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
+    report['scale_backend'] = should_use_sql_backend(report['domain'])
 
     try:
         couch_user = CouchUser.get_by_username(report['username'])
@@ -522,6 +524,7 @@ def bug_report(req):
         u"User Agent: {user_agent}\n"
         u"Feature Flags: {feature_flags}\n"
         u"Feature Previews: {feature_previews}\n"
+        u"Is scale backend: {scale_backend}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)

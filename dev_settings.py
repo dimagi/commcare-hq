@@ -86,5 +86,3 @@ if not os.path.exists(shared_dirname):
 SHARED_DRIVE_ROOT = shared_dirname
 
 PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
-
-NEW_DOMAINS_USE_SQL_BACKEND = True
