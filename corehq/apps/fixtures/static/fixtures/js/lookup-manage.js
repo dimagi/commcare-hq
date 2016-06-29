@@ -299,7 +299,7 @@ requirejs([
             function poll() {
                 if (keep_polling) {
                     $.ajax({
-                        url: response.download_url+"?is_bootstrap3=true",
+                        url: response.download_url,
                         dataType: 'text',
                         success: function (resp) {
                             var progress = $("#download-progress");

@@ -2,12 +2,14 @@ import uuid
 from django.test import TestCase
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.domain.dbaccessors import (
+    count_downloads_for_all_snapshots,
     get_doc_count_in_domain_by_class,
     get_doc_ids_in_domain_by_class,
     get_docs_in_domain_by_class,
     get_domain_ids_by_names,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import UserRole
 from couchforms.models import XFormInstance
@@ -21,7 +23,15 @@ class DBAccessorsTest(TestCase):
     def setUpClass(cls):
         super(DBAccessorsTest, cls).setUpClass()
         cls.domain = 'domain-domain'
+        cls.project = create_domain(cls.domain)
         cls.db = get_db()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(DBAccessorsTest, cls).tearDownClass()
+        for snapshot in cls.project.snapshots():
+            snapshot.delete()
+        cls.project.delete()
 
     def test_get_doc_count_in_domain_by_class(self):
         group = Group(domain=self.domain)
@@ -136,3 +146,12 @@ class DBAccessorsTest(TestCase):
 
         ids = get_domain_ids_by_names(names[:-1])
         self.assertEqual(ids, expected_ids[:-1])
+
+    def test_count_downloads_for_all_snapshots(self):
+        counts = [5, 12, 10]
+        for count in counts:
+            copy = self.project.save_snapshot(share_reminders=False, copy_by_id=set())
+            copy.downloads = count
+            copy.save()
+        self.assertEqual(
+            count_downloads_for_all_snapshots(self.project.get_id), sum(counts))

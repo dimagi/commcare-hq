@@ -10,22 +10,22 @@ from corehq.apps.accounting.models import (
 DESC_BY_EDITION = {
     Edition.COMMUNITY: {
         'name': _("Community"),
-        'description': _("For projects in a pilot phase with a small group (up to 50) of "
+        'description': _("For projects in a pilot phase with a small group (up to %d) of "
                          "mobile users that only need very basic CommCare features."),
     },
     Edition.STANDARD: {
         'name': _("Standard"),
-        'description': _("For projects with a medium set (up to 100) of mobile users that want to "
+        'description': _("For projects with a medium set (up to %d) of mobile users that want to "
                          "build in limited SMS workflows and have increased data security needs."),
     },
     Edition.PRO: {
         'name': _("Pro"),
-        'description': _("For projects with a large group (up to 500) of mobile users that want to "
+        'description': _("For projects with a large group (up to %d) of mobile users that want to "
                          "build in comprehensive SMS workflows and have increased reporting needs."),
     },
     Edition.ADVANCED: {
         'name': _("Advanced"),
-        'description': _("For projects scaling to an even larger group (up to 1,000) of mobile users "
+        'description': _("For projects scaling to an even larger group (up to %d) of mobile users "
                          "that want the full CommCare feature set and dedicated support from Dimagi "
                          "staff.")
     },

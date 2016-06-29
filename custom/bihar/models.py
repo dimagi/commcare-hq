@@ -3,14 +3,10 @@ from corehq.apps.change_feed import topics
 from custom.bihar import getters, BIHAR_DOMAINS
 from custom.bihar.calculations.homevisit import DateRangeFilter
 from custom.bihar.calculations.utils import filters
-from fluff.filters import Filter
-from pillowtop.listener import BasicPillow
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from custom.bihar.calculations import homevisit, pregnancy, postpartum, newborn, familyplanning, mortality
-from custom.bihar.calculations.utils.visits import VISIT_TYPES
 import fluff
-from django.db import models
 
 A_DAY = datetime.timedelta(days=1)
 

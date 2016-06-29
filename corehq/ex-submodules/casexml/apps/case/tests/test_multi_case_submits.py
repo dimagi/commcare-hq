@@ -10,6 +10,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 class MultiCaseTest(TestCase):
 
     def setUp(self):
+        super(MultiCaseTest, self).setUp()
         self.domain = 'gigglyfoo'
         delete_all_xforms()
         delete_all_cases()

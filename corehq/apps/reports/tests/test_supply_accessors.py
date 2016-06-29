@@ -14,6 +14,7 @@ class TestSupplyAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestSupplyAccessors, cls).setUpClass()
         cls.product_a = make_product(cls.domain, 'A Product', 'prodcode_a')
         cls.product_b = make_product(cls.domain, 'B Product', 'prodcode_b')
 

@@ -15,9 +15,9 @@ from corehq.apps.domain.decorators import domain_admin_required, login_or_digest
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import queue_prime_restore
-from corehq.apps.style.views import BaseB3SectionPageView
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
@@ -27,6 +27,8 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
+
+from .utils import demo_user_restore_response
 
 
 @json_error
@@ -38,7 +40,8 @@ def restore(request, domain, app_id=None):
     """
     user = request.user
     couch_user = CouchUser.from_django_user(user)
-    return get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    response, _ = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
+    return response
 
 
 @json_error
@@ -117,15 +120,19 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     # not a view just a view util
     if couch_user.is_commcare_user() and domain != couch_user.domain:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
-                            status=401)
+                            status=401), None
     elif couch_user.is_web_user() and domain not in couch_user.domains:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
-                            status=401)
+                            status=401), None
 
     if couch_user.is_commcare_user():
         restore_user = couch_user.to_ota_restore_user()
     elif couch_user.is_web_user():
         restore_user = couch_user.to_ota_restore_user(domain)
+
+    if couch_user.is_commcare_user() and couch_user.is_demo_user:
+        # if user is in demo-mode, return demo restore
+        return demo_user_restore_response(couch_user), None
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
@@ -146,10 +153,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             overwrite_cache=overwrite_cache
         ),
     )
-    return restore_config.get_response()
+    return restore_config.get_response(), restore_config.timing_context
 
 
-class PrimeRestoreCacheView(BaseB3SectionPageView, DomainViewMixin):
+class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
     page_title = ugettext_noop("Speed up 'Sync with Server'")
     section_name = ugettext_noop("Project Settings")
     urlname = 'prime_restore_cache'

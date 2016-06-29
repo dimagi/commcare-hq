@@ -19,6 +19,7 @@ class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
     domain = 'kafka-publishing-test'
 
     def setUp(self):
+        super(KafkaPublishingTest, self).setUp()
         FormProcessorTestUtils.delete_all_sql_forms()
         FormProcessorTestUtils.delete_all_sql_cases()
         self.form_accessors = FormAccessors(domain=self.domain)

@@ -18,6 +18,7 @@ class PostTest(TestCase, TestFileMixin):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
+        super(PostTest, self).tearDown()
 
     def _process_sql_json(self, expected, xform_json, any_id_ok):
         expected['received_on'] = xform_json['received_on']

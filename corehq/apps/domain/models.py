@@ -41,6 +41,8 @@ from corehq import toggles
 
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
+from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLIFIES_YES
+
 lang_lookup = defaultdict(str)
 
 DATA_DICT = settings.INTERNAL_DATA
@@ -165,6 +167,15 @@ class InternalProperties(DocumentSchema, UpdatableSchema):
     # intentionally different from and commtrack_enabled so that FMs can change
     commtrack_domain = BooleanProperty()
     performance_threshold = IntegerProperty()
+    experienced_threshold = IntegerProperty()
+    amplifies_workers = StringProperty(
+        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
+        default=AMPLIFIES_NOT_SET
+    )
+    amplifies_project = StringProperty(
+        choices=[AMPLIFIES_YES, AMPLIFIES_NO, AMPLIFIES_NOT_SET],
+        default=AMPLIFIES_NOT_SET
+    )
     business_unit = StringProperty(choices=BUSINESS_UNITS + [""], default="")
 
 
@@ -240,6 +251,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
+    use_sql_backend = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 
@@ -668,6 +680,11 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                 if hasattr(new_domain, field):
                     delattr(new_domain, field)
 
+            # Saving the domain should happen before we import any apps since
+            # importing apps can update the domain object (for example, if user
+            # as a case needs to be enabled)
+            new_domain.save()
+
             new_app_components = {}  # a mapping of component's id to its copy
 
             def copy_data_items(old_type_id, new_type_id):
@@ -707,8 +724,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             if share_user_roles:
                 for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
                     self.copy_component('UserRole', doc_id, new_domain_name, user=user)
-
-            new_domain.save()
 
         if user:
             def add_dom_to_user(user):
@@ -917,12 +932,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return most_restrictive(licenses)
 
     @classmethod
-    def hit_sort(cls, domains):
-        domains = list(domains)
-        domains = sorted(domains, key=lambda domain: domain.download_count, reverse=True)
-        return domains
-
-    @classmethod
     def get_module_by_name(cls, domain_name):
         """
         import and return the python module corresponding to domain_name, or
@@ -973,12 +982,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        return self.get_db().view("domain/snapshots",
-            startkey=[self.get_id],
-            endkey=[self.get_id, {}],
-            reduce=True,
-            include_docs=False,
-        ).one()["value"]
+        from corehq.apps.domain.dbaccessors import count_downloads_for_all_snapshots
+        return count_downloads_for_all_snapshots(self.get_id)
 
     @property
     @memoized

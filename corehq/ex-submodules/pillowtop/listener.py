@@ -533,7 +533,7 @@ class AliasedElasticPillow(BasicPillow):
                                 }
                             }
                             yield tr
-            except Exception, ex:
+            except Exception as ex:
                 pillow_logging.error(
                     "Error on change: %s, %s" % (change['id'], ex)
                 )

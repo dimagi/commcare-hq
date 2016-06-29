@@ -4,9 +4,25 @@ Create a template app from ODM-formatted OpenClinica study metadata
 from lxml import etree
 from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.const import APP_V2
-from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, UpdateCaseAction, PreloadAction
+from corehq.apps.app_manager.models import (
+    Application,
+    Module,
+    OpenCaseAction,
+    UpdateCaseAction,
+    PreloadAction,
+    OpenSubCaseAction,
+    FormActionCondition,
+    CaseListForm,
+)
 from corehq.apps.app_manager.xform_builder import XFormBuilder
-from custom.openclinica.utils import odm_nsmap
+from custom.openclinica.const import (
+    CC_SUBJECT_KEY,
+    CC_STUDY_SUBJECT_ID,
+    CC_DOB,
+    CC_SEX,
+    CC_ENROLLMENT_DATE,
+)
+from custom.openclinica.utils import odm_nsmap, quote_nan
 
 
 # Map ODM data types to ODK XForm data types
@@ -40,6 +56,29 @@ ODK_DATA_TYPES = {
 }
 
 
+class StudyMetadataError(Exception):
+    pass
+
+
+def get_odm_child(node, child_node):
+    """
+    Return a child node in ODM namespace. Assumes only one child node with that name, and that it will be there.
+
+    >>> from lxml import etree
+    >>> foo_node = etree.fromstring('''<?xml version="1.0" encoding="UTF-8"?>
+    ... <foo xmlns="http://www.cdisc.org/ns/odm/v1.3">
+    ...   <bar>baz</bar>
+    ... </foo>''')
+    >>> get_odm_child(foo_node, 'bar').text
+    'baz'
+
+    """
+    try:
+        return node.xpath('./odm:' + child_node, namespaces=odm_nsmap)[0]
+    except IndexError:
+        raise StudyMetadataError('"{}" tag is missing a "{}" child node'.format(node.tag, child_node))
+
+
 class StudyObject(object):
     """
     Base class of objects defined from ODM metadata
@@ -58,10 +97,27 @@ class StudyObject(object):
 
 class Study(StudyObject):
 
+    case_update = {
+        CC_STUDY_SUBJECT_ID: '/data/' + CC_STUDY_SUBJECT_ID,
+        CC_DOB: '/data/' + CC_DOB,
+        CC_SEX: '/data/' + CC_SEX,
+        CC_ENROLLMENT_DATE: '/data/' + CC_ENROLLMENT_DATE,
+    }
+
     def __init__(self, defn, meta):
         super(Study, self).__init__(defn, meta)
         self.oid = defn.get('OID')
-        self.name = defn.xpath('./odm:GlobalVariables/odm:StudyName', namespaces=odm_nsmap)[0].text
+        global_vars = get_odm_child(defn, 'GlobalVariables')
+        self.name = get_odm_child(global_vars, 'StudyName').text
+        # e.g.
+        #     <StudyName>An open-label, non-randomized study on Captopril</StudyName>
+        #     <StudyDescription>
+        #         Researcher KEMRI/ CREATES Director
+        #     </StudyDescription>
+        #     <ProtocolName>BE 01/2014</ProtocolName>
+        self.description = get_odm_child(global_vars, 'StudyDescription').text
+        # identifier is "Unique Protocol ID" in UI, "ProtocolName" in ODM, and "identifier" in OpenClinica API
+        self.identifier = get_odm_child(global_vars, 'ProtocolName').text
 
     def iter_events(self):
         for se_ref in self.meta.xpath('./odm:Protocol/odm:StudyEventRef', namespaces=odm_nsmap):
@@ -75,61 +131,76 @@ class Study(StudyObject):
         Return a registration form that mimics OpenClinica subject registration
         """
         xform = XFormBuilder(name)
-        xform.new_question('name', 'Person ID')  # Subject's unique ID. aka "Screening Number", "Subject Key"
-        xform.new_question('subject_study_id', 'Subject Study ID')  # Subject number for this study
-        xform.new_question('dob', 'Date of Birth', data_type='date')
-        xform.new_question('sex', 'Sex', data_type='int', choices={1: 'Male', 2: 'Female'})
-        xform.new_question('enrollment_date', 'Enrollment Date', data_type='date')
+        xform.new_question(CC_SUBJECT_KEY, 'Person ID')  # Unique ID. aka "Screening Number", "Subject Key"
+        xform.new_question(CC_STUDY_SUBJECT_ID, 'Subject Study ID')  # Subject number for this study
+        xform.new_question(CC_DOB, 'Date of Birth', data_type='date')
+        xform.new_question(CC_SEX, 'Sex', data_type='select1', choices={1: 'Male', 2: 'Female'})
+        xform.new_question(CC_ENROLLMENT_DATE, 'Enrollment Date', data_type='date')
         return xform.tostring(pretty_print=True)
 
-    def new_subject_module(self, app):
+    def new_reg_subject_module(self, app):
+
+        def add_reg_form_to_module(module_):
+            reg_form = module_.new_form('Register Subject', None)
+            reg_form.get_unique_id()
+            reg_form.source = self.get_subject_form_source('Register Subject')
+            reg_form.actions.open_case = OpenCaseAction(
+                name_path='/data/' + CC_SUBJECT_KEY,
+                external_id=None,
+                condition=FormActionCondition(type='always')
+            )
+            reg_form.actions.update_case = UpdateCaseAction(
+                update=self.case_update,
+                condition=FormActionCondition(type='always')
+            )
+
+        module = app.add_module(Module.new_module('Register Subject', None))
+        module.unique_id = 'register_subject'
+        module.case_type = 'subject'
+        module.module_filter = 'false()'  # We just want the form to register from the edit module's case list
+        add_reg_form_to_module(module)
+        return module
+
+    def new_edit_subject_module(self, app, reg_form_id):
+
+        def add_edit_form_to_module(module_):
+            edit_form = module_.new_form('Edit Subject', None)
+            edit_form.get_unique_id()
+            edit_form.source = self.get_subject_form_source('Edit Subject')
+            edit_form.requires = 'case'
+            update = dict(self.case_update, name='/data/' + CC_SUBJECT_KEY)
+            preload = {v: k for k, v in update.items()}
+            edit_form.actions.case_preload = PreloadAction(
+                preload=preload,
+                condition=FormActionCondition(type='always')
+            )
+            edit_form.actions.update_case = UpdateCaseAction(
+                update=update,
+                condition=FormActionCondition(type='always')
+            )
+
         module = app.add_module(Module.new_module('Study Subjects', None))
         module.unique_id = 'study_subjects'
         module.case_type = 'subject'
-
-        reg_form = module.new_form('Register Subject', None)
-        reg_form.unique_id = 'register_subject'
-        reg_form.source = self.get_subject_form_source('Register Subject')
-        reg_form.actions.open_case = OpenCaseAction(name_path='/data/name', external_id=None)
-        reg_form.actions.open_case.condition.type = 'always'
-        reg_form.actions.update_case = UpdateCaseAction(update={
-            'subject_study_id': '/data/subject_study_id',
-            'dob': '/data/dob',
-            'sex': '/data/sex',
-            'enrollment_date': '/data/enrollment_date',
-        })
-        reg_form.actions.update_case.condition.type = 'always'
-
-        edit_form = module.new_form('Edit Subject', None)
-        edit_form.unique_id = 'edit_subject'
-        edit_form.source = self.get_subject_form_source('Edit Subject')
-        edit_form.requires = 'case'
-        edit_form.actions.case_preload = PreloadAction(preload={
-            '/data/name': 'name',
-            '/data/subject_study_id': 'subject_study_id',
-            '/data/dob': 'dob',
-            '/data/sex': 'sex',
-            '/data/enrollment_date': 'enrollment_date',
-        })
-        edit_form.actions.case_preload.condition.type = 'always'
-        edit_form.actions.update_case = UpdateCaseAction(update={
-            'name': '/data/name',
-            'subject_study_id': '/data/subject_study_id',
-            'dob': '/data/dob',
-            'sex': '/data/sex',
-            'enrollment_date': '/data/enrollment_date',
-        })
-        edit_form.actions.update_case.condition.type = 'always'
+        module.case_list_form = CaseListForm(
+            form_id=reg_form_id,
+            label={'en': 'Register Subject'}
+        )
+        add_edit_form_to_module(module)
         return module
 
     def get_new_app(self, domain_name, app_name, version=APP_V2):
         app = Application.new_app(domain_name, app_name, application_version=version)
-        app.name = self.name
-        subject_module = self.new_subject_module(app)
+        app.comment = self.name  # Study names can be long. cf. https://clinicaltrials.gov/
+        reg_module = self.new_reg_subject_module(app)
+        subject_module = self.new_edit_subject_module(app, reg_form_id=reg_module.get_form(0).get_unique_id())
         for event in self.iter_events():
             module = event.new_module_for_app(app, subject_module)
             for study_form in event.iter_forms():
-                study_form.add_new_form_to_module(module)
+                study_form.add_form_to_module(module)
+            # Add all the event's forms as a single form in the subject module
+            # We do this to create the new event as a subcase of the subject
+            event.add_form_to_subject_module(subject_module)
         return app
 
 
@@ -161,6 +232,68 @@ class StudyEvent(StudyObject):
         module.parent_select.module_id = subject_module.unique_id
         return module
 
+    def add_form_to_subject_module(self, subject_module):
+
+        def get_form_source(form_name_):
+            xform = XFormBuilder(form_name_)
+            # We want to know the time according to the user, but event start and end timestamps are actually
+            # determined from form submission times.
+            xform.new_question('start_date', 'Start Date', data_type='date')
+            xform.new_question('start_time', 'Start Time', data_type='time')
+            xform.new_question('subject_name', None, data_type=None)  # data_type=None makes this a hidden value
+            xform.new_question('event_type', None, data_type=None,
+                               value="'{}'".format(self.unique_id))  # Quote string default values
+            xform.new_question('event_repeats', None, data_type=None,
+                               value="'{}'".format(self.is_repeating).lower())
+            xform.new_question('name', None, data_type=None,
+                               calculate="concat('{} ', /data/start_date, ' ', /data/start_time, "
+                                         "' (', /data/subject_name, ')')".format(self.name))
+            for study_form in self.iter_forms():
+                study_form.add_item_groups_to_xform(xform)
+            xform.new_question('end_date', 'End Date', data_type='date')
+            xform.new_question('end_time', 'End Time', data_type='time')
+            return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
+
+        def get_preload_action():
+            return PreloadAction(
+                preload={'/data/subject_name': 'name'},
+                condition=FormActionCondition(type='always')
+            )
+
+        def get_open_subcase_action():
+            props = {
+                'start_date': '/data/start_date',
+                'start_time': '/data/start_time',
+                'end_date': '/data/end_date',
+                'end_time': '/data/end_time',
+                'event_type': '/data/event_type',
+                'event_repeats': '/data/event_repeats',
+            }
+            # Save all properties to the case. We will use them to pre-populate the event's update forms (see
+            # StudyForm.add_form_to_module) ... but we won't use them for the export. We will use all the form
+            # submissions instead, so we can get an audit trail of all value changes for the ODM.
+            for study_form in self.iter_forms():
+                for item_group in study_form.iter_item_groups():
+                    for item in item_group.iter_items():
+                        props[item.question_name] = '/data/{}/{}'.format(
+                            item_group.question_name,
+                            item.question_name
+                        )
+            return OpenSubCaseAction(
+                case_type='event',
+                case_name='/data/name',
+                case_properties=props,
+                condition=FormActionCondition(type='always')
+            )
+
+        form_name = 'Schedule ' + self.name
+        form = subject_module.new_form(form_name, None)
+        form.get_unique_id()
+        form.source = get_form_source(form_name)
+        form.requires = 'case'
+        form.actions.case_preload = get_preload_action()
+        form.actions.subcases.append(get_open_subcase_action())
+
 
 class StudyForm(StudyObject):
 
@@ -169,7 +302,6 @@ class StudyForm(StudyObject):
         self.oid = defn.get('OID')
         self.name = defn.get('Name')
         self.is_repeating = defn.get('Repeating') == 'Yes'
-        self.unique_id = self.oid.lower()
 
     def iter_item_groups(self):
         for ig_ref in self.defn.xpath('./odm:ItemGroupRef', namespaces=odm_nsmap):
@@ -177,22 +309,76 @@ class StudyForm(StudyObject):
             ig_def = self.meta.xpath('./odm:ItemGroupDef[@OID="{}"]'.format(ig_oid), namespaces=odm_nsmap)[0]
             yield ItemGroup(ig_def, self.meta)
 
-    def add_new_form_to_module(self, module):
+    def add_form_to_module(self, module):
         """
-        Add a CommCare form based in this form's item groups and items to a given CommCare module
+        Add a CommCare form of this form's item groups and items to a given CommCare module
         """
-        form = module.new_form(self.name, None)
-        form.unique_id = self.unique_id
-        form.source = self.build_xform()
+        def get_preload_action():
+            preload = {
+                '/data/start_date': 'start_date',
+                '/data/start_time': 'start_time',
+                '/data/end_date': 'end_date',
+                '/data/end_time': 'end_time',
+            }
+            for item_group in self.iter_item_groups():
+                for item in item_group.iter_items():
+                    preload['/data/{}/{}'.format(
+                        item_group.question_name,
+                        item.question_name
+                    )] = item.question_name
+            return PreloadAction(
+                preload=preload,
+                condition=FormActionCondition(type='always')
+            )
 
-    def build_xform(self):
-        xform = XFormBuilder(self.name)
+        def get_update_case_action():
+            update = {
+                'start_date': '/data/start_date',
+                'start_time': '/data/start_time',
+                'end_date': '/data/end_date',
+                'end_time': '/data/end_time',
+            }
+            for item_group in self.iter_item_groups():
+                for item in item_group.iter_items():
+                    update[item.question_name] = '/data/{}/{}'.format(
+                        item_group.question_name,
+                        item.question_name
+                    )
+            return UpdateCaseAction(
+                update=update,
+                condition=FormActionCondition(type='always')
+            )
+
+        form = module.new_form(self.name, None)
+        form.get_unique_id()
+        form.source = self.build_xform()
+        # Must require case for case list to work
+        form.requires = 'case'
+        form.actions.case_preload = get_preload_action()
+        form.actions.update_case = get_update_case_action()
+
+    def add_item_groups_to_xform(self, xform):
         for ig in self.iter_item_groups():
             data_type = 'repeatGroup' if self.is_repeating else 'group'
             group = xform.new_group(ig.question_name, ig.question_label, data_type)
             for item in ig.iter_items():
+                params = {}
+                if item.validation:
+                    params['constraint'] = item.validation
+                if item.validation_msg:
+                    params['jr:constraintMsg'] = item.validation_msg
+                if item.comment:
+                    params['hint'] = item.comment
                 group.new_question(item.question_name, item.question_label, ODK_DATA_TYPES[item.data_type],
-                                   choices=item.choices)
+                                   choices=item.choices, **params)
+
+    def build_xform(self):
+        xform = XFormBuilder(self.name)
+        xform.new_question('start_date', 'Start Date', data_type='date')
+        xform.new_question('start_time', 'Start Time', data_type='time')
+        self.add_item_groups_to_xform(xform)
+        xform.new_question('end_date', 'End Date', data_type='date')
+        xform.new_question('end_time', 'End Time', data_type='time')
         return xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
 
 
@@ -225,6 +411,8 @@ class Item(StudyObject):
         self.data_type = defn.get('DataType')
         self.length = defn.get('Length')
         self.sas_field_name = defn.get('SASFieldName')
+        # Sometimes OpenClinica will give important context to the question in the comment. The question text might
+        # be completely ambiguous, like "Normal", but the comment might be "Cardiovascular". Use as Hint Message
         self.comment = defn.get('Comment')
         self.item_group = item_group
 
@@ -239,6 +427,15 @@ class Item(StudyObject):
         text = defn.xpath('./odm:Question/odm:TranslatedText', namespaces=odm_nsmap)
         self.question_label = text[0].text.strip() if text else self.name
 
+        # OpenClinica only includes RangeCheck in metadata. Regular expressions are supported in CRFs, but not in
+        # CDISC ODM. cf. http://www.cdisc.org/system/files/all/generic/text/html/odm1_1_0.html#ItemDef
+        # 3rd-party support: http://www.opencdisc.org/projects/validator/opencdisc-validation-framework#regex-rule
+        range_checks = defn.xpath('./odm:RangeCheck', namespaces=odm_nsmap)
+        if range_checks:
+            self.validation, self.validation_msg = self.get_range_check_validation(range_checks)
+        else:
+            self.validation, self.validation_msg = None, None
+
     def get_choices(self, cl_oid):
         choices = {}
         cl_def = self.meta.xpath('./odm:CodeList[@OID="{}"]'.format(cl_oid), namespaces=odm_nsmap)[0]
@@ -247,6 +444,58 @@ class Item(StudyObject):
             label = cl_item.xpath('./odm:Decode/odm:TranslatedText', namespaces=odm_nsmap)[0].text
             choices[value] = label
         return choices
+
+    @staticmethod
+    def get_condition(comparator, values):
+        """
+        Returns a CommCare validation condition given a CDISC ODM comparator and a list of values
+
+        >>> Item.get_condition('LT', ['5'])
+        '. < 5'
+
+        """
+
+        def value_in(values_):
+            return '(' + ' or '.join(('. = ' + v for v in values_)) + ')'
+
+        scalar_comparators = {
+            'LT': '. < ',
+            'LE': '. <= ',
+            'GT': '. > ',
+            'GE': '. >= ',
+            'EQ': '. = ',
+            'NE': '. != ',
+        }
+        vector_comparators = {
+            'IN': lambda vv: value_in(vv),
+            'NOTIN': lambda vv: 'not ' + value_in(vv)
+        }
+
+        if not values:
+            raise ValueError('A validation condition needs at least one comparable value')
+        quoted_values = [quote_nan(v) for v in values]
+        if comparator in scalar_comparators:
+            return scalar_comparators[comparator] + quoted_values[0]
+        elif comparator in vector_comparators:
+            return vector_comparators[comparator](quoted_values)
+        else:
+            raise ValueError('Unknown comparison operator "{}"'.format(comparator))
+
+    def get_range_check_validation(self, range_checks):
+        error_msg = ''
+        conditions = []
+        for check in range_checks:
+            if check.get('SoftHard') and check.get('SoftHard').lower() != 'hard':
+                # A soft constraint doesn't reject a value, it just produces a warning. We only support hard
+                # constraints
+                continue
+            comparator = check.get('Comparator')
+            values = [val.text for val in check.xpath('./odm:CheckValue', namespaces=odm_nsmap)]
+            conditions.append(self.get_condition(comparator, values))
+            text = check.xpath('./odm:ErrorMessage/odm:TranslatedText', namespaces=odm_nsmap)
+            if text and not error_msg:
+                error_msg = text[0].text.strip()
+        return ' and '.join(conditions), error_msg
 
 
 class Command(BaseCommand):

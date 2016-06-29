@@ -85,8 +85,8 @@
         "field": "person_name",
         "type": "field",
         "display": {
-          "mar": "Name",
-          "tel": "Name",
+          "mar": "नांव",
+          "tel": "పేరు",
           "hin": "नाम",
           "en": "Name"
         }
@@ -98,8 +98,8 @@
         "field": "age_at_death_yrs",
         "type": "field",
         "display": {
-          "mar": "Age",
-          "tel": "Age",
+          "mar": "वय",
+          "tel": "వయస్సు",
           "hin": "उम्र",
           "en": "Age"
         }
@@ -112,15 +112,15 @@
             "M": [
               [
                 "mar",
-                "M"
+                "पुरुष"
               ],
               [
                 "tel",
-                "M"
+                "పురుషుడు"
               ],
               [
                 "hin",
-                "M"
+                "पुरुष"
               ],
               [
                 "en",
@@ -130,15 +130,15 @@
             "O": [
               [
                 "mar",
-                "O"
+                "अन्य"
               ],
               [
                 "tel",
-                "O"
+                "ఇతరులు"
               ],
               [
                 "hin",
-                "O"
+                "अन्य"
               ],
               [
                 "en",
@@ -148,15 +148,15 @@
             "F": [
               [
                 "mar",
-                "F"
+                "स्त्री"
               ],
               [
                 "tel",
-                "F"
+                "మహిళ"
               ],
               [
                 "hin",
-                "F"
+                "महिला"
               ],
               [
                 "en",
@@ -169,8 +169,8 @@
         "field": "sex",
         "type": "field",
         "display": {
-          "mar": "Sex",
-          "tel": "Sex",
+          "mar": "लिंग",
+          "tel": "లింగం",
           "hin": "लिंग",
           "en": "Sex"
         },
@@ -184,11 +184,11 @@
             "white": [
               [
                 "mar",
-                "White"
+                "पांढरा"
               ],
               [
                 "tel",
-                "White"
+                "తెలుపు"
               ],
               [
                 "hin",
@@ -202,11 +202,11 @@
             "green": [
               [
                 "mar",
-                "Green"
+                "हिरवा"
               ],
               [
                 "tel",
-                "Green"
+                "ఆకుపచ్చ"
               ],
               [
                 "hin",
@@ -220,11 +220,11 @@
             "red": [
               [
                 "mar",
-                "Red"
+                "लाल"
               ],
               [
                 "tel",
-                "Red"
+                "ఎరుపు"
               ],
               [
                 "hin",
@@ -238,11 +238,11 @@
             "yellow": [
               [
                 "mar",
-                "Yellow"
+                "पिवळा"
               ],
               [
                 "tel",
-                "Yellow"
+                "పసుపు"
               ],
               [
                 "hin",
@@ -259,9 +259,9 @@
         "field": "zscore_grading_wfa",
         "type": "field",
         "display": {
-          "mar": "Nutrition Status",
-          "tel": "Nutrition Status",
-          "hin": "पोषक तत्वों का स्तर",
+          "mar": "पोषणाची परिस्थिति",
+          "tel": "పోషకాహార స్థితి",
+          "hin": "पोषण की स्थिति",
           "en": "Nutrition Status"
         },
         "aggregation": "simple"
@@ -274,7 +274,7 @@
             "yes": [
               [
                 "mar",
-                "हो"
+                "होय"
               ],
               [
                 "tel",
@@ -296,7 +296,7 @@
               ],
               [
                 "tel",
-                "లేదు"
+                "కాదు"
               ],
               [
                 "hin",
@@ -313,8 +313,8 @@
         "field": "resident",
         "type": "field",
         "display": {
-          "mar": "Resident",
-          "tel": "Resident",
+          "mar": "निवासी",
+          "tel": "నివాసితుడు",
           "hin": "निवासी",
           "en": "Resident"
         },
@@ -327,9 +327,9 @@
         "field": "date_death",
         "type": "field",
         "display": {
-          "mar": "Date Death",
-          "tel": "Date Death",
-          "hin": "मृत्यु की तारिक",
+          "mar": "मृत्युची  तारीख",
+          "tel": "మరణించిన తేదీ",
+          "hin": "मृत्यु की तारीख",
           "en": "Date Death"
         }
       }

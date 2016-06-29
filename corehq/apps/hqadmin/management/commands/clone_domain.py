@@ -2,7 +2,14 @@ from optparse import make_option
 
 from django.core.management.base import BaseCommand, CommandError
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
+from corehq.apps.userreports.models import (
+    CUSTOM_REPORT_PREFIX,
+    STATIC_PREFIX,
+    StaticDataSourceConfiguration,
+    StaticReportConfiguration,
+)
 
 types = [
     "feature_flags",
@@ -26,6 +33,7 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option("-i", "--include", dest="include", action="append", choices=types),
         make_option("-e", "--exclude", dest="exclude", action="append", choices=types),
+        make_option("--check", dest="nocommit", action="store_true", default=False),
     )
 
     _report_map = None
@@ -36,6 +44,8 @@ class Command(BaseCommand):
                ) and type_ not in (options['exclude'] or [])
 
     def handle(self, *args, **options):
+        self.no_commmit = options['nocommit']
+
         self.existing_domain, self.new_domain = args
         self.clone_domain_and_settings()
 
@@ -93,7 +103,8 @@ class Command(BaseCommand):
 
         from corehq.apps.commtrack.models import CommtrackConfig
         commtrack_config = CommtrackConfig.for_domain(self.existing_domain)
-        self.save_couch_copy(commtrack_config, self.new_domain)
+        if commtrack_config:
+            self.save_couch_copy(commtrack_config, self.new_domain)
 
     def set_flags(self):
         from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
@@ -102,13 +113,17 @@ class Command(BaseCommand):
 
         for toggle in all_toggles():
             if toggle.enabled(self.existing_domain):
-                toggle.set(self.new_domain, True, NAMESPACE_DOMAIN)
+                self.stdout.write('Setting flag: {}'.format(toggle.slug))
+                if not self.no_commmit:
+                    toggle.set(self.new_domain, True, NAMESPACE_DOMAIN)
 
         for preview in all_previews():
             if preview.enabled(self.existing_domain):
-                preview.set(self.new_domain, True, NAMESPACE_DOMAIN)
-                if preview.save_fn is not None:
-                    preview.save_fn(self.new_domain, True)
+                self.stdout.write('Setting preview: {}'.format(preview.slug))
+                if not self.no_commmit:
+                    preview.set(self.new_domain, True, NAMESPACE_DOMAIN)
+                    if preview.save_fn is not None:
+                        preview.save_fn(self.new_domain, True)
 
         toggle_js_domain_cachebuster.clear(self.new_domain)
 
@@ -132,9 +147,13 @@ class Command(BaseCommand):
 
         self._copy_custom_data(LocationFieldsView.field_type)
 
-        location_types = LocationType.objects.filter(domain=self.existing_domain)
+        location_types = LocationType.objects.by_domain(self.existing_domain)
+        previous_location_type = None
         for location_type in location_types:
+            if previous_location_type:
+                location_type.parent_type = previous_location_type
             self.save_sql_copy(location_type, self.new_domain)
+            previous_location_type = location_type
 
         def copy_location_hierarchy(location, id_map):
             new_lineage = []
@@ -146,10 +165,11 @@ class Command(BaseCommand):
             location.lineage = new_lineage
 
             old_type_name = location.location_type_name
-            location._sql_location_type = LocationType.objects.get(
-                domain=self.new_domain,
-                name=old_type_name,
-            )
+            if not self.no_commmit:
+                location._sql_location_type = LocationType.objects.get(
+                    domain=self.new_domain,
+                    name=old_type_name,
+                )
             children = location.children
             old_id, new_id = self.save_couch_copy(location, self.new_domain)
             id_map[old_id] = new_id
@@ -199,7 +219,11 @@ class Command(BaseCommand):
                     for config in module.report_configs:
                         config.report_id = self.report_map[config.report_id]
 
-            new_app = import_app(app.to_json(), self.new_domain)
+            if self.no_commmit:
+                new_app = Application.from_source(app.export_json(dump_json=False), self.new_domain)
+                new_app['_id'] = 'new-{}'.format(app._id)
+            else:
+                new_app = import_app(app.to_json(), self.new_domain)
             self.log_copy(app.doc_type, app._id, new_app._id)
 
     def copy_ucr_data(self):
@@ -219,6 +243,25 @@ class Command(BaseCommand):
 
             old_id, new_id = self.save_couch_copy(report, self.new_domain)
             report_map[old_id] = new_id
+        for static_report in StaticReportConfiguration.by_domain(self.existing_domain):
+            if static_report.get_id.startswith(STATIC_PREFIX):
+                report_id = static_report.get_id.replace(
+                    STATIC_PREFIX + self.existing_domain + '-',
+                    ''
+                )
+                is_custom_report = False
+            else:
+                report_id = static_report.get_id.replace(
+                    CUSTOM_REPORT_PREFIX + self.existing_domain + '-',
+                    ''
+                )
+                is_custom_report = True
+            new_id = StaticReportConfiguration.get_doc_id(
+                self.new_domain, report_id, is_custom_report
+            )
+            # check that new report is in new domain's list of static reports
+            StaticReportConfiguration.by_id(new_id)
+            report_map[static_report.get_id] = new_id
         return report_map
 
     def copy_ucr_datasources(self):
@@ -230,6 +273,15 @@ class Command(BaseCommand):
 
             old_id, new_id = self.save_couch_copy(datasource, self.new_domain)
             datasource_map[old_id] = new_id
+        for static_datasource in StaticDataSourceConfiguration.by_domain(self.existing_domain):
+            table_id = static_datasource.get_id.replace(
+                StaticDataSourceConfiguration._datasource_id_prefix + self.existing_domain + '-',
+                ''
+            )
+            new_id = StaticDataSourceConfiguration.get_doc_id(self.new_domain, table_id)
+            # check that new datasource is in new domain's list of static datasources
+            StaticDataSourceConfiguration.by_id(new_id)
+            datasource_map[static_datasource.get_id] = new_id
         return datasource_map
 
     def copy_auto_case_update_rules(self):
@@ -272,10 +324,12 @@ class Command(BaseCommand):
             del doc['_attachments']
             attachments = {k: doc.get_db().fetch_attachment(old_id, k) for k in attachemnt_stubs}
 
-        doc.save()
-
-        for k, attach in attachments.items():
-            doc.put_attachment(attach, name=k, content_type=attachemnt_stubs[k]["content_type"])
+        if self.no_commmit:
+            doc['_id'] = 'new-{}'.format(old_id)
+        else:
+            doc.save()
+            for k, attach in attachments.items():
+                doc.put_attachment(attach, name=k, content_type=attachemnt_stubs[k]["content_type"])
 
         new_id = doc._id
         self.log_copy(doc.doc_type, old_id, new_id)
@@ -285,7 +339,10 @@ class Command(BaseCommand):
         old_id = model.id
         model.domain = new_domain
         model.id = None
-        model.save()
+        if self.no_commmit:
+            model.id = 'new-{}'.format(old_id)
+        else:
+            model.save()
         new_id = model.id
         self.log_copy(model.__class__.__name__, old_id, new_id)
         return old_id, new_id

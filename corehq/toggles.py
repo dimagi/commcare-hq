@@ -593,6 +593,13 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+OPENCLINICA = StaticToggle(
+    'openclinica',
+    'Offer OpenClinica settings and CDISC ODM export',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 OPENLMIS = StaticToggle(
     'openlmis',
     'Offer OpenLMIS settings',
@@ -750,9 +757,10 @@ VIEW_BUILD_SOURCE = StaticToggle(
 
 USE_SQL_BACKEND = StaticToggle(
     'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing (beta)',
+    'Uses a sql backend instead of a couch backend for form processing',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    description="This flag is deprecated. All new domains now use the sql backend."
 )
 
 
@@ -831,8 +839,25 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MOBILE_USER_DEMO_MODE = StaticToggle(
+    'mobile_user_demo_mode',
+    'Ability to make a mobile worker into Demo only mobile worker',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
 
-def enable_toggles_for_scale_beta(domain):
-    USE_SQL_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
-    NEW_EXPORTS.set(domain, True, namespace=NAMESPACE_DOMAIN)
-    TF_USES_SQLITE_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
+
+EXPORT_ZIPPED_APPS = StaticToggle(
+    'export-zipped-apps',
+    'Export+Import Zipped Applications',
+    TAG_UNKNOWN,
+    [NAMESPACE_USER]
+)
+
+
+SEND_UCR_REBUILD_INFO = StaticToggle(
+    'send_ucr_rebuild_info',
+    'Notify when UCR rebuilds finish or error.',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_USER]
+)

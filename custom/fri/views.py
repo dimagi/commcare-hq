@@ -4,10 +4,10 @@ from custom.fri.api import get_message_bank
 from custom.fri.models import FRIMessageBankMessage
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.domain.decorators import require_previewer, login_and_domain_required
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
 
 
 @require_previewer

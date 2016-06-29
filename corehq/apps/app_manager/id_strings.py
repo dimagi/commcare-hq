@@ -164,6 +164,11 @@ def case_list_form_locale(module):
     return u"case_list_form.m{module.id}".format(module=module)
 
 
+@pattern('case_lists.m%d.callout.header')
+def callout_header_locale(module):
+    return u"case_lists.m{module.id}.callout.header".format(module=module)
+
+
 @pattern('case_search.m%d')
 def case_search_locale(module):
     return u"case_search.m{module.id}".format(module=module)

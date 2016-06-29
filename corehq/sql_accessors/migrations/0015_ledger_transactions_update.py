@@ -20,5 +20,4 @@ class Migration(migrations.Migration):
     operations = [
         migrator.get_migration('get_ledger_transactions_for_case.sql'),
         migrator.get_migration('get_latest_ledger_transaction.sql'),
-        migrator.get_migration('save_ledger_values.sql'),
     ]

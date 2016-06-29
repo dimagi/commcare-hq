@@ -39,8 +39,8 @@ class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, 
     base_template_filters = 'care_pathways/filters.html'
 
     @use_nvd3_v3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(CareBaseReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(CareBaseReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):

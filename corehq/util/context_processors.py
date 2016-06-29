@@ -1,12 +1,9 @@
 from django.conf import settings
 from django.core.urlresolvers import resolve, reverse
 from django.http import Http404
-from django.utils.translation import ugettext as _
 from ws4redis.context_processors import default
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
-
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'

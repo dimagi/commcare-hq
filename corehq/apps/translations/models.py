@@ -1,7 +1,6 @@
 from collections import defaultdict
 from dimagi.ext.couchdbkit import (Document, DictProperty,
     StringProperty, ListProperty)
-import commcare_translations
 from dimagi.utils.couch import CouchDocLockableMixIn
 
 

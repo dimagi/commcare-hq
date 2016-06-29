@@ -24,6 +24,7 @@ class XFormPillowTest(TestCase):
     domain = 'xform-pillowtest-domain'
 
     def setUp(self):
+        super(XFormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
         with trap_extra_setup(ConnectionError):
             self.pillow = XFormPillow()
@@ -32,6 +33,7 @@ class XFormPillowTest(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(self.pillow.es_index)
+        super(XFormPillowTest, self).tearDown()
 
     def test_xform_pillow_couch(self):
         metadata = TestFormMetadata(domain=self.domain)
