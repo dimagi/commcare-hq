@@ -16,7 +16,7 @@ closed after May 1st.
              case_es.closed_range(gte=datetime.date(2015, 05, 01))))
 """
 from .es_query import HQESQuery
-from . import filters
+from . import aggregations, filters
 
 
 class CaseES(HQESQuery):
@@ -103,3 +103,30 @@ def user_ids_handle_unknown(user_ids):
     else:
         user_filter = filters.missing('user_id')
     return user_filter
+
+
+def touched_total_aggreation(gt=None, gte=None, lt=None, lte=None):
+    return aggregations.FilterAggregation(
+        'touched_total',
+        filters.AND(
+            filters.date_range('modified_on', gt, gte, lt, lte),
+        )
+    )
+
+
+def active_total_aggreation(gt=None, gte=None, lt=None, lte=None):
+    return aggregations.FilterAggregation(
+        'active_total',
+        filters.AND(
+            filters.date_range('modified_on', gt, gte, lt, lte),
+            filters.term('closed', False))
+    )
+
+
+def inactive_total_aggreation(gt=None, gte=None, lt=None, lte=None):
+    return aggregations.FilterAggregation(
+        'inactive_total',
+        filters.AND(
+            filters.date_range('modified_on', gt, gte, lt, lte),
+            filters.term('closed', False))
+    )

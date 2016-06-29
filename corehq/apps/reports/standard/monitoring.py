@@ -305,30 +305,15 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def _touched_total_aggregation(self):
-        return FilterAggregation(
-            'touched_total',
-            filters.AND(
-                filters.date_range('modified_on', gte=self.milestone_start, lt=self.end_date),
-            )
-        )
+        return case_es.touched_total_aggreation(gte=self.milestone_start, lt=self.end_date)
 
     @property
     def _active_total_aggregation(self):
-        return FilterAggregation(
-            'active_total',
-            filters.AND(
-                filters.date_range('modified_on', gte=self.milestone_start, lt=self.end_date),
-                filters.term('closed', False))
-        )
+        return case_es.active_total_aggreation(gte=self.milestone_start, lt=self.end_date)
 
     @property
     def _inactive_total_aggregation(self):
-        return FilterAggregation(
-            'inactive_total',
-            filters.AND(
-                filters.date_range('modified_on', lt=self.milestone_start),
-                filters.term('closed', False))
-        )
+        return case_es.inactive_total_aggreation(gte=self.milestone_start, lt=self.end_date)
 
     @property
     def _total_row(self):
