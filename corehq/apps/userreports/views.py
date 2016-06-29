@@ -185,6 +185,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'report': self.config,
+            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
         }
 
     @property
