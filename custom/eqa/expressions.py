@@ -21,7 +21,7 @@ def get_val(form, path, default=0):
     question_value = form.get_data(path)
     try:
         return int(question_value)
-    except ValueError:
+    except (ValueError, TypeError):
         return default
 
 
