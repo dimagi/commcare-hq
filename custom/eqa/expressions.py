@@ -16,7 +16,13 @@ STATUSES = {
 
 
 def get_val(form, path, default=0):
-    return int(form.get_data(path)) if form else default
+    if not form:
+        return default
+    question_value = form.get_data(path)
+    try:
+        return int(question_value)
+    except ValueError:
+        return default
 
 
 def get_yes_no(yes, no):
