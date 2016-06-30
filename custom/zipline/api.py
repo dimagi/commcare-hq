@@ -1,4 +1,5 @@
-from custom.zipline.models import EmergencyOrder, EmergencyOrderStatusUpdate
+from custom.zipline.models import (EmergencyOrder, EmergencyOrderStatusUpdate,
+    update_product_quantity_json_field)
 from datetime import datetime
 from decimal import Decimal
 from dimagi.utils.couch import CriticalSection
@@ -28,15 +29,16 @@ def initiate_emergency_order(domain, user, phone_number, location, products):
     """
     from custom.zipline.tasks import send_emergency_order_request
 
-    order = EmergencyOrder.objects.create(
+    order = EmergencyOrder(
         domain=domain,
         requesting_user_id=user.get_id,
         requesting_phone_number=phone_number,
         location=location,
         location_code=location.site_code,
-        products_requested=[{'code': p.code, 'quantity': p.quantity} for p in products],
         timestamp=datetime.utcnow()
     )
+    update_product_quantity_json_field(order.products_requested, products)
+    order.save()
 
     send_emergency_order_request(order.pk)
 
@@ -87,14 +89,14 @@ def get_order_update_critical_section_key(order_id):
 def update_order_products_delivered(order_id, products):
     with CriticalSection(get_order_update_critical_section_key(order_id)):
         order = EmergencyOrder.objects.get(pk=order_id)
-        _update_order_product_info(order.products_delivered, products)
+        update_product_quantity_json_field(order.products_delivered, products)
         order.save()
 
 
 def update_order_products_confirmed(order_id, products):
     with CriticalSection(get_order_update_critical_section_key(order_id)):
         order = EmergencyOrder.objects.get(pk=order_id)
-        _update_order_product_info(order.products_confirmed, products)
+        update_product_quantity_json_field(order.products_confirmed, products)
         confirmed_status = EmergencyOrderStatusUpdate.create_for_order(
             order.pk,
             EmergencyOrderStatusUpdate.STATUS_CONFIRMED,
@@ -103,22 +105,3 @@ def update_order_products_confirmed(order_id, products):
         if not order.confirmed_status:
             order.confirmed_status = confirmed_status
         order.save()
-
-
-def _update_order_product_info(json_field, products):
-    """
-    Updates the product quantities stored in the given field.
-    If the products are already present, the quantity is added to the current
-    quantity for that product.
-    :param json_field: the dictionary that should be updated (for example,
-    order.products_delivered)
-    :param products: a list of ProductQuantity objects representing the products
-    and quantities to update
-    """
-    for product in products:
-        if product.code not in json_field:
-            json_field[product.code] = '0'
-
-        current_value = Decimal(json_field[product.code])
-        new_value = current_value + Decimal(product.quantity)
-        json_field[product.code] = '{0:f}'.format(new_value)

@@ -118,8 +118,8 @@ def get_json_payload_from_order(order):
         'orderId': order.pk,
         'locationCode': order.location_code,
         'products': [
-            {'productCode': p.get('code'), 'quantityOrdered': p.get('quantity')}
-            for p in order.products_requested
+            {'productCode': code, 'quantityOrdered': info.get('quantity')}
+            for code, info in order.products_requested.iteritems()
         ],
     }
 

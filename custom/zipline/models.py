@@ -48,7 +48,7 @@ class EmergencyOrderStatusUpdate(models.Model):
     # If status == STATUS_DISPATCHED, this should be the products and quantities
     # this vehicle is carrying for this order; the format of this field matches
     # the format of EmergencyOrder.products_requested
-    products = jsonfield.JSONField(default=list)
+    products = jsonfield.JSONField(default=dict)
 
     @classmethod
     def create_for_order(cls, order_id, status, zipline_timestamp=None,
@@ -65,20 +65,20 @@ class EmergencyOrderStatusUpdate(models.Model):
         :param products: a list of ProductQuantity objects if this status
         update is associated with products
         """
-        product_json = [
-            {'code': p.code, 'quantity': p.quantity} for p in products
-        ] if products else []
-
-        return cls.objects.create(
+        obj = cls(
             order_id=order_id,
             timestamp=datetime.utcnow(),
             zipline_timestamp=zipline_timestamp,
             status=status,
             vehicle_number=vehicle_number,
             vehicle_id=vehicle_id,
-            additional_text=additional_text,
-            products=product_json
+            additional_text=additional_text
         )
+
+        update_product_quantity_json_field(obj.products, products)
+
+        obj.save()
+        return obj
 
 
 class EmergencyOrder(models.Model):
@@ -97,17 +97,18 @@ class EmergencyOrder(models.Model):
     # can always see historically what it was at the time of the request
     location_code = models.CharField(max_length=126)
 
-    # A list of {'code': <code>, 'quantity': <quantity>} dictionaries
-    # representing the product code and quantity of the products being ordered
-    products_requested = jsonfield.JSONField(default=list)
+    # A dictionary of {'code': <product info>, ...} where each key is a product
+    # code and each value is a dictionary with information about the product;
+    # <product info> has the structure: {'quantity': <quantity>}
+    products_requested = jsonfield.JSONField(default=dict)
 
     # Same format as products_requested; represents products and quantities delivered
     # according to the Zipline delivered status update(s)
-    products_delivered = jsonfield.JSONField(default=list)
+    products_delivered = jsonfield.JSONField(default=dict)
 
     # Same format as products_requested; represents products and quantities reported
     # to have been received by the facility
-    products_confirmed = jsonfield.JSONField(default=list)
+    products_confirmed = jsonfield.JSONField(default=dict)
 
     # The timestamp in CommCareHQ that the order was created
     timestamp = models.DateTimeField()
@@ -151,3 +152,23 @@ class EmergencyOrder(models.Model):
     # confirmation received
     confirmed_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
         related_name='+', null=True)
+
+
+def update_product_quantity_json_field(json_field, products):
+    """
+    Updates the product quantities stored in the given field.
+    If the products are already present, the quantity is added to the current
+    quantity for that product.
+    :param json_field: the dictionary that should be updated (for example,
+    order.products_delivered)
+    :param products: a list of ProductQuantity objects representing the products
+    and quantities to update
+    """
+    for product in products:
+        if product.code not in json_field:
+            json_field[product.code] = {'quantity': '0'}
+
+        product_info = json_field[product.code]
+        current_value = Decimal(product_info['quantity'])
+        new_value = current_value + Decimal(product.quantity)
+        product_info['quantity'] = '{0:f}'.format(new_value)
