@@ -218,7 +218,9 @@ hqDefine('userreports/js/builder_view_models.js', function () {
     PropertyList.prototype.getDefaultDisplayText = function (property_id) {
         var property = this.getPropertyObject(property_id);
         if (property !== undefined) {
-            return property.label || property_id;
+            // property.display will exist if the property is a ColumnOption
+            // property.text will exist if the property is a DataSourceProperty
+            return property.display || property.text || property_id;
         }
         return property_id;
     };
