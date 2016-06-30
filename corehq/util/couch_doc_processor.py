@@ -94,7 +94,6 @@ class ResumableDocsByTypeIterator(object):
 
         # save iteration state without offset to signal completion
         self.state.pop("offset", None)
-        self.state["retry"] = {}
         self._save_state()
 
     def retry(self, doc, max_retry=3):
