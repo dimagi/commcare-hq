@@ -71,7 +71,8 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
 
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
-    data.xform_url = "/webforms/player_proxy";
+    data.xform_url = FormplayerFrontend.request('currentUser').formplayer_url;
+    data.formplayerEnabled = true;
     //TODO yeah
     data.domain = "test";
     data.onerror = function (resp) {
