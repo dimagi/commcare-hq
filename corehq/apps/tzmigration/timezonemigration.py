@@ -6,18 +6,18 @@ from couchdbkit import ResourceNotFound
 from django.conf import settings
 from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-
 from casexml.apps.case.xform import get_case_updates
+
 from corehq.form_processor.utils.metadata import scrub_meta
-from dimagi.utils.couch.database import iter_docs
 from corehq.apps.tzmigration import set_migration_started, \
-    set_migration_complete
+    set_migration_complete, force_phone_timezones_should_be_processed
 from corehq.apps.tzmigration.planning import PlanningDB
+from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
-from corehq.apps.tzmigration import force_phone_timezones_should_be_processed
+from dimagi.utils.couch.database import iter_docs
 
 
 def run_timezone_migration_for_domain(domain):
@@ -89,14 +89,10 @@ def commit_plan(domain, planning_db):
         CommCareCase.get_db().save_doc(case)
 
 
-def _get_submission_xml(xform_id):
-    try:
-        xml = XFormInstance.get_db().fetch_attachment(xform_id, 'form.xml')
-    except ResourceNotFound:
-        raise
-    else:
-        if isinstance(xml, unicode):
-            xml = xml.encode('utf-8')
+def _get_submission_xml(xform, db):
+    xml = BlobHelper(xform, db).fetch_attachment('form.xml')
+    if isinstance(xml, unicode):
+        xml = xml.encode('utf-8')
     return xml
 
 
@@ -134,12 +130,13 @@ def prepare_planning_db(domain):
     db_filepath = get_planning_db_filepath(domain)
     planning_db = PlanningDB.init(db_filepath)
     xform_ids = get_form_ids_by_type(domain, 'XFormInstance')
+    xform_db = XFormInstance.get_db()
 
-    for i, xform in enumerate(iter_docs(XFormInstance.get_db(), xform_ids)):
+    for i, xform in enumerate(iter_docs(xform_db, xform_ids)):
         xform_id = xform['_id']
         case_actions_by_case_id = collections.defaultdict(list)
         try:
-            xml = _get_submission_xml(xform_id)
+            xml = _get_submission_xml(xform, xform_db)
         except ResourceNotFound:
             continue
         new_form_json = _get_new_form_json(xml, xform_id)
