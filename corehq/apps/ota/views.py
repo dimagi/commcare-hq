@@ -109,14 +109,15 @@ def get_restore_params(request):
         'version': request.GET.get('version', "1.0"),
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
-        'force_restore_mode': request.GET.get('mode')
+        'force_restore_mode': request.GET.get('mode'),
+        'as_user': request.GET.get('as'),
     }
 
 
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
-                         force_restore_mode=None):
+                         force_restore_mode=None, as_user=None):
     # not a view just a view util
     if couch_user.is_commcare_user() and domain != couch_user.domain:
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
@@ -133,7 +134,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     app = get_app(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
-        restore_user=_get_restore_user(domain, couch_user),
+        restore_user=_get_restore_user(domain, couch_user, as_user),
         params=RestoreParams(
             sync_log_id=since,
             version=version,
@@ -151,7 +152,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     return restore_config.get_response(), restore_config.timing_context
 
 
-def _get_restore_user(domain, couch_user):
+def _get_restore_user(domain, couch_user, as_user):
     if couch_user.is_commcare_user():
         restore_user = couch_user.to_ota_restore_user()
     elif couch_user.is_web_user():
