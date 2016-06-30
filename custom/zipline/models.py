@@ -76,7 +76,8 @@ class EmergencyOrderStatusUpdate(models.Model):
             additional_text=additional_text
         )
 
-        update_product_quantity_json_field(obj.products, products)
+        if products:
+            update_product_quantity_json_field(obj.products, products)
 
         obj.save()
         return obj
