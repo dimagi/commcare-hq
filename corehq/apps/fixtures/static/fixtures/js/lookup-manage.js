@@ -2,7 +2,6 @@ define([
     "jquery",
     "ko",
     "hq.helpers",
-    "bootstrap",
 ], function(
     $,
     ko
