@@ -4,6 +4,8 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.users.models import CommCareUser
+
 from .models import DemoUserRestore
 
 
@@ -88,8 +90,9 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privel
         message = u"{} was not in the domain {}".format(couch_user.username, domain)
     elif couch_user.is_web_user() and domain not in couch_user.domains and not couch_user.is_superuser:
         message = u"{} was not in the domain {}".format(couch_user.username, domain)
-    elif couch_user.is_web_user() and domain in couch_user.domains and as_user is not None:
-        if not has_data_cleanup_privelege:
+    elif ((couch_user.is_web_user() and domain in couch_user.domains and as_user is not None) or
+            (couch_user.is_superuser and as_user is not None)):
+        if not has_data_cleanup_privelege and not couch_user.is_superuser:
             message = u"{} does not have permissions to restore as {}".format(
                 couch_user.username,
                 as_user,
