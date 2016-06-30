@@ -116,9 +116,9 @@ def _update_order_product_info(json_field, products):
     and quantities to update
     """
     for product in products:
-        if product.code not in products_json:
-            products_json[product.code] = '0'
+        if product.code not in json_field:
+            json_field[product.code] = '0'
 
-        current_value = Decimal(products_json[product.code])
+        current_value = Decimal(json_field[product.code])
         new_value = current_value + Decimal(product.quantity)
-        products_json[product.code] = '{0:f}'.format(new_value)
+        json_field[product.code] = '{0:f}'.format(new_value)
