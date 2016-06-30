@@ -140,6 +140,9 @@ class BaseDocMigrator(BaseDocProcessor):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.backup_file.close()
 
+    def unique_key(self):
+        return self.slug + "-blob-migration"
+
     def _prepare_doc(self, doc, couchdb):
         if self.load_attachments:
             obj = BlobHelper(doc, couchdb)

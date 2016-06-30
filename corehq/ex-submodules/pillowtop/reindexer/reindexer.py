@@ -79,6 +79,9 @@ class PillowReindexProcessor(BaseDocProcessor):
         super(PillowReindexProcessor, self).__init__(slug)
         self.pillow = pillow
 
+    def unique_key(self):
+        return "{}_{}_{}".format(self.slug, self.pillow.pillow_id, 'reindex')
+
     def process_doc(self, doc, couchdb):
         change = self._doc_to_change(doc, couchdb)
         self.pillow.process_change(change)

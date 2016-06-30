@@ -8,7 +8,7 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.s3db import maybe_not_found
 from corehq.blobs.tests.util import (TemporaryFilesystemBlobDB,
     TemporaryMigratingBlobDB, TemporaryS3BlobDB)
-from corehq.util.couch_doc_processor import ResumableDocsByTypeIterator, DOC_PROCESSOR_ITERATION_KEY_PREFIX
+from corehq.util.couch_doc_processor import ResumableDocsByTypeIterator
 from corehq.util.test_utils import trap_extra_setup
 
 from django.conf import settings
@@ -55,7 +55,7 @@ class BaseMigrationTest(TestCase):
         ResumableDocsByTypeIterator(
             list(doc_types.values())[0].get_db(),
             doc_types,
-            slug + DOC_PROCESSOR_ITERATION_KEY_PREFIX,
+            slug + "-blob-migration",
         ).discard_state()
         mod.BlobMigrationState.objects.filter(slug=slug).delete()
 

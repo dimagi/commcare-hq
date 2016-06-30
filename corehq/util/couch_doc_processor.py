@@ -1,13 +1,11 @@
 import hashlib
-from abc import abstractmethod, ABCMeta
+from abc import abstractmethod, ABCMeta, abstractproperty
 from datetime import datetime
 
 import six
 from couchdbkit import ResourceNotFound
 
 from corehq.util.couch_helpers import PaginateViewLogHandler, paginate_view
-
-DOC_PROCESSOR_ITERATION_KEY_PREFIX = "-doc-processor"
 
 
 class ResumableDocsByTypeIterator(object):
@@ -190,6 +188,10 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
+    @abstractproperty
+    def unique_key(self):
+        return self.slug
+
     @abstractmethod
     def process_doc(self, doc, couchdb):
         """Migrate a single document
@@ -239,9 +241,9 @@ class CouchDocumentProcessor(object):
         assert all(m.get_db() is self.couchdb for m in doc_type_map.values()), \
             "documents must live in same couch db: %s" % repr(doc_type_map)
 
-        iter_key = doc_processor.slug + DOC_PROCESSOR_ITERATION_KEY_PREFIX
-        self.docs_by_type = ResumableDocsByTypeIterator(self.couchdb, doc_type_map, iter_key,
-                                                   chunk_size=chunk_size)
+        self.docs_by_type = ResumableDocsByTypeIterator(
+            self.couchdb, doc_type_map, doc_processor.unique_key, chunk_size=chunk_size
+        )
 
     def has_started(self):
         return bool(self.docs_by_type.progress_info)
