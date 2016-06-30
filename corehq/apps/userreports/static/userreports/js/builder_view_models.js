@@ -148,7 +148,15 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             return i;
         };
 
+        // A list of objects representing the properties that can be chosen from
+        // for this list. Objects are js versions of ColumnOption or
+        // DataSourceProperty objects.
         this.propertyOptions = options.propertyOptions;
+
+        // The propertyOptions transformed into a shape that either the
+        // select2 or questionsSelect binding can handle.
+        this.selectablePropertyOptions = options.selectablePropertyOptions;
+
         this.reportType = options.reportType;
         this.buttonText = getOrDefault(options, 'buttonText', 'Add property');
         // True if at least one column is required.
@@ -221,7 +229,14 @@ hqDefine('userreports/js/builder_view_models.js', function () {
      * @returns {object}
      */
     PropertyList.prototype.getPropertyObject = function(property_id) {
-        return _.find(this.propertyOptions, function (opt) {return opt.value === property_id;});
+        // TODO: This is wrong as shit because we need to match on id sometimes.
+        // Let's maybe keep an unmodified set of properties on the PropertyList,
+        // and a second transformed set that is used for the select2/questionsSelect
+        //
+        // Still though, the unmodified will have two forms (but at least "id" will always be the identifier
+        // Maybe its time to properly subclass PropertyList?
+        // Then we could have different methods and shit.
+        return _.find(this.propertyOptions, function (opt) {return opt.id === property_id;});
     };
 
     /**
@@ -302,17 +317,17 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // context into objects with the correct format for the select2 and
         // questionsSelect knockout bindings.
         if (this.optionsContainQuestions) {
-            this.dataSourceIndicators = _.compact(_.map(
+            this.selectableDataSourceIndicators = _.compact(_.map(
                 this.dataSourceIndicators, convertDataSourcePropertyToQuestionsSelectFormat
             ));
-            this.reportColumnOptions = _.compact(_.map(
+            this.selectableReportColumnOptions = _.compact(_.map(
                 this.reportColumnOptions, convertReportColumnOptionToQuestionsSelectFormat
             ));
         } else {
-            this.dataSourceIndicators = _.compact(_.map(
+            this.selectableDataSourceIndicators = _.compact(_.map(
                 this.dataSourceIndicators, convertDataSourcePropertyToSelect2Format
             ));
-            this.reportColumnOptions = _.compact(_.map(
+            this.selectableReportColumnOptions = _.compact(_.map(
                 this.reportColumnOptions, convertReportColumnOptionToSelect2Format
             ));
         }
@@ -328,6 +343,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: select this if the property is a date.<br/><strong>Choice</strong>: select this if the property is text or multiple choice.'),
             reportType: reportType,
             propertyOptions: this.dataSourceIndicators,
+            selectablePropertyOptions: this.selectableDataSourceIndicators,
         });
         this.columnsList = new PropertyList({
             hasFormatCol: false,
@@ -347,6 +363,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             },
             reportType: reportType,
             propertyOptions: this.reportColumnOptions,
+            selectablePropertyOptions: this.selectableReportColumnOptions,
         });
     };
     ConfigForm.prototype.submitHandler = function (formElement) {
