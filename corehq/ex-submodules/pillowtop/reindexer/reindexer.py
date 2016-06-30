@@ -79,6 +79,7 @@ class PillowReindexProcessor(BaseDocProcessor):
         super(PillowReindexProcessor, self).__init__(slug)
         self.pillow = pillow
 
+    @property
     def unique_key(self):
         return "{}_{}_{}".format(self.slug, self.pillow.pillow_id, 'reindex')
 

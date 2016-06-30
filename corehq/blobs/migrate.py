@@ -140,6 +140,7 @@ class BaseDocMigrator(BaseDocProcessor):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.backup_file.close()
 
+    @property
     def unique_key(self):
         return self.slug + "-blob-migration"
 
