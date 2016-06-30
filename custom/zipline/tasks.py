@@ -71,9 +71,10 @@ def _send_emergency_order_request(order, attempt):
         create_error_record(order, 'Received HTTP Response {} from Zipline'.format(response.status_code))
         return EmergencyOrderStatusUpdate.STATUS_ERROR
 
+    response_text = response.text
     try:
-        response_json = response.json()
-    except:
+        response_json = json.loads(response_text)
+    except (TypeError, ValueError):
         notify_exception(
             None,
             message='[ZIPLINE] Invalid JSON response received',
@@ -82,7 +83,7 @@ def _send_emergency_order_request(order, attempt):
                 'attempt': attempt,
             }
         )
-        create_error_record(order, 'Could not parse JSON response from Zipline')
+        create_error_record(order, 'Could not parse JSON response from Zipline: {}'.format(response_text))
         handle_emergency_order_request_retry(order, attempt)
         return EmergencyOrderStatusUpdate.STATUS_ERROR
 
