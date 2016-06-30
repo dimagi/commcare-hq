@@ -167,10 +167,15 @@ def _is_permitted_to_restore(domain, couch_user, as_user):
                 as_user,
             )
 
-        username = as_user.split('@')[0]
-        user_domain = as_user.split('@')[1]
-        if user_domain != domain:
-            message = u"{} was not in the domain {}".format(username, domain)
+        try:
+            username = as_user.split('@')[0]
+            user_domain = as_user.split('@')[1]
+        except IndexError:
+            message = u"Invalid to restore user {}. Format is <user>@<domain>".format(as_user)
+
+        else:
+            if user_domain != domain:
+                message = u"{} was not in the domain {}".format(username, domain)
     return message is None, message
 
 
