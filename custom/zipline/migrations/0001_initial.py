@@ -68,6 +68,12 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='emergencyorder',
+            name='confirmed_status',
+            field=models.ForeignKey(related_name='+', on_delete=django.db.models.deletion.PROTECT, to='zipline.EmergencyOrderStatusUpdate', null=True),
+            preserve_default=True,
+        ),
+        migrations.AddField(
+            model_name='emergencyorder',
             name='delivered_status',
             field=models.ForeignKey(related_name='+', on_delete=django.db.models.deletion.PROTECT, to='zipline.EmergencyOrderStatusUpdate', null=True),
             preserve_default=True,
