@@ -85,6 +85,17 @@ def demo_restore_date_created(commcare_user):
 
 
 def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privelege):
+    """
+    This function determines if the couch_user is permitted to restore
+    for the domain and/or as_user
+    :param domain: Domain of restore
+    :param couch_user: The couch user attempting authentication
+    :param as_user: a string <user>@<domain> that the couch_user is attempting to get
+        a restore for. If None will get restore of the couch_user.
+    :param has_data_cleanup_privelege: Whether the user has permissions to do DATA_CLEANUP
+    :returns: a tuple - first a boolean if the user is permitted,
+        secondly a message explaining why a user was rejected if not permitted
+    """
     message = None
     if couch_user.is_commcare_user() and domain != couch_user.domain:
         message = u"{} was not in the domain {}".format(couch_user.username, domain)
@@ -111,6 +122,15 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privel
 
 
 def get_restore_user(domain, couch_user, as_user):
+    """
+    This will retrieve the restore_user from the couch_user or the as_user
+    if specified
+    :param domain: Domain of restore
+    :param couch_user: The couch user attempting authentication
+    :param as_user: a string <user>@<domain> that the couch_user is attempting to get
+        a restore user for. If None will get restore of the couch_user.
+    :returns: An instance of OTARestoreUser
+    """
     if couch_user.is_commcare_user():
         restore_user = couch_user.to_ota_restore_user()
     elif (couch_user.is_web_user() and as_user is not None):
