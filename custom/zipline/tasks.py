@@ -1,7 +1,6 @@
 import json
 import requests
 from celery.task import task
-from collections import namedtuple
 from custom.zipline.models import EmergencyOrder, EmergencyOrderStatusUpdate
 from datetime import datetime
 from django.conf import settings
