@@ -80,11 +80,11 @@ TODO:
                     <!-- ko ifnot: $root.optionsContainQuestions -->
                     <input type="text"
                            class="form-control"
-                           data-bind="select2: $root.propertyOptions, value: property">
+                           data-bind="select2: $parent.propertyOptions, value: property">
                     <!-- /ko -->
                     <!-- ko if: $root.optionsContainQuestions -->
                     <input class="form-control" type="hidden" data-bind="
-                        questionsSelect: $root.propertyOptions.concat(
+                        questionsSelect: $parent.propertyOptions.concat(
                             existsInCurrentVersion() ? [] : {value: dataSourceField(), label: ''}
                         ),
                         value: existsInCurrentVersion() ? property : dataSourceField,
@@ -93,11 +93,10 @@ TODO:
                     <!-- /ko -->
                     <label class="help-block" data-bind="if: $parent.showWarnings() && !property()">
                         {% trans "Please select a property." %}</label>
-                    {# This is gross and I hate it #}
-                    <label class="help-block" style="white-space: pre-wrap;" data-bind="if: !existsInCurrentVersion()">
+                    <label class="help-block" data-bind="if: !existsInCurrentVersion()">
                         {% blocktrans %}
-                            This property or question no longer exists in your app.
-                            You must delete this property to update this report.
+                        This property or question no longer exists in your app. <br>
+                        You must delete this property to update this report.
                         {% endblocktrans %}
                     </label>
                 </td>
