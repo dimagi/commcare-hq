@@ -125,11 +125,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
                             status=401), None
 
-    if couch_user.is_commcare_user():
-        restore_user = couch_user.to_ota_restore_user()
-    elif couch_user.is_web_user():
-        restore_user = couch_user.to_ota_restore_user(domain)
-
     if couch_user.is_commcare_user() and couch_user.is_demo_user:
         # if user is in demo-mode, return demo restore
         return demo_user_restore_response(couch_user), None
@@ -138,7 +133,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     app = get_app(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
-        restore_user=restore_user,
+        restore_user=_get_restore_user(domain, couch_user),
         params=RestoreParams(
             sync_log_id=since,
             version=version,
@@ -154,6 +149,15 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         ),
     )
     return restore_config.get_response(), restore_config.timing_context
+
+
+def _get_restore_user(domain, couch_user):
+    if couch_user.is_commcare_user():
+        restore_user = couch_user.to_ota_restore_user()
+    elif couch_user.is_web_user():
+        restore_user = couch_user.to_ota_restore_user(domain)
+
+    return restore_user
 
 
 class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
