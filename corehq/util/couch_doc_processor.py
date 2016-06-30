@@ -321,4 +321,3 @@ class CouchDocumentProcessor(object):
         if skipped:
             print(DOCS_SKIPPED_WARNING.format(skipped))
         return processed, skipped
-
