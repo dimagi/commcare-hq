@@ -11,6 +11,7 @@ class EmergencyOrderStatusUpdate(models.Model):
     STATUS_CANCELED = 'CANCELED'
     STATUS_DISPATCHED = 'DISPATCHED'
     STATUS_DELIVERED = 'DELIVERED'
+    STATUS_CONFIRMED = 'CONFIRMED'
     STATUS_ERROR = 'ERROR'
 
     class Meta:
@@ -51,7 +52,8 @@ class EmergencyOrderStatusUpdate(models.Model):
 
     @classmethod
     def create_for_order(cls, order_id, status, zipline_timestamp=None,
-            vehicle_number=None, vehicle_id=None, additional_text=None):
+            vehicle_number=None, vehicle_id=None, additional_text=None,
+            products=None):
         """
         Creates an EmergencyOrderStatusUpdate record for the given order.
         :param order_id: the id of the EmergencyOrder
@@ -59,7 +61,14 @@ class EmergencyOrderStatusUpdate(models.Model):
         :param zipline_timestamp: the value for zipline_timestamp
         :param vehicle_number: the value for vehicle_number
         :param vehicle_id: the value for vehicle_id
+        :param additional_text: the value for additional_text
+        :param products: a list of ProductQuantity objects if this status
+        update is associated with products
         """
+        product_json = [
+            {'code': p.code, 'quantity': p.quantity} for p in products
+        ] if products else []
+
         return cls.objects.create(
             order_id=order_id,
             timestamp=datetime.utcnow(),
@@ -67,7 +76,8 @@ class EmergencyOrderStatusUpdate(models.Model):
             status=status,
             vehicle_number=vehicle_number,
             vehicle_id=vehicle_id,
-            additional_text=additional_text
+            additional_text=additional_text,
+            products=product_json
         )
 
 
@@ -135,4 +145,9 @@ class EmergencyOrder(models.Model):
     # A pointer to the EmergencyOrderStatusUpdate record representing the delivered status
     # update for the last vehicle
     delivered_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
+        related_name='+', null=True)
+
+    # A pointer to the EmergencyOrderStatusUpdate record representing the first receipt
+    # confirmation received
+    confirmed_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
         related_name='+', null=True)

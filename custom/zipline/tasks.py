@@ -1,7 +1,7 @@
 import json
 import requests
 from celery.task import task
-from custom.zipline.api import ProductQuantity, get_order_update_critical_section_key
+from custom.zipline.api import get_order_update_critical_section_key
 from custom.zipline.models import EmergencyOrder, EmergencyOrderStatusUpdate
 from django.conf import settings
 from dimagi.utils.couch import CriticalSection
