@@ -244,21 +244,46 @@ class CouchDocumentProcessor(object):
             self.couchdb, doc_type_map, doc_processor.unique_key, chunk_size=chunk_size
         )
 
+        self.visited = 0
+        self.previously_visited = 0
+        self.total = 0
+
+        self.processed = 0
+        self.skipped = 0
+
+        self.start = None
+
     def has_started(self):
         return bool(self.docs_by_type.progress_info)
 
-    def run(self):
-        """
-        :returns: A tuple `(<num processed>, <num skipped>)`
-        """
+    @property
+    def session_visited(self):
+        return self.visited - self.previously_visited
+
+    @property
+    def session_total(self):
+        return self.total - self.previously_visited
+
+    @property
+    def attempted(self):
+        return self.processed + self.skipped
+
+    @property
+    def timing(self):
+        """Returns a tuple of (elapsed, remaining)"""
+        elapsed = datetime.now() - self.start
+        if self.session_visited > self.session_total:
+            remaining = "?"
+        else:
+            session_remaining = self.session_total - self.session_visited
+            remaining = elapsed / self.session_visited * session_remaining
+        return elapsed, remaining
+
+    def _setup(self):
         from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
 
-        total = sum(get_doc_count_by_type(self.couchdb, doc_type)
+        self.total = sum(get_doc_count_by_type(self.couchdb, doc_type)
                     for doc_type in self.doc_type_map)
-        processed = 0
-        skipped = 0
-        visited = 0
-        previously_visited = 0
 
         if self.reset:
             self.docs_by_type.discard_state()
@@ -268,56 +293,65 @@ class CouchDocumentProcessor(object):
             # Estimate already visited based on difference of old/new
             # totals. The theory is that new or deleted records will be
             # evenly distributed across the entire set.
-            visited = int(round(float(total) / old_total * info["visited"]))
-            previously_visited = visited
+            self.visited = int(round(float(self.total) / old_total * info["visited"]))
+            self.previously_visited = self.visited
         print("Processing {} documents{}: {}...".format(
-            total,
-            " (~{} already processed)".format(visited) if visited else "",
+            self.total,
+            " (~{} already processed)".format(self.visited) if self.visited else "",
             ", ".join(sorted(self.doc_type_map))
         ))
 
+        self.start = datetime.now()
+
+    def run(self):
+        """
+        :returns: A tuple `(<num processed>, <num skipped>)`
+        """
+        self._setup()
         with self.doc_processor:
-            start = datetime.now()
             for doc in self.docs_by_type:
-                visited += 1
-                if visited % self.chunk_size == 0:
-                    self.docs_by_type.progress_info = {"visited": visited, "total": total}
-                if self.doc_processor.should_process(doc):
-                    ok = self.doc_processor.process_doc(doc, self.couchdb)
-                    if ok:
-                        processed += 1
-                    else:
-                        try:
-                            self.docs_by_type.retry(doc, self.max_retry)
-                        except TooManyRetries:
-                            print("Skip: {doc_type} {_id}".format(**doc))
-                            skipped += 1
-                    if (processed + skipped) % self.chunk_size == 0:
-                        elapsed = datetime.now() - start
-                        session_visited = visited - previously_visited
-                        session_total = total - previously_visited
-                        if session_visited > session_total:
-                            remaining = "?"
-                        else:
-                            session_remaining = session_total - session_visited
-                            remaining = elapsed / session_visited * session_remaining
-                        print("Processed {}/{} of {} documents in {} ({} remaining)"
-                              .format(processed, visited, total, elapsed, remaining))
+                self._update_progress()
+                self._process_doc(doc)
 
-        session_visited = visited - previously_visited
-        if session_visited:
-            self.docs_by_type.progress_info = {"visited": visited, "total": total}
+        self._processing_complete()
 
-        self.doc_processor.processing_complete(skipped)
+        return self.processed, self.skipped
 
-        print("Processed {}/{} of {} documents ({} previously processed, {} filtered out)."
-            .format(
-                processed,
-                visited,
-                total,
-                previously_visited,
-                session_visited - (processed + skipped)
-            ))
-        if skipped:
-            print(DOCS_SKIPPED_WARNING.format(skipped))
-        return processed, skipped
+    def _process_doc(self, doc):
+        if not self.doc_processor.should_process(doc):
+            return
+
+        ok = self.doc_processor.process_doc(doc, self.couchdb)
+        if ok:
+            self.processed += 1
+            self.docs_by_type.mark_doc_processed(doc)
+        else:
+            try:
+                self.docs_by_type.retry(doc, self.max_retry)
+            except TooManyRetries:
+                print("Skip: {doc_type} {_id}".format(**doc))
+                self.skipped += 1
+
+    def _update_progress(self):
+        self.visited += 1
+        if self.visited % self.chunk_size == 0:
+            self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
+
+        if self.attempted % self.chunk_size == 0:
+            elapsed, remaining = self.timing
+            print("Processed {}/{} of {} documents in {} ({} remaining)"
+                  .format(self.processed, self.visited, self.total, elapsed, remaining))
+
+    def _processing_complete(self):
+        if self.session_visited:
+            self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
+        self.doc_processor.processing_complete(self.skipped)
+        print("Processed {}/{} of {} documents ({} previously processed, {} filtered out).".format(
+            self.processed,
+            self.visited,
+            self.total,
+            self.previously_visited,
+            self.session_visited - self.attempted
+        ))
+        if self.skipped:
+            print(DOCS_SKIPPED_WARNING.format(self.skipped))
