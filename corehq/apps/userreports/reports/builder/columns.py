@@ -56,11 +56,14 @@ class CountColumn(ColumnOption):
     @property
     @memoized
     def aggregation_options(self):
-        return ("Sum",)
+        # The aggregation won't actually be used, but it will show up in the
+        # "format" field of the report builder. We're hoping that "Count"
+        # will make more sense to users than "Sum", which would technically
+        # be more accurate.
+        return ("Count",)
 
     def to_column_dict(self, index, display_text, aggregation):
         # aggregation is only an arg so that we match the the parent's method signature.
-        assert aggregation in self.aggregation_options
         return {
             'type': 'field',
             'format': 'default',
