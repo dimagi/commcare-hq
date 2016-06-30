@@ -77,7 +77,7 @@ def send_emergency_order_request(order_id, attempt=1):
                 'attempt': attempt,
             }
         )
-        create_error_record(order, 'Internal error: '.format(str(e)))
+        create_error_record(order, 'Internal error: {}'.format(str(e)))
         handle_emergency_order_request_retry(order, attempt)
 
 
