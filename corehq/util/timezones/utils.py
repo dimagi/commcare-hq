@@ -3,6 +3,7 @@ import pytz
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.util.global_request import get_request
+from corehq.util.soft_assert import soft_assert
 
 
 def coerce_timezone_value(value):
@@ -34,7 +35,12 @@ def get_timezone_for_request(request=None):
 
 def get_timezone_for_domain(domain):
     current_domain = Domain.get_by_name(domain)
-    return coerce_timezone_value(current_domain.default_timezone)
+    _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
+    if _assert(current_domain, "get_timezone_for_domain passed fake domain",
+               {'domain': domain}):
+        return coerce_timezone_value(current_domain.default_timezone)
+    else:
+        return pytz.UTC
 
 
 def get_timezone_for_user(couch_user_or_id, domain):
