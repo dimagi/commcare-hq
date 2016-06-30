@@ -1603,3 +1603,16 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
 
         response = self.client.get(self.list_endpoint)
         self.assertEqual(response.status_code, 405)
+
+    def test_auth(self):
+
+        wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        new_user = WebUser.create(wrong_domain.name, 'test', 'testpass')
+        new_user.save()
+
+        self.client.login(username='test', password='testpass')
+        response = self.client.get(self.single_endpoint(self.report_configuration._id))
+        self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
+
+        wrong_domain.delete()
+        new_user.delete()
