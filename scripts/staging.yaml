@@ -64,8 +64,6 @@ submodules:
     # just so we always get latest master
     branches:
       - 2.28-jars
-  submodules/ctable-src:
-    branches: []
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:

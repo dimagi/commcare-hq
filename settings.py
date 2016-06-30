@@ -269,8 +269,6 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'couchlog',
-    'ctable',
-    'ctable_view',
     'dimagi.utils',
     'formtranslate',
     'langcodes',
@@ -422,8 +420,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.m4change',
 
     # submodules with tests that run on travis
-    'ctable',
-    'ctable_view',
     'dimagi.utils',
 )
 
@@ -1196,7 +1192,6 @@ COUCHDB_APPS = [
     'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
-    'ctable',
     'custom_data_fields',
     'hqadmin',
     'ext',
