@@ -206,7 +206,7 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
     def processing_complete(self, skipped):
         pass
 
-    def filter(self, doc):
+    def should_process(self, doc):
         """
         :param doc: the document to filter
         :return: True if this doc should be migrated
@@ -283,7 +283,7 @@ class CouchDocumentProcessor(object):
                 visited += 1
                 if visited % self.chunk_size == 0:
                     self.docs_by_type.progress_info = {"visited": visited, "total": total}
-                if self.doc_processor.filter(doc):
+                if self.doc_processor.should_process(doc):
                     ok = self.doc_processor.process_doc(doc, self.couchdb)
                     if ok:
                         processed += 1

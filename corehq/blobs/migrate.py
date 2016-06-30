@@ -218,7 +218,7 @@ class CouchAttachmentMigrator(BaseDocMigrator):
             return False
         return True
 
-    def filter(self, doc):
+    def should_process(self, doc):
         return doc.get("_attachments")
 
 
@@ -258,7 +258,7 @@ class BlobDbBackendMigrator(BaseDocMigrator):
                   "the total number of migrated blobs were not found."
                   .format(self.not_found, self.total_blobs))
 
-    def filter(self, doc):
+    def should_process(self, doc):
         return doc.get("external_blobs")
 
 
