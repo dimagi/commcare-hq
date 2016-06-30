@@ -4,11 +4,12 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django_prbac.utils import has_privilege
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
@@ -119,12 +120,13 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None, as_user=None):
     # not a view just a view util
-    if couch_user.is_commcare_user() and domain != couch_user.domain:
-        return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
-                            status=401), None
-    elif couch_user.is_web_user() and domain not in couch_user.domains and not couch_user.is_superuser:
-        return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
-                            status=401), None
+    is_permitted, message = _is_permitted_to_restore(
+        domain,
+        couch_user,
+        as_user,
+    )
+    if not is_permitted:
+        return HttpResponse(message, status=401), None
 
     if couch_user.is_commcare_user() and couch_user.is_demo_user:
         # if user is in demo-mode, return demo restore
@@ -150,6 +152,26 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         ),
     )
     return restore_config.get_response(), restore_config.timing_context
+
+
+def _is_permitted_to_restore(domain, couch_user, as_user):
+    message = None
+    if couch_user.is_commcare_user() and domain != couch_user.domain:
+        message = u"{} was not in the domain {}".format(couch_user.username, domain)
+    elif couch_user.is_web_user() and domain not in couch_user.domains and not couch_user.is_superuser:
+        message = u"{} was not in the domain {}".format(couch_user.username, domain)
+    elif couch_user.is_web_user() and domain in couch_user.domains and as_user is not None:
+        if not couch_user.prbac_role.has_privilege(privileges.DATA_CLEANUP):
+            message = u"{} does not have permissions to restore as {}".format(
+                couch_user.username,
+                as_user,
+            )
+
+        username = as_user.split('@')[0]
+        user_domain = as_user.split('@')[1]
+        if user_domain != domain:
+            message = u"{} was not in the domain {}".format(username, domain)
+    return message is None, message
 
 
 def _get_restore_user(domain, couch_user, as_user):
