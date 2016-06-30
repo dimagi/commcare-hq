@@ -1,7 +1,6 @@
 from custom.zipline.models import (EmergencyOrder, EmergencyOrderStatusUpdate,
     update_product_quantity_json_field)
 from datetime import datetime
-from decimal import Decimal
 from dimagi.utils.couch import CriticalSection
 
 

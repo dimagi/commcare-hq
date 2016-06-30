@@ -1,5 +1,6 @@
 import jsonfield
 from datetime import datetime
+from decimal import Decimal
 from django.db import models
 
 
