@@ -111,10 +111,10 @@ class ResumableElasticPillowReindexer(PillowReindexer):
         _clean_index(self.es, self.index_info)
 
     def reindex(self, reset=False):
-        doc_migrator = PillowReindexProcessor(self.index_info.index, self.pillow)
+        doc_processor = PillowReindexProcessor(self.index_info.index, self.pillow)
         processor = CouchDocumentProcessor(
             self.doc_type_map,
-            doc_migrator,
+            doc_processor,
             reset
         )
 
