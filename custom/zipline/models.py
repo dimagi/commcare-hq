@@ -114,26 +114,26 @@ class EmergencyOrder(models.Model):
 
     # A pointer to the EmergencyOrderStatusUpdate record representing the received status update
     received_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
-        related_name='+')
+        related_name='+', null=True)
 
     # A pointer to the EmergencyOrderStatusUpdate record representing the rejected status update
     rejected_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
-        related_name='+')
+        related_name='+', null=True)
 
     # A pointer to the EmergencyOrderStatusUpdate record representing the approved status update
     approved_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
-        related_name='+')
+        related_name='+', null=True)
 
     # A pointer to the EmergencyOrderStatusUpdate record representing the canceled status update
     canceled_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
-        related_name='+')
+        related_name='+', null=True)
 
     # A pointer to the EmergencyOrderStatusUpdate record representing the dispatched status
     # update for the first vehicle
     dispatched_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
-        related_name='+')
+        related_name='+', null=True)
 
     # A pointer to the EmergencyOrderStatusUpdate record representing the delivered status
     # update for the last vehicle
     delivered_status = models.ForeignKey('EmergencyOrderStatusUpdate', on_delete=models.PROTECT,
-        related_name='+')
+        related_name='+', null=True)
