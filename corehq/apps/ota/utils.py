@@ -80,3 +80,45 @@ def demo_restore_date_created(commcare_user):
         restore = DemoUserRestore.objects.get(id=commcare_user.demo_restore_id)
         if restore:
             return restore.timestamp_created
+
+
+def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privelege):
+    message = None
+    if couch_user.is_commcare_user() and domain != couch_user.domain:
+        message = u"{} was not in the domain {}".format(couch_user.username, domain)
+    elif couch_user.is_web_user() and domain not in couch_user.domains and not couch_user.is_superuser:
+        message = u"{} was not in the domain {}".format(couch_user.username, domain)
+    elif couch_user.is_web_user() and domain in couch_user.domains and as_user is not None:
+        if not has_data_cleanup_privelege:
+            message = u"{} does not have permissions to restore as {}".format(
+                couch_user.username,
+                as_user,
+            )
+
+        try:
+            username = as_user.split('@')[0]
+            user_domain = as_user.split('@')[1]
+        except IndexError:
+            message = u"Invalid to restore user {}. Format is <user>@<domain>".format(as_user)
+
+        else:
+            if user_domain != domain:
+                message = u"{} was not in the domain {}".format(username, domain)
+    return message is None, message
+
+
+def get_restore_user(domain, couch_user, as_user):
+    if couch_user.is_commcare_user():
+        restore_user = couch_user.to_ota_restore_user()
+    elif (couch_user.is_web_user() and as_user is not None):
+        username = as_user.split('@')[0]
+        domain = as_user.split('@')[1]
+        if username != couch_user.raw_username and domain == domain:
+            commcare_user = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
+            if not commcare_user:
+                return None
+            restore_user = commcare_user.to_ota_restore_user()
+    elif couch_user.is_web_user():
+        restore_user = couch_user.to_ota_restore_user(domain)
+
+    return restore_user

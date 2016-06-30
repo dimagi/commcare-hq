@@ -29,7 +29,7 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
 
-from .utils import demo_user_restore_response
+from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore
 
 
 @json_error
@@ -112,18 +112,21 @@ def get_restore_params(request):
         'items': request.GET.get('items') == 'true',
         'force_restore_mode': request.GET.get('mode'),
         'as_user': request.GET.get('as'),
+        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP)
     }
 
 
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
-                         force_restore_mode=None, as_user=None):
+                         force_restore_mode=None, as_user=None, has_data_cleanup_privelege=False):
+
     # not a view just a view util
-    is_permitted, message = _is_permitted_to_restore(
+    is_permitted, message = is_permitted_to_restore(
         domain,
         couch_user,
         as_user,
+        has_data_cleanup_privelege,
     )
     if not is_permitted:
         return HttpResponse(message, status=401), None
@@ -132,7 +135,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         # if user is in demo-mode, return demo restore
         return demo_user_restore_response(couch_user), None
 
-    restore_user = _get_restore_user(domain, couch_user, as_user)
+    restore_user = get_restore_user(domain, couch_user, as_user)
     if not restore_user:
         return HttpResponse('Could not find user', status=404)
 
@@ -156,48 +159,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         ),
     )
     return restore_config.get_response(), restore_config.timing_context
-
-
-def _is_permitted_to_restore(domain, couch_user, as_user):
-    message = None
-    if couch_user.is_commcare_user() and domain != couch_user.domain:
-        message = u"{} was not in the domain {}".format(couch_user.username, domain)
-    elif couch_user.is_web_user() and domain not in couch_user.domains and not couch_user.is_superuser:
-        message = u"{} was not in the domain {}".format(couch_user.username, domain)
-    elif couch_user.is_web_user() and domain in couch_user.domains and as_user is not None:
-        if not couch_user.prbac_role.has_privilege(privileges.DATA_CLEANUP):
-            message = u"{} does not have permissions to restore as {}".format(
-                couch_user.username,
-                as_user,
-            )
-
-        try:
-            username = as_user.split('@')[0]
-            user_domain = as_user.split('@')[1]
-        except IndexError:
-            message = u"Invalid to restore user {}. Format is <user>@<domain>".format(as_user)
-
-        else:
-            if user_domain != domain:
-                message = u"{} was not in the domain {}".format(username, domain)
-    return message is None, message
-
-
-def _get_restore_user(domain, couch_user, as_user):
-    if couch_user.is_commcare_user():
-        restore_user = couch_user.to_ota_restore_user()
-    elif (couch_user.is_web_user() and as_user is not None):
-        username = as_user.split('@')[0]
-        domain = as_user.split('@')[1]
-        if username != couch_user.raw_username and domain == domain:
-            commcare_user = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
-            if not commcare_user:
-                return None
-            restore_user = commcare_user.to_ota_restore_user()
-    elif couch_user.is_web_user():
-        restore_user = couch_user.to_ota_restore_user(domain)
-
-    return restore_user
 
 
 class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
