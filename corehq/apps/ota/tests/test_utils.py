@@ -13,6 +13,7 @@ class RestorePermissionsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(RestorePermissionsTest, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
 
@@ -39,6 +40,7 @@ class RestorePermissionsTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        super(RestorePermissionsTest, cls).tearDownClass()
         cls.web_user.delete()
         cls.commcare_user.delete()
         cls.super_user.delete()
@@ -136,6 +138,7 @@ class GetRestoreUserTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GetRestoreUserTest, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
 
@@ -152,6 +155,7 @@ class GetRestoreUserTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        super(GetRestoreUserTest, cls).tearDownClass()
         cls.web_user.delete()
         cls.commcare_user.delete()
         cls.project.delete()
