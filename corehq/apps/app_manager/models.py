@@ -2733,7 +2733,7 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
-    search_config = SchemaListProperty(CaseSearch)
+    search_config = SchemaProperty(CaseSearch)
 
     @classmethod
     def new_module(cls, name, lang):
