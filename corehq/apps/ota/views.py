@@ -132,11 +132,15 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         # if user is in demo-mode, return demo restore
         return demo_user_restore_response(couch_user), None
 
+    restore_user = _get_restore_user(domain, couch_user, as_user)
+    if not restore_user:
+        return HttpResponse('Could not find user', status=404)
+
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
-        restore_user=_get_restore_user(domain, couch_user, as_user),
+        restore_user=restore_user,
         params=RestoreParams(
             sync_log_id=since,
             version=version,
@@ -182,6 +186,14 @@ def _is_permitted_to_restore(domain, couch_user, as_user):
 def _get_restore_user(domain, couch_user, as_user):
     if couch_user.is_commcare_user():
         restore_user = couch_user.to_ota_restore_user()
+    elif (couch_user.is_web_user() and as_user is not None):
+        username = as_user.split('@')[0]
+        domain = as_user.split('@')[1]
+        if username != couch_user.raw_username and domain == domain:
+            commcare_user = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
+            if not commcare_user:
+                return None
+            restore_user = commcare_user.to_ota_restore_user()
     elif couch_user.is_web_user():
         restore_user = couch_user.to_ota_restore_user(domain)
 
