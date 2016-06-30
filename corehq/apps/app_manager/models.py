@@ -3589,19 +3589,29 @@ class CustomMonthFilter(ReportAppFilter):
             _, last_day = calendar.monthrange(date.year, date.month)
             return last_day
 
-        # Find the start and end dates of period 0
         start_of_month = int(self.start_of_month)
-        end_date = datetime.date.today()
-        start_day = start_of_month if start_of_month > 0 else get_last_day(end_date) + start_of_month
-        end_of_month = end_date if end_date.day >= start_day else get_last_month(end_date)
-        start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+        today = datetime.date.today()
+        if start_of_month > 0:
+            start_day = start_of_month
+        else:
+            # start_of_month is zero or negative. Work backwards from the end of the month
+            start_day = get_last_day(today) + start_of_month
 
         # Loop over months backwards for period > 0
+        month = today if today.day >= start_day else get_last_month(today)
         for i in range(int(self.period)):
-            end_of_month = get_last_month(end_of_month)
-            end_date = start_date - datetime.timedelta(days=1)
-            start_day = start_of_month if start_of_month > 0 else get_last_day(end_of_month) + start_of_month
-            start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+            month = get_last_month(month)
+
+        if start_of_month > 0:
+            start_date = datetime.date(month.year, month.month, start_day)
+            days = get_last_day(start_date) - 1
+            end_date = start_date + datetime.timedelta(days=days)
+        else:
+            start_day = get_last_day(month) + start_of_month
+            start_date = datetime.date(month.year, month.month, start_day)
+            next_month = datetime.date(month.year, month.month, get_last_day(month)) + datetime.timedelta(days=1)
+            end_day = get_last_day(next_month) + start_of_month - 1
+            end_date = datetime.date(next_month.year, next_month.month, end_day)
 
         return DateSpan(startdate=start_date, enddate=end_date)
 
