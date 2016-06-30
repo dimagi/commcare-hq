@@ -1,38 +1,46 @@
-$(function() {
-    var clearAnnouncement = function (announcementID) {
-        $.ajax({
-            url: '/announcements/clear/' + announcementID
-        });
-    };
+(function (factory) {
+if (typeof define === 'function' && define.amd) {
+    // AMD. Register as an anonymous module depending on jQuery.
+    define(['jquery', 'ko'], factory);
+} else {
+    // No AMD. Register plugin with global jQuery object.
+    factory(jQuery);
+}
+}(function ($, ko) {
 
-    $('.page-level-alert').bind('closed', function () {
-        var announcement_id = $('.page-level-alert').find('.announcement-control').data('announcementid');
-        if (announcement_id) {
-            clearAnnouncement(announcement_id);
-        }
+var clearAnnouncement = function (announcementID) {
+    $.ajax({
+        url: '/announcements/clear/' + announcementID
     });
+};
 
-    // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
-    $(document).on('submit', 'form', function(ev) {
-        var form = $(ev.target);
-        form.find('.disable-on-submit').disableButton();
-        form.find('.disable-on-submit-no-spinner').disableButtonNoSpinner();
-    });
-    $(document).on('submit', 'form.disable-on-submit', function (ev) {
-        $(ev.target).find('[type="submit"]').disableButton();
-    });
-    $(document).on('click', '.add-spinner-on-click', function(ev) {
-        $(ev.target).addSpinnerToButton();
-    });
-
-    $(document).on('click', '.notification-close-btn', function() {
-        var note_id = $(this).data('note-id');
-        var post_url = $(this).data('url');
-        $.post(post_url, {note_id: note_id});
-        $(this).parents('.alert').hide(150);
-    });
-
+$('.page-level-alert').bind('closed', function () {
+    var announcement_id = $('.page-level-alert').find('.announcement-control').data('announcementid');
+    if (announcement_id) {
+        clearAnnouncement(announcement_id);
+    }
 });
+
+// disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
+$(document).on('submit', 'form', function(ev) {
+    var form = $(ev.target);
+    form.find('.disable-on-submit').disableButton();
+    form.find('.disable-on-submit-no-spinner').disableButtonNoSpinner();
+});
+$(document).on('submit', 'form.disable-on-submit', function (ev) {
+    $(ev.target).find('[type="submit"]').disableButton();
+});
+$(document).on('click', '.add-spinner-on-click', function(ev) {
+    $(ev.target).addSpinnerToButton();
+});
+
+$(document).on('click', '.notification-close-btn', function() {
+    var note_id = $(this).data('note-id');
+    var post_url = $(this).data('url');
+    $.post(post_url, {note_id: note_id});
+    $(this).parents('.alert').hide(150);
+});
+
 
 window.onerror = function(message, file, line, col, error) {
     $.post('/jserror/', {
@@ -136,3 +144,5 @@ $.fn.koApplyBindings = function (context) {
     }
     return ko.applyBindings(context, this.get(0));
 };
+
+}));

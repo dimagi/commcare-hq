@@ -15,6 +15,16 @@
             paths: {
                 "jquery": "{% static 'jquery/dist/jquery.min' %}",
                 "ko": "{% static 'knockout/dist/knockout.debug' %}",
+                "hq.helpers": "{% static 'style/js/hq.helpers' %}",
+                "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
+            },
+            shim: {
+                "hq.helpers": {
+                    deps: ['jquery', 'bootstrap', 'ko'],
+                },
+                "bootstrap": {
+                    deps: ['jquery'],
+                },
             },
         });
 
