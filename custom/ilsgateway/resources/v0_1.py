@@ -1,3 +1,4 @@
+from corehq.apps.api.resources.v0_1 import LoginAndDomainAuthentication
 from corehq.apps.locations.resources.v0_1 import LocationResource
 
 
@@ -10,4 +11,5 @@ class ILSLocationResource(LocationResource):
         )
 
     class Meta(LocationResource.Meta):
+        authentication = LoginAndDomainAuthentication(allow_session_auth=True)
         resource_name = 'ils_location'
