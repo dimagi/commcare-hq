@@ -40,8 +40,8 @@ from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.tests import run_with_all_backends
 from corehq.pillows.case import CasePillow
-from corehq.pillows.reportxform import ReportXFormPillow
-from corehq.pillows.xform import XFormPillow
+from corehq.pillows.reportxform import transform_xform_for_report_forms_index
+from corehq.pillows.xform import transform_xform_for_elasticsearch
 from custom.hope.models import CC_BIHAR_PREGNANCY
 
 
@@ -170,7 +170,6 @@ class TestXFormInstanceResource(APIResourceTest):
         # the ptop infrastructure.
 
         #the pillow is set to offline mode - elasticsearch not needed to validate
-        pillow = XFormPillow(online=False)
         fake_xform_es = FakeXFormES()
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
@@ -182,7 +181,7 @@ class TestXFormInstanceResource(APIResourceTest):
                                          '@xmlns': 'fake-xmlns'
                                      })
         backend_form.save()
-        translated_doc = pillow.change_transform(backend_form.to_json())
+        translated_doc = transform_xform_for_elasticsearch(backend_form.to_json())
         fake_xform_es.add_doc(translated_doc['_id'], translated_doc)
 
         self.client.login(username=self.username, password=self.password)
@@ -820,7 +819,7 @@ class TestReportPillow(TestCase):
         Test to make sure report xform and reportxform pillows strip the appVersion dict to match the
         mappings
         """
-        pillows = [ReportXFormPillow(online=False),XFormPillow(online=False)]
+        transform_functions = [transform_xform_for_report_forms_index, transform_xform_for_elasticsearch]
         bad_appVersion = {
             "_id": "foo",
             "domain": settings.ES_XFORM_FULL_INDEX_DOMAINS[0],
@@ -840,8 +839,8 @@ class TestReportPillow(TestCase):
                 }
             }
         }
-        for pillow in pillows:
-            cleaned = pillow.change_transform(bad_appVersion)
+        for fn in transform_functions:
+            cleaned = fn(bad_appVersion)
             self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
             self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
             self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
