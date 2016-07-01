@@ -6,6 +6,7 @@ from fakecouch import FakeCouchDb
 from corehq.util.couch_doc_processor import ResumableDocsByTypeIterator, TooManyRetries, BaseDocProcessor, \
     CouchDocumentProcessor, BulkDocProcessor, BulkProcessingFailed
 from dimagi.ext.couchdbkit import Document
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import get_db
 
 
@@ -172,34 +173,36 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
             'key': ['Bar', doc_id], 'value': None, 'doc': {'_id': doc_id, 'doc_type': 'Bar'}
         }
 
-    def setUp(self):
-        views = {
-            "all_docs/by_doc_type": [
-                (
-                    {"endkey": ["Bar", {}], "group_level": 1, "reduce": True, "startkey": ["Bar"]},
-                    [{"key": "Bar", "value": 4}]
-                ),
-                (
+    def _get_view_results(self, total, chuck_size):
+        results = [(
+            {"endkey": ["Bar", {}], "group_level": 1, "reduce": True, "startkey": ["Bar"]},
+            [{"key": "Bar", "value": total}]
+        )]
+        for chunk in chunked(range(total), chuck_size):
+            chunk_rows = [self._get_row(ident) for ident in chunk]
+            if chunk[0] == 0:
+                results.append((
                     {
                         'startkey': ['Bar'], 'endkey': ['Bar', {}], 'reduce': False,
-                        'limit': 2, 'include_docs': True
+                        'limit': chuck_size, 'include_docs': True
                     },
-                    [
-                        self._get_row(0),
-                        self._get_row(1),
-                    ]
-                ),
-                (
+                    chunk_rows
+                ))
+            else:
+                previous = 'bar-{}'.format(chunk[0] - 1)
+                results.append((
                     {
-                        'endkey': ['Bar', {}], 'skip': 1, 'startkey_docid': 'bar-1', 'reduce': False,
-                        'startkey': ['Bar', 'bar-1'], 'limit': 2, 'include_docs': True
+                        'endkey': ['Bar', {}], 'skip': 1, 'startkey_docid': previous, 'reduce': False,
+                        'startkey': ['Bar', previous], 'limit': chuck_size, 'include_docs': True
                     },
-                    [
-                        self._get_row(2),
-                        self._get_row(3),
-                    ]
-                ),
-            ]
+                    chunk_rows
+                ))
+
+        return results
+
+    def setUp(self):
+        views = {
+            "all_docs/by_doc_type": self._get_view_results(4, chuck_size=2)
         }
         docs = [self._get_row(ident)['doc'] for ident in range(4)]
         self.db = FakeCouchDb(views=views, docs={
@@ -259,6 +262,7 @@ class TestBulkDocProcessor(BaseCouchDocProcessorTest):
 
     def setUp(self):
         super(TestBulkDocProcessor, self).setUp()
+        # view call after restarting doesn't have the 'skip' arg
         self.db.update_view(
             "all_docs/by_doc_type",
             [(
@@ -296,35 +300,7 @@ class TestBulkDocProcessor(BaseCouchDocProcessorTest):
         self.assertEqual(doc_processor.docs_processed, {'bar-0', 'bar-2', 'bar-3'})
 
     def test_remainder_gets_processed(self):
-        self.db.add_view(
-            "all_docs/by_doc_type",
-            [
-                (
-                    {"endkey": ["Bar", {}], "group_level": 1, "reduce": True, "startkey": ["Bar"]},
-                    [{"key": "Bar", "value": 4}]
-                ),
-                (
-                    {
-                        'startkey': ['Bar'], 'endkey': ['Bar', {}], 'reduce': False,
-                        'limit': 3, 'include_docs': True
-                    },
-                    [
-                        self._get_row(0),
-                        self._get_row(1),
-                        self._get_row(2),
-                    ]
-                ),
-                (
-                    {
-                        'endkey': ['Bar', {}], 'skip': 1, 'startkey_docid': 'bar-2', 'reduce': False,
-                        'startkey': ['Bar', 'bar-2'], 'limit': 3, 'include_docs': True
-                    },
-                    [
-                        self._get_row(3),
-                    ]
-                ),
-            ]
-        )
+        self.db.add_view("all_docs/by_doc_type", self._get_view_results(4, 3))
         doc_processor, processor = self._get_processor(chunk_size=3)
         processor, skipped = processor.run()
         self.assertEqual(processor, 4)
