@@ -383,14 +383,18 @@ class CouchDocumentProcessor(object):
 
 
 class BulkDocProcessor(CouchDocumentProcessor):
-    """Process couch docs in batches
+    """Process couch docs for a single doc type in batches
 
     The bulk doc processor will send a batch of documents to the document
     processor. If the processor does not respond with True then
     the iteration is halted. Restarting the iteration will start by
-    re-sending the previous chunk to the processor
+    re-sending the previous chunk to the processor.
 
-    :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
+    The size of the batches passed to the document processor will be
+    ``chunk_size - may vary depending on how they are being filtered by the
+    document processor but will never exceed ``chunk_size``.
+
+    :param doc_type_map: Dict containing a single `doc_type_name: model_class` pair.
     :param doc_processor: A `BaseDocProcessor` object used to
     process documents.
     :param reset: Reset existing processor state (if any), causing all
@@ -401,6 +405,7 @@ class BulkDocProcessor(CouchDocumentProcessor):
     100 would exceed available memory.
     """
     def __init__(self, doc_type_map, doc_processor, reset=False, chunk_size=100):
+        assert len(doc_type_map) == 1
         super(BulkDocProcessor, self).__init__(doc_type_map, doc_processor, reset=reset, chunk_size=chunk_size)
         self.changes = []
 
