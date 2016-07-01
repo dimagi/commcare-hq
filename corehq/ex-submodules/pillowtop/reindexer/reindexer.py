@@ -1,13 +1,15 @@
 from abc import ABCMeta
 
+import six
+
 from corehq.elastic import get_es_new
-from corehq.util.couch_doc_processor import BaseDocProcessor, CouchDocumentProcessor
+from corehq.util.couch_doc_processor import BaseDocProcessor, BulkDocProcessor
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 from pillowtop.feed.interface import Change
-
-import six
+from pillowtop.logger import pillow_logging
+from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload
 
 
 class PillowReindexer(six.with_metaclass(ABCMeta)):
@@ -52,7 +54,7 @@ def _prepare_index_for_reindex(es, index_info):
 def _prepare_index_for_usage(es, index_info):
     set_index_normal_settings(es, index_info.index)
     es.indices.refresh(index_info.index)
-        
+
 
 class ElasticPillowReindexer(PillowChangeProviderReindexer):
 
@@ -74,34 +76,51 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
         _prepare_index_for_usage(self.es, self.index_info)
 
 
-class PillowReindexProcessor(BaseDocProcessor):
-    def __init__(self, slug, pillow):
-        super(PillowReindexProcessor, self).__init__(slug)
+class BulkPillowReindexProcessor(BaseDocProcessor):
+    def __init__(self, es_client, index_info, pillow):
+        super(BulkPillowReindexProcessor, self).__init__(index_info.index)
+        self.es = es_client
         self.pillow = pillow
+        self.index_info = index_info
 
     @property
     def unique_key(self):
         return "{}_{}_{}".format(self.slug, self.pillow.pillow_id, 'reindex')
 
-    def process_doc(self, doc, couchdb):
-        change = self._doc_to_change(doc, couchdb)
-        self.pillow.process_change(change)
+    def process_bulk_docs(self, docs, couchdb):
+        changes = [self._doc_to_change(doc, couchdb) for doc in docs]
+
+        # todo: decouple from pillow
+        bulk_changes = build_bulk_payload(self.index_info, changes, self.pillow.change_transform)
+
+        max_payload_size = pow(10, 8)  # ~ 100Mb
+        payloads = prepare_bulk_payloads(bulk_changes, max_payload_size)
+        if len(payloads) > 1:
+            pillow_logging.info("%s,payload split into %s parts" % (self.unique_key, len(payloads)))
+
+        pillow_logging.info("%s,sending payload,%s" % (self.unique_key, len(changes)))
+
+        for payload in payloads:
+            self.es.bulk(payload)
+
         return True
 
-    def _doc_to_change(self, doc, couchdb):
+    @staticmethod
+    def _doc_to_change(doc, couchdb):
         return Change(
             id=doc['_id'], sequence_id=None, document=doc, deleted=False,
             document_store=CouchDocumentStore(couchdb)
         )
 
 
-class ResumableElasticPillowReindexer(PillowReindexer):
+class ResumableBulkElasticPillowReindexer(PillowReindexer):
     can_be_reset = True
 
-    def __init__(self, pillow, doc_types, elasticsearch, index_info):
-        super(ResumableElasticPillowReindexer, self).__init__(pillow)
+    def __init__(self, pillow, doc_types, elasticsearch, index_info, chunk_size=1000):
+        super(ResumableBulkElasticPillowReindexer, self).__init__(pillow)
         self.es = elasticsearch
         self.index_info = index_info
+        self.chunk_size = chunk_size
 
         self.doc_type_map = dict(
             t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
@@ -112,11 +131,12 @@ class ResumableElasticPillowReindexer(PillowReindexer):
         _clean_index(self.es, self.index_info)
 
     def reindex(self, reset=False):
-        doc_processor = PillowReindexProcessor(self.index_info.index, self.pillow)
-        processor = CouchDocumentProcessor(
+        doc_processor = BulkPillowReindexProcessor(self.es, self.index_info, self.pillow)
+        processor = BulkDocProcessor(
             self.doc_type_map,
             doc_processor,
-            reset
+            reset=reset,
+            chunk_size=self.chunk_size
         )
 
         if reset or not processor.has_started():
