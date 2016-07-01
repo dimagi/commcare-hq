@@ -333,6 +333,7 @@ class CouchDocumentProcessor(object):
         self._setup()
         with self.doc_processor:
             for doc in self.docs_by_type:
+                self.visited += 1
                 self._process_doc(doc)
                 self._update_progress()
 
@@ -358,7 +359,6 @@ class CouchDocumentProcessor(object):
                     self.skipped += 1
 
     def _update_progress(self):
-        self.visited += 1
         if self.visited % self.chunk_size == 0:
             self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
 
@@ -408,7 +408,7 @@ class BulkDocProcessor(CouchDocumentProcessor):
         if self.doc_processor.should_process(doc):
             self.changes.append(doc)
 
-        if len(self.changes) % self.chunk_size == 0:
+        if self.visited % self.chunk_size == 0:
             self._process_chunk()
 
     def _process_chunk(self):
@@ -420,7 +420,6 @@ class BulkDocProcessor(CouchDocumentProcessor):
             raise BulkProcessingFailed("Processing batch failed")
 
     def _update_progress(self):
-        self.visited += 1
         if self.visited % self.chunk_size == 0:
             self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
 
