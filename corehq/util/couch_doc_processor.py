@@ -170,6 +170,10 @@ class TooManyRetries(Exception):
     pass
 
 
+class BulkProcessingFailed(Exception):
+    pass
+
+
 DOCS_SKIPPED_WARNING = """
         WARNING {} documents were not processed due to concurrent modification
         during migration. Run the migration again until you do not see this
@@ -202,6 +206,17 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
         the document migration will be retried later.
         """
         raise NotImplementedError
+
+    def process_bulk_docs(self, docs, couchdb):
+        """Process a batch of documents. The default implementation passes
+        each doc in turn to ``process_doc``.
+
+        :param docs: A list of document dicts to be processed.
+        :param couchdb: Couchdb database associated with the docs.
+        :returns: True if doc was processed successfully else False.
+        If this returns False the processing will be halted.
+        """
+        return all(self.process_doc(doc, couchdb) for doc in docs)
 
     def handle_skip(self, doc):
         """Called when a document is going to be skipped i.e. it has been
@@ -367,3 +382,47 @@ class CouchDocumentProcessor(object):
         ))
         if self.skipped:
             print(DOCS_SKIPPED_WARNING.format(self.skipped))
+
+
+class BulkDocProcessor(CouchDocumentProcessor):
+    """Process couch docs in batches
+
+    The bulk doc processor will send a batch of documents to the document
+    processor. If the processor does not respond with True then
+    the iteration is halted. Restarting the iteration will start by
+    re-sending the previous chunk to the processor
+
+    :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
+    :param doc_processor: A `BaseDocProcessor` object used to
+    process documents.
+    :param reset: Reset existing processor state (if any), causing all
+    documents to be reconsidered for processing, if this is true.
+    :param chunk_size: Maximum number of records to read from couch at
+    one time. It may be necessary to use a smaller chunk size if the
+    records being processed are very large and the default chunk size of
+    100 would exceed available memory.
+    """
+    def __init__(self, doc_type_map, doc_processor, reset=False, chunk_size=100):
+        super(BulkDocProcessor, self).__init__(doc_type_map, doc_processor, reset=reset, chunk_size=chunk_size)
+        self.changes = []
+
+    def _process_doc(self, doc):
+        if self.doc_processor.should_process(doc):
+            self.changes.append(doc)
+
+        if len(self.changes) % self.chunk_size == 0:
+            self._process_chunk()
+
+    def _process_chunk(self):
+        ok = self.doc_processor.process_bulk_docs(self.changes, self.couchdb)
+        if ok:
+            self.processed += len(self.changes)
+            self.changes = []
+        else:
+            raise BulkProcessingFailed("Processing batch failed")
+
+    def _processing_complete(self):
+        if len(self.changes):
+            self._process_chunk()
+
+        super(BulkDocProcessor, self)._processing_complete()
