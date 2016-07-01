@@ -320,8 +320,8 @@ class CouchDocumentProcessor(object):
         self._setup()
         with self.doc_processor:
             for doc in self.docs_by_type:
-                self._update_progress()
                 self._process_doc(doc)
+                self._update_progress()
 
         self._processing_complete()
 
