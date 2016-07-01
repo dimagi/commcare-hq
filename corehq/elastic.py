@@ -40,26 +40,35 @@ def get_es_new(**kwargs):
     return Elasticsearch(hosts, **kwargs)
 
 
-def doc_exists_in_es(index, doc_id):
-    es_meta = ES_META[index]
-    return get_es_new().exists(es_meta.index, es_meta.type, doc_id)
+def doc_exists_in_es(index_info, doc_id_or_dict):
+    """
+    Check if a document exists, by ID or the whole document.
+    """
+    if isinstance(doc_id_or_dict, basestring):
+        doc_id = doc_id_or_dict
+    else:
+        assert isinstance(doc_id_or_dict, dict)
+        doc_id = doc_id_or_dict['_id']
+    return get_es_new().exists(index_info.index, index_info.type, doc_id)
 
 
-def send_to_elasticsearch(index, doc, delete=False):
+def send_to_elasticsearch(index_name, doc, delete=False):
     """
     Utility method to update the doc in elasticsearch.
     Duplicates the functionality of pillowtop but can be called directly.
     """
+    from pillowtop.es_utils import ElasticsearchIndexInfo
     doc_id = doc['_id']
-    es_meta = ES_META[index]
-    doc_exists = doc_exists_in_es(index, doc_id)
+    es_meta = ES_META[index_name]
+    index_info = ElasticsearchIndexInfo(index=es_meta.index, type=es_meta.type)
+    doc_exists = doc_exists_in_es(index_info, doc_id)
     return send_to_es(
         index=es_meta.index,
         doc_type=es_meta.type,
         doc_id=doc_id,
         es_getter=get_es_new,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
-                                  send_to_elasticsearch.__name__, index),
+                                  send_to_elasticsearch.__name__, index_name),
         data=doc,
         except_on_failure=True,
         update=doc_exists,
