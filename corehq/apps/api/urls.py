@@ -71,6 +71,7 @@ API_LIST = (
         DomainMetadataResource,
         locations.v0_5.LocationResource,
         locations.v0_5.LocationTypeResource,
+        v0_5.SimpleReportConfigurationResource,
     )),
 )
 
