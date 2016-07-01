@@ -410,8 +410,8 @@ class BulkDocProcessor(CouchDocumentProcessor):
     the iteration is halted. Restarting the iteration will start by
     re-sending the previous chunk to the processor.
 
-    The size of the batches passed to the document processor will be
-    ``chunk_size - may vary depending on how they are being filtered by the
+    The size of the batches passed to the document processor may vary
+    depending on how they are being filtered by the
     document processor but will never exceed ``chunk_size``.
 
     :param doc_type_map: Dict containing a single `doc_type_name: model_class` pair.
