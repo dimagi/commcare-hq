@@ -94,6 +94,7 @@ class ResumableDocsByTypeIterator(object):
 
         # save iteration state without offset to signal completion
         self.state.pop("offset", None)
+        self.state["retry"] = {}
         self._save_state()
 
     def retry(self, doc, max_retry=3):
@@ -201,6 +202,15 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
         the document migration will be retried later.
         """
         raise NotImplementedError
+
+    def handle_skip(self, doc):
+        """Called when a document is going to be skipped i.e. it has been
+        retried > max_retries.
+
+        :returns: True to indicate that the skip has been handled
+                  or False to stop execution
+        """
+        return False
 
     def processing_complete(self, skipped):
         pass
@@ -324,13 +334,15 @@ class CouchDocumentProcessor(object):
         ok = self.doc_processor.process_doc(doc, self.couchdb)
         if ok:
             self.processed += 1
-            self.docs_by_type.mark_doc_processed(doc)
         else:
             try:
                 self.docs_by_type.retry(doc, self.max_retry)
             except TooManyRetries:
-                print("Skip: {doc_type} {_id}".format(**doc))
-                self.skipped += 1
+                if not self.doc_processor.handle_skip(doc):
+                    raise
+                else:
+                    print("Skip: {doc_type} {_id}".format(**doc))
+                    self.skipped += 1
 
     def _update_progress(self):
         self.visited += 1

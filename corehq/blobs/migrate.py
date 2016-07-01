@@ -144,6 +144,9 @@ class BaseDocMigrator(BaseDocProcessor):
     def unique_key(self):
         return self.slug + "-blob-migration"
 
+    def handle_skip(self, doc):
+        return True  # ignore
+
     def _prepare_doc(self, doc, couchdb):
         if self.load_attachments:
             obj = BlobHelper(doc, couchdb)

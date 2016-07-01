@@ -232,8 +232,10 @@ class TestCouchDocProcessor(SimpleTestCase):
         self._test_processor(0, [])
 
     def test_multiple_runs_with_skip(self):
-        self._test_processor(2, range(2), skip_docs=['bar-2', 'bar-3'])
-        self._test_processor(2, [2, 3])
+        with self.assertRaises(TooManyRetries):
+            self._test_processor(3, range(3), skip_docs=['bar-3'])
+
+        self._test_processor(1, [3])
 
     @staticmethod
     def _get_processor():
