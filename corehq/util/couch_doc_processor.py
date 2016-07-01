@@ -198,11 +198,11 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def process_doc(self, doc, couchdb):
-        """Migrate a single document
+        """Process a single document
 
-        :param doc: The document dict to be migrated.
-        :param couchdb: Couchdb database in which to save migrated doc.
-        :returns: True if doc was migrated else False. If this returns False
+        :param doc: The document dict to be processed.
+        :param couchdb: Couchdb database associated with the docs.
+        :returns: True if doc was processed successfully else False. If this returns False
         the document migration will be retried later.
         """
         raise NotImplementedError
@@ -241,7 +241,6 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
 class CouchDocumentProcessor(object):
     """Process Couch Docs
 
-    :param slug: process name.
     :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
     :param doc_processor: A `BaseDocProcessor` object used to
     process documents.
