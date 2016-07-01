@@ -72,8 +72,11 @@ class Command(BaseCommand):
                                     if p != "#case/parent/" and p != "#case/grandparent/":
                                         self._form_error(form, "Unknown prefix remaining: {}".format(p))
                                 if options['save']:
-                                    save_xform(form.get_app(), form, form.source)
-                                    app_dirty = True
+                                    try:
+                                        save_xform(form.get_app(), form, form.source)
+                                        app_dirty = True
+                                    except:
+                                        self._form_error(form, "Form xml invalid")
                     if app_dirty:
                         app.save()
         logger.info('done with cmitfb_migrate_syntax')
