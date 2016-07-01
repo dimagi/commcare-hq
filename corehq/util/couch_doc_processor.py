@@ -27,7 +27,7 @@ class ResumableDocsByTypeIterator(object):
     is stopped and later resumed.
     """
 
-    def __init__(self, db, doc_types, iteration_key, chunk_size=100):
+    def __init__(self, db, doc_types, iteration_key, chunk_size=100, log_handler=None):
         if isinstance(doc_types, str):
             raise TypeError("expected list of strings, got %r" % (doc_types,))
         self.db = db
@@ -64,7 +64,7 @@ class ResumableDocsByTypeIterator(object):
         args.update(
             view_name='all_docs/by_doc_type',
             chunk_size=chunk_size,
-            log_handler=ResumableDocsByTypeLogHandler(self),
+            log_handler=ResumableDocsByTypeLogHandler(self, child=log_handler),
             include_docs=True,
             reduce=False,
         )
@@ -157,13 +157,21 @@ class ResumableDocsByTypeIterator(object):
 
 class ResumableDocsByTypeLogHandler(PaginateViewLogHandler):
 
-    def __init__(self, iterator):
+    def __init__(self, iterator, child=None):
         self.iterator = iterator
+        self.child = child
 
     def view_starting(self, db, view_name, kwargs, total_emitted):
+        if self.child:
+            self.child.view_starting(db, view_name, kwargs, total_emitted)
+
         offset = {k: v for k, v in kwargs.items() if k.startswith("startkey")}
         self.iterator.state["offset"] = offset
         self.iterator._save_state()
+
+    def view_ending(self, db, view_name, kwargs, total_emitted, time):
+        if self.child:
+            self.child.view_ending(db, view_name, kwargs, total_emitted, time)
 
 
 class TooManyRetries(Exception):
@@ -251,8 +259,10 @@ class CouchDocumentProcessor(object):
     one time. It may be necessary to use a smaller chunk size if the
     records being processed are very large and the default chunk size of
     100 would exceed available memory.
+    :param log_handler: instance of PaginateViewLogHandler to be notified of
+    view events.
     """
-    def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2, chunk_size=100):
+    def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2, chunk_size=100, log_handler=None):
         self.doc_type_map = doc_type_map
         self.doc_processor = doc_processor
         self.reset = reset
@@ -264,7 +274,8 @@ class CouchDocumentProcessor(object):
             "documents must live in same couch db: %s" % repr(doc_type_map)
 
         self.docs_by_type = ResumableDocsByTypeIterator(
-            self.couchdb, doc_type_map, doc_processor.unique_key, chunk_size=chunk_size
+            self.couchdb, doc_type_map, doc_processor.unique_key, chunk_size=chunk_size,
+            log_handler=log_handler
         )
 
         self.visited = 0
@@ -333,7 +344,6 @@ class CouchDocumentProcessor(object):
         self._setup()
         with self.doc_processor:
             for doc in self.docs_by_type:
-                self.visited += 1
                 self._process_doc(doc)
                 self._update_progress()
 
@@ -359,6 +369,7 @@ class CouchDocumentProcessor(object):
                     self.skipped += 1
 
     def _update_progress(self):
+        self.visited += 1
         if self.visited % self.chunk_size == 0:
             self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
 
@@ -380,6 +391,15 @@ class CouchDocumentProcessor(object):
         ))
         if self.skipped:
             print(DOCS_SKIPPED_WARNING.format(self.skipped))
+
+
+class BulkDocProcessorLogHandler(PaginateViewLogHandler):
+
+    def __init__(self, processor):
+        self.processor = processor
+
+    def view_starting(self, db, view_name, kwargs, total_emitted):
+        self.processor.process_chunk()
 
 
 class BulkDocProcessor(CouchDocumentProcessor):
@@ -406,17 +426,18 @@ class BulkDocProcessor(CouchDocumentProcessor):
     """
     def __init__(self, doc_type_map, doc_processor, reset=False, chunk_size=100):
         assert len(doc_type_map) == 1
-        super(BulkDocProcessor, self).__init__(doc_type_map, doc_processor, reset=reset, chunk_size=chunk_size)
+        super(BulkDocProcessor, self).__init__(
+            doc_type_map, doc_processor, reset=reset, chunk_size=chunk_size,
+            log_handler=BulkDocProcessorLogHandler(self)
+        )
         self.changes = []
 
     def _process_doc(self, doc):
         if self.doc_processor.should_process(doc):
             self.changes.append(doc)
 
-        if self.visited % self.chunk_size == 0:
-            self._process_chunk()
-
-    def _process_chunk(self):
+    def process_chunk(self):
+        """Called by the BulkDocProcessorLogHandler"""
         ok = self.doc_processor.process_bulk_docs(self.changes, self.couchdb)
         if ok:
             self.processed += len(self.changes)
@@ -425,6 +446,7 @@ class BulkDocProcessor(CouchDocumentProcessor):
             raise BulkProcessingFailed("Processing batch failed")
 
     def _update_progress(self):
+        self.visited += 1
         if self.visited % self.chunk_size == 0:
             self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
 
