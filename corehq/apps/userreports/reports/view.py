@@ -34,10 +34,10 @@ from corehq.apps.userreports.exceptions import (
     UserReportsFilterError,
     DataSourceConfigurationNotFoundError)
 from corehq.apps.userreports.models import (
-    STATIC_PREFIX,
     CUSTOM_REPORT_PREFIX,
     StaticReportConfiguration,
     ReportConfiguration,
+    report_config_id_is_static,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
@@ -128,10 +128,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     def is_static(self):
-        return any(
-            self.report_config_id.startswith(prefix)
-            for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
-        )
+        return report_config_id_is_static(self.report_config_id)
 
     @property
     def is_custom_rendered(self):

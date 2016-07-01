@@ -26,7 +26,7 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.models import ReportConfiguration, \
-    StaticReportConfiguration, STATIC_PREFIX, CUSTOM_REPORT_PREFIX
+    StaticReportConfiguration, report_config_id_is_static
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
@@ -559,11 +559,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         :param domain: The domain of the ReportConfiguration
         :return: A ReportConfiguration
         """
-        is_static = any(
-            id_.startswith(prefix)
-            for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
-        )
-        if is_static:
+        if report_config_id_is_static(id_):
             report_config = StaticReportConfiguration.by_id(id_)
             if report_config.domain != domain:
                 raise NotFound

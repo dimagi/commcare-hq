@@ -439,10 +439,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 
     @property
     def is_static(self):
-        return any(
-            self._id.startswith(prefix)
-            for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
-        )
+        return report_config_id_is_static(self._id)
 
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
