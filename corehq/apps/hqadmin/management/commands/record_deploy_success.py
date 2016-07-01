@@ -50,7 +50,7 @@ class Command(BaseCommand):
                   "{} pillow errors queued for retry\n".format(rows_updated)
 
         deploy_notification_text = (
-            "CommCareHQ has been successfully deployed to *{}* by *{}*. "
+            "CommCareHQ has been successfully deployed to *{}* by *{}*. Monitor the dashboard: https://p.datadoghq.com/sb/5c4af2ac8-1f739e93ef"
             "Find the diff {{diff_link}}".format(
                 options['environment'],
                 options['user'],
