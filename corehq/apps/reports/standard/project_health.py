@@ -3,6 +3,7 @@ import datetime
 from django.utils.translation import ugettext_noop
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.users.util import raw_username
@@ -162,7 +163,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             unhealthy_users = filter(
-                lambda stub: stub.is_active and not stub.is_performing,
+                lambda stub: stub.is_active and not stub.is_performing and not
+                CommCareUser.get(stub.user_id).is_deleted(),
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
@@ -174,7 +176,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: not stub.is_active,
+                lambda stub: not stub.is_active and not
+                CommCareUser.get(stub.user_id).is_deleted(),
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: stub.delta_forms)
@@ -186,7 +189,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: stub.is_newly_performing,
+                lambda stub: stub.is_newly_performing and not
+                CommCareUser.get(stub.user_id).is_deleted(),
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
