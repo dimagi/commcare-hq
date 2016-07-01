@@ -31,7 +31,7 @@ from corehq.apps.groups.models import Group
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.xform import XFormPillow
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from pillowtop.es_utils import completely_initialize_pillow_index, initialize_index_and_mapping
@@ -55,52 +55,52 @@ class ExportFilterResultTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        form_pillow = XFormPillow(online=False)
-        case_pillow = CasePillow(online=False)
-        cls.pillows = [form_pillow, case_pillow]
+        cls.case_pillow = CasePillow(online=False)
 
-        es = get_es_new()
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            for pillow in cls.pillows:
-                completely_initialize_pillow_index(pillow)
+            es = get_es_new()
+            cls.tearDownClass()
+            completely_initialize_pillow_index(cls.case_pillow)
             initialize_index_and_mapping(es, GROUP_INDEX_INFO)
+            initialize_index_and_mapping(es, XFORM_INDEX_INFO)
 
         case = new_case(closed=True)
-        case_pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
         case = new_case(closed=False)
-        case_pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
         case = new_case(closed=True, owner_id="foo")
-        case_pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
         case = new_case(closed=False, owner_id="bar")
-        case_pillow.send_robust(case.to_json())
+        cls.case_pillow.send_robust(case.to_json())
 
         group = Group(_id=uuid.uuid4().hex, users=["foo", "bar"])
         cls.group_id = group._id
         send_to_elasticsearch('groups', group.to_json())
 
         form = new_form(form={"meta": {"userID": None}})
-        form_pillow.send_robust(form.to_json())
+        send_to_elasticsearch('forms', form.to_json())
 
         form = new_form(form={"meta": {"userID": ""}})
-        form_pillow.send_robust(form.to_json())
+        send_to_elasticsearch('forms', form.to_json())
 
         form = new_form(form={"meta": {"deviceID": "abc"}})
-        form_pillow.send_robust(form.to_json())
+        send_to_elasticsearch('forms', form.to_json())
 
         form = new_form(form={"meta": {"userID": uuid.uuid4().hex}})
-        form_pillow.send_robust(form.to_json())
+        send_to_elasticsearch('forms', form.to_json())
 
-        for pillow in cls.pillows:
-            pillow.get_es_new().indices.refresh(pillow.es_index)
+        es.indices.refresh(cls.case_pillow.es_index)
+        es.indices.refresh(XFORM_INDEX_INFO.index)
         es.indices.refresh(GROUP_INDEX_INFO.index)
 
     @classmethod
     def tearDownClass(cls):
-        for pillow in cls.pillows:
-            ensure_index_deleted(pillow.es_index)
+        ensure_index_deleted(cls.case_pillow.es_index)
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        ensure_index_deleted(GROUP_INDEX_INFO.index)
 
     def test_filter_combination(self):
         owner_filter = OwnerFilter(DEFAULT_USER)
