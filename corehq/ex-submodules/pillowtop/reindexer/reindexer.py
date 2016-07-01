@@ -1,4 +1,4 @@
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 import six
 
@@ -12,11 +12,15 @@ from pillowtop.logger import pillow_logging
 from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload
 
 
-class PillowReindexer(six.with_metaclass(ABCMeta)):
-    can_be_reset = False
+class Reindexer(six.with_metaclass(ABCMeta)):
+    def consume_options(self, options):
+        """Called from the management command with the command line
+        options.
 
-    def __init__(self, pillow):
-        self.pillow = pillow
+        :param options: command line options dict
+        :return: dict of unprocessed options
+        """
+        return options
 
     def clean(self):
         """
@@ -27,15 +31,30 @@ class PillowReindexer(six.with_metaclass(ABCMeta)):
             """
         pass
 
+    @abstractmethod
+    def reindex(self):
+        """Perform the reindex"""
+        raise NotImplementedError
+
+
+class PillowReindexer(Reindexer):
+    def __init__(self, pillow):
+        self.pillow = pillow
+
 
 class PillowChangeProviderReindexer(PillowReindexer):
+    start_from = None
 
     def __init__(self, pillow, change_provider):
         super(PillowChangeProviderReindexer, self).__init__(pillow)
         self.change_provider = change_provider
 
-    def reindex(self, start_from=None):
-        for change in self.change_provider.iter_all_changes(start_from=start_from):
+    def consume_options(self, options):
+        self.start_from = options.pop("start_from", None)
+        return options
+
+    def reindex(self):
+        for change in self.change_provider.iter_all_changes(start_from=self.start_from):
             self.pillow.process_change(change)
 
 
@@ -66,12 +85,12 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
     def clean(self):
         _clean_index(self.es, self.index_info)
 
-    def reindex(self, start_from=None):
-        if not start_from:
+    def reindex(self):
+        if not self.start_from:
             # when not resuming force delete and create the index
             _prepare_index_for_reindex(self.es, self.index_info)
 
-        super(ElasticPillowReindexer, self).reindex(start_from)
+        super(ElasticPillowReindexer, self).reindex()
 
         _prepare_index_for_usage(self.es, self.index_info)
 
@@ -118,12 +137,11 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         )
 
 
-class ResumableBulkElasticPillowReindexer(PillowReindexer):
-    can_be_reset = True
+class ResumableBulkElasticPillowReindexer(Reindexer):
+    reset = False
 
     def __init__(self, name, doc_types, elasticsearch, index_info,
                  doc_filter=None, doc_transform=None, chunk_size=1000):
-        super(ResumableBulkElasticPillowReindexer, self).__init__(None)
         self.es = elasticsearch
         self.index_info = index_info
         self.chunk_size = chunk_size
@@ -135,18 +153,22 @@ class ResumableBulkElasticPillowReindexer(PillowReindexer):
 
         self.doc_processor = BulkPillowReindexProcessor(name, self.es, self.index_info, doc_filter, doc_transform)
 
+    def consume_options(self, options):
+        self.reset = options.pop("reset", False)
+        return options
+
     def clean(self):
         _clean_index(self.es, self.index_info)
 
-    def reindex(self, reset=False):
+    def reindex(self):
         processor = BulkDocProcessor(
             self.doc_type_map,
             self.doc_processor,
-            reset=reset,
+            reset=self.reset,
             chunk_size=self.chunk_size
         )
 
-        if reset or not processor.has_started():
+        if self.reset or not processor.has_started():
             # when not resuming force delete and create the index
             _prepare_index_for_reindex(self.es, self.index_info)
 
