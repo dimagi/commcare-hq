@@ -15,7 +15,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
 from corehq.pillows.utils import get_user_type
 from couchforms.jsonobject_extensions import GeoPointProperty
 from .base import HQPillow
-from couchforms.const import RESERVED_WORDS
+from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance
 from dateutil import parser
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
@@ -25,7 +25,7 @@ from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
-    ElasticPillowReindexer, ResumableElasticPillowReindexer
+    ElasticPillowReindexer, ResumableBulkElasticPillowReindexer
 
 UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
@@ -69,6 +69,13 @@ class XFormPillow(HQPillow):
 
     def change_transform(self, doc_dict, include_props=True):
         return transform_xform_for_elasticsearch(doc_dict, include_props)
+
+
+def device_log_filter(doc_dict):
+    """
+    :return: True to filter out doc
+    """
+    return doc_dict.get('xmlns', None) == DEVICE_LOG_XMLNS
 
 
 def transform_xform_for_elasticsearch(doc_dict, include_props=True):
@@ -180,11 +187,13 @@ def get_couch_form_reindexer():
 
 
 def get_resumable_couch_form_reindexer():
-    return ResumableElasticPillowReindexer(
-        pillow=XFormPillow(online=False),
+    return ResumableBulkElasticPillowReindexer(
+        name=XFormPillow(online=False).pillow_id,
         doc_types=[XFormInstance],
         elasticsearch=get_es_new(),
-        index_info=_get_xform_index_info()
+        index_info=_get_xform_index_info(),
+        doc_filter=device_log_filter,
+        doc_transform=transform_xform_for_elasticsearch
     )
 
 

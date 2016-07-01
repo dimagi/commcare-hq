@@ -4,7 +4,7 @@ from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
 
 from corehq.util.couch_doc_processor import ResumableDocsByTypeIterator, TooManyRetries, BaseDocProcessor, \
-    CouchDocumentProcessor
+    CouchDocumentProcessor, BulkDocProcessor, BulkProcessingFailed
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.database import get_db
 
@@ -161,7 +161,9 @@ class Bar(Document):
     pass
 
 
-class TestCouchDocProcessor(SimpleTestCase):
+class BaseCouchDocProcessorTest(SimpleTestCase):
+    processor_class = None
+
     @staticmethod
     def _get_row(ident):
         doc_id = 'bar-{}'.format(ident)
@@ -197,7 +199,8 @@ class TestCouchDocProcessor(SimpleTestCase):
                         self._get_row(3),
                     ]
                 ),
-        ]}
+            ]
+        }
         docs = [self._get_row(ident)['doc'] for ident in range(4)]
         self.db = FakeCouchDb(views=views, docs={
             doc['_id']: doc for doc in docs
@@ -206,6 +209,19 @@ class TestCouchDocProcessor(SimpleTestCase):
 
     def tearDown(self):
         self.db.reset()
+
+    def _get_processor(self, chunk_size=2):
+        doc_processor = DemoProcessor('test')
+        processor = self.processor_class(
+            {'Bar': Bar},
+            doc_processor,
+            chunk_size=chunk_size,
+        )
+        return doc_processor, processor
+
+
+class TestCouchDocProcessor(BaseCouchDocProcessorTest):
+    processor_class = CouchDocumentProcessor
 
     def _test_processor(self, expected_processed, doc_idents, ignore_docs=None, skip_docs=None):
         doc_processor, processor = self._get_processor()
@@ -237,12 +253,83 @@ class TestCouchDocProcessor(SimpleTestCase):
 
         self._test_processor(1, [3])
 
-    @staticmethod
-    def _get_processor():
-        doc_processor = DemoProcessor('test')
-        processor = CouchDocumentProcessor(
-            {'Bar': Bar},
-            doc_processor,
-            chunk_size=2,
+
+class TestBulkDocProcessor(BaseCouchDocProcessorTest):
+    processor_class = BulkDocProcessor
+
+    def setUp(self):
+        super(TestBulkDocProcessor, self).setUp()
+        self.db.update_view(
+            "all_docs/by_doc_type",
+            [(
+                {
+                    'endkey': ['Bar', {}], 'startkey_docid': 'bar-1', 'reduce': False,
+                    'startkey': ['Bar', 'bar-1'], 'limit': 2, 'include_docs': True
+                },
+                [
+                    self._get_row(2),
+                    self._get_row(3),
+                ]
+            )]
         )
-        return doc_processor, processor
+
+    def test_batch_gets_retried(self):
+        doc_processor, processor = self._get_processor()
+        doc_processor.skip_docs = ['bar-2']
+        with self.assertRaises(BulkProcessingFailed):
+            processor.run()
+
+        self.assertEqual(doc_processor.docs_processed, {'bar-0', 'bar-1'})
+
+        doc_processor, processor = self._get_processor()
+        processor, skipped = processor.run()
+        self.assertEqual(processor, 2)
+        self.assertEqual(skipped, 0)
+        self.assertEqual(doc_processor.docs_processed, {'bar-2', 'bar-3'})
+
+    def test_filtering(self):
+        doc_processor, processor = self._get_processor()
+        doc_processor.ignore_docs = ['bar-1']
+        processor, skipped = processor.run()
+        self.assertEqual(processor, 3)
+        self.assertEqual(skipped, 0)
+        self.assertEqual(doc_processor.docs_processed, {'bar-0', 'bar-2', 'bar-3'})
+
+    def test_remainder_gets_processed(self):
+        self.db.add_view(
+            "all_docs/by_doc_type",
+            [
+                (
+                    {"endkey": ["Bar", {}], "group_level": 1, "reduce": True, "startkey": ["Bar"]},
+                    [{"key": "Bar", "value": 4}]
+                ),
+                (
+                    {
+                        'startkey': ['Bar'], 'endkey': ['Bar', {}], 'reduce': False,
+                        'limit': 3, 'include_docs': True
+                    },
+                    [
+                        self._get_row(0),
+                        self._get_row(1),
+                        self._get_row(2),
+                    ]
+                ),
+                (
+                    {
+                        'endkey': ['Bar', {}], 'skip': 1, 'startkey_docid': 'bar-2', 'reduce': False,
+                        'startkey': ['Bar', 'bar-2'], 'limit': 3, 'include_docs': True
+                    },
+                    [
+                        self._get_row(3),
+                    ]
+                ),
+            ]
+        )
+        doc_processor, processor = self._get_processor(chunk_size=3)
+        processor, skipped = processor.run()
+        self.assertEqual(processor, 4)
+        self.assertEqual(skipped, 0)
+        self.assertEqual(
+            {'bar-{}'.format(ident) for ident in range(4)},
+            doc_processor.docs_processed
+        )
