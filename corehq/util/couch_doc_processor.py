@@ -196,7 +196,6 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
     def unique_key(self):
         return self.slug
 
-    @abstractmethod
     def process_doc(self, doc, couchdb):
         """Process a single document
 
