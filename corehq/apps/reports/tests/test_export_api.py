@@ -20,13 +20,12 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import get_submit_url
 from corehq.apps.users.models import WebUser
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.xform import XFormPillow
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
-
+from pillowtop.es_utils import initialize_index_and_mapping
 
 FORM_TEMPLATE = """<?xml version='1.0' ?>
 <foo xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://www.commcarehq.org/export/test">
@@ -62,8 +61,6 @@ def _content(streaming_response):
 
 
 class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
-    pillow_class = XFormPillow
-    es_index = XFORM_INDEX
 
     def _clear_docs(self):
         config = ExportConfiguration(XFormInstance.get_db(),
@@ -82,20 +79,18 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         self.couch_user.save()
 
         with trap_extra_setup(ConnectionError):
-            ensure_index_deleted(self.es_index)
-            self.pillow = self.get_pillow()
+            self.es = get_es_new()
+            ensure_index_deleted(XFORM_INDEX_INFO.index)
+            initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
 
     def tearDown(self):
-        ensure_index_deleted(self.es_index)
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
         self.couch_user.delete()
         self._clear_docs()
 
         self.teardown_subscription()
 
         super(ExportTest, self).tearDown()
-
-    def get_pillow(self):
-        return self.pillow_class()
 
     def _submit_form(self, f=None, domain=DOMAIN):
         if f is None:
@@ -107,9 +102,6 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         )
         return spoof_submission(url, f)
 
-    def _pillow_process_form(self, form_pair):
-        self.pillow.change_transport(form_pair.json_form)
-
     def _send_form_to_es(self, domain, **metadata_kwargs):
         metadata = TestFormMetadata(
             domain=domain,
@@ -120,9 +112,8 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
             setattr(metadata, attr, value)
 
         form_pair = make_es_ready_form(metadata)
-        self._pillow_process_form(form_pair)
-        es = get_es_new()
-        es.indices.refresh(self.es_index)
+        send_to_elasticsearch('forms', form_pair.json_form)
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
         return form_pair
 
     def testExportTokenMigration(self):
