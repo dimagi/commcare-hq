@@ -1,3 +1,4 @@
+from copy import deepcopy
 from optparse import make_option
 from django.core.management import BaseCommand, CommandError
 from corehq.pillows.case import (
@@ -15,6 +16,15 @@ from corehq.pillows.xform import (
 )
 
 
+def clean_options(options):
+    options = deepcopy(options)
+
+    for option in BaseCommand.option_list:
+        options.pop(option.dest, None)
+
+    return {key: value for key, value in options.items() if value is not None}
+
+
 class Command(BaseCommand):
     args = 'index'
     help = 'Reindex a pillowtop index'
@@ -25,22 +35,22 @@ class Command(BaseCommand):
                     dest='cleanup',
                     default=False,
                     help='Clean index (delete data) before reindexing.'),
-        make_option('--reset',
-                    action='store_true',
-                    dest='reset',
-                    default=False,
-                    help='Reset a resumable reindex'),
         make_option('--noinput',
                     action='store_true',
                     dest='noinput',
                     default=False,
                     help='Skip important confirmation warnings.'),
+
+        # for resumable reindexers
+        make_option('--reset',
+                    action='store_true',
+                    dest='reset',
+                    help='Reset a resumable reindex'),
     )
 
     def handle(self, index, *args, **options):
-        cleanup = options['cleanup']
-        noinput = options['noinput']
-        reset = options['reset']
+        cleanup = options.pop('cleanup')
+        noinput = options.pop('noinput')
         reindex_fns = {
             'domain': get_domain_reindexer,
             'user': get_user_reindexer,
@@ -64,14 +74,12 @@ class Command(BaseCommand):
             return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
 
         reindexer = reindex_fns[index]()
+        reindexer_options = clean_options(options)
+        unconsumed = reindexer.consume_options(reindexer_options)
+        if unconsumed:
+            raise CommandError("The following options don't apply to the reindexer you're calling: {}".format(unconsumed.keys()))
+
         if cleanup and (noinput or confirm()):
             reindexer.clean()
 
-        if reset:
-            if reindexer.can_be_reset:
-                reindexer.reindex(reset=reset)
-            else:
-                self.stdout.write("Reindexer for '{}' can not be reset".format(index))
-        else:
-            reindexer.reindex()
-
+        reindexer.reindex()
