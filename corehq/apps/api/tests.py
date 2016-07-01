@@ -14,8 +14,11 @@ from tastypie.resources import Resource
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports.models import ReportConfiguration, \
     DataSourceConfiguration
+from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tests.test_columns import UCRTestMixin
 from couchforms.models import XFormInstance
 
 from django_prbac.models import Role
@@ -94,10 +97,7 @@ class APIResourceTest(TestCase):
         Role.get_cache().clear()
         generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        cls.list_endpoint = reverse('api_dispatch_list',
-                kwargs=dict(domain=cls.domain.name,
-                            api_name=cls.api_name,
-                            resource_name=cls.resource._meta.resource_name))
+        cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
@@ -105,6 +105,13 @@ class APIResourceTest(TestCase):
         cls.user.save()
         set_up_subscription(cls)
         cls.domain = Domain.get(cls.domain._id)
+
+    @classmethod
+    def _get_list_endpoint(cls):
+        return reverse('api_dispatch_list',
+                kwargs=dict(domain=cls.domain.name,
+                            api_name=cls.api_name,
+                            resource_name=cls.resource._meta.resource_name))
 
     @classmethod
     def tearDownClass(cls):
@@ -1616,3 +1623,162 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
 
         wrong_domain.delete()
         new_user.delete()
+
+
+class TestConfigurableReportDataResource(APIResourceTest):
+    resource = v0_5.ConfigurableReportDataResource
+    api_name = "v0.5"
+
+    @classmethod
+    def _get_list_endpoint(cls):
+        return None
+
+    def single_endpoint(self, id, start, limit):
+        return reverse('api_dispatch_detail', kwargs=dict(
+            domain=self.domain.name,
+            api_name=self.api_name,
+            resource_name=self.resource._meta.resource_name,
+            pk=id,
+            limit=limit,
+            start=start,
+        ))
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestConfigurableReportDataResource, cls).setUpClass()
+        case_type = "my_case_type"
+        field_name = "my_field"
+
+        cls.cases = []
+        for val in ["foo", "foo", "bar", "baz"]:
+            id = uuid.uuid4().hex
+            case_block = CaseBlock(
+                create=True,
+                case_id=id,
+                case_type=case_type,
+                update={field_name: val},
+            ).as_xml()
+            post_case_blocks([case_block], {'domain': cls.domain.name})
+            cls.cases.append(CommCareCase.get(id))
+
+        cls.report_columns = [
+            {
+                "column_id": field_name,
+                "type": "field",
+                "field": field_name,
+                "aggregation": "simple",
+            }
+        ]
+        cls.report_filters = [
+            {
+                'datatype': 'string',
+                'field': field_name,
+                'type': 'dynamic_choice_list',
+                'slug': 'my_field_filter',
+            }
+        ]
+
+        cls.data_source = DataSourceConfiguration(
+            domain=cls.domain.name,
+            referenced_doc_type="CommCareCase",
+            table_id=uuid.uuid4().hex,
+            configured_filter={
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "property_value": case_type,
+            },
+            configured_indicators=[{
+                "type": "expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": field_name
+                },
+                "column_id": field_name,
+                "display_name": field_name,
+                "datatype": "string"
+            }],
+        )
+        cls.data_source.validate()
+        cls.data_source.save()
+        rebuild_indicators(cls.data_source._id)
+
+        cls.report_configuration = ReportConfiguration(
+            domain=cls.domain.name,
+            config_id=cls.data_source._id,
+            aggregation_columns=["doc_id"],
+            columns=cls.report_columns,
+            filters=cls.report_filters,
+        )
+        cls.report_configuration.save()
+
+    def test_fetching_data(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id, 0, 10))
+
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+
+        self.assertEqual(response_dict["total_records"], len(self.cases))
+        self.assertEqual(len(response_dict["data"]), len(self.cases))
+
+    def test_page_size(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id, 0, 1))
+        response_dict = json.loads(response.content)
+        self.assertEqual(response_dict["total_records"], len(self.cases))
+        self.assertEqual(len(response_dict["data"]), 1)
+
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id, 0, 10000))
+        self.assertEqual(response.status_code, 400)
+
+    def test_page_start(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id, 2, 10))
+        response_dict = json.loads(response.content)
+        self.assertEqual(response_dict["total_records"], len(self.cases))
+        self.assertEqual(len(response_dict["data"]), len(self.cases) - 2)
+
+    def test_filtering(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(
+            self.single_endpoint(
+                self.report_configuration._id, 0, 10
+            ) + "?" + urlencode({"my_field_filter": "foo"})
+        )
+        response_dict = json.loads(response.content)
+
+        self.assertEqual(response_dict["total_records"], 2)
+
+        response = self.client.get(
+            self.single_endpoint(
+                self.report_configuration._id, 0, 10
+            ) + "?" + urlencode({"my_field_filter": "bar"})
+        )
+        response_dict = json.loads(response.content)
+
+        self.assertEqual(response_dict["total_records"], 1)
+
+    def test_auth(self):
+        user_in_wrong_domain_name = 'Mallory'
+        user_in_wrong_domain_password = '1337haxor'
+        wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        user_in_wrong_domain = WebUser.create(
+            wrong_domain.name, user_in_wrong_domain_name, user_in_wrong_domain_password
+        )
+        user_in_wrong_domain.save()
+
+        self.client.login(username=user_in_wrong_domain_name, password=user_in_wrong_domain_password)
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id, 0, 10))
+        self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
+
+        wrong_domain.delete()
+        user_in_wrong_domain.delete()
