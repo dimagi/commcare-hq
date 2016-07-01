@@ -150,8 +150,8 @@ def get_pillow_json(pillow_config):
     }
 
 
-def build_bulk_payload(index_info, changes, doc_transform_fn=None):
-    doc_transform_fn = doc_transform_fn or (lambda x: x)
+def build_bulk_payload(index_info, changes, doc_transform=None):
+    doc_transform = doc_transform or (lambda x: x)
     for change in changes:
         if change.deleted and change.id:
             yield {
@@ -162,7 +162,7 @@ def build_bulk_payload(index_info, changes, doc_transform_fn=None):
                 }
             }
         doc = change.get_document()
-        doc = doc_transform_fn(doc)
+        doc = doc_transform(doc)
         yield {
             "index": {
                 "_index": index_info.index,

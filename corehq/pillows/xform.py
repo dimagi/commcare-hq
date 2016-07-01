@@ -180,10 +180,11 @@ def get_couch_form_reindexer():
 
 def get_resumable_couch_form_reindexer():
     return ResumableBulkElasticPillowReindexer(
-        pillow=XFormPillow(online=False),
+        name=XFormPillow(online=False).pillow_id,
         doc_types=[XFormInstance],
         elasticsearch=get_es_new(),
-        index_info=_get_xform_index_info()
+        index_info=_get_xform_index_info(),
+        doc_transform=transform_xform_for_elasticsearch
     )
 
 
