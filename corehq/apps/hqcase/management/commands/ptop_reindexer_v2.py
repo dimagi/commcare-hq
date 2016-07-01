@@ -77,7 +77,10 @@ class Command(BaseCommand):
         reindexer_options = clean_options(options)
         unconsumed = reindexer.consume_options(reindexer_options)
         if unconsumed:
-            raise CommandError("The following options don't apply to the reindexer you're calling: {}".format(unconsumed.keys()))
+            raise CommandError(
+                """The following options don't apply to the reindexer you're calling: {}
+                """.format(unconsumed.keys())
+            )
 
         if cleanup and (noinput or confirm()):
             reindexer.clean()
