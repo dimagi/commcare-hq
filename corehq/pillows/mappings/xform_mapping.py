@@ -1,10 +1,10 @@
+from corehq.pillows.base import DEFAULT_META
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
-
+from pillowtop.es_utils import ElasticsearchIndexInfo
 
 XFORM_INDEX = es_index("xforms_2016-06-09")
-
 
 XFORM_MAPPING = {
     "date_detection": False,
@@ -113,3 +113,14 @@ XFORM_MAPPING = {
         },
     }
 }
+
+XFORM_ES_TYPE = 'xform'
+XFORM_ALIAS = "xforms"
+
+XFORM_INDEX_INFO = ElasticsearchIndexInfo(
+    index=XFORM_INDEX,
+    alias=XFORM_ALIAS,
+    type=XFORM_ES_TYPE,
+    meta=DEFAULT_META,
+    mapping=XFORM_MAPPING,
+)

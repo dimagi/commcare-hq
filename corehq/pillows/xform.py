@@ -11,7 +11,7 @@ from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
-from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX, XFORM_ES_TYPE
 from corehq.pillows.utils import get_user_type
 from couchforms.jsonobject_extensions import GeoPointProperty
 from .base import HQPillow
@@ -25,12 +25,10 @@ from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
-    ElasticPillowReindexer
-
+    ElasticPillowReindexer, ResumableElasticPillowReindexer
 
 UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
-XFORM_ES_TYPE = 'xform'
 
 
 def is_valid_date(txt):
@@ -177,6 +175,15 @@ def get_couch_form_reindexer():
                 'include_docs': True,
             }
         )
+    )
+
+
+def get_resumable_couch_form_reindexer():
+    return ResumableElasticPillowReindexer(
+        pillow=XFormPillow(online=False),
+        doc_types=[XFormInstance],
+        elasticsearch=get_es_new(),
+        index_info=_get_xform_index_info()
     )
 
 

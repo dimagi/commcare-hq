@@ -57,8 +57,7 @@ branches:
 submodules:
   deployment/commcare-hq-deploy:
    branches:
-     - fr/async-restore-queue
-  #    - br/refactor-operations  # Ben
+     - br/refactor-operations-2  # Ben 7/1
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
