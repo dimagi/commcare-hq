@@ -62,7 +62,7 @@ class Command(BaseCommand):
                     relationships = builder.get_parent_type_map(app.get_case_types(), allow_multiple_parents=True)
                     for module in app.modules:
                         for form in module.forms:
-                            if form.doc_type != 'AdvancedForm' and form.requires_case():
+                            if form.doc_type == 'Form' and form.requires_case():
                                 #logger.info('migrating form {}'.format(form.name.get('en', form.name)))
                                 base_case_type = form.get_module().case_type
                                 self._replace_in_form(form, relationships, base_case_type, 0)
