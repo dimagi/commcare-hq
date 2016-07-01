@@ -212,9 +212,13 @@ class DataSourceBuilder(object):
                     prop.source, prop.column_id
                 ))
             elif prop.type == "question":
-                ret.append(make_form_question_indicator(
+                indicator = make_form_question_indicator(
                     prop.source, prop.column_id
-                ))
+                )
+                if prop.source['type'] == "DataBindOnly" and number_columns:
+                    if indicator['column_id'] in number_columns:
+                        indicator['datatype'] = 'decimal'
+                ret.append(indicator)
             elif prop.type == 'case_property' and prop.source == 'computed/owner_name':
                 ret.append(make_owner_name_indicator(prop.column_id))
             elif prop.type == 'case_property' and prop.source == 'computed/user_name':

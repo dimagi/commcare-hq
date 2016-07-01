@@ -302,6 +302,12 @@ class IndicatorNamedFilterTest(SimpleTestCase):
             'domain': 'test',
             'referenced_doc_type': 'CommCareCase',
             'table_id': 'mother_indicators',
+            'named_expressions': {
+                'on_a_date': {
+                    'type': 'property_name',
+                    'property_name': 'on_date',
+                }
+            },
             'named_filters': {
                 'pregnant': {
                     'type': 'property_match',
@@ -311,6 +317,15 @@ class IndicatorNamedFilterTest(SimpleTestCase):
                 'evil': {
                     'type': 'property_match',
                     'property_name': 'evil',
+                    'property_value': 'yes',
+                },
+                'has_alibi': {
+                    'type': 'boolean_expression',
+                    'expression': {
+                        'type': 'named',
+                        'name': 'on_a_date'
+                    },
+                    'operator': 'eq',
                     'property_value': 'yes',
                 }
             },
