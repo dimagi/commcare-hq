@@ -420,6 +420,15 @@ class BulkDocProcessor(CouchDocumentProcessor):
         else:
             raise BulkProcessingFailed("Processing batch failed")
 
+    def _update_progress(self):
+        self.visited += 1
+        if self.visited % self.chunk_size == 0:
+            self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
+
+            elapsed, remaining = self.timing
+            print("Processed {}/{} of {} documents in {} ({} remaining)"
+                  .format(self.processed, self.visited, self.total, elapsed, remaining))
+
     def _processing_complete(self):
         if len(self.changes):
             self._process_chunk()
