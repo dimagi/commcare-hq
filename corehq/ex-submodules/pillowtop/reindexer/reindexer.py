@@ -77,16 +77,21 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
 
 
 class BulkPillowReindexProcessor(BaseDocProcessor):
-    def __init__(self, name, es_client, index_info, doc_transform=None):
+    def __init__(self, name, es_client, index_info, doc_filter=None, doc_transform=None):
         super(BulkPillowReindexProcessor, self).__init__(index_info.index)
         self.name = name
         self.doc_transform = doc_transform
+        self.doc_filter = doc_filter
         self.es = es_client
         self.index_info = index_info
 
     @property
     def unique_key(self):
         return "{}_{}_{}".format(self.slug, self.name, 'reindex')
+
+    def should_process(self, doc):
+        if self.doc_filter:
+            return not self.doc_filter(doc)
 
     def process_bulk_docs(self, docs, couchdb):
         changes = [self._doc_to_change(doc, couchdb) for doc in docs]
@@ -117,7 +122,7 @@ class ResumableBulkElasticPillowReindexer(PillowReindexer):
     can_be_reset = True
 
     def __init__(self, name, doc_types, elasticsearch, index_info,
-                 doc_transform=None, chunk_size=1000):
+                 doc_filter=None, doc_transform=None, chunk_size=1000):
         super(ResumableBulkElasticPillowReindexer, self).__init__(None)
         self.es = elasticsearch
         self.index_info = index_info
@@ -128,7 +133,7 @@ class ResumableBulkElasticPillowReindexer(PillowReindexer):
         if len(doc_types) != len(self.doc_type_map):
             raise ValueError("Invalid (duplicate?) doc types")
 
-        self.doc_processor = BulkPillowReindexProcessor(name, self.es, self.index_info, doc_transform)
+        self.doc_processor = BulkPillowReindexProcessor(name, self.es, self.index_info, doc_filter, doc_transform)
 
     def clean(self):
         _clean_index(self.es, self.index_info)

@@ -15,7 +15,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX, XF
 from corehq.pillows.utils import get_user_type
 from couchforms.jsonobject_extensions import GeoPointProperty
 from .base import HQPillow
-from couchforms.const import RESERVED_WORDS
+from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance
 from dateutil import parser
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
@@ -68,6 +68,13 @@ class XFormPillow(HQPillow):
 
     def change_transform(self, doc_dict, include_props=True):
         return transform_xform_for_elasticsearch(doc_dict, include_props)
+
+
+def device_log_filter(doc_dict):
+    """
+    :return: True to filter out doc
+    """
+    return doc_dict.get('xmlns', None) == DEVICE_LOG_XMLNS
 
 
 def transform_xform_for_elasticsearch(doc_dict, include_props=True):
@@ -184,6 +191,7 @@ def get_resumable_couch_form_reindexer():
         doc_types=[XFormInstance],
         elasticsearch=get_es_new(),
         index_info=_get_xform_index_info(),
+        doc_filter=device_log_filter,
         doc_transform=transform_xform_for_elasticsearch
     )
 
