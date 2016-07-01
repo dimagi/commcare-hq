@@ -8,8 +8,11 @@ var FormplayerFrontend = new Marionette.Application();
 
 var showError = hqImport('cloudcare/js/util.js').showError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
+var showLoading = hqImport('cloudcare/js/util.js').showLoading;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
+var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
+var hideLoading = hqImport('cloudcare/js/util.js').hideLoading;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -129,4 +132,29 @@ FormplayerFrontend.on("start", function (options) {
             FormplayerFrontend.trigger("apps:list", options.apps);
         }
     }
+});
+
+FormplayerFrontend.on("sync", function () {
+    var user = FormplayerFrontend.request('currentUser');
+    var username = user.username;
+    var formplayer_url = user.formplayer_url;
+    var resp = $.ajax({
+        url: formplayer_url,
+        dataType: "json",
+        data: {"username": username},
+    });
+    //$('#sync-button').disableButton();
+    tfLoading();
+    resp.done(function (data) {
+        var hasError = data.status === "error";
+        tfSyncComplete(hasError);
+        if (hasError) {
+            console.error(data.message);
+        }
+        //$('#sync-button').enableButton();
+    });
+    resp.error(function (data) {
+        tfSyncComplete(true);
+        console.error(data.responseJSON);
+    });
 });
