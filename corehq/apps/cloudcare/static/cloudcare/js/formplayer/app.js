@@ -81,6 +81,7 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     data.onsubmit = function (resp) {
         //TODO: Old Touchforms gets the "submit-all" action then returns the XML to the frontend
         // to be submitted (here). Is there any reason FormPlayer shouldn't do the submitting itself?
+        debugger;
         var xml = resp.output;
         var postUrl = resp.postUrl;
         $.ajax({
