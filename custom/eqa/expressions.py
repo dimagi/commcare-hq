@@ -16,7 +16,13 @@ STATUSES = {
 
 
 def get_val(form, path, default=0):
-    return int(form.get_data(path)) if form else default
+    if not form:
+        return default
+    question_value = form.get_data(path)
+    try:
+        return int(question_value)
+    except (ValueError, TypeError):
+        return default
 
 
 def get_yes_no(yes, no):
@@ -31,8 +37,10 @@ def get_yes_no(yes, no):
 class EQAExpressionSpec(JsonObject):
     type = TypeProperty('eqa_expression')
     question_id = StringProperty()
+    tally_yes_id = StringProperty()
+    tally_no_id = StringProperty()
     display_text = StringProperty()
-    xmlns = StringProperty
+    xmlns = StringProperty()
 
     def __call__(self, item, context=None):
         xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
@@ -51,8 +59,8 @@ class EQAExpressionSpec(JsonObject):
             prev_form = None
 
         path_question = 'form/%s' % self.question_id
-        path_yes = 'form/tally_%s_yes' % self.question_id
-        path_no = 'form/tally_%s_no' % self.question_id
+        path_yes = 'form/%s' % self.tally_yes_id
+        path_no = 'form/%s' % self.tally_no_id
 
         curr_ques = get_val(curr_form, path_question, 99)
         curr_sub_yes = get_val(curr_form, path_yes)

@@ -368,6 +368,7 @@ HQ_APPS = (
     'custom.openlmis',
     'custom.logistics',
     'custom.ilsgateway',
+    'custom.zipline',
     'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
@@ -889,6 +890,10 @@ DATADOG_APP_KEY = None
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+# Settings for Zipline integration
+ZIPLINE_API_URL = ''
+ZIPLINE_API_USER = ''
+ZIPLINE_API_PASSWORD = ''
 
 KAFKA_URL = 'localhost:9092'
 
