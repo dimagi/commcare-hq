@@ -291,6 +291,24 @@ class TestBulkDocProcessor(BaseCouchDocProcessorTest):
         self.assertEqual(skipped, 0)
         self.assertEqual(doc_processor.docs_processed, {'bar-2', 'bar-3'})
 
+    def test_batch_gets_retried_with_filtering(self):
+        self.db.add_view("all_docs/by_doc_type", self._get_view_results(4, 3))
+
+        doc_processor, processor = self._get_processor(chunk_size=3)
+        doc_processor.ignore_docs = ['bar-0']
+        doc_processor.skip_docs = ['bar-2']
+
+        with self.assertRaises(BulkProcessingFailed):
+            processor.run()
+
+        self.assertEqual(doc_processor.docs_processed, {'bar-1'})
+
+        doc_processor, processor = self._get_processor()
+        processor, skipped = processor.run()
+        self.assertEqual(processor, 3)
+        self.assertEqual(skipped, 0)
+        self.assertEqual(doc_processor.docs_processed, {'bar-1', 'bar-2', 'bar-3'})
+
     def test_filtering(self):
         doc_processor, processor = self._get_processor()
         doc_processor.ignore_docs = ['bar-1']
