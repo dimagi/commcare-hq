@@ -506,7 +506,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         obj_filters = bundle.obj.filters
         return [{
             "datatype": f["datatype"],
-            "field": f["field"]
+            "slug": f["slug"]
         } for f in obj_filters]
 
     def dehydrate_columns(self, bundle):
@@ -516,8 +516,17 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
         pk = kwargs['pk']
-        report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
+        try:
+            report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
+        except Http404 as e:
+            raise NotFound(e.message)
         return report_configuration
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'domain': get_obj(bundle_or_obj).domain,
+            'pk': get_obj(bundle_or_obj)._id,
+        }
 
     class Meta(CustomResourceMeta):
         list_allowed_methods = []
