@@ -16,7 +16,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 
 from dimagi.utils.dates import DateSpan
-from pillowtop.es_utils import completely_initialize_pillow_index, initialize_index_and_mapping
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class MaltGeneratorTest(TestCase):

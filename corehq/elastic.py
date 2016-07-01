@@ -18,7 +18,7 @@ from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX, XFORM_INDEX_INFO
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 
 
 def get_es_new(**kwargs):
