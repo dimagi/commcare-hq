@@ -2736,6 +2736,14 @@ class AdvancedModule(ModuleBase):
     search_config = SchemaProperty(CaseSearch)
 
     @classmethod
+    def wrap(cls, data):
+        # lazy migration to accommodate search_config as empty list
+        # http://manage.dimagi.com/default.asp?231186
+        if data.get('search_config') == []:
+            data['search_config'] = {}
+        return super(AdvancedModule, cls).wrap(data)
+
+    @classmethod
     def new_module(cls, name, lang):
         detail = Detail(
             columns=[DetailColumn(
