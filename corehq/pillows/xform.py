@@ -25,8 +25,7 @@ from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
-    ElasticPillowReindexer
-
+    ElasticPillowReindexer, ResumableElasticPillowReindexer
 
 UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
@@ -177,6 +176,15 @@ def get_couch_form_reindexer():
                 'include_docs': True,
             }
         )
+    )
+
+
+def get_resumable_couch_form_reindexer():
+    return ResumableElasticPillowReindexer(
+        pillow=XFormPillow(online=False),
+        doc_types=[XFormInstance],
+        elasticsearch=get_es_new(),
+        index_info=_get_xform_index_info()
     )
 
 
