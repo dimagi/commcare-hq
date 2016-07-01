@@ -1,3 +1,11 @@
+(function (factory) {
+if (typeof define === 'function' && define.amd) {
+    define(['knockout'], factory);
+} else {
+    factory();
+}
+}(function (ko) {
+
 ko.bindingHandlers.staticChecked = {
     init: function (element) {
         $('<span class="icon"></span>').appendTo(element);
@@ -687,3 +695,5 @@ ko.bindingHandlers.popover = {
         $(element).popover(options);
     }
 };
+
+}));

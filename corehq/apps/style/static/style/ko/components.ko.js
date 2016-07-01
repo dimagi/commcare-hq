@@ -1,3 +1,11 @@
+(function (factory) {
+if (typeof define === 'function' && define.amd) {
+    define(['jquery', 'knockout', 'underscore'], factory);
+} else {
+    factory(jQuery);
+}
+}(function ($, ko, _) {
+
 var components = {
     'inline-edit': 'style/ko/components/inline_edit.js'
 };
@@ -11,3 +19,5 @@ $(document).ready(function() {
         _.each($(elementName), function(el) { $(el).koApplyBindings(); });
     });
 });
+
+}));

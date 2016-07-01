@@ -1,3 +1,11 @@
+(function (factory) {
+if (typeof define === 'function' && define.amd) {
+    define(['knockout'], factory);
+} else {
+    factory();
+}
+}(function (ko) {
+
 ko.bindingHandlers.hqbSubmitReady = {
     update: function(element, valueAccessor) {
         var value = (valueAccessor()) ? valueAccessor()() : null;
@@ -31,3 +39,5 @@ ko.bindingHandlers.fadeVisibleInOnly = {
         ko.utils.unwrapObservable(value) ? $(element).fadeIn() : $(element).hide();
     }
 };
+
+}));

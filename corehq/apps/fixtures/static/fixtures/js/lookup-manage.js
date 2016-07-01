@@ -1,6 +1,6 @@
 define([
     "jquery",
-    "ko",
+    "knockout",
     "hq.helpers",
 ], function(
     $,
