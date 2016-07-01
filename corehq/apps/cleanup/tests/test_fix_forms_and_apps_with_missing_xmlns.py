@@ -16,11 +16,13 @@ from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xml
     set_xmlns_on_form,
 )
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.pillows.xform import XFormPillow
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from couchforms.models import XFormInstance
-from pillowtop.es_utils import completely_initialize_pillow_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 DOMAIN = "test"
 
@@ -32,23 +34,23 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(TestFixFormsWithMissingXmlns, cls).setUpClass()
-        cls.form_pillow = XFormPillow(online=False)
+        cls.es = get_es_new()
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            completely_initialize_pillow_index(cls.form_pillow)
+            initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(cls.form_pillow.es_index)
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
         super(TestFixFormsWithMissingXmlns, cls).tearDownClass()
 
     def _submit_form(self, xmlns, form_name, app_id, build_id):
         xform_source = self.get_xml('xform_template').format(xmlns=xmlns, name=form_name, id=uuid.uuid4().hex)
         _, xform, __ = submit_form_locally(xform_source, DOMAIN, app_id=app_id, build_id=build_id)
-        self.form_pillow.send_robust(self.form_pillow.change_transform(xform.to_json()))
+        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(xform.to_json()))
         return xform
 
     def _refresh_pillow(self):
-        self.form_pillow.get_es_new().indices.refresh(self.form_pillow.es_index)
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
 
     def build_normal_app(self):
         xmlns = generate_random_xmlns()
