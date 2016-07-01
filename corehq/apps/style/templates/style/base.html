@@ -201,7 +201,11 @@
         {% include 'style/includes/analytics_all.html' %}
         {% endif %}
 
-        {% if less_debug and not request.use_requirejs %}
+        {% if less_debug %}
+            <!-- 
+                This is not inside RequireJS because it has no dependencies
+                and ought to happen immediately on page load.
+            -->
             <script>
                 less = {
                     env: "development",

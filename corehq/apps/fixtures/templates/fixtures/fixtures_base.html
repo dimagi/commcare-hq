@@ -14,19 +14,15 @@
         requirejs.config({
             paths: {
                 "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
-
                 "hqDefine": "{% static 'hqwebapp/js/hqModules' %}",
                 "hq.helpers": "{% static 'style/js/hq.helpers' %}",
-
                 "jquery": "{% static 'jquery/dist/jquery.min' %}",
-
                 "knockout": "{% static 'knockout/dist/knockout.debug' %}",  // has to be called 'knockout' due to a plugin that uses require("knockout")
                 "ko.mapping": "{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min' %}",
                 "ko.global_handlers": "{% static 'style/ko/global_handlers.ko' %}",
                 "ko.knockout_bindings": "{% static 'style/ko/knockout_bindings.ko' %}",
                 "ko.inline_edit": "{% static 'style/ko/components/inline_edit' %}",
                 "ko.components": "{% static 'style/ko/components.ko' %}",
-
                 "underscore": "{% static 'underscore/underscore' %}",
             },
             shim: {
