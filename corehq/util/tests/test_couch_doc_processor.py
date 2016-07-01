@@ -213,13 +213,17 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
     def tearDown(self):
         self.db.reset()
 
-    def _get_processor(self, chunk_size=2):
+    def _get_processor(self, chunk_size=2, ignore_docs=None, skip_docs=None):
         doc_processor = DemoProcessor('test')
         processor = self.processor_class(
             {'Bar': Bar},
             doc_processor,
             chunk_size=chunk_size,
         )
+        if ignore_docs:
+            doc_processor.ignore_docs = ignore_docs
+        if skip_docs:
+            doc_processor.skip_docs = skip_docs
         return doc_processor, processor
 
 
@@ -227,11 +231,7 @@ class TestCouchDocProcessor(BaseCouchDocProcessorTest):
     processor_class = CouchDocumentProcessor
 
     def _test_processor(self, expected_processed, doc_idents, ignore_docs=None, skip_docs=None):
-        doc_processor, processor = self._get_processor()
-        if ignore_docs:
-            doc_processor.ignore_docs = ignore_docs
-        if skip_docs:
-            doc_processor.skip_docs = skip_docs
+        doc_processor, processor = self._get_processor(ignore_docs=ignore_docs, skip_docs=skip_docs)
         processed, skipped = processor.run()
         self.assertEqual(processed, expected_processed)
         self.assertEqual(skipped, len(skip_docs) if skip_docs else 0)
@@ -278,8 +278,7 @@ class TestBulkDocProcessor(BaseCouchDocProcessorTest):
         )
 
     def test_batch_gets_retried(self):
-        doc_processor, processor = self._get_processor()
-        doc_processor.skip_docs = ['bar-2']
+        doc_processor, processor = self._get_processor(skip_docs=['bar-2'])
         with self.assertRaises(BulkProcessingFailed):
             processor.run()
 
@@ -294,24 +293,21 @@ class TestBulkDocProcessor(BaseCouchDocProcessorTest):
     def test_batch_gets_retried_with_filtering(self):
         self.db.add_view("all_docs/by_doc_type", self._get_view_results(4, 3))
 
-        doc_processor, processor = self._get_processor(chunk_size=3)
-        doc_processor.ignore_docs = ['bar-0']
-        doc_processor.skip_docs = ['bar-2']
+        doc_processor, processor = self._get_processor(chunk_size=3, ignore_docs=['bar-0'], skip_docs=['bar-2'])
 
         with self.assertRaises(BulkProcessingFailed):
             processor.run()
 
         self.assertEqual(doc_processor.docs_processed, {'bar-1'})
 
-        doc_processor, processor = self._get_processor()
+        doc_processor, processor = self._get_processor(chunk_size=3, ignore_docs=['bar-0'])
         processor, skipped = processor.run()
         self.assertEqual(processor, 3)
         self.assertEqual(skipped, 0)
         self.assertEqual(doc_processor.docs_processed, {'bar-1', 'bar-2', 'bar-3'})
 
     def test_filtering(self):
-        doc_processor, processor = self._get_processor()
-        doc_processor.ignore_docs = ['bar-1']
+        doc_processor, processor = self._get_processor(ignore_docs=['bar-1'])
         processor, skipped = processor.run()
         self.assertEqual(processor, 3)
         self.assertEqual(skipped, 0)
