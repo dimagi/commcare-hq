@@ -1,6 +1,7 @@
 from django.conf import settings
 
 from corehq.pillows.base import convert_property_dict
+from corehq.pillows.xform import transform_xform_for_elasticsearch
 from .mappings.reportxform_mapping import REPORT_XFORM_INDEX, REPORT_XFORM_MAPPING
 from .xform import XFormPillow
 
@@ -20,18 +21,21 @@ class ReportXFormPillow(XFormPillow):
     default_mapping = REPORT_XFORM_MAPPING
 
     def change_transform(self, doc_dict):
-        doc_ret = super(ReportXFormPillow, self).change_transform(doc_dict, include_props=False)
+        return transform_xform_for_report_forms_index(doc_dict)
 
-        if doc_ret:
-            domain = doc_dict.get('domain', None)
 
-            if domain not in getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', []):
-                # full indexing is only enabled for select domains on an opt-in basis
-                return None
-            convert_property_dict(doc_ret['form'], self.default_mapping['properties']['form'], override_root_keys=['case'])
-            if 'computed_' in doc_ret:
-                convert_property_dict(doc_ret['computed_'], {})
+def transform_xform_for_report_forms_index(doc_dict):
+    doc_ret = transform_xform_for_elasticsearch(doc_dict)
+    if doc_ret:
+        domain = doc_dict.get('domain', None)
 
-            return doc_ret
-        else:
+        if domain not in getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', []):
+            # full indexing is only enabled for select domains on an opt-in basis
             return None
+        convert_property_dict(doc_ret['form'], REPORT_XFORM_MAPPING['properties']['form'], override_root_keys=['case'])
+        if 'computed_' in doc_ret:
+            convert_property_dict(doc_ret['computed_'], {})
+
+        return doc_ret
+    else:
+        return None
