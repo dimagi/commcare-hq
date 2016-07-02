@@ -398,7 +398,7 @@ class BulkDocProcessorLogHandler(PaginateViewLogHandler):
     def __init__(self, processor):
         self.processor = processor
 
-    def view_starting(self, db, view_name, kwargs, total_emitted):
+    def view_ending(self, db, view_name, kwargs, total_emitted, time):
         self.processor.process_chunk()
 
 
