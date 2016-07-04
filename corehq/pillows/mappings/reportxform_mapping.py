@@ -1,5 +1,8 @@
+from corehq.pillows.base import DEFAULT_META
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.util.elastic import es_index
+from pillowtop.es_utils import ElasticsearchIndexInfo
+
 REPORT_XFORM_INDEX = es_index("report_xforms_20150406_1136")
 
 CASE_MAPPING_FRAGMENT = {
@@ -148,3 +151,14 @@ REPORT_XFORM_MAPPING = {
         }
     ]
 }
+
+REPORT_XFORM_ALIAS = "report_xform"
+REPORT_XFORM_TYPE = "report_xforms"
+
+REPORT_XFORM_INDEX_INFO = ElasticsearchIndexInfo(
+    index=REPORT_XFORM_INDEX,
+    alias=REPORT_XFORM_ALIAS,
+    type=REPORT_XFORM_TYPE,
+    meta=DEFAULT_META,
+    mapping=REPORT_XFORM_MAPPING,
+)
