@@ -115,6 +115,13 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CaseSearchToElasticsearchPillow"
     },
+    "CouchCaseToElasticsearchPillow": {
+        "advertised_name": "CouchCaseToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "couch-cases-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "CouchCaseToElasticsearchPillow"
+    },
     "CouvertureFluffPillow": {
         "advertised_name": "fluff.CouvertureFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",

@@ -92,6 +92,26 @@ def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow
     )
 
 
+def get_couch_case_to_elasticsearch_pillow(pillow_id='CouchCaseToElasticsearchPillow'):
+    checkpoint = PillowCheckpoint(
+        'couch-cases-to-elasticsearch',
+    )
+    case_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=ElasticsearchIndexInfo(index=CASE_INDEX, type=CASE_ES_TYPE),
+        doc_prep_fn=transform_case_for_elasticsearch
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topics=[topics.CASE], group_id='couch-cases-to-es'),
+        processor=case_processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
+    )
+
+
 def get_couch_case_reindexer():
     return get_default_reindexer_for_elastic_pillow(
         pillow=CasePillow(online=False),
