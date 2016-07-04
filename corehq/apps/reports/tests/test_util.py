@@ -2,6 +2,7 @@ from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 from mock import Mock
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.util import create_export_filter
 from corehq.apps.users.models import CommCareUser
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
@@ -16,6 +17,10 @@ DOMAIN = 'test_domain'
 class ReportUtilTests(TestCase):
     pillow_class = XFormPillow
     es_index = XFORM_INDEX
+
+    @classmethod
+    def setUpClass(cls):
+        create_domain(DOMAIN)
 
     def setUp(self):
         self.user = CommCareUser.create(DOMAIN, 'user1', '***')
