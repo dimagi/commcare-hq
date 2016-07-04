@@ -453,9 +453,3 @@ class BulkDocProcessor(CouchDocumentProcessor):
             elapsed, remaining = self.timing
             print("Processed {}/{} of {} documents in {} ({} remaining)"
                   .format(self.processed, self.visited, self.total, elapsed, remaining))
-
-    def _processing_complete(self):
-        if len(self.changes):
-            self._process_chunk()
-
-        super(BulkDocProcessor, self)._processing_complete()
