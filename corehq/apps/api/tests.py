@@ -16,6 +16,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.models import ReportConfiguration, \
     DataSourceConfiguration
+from corehq.pillows.case import transform_case_for_elasticsearch
 from couchforms.models import XFormInstance
 
 from django_prbac.models import Role
@@ -39,7 +40,6 @@ from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRe
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.tests import run_with_all_backends
-from corehq.pillows.case import CasePillow
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from custom.hope.models import CC_BIHAR_PREGNANCY
@@ -309,7 +309,6 @@ class TestCommCareCaseResource(APIResourceTest):
         # read the changes and write it to ElasticSearch.
 
         #the pillow is set to offline mode - elasticsearch not needed to validate
-        pillow = CasePillow(online=False)
         fake_case_es = FakeXFormES()
         v0_4.MOCK_CASE_ES = fake_case_es
 
@@ -318,7 +317,7 @@ class TestCommCareCaseResource(APIResourceTest):
         backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
         backend_case.save()
 
-        translated_doc = pillow.change_transform(backend_case.to_json())
+        translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
         
         fake_case_es.add_doc(translated_doc['_id'], translated_doc)
 
@@ -433,8 +432,6 @@ class TestHOPECaseResource(APIResourceTest):
         # The actual infrastructure involves saving to CouchDB, having PillowTop
         # read the changes and write it to ElasticSearch.
 
-        #the pillow is set to offline mode - elasticsearch not needed to validate
-        pillow = CasePillow(online=False)
         fake_case_es = FakeXFormES()
         v0_4.MOCK_CASE_ES = fake_case_es
 
@@ -444,7 +441,7 @@ class TestHOPECaseResource(APIResourceTest):
         backend_case.type = CC_BIHAR_PREGNANCY
         backend_case.save()
 
-        translated_doc = pillow.change_transform(backend_case.to_json())
+        translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
 
         fake_case_es.add_doc(translated_doc['_id'], translated_doc)
 
@@ -613,6 +610,7 @@ class TestWebUserResource(APIResourceTest):
         another_user = WebUser.create(self.domain.name, 'anotherguy', '***')
         another_user.set_role(self.domain.name, 'field-implementer')
         another_user.save()
+        self.addCleanup(another_user.delete)
 
         response = self.client.get(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
