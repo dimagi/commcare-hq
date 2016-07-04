@@ -31,6 +31,7 @@ def is_system_key(slug):
         validate_reserved_words(slug)
     except ValidationError:
         return True
+    return False
 
 
 class CustomDataField(JsonObject):
