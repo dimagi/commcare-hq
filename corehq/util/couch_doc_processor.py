@@ -1,11 +1,13 @@
 import hashlib
-from abc import abstractmethod, ABCMeta, abstractproperty
+from abc import ABCMeta, abstractproperty
 from datetime import datetime
 
 import six
 from couchdbkit import ResourceNotFound
 
-from corehq.util.couch_helpers import PaginateViewLogHandler, paginate_view
+from corehq.util.couch_helpers import (
+    PaginateViewEventHandler, paginate_view, DelegatingViewEventHandler
+)
 
 
 class ResumableDocsByTypeIterator(object):
@@ -27,7 +29,7 @@ class ResumableDocsByTypeIterator(object):
     is stopped and later resumed.
     """
 
-    def __init__(self, db, doc_types, iteration_key, chunk_size=100):
+    def __init__(self, db, doc_types, iteration_key, chunk_size=100, view_event_handler=None):
         if isinstance(doc_types, str):
             raise TypeError("expected list of strings, got %r" % (doc_types,))
         self.db = db
@@ -61,10 +63,19 @@ class ResumableDocsByTypeIterator(object):
             else:
                 # non-retry phase of iteration is complete
                 doc_types = []
+
+        if view_event_handler:
+            event_handler = DelegatingViewEventHandler([
+                ResumableDocsByTypeEventHandler(self),
+                view_event_handler
+            ])
+        else:
+            event_handler = ResumableDocsByTypeEventHandler(self)
+
         args.update(
             view_name='all_docs/by_doc_type',
             chunk_size=chunk_size,
-            log_handler=ResumableDocsByTypeLogHandler(self),
+            log_handler=event_handler,
             include_docs=True,
             reduce=False,
         )
@@ -155,7 +166,7 @@ class ResumableDocsByTypeIterator(object):
         )
 
 
-class ResumableDocsByTypeLogHandler(PaginateViewLogHandler):
+class ResumableDocsByTypeEventHandler(PaginateViewEventHandler):
 
     def __init__(self, iterator):
         self.iterator = iterator
@@ -167,6 +178,10 @@ class ResumableDocsByTypeLogHandler(PaginateViewLogHandler):
 
 
 class TooManyRetries(Exception):
+    pass
+
+
+class BulkProcessingFailed(Exception):
     pass
 
 
@@ -192,16 +207,26 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
     def unique_key(self):
         return self.slug
 
-    @abstractmethod
     def process_doc(self, doc, couchdb):
-        """Migrate a single document
+        """Process a single document
 
-        :param doc: The document dict to be migrated.
-        :param couchdb: Couchdb database in which to save migrated doc.
-        :returns: True if doc was migrated else False. If this returns False
+        :param doc: The document dict to be processed.
+        :param couchdb: Couchdb database associated with the docs.
+        :returns: True if doc was processed successfully else False. If this returns False
         the document migration will be retried later.
         """
         raise NotImplementedError
+
+    def process_bulk_docs(self, docs, couchdb):
+        """Process a batch of documents. The default implementation passes
+        each doc in turn to ``process_doc``.
+
+        :param docs: A list of document dicts to be processed.
+        :param couchdb: Couchdb database associated with the docs.
+        :returns: True if doc was processed successfully else False.
+        If this returns False the processing will be halted.
+        """
+        return all(self.process_doc(doc, couchdb) for doc in docs)
 
     def handle_skip(self, doc):
         """Called when a document is going to be skipped i.e. it has been
@@ -226,7 +251,6 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
 class CouchDocumentProcessor(object):
     """Process Couch Docs
 
-    :param slug: process name.
     :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
     :param doc_processor: A `BaseDocProcessor` object used to
     process documents.
@@ -238,8 +262,11 @@ class CouchDocumentProcessor(object):
     one time. It may be necessary to use a smaller chunk size if the
     records being processed are very large and the default chunk size of
     100 would exceed available memory.
+    :param view_event_handler: instance of PaginateViewLogHandler to be notified of
+    view events.
     """
-    def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2, chunk_size=100):
+    def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2,
+                 chunk_size=100, view_event_handler=None):
         self.doc_type_map = doc_type_map
         self.doc_processor = doc_processor
         self.reset = reset
@@ -251,7 +278,8 @@ class CouchDocumentProcessor(object):
             "documents must live in same couch db: %s" % repr(doc_type_map)
 
         self.docs_by_type = ResumableDocsByTypeIterator(
-            self.couchdb, doc_type_map, doc_processor.unique_key, chunk_size=chunk_size
+            self.couchdb, doc_type_map, doc_processor.unique_key, chunk_size=chunk_size,
+            view_event_handler=view_event_handler
         )
 
         self.visited = 0
@@ -367,3 +395,65 @@ class CouchDocumentProcessor(object):
         ))
         if self.skipped:
             print(DOCS_SKIPPED_WARNING.format(self.skipped))
+
+
+class BulkDocProcessorEventHandler(PaginateViewEventHandler):
+
+    def __init__(self, processor):
+        self.processor = processor
+
+    def view_ending(self, db, view_name, kwargs, total_emitted, time):
+        self.processor.process_chunk()
+
+
+class BulkDocProcessor(CouchDocumentProcessor):
+    """Process couch docs for a single doc type in batches
+
+    The bulk doc processor will send a batch of documents to the document
+    processor. If the processor does not respond with True then
+    the iteration is halted. Restarting the iteration will start by
+    re-sending the previous chunk to the processor.
+
+    The size of the batches passed to the document processor may vary
+    depending on how they are being filtered by the
+    document processor but will never exceed ``chunk_size``.
+
+    :param doc_type_map: Dict containing a single `doc_type_name: model_class` pair.
+    :param doc_processor: A `BaseDocProcessor` object used to
+    process documents.
+    :param reset: Reset existing processor state (if any), causing all
+    documents to be reconsidered for processing, if this is true.
+    :param chunk_size: Maximum number of records to read from couch at
+    one time. It may be necessary to use a smaller chunk size if the
+    records being processed are very large and the default chunk size of
+    100 would exceed available memory.
+    """
+    def __init__(self, doc_type_map, doc_processor, reset=False, chunk_size=100):
+        assert len(doc_type_map) == 1
+        super(BulkDocProcessor, self).__init__(
+            doc_type_map, doc_processor, reset=reset, chunk_size=chunk_size,
+            view_event_handler=BulkDocProcessorEventHandler(self)
+        )
+        self.changes = []
+
+    def _process_doc(self, doc):
+        if self.doc_processor.should_process(doc):
+            self.changes.append(doc)
+
+    def process_chunk(self):
+        """Called by the BulkDocProcessorLogHandler"""
+        ok = self.doc_processor.process_bulk_docs(self.changes, self.couchdb)
+        if ok:
+            self.processed += len(self.changes)
+            self.changes = []
+        else:
+            raise BulkProcessingFailed("Processing batch failed")
+
+    def _update_progress(self):
+        self.visited += 1
+        if self.visited % self.chunk_size == 0:
+            self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
+
+            elapsed, remaining = self.timing
+            print("Processed {}/{} of {} documents in {} ({} remaining)"
+                  .format(self.processed, self.visited, self.total, elapsed, remaining))

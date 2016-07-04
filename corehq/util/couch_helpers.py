@@ -98,7 +98,7 @@ class CouchAttachmentsBuilder(object):
         return copy(self._dict)
 
 
-class PaginateViewLogHandler(object):
+class PaginateViewEventHandler(object):
 
     def log(self, message):
         # subclasses can override this to actually log something
@@ -117,8 +117,24 @@ class PaginateViewLogHandler(object):
         self.log('View call took {}'.format(time))
 
 
+class DelegatingViewEventHandler(PaginateViewEventHandler):
+    def __init__(self, handlers=None):
+        self.handlers = handlers or []
+
+    def add_handler(self, handler):
+        self.handlers.add(handler)
+
+    def view_starting(self, db, view_name, kwargs, total_emitted):
+        for handler in self.handlers:
+            handler.view_starting(db, view_name, kwargs, total_emitted)
+
+    def view_ending(self, db, view_name, kwargs, total_emitted, time):
+        for handler in self.handlers:
+            handler.view_ending(db, view_name, kwargs, total_emitted, time)
+
+
 def paginate_view(db, view_name, chunk_size,
-                  log_handler=PaginateViewLogHandler(), **view_kwargs):
+                  log_handler=PaginateViewEventHandler(), **view_kwargs):
     """
     intended as a more performant drop-in replacement for
 

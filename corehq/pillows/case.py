@@ -18,7 +18,7 @@ from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
-    ElasticPillowReindexer, ResumableElasticPillowReindexer
+    ElasticPillowReindexer, ResumableBulkElasticPillowReindexer
 
 UNKNOWN_DOMAIN = "__nodomain__"
 UNKNOWN_TYPE = "__notype__"
@@ -106,7 +106,7 @@ def get_couch_case_reindexer():
 
 
 def get_resumable_couch_case_reindexer():
-    return ResumableElasticPillowReindexer(
+    return ResumableBulkElasticPillowReindexer(
         pillow=CasePillow(online=False),
         doc_types=[CommCareCase],
         elasticsearch=get_es_new(),

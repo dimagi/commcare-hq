@@ -1,20 +1,26 @@
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
+
+import six
 
 from corehq.elastic import get_es_new
-from corehq.util.couch_doc_processor import BaseDocProcessor, CouchDocumentProcessor
+from corehq.util.couch_doc_processor import BaseDocProcessor, BulkDocProcessor
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 from pillowtop.feed.interface import Change
+from pillowtop.logger import pillow_logging
+from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload
 
-import six
 
+class Reindexer(six.with_metaclass(ABCMeta)):
+    def consume_options(self, options):
+        """Called from the management command with the command line
+        options.
 
-class PillowReindexer(six.with_metaclass(ABCMeta)):
-    can_be_reset = False
-
-    def __init__(self, pillow):
-        self.pillow = pillow
+        :param options: command line options dict
+        :return: dict of unprocessed options
+        """
+        return options
 
     def clean(self):
         """
@@ -25,15 +31,30 @@ class PillowReindexer(six.with_metaclass(ABCMeta)):
             """
         pass
 
+    @abstractmethod
+    def reindex(self):
+        """Perform the reindex"""
+        raise NotImplementedError
+
+
+class PillowReindexer(Reindexer):
+    def __init__(self, pillow):
+        self.pillow = pillow
+
 
 class PillowChangeProviderReindexer(PillowReindexer):
+    start_from = None
 
     def __init__(self, pillow, change_provider):
         super(PillowChangeProviderReindexer, self).__init__(pillow)
         self.change_provider = change_provider
 
-    def reindex(self, start_from=None):
-        for change in self.change_provider.iter_all_changes(start_from=start_from):
+    def consume_options(self, options):
+        self.start_from = options.pop("start_from", None)
+        return options
+
+    def reindex(self):
+        for change in self.change_provider.iter_all_changes(start_from=self.start_from):
             self.pillow.process_change(change)
 
 
@@ -52,7 +73,7 @@ def _prepare_index_for_reindex(es, index_info):
 def _prepare_index_for_usage(es, index_info):
     set_index_normal_settings(es, index_info.index)
     es.indices.refresh(index_info.index)
-        
+
 
 class ElasticPillowReindexer(PillowChangeProviderReindexer):
 
@@ -64,62 +85,90 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
     def clean(self):
         _clean_index(self.es, self.index_info)
 
-    def reindex(self, start_from=None):
-        if not start_from:
+    def reindex(self):
+        if not self.start_from:
             # when not resuming force delete and create the index
             _prepare_index_for_reindex(self.es, self.index_info)
 
-        super(ElasticPillowReindexer, self).reindex(start_from)
+        super(ElasticPillowReindexer, self).reindex()
 
         _prepare_index_for_usage(self.es, self.index_info)
 
 
-class PillowReindexProcessor(BaseDocProcessor):
-    def __init__(self, slug, pillow):
-        super(PillowReindexProcessor, self).__init__(slug)
-        self.pillow = pillow
+class BulkPillowReindexProcessor(BaseDocProcessor):
+    def __init__(self, name, es_client, index_info, doc_filter=None, doc_transform=None):
+        super(BulkPillowReindexProcessor, self).__init__(index_info.index)
+        self.name = name
+        self.doc_transform = doc_transform
+        self.doc_filter = doc_filter
+        self.es = es_client
+        self.index_info = index_info
 
     @property
     def unique_key(self):
-        return "{}_{}_{}".format(self.slug, self.pillow.pillow_id, 'reindex')
+        return "{}_{}_{}".format(self.slug, self.name, 'reindex')
 
-    def process_doc(self, doc, couchdb):
-        change = self._doc_to_change(doc, couchdb)
-        self.pillow.process_change(change)
+    def should_process(self, doc):
+        if self.doc_filter:
+            return not self.doc_filter(doc)
+
+    def process_bulk_docs(self, docs, couchdb):
+        changes = [self._doc_to_change(doc, couchdb) for doc in docs]
+
+        bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform)
+
+        max_payload_size = pow(10, 8)  # ~ 100Mb
+        payloads = prepare_bulk_payloads(bulk_changes, max_payload_size)
+        if len(payloads) > 1:
+            pillow_logging.info("%s,payload split into %s parts" % (self.unique_key, len(payloads)))
+
+        pillow_logging.info("%s,sending payload,%s" % (self.unique_key, len(changes)))
+
+        for payload in payloads:
+            self.es.bulk(payload)
+
         return True
 
-    def _doc_to_change(self, doc, couchdb):
+    @staticmethod
+    def _doc_to_change(doc, couchdb):
         return Change(
             id=doc['_id'], sequence_id=None, document=doc, deleted=False,
             document_store=CouchDocumentStore(couchdb)
         )
 
 
-class ResumableElasticPillowReindexer(PillowReindexer):
-    can_be_reset = True
+class ResumableBulkElasticPillowReindexer(Reindexer):
+    reset = False
 
-    def __init__(self, pillow, doc_types, elasticsearch, index_info):
-        super(ResumableElasticPillowReindexer, self).__init__(pillow)
+    def __init__(self, name, doc_types, elasticsearch, index_info,
+                 doc_filter=None, doc_transform=None, chunk_size=1000):
         self.es = elasticsearch
         self.index_info = index_info
+        self.chunk_size = chunk_size
 
         self.doc_type_map = dict(
             t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
         if len(doc_types) != len(self.doc_type_map):
             raise ValueError("Invalid (duplicate?) doc types")
 
+        self.doc_processor = BulkPillowReindexProcessor(name, self.es, self.index_info, doc_filter, doc_transform)
+
+    def consume_options(self, options):
+        self.reset = options.pop("reset", False)
+        return options
+
     def clean(self):
         _clean_index(self.es, self.index_info)
 
-    def reindex(self, reset=False):
-        doc_processor = PillowReindexProcessor(self.index_info.index, self.pillow)
-        processor = CouchDocumentProcessor(
+    def reindex(self):
+        processor = BulkDocProcessor(
             self.doc_type_map,
-            doc_processor,
-            reset
+            self.doc_processor,
+            reset=self.reset,
+            chunk_size=self.chunk_size
         )
 
-        if reset or not processor.has_started():
+        if self.reset or not processor.has_started():
             # when not resuming force delete and create the index
             _prepare_index_for_reindex(self.es, self.index_info)
 
