@@ -215,11 +215,14 @@ class ParentCasePropertyBuilder(object):
 
         for m_case_type, form in self.forms_info:
             updates = self.get_case_updates(form, case_type)
-            # HACK exclude case updates that reference properties like "parent/property_name"
-            # TODO add parent property updates to the parent case type(s) of m_case_type
-            # Currently if a property is only ever updated via parent property
-            # reference, then I think it will not appear in the schema.
-            case_properties.update(p for p in updates if "/" not in p)
+            if include_parent_properties:
+                case_properties.update(updates)
+            else:
+                # HACK exclude case updates that reference properties like "parent/property_name"
+                # TODO add parent property updates to the parent case type(s) of m_case_type
+                # Currently if a property is only ever updated via parent property
+                # reference, then I think it will not appear in the schema.
+                case_properties.update(p for p in updates if "/" not in p)
 
         parent_types, contributed_properties = \
             self.get_parent_types_and_contributed_properties(case_type)
