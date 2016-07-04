@@ -9,6 +9,7 @@ from corehq.pillows.domain import get_domain_reindexer
 from corehq.pillows.group import get_group_reindexer
 from corehq.pillows.groups_to_user import get_groups_to_user_reindexer
 from corehq.pillows.ledger import get_ledger_v2_reindexer, get_ledger_v1_reindexer
+from corehq.pillows.reportxform import get_report_xform_reindexer
 from corehq.pillows.sms import get_sms_reindexer
 from corehq.pillows.user import get_user_reindexer
 from corehq.pillows.xform import (
@@ -66,6 +67,7 @@ class Command(BaseCommand):
             'ledger-v2': get_ledger_v2_reindexer,
             'ledger-v1': get_ledger_v1_reindexer,
             'sms': get_sms_reindexer,
+            'report-xform': get_report_xform_reindexer,
         }
         if index not in reindex_fns:
             raise CommandError('Supported indices to reindex are: {}'.format(','.join(reindex_fns.keys())))
