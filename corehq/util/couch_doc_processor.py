@@ -1,11 +1,11 @@
 import hashlib
-from abc import abstractmethod, ABCMeta, abstractproperty
+from abc import ABCMeta, abstractproperty
 from datetime import datetime
 
 import six
 from couchdbkit import ResourceNotFound
 
-from corehq.util.couch_helpers import PaginateViewEventHandler, paginate_view
+from corehq.util.couch_helpers import PaginateViewEventHandler, paginate_view, DelegatingViewEventHandler
 
 
 class ResumableDocsByTypeIterator(object):
@@ -27,7 +27,7 @@ class ResumableDocsByTypeIterator(object):
     is stopped and later resumed.
     """
 
-    def __init__(self, db, doc_types, iteration_key, chunk_size=100, log_handler=None):
+    def __init__(self, db, doc_types, iteration_key, chunk_size=100, view_event_handler=None):
         if isinstance(doc_types, str):
             raise TypeError("expected list of strings, got %r" % (doc_types,))
         self.db = db
@@ -61,10 +61,19 @@ class ResumableDocsByTypeIterator(object):
             else:
                 # non-retry phase of iteration is complete
                 doc_types = []
+
+        if view_event_handler:
+            event_handler = DelegatingViewEventHandler([
+                ResumableDocsByTypeEventHandler(self),
+                view_event_handler
+            ])
+        else:
+            event_handler = ResumableDocsByTypeEventHandler(self)
+
         args.update(
             view_name='all_docs/by_doc_type',
             chunk_size=chunk_size,
-            log_handler=ResumableDocsByTypeEventHandler(self, child=log_handler),
+            log_handler=event_handler,
             include_docs=True,
             reduce=False,
         )
@@ -157,21 +166,13 @@ class ResumableDocsByTypeIterator(object):
 
 class ResumableDocsByTypeEventHandler(PaginateViewEventHandler):
 
-    def __init__(self, iterator, child=None):
+    def __init__(self, iterator):
         self.iterator = iterator
-        self.child = child
 
     def view_starting(self, db, view_name, kwargs, total_emitted):
-        if self.child:
-            self.child.view_starting(db, view_name, kwargs, total_emitted)
-
         offset = {k: v for k, v in kwargs.items() if k.startswith("startkey")}
         self.iterator.state["offset"] = offset
         self.iterator._save_state()
-
-    def view_ending(self, db, view_name, kwargs, total_emitted, time):
-        if self.child:
-            self.child.view_ending(db, view_name, kwargs, total_emitted, time)
 
 
 class TooManyRetries(Exception):
@@ -259,10 +260,10 @@ class CouchDocumentProcessor(object):
     one time. It may be necessary to use a smaller chunk size if the
     records being processed are very large and the default chunk size of
     100 would exceed available memory.
-    :param log_handler: instance of PaginateViewLogHandler to be notified of
+    :param view_event_handler: instance of PaginateViewLogHandler to be notified of
     view events.
     """
-    def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2, chunk_size=100, log_handler=None):
+    def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2, chunk_size=100, view_event_handler=None):
         self.doc_type_map = doc_type_map
         self.doc_processor = doc_processor
         self.reset = reset
@@ -275,7 +276,7 @@ class CouchDocumentProcessor(object):
 
         self.docs_by_type = ResumableDocsByTypeIterator(
             self.couchdb, doc_type_map, doc_processor.unique_key, chunk_size=chunk_size,
-            log_handler=log_handler
+            view_event_handler=view_event_handler
         )
 
         self.visited = 0
@@ -428,7 +429,7 @@ class BulkDocProcessor(CouchDocumentProcessor):
         assert len(doc_type_map) == 1
         super(BulkDocProcessor, self).__init__(
             doc_type_map, doc_processor, reset=reset, chunk_size=chunk_size,
-            log_handler=BulkDocProcessorEventHandler(self)
+            view_event_handler=BulkDocProcessorEventHandler(self)
         )
         self.changes = []
 
