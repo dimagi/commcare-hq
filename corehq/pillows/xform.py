@@ -11,7 +11,7 @@ from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
-from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX, XFORM_ES_TYPE
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
 from couchforms.jsonobject_extensions import GeoPointProperty
 from .base import HQPillow
@@ -19,7 +19,7 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance
 from dateutil import parser
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.es_utils import ElasticsearchIndexInfo, get_index_info_from_pillow
+from pillowtop.es_utils import get_index_info_from_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
@@ -58,13 +58,13 @@ class XFormPillow(HQPillow):
     document_class = XFormInstance
     couch_filter = "couchforms/xforms"
     es_alias = "xforms"
-    es_type = XFORM_ES_TYPE
-    es_index = XFORM_INDEX
+    es_type = XFORM_INDEX_INFO.type
+    es_index = XFORM_INDEX_INFO.index
     include_docs = False
 
     # for simplicity, the handlers are managed on the domain level
     handler_domain_map = {}
-    default_mapping = XFORM_MAPPING
+    default_mapping = XFORM_INDEX_INFO.mapping
 
     def change_transform(self, doc_dict, include_props=True):
         return transform_xform_for_elasticsearch(doc_dict, include_props)
@@ -156,7 +156,7 @@ def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPill
     )
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
-        index_info=ElasticsearchIndexInfo(index=XFORM_INDEX, type=XFORM_ES_TYPE),
+        index_info=XFORM_INDEX_INFO,
         doc_prep_fn=prepare_sql_form_json_for_elasticsearch
     )
     return ConstructedPillow(
@@ -168,6 +168,27 @@ def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPill
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
     )
+
+
+def get_couch_xform_to_elasticsearch_pillow(pillow_id='CouchXFormToElasticsearchPillow'):
+    checkpoint = PillowCheckpoint(
+        'couch-xforms-to-elasticsearch',
+    )
+    form_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=XFORM_INDEX_INFO,
+        doc_prep_fn=transform_xform_for_elasticsearch
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topics=[topics.FORM], group_id='couch-forms-to-es'),
+        processor=form_processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
+    )
+
 
 
 def get_couch_form_reindexer():
