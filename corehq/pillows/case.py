@@ -6,7 +6,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlCaseChangeProvider
-from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX, CASE_ES_TYPE
+from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX, CASE_ES_TYPE, CASE_ES_ALIAS
 from corehq.pillows.utils import get_user_type
 from dimagi.utils.couch import LockManager
 from .base import HQPillow
@@ -34,7 +34,7 @@ class CasePillow(HQPillow):
     """
     document_class = CommCareCase
     couch_filter = "case/casedocs"
-    es_alias = "hqcases"
+    es_alias = CASE_ES_ALIAS
     es_type = CASE_ES_TYPE
 
     es_index = CASE_INDEX
