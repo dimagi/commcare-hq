@@ -55,6 +55,13 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ApplicationBlobDeletionPillow"
     },
+    "ApplicationToElasticsearchPillow": {
+        "advertised_name": "ApplicationToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "applications-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "ApplicationToElasticsearchPillow"
+    },
     "BlobDeletionPillow": {
         "advertised_name": "BlobDeletionPillow",
         "change_feed_type": "KafkaChangeFeed",

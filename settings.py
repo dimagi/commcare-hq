@@ -1454,6 +1454,11 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
         },
         {
+            'name': 'ApplicationToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
+        },
+        {
             'name': 'DefaultChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
