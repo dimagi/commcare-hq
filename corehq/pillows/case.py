@@ -6,7 +6,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlCaseChangeProvider
-from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX, CASE_ES_TYPE
+from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX, CASE_ES_TYPE, CASE_ES_ALIAS
 from corehq.pillows.utils import get_user_type
 from dimagi.utils.couch import LockManager
 from .base import HQPillow
@@ -34,7 +34,7 @@ class CasePillow(HQPillow):
     """
     document_class = CommCareCase
     couch_filter = "case/casedocs"
-    es_alias = "hqcases"
+    es_alias = CASE_ES_ALIAS
     es_type = CASE_ES_TYPE
 
     es_index = CASE_INDEX
@@ -85,6 +85,26 @@ def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], group_id='sql-cases-to-es'),
+        processor=case_processor,
+        change_processed_event_handler=PillowCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100,
+        ),
+    )
+
+
+def get_couch_case_to_elasticsearch_pillow(pillow_id='CouchCaseToElasticsearchPillow'):
+    checkpoint = PillowCheckpoint(
+        'couch-cases-to-elasticsearch',
+    )
+    case_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=ElasticsearchIndexInfo(index=CASE_INDEX, type=CASE_ES_TYPE),
+        doc_prep_fn=transform_case_for_elasticsearch
+    )
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=KafkaChangeFeed(topics=[topics.CASE], group_id='couch-cases-to-es'),
         processor=case_processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,
