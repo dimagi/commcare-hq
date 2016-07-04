@@ -87,7 +87,7 @@ class TestUserSyncToEs(SimpleTestCase):
         user.base_doc += DELETED_SUFFIX
         user.save()
         self.es.indices.refresh(USER_INDEX_INFO.index)
-        self.assertFalse(doc_exists_in_es(USER_INDEX_INFO.index, user._id))
+        self.assertFalse(doc_exists_in_es(USER_INDEX_INFO, user._id))
 
     def check_user(self, user):
         self.es.indices.refresh(USER_INDEX_INFO.index)
