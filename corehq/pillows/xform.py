@@ -66,8 +66,8 @@ class XFormPillow(HQPillow):
     handler_domain_map = {}
     default_mapping = XFORM_MAPPING
 
-    def change_transform(self, doc_dict, include_props=True):
-        return transform_xform_for_elasticsearch(doc_dict, include_props)
+    def change_transform(self, doc_dict):
+        return transform_xform_for_elasticsearch(doc_dict)
 
 
 def device_log_filter(doc_dict):
