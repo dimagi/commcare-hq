@@ -25,7 +25,7 @@ class ReportXFormPillow(XFormPillow):
 
 
 def transform_xform_for_report_forms_index(doc_dict):
-    doc_ret = transform_xform_for_elasticsearch(doc_dict)
+    doc_ret = transform_xform_for_elasticsearch(doc_dict, include_props=False)
     if doc_ret:
         domain = doc_dict.get('domain', None)
 
