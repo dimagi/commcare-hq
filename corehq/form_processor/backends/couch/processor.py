@@ -8,6 +8,7 @@ from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
+from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.exceptions import CaseNotFound
 from couchforms.util import fetch_and_wrap_form
 from couchforms.models import (
@@ -63,7 +64,8 @@ class FormProcessorCouch(object):
         docs = list(processed_forms) + (cases or [])
         docs = filter(None, docs)
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
-        XFormInstance.get_db().bulk_save(docs)
+        with bulk_atomic_blobs(docs):
+            XFormInstance.get_db().bulk_save(docs)
         if stock_result:
             stock_result.commit()
 
