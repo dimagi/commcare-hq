@@ -53,10 +53,10 @@ class CustomDataFieldsDefinition(Document):
 
     def get_fields(self, required_only=False, include_system=True):
         def _is_match(field):
-            if ((required_only and not field.is_required)
-                    or (not include_system and is_system_key(field.slug))):
-                return False
-            return True
+            return not (
+                (required_only and not field.is_required) or
+                (not include_system and is_system_key(field.slug))
+            )
         return filter(_is_match, self.fields)
 
     @classmethod
