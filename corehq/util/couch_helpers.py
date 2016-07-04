@@ -98,7 +98,7 @@ class CouchAttachmentsBuilder(object):
         return copy(self._dict)
 
 
-class PaginateViewLogHandler(object):
+class PaginateViewEventHandler(object):
 
     def log(self, message):
         # subclasses can override this to actually log something
@@ -118,7 +118,7 @@ class PaginateViewLogHandler(object):
 
 
 def paginate_view(db, view_name, chunk_size,
-                  log_handler=PaginateViewLogHandler(), **view_kwargs):
+                  log_handler=PaginateViewEventHandler(), **view_kwargs):
     """
     intended as a more performant drop-in replacement for
 

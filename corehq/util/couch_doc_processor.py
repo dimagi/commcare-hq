@@ -5,7 +5,7 @@ from datetime import datetime
 import six
 from couchdbkit import ResourceNotFound
 
-from corehq.util.couch_helpers import PaginateViewLogHandler, paginate_view
+from corehq.util.couch_helpers import PaginateViewEventHandler, paginate_view
 
 
 class ResumableDocsByTypeIterator(object):
@@ -64,7 +64,7 @@ class ResumableDocsByTypeIterator(object):
         args.update(
             view_name='all_docs/by_doc_type',
             chunk_size=chunk_size,
-            log_handler=ResumableDocsByTypeLogHandler(self, child=log_handler),
+            log_handler=ResumableDocsByTypeEventHandler(self, child=log_handler),
             include_docs=True,
             reduce=False,
         )
@@ -155,7 +155,7 @@ class ResumableDocsByTypeIterator(object):
         )
 
 
-class ResumableDocsByTypeLogHandler(PaginateViewLogHandler):
+class ResumableDocsByTypeEventHandler(PaginateViewEventHandler):
 
     def __init__(self, iterator, child=None):
         self.iterator = iterator
@@ -393,7 +393,7 @@ class CouchDocumentProcessor(object):
             print(DOCS_SKIPPED_WARNING.format(self.skipped))
 
 
-class BulkDocProcessorLogHandler(PaginateViewLogHandler):
+class BulkDocProcessorEventHandler(PaginateViewEventHandler):
 
     def __init__(self, processor):
         self.processor = processor
@@ -428,7 +428,7 @@ class BulkDocProcessor(CouchDocumentProcessor):
         assert len(doc_type_map) == 1
         super(BulkDocProcessor, self).__init__(
             doc_type_map, doc_processor, reset=reset, chunk_size=chunk_size,
-            log_handler=BulkDocProcessorLogHandler(self)
+            log_handler=BulkDocProcessorEventHandler(self)
         )
         self.changes = []
 
