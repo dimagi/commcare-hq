@@ -1,6 +1,6 @@
 import copy
 from corehq.pillows.case import CasePillow
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_MAPPING, REPORT_CASE_INDEX
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from django.conf import settings
 from .base import convert_property_dict
 
@@ -12,8 +12,8 @@ class ReportCasePillow(CasePillow):
     """
     es_alias = "report_cases"
     es_type = "report_case"
-    es_index = REPORT_CASE_INDEX
-    default_mapping = REPORT_CASE_MAPPING
+    es_index = REPORT_CASE_INDEX_INFO.index
+    default_mapping = REPORT_CASE_INDEX_INFO.mapping
 
     @classmethod
     def get_unique_id(cls):
@@ -30,7 +30,7 @@ def transform_case_to_report_es(doc_dict):
     doc_ret = copy.deepcopy(doc_dict)
     convert_property_dict(
         doc_ret,
-        REPORT_CASE_MAPPING,
+        REPORT_CASE_INDEX_INFO.mapping,
         override_root_keys=['_id', 'doc_type', '_rev', '#export_tag']
     )
     return doc_ret
