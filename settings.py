@@ -1449,6 +1449,11 @@ PILLOWTOPS = {
         'corehq.pillows.reportcase.ReportCasePillow',
         'corehq.pillows.reportxform.ReportXFormPillow',
         {
+            'name': 'AppDbChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
+        },
+        {
             'name': 'DefaultChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
