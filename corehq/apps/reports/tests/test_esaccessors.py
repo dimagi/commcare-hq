@@ -26,7 +26,7 @@ from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.pillows.case import get_sql_case_to_elasticsearch_pillow, transform_case_for_elasticsearch
+from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_completed_counts_by_user,
@@ -51,8 +51,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
-from pillowtop.es_utils import initialize_index_and_mapping, get_index_info_from_pillow
-from pillowtop.feed.interface import Change
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class BaseESAccessorsTest(SimpleTestCase):
