@@ -1,7 +1,13 @@
 from django.conf import settings
 
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.xform import transform_xform_for_elasticsearch
+from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import ElasticProcessor
 from .mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from .xform import XFormPillow
 
@@ -39,3 +45,24 @@ def transform_xform_for_report_forms_index(doc_dict):
         return doc_ret
     else:
         return None
+
+
+def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsearchPillow'):
+    checkpoint = PillowCheckpoint(
+        'report-xforms-to-elasticsearch',
+    )
+    form_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=REPORT_XFORM_INDEX_INFO,
+        doc_prep_fn=transform_xform_for_report_forms_index
+    )
+    kafka_change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='report-forms-to-es')
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=kafka_change_feed,
+        processor=form_processor,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
+        ),
+    )
