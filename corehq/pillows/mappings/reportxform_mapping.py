@@ -152,8 +152,8 @@ REPORT_XFORM_MAPPING = {
     ]
 }
 
-REPORT_XFORM_ALIAS = "report_xform"
-REPORT_XFORM_TYPE = "report_xforms"
+REPORT_XFORM_ALIAS = "report_xforms"
+REPORT_XFORM_TYPE = "report_xform"
 
 REPORT_XFORM_INDEX_INFO = ElasticsearchIndexInfo(
     index=REPORT_XFORM_INDEX,
