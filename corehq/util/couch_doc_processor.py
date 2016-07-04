@@ -5,7 +5,9 @@ from datetime import datetime
 import six
 from couchdbkit import ResourceNotFound
 
-from corehq.util.couch_helpers import PaginateViewEventHandler, paginate_view, DelegatingViewEventHandler
+from corehq.util.couch_helpers import (
+    PaginateViewEventHandler, paginate_view, DelegatingViewEventHandler
+)
 
 
 class ResumableDocsByTypeIterator(object):
@@ -263,7 +265,8 @@ class CouchDocumentProcessor(object):
     :param view_event_handler: instance of PaginateViewLogHandler to be notified of
     view events.
     """
-    def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2, chunk_size=100, view_event_handler=None):
+    def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2,
+                 chunk_size=100, view_event_handler=None):
         self.doc_type_map = doc_type_map
         self.doc_processor = doc_processor
         self.reset = reset
