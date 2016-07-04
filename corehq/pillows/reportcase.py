@@ -1,7 +1,15 @@
 import copy
+
+from django.conf import settings
+
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.elastic import get_es_new
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
-from django.conf import settings
+from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors import ElasticProcessor
 from .base import convert_property_dict
 
 
@@ -34,3 +42,24 @@ def transform_case_to_report_es(doc_dict):
         override_root_keys=['_id', 'doc_type', '_rev', '#export_tag']
     )
     return doc_ret
+
+
+def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearchPillow'):
+    checkpoint = PillowCheckpoint(
+        'report-cases-to-elasticsearch',
+    )
+    form_processor = ElasticProcessor(
+        elasticsearch=get_es_new(),
+        index_info=REPORT_CASE_INDEX_INFO,
+        doc_prep_fn=transform_case_to_report_es
+    )
+    kafka_change_feed = KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='report-cases-to-es')
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=kafka_change_feed,
+        processor=form_processor,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
+        ),
+    )

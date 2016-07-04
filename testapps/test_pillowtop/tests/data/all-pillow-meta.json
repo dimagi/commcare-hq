@@ -398,6 +398,13 @@
         "name": "ReportCasePillow",
         "unique_id": "8c10a7564b6af5052f8b86693bf6ac07"
     },
+    "ReportCaseToElasticsearchPillow": {
+        "advertised_name": "ReportCaseToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "report-cases-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "ReportCaseToElasticsearchPillow"
+    },
     "ReportXFormPillow": {
         "advertised_name": "corehq.pillows.reportxform.ReportXFormPillow.test_report_xforms_20150406_1136.testhq",
         "change_feed_type": "CouchChangeFeed",
