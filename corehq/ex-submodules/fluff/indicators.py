@@ -82,7 +82,7 @@ class IndicatorDocument(schema.Document):
     wrapper = None
     document_filter = None
     group_by = ()
-    save_direct_to_sql = None
+    save_direct_to_sql = True
     kafka_topic = None  # if set, this will use a kafka feed instead of couch for the pillow
 
     # A list of doc types to delete from fluff (in case a previously matching document no

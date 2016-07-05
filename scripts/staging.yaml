@@ -53,10 +53,11 @@ branches:
   - np/update-ui # Nick P 6/27
   - np/update-user-buckets # Nick P 6/28
   - nc/report-builder # Noah 6/29
+  - fr/async-restore  # 29/6
 submodules:
-  #deployment/commcare-hq-deploy:
-  #  branches:
-  #    - br/refactor-operations  # Ben
+  deployment/commcare-hq-deploy:
+   branches:
+     - br/refactor-operations-2  # Ben 7/1
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
@@ -67,8 +68,6 @@ submodules:
     # just so we always get latest master
     branches:
       - 2.28-jars
-  submodules/ctable-src:
-    branches: []
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:

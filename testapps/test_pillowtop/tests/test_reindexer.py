@@ -16,8 +16,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
     run_with_all_backends
-from corehq.pillows.case import CasePillow
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
@@ -25,7 +24,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_form, create_and_save_a_case
-
+from pillowtop.es_utils import initialize_index_and_mapping
 
 DOMAIN = 'reindex-test-domain'
 
@@ -37,7 +36,7 @@ class PillowtopReindexerTest(TestCase):
     def setUpClass(cls):
         super(PillowtopReindexerTest, cls).setUpClass()
         with trap_extra_setup(ConnectionError):
-            CasePillow()  # verify connection to elasticsearch
+            initialize_index_and_mapping(get_es_new(), CASE_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):

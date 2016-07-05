@@ -52,7 +52,6 @@ class BaseM4ChangeCaseFluff(fluff.IndicatorDocument):
     document_class = XFormInstance
     document_filter = ORFilter(_get_all_m4change_forms())
     domains = M4CHANGE_DOMAINS
-    save_direct_to_sql = True
     kafka_topic = topics.CASE
 
     class Meta:

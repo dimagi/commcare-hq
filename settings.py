@@ -269,8 +269,6 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'couchlog',
-    'ctable',
-    'ctable_view',
     'dimagi.utils',
     'formtranslate',
     'langcodes',
@@ -370,6 +368,7 @@ HQ_APPS = (
     'custom.openlmis',
     'custom.logistics',
     'custom.ilsgateway',
+    'custom.zipline',
     'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
@@ -422,8 +421,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.m4change',
 
     # submodules with tests that run on travis
-    'ctable',
-    'ctable_view',
     'dimagi.utils',
 )
 
@@ -814,14 +811,6 @@ MESSAGE_LOG_OPTIONS = {
 IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
-# List of Fluff pillow classes that ctable should process diffs for
-# deprecated - use IndicatorDocument.save_direct_to_sql
-FLUFF_PILLOW_TYPES_TO_SQL = {
-    'UnicefMalawiFluff': 'SQL',
-    'CareSAFluff': 'SQL',
-    'OpmUserFluff': 'SQL',
-}
-
 PREVIEWER_RE = '^$'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
@@ -901,6 +890,10 @@ DATADOG_APP_KEY = None
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+# Settings for Zipline integration
+ZIPLINE_API_URL = ''
+ZIPLINE_API_USER = ''
+ZIPLINE_API_PASSWORD = ''
 
 KAFKA_URL = 'localhost:9092'
 
@@ -1204,7 +1197,6 @@ COUCHDB_APPS = [
     'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
-    'ctable',
     'custom_data_fields',
     'hqadmin',
     'ext',
@@ -1477,14 +1469,29 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
         },
         {
+            'name': 'ReportCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
+        },
+        {
             'name': 'SqlXFormToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
         },
         {
+            'name': 'CouchXFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_couch_xform_to_elasticsearch_pillow',
+        },
+        {
             'name': 'SqlCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'CouchCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_couch_case_to_elasticsearch_pillow',
         },
         {
             'name': 'UnknownUsersPillow',
