@@ -24,6 +24,8 @@
                 "ko.inline_edit": "{% static 'style/ko/components/inline_edit' %}",
                 "ko.components": "{% static 'style/ko/components.ko' %}",
                 "underscore": "{% static 'underscore/underscore' %}",
+
+                "config.dataTables": "{% static 'reports/javascripts/config.dataTables.bootstrap' %}",
             },
             shim: {
                 "bootstrap": { deps: ['jquery'] },
@@ -40,7 +42,7 @@
             }
         });
 
-        requirejs(["{% static 'fixtures/js/lookup-manage.js' %}"]);
+        {% block requirejs_entry %}{% endblock requirejs_entry %}
     </script>
 {% endblock %}
 

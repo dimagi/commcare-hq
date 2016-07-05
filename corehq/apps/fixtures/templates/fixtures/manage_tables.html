@@ -8,6 +8,10 @@
     {% trans 'Manage Lookup Tables' %}
 {% endblock %}
 
+{% block requirejs_entry %}
+    requirejs(["{% static 'fixtures/js/lookup-manage.js' %}"]);
+{% endblock requirejs_entry %}
+
 {% block page_content %}
 <p>
     {% blocktrans %}

@@ -1,4 +1,10 @@
-// datatable configuration.
+(function (factory) {
+if (typeof define === 'function' && define.amd) {
+    define(['jquery'], factory);
+} else {
+    factory(jQuery);
+}
+}(function ($) {
 
 function HQReportDataTables(options) {
     var self = this;
@@ -311,3 +317,5 @@ jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a, b) { return sor
 jQuery.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) { return sortSpecial(a, b, true, convertDate); };
 
 jQuery.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) { return sortSpecial(a, b, false, convertDate); };
+
+}));
