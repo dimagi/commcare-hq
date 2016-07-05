@@ -1,3 +1,4 @@
+import weakref
 from datetime import datetime
 import subprocess
 import time
@@ -25,10 +26,12 @@ RETRY_TIME_DELAY_FACTOR = 15
 class ReindexEventHandler(PaginateViewEventHandler):
 
     def __init__(self, reindexer):
-        self.reindexer = reindexer
+        self.reindexer_ref = weakref.ref(reindexer)
 
     def log(self, message):
-        self.reindexer.log(message)
+        reindexer = self.reindexer_ref()
+        if reindexer:
+            reindexer.log(message)
 
 
 class PtopReindexer(NoArgsCommand):
