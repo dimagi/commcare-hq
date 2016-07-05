@@ -12,7 +12,7 @@ from corehq.pillows.ledger import get_ledger_v2_reindexer, get_ledger_v1_reindex
 from corehq.pillows.sms import get_sms_reindexer
 from corehq.pillows.user import get_user_reindexer
 from corehq.pillows.xform import (
-    get_couch_form_reindexer, get_sql_form_reindexer, get_resumable_couch_form_reindexer
+    get_couch_form_reindexer, get_sql_form_reindexer
 )
 
 
@@ -59,7 +59,6 @@ class Command(BaseCommand):
             'case': get_couch_case_reindexer,
             'resumable-case': get_resumable_couch_case_reindexer,
             'form': get_couch_form_reindexer,
-            'resumable-form': get_resumable_couch_form_reindexer,
             'sql-case': get_sql_case_reindexer,
             'sql-form': get_sql_form_reindexer,
             'case-search': get_case_search_reindexer,

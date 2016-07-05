@@ -2,6 +2,7 @@ import collections
 import copy
 import datetime
 
+from dateutil import parser
 from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
@@ -13,19 +14,16 @@ from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
-from couchforms.jsonobject_extensions import GeoPointProperty
-from .base import HQPillow
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
+from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance
-from dateutil import parser
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.es_utils import get_index_info_from_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
-from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
-    ElasticPillowReindexer, ResumableBulkElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ResumableBulkElasticPillowReindexer
+from .base import HQPillow
 
 UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
@@ -190,28 +188,12 @@ def get_couch_xform_to_elasticsearch_pillow(pillow_id='CouchXFormToElasticsearch
     )
 
 
-
 def get_couch_form_reindexer():
-    return get_default_reindexer_for_elastic_pillow(
-        pillow=XFormPillow(online=False),
-        change_provider=CouchViewChangeProvider(
-            couch_db=XFormInstance.get_db(),
-            view_name='all_docs/by_doc_type',
-            view_kwargs={
-                'startkey': ['XFormInstance'],
-                'endkey': ['XFormInstance', {}],
-                'include_docs': True,
-            }
-        )
-    )
-
-
-def get_resumable_couch_form_reindexer():
     return ResumableBulkElasticPillowReindexer(
-        name=XFormPillow(online=False).pillow_id,
+        name="CouchXFormToElasticsearchPillow",
         doc_types=[XFormInstance],
         elasticsearch=get_es_new(),
-        index_info=_get_xform_index_info(),
+        index_info=XFORM_INDEX_INFO,
         doc_filter=device_log_filter,
         doc_transform=transform_xform_for_elasticsearch
     )
