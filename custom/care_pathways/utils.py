@@ -2,12 +2,13 @@ from collections import OrderedDict
 import re
 import os
 import json
+
+from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from corehq.apps.reports.sqlreport import DataFormatter
-from dimagi.utils.decorators.memoized import memoized
 
 
-@memoized
+@quickcache(['domain'], timeout=5 * 60)
 def get_domain_configuration(domain):
     with open(os.path.join(os.path.dirname(__file__), 'resources/%s.json' % (domain))) as f:
         _loaded_configuration = json.loads(f.read())
@@ -34,8 +35,10 @@ def get_mapping(domain_name):
     return list({'val': vc.val, "text": vc.text} for vc in value_chains)
 
 
-def get_domains_with_next(domain_name):
+def get_domains_with_next(domain_name, value_chain=None):
     configuration = get_domain_configuration(domain_name).by_type_hierarchy
+    if value_chain:
+        configuration = filter(lambda x: x['val'] == value_chain, configuration)
     domains = []
     for chain in configuration:
         domains.extend(chain.next)
@@ -47,8 +50,8 @@ def get_domains(domain_name):
     return list({'val': d.val, "text": d.text} for d in domains)
 
 
-def get_pracices(case):
-    domains = get_domains_with_next(case)
+def get_pracices(domain_name, value_chain=None):
+    domains = get_domains_with_next(domain_name, value_chain)
     practices = []
     for domain in domains:
         practices.extend(domain.next)
@@ -167,6 +170,8 @@ class TableCardDataGroupsFormatter(DataFormatter):
 
         for row in data:
             for idx, practice in enumerate(row[2:], 1):
+                if practice.get('sort_key') == 'N/A':
+                    continue
                 group = self.group_level(practice)
                 if idx < len(row) - 1:
                     range_groups[group][idx] += 1
@@ -180,6 +185,21 @@ class TableCardDataGroupsFormatter(DataFormatter):
 
 class TableCardDataIndividualFormatter(DataFormatter):
 
+    def first_column_format(self, x, table_card_group_by):
+        if table_card_group_by == 'group_name':
+            return x
+        else:
+            group_by = 'Groups'
+            if table_card_group_by == 'group_leadership':
+                group_by = 'Leadership'
+
+            if int(x) == 0:
+                return 'All Male %s' % group_by
+            elif int(x) == 1:
+                return 'Mixed %s' % group_by
+            elif int(x) == 2:
+                return 'All Female %s' % group_by
+
     def calculate_total_column(self, row):
         TAG_RE = re.compile(r'<[^>]+>')
 
@@ -189,43 +209,81 @@ class TableCardDataIndividualFormatter(DataFormatter):
         num_practices = 0
         total_practices = 0
         for prop in row:
+            if prop.get('sort_key') == 'N/A':
+                continue
             values = map(int, re.findall(r'\d+', remove_tags(prop['html'])))
             num_practices += values[0]
             total_practices += values[1]
 
-        return "%d/%d (%.2f%%)" % ((num_practices or 0), total_practices, 100 * int(num_practices or 0) / float(total_practices or 1))
+        value = "%d/%d (%.2f%%)" % ((num_practices or 0), total_practices,
+                                    100 * int(num_practices or 0) / float(total_practices or 1))
+        return {'sort_key': value, 'html': value}
 
-    def format(self, data, keys=None, group_by=None, domain=None):
-        rows_dict = OrderedDict()
-        tmp_data = OrderedDict()
-        sorted_data = []
-        value_chains = get_domain_configuration(domain).by_type_hierarchy
-        for key, row in data.items():
-            to_list = list(key)
+    def _init_row(self, practices):
+        row = {}
+        for practice in practices:
+            row[practice.val] = None
+        return row
 
-            def find_name(list, deep):
-                for element in list:
-                    if deep == len(key)-3 and key[deep+1] == element.val:
-                        return element.text
-                    elif key[deep+1] == element.val:
-                        return find_name(element.next, deep+1)
+    def format(self, data, keys=None, group_by=None, domain=None, practices=None):
+        practices = practices or []
+        groups = set()
+        for row in data.keys():
+            groups.add(row[0])
 
-            name = find_name(value_chains, 0)
-            to_list[2] = name
-            tmp_data.update({tuple(to_list): row})
-        if tmp_data:
-            sorted_data = sorted(tmp_data.items(), key=lambda x: (x[0][0], x[0][2]))
+        groups = sorted(list(groups))
+        result = OrderedDict()
+        for group in groups:
+            result[group] = self._init_row(practices)
 
-        for row in sorted_data:
-            formatted_row = self._format.format_row(row[1])
-            if not rows_dict.has_key(formatted_row[0]):
-                rows_dict[formatted_row[0]] = []
-            rows_dict[formatted_row[0]].append(formatted_row[1])
+        for key, row in data.iteritems():
+            formatted_row = self._format.format_row(row)
+            result[key[0]][row['practices']] = formatted_row[1]
 
-        min_length = min([len(item[1]) for item in rows_dict.items()])
+        for key, row in result.items():
+            formatted_row = []
+            for practice in practices:
+                value = row[practice.val]
+                if value is None:
+                    formatted_row.append({'html': 'N/A', 'sort_key': 'N/A'})
+                else:
+                    formatted_row.append(value)
+            total_column = self.calculate_total_column(formatted_row)
+            name = self.first_column_format(key, group_by)
+            res = [{'html': name, 'sort_key': name}, total_column]
+            res.extend(formatted_row)
+            yield res
 
-        for key, row in rows_dict.items():
-            total_column = self.calculate_total_column(row)
-            res = [key, total_column]
-            res.extend(row)
+
+class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
+
+    def format(self, data, keys=None, group_by=None, domain=None, practices=None):
+        practices = practices or []
+        groups = set()
+        id_to_name = {}
+        for row in sorted(data.keys()):
+            groups.add(row[0])
+            id_to_name[row[0]] = u'{} ({})'.format(row[1].title(), row[2])
+
+        groups = sorted(list(groups), key=lambda r: id_to_name[r])
+        result = OrderedDict()
+        for group in groups:
+            result[group] = self._init_row(practices)
+
+        for key, row in data.iteritems():
+            formatted_row = self._format.format_row(row)
+            result[key[0]][row['practices']] = formatted_row[1]
+            id_to_name[key[0]] = u'{} ({})'.format(key[1], key[2])
+
+        for key, row in result.items():
+            formatted_row = []
+            for practice in practices:
+                value = row[practice.val]
+                if value is None:
+                    formatted_row.append({'html': 'N/A', 'sort_key': 'N/A'})
+                else:
+                    formatted_row.append(value)
+            total_column = self.calculate_total_column(formatted_row)
+            res = [{'html': id_to_name[key], 'sort_key': id_to_name[key]}, total_column]
+            res.extend(formatted_row)
             yield res

@@ -25,5 +25,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('archive_unarchive_form.sql'),
-        migrator.get_migration('get_extension_case_ids.sql'),
     ]

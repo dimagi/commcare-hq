@@ -36,6 +36,7 @@ class UTHTests(TestCase):
         return case_id
 
     def setUp(self):
+        super(UTHTests, self).setUp()
         delete_all_xforms()
         delete_all_cases()
 

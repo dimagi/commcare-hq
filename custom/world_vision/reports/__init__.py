@@ -27,8 +27,8 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
     printable = True
 
     @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(TTCReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(TTCReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     @memoized

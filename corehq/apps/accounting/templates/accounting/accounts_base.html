@@ -4,15 +4,14 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var billingInfoHandler = new BillingContactInfoHandler(
-            "{% trans "Please enter a valid email." %}"
-        );
-        billingInfoHandler.init();
+    $(function () {
+        hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
+    });
     </script>
 {% endblock %}
 

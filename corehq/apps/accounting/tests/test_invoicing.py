@@ -4,15 +4,7 @@ import datetime
 
 from dimagi.utils.dates import add_months_to_date
 
-from corehq.apps.sms.models import INCOMING, OUTGOING
-from corehq.apps.smsbillables.models import (
-    SmsBillable,
-    SmsGatewayFee,
-    SmsGatewayFeeCriteria,
-    SmsUsageFee,
-    SmsUsageFeeCriteria,
-)
-from corehq.apps.accounting import generator, tasks, utils
+from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.models import (
     SMALL_INVOICE_THRESHOLD,
     BillingAccount,
@@ -30,7 +22,17 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment,
     SubscriptionType,
 )
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.sms.models import INCOMING, OUTGOING
+from corehq.apps.smsbillables.models import (
+    SmsBillable,
+    SmsGatewayFee,
+    SmsGatewayFeeCriteria,
+    SmsUsageFee,
+    SmsUsageFeeCriteria,
+)
+from corehq.apps.smsbillables.tests.generator import arbitrary_sms_billables_for_domain
 
 
 class BaseInvoiceTestCase(BaseAccountingTest):
@@ -494,10 +496,10 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         - total and subtotals are 0.0
         """
         num_sms = random.randint(0, self.sms_rate.monthly_limit/2)
-        generator.arbitrary_sms_billables_for_domain(
+        arbitrary_sms_billables_for_domain(
             self.subscription.subscriber.domain, self.sms_date, num_sms, direction=INCOMING
         )
-        generator.arbitrary_sms_billables_for_domain(
+        arbitrary_sms_billables_for_domain(
             self.subscription.subscriber.domain, self.sms_date, num_sms, direction=OUTGOING
         )
         sms_line_item = self._create_sms_line_item()
@@ -523,7 +525,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         - total and subtotals are greater than zero
         """
         num_sms = random.randint(self.sms_rate.monthly_limit + 1, self.sms_rate.monthly_limit + 2)
-        billables = generator.arbitrary_sms_billables_for_domain(
+        billables = arbitrary_sms_billables_for_domain(
             self.subscription.subscriber.domain, self.sms_date, num_sms
         )
         sms_line_item = self._create_sms_line_item()
@@ -571,12 +573,12 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         for billable in SmsBillable.objects.all():
             _set_billable_date_sent_day(billable, 1)
 
-        half_charged_billable = generator.arbitrary_sms_billables_for_domain(
+        half_charged_billable = arbitrary_sms_billables_for_domain(
             self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=2
         )[0]
         _set_billable_date_sent_day(half_charged_billable, 2)
 
-        fully_charged_billable = generator.arbitrary_sms_billables_for_domain(
+        fully_charged_billable = arbitrary_sms_billables_for_domain(
             self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=random.randint(2, 5)
         )[0]
         _set_billable_date_sent_day(fully_charged_billable, 3)
@@ -605,7 +607,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         while True:
             multipart_count = random.randint(1, 5)
             if count_parts + multipart_count <= total_parts:
-                generator.arbitrary_sms_billables_for_domain(
+                arbitrary_sms_billables_for_domain(
                     self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=multipart_count
                 )
                 count_parts += multipart_count
@@ -613,7 +615,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
                 break
         remaining_parts = total_parts - count_parts
         if remaining_parts > 0:
-            generator.arbitrary_sms_billables_for_domain(
+            arbitrary_sms_billables_for_domain(
                 self.subscription.subscriber.domain, self.sms_date, 1, multipart_count=remaining_parts
             )
 

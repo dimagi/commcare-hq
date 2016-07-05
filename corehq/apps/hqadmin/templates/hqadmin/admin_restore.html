@@ -1,0 +1,95 @@
+{% load hq_shared_tags %}{% load compress %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Restore Response</title>
+
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
+        <link type="text/css" rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
+        <link type="text/css" rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
+        <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
+
+        {% compress js %}
+            <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'jquery-treetable/jquery.treetable.js' %}"></script>
+            <script type="text/javascript" src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+            <script type="text/javascript" src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
+            <script type="text/javascript" src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
+            <script type="text/javascript" src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
+            <script type="text/javascript" src="{% static 'codemirror/addon/fold/xml-fold.js' %}"></script>
+        {% endcompress %}
+
+        <style>
+            .CodeMirror {
+                height: auto;
+            }
+            .branch {
+                background-color: #f0f0f0;
+            }
+        </style>
+
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-xs-12">
+                    <h3>Response Status Code: {{ status_code }}</h3>
+                    <ul class="list-inline">
+                        <li><a href="https://confluence.dimagi.com/display/commcarehq/Hidden+features#Hiddenfeatures-PhoneRestore" target="_blank">Docs</a></li>
+                        <li><a href="{{request.get_full_path}}&raw=true">Raw</a></li>
+                    </ul>
+                    <div>
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
+                            <li role="presentation"><a href="#timing-tab" role="tab" data-toggle="tab">Timing</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <div role="tabpanel" class="tab-pane active" id="payload-tab">
+                                <pre id="payload">{{ payload }}</pre>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" id="timing-tab">
+                                <table id="timingTable" class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Timer name</th>
+                                            <th>Duration</th>
+                                            <th>Percent of Parent</th>
+                                            <th>Percent of Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for timer in timing_data %}
+                                            <tr data-tt-id="{{ timer.name }}" {% if timer.parent %}data-tt-parent-id="{{ timer.parent.name }}"{% endif %}>
+                                                <td>{{ timer.name }}</td>
+                                                <td>{{ timer.duration|stringformat:".3f" }}</td>
+                                                <td>{{ timer.percent_of_parent|stringformat:".1f" }}</td>
+                                                <td>{{ timer.percent_of_total|stringformat:".1f" }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        <script>
+            var payloadElement = document.getElementById('payload');
+            var myCodeMirror = CodeMirror(function(elt) {
+                payloadElement.parentNode.replaceChild(elt, payloadElement);
+            }, {
+                value: payloadElement.textContent,
+                readOnly: true,
+                lineNumbers: true,
+                mode: {name: "text/xml", json: true},
+                viewportMargin: Infinity,
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+            });
+
+            $("#timingTable").treetable();
+        </script>
+
+    </body>
+</html>

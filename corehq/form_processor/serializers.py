@@ -4,7 +4,7 @@ from rest_framework import serializers
 from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
-    XFormInstanceSQL, XFormOperationSQL,
+    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL,
     LedgerValue)
 
 
@@ -42,15 +42,27 @@ class XFormOperationSQLSerializer(serializers.ModelSerializer):
         model = XFormOperationSQL
 
 
+class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = XFormAttachmentSQL
+
+
 class XFormInstanceSQLSerializer(DeletableModelSerializer):
     history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     auth_context = serializers.DictField()
     openrosa_headers = serializers.DictField()
+    attachments = serializers.JSONField(source='serialized_attachments')
 
     class Meta:
         model = XFormInstanceSQL
         exclude = ('id',)
+
+    def __init__(self, *args, **kwargs):
+        include_attachments = kwargs.pop('include_attachments', False)
+        if not include_attachments:
+            self.fields.pop('attachments')
+        super(XFormInstanceSQLSerializer, self).__init__(*args, **kwargs)
 
 
 class XFormStateField(serializers.ChoiceField):

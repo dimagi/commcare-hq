@@ -1,11 +1,12 @@
 import datetime
-from corehq.apps.domain.models import Domain
-from corehq.apps.accounting import generator
+
 from corehq.apps.accounting.exceptions import NewSubscriptionError
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
     SubscriptionAdjustmentMethod, SubscriptionType, EntryPoint,)
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.domain.models import Domain
 
 
 class TestNewDomainSubscription(BaseAccountingTest):
@@ -32,10 +33,8 @@ class TestNewDomainSubscription(BaseAccountingTest):
             self.domain.name, created_by=self.admin_user.username)[0]
         self.account2 = BillingAccount.get_or_create_account_by_domain(
             self.domain2.name, created_by=self.admin_user.username)[0]
-        self.standard_plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain.name, edition=SoftwarePlanEdition.STANDARD)
-        self.advanced_plan = DefaultProductPlan.get_default_plan_by_domain(
-            self.domain.name, edition=SoftwarePlanEdition.ADVANCED)
+        self.standard_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.STANDARD)
+        self.advanced_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
 
     def test_new_susbscription_in_future(self):
         """

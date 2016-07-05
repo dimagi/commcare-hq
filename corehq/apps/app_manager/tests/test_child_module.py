@@ -341,6 +341,45 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
 
         self.assertXmlEqual(self.get_xml('child-module-rename-session-vars'), upd_guppy_form.render_xform())
 
+    def test_incorrect_case_var_for_case_update(self):
+        # see http://manage.dimagi.com/default.asp?230013
+        factory = AppFactory(build_version='2.9')
+        new_episode_module, new_episode_form = factory.new_basic_module('register_episode', 'episode')
+        factory.form_opens_case(new_episode_form)
+
+        lab_test_module, lab_test_form = factory.new_advanced_module('lab_test', 'episode')
+        factory.form_requires_case(lab_test_form, 'episode')
+        factory.form_opens_case(lab_test_form, 'lab_test', is_subcase=True, is_extension=True)
+        factory.form_opens_case(lab_test_form, 'lab_referral', is_subcase=True, parent_tag='open_lab_test')
+
+        lab_update_module, lab_update_form = factory.new_advanced_module('lab_update', 'lab_test', parent_module=lab_test_module)
+        factory.form_requires_case(lab_update_form, 'episode', update={'episode_type': '/data/question1'})
+        factory.form_requires_case(lab_update_form, 'lab_test', parent_case_type='episode')
+        lab_update_form.source = self.get_xml('original_form', override_path=('data',))
+
+        expected_suite_entry = """
+        <partial>
+            <session>
+                <datum id="case_id_load_episode_0" nodeset="instance('casedb')/casedb/case[@case_type='episode'][@status='open']" value="./@case_id" detail-select="m0_case_short"/>
+                <datum id="case_id_new_lab_test_0" function="uuid()"/>
+                <datum id="case_id_new_lab_referral_1" function="uuid()"/>
+                <datum id="case_id_load_lab_test_0" nodeset="instance('casedb')/casedb/case[@case_type='lab_test'][@status='open'][index/parent=instance('commcaresession')/session/data/case_id_load_episode_0]" value="./@case_id" detail-select="m2_case_short" detail-confirm="m2_case_long"/>
+            </session>
+        </partial>"""
+        suite_xml = factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            expected_suite_entry,
+            suite_xml,
+            './entry[3]/session'
+        )
+        form_xml = lab_update_form.render_xform()
+        self.assertTrue(
+            '<bind calculate="instance(\'commcaresession\')/session/data/case_id_new_lab_test_0" nodeset="/data/case_load_episode_0/case/@case_id"/>' not in form_xml
+        )
+        self.assertTrue(
+            '<bind calculate="instance(\'commcaresession\')/session/data/case_id_load_episode_0" nodeset="/data/case_load_episode_0/case/@case_id"/>' in form_xml
+        )
+
 
 class BasicSubModuleTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')

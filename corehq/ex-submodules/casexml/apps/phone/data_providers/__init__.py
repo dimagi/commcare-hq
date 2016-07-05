@@ -2,23 +2,23 @@ from .standard import *
 from .case import *
 
 
-def get_restore_providers():
+def get_restore_providers(timing_context):
     """
     Get restore providers which contribute directly to the XML.
     """
     # note that ordering matters in this list as this is the order that the items
     # will appear in the XML, and have access to the RestoreState object
     return [
-        SyncElementProvider(),
-        RegistrationElementProvider(),
-        FixtureElementProvider(),
+        SyncElementProvider(timing_context),
+        RegistrationElementProvider(timing_context),
+        FixtureElementProvider(timing_context),
     ]
 
 
-def get_long_running_providers():
+def get_long_running_providers(timing_context):
     """
     Get restore providers that are expected to run for a long time.
 
     These have different API semantics to be able to support asynchronous calls in hte future.
     """
-    return [CasePayloadProvider()]
+    return [CasePayloadProvider(timing_context)]

@@ -12,6 +12,10 @@ from corehq.apps.export.transforms import (
     owner_id_to_display,
 )
 
+# When fixing a bug that requires existing schemas to be rebuilt,
+# bump the version number.
+DATA_SCHEMA_VERSION = 1
+
 DEID_ID_TRANSFORM = "deid_id"
 DEID_DATE_TRANSFORM = "deid_date"
 DEID_TRANSFORM_FUNCTIONS = {

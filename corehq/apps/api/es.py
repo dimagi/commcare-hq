@@ -10,7 +10,6 @@ from django.views.generic import View
 from elasticsearch.exceptions import ElasticsearchException
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
@@ -603,7 +602,7 @@ def validate_date(date):
                 raise DateTimeError("Date not in the correct format")
     return date
 
-RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TASTYPIE_RESERVED_GET_PARAMS)
+RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'])
 
 # Note that dates are already in a string format when they arrive as query params
 query_param_transforms = {

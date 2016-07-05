@@ -1,5 +1,5 @@
 from django.contrib.auth.forms import SetPasswordForm
-from crispy_forms.bootstrap import FormActions, StrictButton
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit

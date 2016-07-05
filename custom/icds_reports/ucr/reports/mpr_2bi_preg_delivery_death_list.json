@@ -85,8 +85,8 @@
         "field": "name",
         "type": "field",
         "display": {
-          "mar": "Name",
-          "tel": "Name",
+          "mar": "नांव",
+          "tel": "పేరు",
           "hin": "नाम",
           "en": "Name"
         }
@@ -98,8 +98,8 @@
         "field": "age_at_death_yrs",
         "type": "field",
         "display": {
-          "mar": "Age",
-          "tel": "Age",
+          "mar": "वय",
+          "tel": "వయస్సు",
           "hin": "उम्र",
           "en": "Age"
         }
@@ -112,11 +112,11 @@
             "delivery": [
               [
                 "mar",
-                "Delivery"
+                "प्रसूति"
               ],
               [
                 "tel",
-                "Delivery"
+                "కాన్పు వివరాలు "
               ],
               [
                 "hin",
@@ -130,15 +130,15 @@
             "pnc": [
               [
                 "mar",
-                "PNC"
+                "प्रसुतीनंतरची देखभाल"
               ],
               [
                 "tel",
-                "PNC"
+                "కాన్పు తరువాత సంరక్షణ "
               ],
               [
                 "hin",
-                "पीएनसी"
+                "प्रसव के बाद देख-रेख"
               ],
               [
                 "en",
@@ -148,11 +148,11 @@
             "pregnant": [
               [
                 "mar",
-                "Pregnant"
+                "गरोदर"
               ],
               [
                 "tel",
-                "Pregnant"
+                "గర్భవతా"
               ],
               [
                 "hin",
@@ -169,8 +169,8 @@
         "field": "female_death_type",
         "type": "field",
         "display": {
-          "mar": "Type",
-          "tel": "Type",
+          "mar": "प्रकार",
+          "tel": "రకం",
           "hin": "प्रकार",
           "en": "Type"
         },
@@ -184,7 +184,7 @@
             "yes": [
               [
                 "mar",
-                "हो"
+                "होय"
               ],
               [
                 "tel",
@@ -206,7 +206,7 @@
               ],
               [
                 "tel",
-                "లేదు"
+                "కాదు"
               ],
               [
                 "hin",
@@ -223,8 +223,8 @@
         "field": "resident",
         "type": "field",
         "display": {
-          "mar": "Resident",
-          "tel": "Resident",
+          "mar": "निवासी",
+          "tel": "నివాసితుడు",
           "hin": "निवासी",
           "en": "Resident"
         },
@@ -237,9 +237,9 @@
         "field": "date_death",
         "type": "field",
         "display": {
-          "mar": "Date Death",
-          "tel": "Date Death",
-          "hin": "मृत्यु की तारिक",
+          "mar": "मृत्युची  तारीख",
+          "tel": "మరణించిన తేదీ",
+          "hin": "मृत्यु की तारीख",
           "en": "Date Death"
         }
       }

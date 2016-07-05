@@ -105,12 +105,12 @@ class PlProxyTests(SimpleTestCase):
 
     def test_get_server_option_string(self):
         self.assertEqual(
-            "p0 'dbname=db1 host=hqdb0 port=5432'",
+            "p0000 'dbname=db1 host=hqdb0 port=5432'",
             ShardMeta(id=0, dbname='db1', host='hqdb0', port=5432).get_server_option_string()
         )
 
     def test_parse_existing_shard(self):
-        parsed = parse_existing_shard('p1=dbname=db1 host=hqdb0 port=5432')
+        parsed = parse_existing_shard('p0001=dbname=db1 host=hqdb0 port=5432')
         self.assertEqual(ShardMeta(id=1, dbname='db1', host='hqdb0', port=5432), parsed)
 
         parsed = parse_existing_shard('p25=dbname=db2 host=hqdb1 port=6432')

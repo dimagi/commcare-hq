@@ -3,7 +3,8 @@ import uuid
 from django.test import TestCase
 from requests import ConnectionError
 
-from corehq.pillows.xform import XFormPillow
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import DocTestMixin, trap_extra_setup
 from couchforms.analytics import (
@@ -15,7 +16,7 @@ from couchforms.analytics import (
     get_form_analytics_metadata, get_exports_by_form,
 )
 from couchforms.models import XFormInstance, XFormError
-from pillowtop.es_utils import completely_initialize_pillow_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class CouchformsAnalyticsTest(TestCase, DocTestMixin):
@@ -95,9 +96,9 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         from corehq.apps.app_manager.models import Application, Module, Form
         delete_all_xforms()
 
-        cls.form_pillow = XFormPillow(online=False)
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            completely_initialize_pillow_index(cls.form_pillow)
+            cls.es = get_es_new()
+            initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
 
         cls.domain = 'exports_forms_analytics_domain'
         cls.app_id_1 = 'a' + uuid.uuid4().hex
@@ -122,9 +123,9 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         cls.all_forms = cls.forms + cls.error_forms
         for form in cls.all_forms:
             form.save()
-            cls.form_pillow.send_robust(form.to_json())
+            send_to_elasticsearch('forms', form.to_json())
 
-        cls.form_pillow.get_es_new().indices.refresh(cls.form_pillow.es_index)
+        cls.es.indices.refresh(XFORM_INDEX_INFO.index)
         update_analytics_indexes()
 
     @classmethod
@@ -133,7 +134,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
             form.delete()
         for app in cls.apps:
             app.delete()
-        ensure_index_deleted(cls.form_pillow.es_index)
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
 
     def test_get_form_analytics_metadata__no_match(self):
         self.assertIsNone(

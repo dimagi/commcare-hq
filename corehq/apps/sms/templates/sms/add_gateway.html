@@ -4,11 +4,11 @@
 {% load crispy_forms_tags %}
 
 {% block stylesheets %} {{ block.super }}
-    <link rel="stylesheet" href="{% new_static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
+    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'sms/ko/add_gateway_form_handler.ko.js' %}"></script>
+    <script src="{% static 'sms/ko/add_gateway_form_handler.ko.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

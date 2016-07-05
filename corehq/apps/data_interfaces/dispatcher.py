@@ -4,7 +4,6 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.reports.dispatcher import ReportDispatcher, ProjectReportDispatcher, datespan_default
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
 

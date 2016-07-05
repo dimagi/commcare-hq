@@ -1,21 +1,21 @@
 {% load hq_shared_tags %}
 
 {# touchforms includes #}
-<link rel="stylesheet" href="{% new_static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
-<link rel="stylesheet" href="{% new_static 'nprogress/nprogress.css' %}">
-<link rel="stylesheet" href="{% new_static 'formplayer/style/webforms.css' %}">
+<link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
+<link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
+<link rel="stylesheet" href="{% static 'formplayer/style/webforms.css' %}">
 {% if not exclude_jquery_ui_import %}
-<script src="{% new_static 'jquery-ui/jquery-ui.min.js' %}"></script>
+<script src="{% static 'jquery-ui/jquery-ui.min.js' %}"></script>
 {% endif %}
-<script src="{% new_static 'nprogress/nprogress.js' %}"></script>
-<script src="{% new_static 'formplayer/script/vendor/shortcut.js' %}"></script>
-<script src="{% new_static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
-<script src="{% new_static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
-<script src="{% new_static 'formplayer/script/vendor/purify.js' %}"></script>
-<script src="{% new_static 'formplayer/script/webformsession.js' %}"></script>
-<script src="{% new_static 'formplayer/script/formnav-all.js' %}"></script>
-<script src="{% new_static 'formplayer/script/entrycontrols_full.js' %}"></script>
-<script src="{% new_static 'formplayer/script/fullform-ui.js' %}"></script>
-<script src="{% new_static 'cloudcare/js/touchforms-inline.js' %}"></script>
+<script src="{% static 'nprogress/nprogress.js' %}"></script>
+<script src="{% static 'formplayer/script/vendor/shortcut.js' %}"></script>
+<script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
+<script src="{% static 'formplayer/script/vendor/ba-tiny-pubsub.min.js' %}"></script>
+<script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
+<script src="{% static 'formplayer/script/webformsession.js' %}"></script>
+<script src="{% static 'formplayer/script/formnav-all.js' %}"></script>
+<script src="{% static 'formplayer/script/entrycontrols_full.js' %}"></script>
+<script src="{% static 'formplayer/script/fullform-ui.js' %}"></script>
+<script src="{% static 'cloudcare/js/touchforms-inline.js' %}"></script>
 
 {% include 'formplayer/fullform-ui/templates.html' %}

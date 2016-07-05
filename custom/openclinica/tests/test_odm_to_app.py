@@ -1,3 +1,4 @@
+import doctest
 import os
 import re
 from django.conf import settings
@@ -6,6 +7,7 @@ from django.test import TestCase, SimpleTestCase
 from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.domain.models import Domain
 from custom.openclinica.management.commands.odm_to_app import Command, Item
+import custom.openclinica.management.commands.odm_to_app
 
 
 def replace_uuids(string):
@@ -70,3 +72,10 @@ class GetConditionTests(SimpleTestCase):
     def test_no_values(self):
         with self.assertRaisesMessage(ValueError, 'A validation condition needs at least one comparable value'):
             Item.get_condition('LT', [])
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(custom.openclinica.management.commands.odm_to_app)
+        self.assertEqual(results.failed, 0)

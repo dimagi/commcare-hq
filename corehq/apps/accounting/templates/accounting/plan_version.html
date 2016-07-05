@@ -4,8 +4,8 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'accounting/js/stay-on-tab.js' %}"></script>
-    <script src="{% new_static 'accounting/ko/accounting.software_plan_version_handler.js' %}"></script>
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+    <script src="{% static 'accounting/ko/accounting.software_plan_version_handler.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}

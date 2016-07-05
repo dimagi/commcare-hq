@@ -2,7 +2,6 @@ from django import template
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
-import corehq.apps.style.utils as style_utils
 from corehq.tabs import MENU_TABS
 from corehq.tabs.exceptions import TabClassError, TabClassErrorSummary
 from corehq.tabs.utils import path_starts_with_url

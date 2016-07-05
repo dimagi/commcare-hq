@@ -5,6 +5,9 @@
 }
 
 .nav-hq-sidebar {
+  font-size: 13px;
+  line-height: 18px;
+
   &.nav > li {
     a {
       padding: 3px 20px;
@@ -22,18 +25,32 @@
   &.nav > li li a {
     padding-left: 30px;
   }
+  li.divider {
+    height: 1px;
+    margin: 8px 10px;
+    overflow: hidden;
+    background-color: white;
+    border-top: 1px solid @cc-neutral-hi;
+  }
+  .nav-input {
+    padding: 3px 20px;
+  }
 }
-
 
 .page-actions-toolbar {
   padding: 0px 15px;
-}
-
-.nav-hq-sidebar .nav-input {
-  padding: 3px 20px;
 }
 
 .nav-main-icon {
   font-size: 1.7em;
   line-height: 0.7em;
 }
+
+.text-hq-nav-header {
+  margin-bottom: 6px;
+}
+
+.nav > li > a {
+  color: @cc-brand-low;
+}
+

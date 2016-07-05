@@ -11,7 +11,6 @@ from corehq.apps.app_manager.util import all_case_properties_by_domain
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader
@@ -30,12 +29,14 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
-from corehq.apps.data_interfaces.dispatcher import (DataInterfaceDispatcher, EditDataInterfaceDispatcher,
-                                                    require_can_edit_data)
-from corehq.apps.style.decorators import use_bootstrap3, use_typeahead, use_angular_js
+from corehq.apps.data_interfaces.dispatcher import (
+    EditDataInterfaceDispatcher,
+    require_can_edit_data,
+)
+from corehq.apps.style.decorators import use_typeahead, use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
-from .interfaces import FormManagementMode, BulkFormManagementInterface, CaseReassignmentInterface
+from .interfaces import FormManagementMode, BulkFormManagementInterface
 from django.db import transaction
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
@@ -176,10 +177,6 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'template': 'deleted-group-template',
         }
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(CaseGroupListView, self).dispatch(request, *args, **kwargs)
-
 
 class ArchiveFormView(DataInterfaceSection):
     template_name = 'data_interfaces/interfaces/import_forms.html'
@@ -189,7 +186,6 @@ class ArchiveFormView(DataInterfaceSection):
     ONE_MB = 1000000
     MAX_SIZE = 3 * ONE_MB
 
-    @use_bootstrap3
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_CASE_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
         if not toggles.BULK_ARCHIVE_FORMS.enabled(request.user.username):
@@ -415,8 +411,8 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     def _get_item_data(self, case):
         return {
-            'id': case._id,
-            'detailsUrl': reverse('case_details', args=[self.domain, case._id]),
+            'id': case.case_id,
+            'detailsUrl': reverse('case_details', args=[self.domain, case.case_id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
             'phoneNumber': getattr(case, 'contact_phone_number', '--'),
@@ -474,10 +470,6 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             return self.get(request, *args, **kwargs)
         return self.paginate_crud_response
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(CaseGroupCaseManagementView, self).dispatch(request, *args, **kwargs)
-
 
 class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
@@ -521,10 +513,6 @@ class XFormManagementStatusView(DataInterfaceSection):
 
     urlname = 'xform_management_status'
     page_title = ugettext_noop('Form Status')
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(XFormManagementStatusView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         context = super(XFormManagementStatusView, self).main_context
@@ -578,7 +566,6 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
     def project_timezone(self):
         return get_timezone_for_user(None, self.domain)
 
-    @use_bootstrap3
     @use_angular_js
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
@@ -729,7 +716,6 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
             'success': True,
         }
 
-    @use_bootstrap3
     @use_angular_js
     @use_typeahead
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))

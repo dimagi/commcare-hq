@@ -47,6 +47,7 @@ class TestReminders(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestReminders, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
         cls.loc1 = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=TEST_DOMAIN)
@@ -149,6 +150,7 @@ class TestReminders(EWSTestCase):
         SMS.objects.all().delete()
         StockState.objects.all().delete()
         StockReport.objects.all().delete()
+        super(TestReminders, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):

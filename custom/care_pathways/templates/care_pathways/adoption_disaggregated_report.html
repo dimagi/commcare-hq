@@ -36,8 +36,6 @@
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},
                 showAllRowsOption: {{ report_table.show_all_rows|JSON }},
                 defaultSort: false,
-                useBootstrap3: true,
-                paginationType: 'bs_normal'
             });
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);

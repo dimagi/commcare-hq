@@ -115,6 +115,20 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CaseSearchToElasticsearchPillow"
     },
+    "CouchCaseToElasticsearchPillow": {
+        "advertised_name": "CouchCaseToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "couch-cases-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "CouchCaseToElasticsearchPillow"
+    },
+    "CouchXFormToElasticsearchPillow": {
+        "advertised_name": "CouchXFormToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "couch-xforms-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "CouchXFormToElasticsearchPillow"
+    },
     "CouvertureFluffPillow": {
         "advertised_name": "fluff.CouvertureFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",
@@ -301,22 +315,6 @@
         "include_docs": true,
         "name": "MVPFormIndicatorPillow"
     },
-    "MalariaConsortiumFluffPillow": {
-        "advertised_name": "fluff.MalariaConsortiumFluffPillow.testhq",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.MalariaConsortiumFluffPillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "CachedCouchDB",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "extra_args": {
-            "doc_type": "XFormInstance",
-            "domains": "mc-inscale"
-        },
-        "full_class_name": "custom.reports.mc.models.MalariaConsortiumFluffPillow",
-        "include_docs": false,
-        "name": "MalariaConsortiumFluffPillow"
-    },
     "McctMonthlyAggregateFormFluffPillow": {
         "advertised_name": "fluff.McctMonthlyAggregateFormFluffPillow.testhq",
         "change_feed_type": "KafkaChangeFeed",
@@ -414,6 +412,13 @@
         "name": "ReportCasePillow",
         "unique_id": "8c10a7564b6af5052f8b86693bf6ac07"
     },
+    "ReportCaseToElasticsearchPillow": {
+        "advertised_name": "ReportCaseToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "report-cases-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "ReportCaseToElasticsearchPillow"
+    },
     "ReportXFormPillow": {
         "advertised_name": "corehq.pillows.reportxform.ReportXFormPillow.test_report_xforms_20150406_1136.testhq",
         "change_feed_type": "CouchChangeFeed",
@@ -430,6 +435,13 @@
         "include_docs": false,
         "name": "ReportXFormPillow",
         "unique_id": "test_report_xforms_20150406_1136"
+    },
+    "ReportXFormToElasticsearchPillow": {
+        "advertised_name": "ReportXFormToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "report-xforms-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "ReportXFormToElasticsearchPillow"
     },
     "SqlCaseToElasticsearchPillow": {
         "advertised_name": "SqlCaseToElasticsearchPillow",
@@ -598,6 +610,13 @@
         "include_docs": false,
         "name": "XFormPillow",
         "unique_id": "test_xforms_2016-06-09"
+    },
+    "AppFormSubmissionTrackerPillow": {
+        "advertised_name": "AppFormSubmissionTrackerPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "app-form-submission-tracker",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "AppFormSubmissionTrackerPillow"
     },
     "kafka-ucr-main": {
         "advertised_name": "kafka-ucr-main",

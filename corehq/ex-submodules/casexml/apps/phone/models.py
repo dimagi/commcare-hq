@@ -32,7 +32,6 @@ class OTARestoreUser(object):
     Note: When adding methods to this user, you'll need to ensure that it is
     functional with both a CommCareUser and WebUser.
     """
-
     def __init__(self, domain, couch_user, loadtest_factor=1):
         self.domain = domain
         self._loadtest_factor = loadtest_factor

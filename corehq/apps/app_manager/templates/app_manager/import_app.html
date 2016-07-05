@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 
 {% block js-inline %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/js/lib/compression.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
     <script>
         $(function () {
             $(".historyBack").click(function () {

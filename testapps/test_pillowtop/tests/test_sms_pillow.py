@@ -20,6 +20,7 @@ class SqlSMSPillowTest(TestCase):
     domain = 'sms-pillow-test-domain'
 
     def setUp(self):
+        super(SqlSMSPillowTest, self).setUp()
         self.elasticsearch = get_es_new()
         ensure_index_deleted(SMS_INDEX_INFO.index)
 
@@ -28,6 +29,7 @@ class SqlSMSPillowTest(TestCase):
         SMS.objects.filter(domain=self.domain).delete()
         MessagingSubEvent.objects.filter(parent__domain=self.domain).delete()
         MessagingEvent.objects.filter(domain=self.domain).delete()
+        super(SqlSMSPillowTest, self).tearDown()
 
     def _create_sms(self):
         event = MessagingEvent.objects.create(

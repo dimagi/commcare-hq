@@ -20,11 +20,9 @@ Things to keep in mind:
 
 
 * `Fluff`_
-* `Ctable`_
 * `sqlagg`_
 * `couchdbkit-aggregate`_ (legacy)
 
-.. _Ctable: https://github.com/dimagi/ctable
 .. _sqlagg: https://github.com/dimagi/sql-agg
 .. _couchdbkit-aggregate: https://github.com/dimagi/couchdbkit-aggregate
 .. _sqlalchemy: http://docs.sqlalchemy.org/en/rel_0_8/core/tutorial.html

@@ -270,6 +270,16 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
 
     @property
     @memoized
+    def serialized_attachments(self):
+        from couchforms.const import ATTACHMENT_NAME
+        from .serializers import XFormAttachmentSQLSerializer
+        return {
+            att.name: XFormAttachmentSQLSerializer(att).data
+            for att in self.get_attachments() if att.name != ATTACHMENT_NAME
+        }
+
+    @property
+    @memoized
     def form_data(self):
         from .utils import convert_xform_to_json, adjust_datetimes
         xml = self.get_xml()
@@ -299,9 +309,9 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
         self.state |= self.DELETED
 
-    def to_json(self):
+    def to_json(self, include_attachments=False):
         from .serializers import XFormInstanceSQLSerializer
-        serializer = XFormInstanceSQLSerializer(self)
+        serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
         return serializer.data
 
     def _get_attachment_from_db(self, attachment_name):
@@ -1228,7 +1238,6 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case_id = models.CharField(max_length=255, default=None)  # remove foreign key until we're sharding this
-    location_id = models.CharField(max_length=255, null=True, default=None)
     # can't be a foreign key to products because of sharding.
     # also still unclear whether we plan to support ledgers to non-products
     entry_id = models.CharField(max_length=100, default=None)
@@ -1256,12 +1265,6 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
         return UniqueLedgerReference(
             case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
         )
-
-    @property
-    def sql_location(self):
-        from corehq.apps.locations.models import SQLLocation
-        if self.location_id:
-            return SQLLocation.by_location_id(self.location_id)
 
     def to_json(self):
         from .serializers import LedgerValueSerializer

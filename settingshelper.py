@@ -1,3 +1,4 @@
+from __future__ import print_function
 from collections import namedtuple
 import os
 import sys
@@ -192,8 +193,8 @@ def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
         for handler in logging_config["handlers"].values():
             if handler["class"].startswith("corehq."):
                 if fix_logger_obfuscation_ != 'quiet':
-                    print "{} logger is being changed to {}".format(
+                    print("{} logger is being changed to {}".format(
                         handler['class'],
                         'logging.StreamHandler'
-                    )
+                    ), file=sys.stderr)
                 handler["class"] = "logging.StreamHandler"

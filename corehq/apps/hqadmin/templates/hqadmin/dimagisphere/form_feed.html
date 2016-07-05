@@ -7,9 +7,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>CommCare HQ Form Feed</title>
 	{% compress css %}
-        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'nvd3/src/nv.d3.css' %}" />
-        <link type="text/css" rel="stylesheet" media="all" href="{% new_static 'leaflet/dist/leaflet.css' %}" />
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}" />
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}" />
     {% endcompress %}
     <style>
         .chart-wrapper, .map-wrapper {
@@ -88,13 +88,13 @@
 		{% endblock main_content %}
 	</div>
     {% compress js %}
-        <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'd3/d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'js/ws4redis.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'leaflet/dist/leaflet.js' %}"></script>
-        <script type="text/javascript" src="{% new_static 'hqadmin/js/dimagisphere_helper.js' %}"></script>
+        <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'd3/d3.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/ws4redis.js' %}"></script>
+        <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqadmin/js/dimagisphere_helper.js' %}"></script>
     {% endcompress %}
 
 	{% block script_panel %}

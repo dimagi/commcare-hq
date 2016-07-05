@@ -4,13 +4,13 @@
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title>CommCareHQ Test</title>
-    <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
     <!-- Mocha and test-only dependencies -->
-    <link href="{% new_static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"></link>
-    <script src="{% new_static 'mocha/mocha.js' %}"></script>
-    <script src="{% new_static 'chai/chai.js' %}"></script>
-    <script src="{% new_static 'sinon/index.js' %}"></script>
-    <script src="{% new_static 'hqwebapp/js/hqModules.js' %}"></script>
+    <link href="{% static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"></link>
+    <script src="{% static 'mocha/mocha.js' %}"></script>
+    <script src="{% static 'chai/chai.js' %}"></script>
+    <script src="{% static 'sinon/index.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
     <script>
         mocha.setup('bdd')
         window.assert = chai.assert
@@ -20,7 +20,7 @@
     {% block core_libraries %}
     {% include "style/includes/core_libraries.html" %}
     {% include "style/includes/ko.html" %}
-    <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
     {% endblock %}
 
     <!-- App specific dependencies -->

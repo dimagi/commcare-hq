@@ -1,14 +1,14 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
-from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations
+from corehq.apps.es import FormES, UserES, GroupES, CaseES, filters, aggregations, LedgerES
 from corehq.apps.es.aggregations import (
     TermsAggregation,
     ExtendedStatsAggregation,
     TopHitsAggregation,
     MissingAggregation,
     MISSING_KEY,
-)
+    AggregationTerm, NestedTermAggregationsHelper, SumAggregation)
 from corehq.apps.es.forms import (
     submitted as submitted_filter,
     completed as completed_filter,
@@ -511,3 +511,58 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
     user_submissions = submissions.get(user_id, None)
     if user_submissions:
         return user_submissions[0]['form']['meta'].get('username', None)
+
+
+def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None):
+    # todo: figure out why this causes circular import
+    from corehq.apps.reports.commtrack.util import StockLedgerValueWrapper
+    query = LedgerES().domain(domain).section(section_id).case(case_ids)
+    if entry_ids:
+        query = query.entry(entry_ids)
+
+    return [StockLedgerValueWrapper.wrap(row) for row in query.run().hits]
+
+
+def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
+    # todo: figure out why this causes circular import
+    query = LedgerES().domain(domain).section(section_id).case(case_ids)
+    if entry_ids:
+        query = query.entry(entry_ids)
+
+    terms = [
+        AggregationTerm('entry_id', 'entry_id'),
+    ]
+    return NestedTermAggregationsHelper(
+        base_query=query,
+        terms=terms,
+        bottom_level_aggregation=SumAggregation('balance', 'balance'),
+    ).get_data()
+
+
+def get_form_ids_having_multimedia(domain, app_id, xmlns, startdate, enddate):
+    # TODO: Remove references to _attachments once all forms have been migrated to Riak
+    query = (FormES()
+             .domain(domain)
+             .app(app_id)
+             .xmlns(xmlns)
+             .submitted(gte=startdate, lte=enddate)
+             .remove_default_filter("has_user")
+             .source(['_attachments', '_id', 'external_blobs']))
+    form_ids = set()
+    for form in query.scroll():
+        try:
+            for attachment in _get_attachment_dicts_from_form(form):
+                if attachment['content_type'] != "text/xml":
+                    form_ids.add(form['_id'])
+                    continue
+        except AttributeError:
+            pass
+    return form_ids
+
+
+def _get_attachment_dicts_from_form(form):
+    if 'external_blobs' in form:
+        return form['external_blobs'].values()
+    elif '_attachments' in form:
+        return form['_attachments'].values()
+    return []

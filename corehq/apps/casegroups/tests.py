@@ -10,6 +10,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(DBAccessorsTest, cls).setUpClass()
         cls.domain = 'skbanskdjoasdkng'
         cls.cases = [
             CommCareCase(name='A', domain=cls.domain),
@@ -35,6 +36,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
     def tearDownClass(cls):
         CommCareCase.get_db().bulk_delete(cls.cases)
         CommCareCaseGroup.get_db().bulk_delete(cls.case_groups)
+        super(DBAccessorsTest, cls).tearDownClass()
 
     def test_get_case_groups_in_domain(self):
         self.assert_doc_lists_equal(

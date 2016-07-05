@@ -5,19 +5,27 @@ branches:
     - master
 env:
   matrix:
-    - MATRIX_TYPE=javascript BOWER=yes NODE=yes
+    - TEST=javascript
     # need node installs for app_manager.XpathValidatorTest
-    - MATRIX_TYPE=python NOSE_DIVIDED_WE_RUN=05 BOWER=yes NODE=yes
-    - MATRIX_TYPE=python NOSE_DIVIDED_WE_RUN=6a BOWER=yes NODE=yes
-    - MATRIX_TYPE=python NOSE_DIVIDED_WE_RUN=bf BOWER=yes NODE=yes
-    - MATRIX_TYPE=python-sharded
+    - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
+    - TEST=python-sharded
 before_install:
-  - "cp .travis/localsettings.py localsettings.py"
-  - ".travis/matrix-before_install.sh"
+  # get newer version of docker-compose for variable substitution in compose files
+  - curl -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv -v docker-compose /usr/local/bin/
 install:
-  - ".travis/matrix-install.sh"
-script: ".travis/matrix-script.sh"
+  - mkdir -p $TRAVIS_BUILD_DIR/docker-volumes
+  - pip install coverage coveralls
+before_script:
+  - docker version
+  - docker-compose version
+script: "scripts/docker test --noinput --stop --verbosity=2 --no-migration-optimizer --divide-depth=1"
 after_success:
+  # create symlink so coverage report can find source files
+  - sudo ln -s $(pwd) /mnt/commcare-hq-ro
   - coverage report
   - coveralls
 services:

@@ -1,6 +1,4 @@
 from pillowtop.listener import AliasedElasticPillow
-from dimagi.utils.decorators.memoized import memoized
-from django.conf import settings
 
 
 VALUE_TAG = '#value'

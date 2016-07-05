@@ -93,7 +93,7 @@ class OtaFixtureTest(TestCase):
     @run_with_all_backends
     def test_fixture_gen_v1(self):
         fixture_xml = generator.get_fixtures(self.restore_user, version=V1)
-        self.assertEqual(fixture_xml, [])
+        self.assertEqual(list(fixture_xml), [])
 
     @run_with_all_backends
     def test_basic_fixture_generation(self):

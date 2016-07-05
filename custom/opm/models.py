@@ -42,7 +42,6 @@ class OpmUserFluff(fluff.IndicatorDocument):
     # Only consider active users
     document_filter = CustomFilter(is_valid_user)
 
-    save_direct_to_sql = True
     kafka_topic = topics.META
 
     name = flat_field(lambda user: user.name)

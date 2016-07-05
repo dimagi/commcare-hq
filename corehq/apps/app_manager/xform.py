@@ -638,7 +638,7 @@ class XForm(WrappedNode):
     def video_references(self):
         return self.media_references(form="video") + self.media_references(form="video-inline")
 
-    def all_references(self, lang):
+    def all_media_references(self, lang):
         images = self.media_references_by_lang(lang=lang, form="image")
         video = self.media_references_by_lang(lang=lang, form="video")
         audio = self.media_references_by_lang(lang=lang, form="audio")
@@ -1638,14 +1638,15 @@ class XForm(WrappedNode):
             from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
             gen = EntriesHelper(form.get_app())
             datums_meta, _ = gen.get_datum_meta_assertions_advanced(module, form)
+            # TODO: this dict needs to be keyed by something unique to the action
             adjusted_datums = {
-                getattr(meta.action, 'id', None): meta.datum.id
+                getattr(meta.action, 'case_tag', None): meta.datum.id
                 for meta in datums_meta
                 if meta.action
             }
 
         for action in form.actions.get_load_update_actions():
-            var_name = adjusted_datums.get(action.id, action.case_session_var)
+            var_name = adjusted_datums.get(action.case_tag, action.case_session_var)
             session_case_id = CaseIDXPath(session_var(var_name))
             if action.preload:
                 self.add_casedb()

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4
 import jsonfield
 import uuid
 from dimagi.ext.couchdbkit import *
@@ -12,9 +11,6 @@ from corehq.apps.app_manager.models import Form
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.users.models import CouchUser
-from casexml.apps.case.models import CommCareCase
-from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
     InvalidFormatException,
     apply_leniency, BadSMSConfigException)
@@ -24,7 +20,6 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     get_message)
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 

@@ -4,8 +4,8 @@
 {% load humanize %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'style/js/main.js' %}"></script>
-    <script src="{% new_static 'style/ko/knockout_bindings.ko.js' %}"></script>
+    <script src="{% static 'style/js/main.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -378,7 +378,7 @@
                 </thead>
                 <tbody>
                 <tr>
-                    <td><img src="{% new_static 'hqwebapp/img/dm.jpg' %}" alt="dan's legacy"></td>
+                    <td><img src="{% static 'hqwebapp/img/dm.jpg' %}" alt="dan's legacy"></td>
                     <td>
                         <ul>
                             <li><a href="{% url 'view_recent_changes' %}">Recent couch changes</a></li>

@@ -68,6 +68,7 @@ class StockTransactionHelper(jsonobject.JsonObject):
     subaction = jsonobject.StringProperty()
     domain = jsonobject.StringProperty()
     quantity = jsonobject.DecimalProperty()
+    # todo: this field is never populated during normal form submissions, only on SMS submissions
     location_id = jsonobject.StringProperty()
     timestamp = jsonobject.DateTimeProperty()
     case_id = jsonobject.StringProperty()

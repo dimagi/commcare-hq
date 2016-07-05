@@ -7,7 +7,6 @@ from corehq.apps.sms.util import strip_plus
 from corehq.apps.smsforms.app import start_session, _get_responses
 from corehq.apps.smsforms.models import XFORMS_SESSION_IVR, get_session_by_session_id
 from corehq.apps.app_manager.models import Form
-from corehq.apps.hqmedia.models import HQMediaMapItem
 from django.http import HttpResponse
 from django.conf import settings
 from dimagi.utils.web import get_url_base

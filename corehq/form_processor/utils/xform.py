@@ -166,6 +166,9 @@ def adjust_datetimes(data, parent=None, key=None):
 def add_couch_properties_to_sql_form_json(sql_form_json):
     sql_form_json['doc_type'] = _get_doc_type_from_state(sql_form_json['state'])
     sql_form_json['_id'] = sql_form_json['form_id']
+    if 'attachments' in sql_form_json:
+        sql_form_json['external_blobs'] = sql_form_json['attachments']
+        del sql_form_json['attachments']
     return sql_form_json
 
 

@@ -1,6 +1,6 @@
 {% load hq_shared_tags %}
 {% include 'hqmedia/partials/multimedia_js.html' %}
-<script type="text/javascript" src="{% new_static 'app_manager/js/app_manager_media.js' %}"></script>
+<script type="text/javascript" src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
 <script type="text/javascript">
 hqDefine('#app_manager/partials/nav_menu_media_js_common.html', function () {
     {% with multimedia.upload_managers.icon as uploader %}
@@ -12,7 +12,7 @@ hqDefine('#app_manager/partials/nav_menu_media_js_common.html', function () {
             fileFilters: {{ uploader.supported_files|JSON }},
             uploadURL: '{{ uploader.destination }}',
             processingURL: '{{ uploader.processing_url }}',
-            swfURL: '{% new_static 'hqmedia/MediaUploader/flashuploader.swf' %}',
+            swfURL: '{% static 'hqmedia/MediaUploader/flashuploader.swf' %}',
             isMultiFileUpload: {{ uploader.is_multi_file|yesno:"true,false" }},
             {% if uploader.queue_template %}queueTemplate: '{% filter escapejs %}{% include uploader.queue_template %}{% endfilter %}',{% endif %}
             {% if uploader.status_template %}statusTemplate: '{% filter escapejs %}{% include uploader.status_template %}{% endfilter %}',{% endif %}
@@ -35,7 +35,7 @@ hqDefine('#app_manager/partials/nav_menu_media_js_common.html', function () {
             fileFilters: {{ uploader.supported_files|JSON }},
             uploadURL: '{{ uploader.destination }}',
             processingURL: '{{ uploader.processing_url }}',
-            swfURL: '{% new_static 'hqmedia/MediaUploader/flashuploader.swf' %}',
+            swfURL: '{% static 'hqmedia/MediaUploader/flashuploader.swf' %}',
             isMultiFileUpload: {{ uploader.is_multi_file|yesno:"true,false" }},
             {% if uploader.queue_template %}queueTemplate: '{% filter escapejs %}{% include uploader.queue_template %}{% endfilter %}',{% endif %}
             {% if uploader.status_template %}statusTemplate: '{% filter escapejs %}{% include uploader.status_template %}{% endfilter %}',{% endif %}

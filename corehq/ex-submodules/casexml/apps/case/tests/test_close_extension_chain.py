@@ -12,6 +12,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 class AutoCloseExtensionsTest(TestCase):
 
     def setUp(self):
+        super(AutoCloseExtensionsTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
         delete_all_users()
@@ -26,6 +27,7 @@ class AutoCloseExtensionsTest(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
         delete_all_users()
+        super(AutoCloseExtensionsTest, self).tearDown()
 
     def _create_extension_chain(self):
         host = CaseStructure(case_id=self.host_id)

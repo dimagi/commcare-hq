@@ -44,8 +44,7 @@ class LocaleResourceContributor(SectionContributor):
         self.build_profile_id = build_profile_id
 
     def get_section_elements(self):
-        langs = self.app.langs if not self.build_profile_id \
-            else self.app.build_profiles[self.build_profile_id].langs
+        langs = self.app.get_build_langs(self.build_profile_id)
         for lang in ["default"] + langs:
             path = './{lang}/app_strings.txt'.format(lang=lang)
             if self.build_profile_id:

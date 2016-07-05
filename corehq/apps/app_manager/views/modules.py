@@ -662,7 +662,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
-        detail.short.columns = map(DetailColumn.wrap, short)
+        detail.short.columns = map(DetailColumn.from_json, short)
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
         if use_case_tiles is not None:
@@ -675,7 +675,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
 
     if long is not None:
-        detail.long.columns = map(DetailColumn.wrap, long)
+        detail.long.columns = map(DetailColumn.from_json, long)
         if tabs is not None:
             detail.long.tabs = map(DetailTab.wrap, tabs)
     if filter != ():
@@ -826,7 +826,7 @@ def _save_case_list_lookup_params(short, case_list_lookup, lang):
     short.lookup_responses = case_list_lookup.get("lookup_responses", short.lookup_responses)
     short.lookup_image = case_list_lookup.get("lookup_image", short.lookup_image)
     short.lookup_display_results = case_list_lookup.get("lookup_display_results", short.lookup_display_results)
-    if case_list_lookup.get("lookup_field_header"):
+    if "lookup_field_header" in case_list_lookup:
         short.lookup_field_header[lang] = case_list_lookup["lookup_field_header"]
     short.lookup_field_template = case_list_lookup.get("lookup_field_template", short.lookup_field_template)
 

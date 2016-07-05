@@ -9,7 +9,7 @@ from corehq.elastic import (
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.quickcache import quickcache
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor, PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -26,7 +26,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
         user_id = None
 
     if (user_id and not _user_exists(user_id)
-            and not doc_exists_in_es('users', user_id)):
+            and not doc_exists_in_es(USER_INDEX_INFO, user_id)):
         doc_type = "AdminUser" if username == "admin" else "UnknownUser"
         doc = {
             "_id": user_id,

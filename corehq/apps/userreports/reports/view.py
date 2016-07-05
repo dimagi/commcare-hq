@@ -5,9 +5,15 @@ from StringIO import StringIO
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
-from corehq.apps.style.decorators import use_bootstrap3, \
-    use_select2, use_daterangepicker, use_jquery_ui, use_nvd3, use_datatables
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
+from corehq.apps.style.decorators import (
+    use_select2,
+    use_daterangepicker,
+    use_jquery_ui,
+    use_nvd3,
+    use_datatables,
+)
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from couchexport.shortcuts import export_response
 from dimagi.utils.modules import to_function
 from django.conf import settings
@@ -54,7 +60,6 @@ from no_exceptions.exceptions import Http403
 
 from corehq.apps.reports.datatables import DataTablesHeader
 
-
 UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 1000
 
 
@@ -75,7 +80,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             return self._domain
         return super(ConfigurableReport, self).domain
 
-    @use_bootstrap3
     @use_select2
     @use_daterangepicker
     @use_jquery_ui
@@ -204,12 +208,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             except UserReportsError as e:
                 details = ''
                 if isinstance(e, DataSourceConfigurationNotFoundError):
-                    error_message = _(
-                        'Sorry! There was a problem viewing your report. '
-                        'This likely occurred because the application associated with the report was deleted. '
-                        'In order to view this data using the Report Builder you will have to delete this report '
-                        'and then build it again. Click below to delete it.'
-                    )
+                    error_message = DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
                 else:
                     error_message = _(
                         'It looks like there is a problem with your report. '

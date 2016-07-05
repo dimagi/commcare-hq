@@ -1,12 +1,7 @@
 from dimagi.ext.couchdbkit import *
 import re
 from decimal import Decimal
-from couchdbkit.exceptions import MultipleResultsFound
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin
-from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.couch.database import get_safe_write_kwargs
 from collections import namedtuple
-from corehq.util.quickcache import quickcache
 
 
 phone_number_re = re.compile("^\d+$")
