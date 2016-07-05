@@ -66,10 +66,7 @@
                         less_error.hide();
                     }
                     {% if request.guided_tour %}
-                    // Only do guided tour if this is an app with the external data tree available
-                    if ($(".fd-accessory-pane:visible").length) {
-                        form_tour_start();
-                    }
+                    form_tour_start();
                     {% endif %}
                 },
                 {% else %}
