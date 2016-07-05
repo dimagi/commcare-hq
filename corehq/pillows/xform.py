@@ -224,9 +224,5 @@ def get_sql_form_reindexer():
         pillow=get_sql_xform_to_elasticsearch_pillow(),
         change_provider=SqlFormChangeProvider(),
         elasticsearch=get_es_new(),
-        index_info=_get_xform_index_info(),
+        index_info=XFORM_INDEX_INFO,
     )
-
-
-def _get_xform_index_info():
-    return get_index_info_from_pillow(XFormPillow(online=False))
