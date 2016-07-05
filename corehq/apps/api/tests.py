@@ -1632,15 +1632,16 @@ class TestConfigurableReportDataResource(APIResourceTest):
     def _get_list_endpoint(cls):
         return None
 
-    def single_endpoint(self, id, start, limit):
-        return reverse('api_dispatch_detail', kwargs=dict(
+    def single_endpoint(self, id, get_params=None):
+        endpoint = reverse('api_dispatch_detail', kwargs=dict(
             domain=self.domain.name,
             api_name=self.api_name,
             resource_name=self.resource._meta.resource_name,
             pk=id,
-            limit=limit,
-            start=start,
         ))
+        if endpoint:
+            endpoint += "?" + urlencode(get_params or {})
+        return endpoint
 
     @classmethod
     def setUpClass(cls):
@@ -1717,7 +1718,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
     def test_fetching_data(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(
-            self.single_endpoint(self.report_configuration._id, 0, 10))
+            self.single_endpoint(self.report_configuration._id))
 
         self.assertEqual(response.status_code, 200)
         response_dict = json.loads(response.content)
@@ -1728,38 +1729,34 @@ class TestConfigurableReportDataResource(APIResourceTest):
     def test_page_size(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(
-            self.single_endpoint(self.report_configuration._id, 0, 1))
+            self.single_endpoint(self.report_configuration._id, {"limit": 1}))
         response_dict = json.loads(response.content)
         self.assertEqual(response_dict["total_records"], len(self.cases))
         self.assertEqual(len(response_dict["data"]), 1)
 
         response = self.client.get(
-            self.single_endpoint(self.report_configuration._id, 0, 10000))
+            self.single_endpoint(self.report_configuration._id, {"limit": 10000}))
         self.assertEqual(response.status_code, 400)
 
     def test_page_start(self):
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(
-            self.single_endpoint(self.report_configuration._id, 2, 10))
+            self.single_endpoint(self.report_configuration._id, {"start": 2}))
         response_dict = json.loads(response.content)
         self.assertEqual(response_dict["total_records"], len(self.cases))
         self.assertEqual(len(response_dict["data"]), len(self.cases) - 2)
 
     def test_filtering(self):
         self.client.login(username=self.username, password=self.password)
-        response = self.client.get(
-            self.single_endpoint(
-                self.report_configuration._id, 0, 10
-            ) + "?" + urlencode({"my_field_filter": "foo"})
+        response = self.client.get(self.single_endpoint(
+            self.report_configuration._id, {"my_field_filter": "foo"})
         )
         response_dict = json.loads(response.content)
 
         self.assertEqual(response_dict["total_records"], 2)
 
-        response = self.client.get(
-            self.single_endpoint(
-                self.report_configuration._id, 0, 10
-            ) + "?" + urlencode({"my_field_filter": "bar"})
+        response = self.client.get(self.single_endpoint(
+            self.report_configuration._id, {"my_field_filter": "bar"})
         )
         response_dict = json.loads(response.content)
 
@@ -1776,7 +1773,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
 
         self.client.login(username=user_in_wrong_domain_name, password=user_in_wrong_domain_password)
         response = self.client.get(
-            self.single_endpoint(self.report_configuration._id, 0, 10))
+            self.single_endpoint(self.report_configuration._id))
         self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
 
         wrong_domain.delete()

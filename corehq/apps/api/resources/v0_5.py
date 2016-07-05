@@ -505,7 +505,7 @@ class StockTransactionResource(HqBaseResource, ModelResource):
 
 
 ConfigurableReportData = namedtuple("ConfigurableReportData", [
-    "data", "id", "start", "limit", "domain", "total_records", "get_params"
+    "data", "id", "domain", "total_records", "get_params"
 ])
 
 
@@ -517,38 +517,58 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
     data = fields.ListField(attribute="data", readonly=True)
     total_records = fields.IntegerField(attribute="total_records", readonly=True)
 
+    LIMIT_DEFAULT = 50
+    LIMIT_MAX = 50
 
-    def obj_get(self, bundle, **kwargs):
-        domain = kwargs['domain']
-        pk = kwargs['pk']
+    def _get_start_param(self, bundle):
         try:
-            start = int(kwargs['start'])
-            limit = int(kwargs['limit'])
-        except (ValueError, TypeError) as e:
-            raise BadRequest("start and limit values must be integers.")
+            start = int(bundle.request.GET.get('start', 0))
+            if start < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest("start must be a positive integer.")
+        return start
 
-        if limit > 50:
-            raise BadRequest("Limit may not exceed 50.")
+    def _get_limit_param(self, bundle):
+        try:
+            limit = int(bundle.request.GET.get('limit', self.LIMIT_DEFAULT))
+            if limit < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest("limit must be a positive integer.")
 
-        report_config = self._get_report_configuration(pk, domain)
+        if limit > self.LIMIT_MAX:
+            raise BadRequest("Limit may not exceed {}.".format(self.LIMIT_MAX))
+        return limit
+
+    def _get_report_data(self, report_config, domain, start, limit, get_params):
         report = ReportFactory.from_spec(report_config)
 
         filter_values = get_filter_values(
             report_config.ui_filters,
-            query_dict_to_dict(bundle.request.GET, domain)
+            query_dict_to_dict(get_params, domain)
         )
         report.set_filter_values(filter_values)
 
         page = list(report.get_data(start=start, limit=limit))
         total_records = report.get_total_records()
+        return page, total_records
+
+    def obj_get(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        pk = kwargs['pk']
+        start = self._get_start_param(bundle)
+        limit = self._get_limit_param(bundle)
+
+        report_config = self._get_report_configuration(pk, domain)
+        page, total_records = self._get_report_data(
+            report_config, domain, start, limit, bundle.request.GET)
 
         return ConfigurableReportData(
             data=page,
             total_records=total_records,
             id=report_config._id,
             domain=domain,
-            start=start,
-            limit=limit,
             get_params=bundle.request.GET,
         )
 
@@ -570,24 +590,21 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
                 raise NotFound
         return report_config
 
-    def base_urls(self):
-        return [url(
-            r"^(?P<resource_name>%s)/(?P<pk>[\w\d_.-]+)/start/(?P<start>[0-9]+)/limit/(?P<limit>[0-9]+)/$" % self._meta.resource_name,
-            self.wrap_view('dispatch_detail'), name='api_dispatch_detail'
-        )]
-
     def detail_uri_kwargs(self, bundle_or_obj):
         return {
             'domain': get_obj(bundle_or_obj).domain,
             'pk': get_obj(bundle_or_obj).id,
-            'limit': get_obj(bundle_or_obj).limit,
-            'start': get_obj(bundle_or_obj).start,
         }
 
     def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):
         uri = super(ConfigurableReportDataResource, self).get_resource_uri(bundle_or_obj, url_name)
         if bundle_or_obj is not None and uri:
-            uri += "?{}".format(get_obj(bundle_or_obj).get_params.urlencode())
+            get_params = get_obj(bundle_or_obj).get_params.copy()
+            if "start" not in get_params:
+                get_params["start"] = 0
+            if "limit" not in get_params:
+                get_params["limit"] = self.LIMIT_DEFAULT
+            uri += "?{}".format(get_params.urlencode())
         return uri
 
     class Meta(CustomResourceMeta):
