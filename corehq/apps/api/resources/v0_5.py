@@ -27,7 +27,6 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from corehq.util import get_document_or_404
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser
 from corehq.toggles import ZAPIER_INTEGRATION
@@ -529,7 +528,6 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         detail_allowed_methods = ["get"]
 
 
-
 UserDomain = namedtuple('UserDomain', 'domain_name project_name')
 UserDomain.__new__.__defaults__ = ('', '')
 
@@ -576,15 +574,16 @@ class DomainForms(Resource):
         include_resource_uri = False
 
     def obj_get_list(self, bundle, **kwargs):
+        application_id = bundle.request.GET.get('application_id')
+        if not application_id:
+            return []
+
         domain = kwargs['domain']
         couch_user = CouchUser.from_django_user(bundle.request.user)
         if not ZAPIER_INTEGRATION.enabled(domain) or not couch_user.is_member_of(domain):
             return []
 
         results = []
-        application_id = bundle.request.GET.get('application_id')
-        if not application_id:
-            return []
         application = Application.get(docid=application_id)
         if not application:
             return []

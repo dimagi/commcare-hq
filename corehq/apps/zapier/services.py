@@ -1,9 +1,9 @@
-from .models import Subscription
+from .models import ZapierSubscription
 
 
 def delete_subscription_with_url(url):
     try:
-        Subscription.objects.get(url=url).delete()
+        ZapierSubscription.objects.get(url=url).delete()
         return True
-    except Subscription.DoesNotExist:
+    except ZapierSubscription.DoesNotExist:
         return False

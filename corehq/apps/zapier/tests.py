@@ -3,15 +3,14 @@ from collections import namedtuple
 
 from django.core.urlresolvers import reverse
 from django.test.testcases import TestCase
-from mock import patch
 from tastypie.models import ApiKey
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.domain.models import Domain
-from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.repeaters.models import FormRepeater
 from corehq.apps.users.models import WebUser
 from corehq.apps.zapier import consts
-from corehq.apps.zapier.models import Subscription
+from corehq.apps.zapier.models import ZapierSubscription
 from corehq.toggles import ZAPIER_INTEGRATION
 
 XFORM = """
@@ -79,7 +78,9 @@ class TestZapierIntegration(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.domain = Domain.get_or_create_with_name(TEST_DOMAIN, is_active=True).name
+        super(TestZapierIntegration, cls).setUpClass()
+        cls.domain_object = Domain.get_or_create_with_name(TEST_DOMAIN, is_active=True)
+        cls.domain = cls.domain_object.name
         cls.web_user = WebUser.create(cls.domain, 'test', '******')
         api_key_object, _ = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())
         cls.api_key = api_key_object.key
@@ -90,8 +91,18 @@ class TestZapierIntegration(TestCase):
         cls.application.save()
         ZAPIER_INTEGRATION.set('domain:{}'.format(cls.domain), True)
 
+    @classmethod
+    def tearDownClass(cls):
+        ZAPIER_INTEGRATION.set('domain:{}'.format(cls.domain), False)
+        cls.web_user.delete()
+        cls.application.delete()
+        cls.domain_object.delete()
+        for repeater in FormRepeater.by_domain(cls.domain):
+            repeater.delete()
+        super(TestZapierIntegration, cls).tearDownClass()
+
     def tearDown(self):
-        Subscription.objects.all().delete()
+        ZapierSubscription.objects.all().delete()
 
     def test_subscribe(self):
         data = {
@@ -107,16 +118,17 @@ class TestZapierIntegration(TestCase):
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
         self.assertEqual(response.status_code, 200)
 
-        subscription = Subscription.objects.get(
+        subscription = ZapierSubscription.objects.get(
             url=ZAPIER_URL
         )
         self.assertListEqual(
             [subscription.url, subscription.user_id, subscription.domain, subscription.form_xmlns],
             [ZAPIER_URL, self.web_user.get_id, TEST_DOMAIN, FORM_XMLNS]
         )
+        self.assertIsNotNone(subscription.repeater_id)
 
     def test_unsubscribe(self):
-        Subscription.objects.create(
+        ZapierSubscription.objects.create(
             url=ZAPIER_URL,
             user_id=self.web_user.get_id,
             domain=TEST_DOMAIN,
@@ -133,22 +145,8 @@ class TestZapierIntegration(TestCase):
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(Subscription.objects.all().count(), 0)
-
-    def test_send_form_to_subscriber(self):
-        Subscription.objects.create(
-            url=ZAPIER_URL,
-            user_id=self.web_user.get_id,
-            domain=TEST_DOMAIN,
-            event_name=consts.EventTypes.NEW_FORM,
-            application_id=self.application.get_id,
-            form_xmlns=FORM_XMLNS
-        )
-
-        with patch('corehq.apps.zapier.models.requests.post',
-                   return_value=MockResponse(status_code=200, reason='No reason')) as mock_post:
-            submit_form_locally(XFORM_XML_TEMPLATE, self.domain, app_id=self.application.get_id)
-            self.assertTrue(mock_post.called)
+        self.assertEqual(ZapierSubscription.objects.all().count(), 0)
+        self.assertEqual(len(FormRepeater.by_domain(TEST_DOMAIN)), 0)
 
     def test_urls_conflict(self):
         data = {
@@ -169,19 +167,3 @@ class TestZapierIntegration(TestCase):
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 409)
-
-    def test_invalid_subscription(self):
-        Subscription.objects.create(
-            url=ZAPIER_URL,
-            user_id=self.web_user.get_id,
-            domain=TEST_DOMAIN,
-            event_name=consts.EventTypes.NEW_FORM,
-            application_id=self.application.get_id,
-            form_xmlns=FORM_XMLNS
-        )
-
-        with patch('corehq.apps.zapier.models.requests.post',
-                   return_value=MockResponse(status_code=410, reason='No reason')) as mock_post:
-            submit_form_locally(XFORM_XML_TEMPLATE, self.domain, app_id=self.application.get_id)
-            self.assertTrue(mock_post.called)
-            self.assertEqual(Subscription.objects.filter(domain=self.domain).count(), 0)

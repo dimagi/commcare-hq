@@ -1,13 +1,26 @@
+from django.db.models.signals import pre_save, post_delete
 from django.dispatch import receiver
 
-from corehq.apps.zapier.tasks import send_to_subscribers_task
-from corehq.toggles import ZAPIER_INTEGRATION
-from couchforms.signals import successful_form_received
+from corehq.apps.repeaters.models import FormRepeater
+from corehq.apps.zapier.models import ZapierSubscription
 
 
-@receiver(successful_form_received)
-def send_form_subscribers(sender, xform, *args, **kwargs):
-    domain = xform.domain
-    if not ZAPIER_INTEGRATION.enabled(domain):
+@receiver(pre_save, sender=ZapierSubscription)
+def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
+    if instance.pk:
         return
-    send_to_subscribers_task.delay(domain, xform)
+    repeater = FormRepeater(
+        domain=instance.domain,
+        url=instance.url,
+        format='form_json',
+        include_app_id_param=False,
+        white_listed_form_xmlns=[instance.form_xmlns]
+    )
+    repeater.save()
+    instance.repeater_id = repeater.get_id
+
+
+@receiver(post_delete, sender=ZapierSubscription)
+def zapier_subscription_post_delete(sender, instance, *args, **kwargs):
+    repeater = FormRepeater.get(instance.repeater_id)
+    repeater.delete()

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Subscription',
+            name='ZapierSubscription',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('url', models.URLField(unique=True)),
@@ -20,6 +20,7 @@ class Migration(migrations.Migration):
                 ('event_name', models.CharField(max_length=128)),
                 ('application_id', models.CharField(max_length=128)),
                 ('form_xmlns', models.CharField(max_length=128)),
+                ('repeater_id', models.CharField(max_length=128)),
             ],
             options={
             },
