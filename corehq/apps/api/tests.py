@@ -18,7 +18,6 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports.models import ReportConfiguration, \
     DataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.tests.test_columns import UCRTestMixin
 from couchforms.models import XFormInstance
 
 from django_prbac.models import Role
