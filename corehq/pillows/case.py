@@ -113,24 +113,12 @@ def get_couch_case_to_elasticsearch_pillow(pillow_id='CouchCaseToElasticsearchPi
 
 
 def get_couch_case_reindexer():
-    return get_default_reindexer_for_elastic_pillow(
-        pillow=CasePillow(online=False),
-        change_provider=CouchViewChangeProvider(
-            couch_db=CommCareCase.get_db(),
-            view_name='cases_by_owner/view',
-            view_kwargs={
-                'include_docs': True,
-            }
-        )
-    )
-
-
-def get_resumable_couch_case_reindexer():
     return ResumableBulkElasticPillowReindexer(
-        pillow=CasePillow(online=False),
+        name="CouchCaseToElasticsearchPillow",
         doc_types=[CommCareCase],
         elasticsearch=get_es_new(),
-        index_info=_get_case_index_info()
+        index_info=_get_case_index_info(),
+        doc_transform=transform_case_for_elasticsearch
     )
 
 

@@ -4,7 +4,7 @@ from django.core.management import BaseCommand, CommandError
 
 from corehq.pillows.application import get_app_reindexer
 from corehq.pillows.case import (
-    get_couch_case_reindexer, get_sql_case_reindexer, get_resumable_couch_case_reindexer
+    get_couch_case_reindexer, get_sql_case_reindexer
 )
 from corehq.pillows.case_search import get_case_search_reindexer
 from corehq.pillows.domain import get_domain_reindexer
@@ -61,7 +61,6 @@ class Command(BaseCommand):
             'group': get_group_reindexer,
             'groups-to-user': get_groups_to_user_reindexer,
             'case': get_couch_case_reindexer,
-            'resumable-case': get_resumable_couch_case_reindexer,
             'form': get_couch_form_reindexer,
             'sql-case': get_sql_case_reindexer,
             'sql-form': get_sql_form_reindexer,
