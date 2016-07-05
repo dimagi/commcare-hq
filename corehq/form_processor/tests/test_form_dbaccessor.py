@@ -315,7 +315,6 @@ class FormAccessorTestsSQL(TestCase):
                          set([form3.form_id, form4.form_id]))
 
         self.assertEqual(0, len(list(FormAccessorSQL.get_all_forms_received_since(end))))
-        self.assertEqual(1, len(list(FormAccessorSQL._get_forms_received_since(limit=1))))
 
     def _validate_deprecation(self, existing_form, new_form):
         saved_new_form = FormAccessorSQL.get_form(new_form.form_id)

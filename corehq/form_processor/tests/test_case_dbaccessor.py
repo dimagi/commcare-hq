@@ -609,7 +609,6 @@ class CaseAccessorTestsSQL(TestCase):
                          set([case3.case_id, case4.case_id]))
 
         self.assertEqual(0, len(list(CaseAccessorSQL.get_all_cases_modified_since(end))))
-        self.assertEqual(1, len(CaseAccessorSQL._get_cases_modified_since(limit=1)))
 
     def test_get_case_by_external_id(self):
         case1 = _create_case(domain=DOMAIN)
