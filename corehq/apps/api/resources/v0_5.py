@@ -1,4 +1,3 @@
-from django.conf.urls import url
 from django.http import Http404
 from tastypie import http
 from tastypie.authorization import ReadOnlyAuthorization
