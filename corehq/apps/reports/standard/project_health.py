@@ -12,7 +12,9 @@ from dimagi.ext import jsonobject
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es.groups import GroupES
+from corehq.apps.es.users import UserES
 from itertools import chain
+from corehq.apps.locations.models import SQLLocation
 
 
 def get_performance_threshold(domain_name):
@@ -51,7 +53,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users, has_group_filter, performance_threshold, previous_summary=None):
+    def __init__(self, domain, month, users, has_filter, performance_threshold, previous_summary=None):
         self._previous_summary = previous_summary
         self._next_summary = None
         base_queryset = MALTRow.objects.filter(
@@ -59,7 +61,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
         )
-        if has_group_filter:
+        if has_filter:
             base_queryset = base_queryset.filter(
                 user_id__in=users,
             )
@@ -245,7 +247,7 @@ class ProjectHealthDashboard(ProjectReport):
     base_template = "reports/project_health/project_health_dashboard.html"
 
     fields = [
-        'corehq.apps.reports.filters.select.MultiGroupFilter',
+        'corehq.apps.reports.filters.location.LocationGroupFilter',
     ]
 
     @classmethod
@@ -256,23 +258,56 @@ class ProjectHealthDashboard(ProjectReport):
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(ProjectHealthDashboard, self).decorator_dispatcher(request, *args, **kwargs)
 
-    def get_filtered_group_ids(self):
-        return self.request.GET.getlist('group')
+    def get_group_location_ids(self):
+        params = filter(None, self.request.GET.getlist('grouplocationfilter'))
+        return params
 
-    def get_users_by_filtered_groupids(self):
-        groupids_param = self.get_filtered_group_ids()
-        users_lists = (GroupES()
-                       .domain(self.domain)
-                       .group_ids(groupids_param)
-                       .values_list("users", flat=True))
-        return set(chain(*users_lists))
+    def parse_params(self, param_ids):
+        locationids_param = []
+        groupids_param = []
+
+        if param_ids:
+            param_ids = param_ids[0].split(',')
+            for id in param_ids:
+                if id.startswith("g__"):
+                    groupids_param.append(id[3:])
+                elif id.startswith("l__"):
+                    loc = SQLLocation.by_location_id(id[3:])
+                    if loc.get_descendants():
+                        locationids_param.extend(loc.get_descendants().location_ids())
+                    locationids_param.append(id[3:])
+
+        return locationids_param, groupids_param
+
+    def get_users_by_location_filter(self, location_ids):
+        return UserES().domain(self.domain).location(location_ids).values_list('_id', flat=True)
+
+    def get_users_by_group_filter(self, group_ids):
+        return GroupES().domain(self.domain).group_ids(group_ids).values_list("users", flat=True)
+
+    def get_unique_users(self, users_loc, users_group):
+        if users_loc and users_group:
+            return set(chain(*users_group)).union(users_loc)
+        elif users_loc:
+            return set(users_loc)
+        else:
+            return set(chain(*users_group))
+
+    def get_users_by_filter(self):
+        locationids_param, groupids_param = self.parse_params(self.get_group_location_ids())
+
+        users_list_by_location = self.get_users_by_location_filter(locationids_param)
+        users_list_by_group = self.get_users_by_group_filter(groupids_param)
+
+        users_set = self.get_unique_users(users_list_by_location, users_list_by_group)
+        return users_set
 
     def previous_six_months(self):
         now = datetime.datetime.utcnow()
         six_month_summary = []
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
-        users_in_group = self.get_users_by_filtered_groupids()
+        filtered_users = self.get_users_by_filter()
         for i in range(-6, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
@@ -281,8 +316,8 @@ class ProjectHealthDashboard(ProjectReport):
                 performance_threshold=performance_threshold,
                 month=month_as_date,
                 previous_summary=last_month_summary,
-                users=users_in_group,
-                has_group_filter=bool(self.get_users_by_filtered_groupids()),
+                users=filtered_users,
+                has_filter=bool(self.get_group_location_ids()),
             )
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
