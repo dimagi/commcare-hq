@@ -505,7 +505,7 @@ class StockTransactionResource(HqBaseResource, ModelResource):
 
 
 ConfigurableReportData = namedtuple("ConfigurableReportData", [
-    "data", "id", "domain", "total_records", "get_params"
+    "data", "id", "domain", "total_records", "get_params", "next_page"
 ])
 
 
@@ -516,6 +516,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
     """
     data = fields.ListField(attribute="data", readonly=True)
     total_records = fields.IntegerField(attribute="total_records", readonly=True)
+    next_page = fields.CharField(attribute="next_page", readonly=True)
 
     LIMIT_DEFAULT = 50
     LIMIT_MAX = 50
@@ -540,6 +541,22 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         if limit > self.LIMIT_MAX:
             raise BadRequest("Limit may not exceed {}.".format(self.LIMIT_MAX))
         return limit
+
+    def _get_next_page(self, domain, id_, start, limit, total_records, get_query_dict):
+        if total_records > start + limit:
+            start += limit
+            new_get_params = get_query_dict.copy()
+            new_get_params["start"] = start
+            # limit has not changed, but it may not have been present in get params before.
+            new_get_params["limit"] = limit
+            return reverse('api_dispatch_detail', kwargs=dict(
+                api_name=self._meta.api_name,
+                resource_name=self._meta.resource_name,
+                domain=domain,
+                pk=id_,
+            )) + "?" + new_get_params.urlencode()
+        else:
+            return ""
 
     def _get_report_data(self, report_config, domain, start, limit, get_params):
         report = ReportFactory.from_spec(report_config)
@@ -570,6 +587,14 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             id=report_config._id,
             domain=domain,
             get_params=bundle.request.GET,
+            next_page=self._get_next_page(
+                domain,
+                report_config._id,
+                start,
+                limit,
+                total_records,
+                bundle.request.GET,
+            )
         )
 
     def _get_report_configuration(self, id_, domain):

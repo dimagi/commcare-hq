@@ -5,6 +5,7 @@ import dateutil.parser
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.http import QueryDict
 from django.test import TestCase
 from django.utils.http import urlencode
 
@@ -1761,6 +1762,19 @@ class TestConfigurableReportDataResource(APIResourceTest):
         response_dict = json.loads(response.content)
 
         self.assertEqual(response_dict["total_records"], 1)
+
+    def test_next_page_url(self):
+        # It's not the last page
+        query_dict = QueryDict("", mutable=True)
+        query_dict.update({"some_filter": "bar"})
+        next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
+            self.domain.name, "123", 100, 50, 3450, query_dict)
+        self.assertEqual(next, self.single_endpoint("123", {"start": 150, "limit": 50, "some_filter": "bar"}))
+
+        # It's the last page
+        next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
+            self.domain.name, "123", 100, 50, 120, query_dict)
+        self.assertEqual(next, "")
 
     def test_auth(self):
         user_in_wrong_domain_name = 'Mallory'
