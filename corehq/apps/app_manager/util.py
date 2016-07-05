@@ -62,7 +62,7 @@ def app_doc_types():
     return {
         'Application': Application,
         'Application-Deleted': Application,
-        'RemoteAp': RemoteApp,
+        'RemoteApp': RemoteApp,
         'RemoteApp-Deleted': RemoteApp,
     }
 
@@ -482,7 +482,7 @@ def get_correct_app_class(doc):
     try:
         return app_doc_types()[doc['doc_type']]
     except KeyError:
-        raise DocTypeError()
+        raise DocTypeError(doc['doc_type'])
 
 
 def all_apps_by_domain(domain):
