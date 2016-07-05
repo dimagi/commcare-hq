@@ -34,7 +34,7 @@ class AppPillowTest(TestCase):
         initialize_index_and_mapping(self.es, APP_INDEX_INFO)
 
     def tearDown(self):
-        # ensure_index_deleted(APP_INDEX_INFO.index)
+        ensure_index_deleted(APP_INDEX_INFO.index)
         super(AppPillowTest, self).tearDown()
 
     def test_app_pillow_couch(self):
@@ -60,7 +60,6 @@ class AppPillowTest(TestCase):
         kafka_seq = consumer.offsets()['fetch'][(topics.APP, 0)]
         couch_seq = get_current_seq(Application.get_db())
 
-        # make a case
         app_name = 'app-{}'.format(uuid.uuid4().hex)
         app = self._create_app(app_name)
 
