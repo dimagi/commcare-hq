@@ -213,12 +213,13 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
     def tearDown(self):
         self.db.reset()
 
-    def _get_processor(self, chunk_size=2, ignore_docs=None, skip_docs=None):
+    def _get_processor(self, chunk_size=2, ignore_docs=None, skip_docs=None, reset=False):
         doc_processor = DemoProcessor('test')
         processor = self.processor_class(
             {'Bar': Bar},
             doc_processor,
             chunk_size=chunk_size,
+            reset=reset
         )
         if ignore_docs:
             doc_processor.ignore_docs = ignore_docs
@@ -285,8 +286,8 @@ class TestBulkDocProcessor(BaseCouchDocProcessorTest):
         self.assertEqual(doc_processor.docs_processed, {'bar-0', 'bar-1'})
 
         doc_processor, processor = self._get_processor()
-        processor, skipped = processor.run()
-        self.assertEqual(processor, 2)
+        processed, skipped = processor.run()
+        self.assertEqual(processed, 2)
         self.assertEqual(skipped, 0)
         self.assertEqual(doc_processor.docs_processed, {'bar-2', 'bar-3'})
 
@@ -301,23 +302,42 @@ class TestBulkDocProcessor(BaseCouchDocProcessorTest):
         self.assertEqual(doc_processor.docs_processed, {'bar-1'})
 
         doc_processor, processor = self._get_processor(chunk_size=3, ignore_docs=['bar-0'])
-        processor, skipped = processor.run()
-        self.assertEqual(processor, 3)
+        processed, skipped = processor.run()
+        self.assertEqual(processed, 3)
         self.assertEqual(skipped, 0)
         self.assertEqual(doc_processor.docs_processed, {'bar-1', 'bar-2', 'bar-3'})
 
     def test_filtering(self):
         doc_processor, processor = self._get_processor(ignore_docs=['bar-1'])
-        processor, skipped = processor.run()
-        self.assertEqual(processor, 3)
+        processed, skipped = processor.run()
+        self.assertEqual(processed, 3)
         self.assertEqual(skipped, 0)
         self.assertEqual(doc_processor.docs_processed, {'bar-0', 'bar-2', 'bar-3'})
 
     def test_remainder_gets_processed(self):
         self.db.add_view("all_docs/by_doc_type", self._get_view_results(4, 3))
         doc_processor, processor = self._get_processor(chunk_size=3)
-        processor, skipped = processor.run()
-        self.assertEqual(processor, 4)
+        processed, skipped = processor.run()
+        self.assertEqual(processed, 4)
+        self.assertEqual(skipped, 0)
+        self.assertEqual(
+            {'bar-{}'.format(ident) for ident in range(4)},
+            doc_processor.docs_processed
+        )
+
+    def test_reset(self):
+        doc_processor, processor = self._get_processor()
+        processed, skipped = processor.run()
+        self.assertEqual(processed, 4)
+        self.assertEqual(skipped, 0)
+        self.assertEqual(
+            {'bar-{}'.format(ident) for ident in range(4)},
+            doc_processor.docs_processed
+        )
+
+        doc_processor, processor = self._get_processor(reset=True)
+        processed, skipped = processor.run()
+        self.assertEqual(processed, 4)
         self.assertEqual(skipped, 0)
         self.assertEqual(
             {'bar-{}'.format(ident) for ident in range(4)},
