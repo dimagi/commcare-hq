@@ -180,6 +180,8 @@ class ResumableDocsByTypeEventHandler(PaginateViewEventHandler):
             offset = {k: v for k, v in kwargs.items() if k.startswith("startkey")}
             iterator.state["offset"] = offset
             iterator._save_state()
+        else:
+            raise Exception("Iterator has gone away")
 
 
 class TooManyRetries(Exception):
@@ -411,6 +413,8 @@ class BulkDocProcessorEventHandler(PaginateViewEventHandler):
         processor = self.processor_ref()
         if processor:
             processor.process_chunk()
+        else:
+            raise BulkProcessingFailed("Processor has gone away")
 
 
 class BulkDocProcessor(CouchDocumentProcessor):
