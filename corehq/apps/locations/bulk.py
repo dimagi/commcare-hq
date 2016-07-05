@@ -299,3 +299,255 @@ def invalid_location_type(location_type, parent_obj, parent_relationships):
         parent_obj.location_type not in parent_relationships or
         location_type not in parent_relationships[parent_obj.location_type]
     )
+
+
+class LocationTypeRow(object):
+    def __init__(row):
+        level_name = row.get('Level Name', '')
+        owns_cases = (row.get('Owns Cases (Y/N) ') or '').lower() == 'y'
+        view_child_cases = (row.get('Owns Cases (Y/N) ') or '').lower() == 'y'
+
+
+class LocationRow(object):
+    titles = {
+        'id': 'Location ID',
+        'code': 'Location Code',
+        'name': 'Name',
+        'parent': 'Parent',
+        'gps_lat': 'GPS - Lat',
+        'gps_lang': 'GPS - Lang',
+        'do_delete': 'Delete Y/N'
+    }
+
+    def __init__(self, row):
+        self.id = row.get(self.titles['id'])
+        self.code = row.get(self.titles['code'])
+        self.name = row.get(self.titles['name'])
+        self.parent = row.get(self.titles['parent'])
+        self.gps_lat = row.get(self.titles['gps_lat'])
+        self.gps_lang = row.get(self.titles['gps_lang'])
+        self.do_delete = row.get(self.titles['do_delete'], 'N').lower() in ['y', 'yes']
+        self.has_problem = None
+        self.warnings = []
+
+    def validate_extra_data(self):
+        # should validate all data except parent/child relation
+        # and return (warnings, errors)
+        return [], []
+
+
+class LocationUploadResult(object):
+    def __init__(self):
+        self.success = True
+        self.messages = []
+        self.errors = []
+        self.warnings = []
+
+
+class LocationAccessorMixin(object):
+    @memoized
+    @property
+    def old_locations(self):
+        domain_obj = Domain.get_by_name(self.domain)
+        types = self.domain_obj.location_types
+        return [Location.filter_by_type(self.domain, loc_type.name) for loc_type in types ]
+
+    @memoized
+    @property
+    def index_by_site_code(self):
+        return {l.site_code: l for l in self.old_locations}
+
+    @memoized
+    @property
+    def index_by_id(self):
+        return {l._id: l for l in self.old_locations}
+
+    def by_site_code(self, site_code):
+        return self.index_by_site_code.get(site_code)
+
+    def by_id(self, id):
+        return self.index_by_id.get(id)
+
+
+class LocationTypeHelper(object):
+
+    def __init__(self, type_rows):
+        self.type_rows = type_rows
+        types = self.domain_obj.location_types
+        index_by_types = {lt.name: lt for lt in types}
+        index_by_parent = {lt.parent_type: lt for lt in types}
+
+
+
+class NewLocationImporter(LocationAccessorMixin):
+
+    self.types_sheet_title = "types"
+    self.locations_sheet_title = "locations"
+
+    def __init__(self, domain, excel_importer, location_rows=None):
+        self.domain = domain
+        self.domain_obj = Domain.get_by_name(domain)
+        self.excel_importer = excel_importer
+        self.sheets_by_title = self.get_sheets_by_title()
+        self.location_rows = self.sheets_by_title[self.locations_sheet_title]
+
+    def get_sheets_by_title(self):
+        # validate excel format/headers
+        sheets_by_title = {ws.title: ws for ws in self.excel_importer.worksheets}
+        if self.types_sheet_title not in self.sheets_by_title:
+            raise LocationImportError("'types' sheet is required")
+        if self.locations_sheet_title not in self.sheets_by_title:
+            raise LocationImportError("'locations' sheet is required")
+        return sheets_by_title
+
+    def run(self):
+        # if any type has a ptoblem this would raise
+        result = LocationUploadResult()
+        type_rows = self.import_types(result)
+        if result.sucess:
+            location_rows = self.import_locations(result)
+
+        if result.sucess:
+            self.commit_changes(type_rows, location_rows, result)
+
+        return result
+
+    def import_types(result):
+        # Validates given locations types, returns list of LocationTypeRow
+        # can't point to itself
+        # no cycles
+        # no do-delete
+        # valid expand to and from
+        # return [LTRow]
+        types_by_parent = {}
+        top_row = type_by_name(TOP)
+        while children:
+            for c in children:
+                children.append(types_by_parent(c))
+
+        def _children(row):
+            ret = []
+            while x 
+            for r in types_by_parent(row.name):
+                ret.append(r)
+            return ret
+
+
+    def import_locations(result):
+
+        # Failures Modes?
+            # if same location_id/site_code/level_name occur twice, should the first one succeed
+            # and rest fail?
+            # Assumption: We should hardfail on everything, because we can't determine which item
+            # in the duplicated items get pointed from children
+
+            # if parent of a location has a problem should all of its descendents fail too
+        # validate location_types
+            # all old location_types are listed
+            # a location sheet exist for all types
+            # types are unique in types-sheet (no duplicates
+            # types have no cycles
+            # valid values for 'Expand From' and 'Sync To'
+        # save all location_types
+
+        old_locations = self.old_locations
+        old_location_ids = [l.id for l in old_locations]
+
+
+        seen_loc_ids = []
+        seen_site_codes = []
+        error_messages = []
+        hardfail = False
+
+        # index location_rows
+        location_rows_by_id = {}
+        location_rows_by_site_code = {}
+
+        for count, location in enumerate(self.location_rows):
+            location = LocationRow(location)
+            # get loc_id and site_code
+            if location._id:
+                site_code = location.site_code or site_code_by_id(location._id) or None
+                loc_id = location._id
+            else:
+                if location.site_code:
+                    loc_id = location._id or loc_id_by_site_code(location.site_code) or None
+                    site_code = location.site_code 
+                else:
+                    loc_id, site_code = None, None
+            # add to index
+            if loc_id:
+                location_rows_by_id[loc_id] = location
+            if site_code
+                location_rows_by_site_code[site_code] = location
+
+            # check for duplicates
+            if loc_id:
+                if loc_id not in old_location_ids:
+                    location.has_problem = "Unknown Location ID"
+                    # hardfail unknown
+                    # unknown_loc_ids.append(loc_id)
+                if loc_id in seen_loc_ids:
+                    location.has_problem = "duplicate location_id"
+                    # hardfail duplicate
+                    # duplicate_loc_ids.append(loc_id)
+            if site_code:
+                if site_code in seen_site_codes:
+                    location.has_problem = "duplicate site_code"
+                    # hardfail
+            if not site_code and no loc_id:
+                # ignore and warning
+                result.warning("No id or site_code for row at {}".format(count))
+
+            # track to_be_deleted
+            if location.do_delete:
+                location.has_problem = "to be deleted"
+
+            # get parent_location
+            if location.parent in [loc_id, site_code]:
+                location.has_problem = "Pointing to itself"
+            if location.parent in old_location_ids:
+                # parent ref must be a location_id
+                parent_location_row = location_rows_by_id.get(location.parent, None)
+            else:
+                # parent ref must be a site_code
+                parent_location_row = location_rows_by_site_code.get(location.parent, None)
+
+            if not parent_location_row:
+                location.has_problem = "Unknown parent"
+            elif parent_location_row.has_problem:
+                location.has_problem = "Problem with parent: ()".format(parent_location_row.has_problem)
+
+            # parent child validation
+            TOP = "TOP"
+            location_level = location.level or TOP
+            parent_level = parent_location.level
+            if not valid_relation(location_level, parent_level):
+                location.has_problem = "Invalid parent location"
+
+            # validate extra information
+            warnings, data_errors = location.validate_extra_data()
+            location.warnings = warnings
+            if data_errors:
+                location.has_problem = data_errors
+
+            if not location.has_problem:
+                valid_location_rows.append(location)
+            else:
+                result.sucess = False
+                error_messages = "Problem with row at index {count}: {problem} ".format(
+                    count=count,
+                    problem=location.has_problem
+                )
+
+            seen_loc_ids.append(loc_id)
+            seen_site_codes.append(site_code)
+        # fail if errors
+        missing_locations = set(old_location_ids) - set(seen_loc_ids)
+        if missing_locations:
+            error_messages = (
+                "All exisitng locations must be listed. Locations with following IDs are missing: {}".format(
+                    list(missing_locations)
+                )
+            )
+        return valid_location_rows
