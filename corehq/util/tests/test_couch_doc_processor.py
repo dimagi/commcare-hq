@@ -166,34 +166,36 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
     processor_class = None
 
     @staticmethod
-    def _get_row(ident):
-        doc_id = 'bar-{}'.format(ident)
+    def _get_row(ident, doc_type="Bar"):
+        doc_id_prefix = '{}-'.format(doc_type.lower())
+        doc_id = '{}{}'.format(doc_id_prefix, ident)
         return {
             'id': doc_id,
-            'key': ['Bar', doc_id], 'value': None, 'doc': {'_id': doc_id, 'doc_type': 'Bar'}
+            'key': [doc_type, doc_id], 'value': None, 'doc': {'_id': doc_id, 'doc_type': doc_type}
         }
 
-    def _get_view_results(self, total, chuck_size):
+    def _get_view_results(self, total, chuck_size, doc_type="Bar"):
+        doc_id_prefix = '{}-'.format(doc_type.lower())
         results = [(
-            {"endkey": ["Bar", {}], "group_level": 1, "reduce": True, "startkey": ["Bar"]},
-            [{"key": "Bar", "value": total}]
+            {"endkey": [doc_type, {}], "group_level": 1, "reduce": True, "startkey": [doc_type]},
+            [{"key": doc_type, "value": total}]
         )]
         for chunk in chunked(range(total), chuck_size):
-            chunk_rows = [self._get_row(ident) for ident in chunk]
+            chunk_rows = [self._get_row(ident, doc_type=doc_type) for ident in chunk]
             if chunk[0] == 0:
                 results.append((
                     {
-                        'startkey': ['Bar'], 'endkey': ['Bar', {}], 'reduce': False,
+                        'startkey': [doc_type], 'endkey': [doc_type, {}], 'reduce': False,
                         'limit': chuck_size, 'include_docs': True
                     },
                     chunk_rows
                 ))
             else:
-                previous = 'bar-{}'.format(chunk[0] - 1)
+                previous = '{}{}'.format(doc_id_prefix, chunk[0] - 1)
                 results.append((
                     {
-                        'endkey': ['Bar', {}], 'skip': 1, 'startkey_docid': previous, 'reduce': False,
-                        'startkey': ['Bar', previous], 'limit': chuck_size, 'include_docs': True
+                        'endkey': [doc_type, {}], 'skip': 1, 'startkey_docid': previous, 'reduce': False,
+                        'startkey': [doc_type, previous], 'limit': chuck_size, 'include_docs': True
                     },
                     chunk_rows
                 ))
@@ -213,10 +215,11 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
     def tearDown(self):
         self.db.reset()
 
-    def _get_processor(self, chunk_size=2, ignore_docs=None, skip_docs=None, reset=False):
+    def _get_processor(self, chunk_size=2, ignore_docs=None, skip_docs=None, reset=False, doc_types=None):
+        doc_types = doc_types or {'Bar': Bar}
         doc_processor = DemoProcessor('test')
         processor = self.processor_class(
-            {'Bar': Bar},
+            doc_types,
             doc_processor,
             chunk_size=chunk_size,
             reset=reset
@@ -341,5 +344,20 @@ class TestBulkDocProcessor(BaseCouchDocProcessorTest):
         self.assertEqual(skipped, 0)
         self.assertEqual(
             {'bar-{}'.format(ident) for ident in range(4)},
+            doc_processor.docs_processed
+        )
+
+    def test_multiple_doc_types(self):
+        chunk_size = 3
+        self.db.add_view("all_docs/by_doc_type", self._get_view_results(4, chunk_size, doc_type="Foo"))
+        self.db.update_view("all_docs/by_doc_type", self._get_view_results(4, chunk_size, doc_type="Bar"))
+
+        doc_types = {'Bar': Bar, 'Foo': Bar}
+        doc_processor, processor = self._get_processor(chunk_size=chunk_size, doc_types=doc_types)
+        processor, skipped = processor.run()
+        self.assertEqual(processor, 8)
+        self.assertEqual(skipped, 0)
+        self.assertEqual(
+            {'bar-{}'.format(ident) for ident in range(4)} | {'foo-{}'.format(ident) for ident in range(4)},
             doc_processor.docs_processed
         )

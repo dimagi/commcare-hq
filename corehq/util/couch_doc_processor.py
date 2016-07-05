@@ -431,7 +431,6 @@ class BulkDocProcessor(CouchDocumentProcessor):
     100 would exceed available memory.
     """
     def __init__(self, doc_type_map, doc_processor, reset=False, chunk_size=100):
-        assert len(doc_type_map) == 1
         super(BulkDocProcessor, self).__init__(
             doc_type_map, doc_processor, reset=reset, chunk_size=chunk_size,
             view_event_handler=BulkDocProcessorEventHandler(self)
