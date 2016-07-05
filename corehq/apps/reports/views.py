@@ -13,6 +13,7 @@ from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
     REPORT_BUILDER_ACCESS
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
+from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.tabs.tabclasses import ProjectReportsTab
 import langcodes
 import os
@@ -1793,11 +1794,13 @@ class EditFormInstance(View):
             'domain': domain,
             'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
             'form_name': _('Edit Submission'),  # used in breadcrumbs
+            'use_sqlite_backend': use_sqlite_backend(domain),
             'edit_context': {
                 'formUrl': self._form_instance_to_context_url(domain, instance),
                 'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
                 'sessionData': edit_session_data,
                 'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
+                'domain': domain,
             }
         })
         return render(request, 'reports/form/edit_submission.html', context)

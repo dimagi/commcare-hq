@@ -69,10 +69,3 @@ def build_last_month_GIR():
         text_content=message
     )
 
-
-@periodic_task(queue='background_queue', run_every=crontab(hour=5, minute=0, day_of_week='*'),
-               ignore_result=True)
-def update_current_GIR():
-    today = datetime.date.today()
-    this_month = DateSpan.from_month(today.month, today.year)
-    GIRTableGenerator([this_month]).build_table()

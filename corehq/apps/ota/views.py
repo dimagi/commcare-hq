@@ -4,11 +4,12 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django_prbac.utils import has_privilege
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
@@ -28,7 +29,7 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
 
-from .utils import demo_user_restore_response
+from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore
 
 
 @json_error
@@ -109,28 +110,32 @@ def get_restore_params(request):
         'version': request.GET.get('version', "1.0"),
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
+        'as_user': request.GET.get('as'),
+        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP)
     }
 
 
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
-                         cache_timeout=None, overwrite_cache=False):
+                         cache_timeout=None, overwrite_cache=False,
+                         force_restore_mode=None, as_user=None, has_data_cleanup_privelege=False):
     # not a view just a view util
-    if couch_user.is_commcare_user() and domain != couch_user.domain:
-        return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
-                            status=401), None
-    elif couch_user.is_web_user() and domain not in couch_user.domains:
-        return HttpResponse("%s was not in the domain %s" % (couch_user.username, domain),
-                            status=401), None
-
-    if couch_user.is_commcare_user():
-        restore_user = couch_user.to_ota_restore_user()
-    elif couch_user.is_web_user():
-        restore_user = couch_user.to_ota_restore_user(domain)
+    is_permitted, message = is_permitted_to_restore(
+        domain,
+        couch_user,
+        as_user,
+        has_data_cleanup_privelege,
+    )
+    if not is_permitted:
+        return HttpResponse(message, status=401), None
 
     if couch_user.is_commcare_user() and couch_user.is_demo_user:
         # if user is in demo-mode, return demo restore
         return demo_user_restore_response(couch_user), None
+
+    restore_user = get_restore_user(domain, couch_user, as_user)
+    if not restore_user:
+        return HttpResponse('Could not find user', status=404)
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None

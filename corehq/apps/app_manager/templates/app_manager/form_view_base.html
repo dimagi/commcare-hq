@@ -182,9 +182,13 @@
                 var labels = {};
                 labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
                 labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
-                labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module.name|trans:langs }}";
+                {% with module_name=module.name|trans:langs %}
+                labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
+                {% endwith %}
                 {% if module.root_module_id %}
-                labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ module.root_module.name|trans:langs }}";
+                {% with root_module_name=module.root_module.name|trans:langs %}
+                labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ root_module_name|escapejs }}";
+                {% endwith %}
                 {% endif %}
                 labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
 

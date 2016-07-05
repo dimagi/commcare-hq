@@ -5,11 +5,11 @@ from django.test import SimpleTestCase
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.es import FormES
+from corehq.elastic import get_es_new, send_to_elasticsearch, doc_exists_in_es
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.xform import XFormPillow
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
-from pillowtop.es_utils import doc_exists
-
+from pillowtop.es_utils import initialize_index_and_mapping
 
 WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_form'])
 
@@ -21,7 +21,8 @@ class XFormESTestCase(SimpleTestCase):
         cls.now = datetime.datetime.utcnow()
         cls.forms = []
         with trap_extra_setup(ConnectionError):
-            cls.pillow = XFormPillow()
+            cls.es = get_es_new()
+            initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
 
     def setUp(self):
         self.test_id = uuid.uuid4().hex
@@ -32,24 +33,24 @@ class XFormESTestCase(SimpleTestCase):
             form_metadata = form_metadata or TestFormMetadata()
             form_pair = make_es_ready_form(form_metadata)
             cls.forms.append(form_pair)
-            cls.pillow.change_transport(form_pair.json_form)
+            send_to_elasticsearch('forms', form_pair.json_form)
         # have to refresh the index to make sure changes show up
-        cls.pillow.get_es_new().indices.refresh(cls.pillow.es_index)
+        cls.es.indices.refresh(XFORM_INDEX_INFO.index)
 
     @classmethod
     def tearDown(cls):
         for form in cls.forms:
-            cls.pillow.get_es_new().delete(cls.pillow.es_index, cls.pillow.es_type, form.wrapped_form.form_id)
-        cls.pillow.get_es_new().indices.refresh(cls.pillow.es_index)
+            cls.es.delete(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type, form.wrapped_form.form_id)
+        cls.es.indices.refresh(XFORM_INDEX_INFO.index)
         cls.forms = []
 
     def test_forms_are_in_index(self):
         for form in self.forms:
-            self.assertFalse(doc_exists(self.pillow, form.wrapped_form.form_id))
+            self.assertFalse(doc_exists_in_es(XFORM_INDEX_INFO, form.wrapped_form.form_id))
         self._ship_forms_to_es([None, None])
         self.assertEqual(2, len(self.forms))
         for form in self.forms:
-            self.assertTrue(doc_exists(self.pillow, form.wrapped_form.form_id))
+            self.assertTrue(doc_exists_in_es(XFORM_INDEX_INFO, form.wrapped_form.form_id))
 
     def test_query_by_domain(self):
         domain1 = 'test1-{}'.format(self.test_id)

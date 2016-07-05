@@ -3,6 +3,7 @@ import datetime
 from django.utils.translation import ugettext_noop
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.users.util import raw_username
@@ -74,19 +75,37 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             domain=domain,
             performance_threshold=performance_threshold,
             active=self._distinct_user_ids.count(),
+            inactive=0,
+            total_users_by_month=0,
+            percent_active=0,
             performing=num_performing_user,
         )
 
     def set_next_month_summary(self, next_month_summary):
         self._next_summary = next_month_summary
 
+    def set_num_inactive_users(self, num_inactive_users):
+        self.inactive = num_inactive_users
+
+    def set_percent_active(self):
+        self.total_users_by_month = self.number_of_inactive_users + self.number_of_active_users
+        self.percent_active = float(self.number_of_active_users) / float(self.total_users_by_month)
+
     @property
     def number_of_performing_users(self):
         return self.performing
 
     @property
+    def number_of_low_performing_users(self):
+        return self.active - self.performing
+
+    @property
     def number_of_active_users(self):
         return self.active
+
+    @property
+    def number_of_inactive_users(self):
+        return self.inactive
 
     @property
     def previous_month(self):
@@ -106,6 +125,20 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
 
     @property
+    def delta_low_performing(self):
+        if self._previous_summary:
+            return self.number_of_low_performing_users - self._previous_summary.number_of_low_performing_users
+        else:
+            return self.number_of_low_performing_users
+
+    @property
+    def delta_low_performing_pct(self):
+        if self.delta_low_performing and self._previous_summary \
+                and self._previous_summary.number_of_low_performing_users:
+            return float(self.delta_low_performing /
+                         float(self._previous_summary.number_of_low_performing_users)) * 100.
+
+    @property
     def delta_active(self):
         return self.active - self._previous_summary.active if self._previous_summary else self.active
 
@@ -113,6 +146,17 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_active_pct(self):
         if self.delta_active and self._previous_summary and self._previous_summary.active:
             return float(self.delta_active / float(self._previous_summary.active)) * 100.
+
+    @property
+    def delta_inactive(self):
+        return self.inactive - self._previous_summary.inactive if self._previous_summary else self.inactive
+
+    @property
+    def delta_inactive_pct(self):
+        if self.delta_inactive and self._previous_summary:
+            if self._previous_summary.number_of_inactive_users == 0:
+                return self.delta_inactive * 100.
+            return float(self.delta_inactive / float(self._previous_summary.number_of_inactive_users)) * 100.
 
     @memoized
     def get_all_user_stubs(self):
@@ -162,7 +206,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             unhealthy_users = filter(
-                lambda stub: stub.is_active and not stub.is_performing,
+                lambda stub: stub.is_active and not stub.is_performing and not
+                CommCareUser.get(stub.user_id).is_deleted(),
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
@@ -174,7 +219,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: not stub.is_active,
+                lambda stub: not stub.is_active and not
+                CommCareUser.get(stub.user_id).is_deleted(),
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: stub.delta_forms)
@@ -186,7 +232,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: stub.is_newly_performing,
+                lambda stub: stub.is_newly_performing and not
+                CommCareUser.get(stub.user_id).is_deleted(),
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
@@ -240,6 +287,8 @@ class ProjectHealthDashboard(ProjectReport):
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
+                this_month_summary.set_num_inactive_users(len(this_month_summary.get_dropouts()))
+            this_month_summary.set_percent_active()
             last_month_summary = this_month_summary
         return six_month_summary
 

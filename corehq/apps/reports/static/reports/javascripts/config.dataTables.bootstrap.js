@@ -210,6 +210,20 @@ function HQReportDataTables(options) {
                 datatable.fnAdjustColumnSizing();
             }, 10);
 
+            // This fixes a display bug in some browsers where the pagination
+            // overlaps the footer when resizing from 10 to 100 or 10 to 50 rows
+            // (perhaps other lengths are affected...unknown). This makes sure
+            // that columns are redrawn on the first hit of a new length,
+            // as fnAdjustColumnSizing fixes the issue and it remains fixed
+            // without intervention afterward.
+            self._lengthsSeen = [];
+            datatable.on( 'length.dt', function (e, settings, length) {
+                if (self._lengthsSeen.indexOf(length) < 0) {
+                    datatable.fnAdjustColumnSizing();
+                    self._lengthsSeen.push(length);
+                }
+            } );
+
             var $dataTablesFilter = $(".dataTables_filter");
             if($dataTablesFilter && $("#extra-filter-info")) {
                 if($dataTablesFilter.length > 1) {

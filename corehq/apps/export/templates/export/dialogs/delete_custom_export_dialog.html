@@ -7,7 +7,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title">{% trans "Delete Export for" %} "{{ export.name }}"?</h4>
             </div>
-            {% if request|toggle_enabled:"NEW_EXPORTS" %}
+            {% if use_new_exports %}
             <form name="drop_report" action="{% url "delete_new_custom_export" domain export.type export.get_id %}" method="post">
             {% else %}
             <form name="drop_report" action="{% url "delete_custom_export" domain export.get_id %}" method="post">

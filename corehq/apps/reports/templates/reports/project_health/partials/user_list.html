@@ -3,9 +3,13 @@
 <table class="table table-striped">
     <thead>
         <tr>
+            <th></th>
+            <th colspan="2">{% trans "Change in Forms Submitted" %}</th>
+        </tr>
+        <tr>
             <th>{% trans "Username" %}</th>
-            <th>{% trans "Change in Forms Submitted Last Month" %}</th>
-            <th>{% trans "Change in Forms Submitted This Month" %}</th>
+            <th>{% trans "Last Month" %}</th>
+            <th>{% trans "This Month" %}</th>
         </tr>
     </thead>
     {% for user in user_list %}

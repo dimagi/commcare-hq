@@ -95,7 +95,7 @@ def test_pillow_settings(env_name, pillows_by_group, extra_debugging=False):
         print dump_yaml([action.to_json()
                          for action in get_pillow_actions_for_env(env_name)])
 
-    from fab.fabfile import get_pillow_env_config
+    from fab.utils import get_pillow_env_config
     pillows = list(get_pillows_for_env([get_pillow_env_config(env_name)], pillows_by_group=pillows_by_group))
 
     print 'Included Pillows'

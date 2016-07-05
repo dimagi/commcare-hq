@@ -802,11 +802,20 @@ class SoftwarePlanVersion(models.Model):
                 self.plan.visibility == SoftwarePlanVisibility.PUBLIC
                 or self.plan.visibility == SoftwarePlanVisibility.TRIAL
             ):
-                desc['description'] = DESC_BY_EDITION[self.plan.edition]['description']
+                desc['description'] = (
+                    DESC_BY_EDITION[self.plan.edition]['description'] % self.user_feature.monthly_limit
+                    if self.plan.edition != SoftwarePlanEdition.ENTERPRISE
+                    else DESC_BY_EDITION[self.plan.edition]['description']
+                )
             else:
                 for desc_key in desc:
                     if not desc[desc_key]:
-                        desc[desc_key] = DESC_BY_EDITION[self.plan.edition][desc_key]
+                        if desc_key == 'description' and self.plan.edition != SoftwarePlanEdition.ENTERPRISE:
+                            desc[desc_key] = (
+                                DESC_BY_EDITION[self.plan.edition]['description'] % self.user_feature.monthly_limit
+                            )
+                        else:
+                            desc[desc_key] = DESC_BY_EDITION[self.plan.edition][desc_key]
         except KeyError:
             pass
         desc.update({

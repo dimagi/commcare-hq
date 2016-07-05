@@ -16,7 +16,7 @@ from corehq.apps.userreports.expressions.specs import (
     PropertyPathGetterSpec,
 )
 from corehq.apps.userreports.expressions.specs import eval_statements
-from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests import run_with_all_backends
@@ -448,6 +448,38 @@ class NestedExpressionTest(SimpleTestCase):
                 ],
             })
         )
+
+    def test_name_in_argument(self):
+        expression = ExpressionFactory.from_spec(
+            {
+                "type": "nested",
+                "argument_expression": {
+                    "type": "named",
+                    "name": "three"
+                },
+                "value_expression": {
+                    "type": "identity",
+                }
+            },
+            context=FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
+        )
+        self.assertEqual(3, expression({}))
+
+    def test_name_in_value(self):
+        expression = ExpressionFactory.from_spec(
+            {
+                "type": "nested",
+                "argument_expression": {
+                    "type": "identity",
+                },
+                "value_expression": {
+                    "type": "named",
+                    "name": "three"
+                }
+            },
+            context=FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
+        )
+        self.assertEqual(3, expression({}))
 
 
 class IteratorExpressionTest(SimpleTestCase):

@@ -1,5 +1,6 @@
 import mock
 from django.test import TestCase, SimpleTestCase
+from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 
@@ -7,9 +8,16 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain, \
     get_cases_in_domain
+from corehq.apps.export.models import (
+    CaseExportDataSchema,
+    ExportGroupSchema,
+    PathNode,
+    ExportItem,
+    MAIN_TABLE,
+)
 from corehq.apps.importer.exceptions import ImporterError
 from corehq.apps.importer.tasks import do_import, bulk_import_async
-from corehq.apps.importer.util import ImporterConfig, is_valid_owner
+from corehq.apps.importer.util import ImporterConfig, is_valid_owner, get_case_properties_for_case_type
 from corehq.apps.locations.models import LocationType
 from corehq.apps.users.models import WebUser, CommCareUser, DomainMembership
 
@@ -379,6 +387,36 @@ class ImporterUtilsTest(SimpleTestCase):
 
     def test_web_user_owner_nomatch(self):
         self.assertFalse(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'nomatch'))
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_get_case_properties_for_case_type(self):
+        schema = CaseExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='name')],
+                            label='name',
+                            last_occurrences={},
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='color')],
+                            label='color',
+                            last_occurrences={},
+                        ),
+                    ],
+                    last_occurrences={},
+                ),
+            ],
+        )
+
+        with mock.patch(
+                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+                return_value=schema):
+            case_types = get_case_properties_for_case_type('test-domain', 'case-type')
+
+        self.assertEqual(sorted(case_types), ['color', 'name'])
 
 
 def _mk_user(domain):
