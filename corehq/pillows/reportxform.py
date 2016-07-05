@@ -46,7 +46,11 @@ def report_xform_filter(doc_dict):
 def transform_xform_for_report_forms_index(doc_dict):
     doc_ret = transform_xform_for_elasticsearch(doc_dict, include_props=False)
     if doc_ret:
-        convert_property_dict(doc_ret['form'], REPORT_XFORM_INDEX_INFO.mapping['properties']['form'], override_root_keys=['case'])
+        convert_property_dict(
+            doc_ret['form'],
+            REPORT_XFORM_INDEX_INFO.mapping['properties']['form'],
+            override_root_keys=['case']
+        )
         if 'computed_' in doc_ret:
             convert_property_dict(doc_ret['computed_'], {})
 
