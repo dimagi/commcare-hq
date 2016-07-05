@@ -109,6 +109,10 @@ class ConfigurableReportEditForm(DocumentFormBase):
             raise ValidationError(_(u'Problem with report spec: {}').format(e))
         return cleaned_data
 
+    def save(self, commit=False):
+        self.instance.report_meta.edited_manually = True
+        return super(ConfigurableReportEditForm, self).save(commit)
+
 
 DOC_TYPE_CHOICES = (
     ('CommCareCase', _('cases')),

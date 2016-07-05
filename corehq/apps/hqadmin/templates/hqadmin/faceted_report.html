@@ -7,13 +7,13 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% new_static 'reports/javascripts/reports.util.js' %}"></script>
-    <script src="{% new_static 'reports/javascripts/reports.async.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.util.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script src="{% new_static 'appstore/js/facet_sidebar.js' %}"></script>
+    <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     {% include "reports/standard/partials/report_loader.html" %}
 {% endblock %}
 
@@ -22,5 +22,5 @@
     <hr />
     {% url "admin_report_dispatcher" facet_report.slug as search_url %}
     <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
-    {% include 'appstore/partials/bootstrap3/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
+    {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
 {% endblock %}

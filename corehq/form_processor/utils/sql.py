@@ -158,7 +158,6 @@ def ledger_value_adapter(ledger_value):
         ledger_value.daily_consumption,
         ledger_value.last_modified_form_id,
         ledger_value.domain,
-        ledger_value.location_id,
     ]
     return ObjectAdapter(fields, LedgerValue_DB_TABLE)
 

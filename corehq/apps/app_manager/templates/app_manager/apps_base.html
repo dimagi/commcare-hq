@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_section.html' %}
+{% extends 'style/base_section.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -18,9 +18,6 @@
     {% endcompress %}
 {% endblock %}
 
-{% block head %}{{ block.super }}
-    {% include 'analytics/fullstory.html' %}
-{% endblock %}
 {% block js %}{{ block.super }}
     <!--
         jQuery UI needs to be included before Bootstrap's JavaScript, otherwise the two

@@ -146,6 +146,7 @@ class FeedApiTest(TestCase):
 class PostApiTest(TestCase):
 
     def setUp(self):
+        super(PostApiTest, self).setUp()
         self.domain = 'post-api-test'
         bootstrap_domain(self.domain)
         self.api = MockOpenLMISEndpoint("uri://mock/lmis/endpoint", username='ned', password='honor')

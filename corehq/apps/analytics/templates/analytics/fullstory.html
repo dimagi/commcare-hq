@@ -1,3 +1,4 @@
+{% if FULLSTORY_ID %}
 <script>
         window['_fs_debug'] = false;
         window['_fs_host'] = 'www.fullstory.com';
@@ -13,3 +14,4 @@
         })(window,document,'FS','script','user');
         FS.identify('{{ request.couch_user.username }}',{'displayName': '{{ request.couch_user.username }}'});
 </script>
+{% endif %}

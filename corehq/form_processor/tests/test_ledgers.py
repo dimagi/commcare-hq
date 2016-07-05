@@ -21,6 +21,7 @@ class LedgerTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(LedgerTests, cls).setUpClass()
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
         cls.product_a = make_product(DOMAIN, 'A Product', 'prodcode_a')
@@ -28,6 +29,7 @@ class LedgerTests(TestCase):
         cls.product_c = make_product(DOMAIN, 'C Product', 'prodcode_c')
 
     def setUp(self):
+        super(LedgerTests, self).setUp()
         self.interface = FormProcessorInterface(domain=DOMAIN)
         self.factory = CaseFactory(domain=DOMAIN)
         self.case = self.factory.create_case()

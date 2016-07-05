@@ -266,6 +266,15 @@ class SubmissionPost(object):
         return response
 
     @staticmethod
+    def submission_ignored_response():
+        return OpenRosaResponse(
+            # would have done ✓ but our test Nokias' fonts don't have that character
+            message=u'√ (this submission was ignored)',
+            nature=ResponseNature.SUBMIT_SUCCESS,
+            status=201,
+        ).response()
+
+    @staticmethod
     def get_failure_response(doc):
         return OpenRosaResponse(
             message=doc.problem,

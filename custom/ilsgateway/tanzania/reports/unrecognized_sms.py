@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.utils.translation import ugettext_noop
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -13,7 +12,6 @@ from corehq.apps.sms.models import WORKFLOW_DEFAULT, SMS, INCOMING, OUTGOING
 from corehq.apps.users.models import CouchUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.parsing import json_format_datetime
 from django.utils.translation import ugettext as _
 
 

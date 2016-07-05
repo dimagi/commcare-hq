@@ -94,7 +94,6 @@ class GeographyFluff(fluff.IndicatorDocument):
     domains = ('pathways-india-mis', 'pathways-tanzania', 'care-macf-malawi', 'care-macf-bangladesh',)
     group_by = ('domain',)
 
-    save_direct_to_sql = True
     kafka_topic = topics.CASE
 
     numerator = Numerator()
@@ -114,7 +113,6 @@ class FarmerRecordFluff(fluff.IndicatorDocument):
                 fluff.AttributeGetter('domains', lambda c: get_domains(c)),
                 fluff.AttributeGetter('practices', lambda c: get_practices(c)))
 
-    save_direct_to_sql = True
     kafka_topic = topics.CASE
 
     lvl_1 = case_property('lvl_1')
@@ -131,6 +129,7 @@ class FarmerRecordFluff(fluff.IndicatorDocument):
     group_leadership = flat_field(get_group_leadership)
     real_or_test = flat_field(lambda c: c.get_case_property('test_or_real'))
     schedule = flat_field(lambda c: (c.get_case_property('farmer_social_category') or '').lower())
+    group_case_id = flat_field(lambda c: c.get_case_property('group_case_id'))
     prop = Property()
 
 

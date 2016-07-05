@@ -5,7 +5,6 @@ from django.http import Http404, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_multiselect,
 )
 from django_prbac.utils import has_privilege
@@ -120,7 +119,6 @@ class BulkSMSVerificationView(BaseDomainView):
 class BaseGroupsView(BaseUserSettingsView):
 
     @method_decorator(require_can_edit_commcare_users)
-    @use_bootstrap3
     @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(BaseGroupsView, self).dispatch(request, *args, **kwargs)

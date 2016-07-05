@@ -36,25 +36,31 @@
             <ItemDef OID="I_VISIT_PT_INIT_7" Name="pt_init" DataType="text" Length="200" SASFieldName="pt_init"
                      Comment="Patient initials">
                 <Question>
-                    <TranslatedText>
-                    Patient initials
-                    </TranslatedText>
+                    <TranslatedText>Patient initials</TranslatedText>
                 </Question>
             </ItemDef>
             <ItemDef OID="I_VISIT_PT_NO_1784" Name="pt_no" DataType="text" Length="200" SASFieldName="pt_no"
                      Comment="Patient number">
                 <Question>
-                    <TranslatedText>
-                    Patient number
-                    </TranslatedText>
+                    <TranslatedText>Patient number</TranslatedText>
                 </Question>
+                <RangeCheck Comparator="GE" SoftHard="Hard">
+                    <CheckValue>1</CheckValue>
+                    <ErrorMessage>
+                        <TranslatedText>Must be from 1 to 10</TranslatedText>
+                    </ErrorMessage>
+                </RangeCheck>
+                <RangeCheck Comparator="LE" SoftHard="Hard">
+                    <CheckValue>10</CheckValue>
+                    <ErrorMessage>
+                        <TranslatedText>Must be from 1 to 10</TranslatedText>
+                    </ErrorMessage>
+                </RangeCheck>
             </ItemDef>
             <ItemDef OID="I_VISIT_ASSD1_664" Name="assd1" DataType="date" SASFieldName="assd1"
                      Comment="Date of Assessment (Demography)">
                 <Question OpenClinica:QuestionNumber="1">
-                    <TranslatedText>
-                    Date of Assessment
-                    </TranslatedText>
+                    <TranslatedText>Date of Assessment</TranslatedText>
                 </Question>
             </ItemDef>
         </MetaDataVersion>

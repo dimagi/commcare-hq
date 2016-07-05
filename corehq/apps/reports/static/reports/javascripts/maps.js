@@ -1,3 +1,5 @@
+/* global HQReportDataTables:true */
+
 // a map control map that lists the various display metrics for this report
 // and allows you to select and display them
 MetricsControl = L.Control.extend({
@@ -125,17 +127,9 @@ function initTable(data, config) {
         }
     );
     var table;
-    if (window.USE_BOOTSTRAP_3) {
-        table = new HQReportDataTables({
-            aoColumns: colSorting,
-            useBootstrap3: true,
-            paginationType: 'bs_normal'
-        });
-    } else {
-        table = new HQReportDataTables({
-            aoColumns: colSorting
-        });
-    }
+    table = new HQReportDataTables({
+        aoColumns: colSorting,
+    });
 
     table.render();
     return table.datatable;

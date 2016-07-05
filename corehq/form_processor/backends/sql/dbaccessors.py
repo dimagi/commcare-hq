@@ -163,13 +163,17 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def archive_form(form, user_id=None):
+        from corehq.form_processor.change_publishers import publish_form_saved
         FormAccessorSQL._archive_unarchive_form(form, user_id, True)
         form.state = XFormInstanceSQL.ARCHIVED
+        publish_form_saved(form)
 
     @staticmethod
     def unarchive_form(form, user_id=None):
+        from corehq.form_processor.change_publishers import publish_form_saved
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
         form.state = XFormInstanceSQL.NORMAL
+        publish_form_saved(form)
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
@@ -319,10 +323,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         # the requested number of cases
         return sorted(results, key=lambda form: form.received_on)[:limit]
 
-    @staticmethod
-    def forms_have_multimedia(domain, app_id, xmlns):
-        raise NotImplementedError
-
 
 class CaseAccessorSQL(AbstractCaseAccessor):
 
@@ -364,12 +364,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.form_id for result in results]
 
     @staticmethod
-    def get_indices(case_id):
-        return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices(%s)', [case_id]))
+    def get_indices(domain, case_id):
+        return list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_case_indices(%s, %s)', [domain, case_id]
+        ))
 
     @staticmethod
-    def get_reverse_indices(case_id):
-        indices = list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
+    def get_reverse_indices(domain, case_id):
+        indices = list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
+        ))
 
         def _set_referenced_id(index):
             # see corehq/couchapps/case_indices/views/related/map.js
@@ -595,10 +599,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=True)
 
     @staticmethod
-    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_id=None):
-        owners = [owner_id] if owner_id else None
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
         return CaseAccessorSQL._get_case_ids_in_domain(
-            domain, case_type=case_type, owner_ids=owners, is_closed=False
+            domain, case_type=case_type, owner_ids=owner_ids, is_closed=False
         )
 
     @staticmethod
@@ -765,13 +768,6 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                     raise LedgerSaveError(e)
 
             ledger_value.clear_tracked_models()
-
-    @staticmethod
-    def get_ledger_values_for_product_ids(product_ids):
-        return RawQuerySetWrapper(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_product_ids(%s)',
-            [product_ids]
-        ))
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):

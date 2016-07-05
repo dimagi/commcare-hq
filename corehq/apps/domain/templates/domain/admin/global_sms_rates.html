@@ -1,12 +1,12 @@
-{% extends "style/bootstrap3/two_column.html" %}
+{% extends "style/two_column.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/ko/select2_handler.js' %}"></script>
-    <script src="{% new_static 'smsbillables/ko/smsbillables.rate_calc.js' %}"></script>
+    <script src="{% static 'hqwebapp/ko/select2_handler.js' %}"></script>
+    <script src="{% static 'smsbillables/ko/smsbillables.rate_calc.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

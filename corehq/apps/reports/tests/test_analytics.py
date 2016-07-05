@@ -16,7 +16,7 @@ from corehq.apps.reports.analytics.couchaccessors import (
 class SetupSimpleAppMixin(object):
 
     @classmethod
-    def setUpClass(cls):
+    def class_setup(cls):
         cls.domain = uuid.uuid4().hex
         cls.f1_xmlns = 'xmlns1'
         cls.f2_xmlns = 'xmlns2'
@@ -50,6 +50,11 @@ class SetupSimpleAppMixin(object):
 
 class ReportAppAnalyticsTest(SetupSimpleAppMixin, TestCase):
     dependent_apps = ['corehq.couchapps']
+
+    @classmethod
+    def setUpClass(cls):
+        super(ReportAppAnalyticsTest, cls).setUpClass()
+        cls.class_setup()
 
     def test_get_all_form_definitions_grouped_by_app_and_xmlns_no_data(self):
         self.assertEqual([], get_all_form_definitions_grouped_by_app_and_xmlns('missing'))

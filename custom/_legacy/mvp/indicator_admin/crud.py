@@ -1,6 +1,6 @@
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from corehq.apps.indicators.admin.crud import BaseDynamicIndicatorCRUDManager, CouchIndicatorCRUDManager
+from corehq.apps.indicators.admin.crud import CouchIndicatorCRUDManager
 
 
 class MVPActiveCasesCRUDManager(CouchIndicatorCRUDManager):

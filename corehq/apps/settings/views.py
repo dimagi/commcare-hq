@@ -4,7 +4,7 @@ from corehq.apps.settings.forms import (
     HQPasswordChangeForm, HQPhoneNumberMethodForm, HQDeviceValidationForm,
     HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
 )
-from corehq.apps.style.decorators import use_bootstrap3, use_select2
+from corehq.apps.style.decorators import use_select2
 from corehq.apps.users.forms import AddPhoneNumberForm
 from django.conf import settings
 from django.contrib import messages
@@ -105,7 +105,6 @@ class MyAccountSettingsView(BaseMyAccountView):
     api_key = None
     template_name = 'settings/edit_my_account.b3.html'
 
-    @use_bootstrap3
     @use_select2
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -221,7 +220,6 @@ class MyProjectsList(BaseMyAccountView):
     template_name = 'settings/my_projects.html'
 
     @method_decorator(login_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
@@ -268,7 +266,6 @@ class ChangeMyPasswordView(BaseMyAccountView):
     page_title = ugettext_lazy("Change My Password")
 
     @method_decorator(login_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
@@ -301,7 +298,6 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     page_title = ugettext_lazy("Two Factor Authentication")
 
     @method_decorator(login_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
@@ -322,7 +318,6 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     )
 
     @method_decorator(login_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
@@ -334,7 +329,6 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     page_title = ugettext_lazy("Two Factor Authentication Setup Complete")
 
     @method_decorator(login_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
@@ -346,7 +340,6 @@ class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     page_title = ugettext_lazy("Two Factor Authentication Backup Tokens")
 
     @method_decorator(login_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
@@ -358,7 +351,6 @@ class TwoFactorDisableView(BaseMyAccountView, DisableView):
     page_title = ugettext_lazy("Disable Two Factor Authentication")
 
     @method_decorator(login_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
@@ -378,7 +370,6 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     )
 
     @method_decorator(login_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)

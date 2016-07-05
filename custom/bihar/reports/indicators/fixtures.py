@@ -1,7 +1,6 @@
 from xml.etree import ElementTree
 from django.utils.translation import ugettext as _
 from casexml.apps.phone.models import OTARestoreUser
-from corehq.apps.groups.models import Group
 from corehq.util.translation import localize
 from custom.bihar import BIHAR_DOMAINS
 from custom.bihar.reports.indicators.indicators import IndicatorDataProvider, IndicatorConfig, INDICATOR_SETS

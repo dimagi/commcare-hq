@@ -1,4 +1,4 @@
-{% extends "style/bootstrap3/base_section.html" %}
+{% extends "style/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -189,7 +189,6 @@
                 </button>
                 <span class="hq-help-template"
                     data-title="{% trans 'Initiate Phone Number Verification for All Mobile Workers In This Group' %}"
-                    data-bootstrap3="true"
                     data-content="{% blocktrans %}
                         For all active mobile workers in this group, and for each phone number, this will
                         initiate an SMS verification workflow. If the phone number is already verified or

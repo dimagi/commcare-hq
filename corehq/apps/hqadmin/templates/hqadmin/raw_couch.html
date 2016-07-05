@@ -9,8 +9,8 @@
         <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
 
         {% compress js %}
-            <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
         {% endcompress %}
 
         {# CodeMirror uses granular resources as a means of config #}

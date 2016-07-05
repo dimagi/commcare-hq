@@ -44,6 +44,7 @@ class SyncBaseTest(TestCase):
     """
 
     def setUp(self):
+        super(SyncBaseTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_sync_logs()
@@ -77,6 +78,8 @@ class SyncBaseTest(TestCase):
         restore_config = RestoreConfig(project=self.project, restore_user=self.user)
         restore_config.cache.delete(restore_config._initial_cache_key())
         self.user._couch_user.delete()
+
+        super(SyncBaseTest, self).tearDown()
 
     def _createCaseStubs(self, id_list, **kwargs):
         case_attrs = {'create': True}

@@ -245,20 +245,33 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return DataTablesHeader(*columns)
 
     @property
-    def rows(self):
+    @memoized
+    def all_users(self):
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         users_data = EMWF.pull_users_and_groups(
             self.domain,
             mobile_user_and_group_slugs,
         )
-        users_by_id = {user.user_id: user for user in users_data.combined_users}
+        return users_data.combined_users
 
-        es_results = self.es_queryset(users_by_id)
+    @property
+    @memoized
+    def users_by_id(self):
+        return {user.user_id: user for user in self.all_users}
+
+    @property
+    @memoized
+    def user_ids(self):
+        return self.users_by_id.keys()
+
+    @property
+    def rows(self):
+        es_results = self.es_queryset()
         buckets = {user_id: bucket for user_id, bucket in es_results.aggregations.users.buckets_dict.items()}
-        if None in users_by_id.keys():
+        if self.missing_users:
             buckets[None] = es_results.aggregations.missing_users.bucket
         rows = []
-        for user_id, user in users_by_id.items():
+        for user_id, user in self.users_by_id.items():
             bucket = buckets.get(user_id, None)
             rows.append(self.Row(self, user, bucket))
 
@@ -300,7 +313,12 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         self.total_row = format_row(self.TotalRow(rows, _("All Users")))
         return map(format_row, rows)
 
-    def es_queryset(self, users_by_id):
+    @property
+    @memoized
+    def missing_users(self):
+        return None in self.user_ids
+
+    def es_queryset(self):
         end_date = ServerTime(self.utc_now).phone_time(self.timezone).done()
         milestone_start = ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
 
@@ -327,22 +345,28 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         landmarks_aggregation = self._landmarks_aggregation(end_date)
 
-        top_level_aggregation = TermsAggregation('users', 'user_id')\
-            .aggregation(landmarks_aggregation)\
-            .aggregation(touched_total_aggregation)\
-            .aggregation(active_total_aggregation)\
+        top_level_aggregation = (
+            TermsAggregation('users', 'user_id')
+            .aggregation(landmarks_aggregation)
+            .aggregation(touched_total_aggregation)
+            .aggregation(active_total_aggregation)
             .aggregation(inactive_total_aggregation)
+        )
 
         query = (
             case_es.CaseES()
             .domain(self.domain)
-            .user_ids_handle_unknown(users_by_id.keys())
+            .user_ids_handle_unknown(self.user_ids)
             .size(0)
         )
-        query = query.aggregation(top_level_aggregation)
-        missing_users = None in users_by_id.keys()
+        if self.case_type:
+            query = query.filter(case_es.case_type(self.case_type))
+        else:
+            query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
 
-        if missing_users:
+        query = query.aggregation(top_level_aggregation)
+
+        if self.missing_users:
             query = query.aggregation(
                 MissingAggregation('missing_users', 'user_id')
                 .aggregation(landmarks_aggregation)

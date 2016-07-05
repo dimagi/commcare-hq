@@ -14,6 +14,7 @@ def _mock_case(owner, user):
 class CaseExportTest(TestCase):
 
     def setUp(self):
+        super(CaseExportTest, self).setUp()
         for user in CommCareUser.all():
             user.delete()
 

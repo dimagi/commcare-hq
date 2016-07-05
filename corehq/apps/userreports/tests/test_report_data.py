@@ -15,6 +15,7 @@ class ReportDataTest(TestCase):
     dependent_apps = ['pillowtop']
 
     def setUp(self):
+        super(ReportDataTest, self).setUp()
         # Create report
         self.domain = 'test-ucr-report-data'
         self.data_source = DataSourceConfiguration(

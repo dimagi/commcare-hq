@@ -21,8 +21,14 @@ def get_reindex_commands(alias_name):
     # that should be used to rebuild the index from scratch
     pillow_command_map = {
         'hqdomains': [('ptop_reindexer_v2', {'index': 'domain'})],
-        'hqcases': ['ptop_fast_reindex_cases'],
-        'xforms': ['ptop_fast_reindex_xforms'],
+        'hqcases': [
+            'ptop_fast_reindex_cases',
+            ('ptop_reindexer_v2', {'index': 'sql-case'}),
+        ],
+        'xforms': [
+            'ptop_fast_reindex_xforms',
+            ('ptop_reindexer_v2', {'index': 'sql-form'}),
+        ],
         # groupstousers indexing must happen after all users are indexed
         'hqusers': [
             ('ptop_reindexer_v2', {'index': 'user'}),

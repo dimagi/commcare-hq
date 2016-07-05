@@ -1,5 +1,4 @@
-from datetime import date, time, datetime, timedelta
-from unittest import TestCase
+from datetime import date, time, datetime
 
 from .case_reports import Report, OPMCase, MockCaseRow, OPMCaseReportTestBase
 from couchforms.models import XFormInstance

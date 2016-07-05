@@ -8,6 +8,7 @@ from corehq.apps.accounting.models import (
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
     SubscriptionType, PreOrPostPay
 )
+from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
 from corehq.apps.registration.models import RegistrationRequest
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.name_to_url import name_to_url
@@ -72,6 +73,7 @@ def request_new_domain(request, form, is_new_user=True):
             date_created=datetime.utcnow(),
             creating_user=current_user.username,
             secure_submissions=True,
+            use_sql_backend=True
         )
 
         if form.cleaned_data.get('domain_timezone'):
@@ -91,6 +93,8 @@ def request_new_domain(request, form, is_new_user=True):
         # Only new-user domains are eligible for Advanced trial
         # domains with no subscription are equivalent to be on free Community plan
         create_30_day_advanced_trial(new_domain)
+    else:
+        ensure_explicit_community_subscription(new_domain.name, date.today())
 
     UserRole.init_domain_with_presets(new_domain.name)
 
@@ -226,8 +230,8 @@ You can view the %s here: %s""" % (
 # Only new-users are eligible for advanced trial
 def create_30_day_advanced_trial(domain_obj):
     # Create a 30 Day Trial subscription to the Advanced Plan
-    advanced_plan_version = DefaultProductPlan.get_default_plan_by_domain(
-        domain_obj, edition=SoftwarePlanEdition.ADVANCED, is_trial=True
+    advanced_plan_version = DefaultProductPlan.get_default_plan(
+        edition=SoftwarePlanEdition.ADVANCED, is_trial=True
     )
     expiration_date = date.today() + timedelta(days=30)
     trial_account = BillingAccount.objects.get_or_create(

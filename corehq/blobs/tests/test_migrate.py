@@ -8,6 +8,7 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.s3db import maybe_not_found
 from corehq.blobs.tests.util import (TemporaryFilesystemBlobDB,
     TemporaryMigratingBlobDB, TemporaryS3BlobDB)
+from corehq.util.couch_doc_processor import ResumableDocsByTypeIterator
 from corehq.util.test_utils import trap_extra_setup
 
 from django.conf import settings
@@ -29,6 +30,7 @@ NOT_SET = object()
 class BaseMigrationTest(TestCase):
 
     def setUp(self):
+        super(BaseMigrationTest, self).setUp()
         self.discard_migration_state(self.slug)
         self._old_flags = {}
         self.docs_to_delete = []
@@ -45,11 +47,12 @@ class BaseMigrationTest(TestCase):
                 del model.migrating_blobs_from_couch
             else:
                 model.migrating_blobs_from_couch = flag
+        super(BaseMigrationTest, self).tearDown()
 
     @staticmethod
     def discard_migration_state(slug):
         doc_types = mod.MIGRATIONS[slug].doc_type_map
-        mod.ResumableDocsByTypeIterator(
+        ResumableDocsByTypeIterator(
             list(doc_types.values())[0].get_db(),
             doc_types,
             slug + "-blob-migration",
@@ -122,12 +125,12 @@ class BaseMigrationTest(TestCase):
         migrator = mod.MIGRATIONS[self.slug]
 
         class ConcurrentModify(migrator.doc_migrator_class):
-            def migrate(self, doc, couchdb):
+            def _do_migration(self, doc, couchdb):
                 if doc["_id"] not in modified and doc["_id"] in docs_by_id:
                     # do concurrent modification
                     modify_doc(docs_by_id[doc["_id"]])
                     modified.add(doc["_id"])
-                return super(ConcurrentModify, self).migrate(doc, couchdb)
+                return super(ConcurrentModify, self)._do_migration(doc, couchdb)
 
         with replattr(migrator, "doc_migrator_class", ConcurrentModify):
             # do migration

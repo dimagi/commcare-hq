@@ -5,7 +5,6 @@ from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.sms.models import ExpectedCallback, CALLBACK_PENDING, CALLBACK_RECEIVED, CALLBACK_MISSED
 from datetime import datetime, timedelta, time
 from corehq.util.timezones.conversions import ServerTime

@@ -130,6 +130,7 @@ class TestNewSyncSpecifics(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestNewSyncSpecifics, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
         cls.project = Domain(name=cls.domain)
         cls.user = create_restore_user(

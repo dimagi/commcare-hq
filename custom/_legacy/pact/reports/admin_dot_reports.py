@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, time
 import logging
-import uuid
 from couchdbkit import ResourceNotFound
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport

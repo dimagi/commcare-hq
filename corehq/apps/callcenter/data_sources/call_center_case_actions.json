@@ -1,96 +1,99 @@
 {
-    "_id": "",
-    "domain": "",
-    "description": "",
-    "display_name": "Call center case actions",
-    "engine_id": "ucr",
-    "is_deactivated": false,
-    "named_expressions": {
-        "owner_id": {
-            "expression": {
-                "expression_if_false": {
-                    "datatype": "string",
-                    "property_name": "owner_id",
-                    "type": "property_name"
-                },
-                "expression_if_true": {
-                    "datatype": "string",
-                    "property_name": "user_id",
-                    "type": "property_name"
-                },
-                "test": {
-                    "expression": {
+    "domains": [],
+    "config": {
+        "_id": "",
+        "domain": "",
+        "description": "",
+        "display_name": "Call center case actions",
+        "engine_id": "ucr",
+        "is_deactivated": false,
+        "named_expressions": {
+            "owner_id": {
+                "expression": {
+                    "expression_if_false": {
                         "datatype": "string",
                         "property_name": "owner_id",
                         "type": "property_name"
                     },
-                    "operator": "eq",
-                    "property_value": "",
-                    "type": "boolean_expression"
-                },
-                "type": "conditional"
-            },
-            "type": "root_doc"
-        }
-    },
-    "named_filters": {},
-    "referenced_doc_type": "CommCareCase",
-    "table_id": "cc_case_actions",
-    "base_item_expression": {
-        "datatype": null,
-        "property_name": "actions",
-        "type": "property_name"
-    },
-    "configured_filter": {},
-    "configured_indicators": [
-        {
-            "column_id": "type",
-            "datatype": "string",
-            "display_name": "Case Type",
-            "expression": {
-                "expression": {
-                    "datatype": null,
-                    "property_name": "type",
-                    "type": "property_name"
+                    "expression_if_true": {
+                        "datatype": "string",
+                        "property_name": "user_id",
+                        "type": "property_name"
+                    },
+                    "test": {
+                        "expression": {
+                            "datatype": "string",
+                            "property_name": "owner_id",
+                            "type": "property_name"
+                        },
+                        "operator": "eq",
+                        "property_value": "",
+                        "type": "boolean_expression"
+                    },
+                    "type": "conditional"
                 },
                 "type": "root_doc"
-            },
-            "is_nullable": false,
-            "is_primary_key": false,
-            "transform": {},
-            "type": "expression"
+            }
         },
-        {
-            "column_id": "owner_id",
-            "datatype": "string",
-            "display_name": "Case Owner",
-            "expression": {
-                "name": "owner_id",
-                "type": "named"
-            },
-            "is_nullable": false,
-            "is_primary_key": false,
-            "transform": {},
-            "type": "expression"
+        "named_filters": {},
+        "referenced_doc_type": "CommCareCase",
+        "table_id": "cc_case_actions",
+        "base_item_expression": {
+            "datatype": null,
+            "property_name": "actions",
+            "type": "property_name"
         },
-        {
-            "column_id": "date",
-            "datatype": "datetime",
-            "display_name": "Action date",
-            "expression": {
+        "configured_filter": {},
+        "configured_indicators": [
+            {
+                "column_id": "type",
+                "datatype": "string",
+                "display_name": "Case Type",
+                "expression": {
+                    "expression": {
+                        "datatype": null,
+                        "property_name": "type",
+                        "type": "property_name"
+                    },
+                    "type": "root_doc"
+                },
+                "is_nullable": false,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "owner_id",
+                "datatype": "string",
+                "display_name": "Case Owner",
+                "expression": {
+                    "name": "owner_id",
+                    "type": "named"
+                },
+                "is_nullable": false,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "date",
                 "datatype": "datetime",
-                "property_name": "date",
-                "type": "property_name"
+                "display_name": "Action date",
+                "expression": {
+                    "datatype": "datetime",
+                    "property_name": "date",
+                    "type": "property_name"
+                },
+                "is_nullable": false,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
             },
-            "is_nullable": false,
-            "is_primary_key": false,
-            "transform": {},
-            "type": "expression"
-        },
-        {
-            "column_id": "count",
-            "display_name": "Count",
-            "type": "count"
-        }
-    ]
+            {
+                "column_id": "count",
+                "display_name": "Count",
+                "type": "count"
+            }
+        ]
+    }
 }

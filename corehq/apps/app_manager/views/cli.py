@@ -18,7 +18,6 @@ from ..dbaccessors import (
     get_latest_released_app_doc,
     wrap_app,
 )
-from ..models import Application
 
 
 @json_error
@@ -48,6 +47,7 @@ def direct_ccz(request, domain):
         build: Latest version regardless of star
         save: Latest saved version of the application (even without a build)
     If 'version' and 'latest' aren't specified it will default to latest save
+    You may also set 'include_multimedia=true' if you need multimedia.
     """
     def error(msg, code=400):
         return json_response({'status': 'error', 'message': msg}, status_code=code)
@@ -66,6 +66,7 @@ def direct_ccz(request, domain):
     app_id = request.GET.get('app_id', None)
     version = request.GET.get('version', None)
     latest = request.GET.get('latest', None)
+    include_multimedia = request.GET.get('include_multimedia', 'false').lower() == 'true'
 
     # Make sure URL params make sense
     if not app_id:
@@ -91,7 +92,7 @@ def direct_ccz(request, domain):
     app.set_media_versions(None)
     download = DownloadBase()
     build_application_zip(
-        include_multimedia_files=False,
+        include_multimedia_files=include_multimedia,
         include_index_files=True,
         app=app,
         download_id=download.download_id,

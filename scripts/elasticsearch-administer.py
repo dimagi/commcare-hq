@@ -22,14 +22,22 @@ def confirm(msg):
         sys.exit()
 
 
-Node = namedtuple("Node", "name node_id docs")
+Node = namedtuple("Node", "name node_id docs settings")
 
 
 def get_nodes_info(es):
     nc = NodesClient(es)
     stats = nc.stats(metric="indices", index_metric="docs")
-    return [Node(info['name'], node_id, info['indices']['docs'])
-            for node_id, info in stats['nodes'].items()]
+    info = nc.info()
+    return [
+        Node(
+            name=data['name'],
+            node_id=node_id,
+            docs=data['indices']['docs'],
+            settings=info['nodes'][node_id]['settings'],
+        )
+        for node_id, data in stats['nodes'].items()
+    ]
 
 
 def cluster_status(es):
@@ -91,6 +99,38 @@ def decommission_node(es):
     print "The node is now being decommissioned."
 
 
+def force_zone_awareness(es):
+    cluster = ClusterClient(es)
+    print "NODE SETTINGS:"
+    for node in get_nodes_info(es):
+        pprint(node.settings)
+    zones = raw_input("\nEnter the zone names, separated by a comma\n")
+    confirm("Are you sure these zones exist?")
+    cmd = {"persistent": {"cluster.routing.allocation.awareness.force.zone.values": zones,
+                          "cluster.routing.allocation.awareness.attributes": "zone"}}
+    print "This will add the following settings"
+    pprint(cmd)
+    confirm("Okay?")
+    pprint(cluster.put_settings(cmd))
+    print "Finished"
+
+
+def clear_zone_awareness(es):
+    # There doesn't appear to be a proper way to unset settings
+    # https://github.com/elastic/elasticsearch/issues/6732
+    cluster = ClusterClient(es)
+    cmd = {"persistent": {"cluster.routing.allocation.awareness.force.zone.values": "",
+                          "cluster.routing.allocation.awareness.attributes": ""}}
+    confirm("Remove the allocation awareness settings from the cluster?")
+    pprint(cluster.put_settings(cmd))
+    print "Cleared"
+
+
+def pending_tasks(es):
+    cluster = ClusterClient(es)
+    pprint(cluster.pending_tasks())
+
+
 commands = {
     'cluster_status': cluster_status,
     'cluster_settings': cluster_settings,
@@ -99,6 +139,9 @@ commands = {
     'shard_status': shard_status,
     'create_replica_shards': create_replica_shards,
     'cancel_replica_shards': cancel_replica_shards,
+    'force_zone_awareness': force_zone_awareness,
+    'clear_zone_awareness': clear_zone_awareness,
+    'pending_tasks': pending_tasks,
 }
 
 

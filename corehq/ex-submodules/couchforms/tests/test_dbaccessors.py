@@ -16,6 +16,7 @@ class TestDBAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestDBAccessors, cls).setUpClass()
         from casexml.apps.case.tests.util import delete_all_xforms
         delete_all_xforms()
         cls.domain = 'evelyn'
@@ -55,6 +56,7 @@ class TestDBAccessors(TestCase):
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_xforms(cls.domain)
         cls.xform_deleted.delete()
+        super(TestDBAccessors, cls).tearDownClass()
 
     def test_get_form_ids_by_type_xforminstance(self):
         form_ids = get_form_ids_by_type(self.domain, 'XFormInstance')

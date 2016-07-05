@@ -9,6 +9,7 @@ from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 class TestBillableCreation(TestCase):
 
     def setUp(self):
+        super(TestBillableCreation, self).setUp()
         self.domain = 'sms_test_domain'
         self.mobile_backend = SQLTropoBackend(
             name="TEST",
@@ -58,3 +59,4 @@ class TestBillableCreation(TestCase):
 
     def tearDown(self):
         self.mobile_backend.delete()
+        super(TestBillableCreation, self).tearDown()

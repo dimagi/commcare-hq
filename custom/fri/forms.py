@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from corehq.util.spreadsheets.excel import WorksheetNotFound, \
     WorkbookJSONReader
 from openpyxl.utils.exceptions import InvalidFileException
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
 
 
 class MessageBankForm(Form):

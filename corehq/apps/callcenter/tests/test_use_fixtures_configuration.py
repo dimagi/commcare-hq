@@ -2,6 +2,7 @@ import os
 
 from django.test import SimpleTestCase
 
+from corehq.apps.app_manager.models import ReportModule, ReportAppConfig
 from corehq.apps.callcenter.app_parser import (
     parse_indicator, ParsedIndicator, get_call_center_config_from_app,
     _get_indicators_used_in_modules, _get_indicators_used_in_forms
@@ -100,6 +101,17 @@ class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
             sorted(indicators_from_config),
             expected
         )
+
+    def test_get_config_from_app_report_module(self):
+        app = self._get_app()
+        report_module = app.add_module(ReportModule.new_module('Reports', None))
+        report_module.report_configs = [
+            ReportAppConfig(report_id='other_config_id', header={'en': 'CommBugz'})
+        ]
+        indicators = sorted(list(
+            _get_indicators_used_in_modules(app)
+        ))
+        self.assertEqual(indicators, [])
 
     def _get_app(self):
         from corehq.apps.app_manager.tests.app_factory import AppFactory

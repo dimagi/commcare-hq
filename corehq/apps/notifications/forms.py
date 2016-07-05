@@ -1,4 +1,5 @@
 from django import forms
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy, ugettext as _
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -23,6 +24,7 @@ class NotificationCreationForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        from corehq.apps.notifications.views import ManageNotificationView
         super(NotificationCreationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
 
@@ -46,7 +48,7 @@ class NotificationCreationForm(forms.Form):
                 ),
                 hqcrispy.LinkButton(
                     _("Cancel"),
-                    '#',
+                    reverse(ManageNotificationView.urlname),
                     css_class="btn btn-default",
                     name="cancel",
                 ),

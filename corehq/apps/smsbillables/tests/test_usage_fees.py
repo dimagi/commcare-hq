@@ -3,8 +3,7 @@ from random import randint
 
 from django.test import TestCase
 
-from corehq.apps.accounting.generator import init_default_currency
-from corehq.apps.smsbillables import generator
+from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SQLMobileBackend
 from corehq.apps.smsbillables.models import (
     SmsBillable,
@@ -12,13 +11,15 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFee,
     SmsUsageFeeCriteria,
 )
-from corehq.apps.smsbillables.tests import FakeTwilioMessageFactory
+from corehq.apps.smsbillables.tests import FakeTwilioMessageFactory, generator
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 
 
 class TestUsageFee(TestCase):
 
     def setUp(self):
+        super(TestUsageFee, self).setUp()
+
         # Must remove existing data populated in migrations
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
@@ -152,3 +153,5 @@ class TestUsageFee(TestCase):
             SQLMobileBackend.load(backend_id, is_couch_id=True).delete()
 
         FakeTwilioMessageFactory.backend_message_id_to_price = {}
+
+        super(TestUsageFee, self).tearDown()

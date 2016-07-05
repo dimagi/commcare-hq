@@ -5,7 +5,6 @@
             <span data-bind="visible: !$parent.isOffsetTimingUsed()">{% trans 'Day' %}</span>
             <span data-bind="visible: $parent.isOffsetTimingUsed()">{% trans 'Days to Delay' %}</span>
             <span class="hq-help-template"
-                       data-bootstrap3="true"
                        data-title="{% trans 'Day' %}"
                        data-content="{% blocktrans %}
                           The day on which each event in the reminder comes due.
@@ -19,7 +18,6 @@
             <span data-bind="visible: !$parent.isOffsetTimingUsed()">{% trans 'Time' %}</span>
             <span data-bind="visible: $parent.isOffsetTimingUsed()">{% trans 'Time to Delay' %}</span>
             <span class="hq-help-template"
-                        data-bootstrap3="true"
                         data-title="{% trans 'Time' %}"
                         data-content="{% blocktrans %}
                             Specify the time at which the reminder will be sent out.
@@ -31,7 +29,6 @@
         <th class="col-md-2" data-bind="visible: isWindowLengthVisible">
             {% trans 'Window' %}
             <span class="hq-help-template"
-                        data-bootstrap3="true"
                         data-title="{% trans 'Window' %}"
                         data-content="{% blocktrans %}
                             The number of minutes after the start within which to randomly send the message.

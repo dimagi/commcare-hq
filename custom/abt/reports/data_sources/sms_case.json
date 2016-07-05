@@ -3,6 +3,7 @@
     "airs-testing",
     "airsbenin",
     "airstanzania",
+    "abtmali",
     "airsethiopia"
   ],
   "config": {
@@ -408,6 +409,29 @@
                     "property_name": "owner_id"
                   }
                 }
+              },
+            "mali": {
+                "default": 0,
+                "cases": {
+                    "koulikoro": 169156,
+                    "segou": 73528
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_1_data"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
               }
           },
           "type": "switch",
@@ -565,11 +589,12 @@
                 }
               }
             },
-            "Mali": {
+            "mali": {
               "default": 0,
               "cases": {
-                "baroueli": 73226,
-                "koulikoro": 62491
+                "baroueli": 73528,
+                "koulikoro": 66927,
+                "dioila": 102229
               },
               "type": "switch",
               "switch_on": {
@@ -931,7 +956,31 @@
                       "property_name": "owner_id"
                     }
                   }
+                },
+            "mali": {
+              "default": 0,
+              "cases": {
+                "koulikoro": 66927,
+                "fana": 102229,
+                "baroueli": 73528
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_3_data"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
                 }
+              }
+            }
           },
           "type": "switch",
           "switch_on": {
@@ -953,6 +1002,142 @@
         "column_id": "level_3_target_number"
       },
       {
+        "display_name": "level_4_target_number",
+        "datatype": "integer",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "default": 0,
+          "cases": {
+            "mali": {
+              "default": 0,
+              "cases": {
+                "banido": 1968,
+                "baraoueli": 9248,
+                "belego": 11428,
+                "boidie": 3492,
+                "bougoucourala": 1640,
+                "chola": 2352,
+                "dandougou": 5044,
+                "diebe": 3723,
+                "diele": 995,
+                "dioforongo": 1635,
+                "djoumazana": 6174,
+                "dotembougou": 1748,
+                "dougoufie": 2930,
+                "doumba": 1900,
+                "falako": 6776,
+                "fana": 17450,
+                "faracoro": 907,
+                "fougadougou": 1147,
+                "garna": 2474,
+                "gouendo": 3385,
+                "gouni": 4435,
+                "kalake": 3711,
+                "kamani": 2609,
+                "kankoni": 2864,
+                "kenenkoun": 5832,
+                "kerela": 4634,
+                "kolebougou": 3380,
+                "koni": 4158,
+                "konkon": 1377,
+                "konobougou": 8285,
+                "korokoro": 2395,
+                "kotoula": 3085,
+                "koula": 2946,
+                "koulikoroba": 3167,
+                "m'pebougou": 1507,
+                "markacoungo": 4670,
+                "massala": 2335,
+                "mena": 7053,
+                "moabougou": 3513,
+                "monzombala": 3427,
+                "n'djilla": 1802,
+                "n'gassola": 2051,
+                "nangola": 7003,
+                "nianzana": 2939,
+                "nyamina": 6706,
+                "sanando": 4708,
+                "seguela": 2054,
+                "seyla": 3808,
+                "sirakorobougou": 2304,
+                "sirakorola": 8007,
+                "sizani": 2012,
+                "somo": 4195,
+                "souban": 1440,
+                "tamani": {
+                  "default": 0,
+                  "cases": {
+                    "koulikoro": 4748,
+                    "baroueli": 3206
+
+                  },
+                  "type": "switch",
+                  "switch_on": {
+                    "value_expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "user_data",
+                        "level_3_data"
+                      ]
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                      "type": "property_name",
+                      "property_name": "owner_id"
+                    }
+                  }
+                },
+                "tesserela": 2311,
+                "tienfala": 2669,
+                "tigui": 2554,
+                "tingole": 5898,
+                "tombougou": 2238,
+                "tougouni": 4420,
+                "wondobougou": 2260,
+                "yerebougou": 1552
+              },
+              "type": "switch",
+              "switch_on": {
+                "value_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "user_data",
+                    "level_4_data"
+                  ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareUser",
+                "doc_id_expression": {
+                  "type": "property_name",
+                  "property_name": "owner_id"
+                }
+              }
+            }
+          },
+          "type": "switch",
+          "switch_on": {
+            "value_expression": {
+              "type": "property_path",
+              "property_path": [
+                "user_data",
+                "country"
+              ]
+            },
+            "type": "related_doc",
+            "related_doc_type": "CommCareUser",
+            "doc_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            }
+          }
+        },
+        "column_id": "level_4_target_number"
+      },
+      {
         "display_name": "country_target_number",
         "datatype": "integer",
         "type": "expression",
@@ -966,7 +1151,7 @@
             "Rwanda": 144417,
             "Zambia": 539348,
             "Ethiopia": 708258,
-            "Mali": 135717,
+            "mali": 242684,
             "Madagascar": 72120,
             "Tanzania": 502934,
             "benin": 270141

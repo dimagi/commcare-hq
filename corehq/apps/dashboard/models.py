@@ -238,14 +238,9 @@ class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
         :return:
         """
 
-        def _fmt_item_name(n):
-            if len(n) > 38:
-                return "%s..." % n[0:36]
-            return n
-
         return {
             'name_full': full_name or name,
-            'name': _fmt_item_name(name),
+            'name': name,
             'description': description,
             'url': url,
             'secondary_url': secondary_url,

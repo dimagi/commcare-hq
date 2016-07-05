@@ -19,6 +19,7 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
         settings.NEW_DOMAINS_DB, settings.NEW_APPS_DB, settings.SYNCLOGS_DB),
     # register these views to both the main db AND the apps db.
     'app_translations_by_popularity': (None, settings.NEW_APPS_DB),
+    'apps_with_submissions': settings.NEW_APPS_DB,
     'exports_forms_by_app': (None, settings.NEW_APPS_DB),
     'forms_by_app_info': (None, settings.NEW_APPS_DB),
 })

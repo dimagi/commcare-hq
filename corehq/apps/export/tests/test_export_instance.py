@@ -13,6 +13,7 @@ from corehq.apps.export.models import (
     PathNode,
     MAIN_TABLE,
     FormExportInstanceDefaults,
+    MultiMediaExportColumn,
 )
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
     TOP_MAIN_FORM_TABLE_PROPERTIES
@@ -68,7 +69,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         """Only questions that are in the main table and of the same version should be shown"""
         build_ids_and_versions = {self.app_id: 3}
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
 
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
@@ -98,7 +99,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
         """Given a higher app_version, all the old questions should not be shown or selected"""
         build_ids_and_versions = {self.app_id: 4}
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
@@ -197,7 +198,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
             self.second_app_id: 4,
         }
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
@@ -221,7 +222,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
             self.second_app_id: 5,
         }
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
@@ -240,24 +241,29 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
 
 class TestExportInstance(SimpleTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.schema = FormExportInstance(
+    def setUp(self):
+        self.instance = FormExportInstance(
             tables=[
                 TableConfiguration(
                     path=MAIN_TABLE
                 ),
                 TableConfiguration(
                     path=[PathNode(name='data', is_repeat=False), PathNode(name='repeat', is_repeat=True)],
+                    columns=[
+                        MultiMediaExportColumn(
+                            selected=True
+                        )
+                    ]
+
                 )
             ]
         )
 
     def test_get_table(self):
-        table = self.schema.get_table(MAIN_TABLE)
+        table = self.instance.get_table(MAIN_TABLE)
         self.assertEqual(table.path, MAIN_TABLE)
 
-        table = self.schema.get_table([
+        table = self.instance.get_table([
             PathNode(name='data', is_repeat=False), PathNode(name='repeat', is_repeat=True)
         ])
         self.assertEqual(
@@ -265,10 +271,17 @@ class TestExportInstance(SimpleTestCase):
             [PathNode(name='data', is_repeat=False), PathNode(name='repeat', is_repeat=True)]
         )
 
-        table = self.schema.get_table([
+        table = self.instance.get_table([
             PathNode(name='data', is_repeat=False), PathNode(name='DoesNotExist', is_repeat=False)
         ])
         self.assertIsNone(table)
+
+    def test_has_multimedia(self):
+        self.assertTrue(self.instance.has_multimedia)
+
+    def test_has_multimedia_not_selected(self):
+        self.instance.tables[1].columns[0].selected = False
+        self.assertFalse(self.instance.has_multimedia)
 
 
 @mock.patch(
@@ -279,6 +292,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportInstanceFromSavedInstance, cls).setUpClass()
         cls.app_id = '1234'
         cls.schema = FormExportDataSchema(
             group_schemas=[
@@ -353,7 +367,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
             self.app_id: 3,
         }
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
@@ -369,7 +383,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
         self.assertFalse(instance.tables[0].columns[first_non_system_property].selected)
 
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
 
             instance = FormExportInstance.generate_instance_from_schema(
@@ -390,7 +404,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
             self.app_id: 3,
         }
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
@@ -404,7 +418,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
             self.app_id: 4,
         }
         with mock.patch(
-                'corehq.apps.export.models.new.get_latest_built_app_ids_and_versions',
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
 
             instance = FormExportInstance.generate_instance_from_schema(

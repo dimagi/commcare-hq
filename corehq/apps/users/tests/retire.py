@@ -17,6 +17,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 class RetireUserTestCase(TestCase):
 
     def setUp(self):
+        super(RetireUserTestCase, self).setUp()
         self.domain = 'test'
         self.username = "fake-person@test.commcarehq.org"
         self.other_username = 'other-user@test.commcarehq.org'
@@ -33,6 +34,7 @@ class RetireUserTestCase(TestCase):
             user.delete()
         delete_all_cases()
         delete_all_xforms()
+        super(RetireUserTestCase, self).tearDown()
 
     @run_with_all_backends
     def test_deleted_indices_removed(self):

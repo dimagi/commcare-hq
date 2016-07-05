@@ -1,15 +1,273 @@
+import mock
+import os
+from xml.etree import ElementTree
+
+from corehq.util.test_utils import flag_enabled
+
 from datetime import datetime, timedelta
 from django.test import TestCase
 from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.models import Domain
+from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.users.models import CommCareUser
+
+from corehq.apps.app_manager.tests.util import TestXmlMixin
+from casexml.apps.case.xml import V2
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
-from ..fixtures import _location_to_fixture, _location_footprint, should_sync_locations
+from .util import (
+    LocationHierarchyPerTest,
+    setup_location_types_with_structure,
+    setup_locations_with_structure,
+    LocationStructure,
+    LocationTypeStructure,
+)
+from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator
 from ..models import SQLLocation, LocationType, Location
 
+DEPENDENT_APPS = [
+    'auditcare',
+    'couchforms',
+    'phonelog',
+    'django_digest',
+    'casexml.apps.case',
+    'casexml.apps.phone',
+    'casexml.apps.stock',
+    'corehq.couchapps',
+    'corehq.form_processor',
+    'corehq.sql_accessors',
+    'corehq.sql_proxy_accessors',
+    'corehq.apps.commtrack',
+    'corehq.apps.consumption',
+    'corehq.apps.custom_data_fields',
+    'corehq.apps.domain',
+    'corehq.apps.hqcase',
+    'corehq.apps.fixtures',
+    'corehq.apps.groups',
+    'corehq.apps.products',
+    'corehq.apps.reminders',
+    'corehq.apps.sms',
+    'corehq.apps.smsforms',
+    'corehq.apps.tzmigration',
+    'corehq.apps.users',
+    'custom.logistics',
+    'custom.ilsgateway',
+    'custom.ewsghana',
+]
 
-class LocationFixturesTest(TestCase):
+
+class FixtureHasLocationsMixin(TestXmlMixin):
+    root = os.path.dirname(__file__)
+    file_path = ['data']
+
+    def _assert_fixture_has_locations(self, xml_name, desired_locations):
+        ids = {
+            "{}_id".format(desired_location.lower().replace(" ", "_")): (
+                self.locations[desired_location].location_id
+            )
+            for desired_location in desired_locations
+        }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
+        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
+        desired_fixture = self.get_xml(xml_name).format(
+            user_id=self.user.user_id,
+            **ids
+        )
+        self.assertXmlEqual(desired_fixture, fixture)
+
+
+@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
+class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+    dependent_apps = DEPENDENT_APPS
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+                ('Revere', []),
+            ])
+        ]),
+        ('New York', [
+            ('New York City', [
+                ('Manhattan', []),
+                ('Brooklyn', []),
+                ('Queens', []),
+            ]),
+        ]),
+    ]
+
+    def setUp(self):
+        super(LocationFixturesTest, self).setUp()
+        self.user = create_restore_user(self.domain, 'user', '123')
+
+    def test_no_user_locations_returns_empty(self, uses_locations):
+        empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
+        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
+        self.assertXmlEqual(empty_fixture, fixture)
+
+    def test_simple_location_fixture(self, uses_locations):
+        self.user.set_location(self.locations['Suffolk'].couch_location)
+
+        self._assert_fixture_has_locations(
+            'simple_fixture',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere']
+        )
+
+    def test_all_locations_flag_returns_all_locations(self, uses_locations):
+        with flag_enabled('SYNC_ALL_LOCATIONS'):
+            self._assert_fixture_has_locations(
+                'expand_from_root',
+                ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
+                 'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+            )
+
+    @mock.patch.object(CommCareUser, 'locations')
+    @mock.patch.object(Domain, 'supports_multiple_locations_per_user')
+    def test_multiple_locations_returns_multiple_trees(
+            self,
+            supports_multiple_locations,
+            user_locations,
+            uses_locations
+    ):
+        multiple_locations_different_states = [
+            self.locations['Suffolk'].couch_location,
+            self.locations['New York City'].couch_location
+        ]
+        supports_multiple_locations.__get__ = mock.Mock(return_value=True)
+        user_locations.__get__ = mock.Mock(return_value=multiple_locations_different_states)
+
+        self._assert_fixture_has_locations(
+            'multiple_locations',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York',
+             'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+        )
+
+    def test_expand_to_county(self, uses_locations):
+        """
+        expand to "county"
+        should return:
+            Mass
+            - Suffolk
+        """
+        self.user.set_location(self.locations['Suffolk'].couch_location)
+        location_type = self.locations['Suffolk'].location_type
+        location_type.expand_to = location_type
+        location_type.save()
+
+        self._assert_fixture_has_locations(
+            'expand_to_county',
+            ['Massachusetts', 'Suffolk']
+        )
+
+    def test_expand_to_county_from_state(self, uses_locations):
+        self.user.set_location(self.locations['Massachusetts'].couch_location)
+        location_type = self.locations['Massachusetts'].location_type
+        location_type.expand_to = self.locations['Suffolk'].location_type
+        location_type.save()
+
+        self._assert_fixture_has_locations(
+            'expand_to_county_from_state',
+            ['Massachusetts', 'Suffolk', 'Middlesex']
+        )
+
+    def test_expand_from_county_at_city(self, uses_locations):
+        self.user.set_location(self.locations['Boston'].couch_location)
+        location_type = self.locations['Boston'].location_type
+        location_type.expand_from = self.locations['Suffolk'].location_type
+        location_type.save()
+
+        self._assert_fixture_has_locations(
+            'expand_from_county_at_city',
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere']
+        )
+
+    def test_expand_from_root_at_city(self, uses_locations):
+        self.user.set_location(self.locations['Boston'].couch_location)
+        location_type = self.locations['Boston'].location_type
+        location_type.expand_from_root = True
+        location_type.save()
+
+        self._assert_fixture_has_locations(
+            'expand_from_root',
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
+             'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+        )
+
+    def test_expand_from_root_to_county(self, uses_locations):
+        self.user.set_location(self.locations['Massachusetts'].couch_location)
+        location_type = self.locations['Massachusetts'].location_type
+        location_type.expand_from_root = True
+        location_type.expand_to = self.locations['Suffolk'].location_type
+        location_type.save()
+        self._assert_fixture_has_locations(
+            'expand_from_root_to_county',
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'New York', 'New York City']
+        )
+
+
+@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
+class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+    """
+    - State
+        - County
+            - City
+        - Region
+            - Town
+    """
+    dependent_apps = DEPENDENT_APPS
+    location_type_structure = [
+        LocationTypeStructure('state', [
+            LocationTypeStructure('county', [
+                LocationTypeStructure('city', [])
+            ]),
+            LocationTypeStructure('region', [
+                LocationTypeStructure('town', [])
+            ])
+        ])
+    ]
+
+    location_structure = [
+        LocationStructure('Massachusetts', 'state', [
+            LocationStructure('Middlesex', 'county', [
+                LocationStructure('Cambridge', 'city', []),
+                LocationStructure('Somerville', 'city', [])
+            ]),
+            LocationStructure('Suffolk', 'county', [
+                LocationStructure('Boston', 'city', []),
+            ]),
+            LocationStructure('Berkshires', 'region', [
+                LocationStructure('Granville', 'town', []),
+                LocationStructure('Granby', 'town', []),
+            ]),
+            LocationStructure('Pioneer Valley', 'region', [
+                LocationStructure('Greenfield', 'town', []),
+            ]),
+        ])
+    ]
+
+    def setUp(self):
+        self.domain_obj = bootstrap_domain(self.domain)
+        self.user = create_restore_user(self.domain, 'user', '123')
+        self.location_types = setup_location_types_with_structure(self.domain, self.location_type_structure)
+        self.locations = setup_locations_with_structure(self.domain, self.location_structure)
+
+    def test_forked_locations(self, *args):
+        self.user.set_location(self.locations['Massachusetts'].couch_location)
+        location_type = self.locations['Massachusetts'].location_type
+        location_type.expand_to = self.locations['Middlesex'].location_type
+        location_type.save()
+        self._assert_fixture_has_locations(
+            'forked_expand_to_county',
+            ['Massachusetts', 'Suffolk', 'Middlesex', 'Berkshires', 'Pioneer Valley']
+        )
+
+
+class ShouldSyncLocationFixturesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -40,7 +298,7 @@ class LocationFixturesTest(TestCase):
             metadata={'best_swordsman': "Sylvio Forel",
                       'in_westeros': "false"},
         )
-        location_db = _location_footprint([location])
+        location_db = LocationSet([location])
         fixture = _location_to_fixture(location_db, location, self.location_type)
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
@@ -67,7 +325,7 @@ class LocationFixturesTest(TestCase):
 
         SQLLocation.objects.filter(pk=location.pk).update(last_modified=day_before_yesterday)
         location = SQLLocation.objects.last()
-        location_db = _location_footprint([location])
+        location_db = LocationSet([location])
 
         self.assertFalse(
             should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
@@ -77,7 +335,7 @@ class LocationFixturesTest(TestCase):
         self.location_type.save()
 
         location = SQLLocation.objects.last()
-        location_db = _location_footprint([location])
+        location_db = LocationSet([location])
 
         self.assertTrue(
             should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
@@ -97,7 +355,7 @@ class LocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         self.assertEqual(couch_location._id, location.location_id)
         self.assertEqual('winterfell', location.name)
-        location_db = _location_footprint([location])
+        location_db = LocationSet([location])
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
         )
@@ -107,7 +365,7 @@ class LocationFixturesTest(TestCase):
         after_archive = datetime.utcnow()
 
         location = SQLLocation.objects.last()
-        location_db = _location_footprint([location])
+        location_db = LocationSet([location])
         self.assertTrue(
             should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
         )

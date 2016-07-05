@@ -13,11 +13,11 @@ from corehq.apps.reports.graph_models import Axis
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, ViewReportFilter, EWSDateFilter, \
     EWSRestrictionLocationFilter
-from custom.ewsghana.reports.stock_levels_report import StockLevelsReport, InventoryManagementData, \
+from custom.ewsghana.reports.stock_levels_report import InventoryManagementData, \
     StockLevelsLegend, FacilityReportData, InputStock, UsersData
 from custom.ewsghana.reports import MultiReport, EWSData, EWSMultiBarChart, ProductSelectionPane, EWSLineChart
 from casexml.apps.stock.models import StockTransaction
-from custom.ewsghana.utils import get_descendants, make_url, get_second_week, get_country_id, get_supply_points
+from custom.ewsghana.utils import get_descendants, make_url, get_second_week, get_supply_points
 
 
 class ProductAvailabilityData(EWSData):

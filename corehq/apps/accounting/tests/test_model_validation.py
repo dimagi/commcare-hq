@@ -3,7 +3,6 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.test import TransactionTestCase
 
-from corehq.apps.accounting import generator
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditAdjustment,
@@ -12,17 +11,18 @@ from corehq.apps.accounting.models import (
     Subscriber,
     Subscription,
 )
+from corehq.apps.accounting.tests import generator
 
 
 class TestCreditAdjustmentValidation(TransactionTestCase):
 
     def tearDown(self):
-        super(TestCreditAdjustmentValidation, self).tearDown()
         CreditAdjustment.objects.all().delete()
         LineItem.objects.all().delete()
         Invoice.objects.all().delete()
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
+        super(TestCreditAdjustmentValidation, self).tearDown()
 
     def test_clean(self):
         account = BillingAccount.objects.create(

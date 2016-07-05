@@ -1,9 +1,6 @@
 from couchdbkit.ext.django.schema import StringProperty, ListProperty
 
-from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from dimagi.ext.couchdbkit import Document
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
 
 

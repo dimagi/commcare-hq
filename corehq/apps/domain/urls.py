@@ -27,6 +27,7 @@ from corehq.apps.domain.views import (
     WireInvoiceView, SubscriptionRenewalView, CreditsWireInvoiceView,
     CardsView, CardView, PasswordResetView,
     CaseSearchConfigView,
+    EditOpenClinicaSettingsView,
 )
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -121,6 +122,7 @@ domain_settings = patterns(
     url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
     url(r'^privacy/$', EditPrivacySecurityView.as_view(), name=EditPrivacySecurityView.urlname),
     url(r'^dhis2/$', EditDhis2SettingsView.as_view(), name=EditDhis2SettingsView.urlname),
+    url(r'^openclinica/$', EditOpenClinicaSettingsView.as_view(), name=EditOpenClinicaSettingsView.urlname),
     url(r'^subscription/change/$', SelectPlanView.as_view(), name=SelectPlanView.urlname),
     url(r'^subscription/change/confirm/$', ConfirmSelectedPlanView.as_view(),
         name=ConfirmSelectedPlanView.urlname),

@@ -1,6 +1,5 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
@@ -19,7 +18,7 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.tour.tours import REPORT_BUILDER_ACCESS, REPORT_BUILDER_NO_ACCESS
 from corehq.apps.users.views import DefaultProjectUserSettingsView
-from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
+from corehq.apps.style.decorators import use_angular_js
 from django_prbac.utils import has_privilege
 from django.conf import settings
 
@@ -46,7 +45,6 @@ def default_dashboard_url(request, domain):
 
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
-    @use_bootstrap3
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         return super(BaseDashboardView, self).dispatch(request, *args, **kwargs)

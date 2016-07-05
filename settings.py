@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 import importlib
 from collections import defaultdict
 
@@ -228,7 +227,7 @@ DEFAULT_APPS = (
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
-CRISPY_TEMPLATE_PACK = 'bootstrap'
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
@@ -270,8 +269,6 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'couchlog',
-    'ctable',
-    'ctable_view',
     'dimagi.utils',
     'formtranslate',
     'langcodes',
@@ -332,6 +329,7 @@ HQ_APPS = (
     'corehq.tabs',
     'custom.apps.wisepill',
     'custom.fri',
+    'custom.openclinica',
     'fluff',
     'fluff.fluff_filter',
     'soil',
@@ -370,6 +368,7 @@ HQ_APPS = (
     'custom.openlmis',
     'custom.logistics',
     'custom.ilsgateway',
+    'custom.zipline',
     'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
@@ -385,7 +384,6 @@ HQ_APPS = (
     'custom.common',
 
     'custom.dhis2',
-    'custom.openclinica',
     'custom.icds_reports',
 )
 
@@ -423,8 +421,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.m4change',
 
     # submodules with tests that run on travis
-    'ctable',
-    'ctable_view',
     'dimagi.utils',
 )
 
@@ -470,7 +466,7 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 ####### Shared/Global/UI Settings #######
 
 # restyle some templates
-BASE_TEMPLATE = "style/bootstrap3/base.html"  # should eventually be bootstrap3
+BASE_TEMPLATE = "style/base.html"
 BASE_ASYNC_TEMPLATE = "reports/async/basic.html"
 LOGIN_TEMPLATE = "login_and_password/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
@@ -815,15 +811,6 @@ MESSAGE_LOG_OPTIONS = {
 IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
-# List of Fluff pillow classes that ctable should process diffs for
-# deprecated - use IndicatorDocument.save_direct_to_sql
-FLUFF_PILLOW_TYPES_TO_SQL = {
-    'UnicefMalawiFluff': 'SQL',
-    'MalariaConsortiumFluff': 'SQL',
-    'CareSAFluff': 'SQL',
-    'OpmUserFluff': 'SQL',
-}
-
 PREVIEWER_RE = '^$'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
@@ -841,8 +828,8 @@ COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
 'compressor.filters.cssmin.rCSSMinFilter']
 
 LESS_B3_PATHS = {
-    'variables': '../../../style/less/bootstrap3/includes/variables',
-    'mixins': '../../../style/less/bootstrap3/includes/mixins',
+    'variables': '../../../style/less/_hq/includes/variables',
+    'mixins': '../../../style/less/_hq/includes/mixins',
 }
 
 LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
@@ -903,6 +890,10 @@ DATADOG_APP_KEY = None
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+# Settings for Zipline integration
+ZIPLINE_API_URL = ''
+ZIPLINE_API_USER = ''
+ZIPLINE_API_PASSWORD = ''
 
 KAFKA_URL = 'localhost:9092'
 
@@ -1028,10 +1019,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'couchlog': {
-            'level': 'WARNING',
-            'class': 'couchlog.handlers.CouchHandler',
-        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
@@ -1046,7 +1033,7 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file'],
             'propagate': True,
             'level': 'INFO',
         },
@@ -1070,7 +1057,7 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file', 'couchlog'],
+            'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': True
         },
@@ -1085,7 +1072,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'console', 'couchlog', 'mail_admins'],
+            'handlers': ['accountinglog', 'console', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -1210,7 +1197,6 @@ COUCHDB_APPS = [
     'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
-    'ctable',
     'custom_data_fields',
     'hqadmin',
     'ext',
@@ -1245,6 +1231,7 @@ COUCHDB_APPS = [
     'grapevine',
     'uth',
     'dhis2',
+    'openclinica',
 
     # custom reports
     'care_benin',
@@ -1333,8 +1320,8 @@ EMAIL_HOST = EMAIL_SMTP_HOST
 EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
-# EMAIL_USE_TLS and SEND_BROKEN_LINK_EMAILS are set above
-# so they can be overridden in localsettings (e.g. in a dev environment)
+# EMAIL_USE_TLS is set above
+# so it can be overridden in localsettings (e.g. in a dev environment)
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
@@ -1415,18 +1402,6 @@ CUSTOM_CHAT_TEMPLATES = {
     "FRI": "fri/chat.html",
 }
 
-SELENIUM_APP_SETTING_DEFAULTS = {
-    'cloudcare': {
-        # over-generous defaults for now
-        'OPEN_FORM_WAIT_TIME': 20,
-        'SUBMIT_FORM_WAIT_TIME': 20
-    },
-    'reports': {
-        'MAX_PRELOAD_TIME': 20,
-        'MAX_LOAD_TIME': 30,
-    },
-}
-
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
@@ -1464,6 +1439,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
         },
+        {
+            'name': 'AppFormSubmissionTrackerPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_app_form_submission_tracker_pillow',
+        },
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
@@ -1489,14 +1469,29 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
         },
         {
+            'name': 'ReportCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
+        },
+        {
             'name': 'SqlXFormToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
         },
         {
+            'name': 'CouchXFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_couch_xform_to_elasticsearch_pillow',
+        },
+        {
             'name': 'SqlCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'CouchCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_couch_case_to_elasticsearch_pillow',
         },
         {
             'name': 'UnknownUsersPillow',
@@ -1538,7 +1533,6 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
-        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1579,6 +1573,31 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_3_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_household_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_pregnancies.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_4_6_infrastructure.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10a_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10b_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_11_visitor_book_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2ci_child_birth_list.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_3i_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_3ii_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_4a_6_pse.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_4b_infra_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_7_growth_monitoring_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_8_tasks_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_9_vhnd_forms.json'),
 ]
 
 
@@ -1594,11 +1613,30 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
-    os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json')
+    os.path.join('custom', 'apps', 'cvsu', 'data_sources', 'unicef_malawi.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_provider'
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]
 
 
@@ -1651,7 +1689,8 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
-    ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression')
+    ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression'),
+    ('eqa_expression', 'custom.eqa.expressions.eqa_expression')
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1702,6 +1741,7 @@ DOMAIN_MODULE_MAP = {
 
     'ipm-senegal': 'custom.intrahealth',
     'icds-test': 'custom.icds_reports',
+    'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
@@ -1715,8 +1755,6 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
-    'kemri': 'custom.openclinica',
-    'novartis': 'custom.openclinica',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

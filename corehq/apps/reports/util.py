@@ -9,6 +9,7 @@ from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
 from corehq.apps.users.permissions import get_extra_permissions
+from corehq.form_processor.utils import use_new_exports
 
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_first_form_submission_received
@@ -88,6 +89,13 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         Returns a list of CommCare Users based on domain, group, and user 
         filter (demo_user, admin, registered, unknown)
     """
+    def _create_temp_user(user_id):
+        username = get_username_from_forms(domain, user_id).lower()
+        temp_user = TempCommCareUser(domain, username, user_id)
+        if user_filter[temp_user.filter_flag].show:
+            return temp_user
+        return None
+
     user_ids = user_ids if user_ids and user_ids[0] else None
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
@@ -99,7 +107,15 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         users = group.get_users(is_active=(not include_inactive), only_commcare=True)
     elif user_ids is not None:
         try:
-            users = [CommCareUser.get_by_user_id(id) for id in user_ids]
+            users = []
+            for id in user_ids:
+                user = CommCareUser.get_by_user_id(id)
+                if not user and (user_filter[HQUserType.ADMIN].show or
+                      user_filter[HQUserType.DEMO_USER].show or
+                      user_filter[HQUserType.UNKNOWN].show):
+                    user = _create_temp_user(id)
+                if user:
+                    users.append(user)
         except Exception:
             users = []
         if users and users[0] is None:
@@ -116,21 +132,20 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
                 user = registered_user_ids[user_id]
                 users.append(user)
-            elif not user_id in registered_user_ids and \
+            elif (user_id not in registered_user_ids and
                  (user_filter[HQUserType.ADMIN].show or
                   user_filter[HQUserType.DEMO_USER].show or
-                  user_filter[HQUserType.UNKNOWN].show):
-                username = get_username_from_forms(domain, user_id).lower()
-                temp_user = TempCommCareUser(domain, username, user_id)
-                if user_filter[temp_user.filter_flag].show:
-                    users.append(temp_user)
+                  user_filter[HQUserType.UNKNOWN].show)):
+                user = _create_temp_user(user_id)
+                if user:
+                    users.append(user)
         if user_filter[HQUserType.UNKNOWN].show:
             users.append(TempCommCareUser(domain, '*', None))
 
         if user_filter[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
             for user_id in registered_user_ids:
-                if not user_id in submitted_user_ids:
+                if user_id not in submitted_user_ids:
                     user = CommCareUser.get_by_user_id(user_id)
                     users.append(user)
 
@@ -421,8 +436,7 @@ def numcell(text, value=None, convert='int', raw=None):
 
 
 def datespan_from_beginning(domain_object, timezone):
-    from corehq import toggles
-    if toggles.NEW_EXPORTS.enabled(domain_object.name):
+    if use_new_exports(domain_object.name):
         startdate = domain_object.date_created
     else:
         startdate = get_first_form_submission_received(domain_object.name)
@@ -435,13 +449,6 @@ def datespan_from_beginning(domain_object, timezone):
 def get_installed_custom_modules():
 
     return [import_module(module) for module in settings.CUSTOM_MODULES]
-
-
-def make_ctable_table_name(name):
-    if getattr(settings, 'CTABLE_PREFIX', None):
-        return '{0}_{1}'.format(settings.CTABLE_PREFIX, name)
-
-    return name
 
 
 def is_mobile_worker_with_report_access(couch_user, domain):

@@ -1,8 +1,7 @@
 from optparse import make_option
 from django.core.management import BaseCommand
 from corehq.elastic import get_es_new
-from pillowtop import get_all_pillow_instances
-from pillowtop.listener import AliasedElasticPillow
+from corehq.pillows.utils import get_all_expected_es_indices
 
 
 class Command(BaseCommand):
@@ -20,20 +19,17 @@ class Command(BaseCommand):
         # call this before getting existing indices because apparently getting the pillow will create the index
         # if it doesn't exist
         found_indices = set(es.indices.get_aliases().keys())
-        existing_indices = set(
-            pillow.es_index for pillow in filter(lambda x: isinstance(x, AliasedElasticPillow),
-                                                 get_all_pillow_instances())
-        )
+        expected_indices = {info.index for info in get_all_expected_es_indices()}
 
         if options['verbose']:
-            if existing_indices - found_indices:
+            if expected_indices - found_indices:
                 print 'the following indices were not found:\n{}\n'.format(
-                    '\n'.join(existing_indices - found_indices)
+                    '\n'.join(expected_indices - found_indices)
                 )
-            print 'expecting {} indices:\n{}\n'.format(len(existing_indices),
-                                                       '\n'.join(sorted(existing_indices)))
+            print 'expecting {} indices:\n{}\n'.format(len(expected_indices),
+                                                       '\n'.join(sorted(expected_indices)))
 
-        to_delete = set([index for index in found_indices if index not in existing_indices])
+        to_delete = set([index for index in found_indices if index not in expected_indices])
         if to_delete:
             if options['noinput'] or raw_input(
                     '\n'.join([

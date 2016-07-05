@@ -14,13 +14,13 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
 
-from couchdbkit import ResourceConflict, ResourceNotFound
+from couchdbkit import ResourceConflict
 
 from casexml.apps.case.models import CASE_STATUS_OPEN
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
-from casexml.apps.stock.models import StockTransaction
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.utils.general import use_sqlite_backend
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
@@ -56,14 +56,12 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
     use_datatables,
-    use_bootstrap3,
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.util.couch import get_document_or_404
 from corehq.util.quickcache import skippable_quickcache
 from corehq.util.xml_utils import indent_xml
 from corehq.apps.analytics.tasks import track_clicked_preview_on_hubspot
@@ -85,7 +83,6 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 
 class CloudcareMain(View):
 
-    @use_bootstrap3
     @use_datatables
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
@@ -132,7 +129,7 @@ class CloudcareMain(View):
         def _default_lang():
             if apps:
                 # unfortunately we have to go back to the DB to find this
-                return Application.get(apps[0]["_id"]).langs[0]
+                return Application.get(apps[0]["_id"]).default_language
             else:
                 return "en"
 
@@ -207,6 +204,7 @@ class CloudcareMain(View):
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
+            'use_sqlite_backend': use_sqlite_backend(domain),
         }
         context.update(_url_context())
         if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
@@ -534,12 +532,14 @@ def sync_db_api(request, domain):
     auth_cookie = request.COOKIES.get('sessionid')
     username = request.GET.get('username')
     try:
-        sync_db(username, domain, DjangoAuth(auth_cookie))
-        return json_response({
-            'status': 'OK'
-        })
+        response = sync_db(username, domain, DjangoAuth(auth_cookie))
     except Exception, e:
-        return HttpResponse(e, status=500, content_type="text/plain")
+        return json_response(
+            {'status': 'error', 'message': unicode(e)},
+            status_code=500
+        )
+    else:
+        return json_response(response)
 
 
 @cloudcare_api
@@ -584,7 +584,6 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(EditCloudcareUserPermissionsView, self).dispatch(request, *args, **kwargs)
 

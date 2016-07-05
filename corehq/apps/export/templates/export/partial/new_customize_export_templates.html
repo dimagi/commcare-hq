@@ -117,7 +117,7 @@
                                     <span data-bind="foreach: { data: column.tags, as: 'tag' }">
                                         <span data-bind="
                                             text: tag,
-                                            attr: { class: Exports.Utils.getTagCSSClass(tag) }"></span>
+                                            attr: { class: hqImport('export/js/utils.js').getTagCSSClass(tag) }"></span>
                                     </span>
                                     <code data-toggle="tooltip" data-placement="top" 
                                         data-bind="
@@ -148,11 +148,11 @@
                                                 }
                                             "></span>
                                             <select style="width:200px" class="form-control" data-bind="
-                                                options: Exports.Constants.USER_DEFINED_SPLIT_TYPES,
+                                                options: hqImport('export/js/const.js').USER_DEFINED_SPLIT_TYPES,
                                                 value: column.split_type,
                                             "/></select>
                                         </div>
-                                        <!-- ko if: column.split_type() === Exports.Constants.MULTISELECT_SPLIT_TYPE -->
+                                        <!-- ko if: column.split_type() === hqImport('export/js/const.js').MULTISELECT_SPLIT_TYPE -->
                                         <div class="form-group">
                                             <button class="btn btn-default btn-xs" data-bind="
                                                 visible: !column.showOptions(),

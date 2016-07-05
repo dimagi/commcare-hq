@@ -25,16 +25,16 @@
         vellumCaseManagement: {{ app.vellum_case_management|JSON }}
         {% if app.application_version == '1.0' %}
         ,ejs_urls: {
-            template: "{% new_static 'app_manager/ejs/case-config-ui-2.ejs' %}",
-            condition_ejs: "{% new_static 'app_manager/ejs/condition.ejs' %}",
-            action_ejs: "{% new_static 'app_manager/ejs/action.ejs' %}",
-            options_ejs: "{% new_static 'app_manager/ejs/options.ejs' %}",
-            propertyList_ejs: "{% new_static 'app_manager/ejs/propertyList.ejs' %}",
+            template: "{% static 'app_manager/ejs/case-config-ui-2.ejs' %}",
+            condition_ejs: "{% static 'app_manager/ejs/condition.ejs' %}",
+            action_ejs: "{% static 'app_manager/ejs/action.ejs' %}",
+            options_ejs: "{% static 'app_manager/ejs/options.ejs' %}",
+            propertyList_ejs: "{% static 'app_manager/ejs/propertyList.ejs' %}",
             action_templates: {
-                open_case: "{% new_static 'app_manager/ejs/actions/open_case.ejs' %}",
-                update_case: "{% new_static 'app_manager/ejs/actions/update_case.ejs' %}",
-                case_preload: "{% new_static 'app_manager/ejs/actions/case_preload.ejs' %}",
-                close_case: "{% new_static 'app_manager/ejs/actions/close_case.ejs' %}"
+                open_case: "{% static 'app_manager/ejs/actions/open_case.ejs' %}",
+                update_case: "{% static 'app_manager/ejs/actions/update_case.ejs' %}",
+                case_preload: "{% static 'app_manager/ejs/actions/case_preload.ejs' %}",
+                close_case: "{% static 'app_manager/ejs/actions/close_case.ejs' %}"
             }
         }
         {% endif %}

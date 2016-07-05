@@ -3,8 +3,7 @@ import datetime
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from . import display
-from custom.bihar.reports.indicators.display import next_visit_date, days_overdue
-from custom.bihar.reports.indicators.reports import DEFAULT_EMPTY
+from custom.bihar.reports.indicators.display import days_overdue
 
 
 class ClientListDisplay(object):

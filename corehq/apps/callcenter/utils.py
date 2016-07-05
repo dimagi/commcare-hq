@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
-from casexml.apps.case.const import CASE_ACTION_CLOSE
 from casexml.apps.case.mock import CaseBlock
 import uuid
 from xml.etree import ElementTree
@@ -52,13 +51,9 @@ class _UserCaseHelper(object):
 
     @staticmethod
     def re_open_case(case):
-        closing_action = None
-        for action in reversed(case.actions):
-            if action.action_type == CASE_ACTION_CLOSE:
-                closing_action = action
-                break
-        if closing_action:
-            closing_action.xform.archive()
+        transactions = case.get_closing_transactions()
+        for transaction in transactions:
+            transaction.form.archive()
 
     def create_user_case(self, case_type, commcare_user, fields):
         fields['hq_user_id'] = commcare_user._id
@@ -272,9 +267,8 @@ def get_call_center_cases(domain_name, case_type, user=None):
 
     if user:
         case_ids = [
-            case_id for owner_id in user.get_owner_ids()
-            for case_id in case_accessor.get_open_case_ids_in_domain_by_type(
-                case_type=case_type, owner_id=owner_id
+            case_id for case_id in case_accessor.get_open_case_ids_in_domain_by_type(
+                case_type=case_type, owner_ids=user.get_owner_ids()
             )
         ]
     else:

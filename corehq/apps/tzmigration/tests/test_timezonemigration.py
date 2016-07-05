@@ -37,6 +37,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
             ))
 
     def setUp(self):
+        super(TimeZoneMigrationTest, self).setUp()
         self.domain = 'foo'
         self.domain_object = create_domain(self.domain)
         tzp, _ = TimezoneMigrationProgress.objects.get_or_create(pk=self.domain)
@@ -48,6 +49,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
         delete_all_cases()
         self.domain_object.delete()
         TimezoneMigrationProgress.objects.all().delete()
+        super(TimeZoneMigrationTest, self).tearDown()
 
     def _compare_forms(self, actual_json, expected_json, msg):
         expected_json.update({

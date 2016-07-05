@@ -6,6 +6,7 @@
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/A9DA1F89-7DB3-430C-9DE8-91319F9EB469" uiVersion="1" version="1" name="Checkup">
 					<question1/>
 					<question2/>
+					<stub/>
 				</data>
 			</instance>
 			<bind nodeset="/data/question1" type="xsd:string"/>

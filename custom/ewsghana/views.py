@@ -5,7 +5,6 @@ from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST, require_GET
 from django.views.generic.base import RedirectView
 from corehq.apps.commtrack.models import StockState
@@ -19,18 +18,16 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
 from custom.ewsghana.handlers.web_submission_handler import WebSubmissionHandler
-from custom.ewsghana.models import EWSGhanaConfig, FacilityInCharge, EWSExtension
+from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reports.specific_reports.dashboard_report import DashboardReport
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockoutsProduct, StockStatus
 from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
 from custom.ewsghana.utils import make_url, has_input_stock_permissions, calculate_last_period, Msg
 from custom.ilsgateway.views import GlobalStats
-from custom.logistics.views import BaseConfigView
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.web import json_handler, json_response
 
@@ -47,7 +44,6 @@ class InputStockView(BaseDomainView):
     template_name = 'ewsghana/input_stock.html'
 
     @method_decorator(login_and_domain_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         couch_user = self.request.couch_user
         site_code = kwargs['site_code']

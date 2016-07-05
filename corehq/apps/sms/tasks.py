@@ -16,8 +16,6 @@ from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import soft_delete_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
 from dimagi.utils.rate_limit import rate_limit

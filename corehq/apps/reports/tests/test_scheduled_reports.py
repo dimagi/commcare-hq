@@ -205,8 +205,7 @@ class ScheduledReportSendingTest(TestCase):
         response = get_scheduled_report_response(
             couch_user=user, domain=domain, scheduled_report_id=report._id
         )[0]
-        self.assertEqual(200, response.status_code)
-        self.assertTrue(user.username in response.serialize())
+        self.assertTrue(user.username in response)
 
 
 class TestMVPCeleryQueueHack(SimpleTestCase):

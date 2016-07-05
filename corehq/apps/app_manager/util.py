@@ -214,7 +214,15 @@ class ParentCasePropertyBuilder(object):
         case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
 
         for m_case_type, form in self.forms_info:
-            case_properties.update(self.get_case_updates(form, case_type))
+            updates = self.get_case_updates(form, case_type)
+            if include_parent_properties:
+                case_properties.update(updates)
+            else:
+                # HACK exclude case updates that reference properties like "parent/property_name"
+                # TODO add parent property updates to the parent case type(s) of m_case_type
+                # Currently if a property is only ever updated via parent property
+                # reference, then I think it will not appear in the schema.
+                case_properties.update(p for p in updates if "/" not in p)
 
         parent_types, contributed_properties = \
             self.get_parent_types_and_contributed_properties(case_type)
@@ -243,7 +251,7 @@ class ParentCasePropertyBuilder(object):
     def get_case_updates(self, form, case_type):
         return form.get_case_updates(case_type)
 
-    def get_parent_type_map(self, case_types):
+    def get_parent_type_map(self, case_types, allow_multiple_parents=False):
         """
         :returns: A dict
         ```
@@ -258,12 +266,15 @@ class ParentCasePropertyBuilder(object):
                 rel_map[relationship].append(parent_type)
 
             for relationship, types in rel_map.items():
-                if len(types) > 1:
-                    logger.error(
-                        "Case Type '%s' has multiple parents for relationship '%s': %s",
-                        case_type, relationship, types
-                    )
-                parent_map[case_type][relationship] = types[0]
+                if allow_multiple_parents:
+                    parent_map[case_type][relationship] = types
+                else:
+                    if len(types) > 1:
+                        logger.error(
+                            "Case Type '%s' in app '%s' has multiple parents for relationship '%s': %s",
+                            case_type, self.app.id, relationship, types
+                        )
+                    parent_map[case_type][relationship] = types[0]
 
         return parent_map
 
@@ -318,16 +329,39 @@ def get_all_case_properties(app):
     return get_case_properties(app, app.get_case_types(), defaults=('name',))
 
 
-def get_casedb_schema(app):
-    """Get case database schema definition
+def get_casedb_schema(form):
+    """Get case database schema definition for vellum to display as an external data source.
 
     This lists all case types and their properties for the given app.
     """
+    app = form.get_app()
+    base_case_type = form.get_module().case_type
     case_types = app.get_case_types()
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
-    related = builder.get_parent_type_map(case_types)
+    related = builder.get_parent_type_map(case_types, allow_multiple_parents=True)
     map = builder.get_case_property_map(case_types, include_parent_properties=False)
+
+    if base_case_type:
+        # Generate hierarchy of case types, represented as a list of lists of strings:
+        # [[base_case_type], [parent_type1, parent_type2...], [grandparent_type1, grandparent_type2...]]
+        # Vellum case management only supports three levels
+        generation_names = ['case', 'parent', 'grandparent']
+        generations = [[] for g in generation_names]
+
+        def _add_ancestors(ctype, generation):
+            if generation < len(generation_names):
+                generations[generation].append(ctype)
+                for parent in related.get(ctype, {}).get('parent', []):
+                    _add_ancestors(parent, generation + 1)
+
+        _add_ancestors(base_case_type, 0)
+
+        # Remove any duplicate types or empty generations
+        generations = [set(g) for g in generations if len(g)]
+    else:
+        generations = []
+
     return {
         "id": "casedb",
         "uri": "jr://instance/casedb",
@@ -335,11 +369,12 @@ def get_casedb_schema(app):
         "path": "/casedb/case",
         "structure": {},
         "subsets": [{
-            "id": ctype,
+            "id": generation_names[i],
+            "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
             "key": "@case_type",
-            "structure": {p: {} for p in props},
-            "related": related.get(ctype),  # {<relationship>: <parent_type>, ...}
-        } for ctype, props in sorted(map.iteritems())],
+            "structure": {p: {} for type in [map[t] for t in ctypes] for p in type},
+            "related": {"parent": generation_names[i + 1]} if i < len(generations) - 1 else None,
+        } for i, ctypes in enumerate(generations)],
     }
 
 
@@ -355,7 +390,7 @@ def get_session_schema(form):
             structure[session_var] = {
                 "reference": {
                     "source": "casedb",
-                    "subset": datum.case_type,
+                    "subset": "case",
                     "key": "@case_id",
                 },
             }
@@ -672,13 +707,6 @@ def _app_callout_templates():
     while True:
         yield data
 app_callout_templates = _app_callout_templates()
-
-
-def use_app_aware_sync(app):
-    """
-    Determines whether OTA restore should sync only cases/ledgers/fixtures of the given app where possible
-    """
-    return toggles.APP_AWARE_SYNC.enabled(app.domain)
 
 
 def purge_report_from_mobile_ucr(report_config):

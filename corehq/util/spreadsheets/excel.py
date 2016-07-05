@@ -159,7 +159,8 @@ class WorksheetJSONReader(IteratorJSONReader):
                 if isinstance(value, float) and int(value) == value:
                     return int(value)
                 else:
-                    return value or ''
+                    # Specifically check for None so that we can allow a value of 0
+                    return value if value is not None else ''
             for row in self.worksheet.iter_rows():
                 cell_values = [
                     _convert_float(cell.value)

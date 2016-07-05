@@ -27,9 +27,12 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
+    (function () {
+        var PricingTable = hqImport('accounting/ko/accounting.pricing_table.js').PricingTable;
         var pricingTable = new PricingTable({{ pricing_table|JSON }}, '{{ current_edition }}', {{ is_renewal|BOOL }});
         $('#pricing-table').koApplyBindings(pricingTable);
         pricingTable.init();
+    }());
     </script>
 {% endblock %}
 

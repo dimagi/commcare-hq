@@ -1,6 +1,6 @@
 import json
 import os
-from couchdbkit import ResourceNotFound, ResourceConflict
+from couchdbkit import ResourceConflict
 from django.test.testcases import TestCase
 from mock import patch
 from casexml.apps.case.models import CommCareCase
@@ -14,7 +14,6 @@ from corehq.apps.indicators.tests.utils import delete_indicator_doc
 from mvp_docs.models import IndicatorXForm, IndicatorCase
 from mvp_docs.pillows import MVPFormIndicatorPillow, MVPCaseIndicatorPillow
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db
 
 INDICATOR_TEST_DOMAIN = 'indicator-domain'
 INDICATOR_TEST_NAMESPACE = 'indicator_test'

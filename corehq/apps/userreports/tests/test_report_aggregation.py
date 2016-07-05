@@ -77,6 +77,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestReportAggregation, cls).setUpClass()
         cls._create_data()
         cls._create_data_source()
 

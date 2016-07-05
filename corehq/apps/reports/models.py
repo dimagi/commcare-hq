@@ -1,4 +1,6 @@
 import calendar
+import hashlib
+import uuid
 from collections import defaultdict, namedtuple
 from datetime import datetime
 import functools
@@ -616,6 +618,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     minute = IntegerProperty(default=0)
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["daily", "weekly", "monthly"])
+    uuid = StringProperty()
 
     @property
     def is_editable(self):
@@ -743,6 +746,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             recipients[language].append(email)
         return immutabledict(recipients)
 
+    def get_secret(self, email):
+        uuid = self._get_or_create_uuid()
+        return hashlib.sha1(uuid + email).hexdigest()[:20]
+
     def send(self):
         # Scenario: user has been removed from the domain that they
         # have scheduled reports for.  Delete this scheduled report
@@ -758,8 +765,14 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             for language, emails in self.recipients_by_language.items():
                 self._get_and_send_report(language, emails)
 
+    def _get_or_create_uuid(self):
+        if not self.uuid:
+            self.uuid = uuid.uuid4().hex
+            self.save()
+        return self.uuid
+
     def _get_and_send_report(self, language, emails):
-        from corehq.apps.reports.views import get_scheduled_report_response
+        from corehq.apps.reports.views import get_scheduled_report_response, render_full_report_notification
 
         with localize(language):
             title = (
@@ -767,22 +780,22 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 if self.email_subject == DEFAULT_REPORT_NOTIF_SUBJECT
                 else self.email_subject
             )
+
             attach_excel = getattr(self, 'attach_excel', False)
-            body, excel_files = get_scheduled_report_response(
-                self.owner, self.domain, self._id, attach_excel=attach_excel
-            )
+            content, excel_files = get_scheduled_report_response(
+                self.owner, self.domain, self._id, attach_excel=attach_excel)
+
             for email in emails:
-                send_html_email_async.delay(title, email, body.content,
-                                            email_from=settings.DEFAULT_FROM_EMAIL,
-                                            file_attachments=excel_files, ga_track=True,
-                                            ga_tracking_info={'project_space_id': self.domain})
+                body = render_full_report_notification(None, content, email, self).content
+                send_html_email_async.delay(
+                    title, email, body, email_from=settings.DEFAULT_FROM_EMAIL,
+                    file_attachments=excel_files, ga_track=True, ga_tracking_info={'cd4': self.domain})
 
     def remove_recipient(self, email):
         try:
             if email == self.owner.get_email():
                 self.send_to_owner = False
-            else:
-                self.recipient_emails.remove(email)
+            self.recipient_emails.remove(email)
         except ValueError:
             pass
 

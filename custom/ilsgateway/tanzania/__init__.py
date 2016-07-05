@@ -221,8 +221,8 @@ class MultiReport(SqlTabularReport, ILSMixin, CustomProjectReport,
     emailable = False
 
     @use_nvd3
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(MultiReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(MultiReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @classmethod
     def get_url(cls, domain=None, render_as=None, **kwargs):

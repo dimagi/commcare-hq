@@ -1,28 +1,26 @@
 import json
 import uuid
 from datetime import datetime
-
 import dateutil.parser
 
-from django.utils.http import urlencode
-from django.test import TestCase
+from django.conf import settings
 from django.core.urlresolvers import reverse
-from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.tests import run_with_all_backends
-from django_prbac.models import Role
+from django.test import TestCase
+from django.utils.http import urlencode
+
+from tastypie import fields
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
-from tastypie import fields
 
-from corehq.apps.api.util import get_obj
-from corehq.apps.groups.models import Group
-from corehq.pillows.reportxform import ReportXFormPillow
-
-from couchforms.models import XFormInstance
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.userreports.models import ReportConfiguration, \
+    DataSourceConfiguration
+from corehq.pillows.case import transform_case_for_elasticsearch
+from couchforms.models import XFormInstance
 
-from corehq.apps.accounting import generator
+from django_prbac.models import Role
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -30,16 +28,20 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment
 )
-from corehq.pillows.xform import XFormPillow
-from corehq.pillows.case import CasePillow
-from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.domain.models import Domain
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
-from corehq.apps.api.resources import v0_4, v0_5
-from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
+from corehq.apps.accounting.tests import generator
 from corehq.apps.api.es import ElasticAPIQuerySet
+from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
+from corehq.apps.api.resources import v0_4, v0_5
+from corehq.apps.api.util import get_obj
+from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.users.analytics import update_analytics_indexes
-from django.conf import settings
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.tests import run_with_all_backends
+from corehq.pillows.reportxform import transform_xform_for_report_forms_index
+from corehq.pillows.xform import transform_xform_for_elasticsearch
 from custom.hope.models import CC_BIHAR_PREGNANCY
 
 
@@ -72,7 +74,7 @@ class FakeXFormES(object):
 
 def set_up_subscription(cls):
     cls.account = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by="automated-test")[0]
-    plan = DefaultProductPlan.get_default_plan_by_domain(cls.domain.name, edition=SoftwarePlanEdition.ADVANCED)
+    plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
     cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan)
     cls.subscription.is_active = True
     cls.subscription.save()
@@ -90,12 +92,12 @@ class APIResourceTest(TestCase):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting_for_tests()
+        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.list_endpoint = reverse('api_dispatch_list',
                 kwargs=dict(domain=cls.domain.name,
                             api_name=cls.api_name,
-                            resource_name=cls.resource.Meta.resource_name))
+                            resource_name=cls.resource._meta.resource_name))
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
@@ -122,7 +124,7 @@ class APIResourceTest(TestCase):
     def single_endpoint(self, id):
         return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
                                                           api_name=self.api_name,
-                                                          resource_name=self.resource.Meta.resource_name,
+                                                          resource_name=self.resource._meta.resource_name,
                                                           pk=id))
 
 
@@ -168,7 +170,6 @@ class TestXFormInstanceResource(APIResourceTest):
         # the ptop infrastructure.
 
         #the pillow is set to offline mode - elasticsearch not needed to validate
-        pillow = XFormPillow(online=False)
         fake_xform_es = FakeXFormES()
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
@@ -180,7 +181,7 @@ class TestXFormInstanceResource(APIResourceTest):
                                          '@xmlns': 'fake-xmlns'
                                      })
         backend_form.save()
-        translated_doc = pillow.change_transform(backend_form.to_json())
+        translated_doc = transform_xform_for_elasticsearch(backend_form.to_json())
         fake_xform_es.add_doc(translated_doc['_id'], translated_doc)
 
         self.client.login(username=self.username, password=self.password)
@@ -308,7 +309,6 @@ class TestCommCareCaseResource(APIResourceTest):
         # read the changes and write it to ElasticSearch.
 
         #the pillow is set to offline mode - elasticsearch not needed to validate
-        pillow = CasePillow(online=False)
         fake_case_es = FakeXFormES()
         v0_4.MOCK_CASE_ES = fake_case_es
 
@@ -317,7 +317,7 @@ class TestCommCareCaseResource(APIResourceTest):
         backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
         backend_case.save()
 
-        translated_doc = pillow.change_transform(backend_case.to_json())
+        translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
         
         fake_case_es.add_doc(translated_doc['_id'], translated_doc)
 
@@ -432,8 +432,6 @@ class TestHOPECaseResource(APIResourceTest):
         # The actual infrastructure involves saving to CouchDB, having PillowTop
         # read the changes and write it to ElasticSearch.
 
-        #the pillow is set to offline mode - elasticsearch not needed to validate
-        pillow = CasePillow(online=False)
         fake_case_es = FakeXFormES()
         v0_4.MOCK_CASE_ES = fake_case_es
 
@@ -443,7 +441,7 @@ class TestHOPECaseResource(APIResourceTest):
         backend_case.type = CC_BIHAR_PREGNANCY
         backend_case.save()
 
-        translated_doc = pillow.change_transform(backend_case.to_json())
+        translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
 
         fake_case_es.add_doc(translated_doc['_id'], translated_doc)
 
@@ -612,6 +610,7 @@ class TestWebUserResource(APIResourceTest):
         another_user = WebUser.create(self.domain.name, 'anotherguy', '***')
         another_user.set_role(self.domain.name, 'field-implementer')
         another_user.save()
+        self.addCleanup(another_user.delete)
 
         response = self.client.get(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
@@ -818,7 +817,7 @@ class TestReportPillow(TestCase):
         Test to make sure report xform and reportxform pillows strip the appVersion dict to match the
         mappings
         """
-        pillows = [ReportXFormPillow(online=False),XFormPillow(online=False)]
+        transform_functions = [transform_xform_for_report_forms_index, transform_xform_for_elasticsearch]
         bad_appVersion = {
             "_id": "foo",
             "domain": settings.ES_XFORM_FULL_INDEX_DOMAINS[0],
@@ -838,8 +837,8 @@ class TestReportPillow(TestCase):
                 }
             }
         }
-        for pillow in pillows:
-            cleaned = pillow.change_transform(bad_appVersion)
+        for fn in transform_functions:
+            cleaned = fn(bad_appVersion)
             self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
             self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
             self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
@@ -1220,8 +1219,7 @@ class TestSingleSignOnResource(APIResourceTest):
         # have to set up subscription for the bad domain or it will fail on authorization
         new_account = BillingAccount.get_or_create_account_by_domain(wrong_domain.name,
                                                                      created_by="automated-test")[0]
-        plan = DefaultProductPlan.get_default_plan_by_domain(wrong_domain.name,
-                                                             edition=SoftwarePlanEdition.ADVANCED)
+        plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
         new_subscription = Subscription.new_domain_subscription(new_account, wrong_domain.name, plan)
         new_subscription.is_active = True
         new_subscription.save()
@@ -1365,7 +1363,7 @@ class TestBulkUserAPI(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         Role.get_cache().clear()
-        generator.instantiate_accounting_for_tests()
+        generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
@@ -1515,3 +1513,103 @@ class TestApiKey(APIResourceTest):
 
         other_api_key.delete()
         other_user.delete()
+
+
+class TestSimpleReportConfigurationResource(APIResourceTest):
+    resource = v0_5.SimpleReportConfigurationResource
+    api_name = "v0.5"
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestSimpleReportConfigurationResource, cls).setUpClass()
+
+        cls.report_columns = [
+            {
+                "column_id": 'foo',
+                "type": "field",
+                "field": "my_field",
+                "aggregation": "simple",
+            },
+            {
+                "column_id": 'bar',
+                "type": "field",
+                "field": "my_field",
+                "aggregation": "simple",
+            }
+        ]
+        cls.report_filters = [
+            {
+                'datatype': 'integer',
+                'field': 'my_field',
+                'type': 'dynamic_choice_list',
+                'slug': 'my_field_filter',
+            },
+            {
+                'datatype': 'string',
+                'field': 'my_other_field',
+                'type': 'dynamic_choice_list',
+                'slug': 'my_other_field_filter',
+            }
+        ]
+
+        cls.data_source = DataSourceConfiguration(
+            domain=cls.domain.name,
+            referenced_doc_type="XFormInstance",
+            table_id=uuid.uuid4().hex,
+        )
+        cls.data_source.save()
+
+        cls.report_configuration = ReportConfiguration(
+            domain=cls.domain.name,
+            config_id=cls.data_source._id,
+            columns=cls.report_columns,
+            filters=cls.report_filters
+        )
+        cls.report_configuration.save()
+
+    def test_get_detail(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id))
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+        filters = response_dict['filters']
+        columns = response_dict['columns']
+
+        self.assertEqual(
+            set(response_dict.keys()),
+            {'resource_uri', 'filters', 'columns', 'id'}
+        )
+
+        self.assertEqual(
+            [c['column_id'] for c in self.report_columns],
+            columns
+        )
+        self.assertEqual(
+            [{'datatype': x['datatype'], 'field': x['field']} for x in self.report_filters],
+            filters
+        )
+
+    def test_disallowed_methods(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.single_endpoint(self.report_configuration._id),
+            {}
+        )
+        self.assertEqual(response.status_code, 405)
+
+        response = self.client.get(self.list_endpoint)
+        self.assertEqual(response.status_code, 405)
+
+    def test_auth(self):
+
+        wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        new_user = WebUser.create(wrong_domain.name, 'test', 'testpass')
+        new_user.save()
+
+        self.client.login(username='test', password='testpass')
+        response = self.client.get(self.single_endpoint(self.report_configuration._id))
+        self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
+
+        wrong_domain.delete()
+        new_user.delete()

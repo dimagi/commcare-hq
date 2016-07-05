@@ -20,7 +20,6 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth,
     BASIC, DIGEST, API_KEY
 )
-from django_prbac.utils import has_privilege
 from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
@@ -33,7 +32,6 @@ from django_otp import match_token
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
-from corehq import privileges
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################

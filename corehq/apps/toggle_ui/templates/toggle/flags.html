@@ -1,10 +1,10 @@
-{% extends 'style/bootstrap3/base_page.html' %}
+{% extends 'style/base_page.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
 
 {% block js %}{{ block.super }}
-    <script type="text/javascript" src="{% new_static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
 {% endblock %}
 
 
@@ -29,8 +29,6 @@
             dataTableElem: dataTableElem,
             showAllRowsOption: true,
             includeFilter: true,
-            useBootstrap3: true,
-            paginationType: 'bs_normal'
         });
         table.render();
 

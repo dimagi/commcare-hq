@@ -1,4 +1,4 @@
-{% extends 'style/bootstrap3/base_paginated_crud.html' %}
+{% extends 'style/base_paginated_crud.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -62,7 +62,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
 {% endblock %}
 
 {% block pagination_header %}
@@ -100,7 +100,7 @@
         <% } %>
     </script>
     <div id="upload-notice">
-        <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading" />
+        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading" />
         {% trans 'Processing file...' %}
         <hr />
     </div>
@@ -163,7 +163,7 @@
         </div>
         <div id="bulk-upload-accordion" class="accordion-body collapse">
             <div class="accordion-inner">
-                {% include "style/bootstrap3/partials/bulk_upload.html" %}
+                {% include "style/partials/bulk_upload.html" %}
             </div>
         </div>
     </div>

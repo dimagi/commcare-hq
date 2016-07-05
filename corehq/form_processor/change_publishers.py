@@ -31,7 +31,7 @@ def change_meta_from_sql_form(form):
         document_type=form.state,
         document_subtype=form.xmlns,
         domain=form.domain,
-        is_deletion=False,
+        is_deletion=form.is_deleted,
     )
 
 
@@ -52,7 +52,7 @@ def change_meta_from_sql_case(case):
         document_type='CommCareCaseSql',  # todo: should this be the same as the couch models?
         document_subtype=case.type,
         domain=case.domain,
-        is_deletion=False,
+        is_deletion=case.is_deleted,
     )
 
 

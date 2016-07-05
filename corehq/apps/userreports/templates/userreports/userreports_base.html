@@ -1,4 +1,4 @@
-{% extends "style/bootstrap3/base_section.html" %}
+{% extends "style/base_section.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
@@ -23,6 +23,7 @@
 </style>
 <script>
     $(function () {
+        {% if not code_mirror_off %}
         $('.jsonwidget').each(function () {
             var elem = this;
             var codeMirror = CodeMirror.fromTextArea(elem, {
@@ -48,6 +49,7 @@
             }
             adjustToggleAppearance();
         });
+        {% endif %}
         $('.btn-danger').click(function (e) {
             var warning = "{% trans 'Are you sure you want to do this? Deleting things is permanent and not undoable!' %}";
             return window.confirm(warning);

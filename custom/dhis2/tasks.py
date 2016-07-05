@@ -21,7 +21,6 @@ import uuid
 from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xml import V2
 from celery.schedules import crontab
 from celery.task import periodic_task
 from corehq.apps.es import CaseES, UserES

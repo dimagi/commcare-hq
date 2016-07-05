@@ -1,13 +1,12 @@
-from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.world_vision.filters import LocationFilter, WVDatespanFilter
 from custom.world_vision.reports import TTCReport
 from custom.world_vision.sqldata.child_sqldata import ChildRegistrationDetails, ClosedChildCasesBreakdown, \
-    ChildrenDeaths, ChildrenDeathDetails, NutritionMeanMedianBirthWeightDetails, NutritionBirthWeightDetails, \
+    ChildrenDeaths, NutritionMeanMedianBirthWeightDetails, NutritionBirthWeightDetails, \
     NutritionFeedingDetails, ChildHealthIndicators
-from custom.world_vision.sqldata.main_sqldata import AnteNatalCareServiceOverview, DeliveryPlaceDetails, \
+from custom.world_vision.sqldata.main_sqldata import DeliveryPlaceDetails, \
     ImmunizationOverview
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown, \
-    PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, DeliveryStillBirthDetails, PostnatalCareOverview, \
+    PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, PostnatalCareOverview, \
     CauseOfMaternalDeaths, AnteNatalCareServiceOverviewExtended
 from dimagi.utils.decorators.memoized import memoized
 

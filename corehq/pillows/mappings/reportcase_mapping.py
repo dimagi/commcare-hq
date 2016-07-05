@@ -1,9 +1,10 @@
+from corehq.pillows.base import DEFAULT_META
 from corehq.util.elastic import es_index
+from pillowtop.es_utils import ElasticsearchIndexInfo
 
 ##################
 # NOTE to the next person who updates this name:
-#    You should also update ReportCasePillow.get_unique_id to return `REPORT_CASE_INDEX`
-#    Also remove this comment and the corresponding comment in ReportCasePillow
+#    You should also remove the ReportCasePillow.get_unique_id method
 REPORT_CASE_INDEX = es_index("report_cases_czei39du507m9mmpqk3y01x72a3ux4p0")
 ##################
 
@@ -128,3 +129,14 @@ REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
                 'user_id': {'type': 'string'},
                 'version': {'type': 'string'},
                 'xform_ids': {'index': 'not_analyzed', 'type': 'string'}}}
+
+REPORT_CASE_ES_ALIAS = "report_cases"
+REPORT_CASE_ES_TYPE = "report_case"
+
+REPORT_CASE_INDEX_INFO = ElasticsearchIndexInfo(
+    index=REPORT_CASE_INDEX,
+    alias=REPORT_CASE_ES_ALIAS,
+    type=REPORT_CASE_ES_TYPE,
+    meta=DEFAULT_META,
+    mapping=REPORT_CASE_MAPPING,
+)

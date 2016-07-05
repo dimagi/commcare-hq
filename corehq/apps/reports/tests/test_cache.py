@@ -47,6 +47,7 @@ class ReportCacheTest(TestCase):
     domain = 'cache-test'
 
     def setUp(self):
+        super(ReportCacheTest, self).setUp()
         self.test_domain = create_domain(self.domain)
         self.web_user1 = WebUser.create(self.domain, 'w1', 'secret')
         self.web_user2 = WebUser.create(self.domain, 'w2', 'secret')
@@ -55,6 +56,7 @@ class ReportCacheTest(TestCase):
         self.web_user1.delete()
         self.web_user2.delete()
         self.test_domain.delete()
+        super(ReportCacheTest, self).tearDown()
 
     def testBasicFunctionality(self):
         report = MockReport(_make_request('/a/{domain}/reports/foobar'.format(domain=self.domain),

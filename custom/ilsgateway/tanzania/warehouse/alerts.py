@@ -1,5 +1,4 @@
 from datetime import datetime
-from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.products.models import SQLProduct
 from custom.ilsgateway.tanzania.warehouse import const
 from custom.ilsgateway.tanzania.warehouse.const import NO_PRIMARY_CONTACT

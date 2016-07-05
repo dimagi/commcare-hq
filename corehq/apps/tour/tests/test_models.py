@@ -14,13 +14,16 @@ class GuidedTourTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GuidedTourTest, cls).setUpClass()
         cls.domain_obj = create_domain(cls.domain)
 
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        super(GuidedTourTest, cls).tearDownClass()
 
     def setUp(self):
+        super(GuidedTourTest, self).setUp()
         self.web_user = WebUser.create(self.domain, 'tourtester@mail.com', 'test123')
         self.test_user = User.objects.get_by_natural_key(self.web_user.username)
 
@@ -33,3 +36,4 @@ class GuidedTourTest(TestCase):
 
     def tearDown(self):
         self.web_user.delete()
+        super(GuidedTourTest, self).tearDown()

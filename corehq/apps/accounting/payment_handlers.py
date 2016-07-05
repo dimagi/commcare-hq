@@ -47,12 +47,6 @@ class BaseStripePaymentHandler(object):
         """
         raise NotImplementedError("you must implement cost_item_name")
 
-    @property
-    @memoized
-    def core_product(self):
-        domain = Domain.get_by_name(self.domain)
-        return SoftwareProductType.get_type_by_domain(domain)
-
     def create_charge(self, amount, card=None, customer=None):
         """Process the HTTPRequest used to make this payment
 
@@ -171,7 +165,7 @@ class BaseStripePaymentHandler(object):
         additional_context = self.get_email_context()
         from corehq.apps.accounting.tasks import send_purchase_receipt
         send_purchase_receipt.delay(
-            payment_record, self.core_product, self.domain, self.receipt_email_template,
+            payment_record, self.domain, self.receipt_email_template,
             self.receipt_email_template_plaintext, additional_context
         )
 
@@ -331,7 +325,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         )
 
     def _humanized_features(self):
-        return [{'type': get_feature_name(feature['type'], self.core_product),
+        return [{'type': get_feature_name(feature['type'], SoftwareProductType.COMMCARE),
                  'amount': fmt_dollar_amount(feature['amount'])}
                 for feature in self.features]
 
@@ -433,7 +427,11 @@ class AutoPayInvoicePaymentHandler(object):
                 continue
 
             try:
-                payment_record = payment_method.create_charge(autopay_card, amount_in_dollars=amount)
+                payment_record = payment_method.create_charge(
+                    autopay_card,
+                    amount_in_dollars=amount,
+                    description='Auto-payment for Invoice %s' % invoice.invoice_number,
+                )
             except stripe.error.CardError:
                 self._handle_card_declined(invoice, payment_method)
                 continue
@@ -454,8 +452,6 @@ class AutoPayInvoicePaymentHandler(object):
         receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
         try:
             domain = invoice.subscription.subscriber.domain
-            product = SoftwareProductType.get_type_by_domain(Domain.get_by_name(domain))
-
             context = {
                 'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
                 'balance': fmt_dollar_amount(invoice.balance),
@@ -464,7 +460,7 @@ class AutoPayInvoicePaymentHandler(object):
                 'invoice_num': invoice.invoice_number,
             }
             send_purchase_receipt.delay(
-                payment_record, product, domain, receipt_email_template, receipt_email_template_plaintext, context,
+                payment_record, domain, receipt_email_template, receipt_email_template_plaintext, context,
             )
         except:
             self._handle_email_failure(payment_record)
