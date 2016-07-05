@@ -153,30 +153,34 @@ class LedgerDBAccessorTest(TestCase):
 
         self._set_balance(100, self.case_one.case_id, self.product_a._id)
         self._set_balance(100, self.case_one.case_id, self.product_b._id)
+        self._set_balance(100, self.case_one.case_id, self.product_c._id)
         middle = datetime.utcnow()
         time.sleep(.01)
         self._set_balance(100, self.case_two.case_id, self.product_a._id)
         self._set_balance(100, self.case_two.case_id, self.product_b._id)
+        self._set_balance(100, self.case_two.case_id, self.product_c._id)
         time.sleep(.01)
         end = datetime.utcnow()
 
-        ledgers_back = list(LedgerAccessorSQL.get_all_ledgers_modified_since())
-        self.assertEqual(4, len(ledgers_back))
+        ledgers_back = list(LedgerAccessorSQL.get_all_ledgers_modified_since(chunk_size=2))
+        self.assertEqual(6, len(ledgers_back))
         ledger_references = [
             UniqueLedgerReference(self.case_one.case_id, 'stock', self.product_a._id),
             UniqueLedgerReference(self.case_one.case_id, 'stock', self.product_b._id),
+            UniqueLedgerReference(self.case_one.case_id, 'stock', self.product_c._id),
             UniqueLedgerReference(self.case_two.case_id, 'stock', self.product_a._id),
             UniqueLedgerReference(self.case_two.case_id, 'stock', self.product_b._id),
+            UniqueLedgerReference(self.case_two.case_id, 'stock', self.product_c._id),
         ]
         self.assertEqual(
             set(ledger.ledger_reference for ledger in ledgers_back),
             set(ledger_references)
         )
 
-        ledgers_back = list(LedgerAccessorSQL.get_all_ledgers_modified_since(middle))
-        self.assertEqual(2, len(ledgers_back))
+        ledgers_back = list(LedgerAccessorSQL.get_all_ledgers_modified_since(middle, chunk_size=2))
+        self.assertEqual(3, len(ledgers_back))
         self.assertEqual(set(ledger.ledger_reference for ledger in ledgers_back),
-                         set(ledger_references[2:]))
+                         set(ledger_references[3:]))
 
         self.assertEqual(0, len(list(LedgerAccessorSQL.get_all_ledgers_modified_since(end))))
 

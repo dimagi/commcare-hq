@@ -295,24 +295,22 @@ class FormAccessorTestsSQL(TestCase):
         # since this test depends on the global form list just wipe everything
         FormProcessorTestUtils.delete_all_sql_forms()
 
-        form1 = create_form_for_test(DOMAIN)
-        form2 = create_form_for_test(DOMAIN)
+        first_batch = [create_form_for_test(DOMAIN).form_id for i in range(4)]
         middle = datetime.utcnow()
-        time.sleep(.01)
-        form3 = create_form_for_test(DOMAIN)
-        form4 = create_form_for_test(DOMAIN)
-        time.sleep(.01)
+        time.sleep(.02)
+        second_batch = [create_form_for_test(DOMAIN).form_id for i in range(4)]
+        time.sleep(.02)
         end = datetime.utcnow()
 
-        forms_back = list(FormAccessorSQL.get_all_forms_received_since())
+        forms_back = list(FormAccessorSQL.get_all_forms_received_since(chunk_size=2))
+        self.assertEqual(8, len(forms_back))
+        self.assertEqual(set(form.form_id for form in forms_back),
+                         set(first_batch + second_batch))
+
+        forms_back = list(FormAccessorSQL.get_all_forms_received_since(middle, chunk_size=2))
         self.assertEqual(4, len(forms_back))
         self.assertEqual(set(form.form_id for form in forms_back),
-                         set([form1.form_id, form2.form_id, form3.form_id, form4.form_id]))
-
-        forms_back = list(FormAccessorSQL.get_all_forms_received_since(middle))
-        self.assertEqual(2, len(forms_back))
-        self.assertEqual(set(form.form_id for form in forms_back),
-                         set([form3.form_id, form4.form_id]))
+                         set(second_batch))
 
         self.assertEqual(0, len(list(FormAccessorSQL.get_all_forms_received_since(end))))
 
