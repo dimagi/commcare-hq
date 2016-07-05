@@ -111,6 +111,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
     def should_process(self, doc):
         if self.doc_filter:
             return not self.doc_filter(doc)
+        return True
 
     def process_bulk_docs(self, docs, couchdb):
         changes = [self._doc_to_change(doc, couchdb) for doc in docs]
