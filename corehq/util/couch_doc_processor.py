@@ -36,6 +36,7 @@ class ResumableDocsByTypeIterator(object):
         self.original_doc_types = doc_types = sorted(doc_types)
         self.iteration_key = iteration_key
         self.chunk_size = chunk_size
+        self.view_event_handler = view_event_handler
         iteration_name = "{}/{}".format(iteration_key, " ".join(doc_types))
         self.iteration_id = hashlib.sha1(iteration_name).hexdigest()
         try:
@@ -163,6 +164,7 @@ class ResumableDocsByTypeIterator(object):
             self.original_doc_types,
             self.iteration_key,
             self.chunk_size,
+            self.view_event_handler
         )
 
 

@@ -436,6 +436,13 @@
         "name": "ReportXFormPillow",
         "unique_id": "test_report_xforms_20150406_1136"
     },
+    "ReportXFormToElasticsearchPillow": {
+        "advertised_name": "ReportXFormToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "report-xforms-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "ReportXFormToElasticsearchPillow"
+    },
     "SqlCaseToElasticsearchPillow": {
         "advertised_name": "SqlCaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
