@@ -284,7 +284,7 @@
                                     </div>
                                 {% endfor %}
                             {% endif %}
-                            <div id="message-alerts" data-bind="foreach: alerts">
+                            <div id="message-alerts" data-bind="foreach: alerts" class="hide"><!-- TODO: support requirejs -->
                                 <div data-bind="attr: {'class': alert_class}">
                                     <a class="close" data-dismiss="alert" href="#">&times;</a>
                                     <span data-bind="text: message"></span>
@@ -440,7 +440,7 @@
         <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
         {% endif %}
 
-        {% if not request.use_requirejs %}
+        {% if not request.use_requirejs %} {# TODO: requirejs support #}
         <script type="text/javascript">
             /*
                 This is the knockout-based, javascript analog of messages in Django.
