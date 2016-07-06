@@ -103,6 +103,9 @@ NEW_APP = StaticGuidedTour(
 REPORT_BUILDER_NO_ACCESS = ReportBuilderNoAccessTour(
     'report_builder_no_access', 'tour/config/report_builder_no_access.html'
 )
+VELLUM_CASE_MANAGEMENT = StaticGuidedTour(
+    'vellum_case_management', 'tour/config/vellum_case_management.html'
+)
 # Not calling this tour "REPORT_BUILDER" in case we actually make a tour of the
 # report builder itself at some point.
 REPORT_BUILDER_ACCESS = ReportBuilderAccessTour(

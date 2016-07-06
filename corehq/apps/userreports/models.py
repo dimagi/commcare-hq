@@ -162,7 +162,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def named_filter_objects(self):
-        return {name: FilterFactory.from_spec(filter, FactoryContext.empty())
+        return {name: FilterFactory.from_spec(filter, FactoryContext(self.named_expression_objects, {}))
                 for name, filter in self.named_filters.items()}
 
     def _get_factory_context(self):

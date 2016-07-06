@@ -430,7 +430,7 @@
         {% endif %}
         {# JavaScript Display Logic Libaries #}
 
-        {% if request.couch_user and request|toggle_enabled:"NOTIFICATIONS" and not request.use_requirejs %} {# TODO: requirejs support #}
+        {% if request.couch_user %} {# TODO: requirejs support #}
         <script type="text/javascript" src="{% static '/notifications/js/NotificationsService.ko.js' %}"></script>
         <script type="text/javascript">
             $(function () {

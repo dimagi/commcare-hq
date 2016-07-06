@@ -1,4 +1,6 @@
 from collections import namedtuple
+
+from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from couchforms.models import all_known_formlike_doc_types
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -11,6 +13,7 @@ META = 'meta'
 COMMCARE_USER = 'commcare-user'
 WEB_USER = 'web-user'
 GROUP = 'group'
+APP = 'app'
 
 
 DocumentMetadata = namedtuple(
@@ -38,6 +41,8 @@ def _get_primary_type(raw_doc_type):
         return WEB_USER
     elif raw_doc_type in ('Group', 'Group-Deleted'):
         return GROUP
+    elif raw_doc_type in app_doc_types().keys():
+        return APP
     else:
         # at some point we may want to make this more granular
         return META

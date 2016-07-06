@@ -589,27 +589,26 @@ class CaseAccessorTestsSQL(TestCase):
         )
 
     def test_get_all_cases_modified_since(self):
-        case1 = _create_case(user_id="user1")
-        case2 = _create_case(user_id="user1")
+        FormProcessorTestUtils.delete_all_cases()
+
+        first_batch = [_create_case(user_id="user1").case_id for i in range(4)]
         middle = datetime.utcnow()
-        time.sleep(.01)
-        case3 = _create_case(user_id="user2")
-        case4 = _create_case(user_id="user3")
-        time.sleep(.01)
+        time.sleep(.02)
+        second_batch = [_create_case(user_id="user1").case_id for i in range(4)]
+        time.sleep(.02)
         end = datetime.utcnow()
 
-        cases_back = list(CaseAccessorSQL.get_all_cases_modified_since())
+        cases_back = list(CaseAccessorSQL.get_all_cases_modified_since(chunk_size=2))
+        self.assertEqual(8, len(cases_back))
+        self.assertEqual(set(case.case_id for case in cases_back),
+                         set(first_batch + second_batch))
+
+        cases_back = list(CaseAccessorSQL.get_all_cases_modified_since(middle, chunk_size=2))
         self.assertEqual(4, len(cases_back))
         self.assertEqual(set(case.case_id for case in cases_back),
-                         set([case1.case_id, case2.case_id, case3.case_id, case4.case_id]))
-
-        cases_back = list(CaseAccessorSQL.get_all_cases_modified_since(middle))
-        self.assertEqual(2, len(cases_back))
-        self.assertEqual(set(case.case_id for case in cases_back),
-                         set([case3.case_id, case4.case_id]))
+                         set(second_batch))
 
         self.assertEqual(0, len(list(CaseAccessorSQL.get_all_cases_modified_since(end))))
-        self.assertEqual(1, len(CaseAccessorSQL.get_cases_modified_since(limit=1)))
 
     def test_get_case_by_external_id(self):
         case1 = _create_case(domain=DOMAIN)
@@ -618,6 +617,7 @@ class CaseAccessorTestsSQL(TestCase):
         case2 = _create_case(domain='d2', case_type='t1')
         case2.external_id = '123'
         CaseAccessorSQL.save_case(case2)
+        self.addCleanup(lambda: CaseAccessorSQL.delete_all_cases('d2'))
 
         [case] = CaseAccessorSQL.get_cases_by_external_id(DOMAIN, '123')
         self.assertEqual(case.case_id, case1.case_id)
