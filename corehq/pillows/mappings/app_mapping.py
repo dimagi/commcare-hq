@@ -1,4 +1,5 @@
 from corehq.util.elastic import es_index
+from pillowtop.es_utils import ElasticsearchIndexInfo
 
 APP_INDEX = es_index("hqapps_2016-03-01_2128")
 APP_MAPPING={'_meta': {'created': None},
@@ -304,3 +305,26 @@ APP_MAPPING={'_meta': {'created': None},
                 'use_custom_suite': {'type': 'boolean'},
                 'user_type': {'type': 'string'},
                 'version': {'type': 'long'}}}
+
+APP_ES_ALIAS = "hqapps"
+APP_ES_TYPE = "app"
+APP_ES_META = {
+    "settings": {
+        "analysis": {
+            "analyzer": {
+                "default": {
+                    "type": "custom",
+                    "tokenizer": "whitespace",
+                    "filter": ["lowercase"]
+                },
+            }
+        }
+    }
+}
+APP_INDEX_INFO = ElasticsearchIndexInfo(
+    index=APP_INDEX,
+    alias=APP_ES_ALIAS,
+    type=APP_ES_TYPE,
+    meta=APP_ES_META,
+    mapping=APP_MAPPING
+)

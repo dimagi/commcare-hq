@@ -57,6 +57,16 @@ USER_CASE_XPATH_SUBSTRING_MATCHES = [
 ]
 
 
+def app_doc_types():
+    from corehq.apps.app_manager.models import Application, RemoteApp
+    return {
+        'Application': Application,
+        'Application-Deleted': Application,
+        'RemoteApp': RemoteApp,
+        'RemoteApp-Deleted': RemoteApp,
+    }
+
+
 def _prepare_xpath_for_validation(xpath):
     prepared_xpath = xpath.lower()
     prepared_xpath = prepared_xpath.replace('"', "'")
@@ -469,16 +479,10 @@ def is_sort_only_column(column):
 
 
 def get_correct_app_class(doc):
-    from corehq.apps.app_manager.models import Application, RemoteApp
     try:
-        return {
-            'Application': Application,
-            'Application-Deleted': Application,
-            "RemoteApp": RemoteApp,
-            "RemoteApp-Deleted": RemoteApp,
-        }[doc['doc_type']]
+        return app_doc_types()[doc['doc_type']]
     except KeyError:
-        raise DocTypeError()
+        raise DocTypeError(doc['doc_type'])
 
 
 def all_apps_by_domain(domain):

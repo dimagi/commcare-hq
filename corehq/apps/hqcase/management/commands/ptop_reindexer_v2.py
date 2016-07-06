@@ -1,6 +1,8 @@
 from copy import deepcopy
 from optparse import make_option
 from django.core.management import BaseCommand, CommandError
+
+from corehq.pillows.application import get_app_reindexer
 from corehq.pillows.case import (
     get_couch_case_reindexer, get_sql_case_reindexer, get_resumable_couch_case_reindexer
 )
@@ -67,6 +69,7 @@ class Command(BaseCommand):
             'ledger-v1': get_ledger_v1_reindexer,
             'sms': get_sms_reindexer,
             'report-xform': get_report_xform_couch_reindexer,
+            'app': get_app_reindexer,
         }
         if index not in reindex_fns:
             raise CommandError('Supported indices to reindex are: {}'.format(','.join(reindex_fns.keys())))

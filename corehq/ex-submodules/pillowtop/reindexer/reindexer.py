@@ -111,8 +111,12 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
     def should_process(self, doc):
         if self.doc_filter:
             return not self.doc_filter(doc)
+        return True
 
     def process_bulk_docs(self, docs, couchdb):
+        if len(docs) == 0:
+            return True
+
         changes = [self._doc_to_change(doc, couchdb) for doc in docs]
 
         bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform)

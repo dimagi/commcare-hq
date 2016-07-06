@@ -31,6 +31,13 @@
         "include_docs": false,
         "name": "AncHmisCaseFluffPillow"
     },
+    "AppDbChangeFeedPillow": {
+        "advertised_name": "AppDbChangeFeedPillow",
+        "change_feed_type": "CouchChangeFeed",
+        "checkpoint_id": "AppDbChangeFeedPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "AppDbChangeFeedPillow"
+    },
     "AppPillow": {
         "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-03-01_2128.testhq",
         "change_feed_type": "CouchChangeFeed",
@@ -54,6 +61,13 @@
         "checkpoint_id": "ApplicationBlobDeletionPillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ApplicationBlobDeletionPillow"
+    },
+    "ApplicationToElasticsearchPillow": {
+        "advertised_name": "ApplicationToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "applications-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "ApplicationToElasticsearchPillow"
     },
     "BlobDeletionPillow": {
         "advertised_name": "BlobDeletionPillow",
