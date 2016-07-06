@@ -380,6 +380,7 @@ def restore_commcare_user(request, domain, user_id):
     messages.success(request, "User %s and all their submissions have been restored" % user.username)
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
+
 @require_can_edit_commcare_users
 @require_POST
 def toggle_demo_mode(request, domain, user_id):
