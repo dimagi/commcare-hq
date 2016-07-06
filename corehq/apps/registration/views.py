@@ -130,6 +130,7 @@ class NewUserRegistrationView(BasePageView):
             'reg_form': RegisterNewWebUserForm(
                 initial={'email': self.prefilled_email}
             ),
+            'reg_form_defaults': {'email': self.prefilled_email} if self.prefilled_email else {},
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
         }
 

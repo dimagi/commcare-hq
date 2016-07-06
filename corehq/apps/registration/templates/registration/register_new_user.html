@@ -34,7 +34,7 @@
       {% if not hide_password_feedback %}
         reg.showPasswordFeedback();
       {% endif %}
-      var regForm = new reg.FormViewModel({}, '#registration-form-container', ['step-1', 'step-2', 'final-step']);
+      var regForm = new reg.FormViewModel({{ reg_form_defaults|JSON }}, '#registration-form-container', ['step-1', 'step-2', 'final-step']);
       $('#registration-form-container').koApplyBindings(regForm);
 
       reg.setResetEmailFeedbackFn(function (isValidating) {
