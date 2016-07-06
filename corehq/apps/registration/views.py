@@ -1,3 +1,4 @@
+import urllib
 from datetime import datetime
 import logging
 from django.conf import settings
@@ -50,7 +51,7 @@ def registration_default(request):
 
 def _get_url_with_email(url, email):
     if email:
-        url = "{}?e={}".format(url, email)
+        url = "{}?e={}".format(url, urllib.quote_plus(email))
     return url
 
 
