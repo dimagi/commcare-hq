@@ -11,13 +11,16 @@ class DeviceLogTagFilter(BaseReportFilter):
     errors_only_slug = "errors_only"
     template = "reports/filters/devicelog_tags.html"
 
-    @property
     @quickcache(['self.domain'], timeout=10 * 60)
+    def _all_values(self):
+        return fast_distinct_in_domain(DeviceReportEntry, 'type', self.domain)
+
+    @property
     def filter_context(self):
         errors_only = bool(self.request.GET.get(self.errors_only_slug, False))
         selected_tags = self.request.GET.getlist(self.slug)
         show_all = bool(not selected_tags)
-        values = fast_distinct_in_domain(DeviceReportEntry, 'type', self.domain)
+        values = self._all_values()
         tags = [{
             'name': value,
             'show': bool(show_all or value in selected_tags)
