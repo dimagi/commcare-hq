@@ -4,7 +4,7 @@
 define([
     "filters",
     "jquery",
-    "config.datatables",
+    "config.datatables.bootstrap",
     "hq.helpers",
 ], function(
     filters,

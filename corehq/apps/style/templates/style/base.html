@@ -344,6 +344,7 @@
             <script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
             <script type="text/javascript">
                 requirejs.config({
+                    baseUrl: "{% block requirejs_url %}{% endblock %}",
                     paths: {
                         {% include "style/includes/core_libraries.html" %}
                         "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
@@ -369,8 +370,6 @@
                         {% if request.use_select2_v4 %}
                         "select2": "{% static 'select2/dist/js/select2.full.min' %}",
                         {% endif %}
-
-                        {% block requirejs_paths %}{% endblock %}
                     },
                     shim: {
                         "bootstrap": { deps: ['jquery'] },
@@ -384,8 +383,6 @@
                         {% if request.use_datatables %}
                         "datatables.bootstrap": { deps: ['datatables'] },
                         {% endif %}
-
-                        {% block requirejs_shim %}{% endblock %}
                     },
                     map: {
                         {% if request.use_datatables %}

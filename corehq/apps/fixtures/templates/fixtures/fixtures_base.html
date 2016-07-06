@@ -4,14 +4,7 @@
 
 {% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}\
 
-{% block requirejs_paths %}
-    "filters": "{% static 'reports/javascripts/filters' %}",
-    "config.datatables": "{% static 'reports/javascripts/config.dataTables.bootstrap' %}",
-{% endblock %}
-
-{% block requirejs_shim %}
-    "config.datatables": { deps: ['datatables.bootstrap'] },
-{% endblock %}
+{% block requirejs_url %}{% static 'reports/javascripts' %}{% endblock %}
 
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">

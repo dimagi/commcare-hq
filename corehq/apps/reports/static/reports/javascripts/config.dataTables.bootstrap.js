@@ -1,6 +1,6 @@
 (function (factory) {
 if (typeof define === 'function' && define.amd) {
-    define(['jquery'], factory);
+    define(['jquery', 'datatables.bootstrap'], factory);
 } else {
     factory(jQuery);
 }
