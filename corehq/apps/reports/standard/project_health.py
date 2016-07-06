@@ -329,24 +329,43 @@ class ProjectHealthDashboard(ProjectReport):
             last_month_summary = this_month_summary
         return six_month_summary
 
+    def export_summary(self, six_months):
+        table = []
+        table.append('Six Month Performance Summary')
+        worksheet_headers = ['month', 'num_high_performing_users', 'num_low_performing_users',
+                             'total_active', 'total_inactive', 'total_num_users']
+        table.append([worksheet_headers])
+        for month_summary in six_months:
+            table[1].append([month_summary.month.isoformat(), month_summary.number_of_performing_users,
+                             month_summary.number_of_low_performing_users, month_summary.active,
+                             month_summary.inactive, month_summary.total_users_by_month])
+        return table
+
     @property
     def export_table(self):
         spreadsheet = []
-        worksheet_headers = ['user_id', 'username', 'num_forms_submitted', 'is_performing']
-        worksheet_titles = ['Inactive Users', 'Low Performing Users', 'New Performing Users']
         six_months_reports = self.previous_six_months()
+
+        # summary statistics from six months of MonthlyPerformanceSummary
+        spreadsheet.append(self.export_summary(six_months_reports))
+
         last_month = six_months_reports[-2]
         users_by_categories = [last_month.get_dropouts(), last_month.get_unhealthy_users(),
                                last_month.get_newly_performing()]
+        worksheet_headers = ['user_id', 'username', 'last_month_forms', 'delta_last_month',
+                             'this_month_forms', 'delta_this_month', 'is_performing']
+        worksheet_titles = ['Inactive Users', 'Low Performing Users', 'New Performing Users']
 
+        # list last month's users by category per worksheet
         for i in range(0, 3):
             table = []
             table.append(worksheet_titles[i])
             table.append([worksheet_headers])
             for user in users_by_categories[i]:
-                table[1].append([user.user_id, user.username, user.num_forms_submitted, user.is_performing])
+                table[1].append([user.user_id, user.username, user.num_forms_submitted, user.delta_forms,
+                                 user.num_forms_submitted_next_month, user.delta_forms_next_month,
+                                 user.is_performing])
             spreadsheet.append(table)
-
         return spreadsheet
 
     @property
