@@ -1,5 +1,5 @@
 {% load hq_shared_tags %}
-{% if requirejs %}
+{% if request.use_requirejs %}
     "jquery": "{% static 'jquery/dist/jquery.min' %}",
     "jquery.form": "{% static 'jquery-form/jquery.form' %}",
     "underscore": "{% static 'underscore/underscore' %}",

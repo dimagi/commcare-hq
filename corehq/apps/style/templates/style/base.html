@@ -156,7 +156,7 @@
         {# Core Libraries #}
         {% if not request.use_requirejs %}
         {% compress js %}
-        {% include "style/includes/core_libraries.html" with requirejs=False %}
+        {% include "style/includes/core_libraries.html" %}
         {% endcompress %}
         {% endif %}
 
@@ -345,7 +345,7 @@
             <script type="text/javascript">
                 requirejs.config({
                     paths: {
-                        {% include "style/includes/core_libraries.html" with requirejs=True %}
+                        {% include "style/includes/core_libraries.html" %}
                         "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
                         "hqDefine": "{% static 'hqwebapp/js/hqModules' %}",
                         "hq.helpers": "{% static 'style/js/hq.helpers' %}",
