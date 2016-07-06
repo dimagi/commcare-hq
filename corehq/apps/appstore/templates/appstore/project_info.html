@@ -32,8 +32,15 @@
     </style>
 {%  endblock %}
 
+{% block js %}{{ block.super }}
+<script type="text/javascript" src="{% static 'registration/js/signup_ab.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     <script>
+        $(function () {
+            hqImport('registration/js/signup_ab.js').init($('#sign-up-link'));
+        });
         function update_import_into_button() {
             var project = $('#project_select option:selected').text();
             $("#import-into-button").text("Import into " + project);
@@ -319,10 +326,11 @@
                         {% endif %}
                     {% else %}
                         {% url "login" login_url %}
-                        {% url "register_user" %}
+                        {% url 'register_user' reg_url_a %}
+                        {% url 'register_new_user' reg_url_b %}
                         {% blocktrans %}
                             Please <a href="{{ login_url }}">sign in</a>
-                            or <a href="{{ register_url }}">register</a>
+                            or <a href="{{ reg_url_a }}" data-actionA="{{ reg_url_a }}" data-actionB="{{ reg_url_b }}" id="sign-up-link">register</a>
                             to download an app from Exchange
                         {% endblocktrans %}
                     {% endif %}

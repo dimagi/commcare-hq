@@ -24,6 +24,9 @@
   <script type="text/javascript" src="{% static 'registration/js/new_user.ko.js' %}"></script>
   <script type="text/javascript">
     $(function () {
+      var regAB = hqImport('registration/js/signup_ab.js');
+      regAB.redirectIfNotMatching(regAB.VAR_B, "{% url 'register_user' %}");
+
       var reg = hqImport('registration/js/new_user.ko.js');
       reg.onModuleLoad = function () {
         $('.loading-form-step').fadeOut(500, function () {
@@ -34,7 +37,7 @@
       {% if not hide_password_feedback %}
         reg.showPasswordFeedback();
       {% endif %}
-      var regForm = new reg.FormViewModel({}, '#registration-form-container', ['step-1', 'step-2', 'final-step']);
+      var regForm = new reg.FormViewModel({{ reg_form_defaults|JSON }}, '#registration-form-container', ['step-1', 'step-2', 'final-step']);
       $('#registration-form-container').koApplyBindings(regForm);
 
       reg.setResetEmailFeedbackFn(function (isValidating) {
@@ -54,6 +57,14 @@
               .removeClass('fa-spinner fa-spin')
               .addClass((regForm.emailDelayed.isValid() && regForm.email.isValid()) ? 'fa-check' : 'fa-remove');
         }
+      });
+
+      reg.setSubmitAttemptFn = function (callback) {
+        regAB.registerClickCreateAccount(regAB.VAR_B);
+      };
+
+      reg.setSubmitSuccessFn(function () {
+        regAB.registerSuccess(regAB.VAR_B);
       });
     });
   </script>

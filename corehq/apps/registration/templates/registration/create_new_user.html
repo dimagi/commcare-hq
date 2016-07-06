@@ -11,8 +11,16 @@
     <script src="{% static 'registration/js/password.js' %}"></script>
     {% endif %}
     <script>
-        $('#new-user-btn').click(function() {
-           analytics.workflow('Clicked "Create Account" Button');
+        $(function () {
+          {% if create_domain %}
+          var regAB = hqImport('registration/js/signup_ab.js');
+          regAB.redirectIfNotMatching(regAB.VAR_A, "{% url 'register_new_user' %}");
+          {% endif %}
+
+          $('#new -user-btn').click(function() {
+             analytics.workflow('Clicked "Create Account" Button');
+            regAB.registerClickCreateAccount(regAB.VAR_A);
+          });
         });
     </script>
 {% endblock %}
