@@ -25,7 +25,7 @@
             }
         );
         $('#table-filters').koApplyBindings(viewModel);
-        var table = new hqImport('reports/javascripts/config.dataTables.bootstrap.js').HQReportDataTables({
+        var table = hqImport('reports/javascripts/config.dataTables.bootstrap.js').HQReportDataTables({
             dataTableElem: dataTableElem,
             showAllRowsOption: true,
             includeFilter: true,
