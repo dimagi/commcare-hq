@@ -6,6 +6,7 @@ from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4, v0_5
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource, InternalFixtureResource
 from corehq.apps.locations import resources as locations
+from corehq.apps.sms.resources import v0_5 as sms_v0_5
 from django.conf.urls import *
 from django.http import HttpResponseNotFound
 from tastypie.api import Api
@@ -72,6 +73,7 @@ API_LIST = (
         locations.v0_5.LocationResource,
         locations.v0_5.LocationTypeResource,
         v0_5.SimpleReportConfigurationResource,
+        sms_v0_5.UserSelfRegistrationResource,
     )),
 )
 
