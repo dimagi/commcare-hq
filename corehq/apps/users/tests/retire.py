@@ -5,7 +5,6 @@ import uuid
 from xml.etree import ElementTree
 
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms

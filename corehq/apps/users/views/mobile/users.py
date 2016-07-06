@@ -371,6 +371,7 @@ def delete_commcare_user(request, domain, user_id):
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
+
 @require_can_edit_commcare_users
 @require_POST
 def restore_commcare_user(request, domain, user_id):
