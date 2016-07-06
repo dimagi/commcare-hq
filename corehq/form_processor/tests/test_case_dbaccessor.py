@@ -589,6 +589,8 @@ class CaseAccessorTestsSQL(TestCase):
         )
 
     def test_get_all_cases_modified_since(self):
+        FormProcessorTestUtils.delete_all_cases()
+
         first_batch = [_create_case(user_id="user1").case_id for i in range(4)]
         middle = datetime.utcnow()
         time.sleep(.02)
