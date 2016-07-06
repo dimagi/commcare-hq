@@ -1,4 +1,5 @@
 import hashlib
+import weakref
 from abc import ABCMeta, abstractproperty
 from datetime import datetime
 
@@ -171,12 +172,16 @@ class ResumableDocsByTypeIterator(object):
 class ResumableDocsByTypeEventHandler(PaginateViewEventHandler):
 
     def __init__(self, iterator):
-        self.iterator = iterator
+        self.iterator_ref = weakref.ref(iterator)
 
     def view_starting(self, db, view_name, kwargs, total_emitted):
-        offset = {k: v for k, v in kwargs.items() if k.startswith("startkey")}
-        self.iterator.state["offset"] = offset
-        self.iterator._save_state()
+        iterator = self.iterator_ref()
+        if iterator:
+            offset = {k: v for k, v in kwargs.items() if k.startswith("startkey")}
+            iterator.state["offset"] = offset
+            iterator._save_state()
+        else:
+            raise Exception("Iterator has gone away")
 
 
 class TooManyRetries(Exception):
@@ -402,10 +407,14 @@ class CouchDocumentProcessor(object):
 class BulkDocProcessorEventHandler(PaginateViewEventHandler):
 
     def __init__(self, processor):
-        self.processor = processor
+        self.processor_ref = weakref.ref(processor)
 
     def view_ending(self, db, view_name, kwargs, total_emitted, time):
-        self.processor.process_chunk()
+        processor = self.processor_ref()
+        if processor:
+            processor.process_chunk()
+        else:
+            raise BulkProcessingFailed("Processor has gone away")
 
 
 class BulkDocProcessor(CouchDocumentProcessor):
@@ -431,7 +440,6 @@ class BulkDocProcessor(CouchDocumentProcessor):
     100 would exceed available memory.
     """
     def __init__(self, doc_type_map, doc_processor, reset=False, chunk_size=100):
-        assert len(doc_type_map) == 1
         super(BulkDocProcessor, self).__init__(
             doc_type_map, doc_processor, reset=reset, chunk_size=chunk_size,
             view_event_handler=BulkDocProcessorEventHandler(self)
