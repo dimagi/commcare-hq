@@ -3,7 +3,7 @@ import hashlib
 import threading
 from copy import copy
 from mimetypes import guess_type
-from corehq.util.pagination import paginate_function, PaginationEventHandler
+from corehq.util.pagination import paginate_function, PaginationEventHandler, ArgsProvider
 
 
 class CouchAttachmentsBuilder(object):
@@ -98,6 +98,23 @@ class CouchAttachmentsBuilder(object):
         return copy(self._dict)
 
 
+class PaginatedViewArgsProvider(ArgsProvider):
+    def __init__(self, initial_view_kwargs):
+        self.initial_view_kwargs = initial_view_kwargs
+
+    def get_initial_args(self):
+        return [], self.initial_view_kwargs
+
+    def get_next_args(self, result, *last_args, **last_view_kwargs):
+        if result:
+            last_view_kwargs['startkey'] = result['key']
+            last_view_kwargs['startkey_docid'] = result['id']
+            last_view_kwargs['skip'] = 1
+            return [], last_view_kwargs
+        else:
+            raise StopIteration
+
+
 def paginate_view(db, view_name, chunk_size, event_handler=PaginationEventHandler(), **view_kwargs):
     """
     intended as a more performant drop-in replacement for
@@ -130,17 +147,12 @@ def paginate_view(db, view_name, chunk_size, event_handler=PaginationEventHandle
 
     view_kwargs['limit'] = chunk_size
 
-    def call_view(db, view_name, **view_kwargs):
+    def call_view(**view_kwargs):
         return db.view(view_name, **view_kwargs)
 
-    def next_args(result, *args, **kwargs):
-        if result:
-            view_kwargs['startkey'] = result['key']
-            view_kwargs['startkey_docid'] = result['id']
-            view_kwargs['skip'] = 1
-        return [db, view_name], view_kwargs
+    args_provider = PaginatedViewArgsProvider(view_kwargs)
 
-    for result in paginate_function(call_view, next_args, event_handler):
+    for result in paginate_function(call_view, args_provider, event_handler):
         yield result
 
 

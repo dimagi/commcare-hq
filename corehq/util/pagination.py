@@ -13,8 +13,8 @@ class PaginationEventHandler(object):
         """Called prior to getting each page of data
 
         :param total_emitted: total count of data items yielded
-        :param args: Argument list that was passed to the ``get_data_fn`` for this page
-        :param kwargs: Keyword arguments that were passed to the ``get_data_fn`` for this page
+        :param args: Argument list that was passed to the ``data_function`` for this page
+        :param kwargs: Keyword arguments that were passed to the ``data_function`` for this page
         """
         pass
 
@@ -23,8 +23,8 @@ class PaginationEventHandler(object):
 
         :param total_emitted: total count of data items yielded
         :param duration: the duration in ms that it took to yield this page
-        :param args: Argument list that was passed to the ``get_data_fn`` for this page
-        :param kwargs: Keyword arguments that were passed to the ``get_data_fn`` for this page
+        :param args: Argument list that was passed to the ``data_function`` for this page
+        :param kwargs: Keyword arguments that were passed to the ``data_function`` for this page
         """
         pass
 
@@ -45,23 +45,36 @@ class DelegatingPaginationEventHandler(PaginationEventHandler):
             handler.page_end(total_emitted, duration, *args, **kwargs)
 
 
-def paginate_function(get_data_fn, next_args_fn, event_handler=PaginationEventHandler()):
-    """
-    Repeatedly call a data provider function with successive sets of arguments until
-    no more data is returned.
+class ArgsProvider(object):
+    def get_initial_args(self):
+        """Return the initial set of args and kwargs
 
-    :param get_data_fn: function to paginate. Must return an list of data elements.
-    :param next_args_fn: given the last data element of the previous ``get_data_fn`` call and the previous
-    ``get_data_fn`` args and kwargs return the next set of arguments for ``get_data_fn``.
-    Initially called with ``None`` to get the fist set of arguments.
+        :returns: tuple of args list and kwargs dict"""
+        raise NotImplementedError
+
+    def get_next_args(self, last_item, *last_args, **last_kwargs):
+        """Return the next set of args and kwargs
+
+        :returns: tuple of args list and kwargs dict
+        :raises: StopIteration to end the iteration
+        """
+        raise StopIteration
+
+
+def paginate_function(data_function, args_provider, event_handler=PaginationEventHandler()):
+    """
+    Repeatedly call a data provider function with successive sets of arguments provided
+    by the ``args_provider``
+
+    :param data_function: function to paginate. Must return an list of data elements.
+    :param args_provider: An instance of the ``ArgsProvider`` class.
     :param event_handler: class to be notified on page start and page end.
     """
     total_emitted = 0
-    len_results = -1
-    args, kwargs = next_args_fn(None)
-    while len_results:
+    args, kwargs = args_provider.get_initial_args()
+    while True:
         event_handler.page_start(total_emitted, *args, **kwargs)
-        results = get_data_fn(*args, **kwargs)
+        results = data_function(*args, **kwargs)
         start_time = datetime.utcnow()
         len_results = len(results)
 
@@ -71,8 +84,11 @@ def paginate_function(get_data_fn, next_args_fn, event_handler=PaginationEventHa
         total_emitted += len_results
         event_handler.page_end(total_emitted, datetime.utcnow() - start_time, *args, **kwargs)
 
-        if len_results:
-            args, kwargs = next_args_fn(item, *args, **kwargs)
+        item = item if len_results else None
+        try:
+            args, kwargs = args_provider.get_next_args(item, *args, **kwargs)
+        except StopIteration:
+            break
 
 
 class ResumableIteratorState(JsonObject):
@@ -87,6 +103,22 @@ class ResumableIteratorState(JsonObject):
     complete = BooleanProperty(default=False)
 
 
+class ResumableArgsProvider(ArgsProvider):
+    def __init__(self, iterator_state, args_provider):
+        self.args_provider = args_provider
+        self.resume = bool(getattr(iterator_state, '_rev', None))  # if there is a _rev then we're resuming
+        self.resume_args = iterator_state.args
+        self.resume_kwargs = iterator_state.kwargs
+
+    def get_initial_args(self):
+        if self.resume:
+            return self.resume_args, self.resume_kwargs
+        return self.args_provider.get_initial_args()
+
+    def get_next_args(self, last_item, *last_args, **last_kwargs):
+        return self.args_provider.get_next_args(last_item, *last_args, **last_kwargs)
+
+
 class ResumableFunctionIterator(object):
     """Perform one-time resumable iteration over a data provider function.
 
@@ -97,16 +129,14 @@ class ResumableFunctionIterator(object):
     about an iteration that is in progress. The state will be maintained
     indefinitely unless it is removed with `discard_state()`.
     :param data_function: function to iterate over. Must return an list of data elements.
-    :param args_function: given the last data element of the previous ``data_function`` call and the previous
-    ``data_function`` args and kwargs return the next set of arguments for ``data_function``.
-    Initially called with ``None`` to get the fist set of arguments.
+    :param args_provider: An instance of the ``ArgsProvider`` class.
     :param event_handler: Instance of ``PaginationEventHandler`` to be notified on page start and page end.
     """
 
-    def __init__(self, iteration_key, data_function, args_function, event_handler=None):
+    def __init__(self, iteration_key, data_function, args_provider, event_handler=None):
         self.iteration_key = iteration_key
         self.data_function = data_function
-        self.args_function = args_function
+        self.args_provider = args_provider
         self.event_handler = event_handler
         self.iteration_name = '{}/{}'.format(iteration_key, data_function.__name__)
         self.iteration_id = hashlib.sha1(self.iteration_name).hexdigest()
@@ -132,7 +162,7 @@ class ResumableFunctionIterator(object):
         if self.state.complete:
             return
 
-        resumable_args = self._get_resumable_args()
+        resumable_args = ResumableArgsProvider(self.state, self.args_provider)
         event_handler = self._get_event_handler()
 
         for item in paginate_function(self.data_function, resumable_args, event_handler):
@@ -151,20 +181,6 @@ class ResumableFunctionIterator(object):
             ])
         else:
             return ResumableIteratorEventHandler(self)
-
-    def _get_resumable_args(self):
-        resume = bool(getattr(self.state, '_rev', None))  # if there is a _rev then we're resuming
-        resume_args = self.state.args
-        resume_kwargs = self.state.kwargs
-
-        def _resumable_args(item, *args, **kwargs):
-            if resume and item is None:
-                # return previous args on first call
-                return resume_args, resume_kwargs
-
-            return self.args_function(item, *args, **kwargs)
-
-        return _resumable_args
 
     @property
     def progress_info(self):
@@ -195,7 +211,7 @@ class ResumableFunctionIterator(object):
         self.__init__(
             self.iteration_key,
             self.data_function,
-            self.args_function,
+            self.args_provider,
             self.event_handler
         )
 

@@ -3,7 +3,22 @@ import itertools
 from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
 
-from corehq.util.pagination import ResumableFunctionIterator
+from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
+
+
+class TestArgsProvider(ArgsProvider):
+    def __init__(self):
+        self.batch_number = 0
+
+    def get_initial_args(self):
+        return [0], {}
+
+    def get_next_args(self, last_item, *last_args, **last_kwargs):
+        if last_item is None:
+            raise StopIteration
+
+        [batch_number] = last_args
+        return [batch_number + 1], {}
 
 
 class TestResumableFunctionIterator(SimpleTestCase):
@@ -22,20 +37,13 @@ class TestResumableFunctionIterator(SimpleTestCase):
         self.couch_db.reset()
 
     def get_iterator(self):
-        def next_args(last_item, *args, **kwargs):
-            if last_item is None:
-                return [0], {}
-
-            [batch_number] = args
-            return [batch_number + 1], {}
-
         def data_provider(batch_number):
             try:
                 return self.batches[batch_number]
             except IndexError:
                 return []
 
-        itr = ResumableFunctionIterator("test", data_provider, next_args)
+        itr = ResumableFunctionIterator("test", data_provider, TestArgsProvider())
         itr.couch_db = self.couch_db
         return itr
 
