@@ -5,6 +5,8 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
+        var regAB = hqImport('registration/js/signup_ab.js');
+        regAB.registerSuccess(regAB.VAR_A);
         analytics.workflow("Created new project");
     });
 </script>

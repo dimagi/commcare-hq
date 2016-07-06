@@ -1,8 +1,12 @@
-{% extends login_template %}
+{% extends 'login_and_password/login.html' %}
+{% load hq_shared_tags %}
 
 {% block head %}{{ block.super }}
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
+
+{# Don't carry over inline js from login #}
+{% block js-inline %}{% endblock %}
 
 {% block login-content %}
     <div class="row">

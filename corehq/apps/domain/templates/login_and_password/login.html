@@ -1,5 +1,18 @@
 {% extends "style/base_page.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+  <script type="text/javascript" src="{% static 'registration/js/signup_ab.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+  <script>
+      $(function () {
+          hqImport('registration/js/signup_ab.js').init($('#sign-up-link'));
+      });
+  </script>
+{% endblock %}
 
 {% block title %}{% trans "Login to CommCare HQ" %}{% endblock title %}
 

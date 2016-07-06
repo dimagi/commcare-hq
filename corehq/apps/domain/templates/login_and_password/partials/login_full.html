@@ -13,11 +13,13 @@
               </p>
             {% endif %}
               <p>{% blocktrans %}Don't have a CommCare HQ account? Sign up for free and get started today!{% endblocktrans %}</p>
-              <a class="btn btn-success btn-lg pull-right"
+              <a class="btn btn-success btn-lg pull-right" id="sign-up-link"
                  {% if allow_domain_requests %}
                    href="{% url "domain_request" domain %}"
                  {% else %}
                    href="{% url "register_user" %}"
+                   data-actionA="{%  url 'register_user' %}"
+                   data-actionB="{%  url 'register_new_user' %}"
                  {% endif %}
               >
                 {% if allow_domain_requests %}
