@@ -19,7 +19,6 @@
     </style>
 {% endblock %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.util.js' %}"></script>
     <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
@@ -148,6 +147,7 @@
     });
 </script>
 {% endblock %}
+
 {% block main_column_content %}
     <h1>{% trans "Project Performance Dashboard" %}</h1>
     <p class="lead">
