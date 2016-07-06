@@ -2,7 +2,9 @@
 if (typeof define === 'function' && define.amd) {
     define(['jquery', 'datatables.bootstrap'], factory);
 } else {
-    factory(jQuery);
+    hqDefine('reports/javascripts/config.dataTables.bootstrap.js', function() {
+        return factory(jQuery);
+    });
 }
 }(function ($) {
 
@@ -321,10 +323,6 @@ jQuery.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) { return sortSp
 var module = {
     HQReportDataTables: HQReportDataTables,
 };
-
-hqDefine('reports/javascripts/config.dataTables.bootstrap.js', function() {
-    return module;
-});
 
 return module;
 
