@@ -1,3 +1,6 @@
+/**
+ *  Handles fixtures' "View Table" page.
+ */
 define([
     "filters",
     "jquery",

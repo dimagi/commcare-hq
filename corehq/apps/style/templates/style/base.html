@@ -156,11 +156,13 @@
         {# Core Libraries #}
         {% if not request.use_requirejs %}
         {% compress js %}
+        {# TODO: not all of these are included when requirejs is on #}
         {% include "style/includes/core_libraries.html" %}
         {% endcompress %}
         {% endif %}
 
         {% if request.use_jquery_ui and not request.use_requirejs %}
+        {# TODO: add to requirejs_paths as needed - and probably separate out as its own include #}
         {% compress js %}
             <!-- UI libraries needed for all other widgets and interactions -->
             <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
@@ -186,7 +188,7 @@
 
         {# Up here because if daterangepicker is called from within a form widget, #}
         {# the javascript requiring the config file is run before js-inline #}
-        {% if request.use_daterangepicker and not request.use_requirejs %}
+        {% if request.use_daterangepicker and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         <script type="text/javascript" src="{% static 'moment/moment.js' %}"></script>
         <script type="text/javascript" src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
@@ -197,12 +199,12 @@
         {% block head %}
         {% endblock %}
 
-        {% if not request.use_requirejs %}
+        {% if not request.use_requirejs %} {# TODO: requirejs support #}
         {% include 'style/includes/analytics_all.html' %}
         {% endif %}
 
         {% if less_debug %}
-            <!-- 
+            <!--
                 This is not inside RequireJS because it has no dependencies
                 and ought to happen immediately on page load.
             -->
@@ -401,7 +403,7 @@
         {% endif %}
 
         {# HQ Specific Libraries #}
-        {% if not request.use_requirejs %}
+        {% if not request.use_requirejs %} {# TODO: requirejs support #}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% compress js %}
         <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
@@ -415,11 +417,11 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.domain and request.user.username and not request.use_requirejs %}
+        {% if request.domain and request.user.username and not request.use_requirejs %} {# TODO: requirejs support #}
             <script type="text/javascript" src="{% toggle_js_url request.domain request.user.username %}"></script>
         {% endif %}
 
-        {% if not request.use_requirejs %}
+        {% if not request.use_requirejs %} {# TODO: requirejs support #}
         <script type="text/javascript">
             $(function(){
                 $('.hq-help-template').each(function () {
@@ -430,7 +432,7 @@
         {% endif %}
         {# JavaScript Display Logic Libaries #}
 
-        {% if request.couch_user and request|toggle_enabled:"NOTIFICATIONS" and not request.use_requirejs %}
+        {% if request.couch_user and request|toggle_enabled:"NOTIFICATIONS" and not request.use_requirejs %} {# TODO: requirejs support #}
         <script type="text/javascript" src="{% static '/notifications/js/NotificationsService.ko.js' %}"></script>
         <script type="text/javascript">
             $(function () {
@@ -439,7 +441,7 @@
         </script>
         {% endif %}
 
-        {% if not request.use_requirejs %}
+        {% if not request.use_requirejs %} {# TODO: knockout no longer works on non-requirejs pages #}
         {% include "style/includes/ko.html" %}
         {% endif %}
 
@@ -482,7 +484,7 @@
         </script>
         {% endif %}
 
-        {% if request.use_angular_js and not request.use_requirejs %}
+        {% if request.use_angular_js and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         {% include "style/includes/angular.html" %}
         {% endcompress %}
@@ -494,13 +496,13 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_select2_v4 and not request.use_requirejs %}
+        {% if request.use_select2_v4 and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         <script type="text/javascript" src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_nvd3 and not request.use_requirejs %}
+        {% if request.use_nvd3 and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
         <script src="{% static 'nvd3/lib/fisheye.js' %}"></script>
@@ -509,7 +511,7 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_nvd3_v3 and not request.use_requirejs %}
+        {% if request.use_nvd3_v3 and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
         <script type="text/javascript" src="{% static 'd3/d3.min.js' %}"></script>
@@ -525,20 +527,20 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_typeahead and not request.use_requirejs %}
+        {% if request.use_typeahead and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
         <script src="{% static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_timepicker and not request.use_requirejs %}
+        {% if request.use_timepicker and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         <script type="text/javascript" src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.guided_tour and not request.use_requirejs %}
+        {% if request.guided_tour and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         <script src="{% static 'tour/js/tour.utils.js' %}"></script>
         <script type="text/javascript" src="{% static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
@@ -546,7 +548,7 @@
         {% endif %}
 
 
-        {% if not request.use_requirejs %}
+        {% if not request.use_requirejs %} {# TODO: requirejs support #}
         {% if request.use_maps or request.use_maps_async %}
         {% compress js %}
         <script type="text/javascript" src="{% static 'jquery-color/jquery.color.js' %}"></script>
@@ -555,25 +557,25 @@
         {% endif %}
         {% endif %}
 
-        {% if reqeust.maps_prefer_canvas and not request.use_requirejs %}
+        {% if reqeust.maps_prefer_canvas and not request.use_requirejs %} {# TODO: requirejs support #}
         <script>L_PREFER_CANVAS = true;</script>
         {% endif %}
 
-        {% if request.use_maps and not request.use_requirejs %}
+        {% if request.use_maps and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         <script src="{% static 'reports/javascripts/maps.js' %}"></script>
         <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_maps_async and not request.use_requirejs %}
+        {% if request.use_maps_async and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         <script src="{% static 'reports/javascripts/async_maps.js' %}"></script>
         <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_timeago and not request.use_requirejs %}
+        {% if request.use_timeago and not request.use_requirejs %} {# TODO: requirejs support #}
         <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
         <script>
             $(function () {
@@ -583,7 +585,7 @@
         </script>
         {% endif %}
 
-        {% if request.use_multiselect and not request.use_requirejs %}
+        {% if request.use_multiselect and not request.use_requirejs %} {# TODO: requirejs support #}
         {% compress js %}
         <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
         <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
@@ -602,7 +604,7 @@
         {# 30 Day Trial #}
         {% include 'style/includes/modal_30_day_trial.html' %}
 
-        {% if not request.use_requirejs %}
+        {% if not request.use_requirejs %} {# TODO: requirejs support #}
         <!--[if IE]>
         <script>
             $(function () {
