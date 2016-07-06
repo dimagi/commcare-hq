@@ -20,6 +20,7 @@ from corehq.apps.analytics.tasks import (
     track_clicked_signup_on_hubspot
 )
 from corehq.apps.analytics.utils import get_meta
+from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.exceptions import NameUnavailableException
@@ -45,6 +46,12 @@ def get_domain_context():
 
 def registration_default(request):
     return redirect(register_user)
+
+
+def _get_url_with_email(url, email):
+    if email:
+        url = "{}?e={}".format(url, email)
+    return url
 
 
 class ProcessRegistrationView(JSONResponseMixin, View):
@@ -118,7 +125,18 @@ class NewUserRegistrationView(BasePageView):
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
-        return super(NewUserRegistrationView, self).dispatch(request, *args, **kwargs)
+        response = super(NewUserRegistrationView, self).dispatch(request, *args, **kwargs)
+        if self.ab.version != ab_tests.NEW_USER_SIGNUP_OPTION_NEW:
+            response = HttpResponseRedirect(
+                _get_url_with_email(reverse('register_user'), self.prefilled_email)
+            )
+        self.ab.update_response(response)
+        return response
+
+    @property
+    @memoized
+    def ab(self):
+        return ab_tests.ABTest(ab_tests.NEW_USER_SIGNUP, self.request)
 
     @property
     def prefilled_email(self):
@@ -132,6 +150,7 @@ class NewUserRegistrationView(BasePageView):
             ),
             'reg_form_defaults': {'email': self.prefilled_email} if self.prefilled_email else {},
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'ab_test': self.ab.context,
         }
 
     @property
@@ -152,6 +171,15 @@ def register_user(request):
         else:
             return redirect("homepage")
     else:
+
+        ab = ab_tests.ABTest(ab_tests.NEW_USER_SIGNUP, request)
+        if ab.version != ab_tests.NEW_USER_SIGNUP_OPTION_OLD:
+            response = HttpResponseRedirect(
+                _get_url_with_email(reverse(NewUserRegistrationView.urlname), prefilled_email)
+            )
+            ab.update_response(response)
+            return response
+
         if request.method == 'POST':
             form = NewWebUserRegistrationForm(request.POST)
             if form.is_valid():
@@ -195,8 +223,11 @@ def register_user(request):
             'current_page': {'page_name': _('Create an Account')},
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'is_register_user': True,
+            'ab_test': ab.context,
         })
-        return render(request, 'registration/create_new_user.html', context)
+        response = render(request, 'registration/create_new_user.html', context)
+        ab.update_response(response)
+        return response
 
 
 class RegisterDomainView(TemplateView):
