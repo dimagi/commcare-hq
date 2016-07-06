@@ -341,8 +341,7 @@ class ProjectHealthDashboard(ProjectReport):
                              month_summary.inactive, month_summary.total_users_by_month])
         return table
 
-    @property
-    def export_table(self):
+    def build_excel_table(self):
         spreadsheet = []
         six_months_reports = self.previous_six_months()
 
@@ -367,6 +366,11 @@ class ProjectHealthDashboard(ProjectReport):
                                  user.is_performing])
             spreadsheet.append(table)
         return spreadsheet
+
+    @property
+    def export_table(self):
+        report = self.build_excel_table()
+        return report
 
     @property
     def template_context(self):
