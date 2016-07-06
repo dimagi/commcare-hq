@@ -67,7 +67,7 @@ class CaseBlock(dict):
             case_type=undefined,
             case_name=undefined,
             create=False,
-            date_opened=undefined,
+            date_opened=None,
             update=None,
             close=False,
             index=None,
@@ -99,7 +99,9 @@ class CaseBlock(dict):
         """
         super(CaseBlock, self).__init__()
         self._id = case_id
-        date_modified = date_modified or datetime.utcnow()
+        now = datetime.utcnow()
+        date_modified = date_modified or now
+        date_opened = date_opened or now
         update = copy.copy(update) if update else {}
         index = copy.copy(index) if index else {}
 
@@ -115,10 +117,9 @@ class CaseBlock(dict):
             case_name = "" if case_name is CaseBlock.undefined else case_name
             owner_id = "" if owner_id is CaseBlock.undefined else owner_id
         self['update'] = update
-        self['update'].update({
-            'date_opened':                  date_opened
-        })
+
         create_or_update = {
+            'date_opened':                  date_opened,
             self.CASE_TYPE:                 case_type,
             'case_name':                    case_name,
         }

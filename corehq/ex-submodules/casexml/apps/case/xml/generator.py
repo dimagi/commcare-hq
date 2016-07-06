@@ -148,6 +148,8 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_base_properties(self, element):
         super(V2CaseXMLGenerator, self).add_base_properties(element)
         from corehq.apps.users.cases import get_owner_id
+        if self.case.opened_on:
+            element.append(safe_element("date_opened", json_format_datetime(self.case.opened_on)))
         element.append(safe_element('owner_id', get_owner_id(self.case)))
 
     def add_custom_properties(self, element):
