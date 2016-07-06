@@ -912,6 +912,7 @@ def _batch_iterate_over_shards(batch_fn, next_start_args, start_from=None, chunk
     next_start_args(item) - a function that returns a tuple of "start_from" and "last_id" for the next batch.
     The key is used to exclude duplicate items.
     """
+    # TODO: implement this https://wiki.postgresql.org/images/3/35/Pagination_Done_the_PostgreSQL_Way.pdf
     start_from = start_from or datetime.min
     if not settings.USE_PARTITIONED_DATABASE:
         db_list = [None]  # use the default database
