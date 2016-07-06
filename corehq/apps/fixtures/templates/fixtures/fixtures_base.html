@@ -1,11 +1,6 @@
 {% extends "style/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block js %}{{ block.super }}
-    {% block reports-js %}
-    <!--script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script-->
-    {% endblock %}
-{% endblock %}
 
 {% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}\
 
@@ -18,7 +13,7 @@
                 "hqDefine": "{% static 'hqwebapp/js/hqModules' %}",
                 "hq.helpers": "{% static 'style/js/hq.helpers' %}",
                 "jquery": "{% static 'jquery/dist/jquery.min' %}",
-                "knockout": "{% static 'knockout/dist/knockout.debug' %}",  // has to be called 'knockout' due to a plugin that uses require("knockout")
+                "knockout": "{% static 'knockout/dist/knockout.debug' %}",
                 "ko.mapping": "{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min' %}",
                 "ko.global_handlers": "{% static 'style/ko/global_handlers.ko' %}",
                 "ko.knockout_bindings": "{% static 'style/ko/knockout_bindings.ko' %}",
@@ -48,12 +43,10 @@
                 "ko.components": { deps: ['knockout', 'underscore'] },
 
                 // TODO: only if request.use_datatables
-                "datatables": { deps: ['jquery'] },
-                "datatables.fixedColumns": { deps: ['datatables'] },
-                "datatables.bootstrap": { deps: ['datatables', 'bootstrap'] },
+                "datatables.bootstrap": { deps: ['datatables'] },
 
                 // TODO: specific to this file
-                "config.datatables": { deps: ['datatables.fixedColumns', 'datatables.bootstrap'] },
+                "config.datatables": { deps: ['datatables.bootstrap'] },
             },
             map: {
                 "datatables.fixedColumns": {
