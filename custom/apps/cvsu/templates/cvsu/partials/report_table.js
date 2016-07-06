@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% if report_table and report_table.datatables %}
-    var reportTables = new HQReportDataTables({
+    var reportTables = new hqImport('reports/javascripts/config.dataTables.bootstrap.js').HQReportDataTables({
         dataTableElem: '#report_table_{{ report.slug }}_{{ forloop.counter }}',
         defaultRows: {{ report_table.default_rows|default:10 }},
         startAtRowNum: {{ report_table.start_at_row|default:0 }},

@@ -6,7 +6,7 @@ if (typeof define === 'function' && define.amd) {
 }
 }(function ($) {
 
-function HQReportDataTables(options) {
+var HQReportDataTables = function(options) {
     var self = this;
     self.dataTableElem = options.dataTableElem || '.datatable';
     self.paginationType = options.paginationType || 'bs_normal';
@@ -318,9 +318,14 @@ jQuery.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) { return sortSpe
 
 jQuery.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) { return sortSpecial(a, b, false, convertDate); };
 
-return {
-    // TODO: did I break non-fixtures pages that use this?
+var module = {
     HQReportDataTables: HQReportDataTables,
 };
+
+hqDefine('reports/javascripts/config.dataTables.bootstrap.js', function() {
+    return module;
+});
+
+return module;
 
 }));
