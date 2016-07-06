@@ -16,7 +16,8 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
+    XFormDuplicate, SubmissionErrorLog
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -190,7 +191,16 @@ def get_couch_xform_to_elasticsearch_pillow(pillow_id='CouchXFormToElasticsearch
 def get_couch_form_reindexer():
     return ResumableBulkElasticPillowReindexer(
         name="CouchXFormToElasticsearchPillow",
-        doc_types=[XFormInstance],
+        doc_types=[
+            XFormInstance,
+            XFormArchived,
+            XFormError,
+            XFormDeprecated,
+            XFormDuplicate,
+            ('XFormInstance-Deleted', XFormInstance),
+            ('HQSubmission', XFormInstance),
+            SubmissionErrorLog,
+        ],
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_filter=device_log_filter,
