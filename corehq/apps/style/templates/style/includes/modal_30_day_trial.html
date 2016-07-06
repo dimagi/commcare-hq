@@ -54,10 +54,13 @@
             </div>
         </div>
     </div>
-    <!-- TODO: requirejs support -->
-    <!--script type="text/javascript">
+    <script type="text/javascript">
+    {% if request.use_requirejs %}
+        requirejs(['jquery', 'bootstrap'], function($) {
+    {% else %}
         $(window).load(function(){
+    {% endif %}
             $('#modalTrial30Day').modal('show');
         });
-    </script-->
+    </script>
 {% endif %}
