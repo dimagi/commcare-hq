@@ -130,13 +130,15 @@ class ResumableFunctionIterator(object):
     indefinitely unless it is removed with `discard_state()`.
     :param data_function: function to iterate over. Must return an list of data elements.
     :param args_provider: An instance of the ``ArgsProvider`` class.
+    :param item_getter: Function which can be used to get an item by ID. Used for retrying items that failed.
     :param event_handler: Instance of ``PaginationEventHandler`` to be notified on page start and page end.
     """
 
-    def __init__(self, iteration_key, data_function, args_provider, event_handler=None):
+    def __init__(self, iteration_key, data_function, args_provider, item_getter, event_handler=None):
         self.iteration_key = iteration_key
         self.data_function = data_function
         self.args_provider = args_provider
+        self.item_getter = item_getter
         self.event_handler = event_handler
         self.iteration_name = '{}/{}'.format(iteration_key, data_function.__name__)
         self.iteration_id = hashlib.sha1(self.iteration_name).hexdigest()
@@ -168,8 +170,19 @@ class ResumableFunctionIterator(object):
         for item in paginate_function(self.data_function, resumable_args, event_handler):
             yield item
 
+        retried = {}
+        while self.state.retry != retried:
+            for item_id, retries in list(self.state.retry.iteritems()):
+                if retries == retried.get(item_id):
+                    continue  # skip already retried (successfully)
+                retried[item_id] = retries
+                item = self.item_getter(item_id)
+                if item is not None:
+                    yield item
+
         self.state.args = None
         self.state.kwargs = None
+        self.state.retry = {}
         self.state.complete = True
         self._save_state()
 
@@ -181,6 +194,31 @@ class ResumableFunctionIterator(object):
             ])
         else:
             return ResumableIteratorEventHandler(self)
+
+    def retry(self, item_id, max_retry=3):
+        """Add document to be yielded at end of iteration
+
+        Iteration order of retry documents is undefined. All retry
+        documents will be yielded after the initial non-retry phase of
+        iteration has completed, and every retry document will be
+        yielded each time the iterator is stopped and resumed during the
+        retry phase. This method is relatively inefficient because it
+        forces the iteration state to be saved to couch. If you find
+        yourself calling this for many documents during the iteration
+        you may want to consider a different retry strategy.
+
+        :param item_id: The ID of the item to retry. It will be re-fetched using
+        the ``item_getter`` before being yielded from the iteration.
+        :param max_retry: Maximum number of times a given document may
+        be retried.
+        :raises: `TooManyRetries` if this method has been called too
+        many times with a given document.
+        """
+        retries = self.state.retry.get(item_id, 0) + 1
+        if retries > max_retry:
+            raise TooManyRetries(item_id)
+        self.state.retry[item_id] = retries
+        self._save_state()
 
     @property
     def progress_info(self):
@@ -224,3 +262,7 @@ class ResumableIteratorEventHandler(PaginationEventHandler):
         self.iterator.state.args = list(args)
         self.iterator.state.kwargs = kwargs
         self.iterator._save_state()
+
+
+class TooManyRetries(Exception):
+    pass
