@@ -1,10 +1,13 @@
+import uuid
+
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
 
-from corehq.util.couch_doc_processor import ResumableDocsByTypeIterator, TooManyRetries, BaseDocProcessor, \
+from corehq.util.couch_doc_processor import ResumableDocsByTypeIterator, BaseDocProcessor, \
     CouchDocumentProcessor, BulkDocProcessor, BulkProcessingFailed
+from corehq.util.pagination import TooManyRetries
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import get_db
@@ -35,6 +38,7 @@ class TestResumableDocsByTypeIterator(TestCase):
         self.sorted_keys = ["{}-{}".format(n, i)
             for n in ["bar", "baz", "foo"]
             for i in range(3)]
+        self.iteration_key = uuid.uuid4().hex
         self.itr = self.get_iterator()
 
     def tearDown(self):
@@ -54,7 +58,7 @@ class TestResumableDocsByTypeIterator(TestCase):
         return doc
 
     def get_iterator(self):
-        return ResumableDocsByTypeIterator(self.db, self.doc_types, "test", 2)
+        return ResumableDocsByTypeIterator(self.db, self.doc_types, self.iteration_key, 2)
 
     def test_iteration(self):
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys)
@@ -75,14 +79,14 @@ class TestResumableDocsByTypeIterator(TestCase):
     def test_iteration_with_retry(self):
         itr = iter(self.itr)
         doc = next(itr)
-        self.itr.retry(doc)
+        self.itr.retry(doc['_id'])
         self.assertEqual(doc["_id"], "bar-0")
         self.assertEqual(["bar-0"] + [d["_id"] for d in itr],
                          self.sorted_keys + ["bar-0"])
 
     def test_iteration_complete_after_retry(self):
         itr = iter(self.itr)
-        self.itr.retry(next(itr))
+        self.itr.retry(next(itr)['_id'])
         list(itr)
         self.itr = self.get_iterator()
         self.assertEqual([doc["_id"] for doc in self.itr], [])
@@ -92,19 +96,19 @@ class TestResumableDocsByTypeIterator(TestCase):
         doc = next(itr)
         ids = [doc["_id"]]
         self.assertEqual(doc["_id"], "bar-0")
-        self.itr.retry(doc)
+        self.itr.retry(doc['_id'])
         retries = 1
         for doc in itr:
             ids.append(doc["_id"])
             if doc["_id"] == "bar-0":
                 if retries < 3:
-                    self.itr.retry(doc)
+                    self.itr.retry(doc['_id'])
                     retries += 1
                 else:
                     break
         self.assertEqual(doc["_id"], "bar-0")
         with self.assertRaises(TooManyRetries):
-            self.itr.retry(doc)
+            self.itr.retry(doc['_id'])
         self.assertEqual(ids, self.sorted_keys + ["bar-0", "bar-0", "bar-0"])
         self.assertEqual(list(itr), [])
         self.assertEqual(list(self.get_iterator()), [])
@@ -113,7 +117,7 @@ class TestResumableDocsByTypeIterator(TestCase):
         itr = iter(self.itr)
         doc = next(itr)
         self.assertEqual(doc["_id"], "bar-0")
-        self.itr.retry(doc)
+        self.itr.retry(doc['_id'])
         self.db.delete_doc(doc)
         try:
             self.assertEqual(["bar-0"] + [d["_id"] for d in itr],
@@ -123,8 +127,9 @@ class TestResumableDocsByTypeIterator(TestCase):
 
     def test_iteration_with_progress_info(self):
         itr = iter(self.itr)
+
         self.assertEqual([next(itr)["_id"] for i in range(6)], self.sorted_keys[:6])
-        self.assertEqual(self.itr.progress_info, None)
+        self.assertEqual(self.itr.progress_info, {})
         self.itr.progress_info = {"visited": 6}
         # stop/resume iteration
         self.itr = self.get_iterator()
@@ -211,19 +216,21 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
             doc['_id']: doc for doc in docs
         })
         Bar.set_db(self.db)
+        self.processor_slug = uuid.uuid4().hex
 
     def tearDown(self):
         self.db.reset()
 
     def _get_processor(self, chunk_size=2, ignore_docs=None, skip_docs=None, reset=False, doc_types=None):
         doc_types = doc_types or {'Bar': Bar}
-        doc_processor = DemoProcessor('test')
+        doc_processor = DemoProcessor(self.processor_slug)
         processor = self.processor_class(
             doc_types,
             doc_processor,
             chunk_size=chunk_size,
             reset=reset
         )
+        processor.docs_by_type.couch_db = self.db
         if ignore_docs:
             doc_processor.ignore_docs = ignore_docs
         if skip_docs:

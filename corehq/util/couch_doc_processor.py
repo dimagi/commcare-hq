@@ -1,4 +1,3 @@
-import hashlib
 import weakref
 from abc import ABCMeta, abstractproperty
 from datetime import datetime
@@ -6,11 +5,35 @@ from datetime import datetime
 import six
 from couchdbkit import ResourceNotFound
 
-from corehq.util.couch_helpers import paginate_view
-from corehq.util.pagination import PaginationEventHandler, DelegatingPaginationEventHandler
+from corehq.util.couch_helpers import PaginatedViewArgsProvider
+from corehq.util.pagination import PaginationEventHandler, ResumableFunctionIterator, TooManyRetries
 
 
-class ResumableDocsByTypeIterator(object):
+class ResumableDocsByTypeArgsProvider(PaginatedViewArgsProvider):
+    def __init__(self, initial_view_kwargs, doc_types):
+        super(ResumableDocsByTypeArgsProvider, self).__init__(initial_view_kwargs)
+        self.doc_types = doc_types
+
+    def get_next_args(self, result, *last_args, **last_view_kwargs):
+        try:
+            return super(ResumableDocsByTypeArgsProvider, self).get_next_args(result, *last_args, **last_view_kwargs)
+        except StopIteration:
+            last_doc_type = last_view_kwargs["startkey"][0]
+            # skip doc types already processed
+            index = self.doc_types.index(last_doc_type) + 1
+            self.doc_types = self.doc_types[index:]
+            try:
+                next_doc_type = self.doc_types[0]
+            except IndexError:
+                raise StopIteration
+            last_view_kwargs.pop('skip', None)
+            last_view_kwargs.pop("startkey_docid", None)
+            last_view_kwargs['startkey'] = [next_doc_type]
+            last_view_kwargs['endkey'] = [next_doc_type, {}]
+        return last_args, last_view_kwargs
+
+
+def ResumableDocsByTypeIterator(db, doc_types, iteration_key, chunk_size=100, view_event_handler=None):
     """Perform one-time resumable iteration over documents by type
 
     Iteration can be efficiently stopped and resumed. The iteration may
@@ -29,162 +52,34 @@ class ResumableDocsByTypeIterator(object):
     is stopped and later resumed.
     """
 
-    def __init__(self, db, doc_types, iteration_key, chunk_size=100, view_event_handler=None):
-        if isinstance(doc_types, str):
-            raise TypeError("expected list of strings, got %r" % (doc_types,))
-        self.db = db
-        self.original_doc_types = doc_types = sorted(doc_types)
-        self.iteration_key = iteration_key
-        self.chunk_size = chunk_size
-        self.view_event_handler = view_event_handler
-        iteration_name = "{}/{}".format(iteration_key, " ".join(doc_types))
-        self.iteration_id = hashlib.sha1(iteration_name).hexdigest()
-        try:
-            self.state = db.get(self.iteration_id)
-        except ResourceNotFound:
-            # new iteration
-            self.state = {
-                "_id": self.iteration_id,
-                "doc_type": "ResumableDocsByTypeIteratorState",
-                "retry": {},
+    def data_function(**view_kwargs):
+        return db.view('all_docs/by_doc_type', **view_kwargs)
 
-                # for humans
-                "name": iteration_name,
-                "timestamp": datetime.utcnow().isoformat()
-            }
-            args = {}
-        else:
-            # resume iteration
-            args = self.state.get("offset", {}).copy()
-            if args:
-                assert args.get("startkey"), args
-                doc_type = args["startkey"][0]
-                # skip doc types before offset
-                doc_types = doc_types[doc_types.index(doc_type):]
-            else:
-                # non-retry phase of iteration is complete
-                doc_types = []
+    doc_types = sorted(doc_types)
+    data_function.__name__ = " ".join(doc_types)
 
-        if view_event_handler:
-            event_handler = DelegatingPaginationEventHandler([
-                ResumableDocsByTypeEventHandler(self),
-                view_event_handler
-            ])
-        else:
-            event_handler = ResumableDocsByTypeEventHandler(self)
+    view_kwargs = {
+        'limit': chunk_size,
+        'include_docs': True,
+        'reduce': False,
+        'startkey': [doc_types[0]],
+        'endkey': [doc_types[0], {}]
+    }
 
-        args.update(
-            view_name='all_docs/by_doc_type',
-            chunk_size=chunk_size,
-            event_handler=event_handler,
-            include_docs=True,
-            reduce=False,
-        )
-        self.view_args = args
-        self.doc_types = doc_types
+    args_provider = ResumableDocsByTypeArgsProvider(view_kwargs, doc_types)
 
-    def __iter__(self):
-        args = self.view_args
-        for doc_type in self.doc_types:
-            if args.get("startkey", [None])[0] != doc_type:
-                args.pop("startkey_docid", None)
-                args["startkey"] = [doc_type]
-            args["endkey"] = [doc_type, {}]
-            for result in paginate_view(self.db, **args):
+    class ResumableDocsIterator(ResumableFunctionIterator):
+        def __iter__(self):
+            for result in super(ResumableDocsIterator, self).__iter__():
                 yield result['doc']
 
-        retried = {}
-        while self.state["retry"] != retried:
-            for doc_id, retries in list(self.state["retry"].iteritems()):
-                if retries == retried.get(doc_id):
-                    continue  # skip already retried (successfully)
-                retried[doc_id] = retries
-                try:
-                    yield self.db.get(doc_id)
-                except ResourceNotFound:
-                    pass
-
-        # save iteration state without offset to signal completion
-        self.state.pop("offset", None)
-        self.state["retry"] = {}
-        self._save_state()
-
-    def retry(self, doc, max_retry=3):
-        """Add document to be yielded at end of iteration
-
-        Iteration order of retry documents is undefined. All retry
-        documents will be yielded after the initial non-retry phase of
-        iteration has completed, and every retry document will be
-        yielded each time the iterator is stopped and resumed during the
-        retry phase. This method is relatively inefficient because it
-        forces the iteration state to be saved to couch. If you find
-        yourself calling this for many documents during the iteration
-        you may want to consider a different retry strategy.
-
-        :param doc: The doc dict to retry. It will be re-fetched from
-        the database before being yielded from the iteration.
-        :param max_retry: Maximum number of times a given document may
-        be retried.
-        :raises: `TooManyRetries` if this method has been called too
-        many times with a given document.
-        """
-        doc_id = doc["_id"]
-        retries = self.state["retry"].get(doc_id, 0) + 1
-        if retries > max_retry:
-            raise TooManyRetries(doc_id)
-        self.state["retry"][doc_id] = retries
-        self._save_state()
-
-    @property
-    def progress_info(self):
-        """Extra progress information
-
-        This property can be used to store and retrieve extra progress
-        information associated with the iteration. The information is
-        persisted with the iteration state in couch.
-        """
-        return self.state.get("progress_info")
-
-    @progress_info.setter
-    def progress_info(self, info):
-        self.state["progress_info"] = info
-        self._save_state()
-
-    def _save_state(self):
-        self.state["timestamp"] = datetime.utcnow().isoformat()
-        self.db.save_doc(self.state)
-
-    def discard_state(self):
+    def item_getter(doc_id):
         try:
-            self.db.delete_doc(self.iteration_id)
+            return {'doc': db.get(doc_id)}
         except ResourceNotFound:
             pass
-        self.__init__(
-            self.db,
-            self.original_doc_types,
-            self.iteration_key,
-            self.chunk_size,
-            self.view_event_handler
-        )
 
-
-class ResumableDocsByTypeEventHandler(PaginationEventHandler):
-
-    def __init__(self, iterator):
-        self.iterator_ref = weakref.ref(iterator)
-
-    def page_start(self, total_emitted, *args, **kwargs):
-        iterator = self.iterator_ref()
-        if iterator:
-            offset = {k: v for k, v in kwargs.items() if k.startswith("startkey")}
-            iterator.state["offset"] = offset
-            iterator._save_state()
-        else:
-            raise Exception("Iterator has gone away")
-
-
-class TooManyRetries(Exception):
-    pass
+    return ResumableDocsIterator(iteration_key, data_function, args_provider, item_getter, view_event_handler)
 
 
 class BulkProcessingFailed(Exception):
@@ -370,7 +265,7 @@ class CouchDocumentProcessor(object):
             self.processed += 1
         else:
             try:
-                self.docs_by_type.retry(doc, self.max_retry)
+                self.docs_by_type.retry(doc['_id'], self.max_retry)
             except TooManyRetries:
                 if not self.doc_processor.handle_skip(doc):
                     raise
