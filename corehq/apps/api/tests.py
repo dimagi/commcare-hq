@@ -1700,8 +1700,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         new_user.save()
 
         response = self._assert_auth_get_resource(self.single_endpoint(self.report_configuration._id),
-                                                  username='test', password='testpass'
-        )
+                                                  username='test', password='testpass')
         self.assertEqual(response.status_code, 403)  # 403 is "Forbidden"
 
         wrong_domain.delete()
