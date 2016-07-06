@@ -23,12 +23,26 @@ hqDefine('registration/js/new_user.ko.js', function () {
         throw "please call setResetEmailFeedbackFn. " +
               "Expects boolean isValidating. " + isValidating;
     };
+    _private.submitAttemptFn = function () {
+        // useful for off-module analytics
+    };
+    _private.submitSuccessFn = function () {
+        // useful for off-module analytics
+    };
 
     module.setResetEmailFeedbackFn = function (callback) {
         // use this function to reset the form-control-feedback ui
         // in the email form so that it removes the waiting / checking email note
         // or adds it if the validator is still in async validation mode
         _private.resetEmailFeedback = callback;
+    };
+
+    module.setSubmitAttemptFn = function (callback) {
+        _private.submitAttemptFn = callback;
+    };
+
+    module.setSubmitSuccessFn = function (callback) {
+        _private.submitSuccessFn = callback;
     };
 
     module.initRMI = function (rmiUrl) {
@@ -256,6 +270,8 @@ hqDefine('registration/js/new_user.ko.js', function () {
             self.submitErrors([]);
             self.isSubmitting(true);
 
+            _private.submitAttemptFn();
+            
             _private.rmi(
                 "register_new_user",
                 {data : _getDataForSubmission()},
@@ -273,6 +289,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
                         } else if (response.success) {
                             self.isSubmitting(false);
                             self.isSubmitSuccess(true);
+                            _private.submitSuccessFn();
                         }
                     },
                     error: function () {
