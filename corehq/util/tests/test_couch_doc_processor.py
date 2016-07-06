@@ -68,7 +68,7 @@ class TestResumableDocsByTypeIterator(TestCase):
         self.assertEqual([next(itr)["_id"] for i in range(6)], self.sorted_keys[:6])
         # stop/resume iteration
         self.itr = self.get_iterator()
-        self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[4:])
+        self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[5:])
 
     def test_resume_iteration_after_complete_iteration(self):
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys)
@@ -138,7 +138,7 @@ class TestResumableDocsByTypeIterator(TestCase):
         # stop/resume iteration
         self.itr = self.get_iterator()
         self.assertEqual(self.itr.progress_info, {"visited": "six"})
-        self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[4:])
+        self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[5:])
 
 
 class DemoProcessor(BaseDocProcessor):
