@@ -6,9 +6,8 @@ from datetime import datetime
 import six
 from couchdbkit import ResourceNotFound
 
-from corehq.util.couch_helpers import (
-    PaginateViewEventHandler, paginate_view, DelegatingViewEventHandler
-)
+from corehq.util.couch_helpers import paginate_view
+from corehq.util.pagination import PaginationEventHandler, DelegatingPaginationEventHandler
 
 
 class ResumableDocsByTypeIterator(object):
@@ -67,7 +66,7 @@ class ResumableDocsByTypeIterator(object):
                 doc_types = []
 
         if view_event_handler:
-            event_handler = DelegatingViewEventHandler([
+            event_handler = DelegatingPaginationEventHandler([
                 ResumableDocsByTypeEventHandler(self),
                 view_event_handler
             ])
@@ -77,7 +76,7 @@ class ResumableDocsByTypeIterator(object):
         args.update(
             view_name='all_docs/by_doc_type',
             chunk_size=chunk_size,
-            log_handler=event_handler,
+            event_handler=event_handler,
             include_docs=True,
             reduce=False,
         )
@@ -169,12 +168,12 @@ class ResumableDocsByTypeIterator(object):
         )
 
 
-class ResumableDocsByTypeEventHandler(PaginateViewEventHandler):
+class ResumableDocsByTypeEventHandler(PaginationEventHandler):
 
     def __init__(self, iterator):
         self.iterator_ref = weakref.ref(iterator)
 
-    def view_starting(self, db, view_name, kwargs, total_emitted):
+    def page_start(self, total_emitted, *args, **kwargs):
         iterator = self.iterator_ref()
         if iterator:
             offset = {k: v for k, v in kwargs.items() if k.startswith("startkey")}
@@ -404,12 +403,12 @@ class CouchDocumentProcessor(object):
             print(DOCS_SKIPPED_WARNING.format(self.skipped))
 
 
-class BulkDocProcessorEventHandler(PaginateViewEventHandler):
+class BulkDocProcessorEventHandler(PaginationEventHandler):
 
     def __init__(self, processor):
         self.processor_ref = weakref.ref(processor)
 
-    def view_ending(self, db, view_name, kwargs, total_emitted, time):
+    def page_end(self, total_emitted, duration, *args, **kwargs):
         processor = self.processor_ref()
         if processor:
             processor.process_chunk()
