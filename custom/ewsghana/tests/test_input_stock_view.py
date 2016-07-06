@@ -26,6 +26,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(TestInputStockView, cls).setUpClass()
         cls.domain = initial_bootstrap(TEST_DOMAIN)
         db = get_db()
         if db.doc_exist(DOMAIN_MODULE_KEY):
@@ -134,6 +135,7 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
         cls.client = Client()
 
     def setUp(self):
+        super(TestInputStockView, self).setUp()
         StockTransaction.objects.all().delete()
         StockReport.objects.all().delete()
         StockState.objects.all().delete()
@@ -318,3 +320,4 @@ class TestInputStockView(TestCase, DomainSubscriptionMixin):
         cls.web_user1.delete()
         cls.domain.delete()
         cls.teardown_subscription()
+        super(TestInputStockView, cls).tearDownClass()

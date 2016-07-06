@@ -12,10 +12,10 @@ There are three steps to adding a new app to test:
 
 ## Creating an alternative configuration for an app
 
-Occasionally there's a need to use a different mocha template to run tests for the same app. An example of this is if the app uses javascript that depends on bootstrap2 libraries and javascript that depends on bootstrap3 libraries. In order to create multiple configurations, specify the app in the `Gruntfile.js` like this:
+Occasionally there's a need to use a different mocha template to run tests for the same app. In order to create multiple configurations, specify the app in the `Gruntfile.js` like this:
 
 ```
-<app>#<config>  // (e.g. app_manager#b3)
+<app>#<config>
 ```
 
 Now mocha will look for that template in `corehq/apps/<app>/templates/<app>/spec/<config>/mocha.html`

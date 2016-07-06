@@ -1,0 +1,11 @@
+{% load i18n %}
+
+<div class="alert alert-danger">
+    <p>
+        {{ error }}
+    </p>
+</div>
+
+{% if url %}
+    <a href="{{ url }}" class="btn btn-primary">{% trans "Return to import cases" %}</a>
+{% endif %}

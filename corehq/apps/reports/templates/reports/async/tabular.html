@@ -5,8 +5,8 @@
 
 {% block js %}{{ block.super }}
     {% if charts %}
-    <script type="text/javascript" src="{% new_static 'nvd3/lib/d3.v2.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'nvd3/nv.d3.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
+    <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
     {% endif %}
 {% endblock %}
 
@@ -124,8 +124,6 @@
         {% if report_table and report_table.datatables %}
             var reportTables = new HQReportDataTables({
                 dataTableElem: '#report_table_{{ report.slug }}',
-                useBootstrap3: true,
-                paginationType: 'bs_normal',
                 defaultRows: {{ report_table.default_rows|default:10 }},
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},
                 showAllRowsOption: {{ report_table.show_all_rows|JSON }},

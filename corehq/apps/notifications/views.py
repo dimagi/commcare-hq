@@ -13,7 +13,6 @@ from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
 from corehq.apps.notifications.models import Notification
-from corehq.apps.style.decorators import use_bootstrap3
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):
@@ -49,7 +48,6 @@ class ManageNotificationView(BasePageView):
     template_name = 'notifications/manage_notifications.html'
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(ManageNotificationView, self).dispatch(request, *args, **kwargs)
 

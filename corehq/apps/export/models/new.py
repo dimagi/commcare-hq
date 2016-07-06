@@ -9,6 +9,7 @@ from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
+from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -17,7 +18,7 @@ from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_for_app_id,
     get_all_built_app_ids_and_versions,
-    get_latest_built_app_ids_and_versions,
+    get_latest_app_ids_and_versions,
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
@@ -26,7 +27,6 @@ from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from corehq.toggles import USE_SQL_BACKEND
 from corehq.util.global_request import get_request
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
@@ -48,7 +48,8 @@ from corehq.apps.export.const import (
     DEID_TRANSFORM_FUNCTIONS,
     PROPERTY_TAG_CASE,
     USER_DEFINED_SPLIT_TYPES,
-    PLAIN_USER_DEFINED_SPLIT_TYPE
+    PLAIN_USER_DEFINED_SPLIT_TYPE,
+    DATA_SCHEMA_VERSION,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
@@ -213,7 +214,11 @@ class ExportColumn(DocumentSchema):
         else:
             column = ExportColumn(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
-        column.selected = not column._is_deleted(app_ids_and_versions) and is_main_table and not is_case_update
+        column.selected = (
+            not column._is_deleted(app_ids_and_versions) and
+            not is_case_update and
+            is_main_table
+        )
         return column
 
     def _is_deleted(self, app_ids_and_versions):
@@ -437,6 +442,15 @@ class ExportInstance(BlobMixin, Document):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
     @property
+    @memoized
+    def has_multimedia(self):
+        for table in self.tables:
+            for column in table.selected_columns:
+                if isinstance(column, MultiMediaExportColumn):
+                    return True
+        return False
+
+    @property
     def selected_tables(self):
         return filter(lambda t: t.selected, self.tables)
 
@@ -460,7 +474,7 @@ class ExportInstance(BlobMixin, Document):
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
 
-        latest_app_ids_and_versions = get_latest_built_app_ids_and_versions(
+        latest_app_ids_and_versions = get_latest_app_ids_and_versions(
             schema.domain,
             getattr(schema, 'app_id', None),
         )
@@ -474,6 +488,7 @@ class ExportInstance(BlobMixin, Document):
                 group_schema.last_occurrences,
                 latest_app_ids_and_versions,
             )
+
             prev_index = 0
             for item in group_schema.items:
                 index, column = table.get_column(
@@ -817,12 +832,68 @@ class ExportDataSchema(Document):
     domain = StringProperty()
     created_on = DateTimeProperty(default=datetime.utcnow)
     group_schemas = SchemaListProperty(ExportGroupSchema)
+    app_id = StringProperty()
+    version = IntegerProperty(default=1)
 
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
     last_app_versions = DictProperty()
 
     class Meta:
         app_label = 'export'
+
+    @classmethod
+    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False):
+        """Builds a schema from Application builds for a given identifier
+
+        :param domain: The domain that the export belongs to
+        :param app_id: The app_id that the export belongs to (or None if export is not associated with an app.
+        :param identifier: The unique identifier of the schema being exported.
+            case_type for Case Exports and xmlns for Form Exports
+        :returns: Returns a FormExportDataSchema instance
+        """
+
+        original_id, original_rev = None, None
+        current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
+        if (current_schema
+                and not force_rebuild
+                and current_schema.version == DATA_SCHEMA_VERSION):
+            original_id, original_rev = current_schema._id, current_schema._rev
+        else:
+            current_schema = cls()
+
+        app_build_ids = cls._get_app_build_ids_to_process(
+            domain,
+            app_id,
+            current_schema.last_app_versions,
+        )
+        if app_id:
+            app_build_ids.append(app_id)
+        for app_doc in iter_docs(Application.get_db(), app_build_ids):
+            # TODO: Remove this when we mark applications that have been submitted
+            if (should_use_sql_backend(domain) and
+                    not app_doc.get('is_released', False) and
+                    app_doc.get('copy_of')):
+                continue
+
+            app = Application.wrap(app_doc)
+            current_schema = cls._process_app_build(
+                current_schema,
+                app,
+                identifier,
+            )
+
+            current_schema.record_update(app_id, app.version)
+
+        current_schema.domain = domain
+        current_schema.app_id = app_id
+        current_schema.version = DATA_SCHEMA_VERSION
+        current_schema._set_identifier(identifier)
+        current_schema = cls._save_export_schema(
+            current_schema,
+            original_id,
+            original_rev
+        )
+        return current_schema
 
     @classmethod
     def _merge_schemas(cls, *schemas):
@@ -883,10 +954,30 @@ class ExportDataSchema(Document):
             app_version,
         )
 
+    @staticmethod
+    def _save_export_schema(current_schema, original_id, original_rev):
+        """
+        Given a schema object, this function saves the object and ensures that the
+        ID remains the save as the previous save if there existed a previous version.
+        """
+        if original_id and original_rev:
+            current_schema._id = original_id
+            current_schema._rev = original_rev
+
+        try:
+            current_schema.save()
+        except ResourceConflict:
+            # It's possible that another process updated the schema before we
+            # got to it. If so, we want to overwrite those changes because we
+            # have the most recently built schema.
+            current_schema._rev = ExportDataSchema.get_db().get_rev(current_schema._id)
+            current_schema.save()
+
+        return current_schema
+
 
 class FormExportDataSchema(ExportDataSchema):
 
-    app_id = StringProperty()
     xmlns = StringProperty()
     datatype_mapping = defaultdict(lambda: ScalarItem, {
         'MSelect': MultipleChoiceItem,
@@ -900,68 +991,36 @@ class FormExportDataSchema(ExportDataSchema):
     def type(self):
         return FORM_EXPORT
 
+    def _set_identifier(self, form_xmlns):
+        self.xmlns = form_xmlns
+
     @staticmethod
-    def generate_schema_from_builds(domain, app_id, form_xmlns, force_rebuild=False):
-        """Builds a schema from Application builds for a given identifier
-
-        :param domain: The domain that the export belongs to
-        :param app_id: The app_id that the export belongs to
-        :param unique_form_id: The unique identifier of the item being exported
-        :returns: Returns a FormExportDataSchema instance
-        """
-        original_id, original_rev = None, None
-        current_xform_schema = get_latest_form_export_schema(domain, app_id, form_xmlns)
-        if current_xform_schema and not force_rebuild:
-            original_id, original_rev = current_xform_schema._id, current_xform_schema._rev
-        else:
-            current_xform_schema = FormExportDataSchema()
-
-        app_build_ids = get_built_app_ids_for_app_id(
+    def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
+        return get_built_app_ids_for_app_id(
             domain,
             app_id,
-            current_xform_schema.last_app_versions.get(app_id)
+            last_app_versions.get(app_id)
         )
 
-        for app_doc in iter_docs(Application.get_db(), app_build_ids):
-            # TODO: Remove this when we mark applications that have been submitted
-            if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
-                continue
+    @staticmethod
+    def get_latest_export_schema(domain, app_id, form_xmlns):
+        return get_latest_form_export_schema(domain, app_id, form_xmlns)
 
-            app = Application.wrap(app_doc)
-            xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
-            if not xform:
-                continue
-            case_updates = xform.get_case_updates(xform.get_module().case_type)
-            xform = xform.wrapped_xform()
-            xform_schema = FormExportDataSchema._generate_schema_from_xform(
-                xform,
-                case_updates,
-                app.langs,
-                app.copy_of,
-                app.version,
-            )
-            current_xform_schema = FormExportDataSchema._merge_schemas(current_xform_schema, xform_schema)
-            current_xform_schema.record_update(app.copy_of, app.version)
-
-        if not original_id or app_build_ids:
-            # Don't save the schema if there is already a saved schema object
-            # and we didn't update it with any app builds
-            if original_id and original_rev:
-                current_xform_schema._id = original_id
-                current_xform_schema._rev = original_rev
-            current_xform_schema.domain = domain
-            current_xform_schema.app_id = app_id
-            current_xform_schema.xmlns = form_xmlns
-            try:
-                current_xform_schema.save()
-            except ResourceConflict:
-                # It's possible that another process updated the schema before we
-                # got to it. If so, we want to overwrite those changes because we
-                # have the most recently built schema.
-                current_xform_schema._rev = FormExportDataSchema.get_db().get_rev(current_xform_schema._id)
-                current_xform_schema.save()
-
-        return current_xform_schema
+    @staticmethod
+    def _process_app_build(current_schema, app, form_xmlns):
+        xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
+        if not xform:
+            return current_schema
+        case_updates = xform.get_case_updates(xform.get_module().case_type)
+        xform = xform.wrapped_xform()
+        xform_schema = FormExportDataSchema._generate_schema_from_xform(
+            xform,
+            case_updates,
+            app.langs,
+            app.copy_of or app._id,  # If it's not a copy, must be current
+            app.version,
+        )
+        return FormExportDataSchema._merge_schemas(current_schema, xform_schema)
 
     @staticmethod
     def _generate_schema_from_xform(xform, case_updates, langs, app_id, app_version):
@@ -1027,8 +1086,11 @@ class CaseExportDataSchema(ExportDataSchema):
     def type(self):
         return CASE_EXPORT
 
+    def _set_identifier(self, case_type):
+        self.case_type = case_type
+
     @staticmethod
-    def _get_app_build_ids_to_process(domain, last_app_versions):
+    def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
         app_build_verions = get_all_built_app_ids_and_versions(domain)
         # Filter by current app id
         app_build_verions = filter(
@@ -1040,84 +1102,41 @@ class CaseExportDataSchema(ExportDataSchema):
         return map(lambda app_build_version: app_build_version.build_id, app_build_verions)
 
     @staticmethod
-    def generate_schema_from_builds(domain, case_type, force_rebuild=False):
-        """Builds a schema from Application builds for a given identifier
+    def get_latest_export_schema(domain, app_id, case_type):
+        return get_latest_case_export_schema(domain, case_type)
 
-        :param domain: The domain that the export belongs to
-        :param unique_form_id: The unique identifier of the item being exported
-        :returns: Returns a CaseExportDataSchema instance
-        """
-
-        original_id, original_rev = None, None
-        current_case_schema = get_latest_case_export_schema(domain, case_type)
-
-        if current_case_schema and not force_rebuild:
-            # Save the original id an rev so we can later save the document under the same _id
-            original_id, original_rev = current_case_schema._id, current_case_schema._rev
-        else:
-            current_case_schema = CaseExportDataSchema()
-
-        app_build_ids = CaseExportDataSchema._get_app_build_ids_to_process(
-            domain,
-            current_case_schema.last_app_versions,
+    @staticmethod
+    def _process_app_build(current_schema, app, case_type):
+        case_property_mapping = get_case_properties(
+            app,
+            [case_type],
+            include_parent_properties=False
         )
-
-        for app_doc in iter_docs(Application.get_db(), app_build_ids):
-            # TODO: Remove this when we mark applications that have been submitted
-            if USE_SQL_BACKEND.enabled(domain) and not app_doc.get('is_released', False):
-                continue
-            app = Application.wrap(app_doc)
-            case_property_mapping = get_case_properties(
-                app,
-                [case_type],
-                include_parent_properties=False
-            )
-            parent_types, _ = (
-                ParentCasePropertyBuilder(app)
-                .get_parent_types_and_contributed_properties(case_type)
-            )
-            case_schemas = []
-            case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
-                case_property_mapping,
-                parent_types,
-                app.copy_of,
+        parent_types, _ = (
+            ParentCasePropertyBuilder(app)
+            .get_parent_types_and_contributed_properties(case_type)
+        )
+        case_schemas = []
+        case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
+            case_property_mapping,
+            parent_types,
+            app.copy_of or app._id,  # If not copy, must be current app
+            app.version,
+        ))
+        if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
+            case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
+                app.copy_of or app._id,
                 app.version,
             ))
-            if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
-                case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
-                    app.copy_of,
-                    app.version,
-                ))
 
-            case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
-                case_property_mapping,
-                app.copy_of,
-                app.version,
-            ))
-            case_schemas.append(current_case_schema)
+        case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
+            case_property_mapping,
+            app.copy_of or app._id,
+            app.version,
+        ))
+        case_schemas.append(current_schema)
 
-            current_case_schema = CaseExportDataSchema._merge_schemas(*case_schemas)
-
-            current_case_schema.record_update(app.copy_of, app.version)
-
-        if not original_id or app_build_ids:
-            # Don't save the schema if there is already a saved schema object
-            # and we didn't update it with any app builds
-            if original_id and original_rev:
-                current_case_schema._id = original_id
-                current_case_schema._rev = original_rev
-            current_case_schema.domain = domain
-            current_case_schema.case_type = case_type
-            try:
-                current_case_schema.save()
-            except ResourceConflict:
-                # It's possible that another process updated the schema before we
-                # got to it. If so, we want to overwrite those changes because we
-                # have the most recently built schema.
-                current_case_schema._rev = CaseExportDataSchema.get_db().get_rev(current_case_schema._id)
-                current_case_schema.save()
-
-            return current_case_schema
+        return CaseExportDataSchema._merge_schemas(*case_schemas)
 
     @staticmethod
     def _generate_schema_from_case_property_mapping(case_property_mapping, parent_types, app_id, app_version):

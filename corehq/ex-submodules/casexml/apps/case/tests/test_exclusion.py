@@ -16,6 +16,7 @@ class CaseExclusionTest(TestCase):
     """
     
     def setUp(self):
+        super(CaseExclusionTest, self).setUp()
         delete_all_cases()
 
     @run_with_all_backends

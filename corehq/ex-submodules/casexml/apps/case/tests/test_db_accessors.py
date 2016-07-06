@@ -21,6 +21,7 @@ class TestExtensionCaseIds(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
+        super(TestExtensionCaseIds, self).tearDown()
 
     @run_with_all_backends
     def test_no_extensions(self):
@@ -153,6 +154,7 @@ class TestIndexedCaseIds(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
+        super(TestIndexedCaseIds, self).tearDown()
 
     @run_with_all_backends
     def test_indexed_case_ids_returns_extensions(self):
@@ -192,6 +194,7 @@ class TestReverseIndexedCases(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
+        super(TestReverseIndexedCases, self).tearDown()
 
     def _delete_relationship(self):
         del self.case.indices[0].relationship

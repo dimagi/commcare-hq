@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 import importlib
 from collections import defaultdict
 
@@ -228,7 +227,7 @@ DEFAULT_APPS = (
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
-CRISPY_TEMPLATE_PACK = 'bootstrap'
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
@@ -270,8 +269,6 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'couchlog',
-    'ctable',
-    'ctable_view',
     'dimagi.utils',
     'formtranslate',
     'langcodes',
@@ -371,6 +368,7 @@ HQ_APPS = (
     'custom.openlmis',
     'custom.logistics',
     'custom.ilsgateway',
+    'custom.zipline',
     'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
@@ -423,8 +421,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.m4change',
 
     # submodules with tests that run on travis
-    'ctable',
-    'ctable_view',
     'dimagi.utils',
 )
 
@@ -815,15 +811,6 @@ MESSAGE_LOG_OPTIONS = {
 IVR_OUTBOUND_RETRIES = 3
 IVR_OUTBOUND_RETRY_INTERVAL = 10
 
-# List of Fluff pillow classes that ctable should process diffs for
-# deprecated - use IndicatorDocument.save_direct_to_sql
-FLUFF_PILLOW_TYPES_TO_SQL = {
-    'UnicefMalawiFluff': 'SQL',
-    'MalariaConsortiumFluff': 'SQL',
-    'CareSAFluff': 'SQL',
-    'OpmUserFluff': 'SQL',
-}
-
 PREVIEWER_RE = '^$'
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
@@ -903,6 +890,10 @@ DATADOG_APP_KEY = None
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
+# Settings for Zipline integration
+ZIPLINE_API_URL = ''
+ZIPLINE_API_USER = ''
+ZIPLINE_API_PASSWORD = ''
 
 KAFKA_URL = 'localhost:9092'
 
@@ -1206,7 +1197,6 @@ COUCHDB_APPS = [
     'couchdbkit_aggregate',
     'couchforms',
     'couchexport',
-    'ctable',
     'custom_data_fields',
     'hqadmin',
     'ext',
@@ -1330,8 +1320,8 @@ EMAIL_HOST = EMAIL_SMTP_HOST
 EMAIL_PORT = EMAIL_SMTP_PORT
 EMAIL_HOST_USER = EMAIL_LOGIN
 EMAIL_HOST_PASSWORD = EMAIL_PASSWORD
-# EMAIL_USE_TLS and SEND_BROKEN_LINK_EMAILS are set above
-# so they can be overridden in localsettings (e.g. in a dev environment)
+# EMAIL_USE_TLS is set above
+# so it can be overridden in localsettings (e.g. in a dev environment)
 
 NO_HTML_EMAIL_MESSAGE = """
 This is an email from CommCare HQ. You're seeing this message because your
@@ -1412,18 +1402,6 @@ CUSTOM_CHAT_TEMPLATES = {
     "FRI": "fri/chat.html",
 }
 
-SELENIUM_APP_SETTING_DEFAULTS = {
-    'cloudcare': {
-        # over-generous defaults for now
-        'OPEN_FORM_WAIT_TIME': 20,
-        'SUBMIT_FORM_WAIT_TIME': 20
-    },
-    'reports': {
-        'MAX_PRELOAD_TIME': 20,
-        'MAX_LOAD_TIME': 30,
-    },
-}
-
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
@@ -1461,6 +1439,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.domain.get_domain_kafka_to_elasticsearch_pillow',
         },
+        {
+            'name': 'AppFormSubmissionTrackerPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_app_form_submission_tracker_pillow',
+        },
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
@@ -1486,6 +1469,11 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
         },
         {
+            'name': 'ReportCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
+        },
+        {
             'name': 'SqlXFormToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
@@ -1494,6 +1482,11 @@ PILLOWTOPS = {
             'name': 'SqlCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'CouchCaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_couch_case_to_elasticsearch_pillow',
         },
         {
             'name': 'UnknownUsersPillow',
@@ -1535,7 +1528,6 @@ PILLOWTOPS = {
         'custom.world_vision.models.WorldVisionChildFluffPillow',
         'custom.world_vision.models.WorldVisionHierarchyFluffPillow',
         'custom.succeed.models.UCLAPatientFluffPillow',
-        'custom.reports.mc.models.MalariaConsortiumFluffPillow',
     ],
     'mvp_indicators': [
         'mvp_docs.pillows.MVPFormIndicatorPillow',
@@ -1639,7 +1631,7 @@ STATIC_DATA_SOURCES = [
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
-    'corehq.apps.callcenter.data_source.call_center_data_source_provider'
+    'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]
 
 
@@ -1692,7 +1684,8 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
-    ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression')
+    ('cvsu_expression', 'custom.apps.cvsu.expressions.cvsu_expression'),
+    ('eqa_expression', 'custom.eqa.expressions.eqa_expression')
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1743,6 +1736,7 @@ DOMAIN_MODULE_MAP = {
 
     'ipm-senegal': 'custom.intrahealth',
     'icds-test': 'custom.icds_reports',
+    'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 

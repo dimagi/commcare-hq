@@ -28,6 +28,7 @@ class CaseAccessorTestsSQL(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
         FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
+        super(CaseAccessorTestsSQL, self).tearDown()
 
     def test_get_case_by_id(self):
         case = _create_case()

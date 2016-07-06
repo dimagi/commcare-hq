@@ -4,6 +4,7 @@ from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
+from django.utils.translation import ugettext as _
 from couchdbkit import ResourceConflict, BulkSaveError
 from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
@@ -140,3 +141,35 @@ def resend_pending_invitations():
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:
                 invitation.send_activation_email(days_to_expire - days)
+
+
+@task
+def turn_on_demo_mode_task(couch_user, domain):
+    from corehq.apps.ota.utils import turn_on_demo_mode
+
+    DownloadBase.set_progress(turn_on_demo_mode_task, 0, 100)
+    results = turn_on_demo_mode(couch_user, domain)
+    DownloadBase.set_progress(turn_on_demo_mode_task, 100, 100)
+
+    return {
+        'messages': results
+    }
+
+
+@task
+def reset_demo_user_restore_task(couch_user, domain):
+    from corehq.apps.ota.utils import reset_demo_user_restore
+
+    DownloadBase.set_progress(reset_demo_user_restore_task, 0, 100)
+
+    try:
+        reset_demo_user_restore(couch_user, domain)
+        results = {'errors': []}
+    except Exception as e:
+        notify_exception(None, message=e.message)
+        results = {'errors': [
+            _("Something went wrong in creating restore for the user. Please try again or report an issue")
+        ]}
+
+    DownloadBase.set_progress(reset_demo_user_restore_task, 100, 100)
+    return {'messages': results}

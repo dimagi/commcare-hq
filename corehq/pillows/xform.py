@@ -6,30 +6,29 @@ from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
-from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX
+from corehq.pillows.mappings.xform_mapping import XFORM_MAPPING, XFORM_INDEX, XFORM_ES_TYPE
 from corehq.pillows.utils import get_user_type
 from couchforms.jsonobject_extensions import GeoPointProperty
 from .base import HQPillow
-from couchforms.const import RESERVED_WORDS
+from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.models import XFormInstance
 from dateutil import parser
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.es_utils import ElasticsearchIndexInfo, get_index_info_from_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
-    ElasticPillowReindexer
-
+    ElasticPillowReindexer, ResumableBulkElasticPillowReindexer
 
 UNKNOWN_VERSION = 'XXX'
 UNKNOWN_UIVERSION = 'XXX'
-XFORM_ES_TYPE = 'xform'
 
 
 def is_valid_date(txt):
@@ -69,6 +68,13 @@ class XFormPillow(HQPillow):
 
     def change_transform(self, doc_dict, include_props=True):
         return transform_xform_for_elasticsearch(doc_dict, include_props)
+
+
+def device_log_filter(doc_dict):
+    """
+    :return: True to filter out doc
+    """
+    return doc_dict.get('xmlns', None) == DEVICE_LOG_XMLNS
 
 
 def transform_xform_for_elasticsearch(doc_dict, include_props=True):
@@ -176,6 +182,37 @@ def get_couch_form_reindexer():
                 'include_docs': True,
             }
         )
+    )
+
+
+def get_resumable_couch_form_reindexer():
+    return ResumableBulkElasticPillowReindexer(
+        name=XFormPillow(online=False).pillow_id,
+        doc_types=[XFormInstance],
+        elasticsearch=get_es_new(),
+        index_info=_get_xform_index_info(),
+        doc_filter=device_log_filter,
+        doc_transform=transform_xform_for_elasticsearch
+    )
+
+
+def get_app_form_submission_tracker_pillow(pillow_id='AppFormSubmissionTrackerPillow'):
+    """
+    This gets a pillow which iterates through all forms and marks the corresponding app
+    as having submissions. This could be expanded to be more generic and include
+    other processing that needs to happen on each form
+    """
+    checkpoint = PillowCheckpoint('app-form-submission-tracker')
+    form_processor = AppFormSubmissionTrackerProcessor()
+    change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor')
+    return ConstructedPillow(
+        name=pillow_id,
+        checkpoint=checkpoint,
+        change_feed=change_feed,
+        processor=form_processor,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
+        ),
     )
 
 

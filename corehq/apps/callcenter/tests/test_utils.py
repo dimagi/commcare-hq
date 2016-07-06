@@ -388,6 +388,6 @@ def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type, cc_case_owne
         domain.call_center_config.use_user_location_as_owner = use_location_as_owner
 
         send_to_elasticsearch(
-            index='domains',
+            'domains',
             doc=domain.to_json(),
         )

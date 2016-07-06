@@ -1,0 +1,9 @@
+# Don't forget to rebuild and start the elasticsearch image after changing this file:
+#     $ ./scripts/docker rebuild elasticsearch
+#     $ ./scripts/docker up -d elasticsearch
+
+http.port: 9200
+
+# dev-only setting to allow client-side ES front-ends
+http.cors.allow-origin: "*"
+http.cors.enabled: true

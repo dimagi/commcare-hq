@@ -13,7 +13,7 @@ from corehq.apps.commtrack.processing import plan_rebuild_stock_state, \
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.apps.style.decorators import use_bootstrap3, use_jquery_ui
+from corehq.apps.style.decorators import use_jquery_ui
 from corehq.util.timezones.conversions import ServerTime
 
 from dimagi.utils.decorators.memoized import memoized
@@ -151,10 +151,6 @@ class CommTrackSettingsView(BaseCommTrackManageView):
             return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)
-
 
 class DefaultConsumptionView(BaseCommTrackManageView):
     urlname = 'update_default_consumption'
@@ -182,10 +178,6 @@ class DefaultConsumptionView(BaseCommTrackManageView):
                 reverse(DefaultConsumptionView.urlname, args=[self.domain])
             )
         return self.get(request, *args, **kwargs)
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(DefaultConsumptionView, self).dispatch(request, *args, **kwargs)
 
 
 class SMSSettingsView(BaseCommTrackManageView):
@@ -248,7 +240,6 @@ class SMSSettingsView(BaseCommTrackManageView):
 
         return self.get(request, *args, **kwargs)
 
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
@@ -313,19 +304,11 @@ class StockLevelsView(BaseCommTrackManageView):
         # TODO display error messages to the user...
         return self.get(request, *args, **kwargs)
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(StockLevelsView, self).dispatch(request, *args, **kwargs)
-
 
 class RebuildStockStateView(BaseCommTrackManageView):
     urlname = 'rebuild_stock_state'
     page_title = ugettext_noop("Rebuild Stock State")
     template_name = 'commtrack/manage/rebuild_stock_state.html'
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(RebuildStockStateView, self).dispatch(request, *args, **kwargs)
 
     @memoized
     def get_server_date_by_form_id(self, form_id):

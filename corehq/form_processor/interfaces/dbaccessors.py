@@ -78,10 +78,6 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def forms_have_multimedia(domain, app_id, xmlns):
-        raise NotImplementedError
-
-    @abstractmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         raise NotImplementedError
 
@@ -147,9 +143,6 @@ class FormAccessors(object):
 
     def get_attachment_content(self, form_id, attachment_name):
         return self.db_accessor.get_attachment_content(form_id, attachment_name)
-
-    def forms_have_multimedia(self, app_id, xmlns):
-        return self.db_accessor.forms_have_multimedia(self.domain, app_id, xmlns)
 
     def soft_delete_forms(self, form_ids, deletion_date=None, deletion_id=None):
         return self.db_accessor.soft_delete_forms(self.domain, form_ids, deletion_date, deletion_id)
@@ -313,6 +306,9 @@ class CaseAccessors(object):
 
     def get_all_reverse_indices_info(self, case_ids):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
+
+    def get_reverse_indexed_cases(self, case_ids):
+        return self.db_accessor.get_reverse_indexed_cases(self.domain, case_ids)
 
     def get_attachment_content(self, case_id, attachment_id):
         return self.db_accessor.get_attachment_content(case_id, attachment_id)

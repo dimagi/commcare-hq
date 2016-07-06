@@ -59,7 +59,7 @@ class StockLedgerValueWrapper(jsonobject.JsonObject):
             last_modified=stock_state.last_modified_date,
             last_modified_form_id=stock_state.last_modified_form_id,
             daily_consumption=stock_state.daily_consumption,
-            location_id=stock_state.sql_location.location_id if stock_state.sql_location else None,
+            location_id=stock_state.location_id,
             sql_location=stock_state.sql_location,
             sql_product=stock_state.sql_product,
         )
@@ -102,4 +102,14 @@ def get_relevant_supply_point_ids(domain, active_location=None):
 
         return supply_point_ids
     else:
-        return filter_relevant(SQLLocation.objects.filter(domain=domain))
+        return list(filter_relevant(SQLLocation.objects.filter(domain=domain)))
+
+
+def get_product_id_name_mapping(domain):
+    return dict(SQLProduct.objects.filter(domain=domain).values_list('product_id', 'name'))
+
+
+def get_product_ids_for_program(domain, program_id):
+    return SQLProduct.objects.filter(
+        domain=domain, program_id=program_id
+    ).values_list('product_id', flat=True)

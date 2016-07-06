@@ -234,9 +234,16 @@ def download_file(request, domain, app_id, path):
                 payload = request.app.fetch_attachment(full_path)
             except ResourceNotFound:
                 if build_profile in request.app.build_profiles and build_profile_access:
-                    request.app.create_build_files(save=True, build_profile_id=build_profile)
-                    request.app.save()
-                    payload = request.app.fetch_attachment(full_path)
+                    try:
+                        # look for file guaranteed to exist if profile is created
+                        request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
+                    except ResourceNotFound:
+                        request.app.create_build_files(save=True, build_profile_id=build_profile)
+                        request.app.save()
+                        payload = request.app.fetch_attachment(full_path)
+                    else:
+                        # if profile.xml is found the profile has been built and its a bad request
+                        raise
                 else:
                     raise
             if type(payload) is unicode:
@@ -383,39 +390,24 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
         return HttpResponse(response_html)
 
 
-def _file_needed_for_CCZ(path, prefix, profiles):
-    if path.startswith(prefix):
-        # already narrowed to specific profile
-        if prefix != 'files/':
-            return True
-        else:
-            second = path.split('/')[1]
-            # dont want to return files from other profiles
-            if second in profiles:
-                return False
-            else:
-                return True
-    else:
-        return False
-
-
 def download_index_files(app, build_profile_id=None):
-    files = []
-    prefix = 'files/'
-    profiles = set(app.build_profiles.keys())
-    if build_profile_id:
-        prefix += build_profile_id + '/'
     if app.copy_of:
-        if (prefix + 'profile.ccpr') not in app.blobs:
+        prefix = 'files/'
+        if build_profile_id is not None:
+            prefix += build_profile_id + '/'
+            needed_for_CCZ = lambda path: path.startswith(prefix)
+        else:
+            profiles = set(app.build_profiles)
+            needed_for_CCZ = lambda path: (path.startswith(prefix) and
+                                           path.split('/')[1] not in profiles)
+        if not (prefix + 'profile.ccpr') in app.blobs:
             # profile hasnt been built yet
             app.create_build_files(save=True, build_profile_id=build_profile_id)
             app.save()
         files = [(path[len(prefix):], app.fetch_attachment(path))
-                 for path in app.blobs
-                 if _file_needed_for_CCZ(path, prefix, profiles)]
+                 for path in app.blobs if needed_for_CCZ(path)]
     else:
         files = app.create_all_files().items()
-
     return sorted(files)
 
 

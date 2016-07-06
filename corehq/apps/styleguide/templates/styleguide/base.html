@@ -10,19 +10,19 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/bootstrap.debug.less' %}" />
+                  href="{% static 'style/less/bootstrap.debug.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
+                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/font-commcare.less' %}" />
+                  href="{% static 'style/less/font-commcare.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/style.debug.less' %}" />
+                  href="{% static 'style/less/style.debug.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -32,19 +32,19 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/bootstrap.less' %}" />
+                  href="{% static 'style/less/bootstrap.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'font-awesome/less/font-awesome.less' %}" />
+                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/font-commcare.less' %}" />
+                  href="{% static 'style/less/font-commcare.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% new_static 'style/less/style.less' %}" />
+                  href="{% static 'style/less/style.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -53,8 +53,8 @@
         {% endif %}
 
         {% compress js %}
-            <script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
-            <script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
         {% endcompress %}
 
         {% if less_debug %}
@@ -72,7 +72,7 @@
                     relativeUrls: false
                 };
             </script>
-            <script src="{% new_static 'less/dist/less-1.7.3.min.js' %}"></script>
+            <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
             {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
     </head>

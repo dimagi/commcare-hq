@@ -16,12 +16,18 @@ class FundamentalCaseTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(FundamentalCaseTests, cls).setUpClass()
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
 
-    tearDownClass = setUpClass
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases(DOMAIN)
+        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        super(FundamentalCaseTests, cls).tearDownClass()
 
     def setUp(self):
+        super(FundamentalCaseTests, self).setUp()
         self.interface = FormProcessorInterface()
         self.casedb = CaseAccessors()
 

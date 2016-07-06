@@ -7,13 +7,13 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% new_static 'reports/javascripts/reports.util.js' %}"></script>
-    <script src="{% new_static 'reports/javascripts/reports.async.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.util.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script src="{% new_static 'appstore/js/facet_sidebar.js' %}"></script>
+    <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     {% include "reports/standard/partials/report_loader.html" %}
 {% endblock %}
 

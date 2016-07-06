@@ -9,6 +9,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends, FormProcess
 class UserModelTest(TestCase):
 
     def setUp(self):
+        super(UserModelTest, self).setUp()
         self.domain = 'my-domain'
         self.domain_obj = create_domain(self.domain)
         self.user = CommCareUser.create(
@@ -27,6 +28,7 @@ class UserModelTest(TestCase):
         CommCareUser.get_db().delete_doc(self.user._id)
         FormProcessorTestUtils.delete_all_xforms(self.domain)
         self.domain_obj.delete()
+        super(UserModelTest, self).tearDown()
 
     @run_with_all_backends
     def test_get_form_ids(self):

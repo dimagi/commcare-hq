@@ -12,7 +12,7 @@ var HQAsyncReport = function (o) {
     self.customAsyncUrl = o.customAsyncUrl || null;
     self.additionalParams = o.additionalParams || '';
     self.additionalWindowParams = o.additionalWindowParams || '';
-    self.loaderClass = (o.isBootstrap3) ? '.report-loading' : '.hq-loading';
+    self.loaderClass = '.report-loading';
 
     self.humanReadableErrors = {
         400: "Please check your Internet connection!",
@@ -120,7 +120,7 @@ var HQAsyncReport = function (o) {
                     self.standardReport.filterSubmitButton
                         .button('reset');
                     setTimeout(function () {
-                        // Bootstrap 3 clears all btn styles except btn on reset
+                        // Bootstrap clears all btn styles except btn on reset
                         // This gets around it by waiting 10ms.
                         self.standardReport.filterSubmitButton
                             .removeClass('btn-primary')

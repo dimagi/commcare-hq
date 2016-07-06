@@ -2,10 +2,10 @@ web:
   build: .
   environment:
     DEPENDENT_SERVICES: "couch postgres redis kafka elasticsearch riakcs"
+    DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
     JS_SETUP: "${JS_SETUP}"
     NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
     REUSE_DB: "${REUSE_DB}"
-    TRAVIS: "${TRAVIS}"
   privileged: true  # allows mount inside container
   links:
     - postgres

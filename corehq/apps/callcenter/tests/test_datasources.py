@@ -1,7 +1,8 @@
+import itertools
 from django.test.testcases import SimpleTestCase
 from mock import patch
 
-from corehq.apps.callcenter.data_source import call_center_data_source_provider
+from corehq.apps.callcenter.data_source import call_center_data_source_configuration_provider
 from corehq.apps.callcenter.utils import DomainLite
 
 
@@ -15,17 +16,17 @@ class TestCallCenterDataSources(SimpleTestCase):
             DomainLite('domain3', None, None, False)
         ]
 
-        data_sources = list(call_center_data_source_provider())
-        self.assertEqual(6, len(data_sources))
+        data_source_configs = [config for config, _ in call_center_data_source_configuration_provider()]
+        self.assertEqual(3, len(data_source_configs))
 
-        domains = [ds.domain for ds in data_sources]
+        domains = set(itertools.chain(*[config.domains for config in data_source_configs]))
         self.assertEqual(
-            (['domain1'] * 3) + (['domain2'] * 3),
+            set((['domain1'] * 3) + (['domain2'] * 3)),
             domains
         )
 
-        table_ids = [ds.table_id for ds in data_sources]
+        table_ids = [config.config['table_id'] for config in data_source_configs]
         self.assertEqual(
-            ['cc_forms', 'cc_cases', 'cc_case_actions'] * 2,
+            ['cc_forms', 'cc_cases', 'cc_case_actions'],
             table_ids
         )

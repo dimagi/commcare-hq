@@ -4,9 +4,9 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'accounting/js/credits-tab.js' %}"></script>
-    <script src="{% new_static 'accounting/js/stay-on-tab.js' %}"></script>
-    <script src="{% new_static 'accounting/ko/accounting.billing_account_form.ko.js' %}"></script>
+    <script src="{% static 'accounting/js/credits-tab.js' %}"></script>
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+    <script src="{% static 'accounting/ko/accounting.billing_account_form.ko.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

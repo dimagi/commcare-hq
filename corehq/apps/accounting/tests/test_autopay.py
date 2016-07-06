@@ -1,15 +1,17 @@
 import mock
 
 from stripe import Charge
+
 from django.core import mail
 
 from dimagi.utils.dates import add_months_to_date
 
-from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
-from corehq.apps.accounting import generator, utils, tasks
-from corehq.apps.accounting.generator import FakeStripeCard, FakeStripeCustomer
+from corehq.apps.accounting import utils, tasks
 from corehq.apps.accounting.models import Invoice, StripePaymentMethod, PaymentRecord
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
+from corehq.apps.accounting.tests import generator
+from corehq.apps.accounting.tests.generator import FakeStripeCard, FakeStripeCustomer
+from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
 
 class TestBillingAutoPay(BaseInvoiceTestCase):

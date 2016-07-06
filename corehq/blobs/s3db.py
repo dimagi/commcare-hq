@@ -100,7 +100,10 @@ class S3BlobDB(AbstractBlobDB):
 
 
 def safepath(path):
-    if path.startswith(("/", ".")) or ".." in path or not SAFENAME.match(path):
+    if (path.startswith(("/", ".")) or
+            "/../" in path or
+            path.endswith("/..") or
+            not SAFENAME.match(path)):
         raise BadName(u"unsafe path name: %r" % path)
     return path
 

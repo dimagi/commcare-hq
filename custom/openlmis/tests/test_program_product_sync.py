@@ -12,6 +12,7 @@ TEST_DOMAIN = 'openlmis-commtrack-program-test'
 class ProgramSyncTest(TestCase):
 
     def setUp(self):
+        super(ProgramSyncTest, self).setUp()
         self.datapath = os.path.join(os.path.dirname(__file__), 'data')
         initial_bootstrap(TEST_DOMAIN)
         bootstrap_domain(TEST_DOMAIN)

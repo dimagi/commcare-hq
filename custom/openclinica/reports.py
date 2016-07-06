@@ -78,6 +78,11 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
             'protocol_name': get_study_constant(self.domain, 'protocol_name'),
             'study_oid': get_study_constant(self.domain, 'study_oid'),
             'audit_logs': AUDIT_LOGS,
+            # The template accepts XML strings in params "study_xml" and
+            # "admin_data_xml" which come from the study metadata.
+            'study_xml': get_study_constant(self.domain, 'study_xml'),
+            'admin_data_xml': get_study_constant(self.domain, 'admin_data_xml'),
+            'domain': self.domain,
         }
         return [
             [
@@ -137,6 +142,9 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
             row = [
                 'SS_' + subject.subject_key,  # OpenClinica prefixes subject key with "SS_" to make the OID
                 subject.study_subject_id,
+                subject.enrollment_date,
+                subject.sex,
+                subject.dob,
                 subject.get_export_data(),
             ]
             yield row

@@ -355,6 +355,27 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             factory.app.create_suite(),
             './entry')
 
+    def test_case_list_form_requires_parent_case_but_target_doesnt(self):
+        factory = AppFactory(build_version='2.9.0/latest')
+        register_household_module, register_household_form = factory.new_basic_module('new_household', 'household')
+        factory.form_opens_case(register_household_form)
+
+        households, edit_household_form = factory.new_basic_module('households', 'household',
+                                                                   case_list_form=register_household_form)
+        factory.form_requires_case(edit_household_form)
+
+        register_member_module, register_member_form = factory.new_advanced_module('new_member', 'member')
+        factory.form_requires_case(register_member_form, 'household')
+        factory.form_opens_case(register_member_form, 'member', is_subcase=True)
+
+        members, edit_member_form = factory.new_basic_module('members', 'member', case_list_form=register_member_form)
+        factory.form_requires_case(edit_member_form)
+
+        suite = factory.app.create_suite()
+        self.assertXmlEqual(
+            self.get_xml('source_requires_case_target_doesnt'),
+            suite
+        )
 
 class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'case_list_form'

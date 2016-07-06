@@ -13,11 +13,18 @@
         }
     </style>
 {% endblock %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.util.js' %}"></script>
+    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+{% endblock %}
+
 {% block js-inline %}
+{% include "reports/standard/partials/report_loader.html" %}
 <script type="text/javascript">
+    // "Performing / Active User Trends" Chart
     function setupCharts() {
-        // setup chart
-        var data = {{ rows|JSON }};
+        var data = {{ six_months_reports|JSON }};
         var performingSeries = {
             'key': 'performing',
             values: _.map(data, function(item) {
@@ -50,6 +57,7 @@
         });
     }
 
+    // User Information PopOver, when clicked on username
     function setupPopovers() {
         // ajax popover: http://stackoverflow.com/a/14560039/8207
         $('a.user-popover').popover({
@@ -87,6 +95,9 @@
         A summary of the overall health of your project based on how your users are doing over time.
         {% endblocktrans %}
     </p>
+    {% block filter_panel %}
+        {% include "reports/standard/partials/filter_panel.html" %}
+    {% endblock %}
     <h2>{% trans "Last Month Stats" %}</h2>
 <table class="table lead">
     <thead>
@@ -103,7 +114,7 @@
         <td>{% trans "Performing users" %}
             <p class="text-muted"><small>{% blocktrans %}Users who submitted {{ threshold }} or more forms last month.{% endblocktrans %}</small></p>
         </td>
-        <td>{{ last_month.performing }}</td>
+        <td>{{ last_month.number_of_performing_users }}</td>
         <td>
             {% chevron last_month.delta_performing_pct %}
             {{ last_month.delta_performing_pct|floatformat }} %

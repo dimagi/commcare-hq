@@ -19,7 +19,6 @@ from django.views.generic import View
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_select2,
     use_jquery_ui,
     use_multiselect,
@@ -91,7 +90,6 @@ class AccountingSectionView(BaseSectionPageView):
         return reverse('accounting_default')
 
     @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
-    @use_bootstrap3
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSectionView, self).dispatch(request, *args, **kwargs)

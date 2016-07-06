@@ -26,7 +26,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.style.decorators import use_bootstrap3, use_angular_js
+from corehq.apps.style.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -160,8 +160,6 @@ def save_copy(request, domain, app_id):
     track_built_app_on_hubspot.delay(request.couch_user)
     comment = request.POST.get('comment')
     app = get_app(domain, app_id)
-    if not app.is_remote_app():
-        app.update_mm_map()
     try:
         errors = app.validate_app()
     except ModuleIdMissingException:
@@ -237,7 +235,7 @@ def odk_install(request, domain, app_id, with_media=False):
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
     build_profile_id = request.GET.get('profile')
     profile_url = app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url
-    if build_profile_id:
+    if build_profile_id is not None:
         profile_url += '?profile={profile}'.format(profile=build_profile_id)
     context = {
         "domain": domain,
@@ -339,7 +337,6 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     page_title = ugettext_lazy("App diff")
     template_name = 'app_manager/app_diff.html'
 
-    @use_bootstrap3
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         try:

@@ -125,6 +125,7 @@ class ReportConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ReportConfigurationDbTest, cls).setUpClass()
         domain_foo = Domain(name='foo')
         domain_foo.save()
         domain_bar = Domain(name='bar')
@@ -141,6 +142,7 @@ class ReportConfigurationDbTest(TestCase):
         delete_all_report_configs()
         for domain in Domain.get_all():
             domain.delete()
+        super(ReportConfigurationDbTest, cls).tearDownClass()
 
     def test_get_by_domain(self):
         results = ReportConfiguration.by_domain('foo')
@@ -173,6 +175,7 @@ class ReportTranslationTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ReportTranslationTest, cls).setUpClass()
         data_source = DataSourceConfiguration(
             domain=cls.DOMAIN,
             table_id="foo",
@@ -205,8 +208,10 @@ class ReportTranslationTest(TestCase):
         for config in DataSourceConfiguration.all():
             config.delete()
         delete_all_report_configs()
+        super(ReportTranslationTest, cls).tearDownClass()
 
     def setUp(self):
+        super(ReportTranslationTest, self).setUp()
         report = ReportConfiguration.by_domain(self.DOMAIN)[0]
         self.report_source = ReportFactory.from_spec(report)
 

@@ -1,8 +1,10 @@
 # coding: utf-8
+import doctest
 from django.test import SimpleTestCase
 import re
 from corehq.apps.app_manager.tests import TestXmlMixin
 from corehq.apps.app_manager.xform_builder import XFormBuilder
+import corehq.apps.app_manager.xform_builder
 
 
 class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
@@ -128,3 +130,12 @@ class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
             self.replace_xmlns(self.get_xml('question_params'), self.xform.xmlns),
             self.xform.tostring(pretty_print=True, encoding='utf-8', xml_declaration=True)
         )
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(corehq.apps.app_manager.xform_builder)
+        # Note: XFormBuilder has doctests for functions defined inside methods. Those doctests are for
+        # illustration only; they can't be executed. XFormBuilderTests test those functions.
+        self.assertEqual(results.failed, 0)

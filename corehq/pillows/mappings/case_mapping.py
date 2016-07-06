@@ -1,6 +1,8 @@
+from corehq.pillows.base import DEFAULT_META
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
+from pillowtop.es_utils import ElasticsearchIndexInfo
 
 ##################
 # NOTE to the next person who updates this name:
@@ -102,3 +104,13 @@ CASE_MAPPING = {
                                  'type': 'string'},
     }
 }
+
+CASE_ES_ALIAS = "hqcases"
+
+CASE_INDEX_INFO = ElasticsearchIndexInfo(
+    index=CASE_INDEX,
+    alias=CASE_ES_ALIAS,
+    type=CASE_ES_TYPE,
+    meta=DEFAULT_META,
+    mapping=CASE_MAPPING
+)

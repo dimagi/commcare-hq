@@ -1,11 +1,11 @@
 {% load compress %}{% load hq_shared_tags %}<!DOCTYPE html>
-<link type="text/css" rel="stylesheet" media="all" href="{% new_static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-<script type="text/javascript" src="{% new_static 'jquery/dist/jquery.min.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'tableau.min.js' %}"></script>
+<link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
+<script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'tableau.min.js' %}"></script>
 
-<script type="text/javascript" src="{% new_static 'underscore/underscore.js' %}"></script>
-<script type="text/javascript" src="{% new_static 'tableau_app.js' %}">></script>
+<script type="text/javascript" src="{% static 'underscore/underscore.js' %}"></script>
+<script type="text/javascript" src="{% static 'tableau_app.js' %}">></script>
 
 <script>
     var tableauOptions = {

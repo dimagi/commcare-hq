@@ -15,8 +15,8 @@ from corehq.apps.importer.exceptions import (
     ImporterRefError,
     InvalidCustomFieldNameException,
     InvalidDateException,
-    InvalidIntegerException
-)
+    InvalidIntegerException,
+    ImporterError)
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
@@ -517,11 +517,33 @@ def get_case_properties_for_case_type(domain, case_type):
         from corehq.apps.export.models.new import MAIN_TABLE
         schema = CaseExportDataSchema.generate_schema_from_builds(
             domain,
+            None,
             case_type,
         )
         group_schemas = [gs for gs in schema.group_schemas if gs.path == MAIN_TABLE]
         if group_schemas:
-            return sorted(set([item.path[0] for item in group_schemas[0].items]))
+            return sorted(set([item.path[0].name for item in group_schemas[0].items]))
     else:
         from corehq.apps.hqcase.dbaccessors import get_case_properties
         return get_case_properties(domain, case_type)
+
+
+def get_importer_error_message(e):
+    if isinstance(e, ImporterRefError):
+        # I'm not totally sure this is the right error, but it's what was being
+        # used before. (I think people were just calling _spreadsheet_expired
+        # or otherwise blaming expired sessions whenever anything unexpected
+        # happened though...)
+        return _('Sorry, your session has expired. Please start over and try again.')
+    elif isinstance(e, ImporterFileNotFound):
+        return _('The session containing the file you uploaded has expired '
+                 '- please upload a new one.')
+    elif isinstance(e, ImporterExcelFileEncrypted):
+        return _('The file you want to import is password protected. '
+                 'Please choose a file that is not password protected.')
+    elif isinstance(e, ImporterExcelError):
+        return _("The file uploaded has the following error: {}").format(e.message)
+    elif isinstance(e, ImporterError):
+        return _("The session containing the file you uploaded has expired - please upload a new one.")
+    else:
+        return _("Error: {}").format(e.message)

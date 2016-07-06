@@ -48,7 +48,6 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_ba
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_select2,
     use_daterangepicker,
     use_datatables,
@@ -153,7 +152,6 @@ class BaseUserConfigReportsView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
 
-    @use_bootstrap3
     @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(BaseUserConfigReportsView, self).dispatch(request, *args, **kwargs)
@@ -187,6 +185,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'report': self.config,
+            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
         }
 
     @property
@@ -233,7 +232,6 @@ class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
     @cls_to_view_login_and_domain
-    @use_bootstrap3
     @use_select2
     @use_daterangepicker
     @use_datatables
@@ -273,10 +271,6 @@ def paywall_home(domain):
 
 class ReportBuilderPaywallBase(BaseDomainView):
     page_title = ugettext_lazy('Subscribe')
-
-    @use_bootstrap3
-    def dispatch(self, *args, **kwargs):
-        return super(ReportBuilderPaywallBase, self).dispatch(*args, **kwargs)
 
     @property
     def section_name(self):
@@ -936,7 +930,8 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'data_source': self.config,
-            'read_only': self.read_only
+            'read_only': self.read_only,
+            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
         }
 
     @property

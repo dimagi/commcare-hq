@@ -192,7 +192,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     UNIT_TESTING = False
     ADMINS = (('Admin', 'admin@example.com'),)
 
-    SEND_BROKEN_LINK_EMAILS = True
     CELERY_SEND_TASK_ERROR_EMAILS = True
 
     LESS_DEBUG = True

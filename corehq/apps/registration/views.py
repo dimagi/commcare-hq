@@ -25,7 +25,6 @@ from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import NewWebUserRegistrationForm, DomainRegistrationForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
-from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import WebUser, CouchUser
 from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.decorators.memoized import memoized
@@ -106,7 +105,6 @@ class RegisterDomainView(TemplateView):
     template_name = 'registration/domain_request.html'
 
     @method_decorator(login_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(RegisterDomainView, self).dispatch(request, *args, **kwargs)
 
@@ -132,7 +130,7 @@ class RegisterDomainView(TemplateView):
     def post(self, request, *args, **kwargs):
         referer_url = request.GET.get('referer', '')
         nextpage = request.POST.get('next')
-        form = DomainRegistrationForm(request.POST, current_user=request.couch_user)
+        form = DomainRegistrationForm(request.POST)
         context = self.get_context_data(form=form)
         if form.is_valid():
             reqs_today = RegistrationRequest.get_requests_today()
@@ -183,8 +181,7 @@ class RegisterDomainView(TemplateView):
         context.update(get_domain_context())
 
         context.update({
-            'form': kwargs.get('form') or DomainRegistrationForm(current_user=request.couch_user),
-            'force_sql_backend': getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False),
+            'form': kwargs.get('form') or DomainRegistrationForm(),
             'is_new_user': self.is_new_user,
         })
         return context

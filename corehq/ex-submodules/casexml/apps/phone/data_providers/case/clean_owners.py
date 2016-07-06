@@ -16,17 +16,12 @@ from dimagi.utils.decorators.memoized import memoized
 PotentialSyncElement = namedtuple("PotentialSyncElement", ['case_stub', 'sync_xml_items'])
 
 
-def get_case_payload(restore_state):
-    sync_op = CleanOwnerCaseSyncOperation(restore_state)
-    return sync_op.get_payload()
-
-
 # todo: push to state?
 chunk_size = 1000
 
 
 class CleanOwnerSyncPayload(object):
-    def __init__(self, case_ids_to_sync, restore_state):
+    def __init__(self, timing_context, case_ids_to_sync, restore_state):
         self.restore_state = restore_state
         self.case_accessor = CaseAccessors(self.restore_state.domain)
         self.response = self.restore_state.restore_class()
@@ -40,14 +35,27 @@ class CleanOwnerSyncPayload(object):
         self.closed_cases = set()
         self.potential_elements_to_sync = {}
 
+        self.timing_context = timing_context
+
     def get_payload(self):
-        while self.case_ids_to_sync:
-            self.process_case_batch(self._get_next_case_batch())
-        self.update_index_trees()
-        self.update_case_ids_on_phone()
-        self.move_no_longer_owned_cases_to_dependent_list_if_necessary()
-        irrelevant_cases = self.purge_and_get_irrelevant_cases()
-        self.compile_response(irrelevant_cases)
+        with self.timing_context('process_case_batches'):
+            while self.case_ids_to_sync:
+                self.process_case_batch(self._get_next_case_batch())
+
+        with self.timing_context('update_index_trees'):
+            self.update_index_trees()
+
+        with self.timing_context('update_case_ids_on_phone'):
+            self.update_case_ids_on_phone()
+
+        with self.timing_context('move_no_longer_owned_cases_to_dependent_list_if_necessary'):
+            self.move_no_longer_owned_cases_to_dependent_list_if_necessary()
+
+        with self.timing_context('purge_and_get_irrelevant_cases'):
+            irrelevant_cases = self.purge_and_get_irrelevant_cases()
+
+        with self.timing_context('compile_response'):
+            self.compile_response(irrelevant_cases)
 
         return self.response
 
@@ -157,7 +165,9 @@ class CleanOwnerSyncPayload(object):
             if syncable_case_id not in irrelevant_cases
         ]
 
-        self._add_commtrack_elements_to_response(relevant_sync_elements)
+        with self.timing_context('add_commtrack_elements_to_response'):
+            self._add_commtrack_elements_to_response(relevant_sync_elements)
+
         self._add_case_elements_to_response(relevant_sync_elements)
 
     def _add_commtrack_elements_to_response(self, relevant_sync_elements):
@@ -178,7 +188,8 @@ class CleanOwnerSyncPayload(object):
 
 class CleanOwnerCaseSyncOperation(object):
 
-    def __init__(self, restore_state):
+    def __init__(self, timing_context, restore_state):
+        self.timing_context = timing_context
         self.restore_state = restore_state
         self.case_accessor = CaseAccessors(self.restore_state.domain)
 
@@ -197,7 +208,9 @@ class CleanOwnerCaseSyncOperation(object):
 
     def get_payload(self):
         self.restore_state.mark_as_new_format()
-        sync_payload = CleanOwnerSyncPayload(self.get_case_ids_to_sync(), self.restore_state)
+        with self.timing_context('get_case_ids_to_sync'):
+            case_ids_to_sync = self.get_case_ids_to_sync()
+        sync_payload = CleanOwnerSyncPayload(self.timing_context, case_ids_to_sync, self.restore_state)
         return sync_payload.get_payload()
 
     def get_case_ids_to_sync(self):

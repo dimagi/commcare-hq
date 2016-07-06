@@ -19,12 +19,14 @@ class TestFormArchiving(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
+        super(TestFormArchiving, self).setUp()
         self.casedb = CaseAccessors('test-domain')
         self.formdb = FormAccessors('test-domain')
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_cases()
+        super(TestFormArchiving, self).tearDown()
 
     @run_with_all_backends
     def testArchive(self):

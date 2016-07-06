@@ -3,11 +3,11 @@
 {% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
-    <script src="{% new_static 'accounting/js/credits-tab.js' %}"></script>
-    <script src="{% new_static 'accounting/js/stay-on-tab.js' %}"></script>
-    <script src="{% new_static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
-    <script src="{% new_static 'accounting/js/accounting.subscription_info_handler.js' %}"></script>
-    <script src="{% new_static 'accounting/js/invoices.js' %}"></script>
+    <script src="{% static 'accounting/js/credits-tab.js' %}"></script>
+    <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
+    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+    <script src="{% static 'accounting/js/accounting.subscription_info_handler.js' %}"></script>
+    <script src="{% static 'accounting/js/invoices.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}

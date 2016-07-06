@@ -3,7 +3,6 @@ from django.http import HttpResponseBadRequest, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.style.decorators import use_bootstrap3
 from dimagi.utils.data.crud import CRUDFormRequestManager, CRUDActionError
 from dimagi.utils.modules import to_function
 
@@ -16,7 +15,6 @@ class BaseCRUDFormView(TemplateView):
     def is_form_class_valid(self, form_class):
         return True
 
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         self.request = request
         form_type = kwargs.get('form_type')

@@ -43,7 +43,7 @@ class CustomMonthFilterTests(SimpleTestCase):
         self.date_class = datetime.date
 
     # Assume it was May 15:
-    # Period 0, day 21, you would sync April 21-May 15th
+    # Period 0, day 21, you would sync April 21-May 20th
     # Period 1, day 21, you would sync March 21-April 20th
     # Period 2, day 21, you would sync February 21-March 20th
 
@@ -52,7 +52,7 @@ class CustomMonthFilterTests(SimpleTestCase):
             filter_ = CustomMonthFilter(start_of_month=21, period=0)
             date_span = filter_.get_filter_value(user=None, ui_filter=None)
             self.assertEqual(date_span.startdate, self.date_class(year=2015, month=4, day=21))
-            self.assertEqual(date_span.enddate, self.date_class(*MAY_15))
+            self.assertEqual(date_span.enddate, self.date_class(year=2015, month=5, day=20))
 
     def test_may15_period1(self):
         with patch_today(*MAY_15):
@@ -95,7 +95,7 @@ class CustomMonthFilterTests(SimpleTestCase):
             self.assertEqual(date_span.enddate, self.date_class(year=2015, month=3, day=20))
 
     # Assume it was May 21:
-    # Period 0, day 21, you would sync May 21-May 21th
+    # Period 0, day 21, you would sync May 21-June 20th
     # Period 1, day 21, you would sync April 21-May 20th
     # Period 2, day 21, you would sync March 21-April 20th
 
@@ -104,7 +104,7 @@ class CustomMonthFilterTests(SimpleTestCase):
             filter_ = CustomMonthFilter(start_of_month=21, period=0)
             date_span = filter_.get_filter_value(user=None, ui_filter=None)
             self.assertEqual(date_span.startdate, self.date_class(*MAY_21))
-            self.assertEqual(date_span.enddate, self.date_class(*MAY_21))
+            self.assertEqual(date_span.enddate, self.date_class(year=2015, month=6, day=20))
 
     def test_may21_period1(self):
         with patch_today(*MAY_21):
@@ -121,23 +121,23 @@ class CustomMonthFilterTests(SimpleTestCase):
             self.assertEqual(date_span.enddate, self.date_class(year=2015, month=4, day=20))
 
     # May 15 for 10 days from the end of the month (start_of_month = -10):
-    # Period 0, day 21, you would sync April 21-May 15th
-    # Period 1, day 21, you would sync March 21-April 20th
+    # Period 0, day 21, you would sync April 20-May 20th
+    # Period 1, day 21, you would sync March 21-April 19th
     # Period 2, day 21, you would sync February 18-March 20th
 
     def test_may15_minus10_period0(self):
         with patch_today(*MAY_15):
             filter_ = CustomMonthFilter(start_of_month=-10, period=0)
             date_span = filter_.get_filter_value(user=None, ui_filter=None)
-            self.assertEqual(date_span.startdate, self.date_class(year=2015, month=4, day=21))
-            self.assertEqual(date_span.enddate, self.date_class(*MAY_15))
+            self.assertEqual(date_span.startdate, self.date_class(year=2015, month=4, day=20))
+            self.assertEqual(date_span.enddate, self.date_class(year=2015, month=5, day=20))
 
     def test_may15_minus10_period1(self):
         with patch_today(*MAY_15):
             filter_ = CustomMonthFilter(start_of_month=-10, period=1)
             date_span = filter_.get_filter_value(user=None, ui_filter=None)
             self.assertEqual(date_span.startdate, self.date_class(year=2015, month=3, day=21))
-            self.assertEqual(date_span.enddate, self.date_class(year=2015, month=4, day=20))
+            self.assertEqual(date_span.enddate, self.date_class(year=2015, month=4, day=19))
 
     def test_may15_minus10_period2(self):
         with patch_today(*MAY_15):

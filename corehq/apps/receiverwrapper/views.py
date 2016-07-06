@@ -12,7 +12,12 @@ from corehq.apps.receiverwrapper.auth import (
     WaivedAuthContext,
     domain_requires_auth,
 )
-from corehq.apps.receiverwrapper.util import get_app_and_build_ids, determine_authtype
+from corehq.apps.receiverwrapper.util import (
+    get_app_and_build_ids,
+    determine_authtype,
+    from_demo_user,
+    should_ignore_submission
+)
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
@@ -30,6 +35,10 @@ from dimagi.utils.logging import notify_exception
 @count_by_response_code('commcare.xform_submissions')
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
+    if should_ignore_submission(request):
+        # silently ignore submission if it meets ignore-criteria
+        return SubmissionPost.submission_ignored_response()
+
     try:
         instance, attachments = couchforms.get_instance_and_attachment(request)
     except MultimediaBug as e:
@@ -121,15 +130,7 @@ def _noauth_post(request, domain, app_id=None):
     case_updates = get_case_updates(form_json)
 
     def form_ok(form_json):
-        try:
-            # require new-style meta/userID (reject Meta/chw_id)
-            if form_json['meta']['userID'] == 'demo_user':
-                return True
-        except (KeyError, ValueError):
-            pass
-        if is_device_report(form_json):
-            return True
-        return False
+        return from_demo_user(form_json) or is_device_report(form_json)
 
     def case_block_ok(case_updates):
         """

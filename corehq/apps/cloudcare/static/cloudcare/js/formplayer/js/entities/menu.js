@@ -45,11 +45,12 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (appId, stepList, page) {
+        getMenus: function (appId, stepList, page, search) {
 
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
             var domain = user.domain;
+            var language = user.language;
             var formplayerUrl = user.formplayer_url;
             var trimmedUsername = username.substring(0, username.indexOf("@"));
 
@@ -64,8 +65,10 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "username": trimmedUsername,
                         "domain": domain,
                         "app_id": collection.appId,
+                        "locale": language,
                         "selections": stepList,
                         "offset": page * 10,
+                        "search_text": search,
                     });
 
                     if (stepList) {
@@ -98,7 +101,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, stepList, page) {
-        return API.getMenus(appId, stepList, page);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, stepList, page, search) {
+        return API.getMenus(appId, stepList, page, search);
     });
 });

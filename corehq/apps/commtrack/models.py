@@ -384,6 +384,10 @@ class StockState(models.Model):
         return self.product_id
 
     @property
+    def location_id(self):
+        return self.sql_location.location_id if self.sql_location else None
+
+    @property
     def balance(self):
         return self.stock_on_hand
 

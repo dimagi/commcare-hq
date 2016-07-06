@@ -26,6 +26,7 @@ class TestAlerts(EWSTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(EWSTestCase, cls).setUpClass()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
 
@@ -94,6 +95,7 @@ class TestAlerts(EWSTestCase):
         SMS.objects.all().delete()
         StockReport.objects.all().delete()
         StockState.objects.all().delete()
+        super(TestAlerts, self).tearDown()
 
     def test_ongoing_non_reporting(self):
         now = datetime.utcnow()

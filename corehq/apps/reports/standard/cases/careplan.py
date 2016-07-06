@@ -56,12 +56,12 @@ class CareplanReport(ProjectReport, GenericReportView, ProjectReportParametersMi
     name = "Care Plan"
 
     @use_timeago
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
+    def decorator_dispatcher(self, request, *args, **kwargs):
         """
         This shouldn't have any effect until we upgrade to boostrap 3. Putting
         it here proactively so we don't forget about it.
         """
-        return super(CareplanReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+        return super(CareplanReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):

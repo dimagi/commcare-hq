@@ -4,7 +4,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.api.es import report_term_filter
 from corehq.pillows.base import VALUE_TAG
 from corehq.pillows.case import CasePillow
-from corehq.pillows.reportcase import ReportCasePillow
+from corehq.pillows.reportcase import transform_case_to_report_es
 from corehq.pillows.reportxform import ReportXFormPillow
 from corehq.pillows.xform import XFormPillow
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_MAPPING
@@ -522,9 +522,7 @@ class testReportCaseProcessing(TestCase):
     def testReportCaseTransform(self):
         case = EXAMPLE_CASE
         case['domain'] = settings.ES_CASE_FULL_INDEX_DOMAINS[0]
-        report_pillow = ReportCasePillow(online=False)
-        processed_case = report_pillow.change_transform(case)
-        mapping = report_pillow.default_mapping
+        processed_case = transform_case_to_report_es(case)
 
         #known properties, not #value'd
         self.assertEqual(processed_case['user_id'], case['user_id'])

@@ -3,12 +3,12 @@
 
 {% block core_libraries %}{{ block.super }}
 {% include "style/includes/angular.html" %}
-<script src="{% new_static 'angular-mocks/angular-mocks.js' %}"></script>
+<script src="{% static 'angular-mocks/angular-mocks.js' %}"></script>
 {% endblock %}
 
 {% block dependencies %}
-<script src="{% new_static 'export/js/list_exports.ng.js' %}"></script>
-<script src="{% new_static 'export/js/download_export.ng.js' %}"></script>
+<script src="{% static 'export/js/list_exports.ng.js' %}"></script>
+<script src="{% static 'export/js/download_export.ng.js' %}"></script>
 {% endblock %}
 
 {% block mocha_tests %}
@@ -18,12 +18,12 @@
         workflow: sinon.stub()
     };
 </script>
-<script src="{% new_static 'export/spec/utils/list_exports.utils.mo.js' %}"></script>
-<script src="{% new_static 'export/spec/ListExportsController.spec.mo.js' %}"></script>
-<script src="{% new_static 'export/spec/utils/download_export.utils.mo.js' %}"></script>
-<script src="{% new_static 'export/spec/DownloadExportFormController.init.spec.mo.js' %}"></script>
-<script src="{% new_static 'export/spec/DownloadExportFormController.prepare.spec.mo.js' %}"></script>
-<script src="{% new_static 'export/spec/DownloadExportFormController.prepareMultimedia.spec.mo.js' %}"></script>
-<script src="{% new_static 'export/spec/exportDownloadService.polling.spec.mo.js' %}"></script>
-<script src="{% new_static 'export/spec/DownloadProgressController.spec.mo.js' %}"></script>
+<script src="{% static 'export/spec/utils/list_exports.utils.mo.js' %}"></script>
+<script src="{% static 'export/spec/ListExportsController.spec.mo.js' %}"></script>
+<script src="{% static 'export/spec/utils/download_export.utils.mo.js' %}"></script>
+<script src="{% static 'export/spec/DownloadExportFormController.init.spec.mo.js' %}"></script>
+<script src="{% static 'export/spec/DownloadExportFormController.prepare.spec.mo.js' %}"></script>
+<script src="{% static 'export/spec/DownloadExportFormController.prepareMultimedia.spec.mo.js' %}"></script>
+<script src="{% static 'export/spec/exportDownloadService.polling.spec.mo.js' %}"></script>
+<script src="{% static 'export/spec/DownloadProgressController.spec.mo.js' %}"></script>
 {% endblock %}

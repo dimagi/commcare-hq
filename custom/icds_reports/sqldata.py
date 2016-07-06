@@ -5,7 +5,7 @@ from custom.icds_reports.utils import ICDSMixin
 
 class BaseIdentification(object):
 
-    title = 'Identification'
+    title = 'a. Identification'
     slug = 'identification'
     has_sections = False
     subtitle = []
@@ -25,7 +25,7 @@ class BaseIdentification(object):
 
 class BaseOperationalization(ICDSMixin):
 
-    title = 'Status of operationalization of AWCs'
+    title = 'c. Status of operationalization of AWCs'
     slug = 'operationalization'
 
     @property
@@ -77,7 +77,7 @@ class BasePopulation(ICDSMixin):
             data = self.custom_data(selected_location=None, domain=self.config['domain'])
             return [
                 [
-                    "Total Population of the project (as of last April):",
+                    "Total Population of the project:",
                     data['open_count']
                 ]
             ]

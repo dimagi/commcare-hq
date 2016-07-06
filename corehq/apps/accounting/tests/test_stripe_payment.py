@@ -13,6 +13,7 @@ from corehq.apps.domain.models import Domain
 class TestCreditStripePaymentHandler(TransactionTestCase):
 
     def setUp(self):
+        super(TestCreditStripePaymentHandler, self).setUp()
         self.domain = Domain(name='test-domain')
         self.domain.save()
         self.payment_method = PaymentMethod()
@@ -26,6 +27,7 @@ class TestCreditStripePaymentHandler(TransactionTestCase):
         PaymentRecord.objects.all().delete()
         self.payment_method.delete()
         self.account.delete()
+        super(TestCreditStripePaymentHandler, self).tearDown()
 
     @patch.object(stripe.Charge, 'create')
     def test_working_process_request(self, mock_create):
