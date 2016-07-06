@@ -2,12 +2,13 @@ import json
 from collections import namedtuple
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.resources import HqBaseResource
-from corehq.apps.api.resources.v0_1 import DomainAdminAuthentication
+from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin, apply_leniency,
     InvalidFormatException)
 from corehq.apps.sms.models import SelfRegistrationInvitation
+from corehq.apps.users.models import Permissions
 from corehq import privileges
 from django.http import HttpResponse, Http404
 from tastypie.exceptions import ImmediateHttpResponse
@@ -119,7 +120,7 @@ class UserSelfRegistrationResource(HqBaseResource):
     registration_result = None
 
     class Meta:
-        authentication = DomainAdminAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
         resource_name = 'sms_user_registration'
         allowed_methods = ['post']
         validation = UserSelfRegistrationValidation()
