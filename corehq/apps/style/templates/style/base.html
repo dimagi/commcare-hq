@@ -606,16 +606,12 @@
         {# 30 Day Trial #}
         {% include 'style/includes/modal_30_day_trial.html' %}
 
-        {% if not request.use_requirejs %} {# TODO: requirejs support #}
         <!--[if IE]>
         <script>
-            $(function () {
-                $('#unsupported-browser').show();
-            });
+            document.getElementById("unsupported-browser").style.display = "block";
         </script>
         <![endif]-->
-        {% endif %}
-        
+ 
         {% block js-inline %}{% endblock js-inline %}
 
     </body>
