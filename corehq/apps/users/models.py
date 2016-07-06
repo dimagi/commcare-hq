@@ -1529,10 +1529,34 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_case_ids(self):
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
+    def _get_deleted_form_ids(self):
+        return FormAccessors(self.domain).get_deleted_form_ids_for_user(self.domain, self.user_id)
+
+    def _get_deleted_case_ids(self):
+        return CaseAccessors(self.domain).get_deleted_case_ids_by_owner(self.user_id)
+
     def get_owner_ids(self, domain=None):
         owner_ids = [self.user_id]
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
+
+    def unretire(self):
+        """
+        This un-deletes a user, but does not fully restore the state to
+        how it previously was. Using this has these caveats:
+        - It will not restore Case Indexes that were removed
+        - It will not restore the user's phone numbers
+        - It will not restore reminders for cases
+        """
+        if self.base_doc.endswith(DELETED_SUFFIX):
+            self.base_doc = self.base_doc[:-len(DELETED_SUFFIX)]
+
+        deleted_form_ids = self._get_deleted_form_ids()
+        FormAccessors(self.domain).soft_undelete_forms(deleted_form_ids)
+
+        deleted_case_ids = self._get_deleted_case_ids()
+        CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
+        self.save()
 
     def retire(self):
         suffix = DELETED_SUFFIX
