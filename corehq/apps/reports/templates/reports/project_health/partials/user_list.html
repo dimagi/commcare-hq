@@ -15,8 +15,8 @@
     {% for user in user_list %}
     <tr>
         <td><a class="user-popover" data-url="{% url 'project_health_user_details' domain user.user_id %}" tabindex="0" role="button" data-trigger="focus" data-toggle="popover" title="{% trans 'User Information' %}" >{{ user.username }}</a></td>
-        <td>{% chevron user.delta_forms %} {{ user.delta_forms }} &nbsp;&nbsp;<small class="text-muted">{{ user.num_forms_submitted }}</small></td>
-        <td>{% chevron user.delta_forms_next_month %} {{ user.delta_forms_next_month }} &nbsp;&nbsp;<small class="text-muted">{{ user.num_forms_submitted_next_month }}</small></td>
+        <td title="{% trans 'Change in Forms Submitted' %}">{% chevron user.delta_forms %} {{ user.delta_forms }} &nbsp;&nbsp;<small class="text-muted" title="{% trans 'Number of Forms Submitted Last Month' %}">{{ user.num_forms_submitted }}</small></td>
+        <td title="{% trans 'Change in Forms Submitted' %}">{% chevron user.delta_forms_next_month %} {{ user.delta_forms_next_month }} &nbsp;&nbsp;<small class="text-muted" title="{% trans 'Number of Forms Submitted This Month' %}">{{ user.num_forms_submitted_next_month }}</small></td>
     </tr>
     {% endfor %}
 </table>
