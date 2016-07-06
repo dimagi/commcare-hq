@@ -40,7 +40,7 @@ class BasePayloadGenerator(object):
     def get_headers(self):
         return {'Content-type': self.content_type}
 
-    def get_test_payload(self, domain=None):
+    def get_test_payload(self, domain):
         return (
             "<?xml version='1.0' ?>"
             "<data id='test'>"
@@ -55,7 +55,7 @@ class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.get_xml()
 
-    def get_test_payload(self, domain=None):
+    def get_test_payload(self, domain):
         return self.get_payload(None, _get_test_form(domain))
 
 
@@ -65,7 +65,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
 
-    def get_test_payload(self, domain=None):
+    def get_test_payload(self, domain):
         from casexml.apps.case.mock import CaseBlock
         return CaseBlock(
             case_id='test-case-%s' % uuid4().hex,
@@ -87,7 +87,7 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def content_type(self):
         return 'application/json'
 
-    def get_test_payload(self, domain=None):
+    def get_test_payload(self, domain):
         from casexml.apps.case.models import CommCareCase
         return self.get_payload(
             None,
@@ -119,7 +119,7 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def content_type(self):
         return 'application/json'
 
-    def get_test_payload(self, domain=None):
+    def get_test_payload(self, domain):
         return json.dumps({
             'form_id': 'test-form-' + uuid4().hex,
             'received_on': json_format_datetime(datetime.utcnow()),
@@ -140,5 +140,5 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     def content_type(self):
         return 'application/json'
 
-    def get_test_payload(self, domain=None):
+    def get_test_payload(self, domain):
         return self.get_payload(None, _get_test_form(domain))
