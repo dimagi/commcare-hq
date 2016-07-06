@@ -9,6 +9,16 @@
         <p>
             {% blocktrans with couch_user.raw_username as username  %}The user <strong>{{ username }}</strong> no longer exists.{% endblocktrans %}
         </p>
+        <div class="alert alert-danger">
+        This un-deletes a user, but does not fully restore the state to
+        how it previously was. Using this has these caveats (and possibly more unknown ones):
+        <ul>
+            <li>It will not restore Case Indexes that were removed</li>
+            <li>It will not restore the user's phone numbers</li>
+            <li>It will not restore reminders for cases</li>
+        </ul>
+
+        </div>
         <div class="alert alert-info">
             <p>{% blocktrans %}If you think this user was deleted in error: {% endblocktrans %}</p>
             <p><a href="{% url "restore_commcare_user" domain couch_user.user_id %}"
