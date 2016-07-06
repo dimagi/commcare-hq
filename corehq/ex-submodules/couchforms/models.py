@@ -5,7 +5,6 @@ import datetime
 import hashlib
 import logging
 import time
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from jsonobject.base import DefaultProperty
 from lxml import etree
 
@@ -23,6 +22,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.mixins import UnicodeMixIn
+from corehq.blobs.mixin import DeferredBlobMixin
 from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
@@ -96,9 +96,11 @@ class XFormOperation(DocumentSchema):
     operation = StringProperty()  # e.g. "archived", "unarchived"
 
 
-class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
-                    CouchDocLockableMixIn, AbstractXFormInstance):
+class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
+                    ComputedDocumentMixin, CouchDocLockableMixIn,
+                    AbstractXFormInstance):
     """An XForms instance."""
+    migrating_blobs_from_couch = True
     domain = StringProperty()
     app_id = StringProperty()
     xmlns = StringProperty()
@@ -199,9 +201,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         return "%s (%s)" % (self.type, self.xmlns)
 
     def save(self, **kwargs):
-        # default to encode_attachments=False
-        if 'encode_attachments' not in kwargs:
-            kwargs['encode_attachments'] = False
         # HACK: cloudant has a race condition when saving newly created forms
         # which throws errors here. use a try/retry loop here to get around
         # it until we find something more stable.
@@ -241,9 +240,6 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         self.save()
 
     def get_xml(self):
-        if (self._attachments and ATTACHMENT_NAME in self._attachments
-                and 'data' in self._attachments[ATTACHMENT_NAME]):
-            return base64.b64decode(self._attachments[ATTACHMENT_NAME]['data'])
         try:
             return self.fetch_attachment(ATTACHMENT_NAME)
         except ResourceNotFound:
@@ -288,7 +284,9 @@ class XFormInstance(SafeSaveDocument, UnicodeMixIn, ComputedDocumentMixin,
         Get the extra attachments for this form. This will not include
         the form itself
         """
-        return dict((item, val) for item, val in self._attachments.items() if item != ATTACHMENT_NAME)
+        return {name: meta.to_json()
+            for name, meta in self.blobs.iteritems()
+            if name != ATTACHMENT_NAME}
     
     def xml_md5(self):
         return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
@@ -412,9 +410,9 @@ class SubmissionErrorLog(XFormError):
     here. 
     """
     md5 = StringProperty()
-        
+
     def __unicode__(self):
-        return "Doc id: %s, Error %s" % (self.get_id, self.problem) 
+        return u"Doc id: %s, Error %s" % (self.get_id, self.problem)
 
     def get_xml(self):
         return self.fetch_attachment(ATTACHMENT_NAME)
@@ -422,7 +420,7 @@ class SubmissionErrorLog(XFormError):
     def save(self, *args, **kwargs):
         # we have to override this because XFormError does too 
         self["doc_type"] = "SubmissionErrorLog" 
-        # and we can't use super for the same reasons XFormError 
+        # and we can't use super for the same reasons XFormError
         XFormInstance.save(self, *args, **kwargs)
 
     @property
@@ -434,18 +432,13 @@ class SubmissionErrorLog(XFormError):
         """
         Create an instance of this record from a submission body
         """
-        attachments_builder = CouchAttachmentsBuilder()
-        attachments_builder.add(
-            content=instance,
-            name=ATTACHMENT_NAME,
-            content_type='text/xml',
-        )
-        return SubmissionErrorLog(
+        log = SubmissionErrorLog(
             received_on=datetime.datetime.utcnow(),
             md5=hashlib.md5(instance).hexdigest(),
             problem=message,
-            _attachments=attachments_builder.to_json(),
         )
+        log.deferred_put_attachment(instance, ATTACHMENT_NAME, context_type="text/xml")
+        return log
 
 
 class DefaultAuthContext(DocumentSchema):

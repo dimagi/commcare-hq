@@ -20,6 +20,9 @@ class AttachmentContent(namedtuple('AttachmentContent', ['content_type', 'conten
 
     @property
     def content_body(self):
+        # WARNING an error is likely if this property is accessed more than once
+        # self.content_stream is a file-like object, and most file-like objects
+        # will error on subsequent read attempt once closed (by with statement).
         with self.content_stream as stream:
             return stream.read()
 
