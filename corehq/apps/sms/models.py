@@ -1257,13 +1257,13 @@ class SelfRegistrationInvitation(models.Model):
         self.registered_date = datetime.utcnow()
         self.save()
 
-    def send_step1_sms(self):
+    def send_step1_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
         send_sms(
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_INVITATION_START, domain=self.domain)
+            custom_message or get_message(MSG_MOBILE_WORKER_INVITATION_START, domain=self.domain)
         )
 
     def send_step2_java_sms(self):
@@ -1374,7 +1374,7 @@ class SelfRegistrationInvitation(models.Model):
 
     @classmethod
     def initiate_workflow(cls, domain, phone_numbers, app_id=None,
-            days_until_expiration=30):
+            days_until_expiration=30, custom_first_message=None):
         """
         If app_id is passed in, then an additional SMS will be sent to Android
         phones containing a link to the latest starred build (or latest
@@ -1419,7 +1419,7 @@ class SelfRegistrationInvitation(models.Model):
                 odk_url=odk_url,
             )
 
-            invitation.send_step1_sms()
+            invitation.send_step1_sms(custom_first_message)
             success_numbers.append(phone_number)
 
         return (success_numbers, invalid_format_numbers, numbers_in_use)

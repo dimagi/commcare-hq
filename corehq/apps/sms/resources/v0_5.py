@@ -152,11 +152,18 @@ class UserSelfRegistrationResource(HqBaseResource):
             raise ImmediateHttpResponse(response=self.error_response(bundle.request, bundle.errors))
 
         data = bundle.data
+
+        custom_registration_message = data.get('custom_registration_message')
+        if isinstance(custom_registration_message, basestring):
+            custom_registration_message = custom_registration_message.strip()
+            if not custom_registration_message:
+                custom_registration_message = None
+
         obj = SelfRegistrationInfo(
             data.get('app_id'),
             data.get('android_only', False),
             data.get('require_email', False),
-            data.get('custom_registration_message')
+            custom_registration_message
         )
         for user_info in data.get('users', []):
             obj.add_user(SelfRegistrationUserInfo(
@@ -171,7 +178,8 @@ class UserSelfRegistrationResource(HqBaseResource):
         self.registration_result = SelfRegistrationInvitation.initiate_workflow(
             bundle.request.domain,
             [user_info.phone_number for user_info in bundle.obj.users],
-            app_id=bundle.obj.app_id
+            app_id=bundle.obj.app_id,
+            custom_first_message=bundle.obj.custom_registration_message,
         )
         return bundle
 
