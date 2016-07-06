@@ -341,7 +341,63 @@
 
         {% if request.use_requirejs %}
             <script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
-            {% block requirejs_config %}{% endblock requirejs_config %}
+            <script type="text/javascript">
+                requirejs.config({
+                    paths: {
+                        "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
+                        "hqDefine": "{% static 'hqwebapp/js/hqModules' %}",
+                        "hq.helpers": "{% static 'style/js/hq.helpers' %}",
+                        "jquery": "{% static 'jquery/dist/jquery.min' %}",
+                        "knockout": "{% static 'knockout/dist/knockout.debug' %}",
+                        "ko.mapping": "{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min' %}",
+                        "ko.global_handlers": "{% static 'style/ko/global_handlers.ko' %}",
+                        "ko.knockout_bindings": "{% static 'style/ko/knockout_bindings.ko' %}",
+                        "ko.inline_edit": "{% static 'style/ko/components/inline_edit' %}",
+                        "ko.components": "{% static 'style/ko/components.ko' %}",
+                        "underscore": "{% static 'underscore/underscore' %}",
+
+                        {% if request.use_datatables %}
+                        "datatables": "{% static 'datatables/media/js/jquery.dataTables.min' %}",
+                        "datatables.fixedColumns": "{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns' %}",
+                        "datatables.bootstrap": "{% static 'datatables-bootstrap3/BS3/assets/js/datatables' %}",
+                        {% endif %}
+
+                        {% if request.use_select2 %}
+                        "select2": "{% static 'select2-3.5.2-legacy/select2' %}",
+                        {% endif %}
+
+                        {% block requirejs_paths %}{% endblock %}
+                    },
+                    shim: {
+                        "bootstrap": { deps: ['jquery'] },
+                        "hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout'] },
+                        "ko.mapping": { deps: ['knockout'] },
+                        "ko.global_handlers": { deps: ['knockout'] },
+                        "ko.knockout_bindings": { deps: ['knockout'] },
+                        "ko.inline_edit": { deps: ['knockout', 'hqDefine'] },
+                        "ko.components": { deps: ['knockout', 'underscore'] },
+
+                        {% if request.use_datatables %}
+                        "datatables.bootstrap": { deps: ['datatables'] },
+                        {% endif %}
+
+                        {% block requirejs_shim %}{% endblock %}
+                    },
+                    map: {
+                        {% if request.use_datatables %}
+                        "datatables.fixedColumns": {
+                            "datatables.net": "datatables",
+                        },
+                        {% endif %}
+                    },
+                    deps: ['knockout', 'ko.mapping'],
+                    callback: function (ko, mapping) {
+                        ko.mapping = mapping;
+                    }
+                });
+
+                {% block requirejs_entry %}{% endblock requirejs_entry %}
+            </script>
         {% endif %}
 
         {# HQ Specific Libraries #}

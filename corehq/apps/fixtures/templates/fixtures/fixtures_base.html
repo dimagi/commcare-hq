@@ -4,63 +4,13 @@
 
 {% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}\
 
-{% block requirejs_config %}
-    <script type="text/javascript">
-        requirejs.config({
-            paths: {
-                // TODO: move this piece into style/base.html
-                "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
-                "hqDefine": "{% static 'hqwebapp/js/hqModules' %}",
-                "hq.helpers": "{% static 'style/js/hq.helpers' %}",
-                "jquery": "{% static 'jquery/dist/jquery.min' %}",
-                "knockout": "{% static 'knockout/dist/knockout.debug' %}",
-                "ko.mapping": "{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min' %}",
-                "ko.global_handlers": "{% static 'style/ko/global_handlers.ko' %}",
-                "ko.knockout_bindings": "{% static 'style/ko/knockout_bindings.ko' %}",
-                "ko.inline_edit": "{% static 'style/ko/components/inline_edit' %}",
-                "ko.components": "{% static 'style/ko/components.ko' %}",
-                "underscore": "{% static 'underscore/underscore' %}",
+{% block requirejs_paths %}
+    "filters": "{% static 'reports/javascripts/filters' %}",
+    "config.datatables": "{% static 'reports/javascripts/config.dataTables.bootstrap' %}",
+{% endblock %}
 
-                // TODO: only if request.use_datatables
-                "datatables": "{% static 'datatables/media/js/jquery.dataTables.min' %}",
-                "datatables.fixedColumns": "{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns' %}",
-                "datatables.bootstrap": "{% static 'datatables-bootstrap3/BS3/assets/js/datatables' %}",
-
-                // TODO: only if request.use_select2
-                "select2": "{% static 'select2-3.5.2-legacy/select2' %}",
-
-                // TODO: these are actually specific to this file
-                "filters": "{% static 'reports/javascripts/filters' %}",
-                "config.datatables": "{% static 'reports/javascripts/config.dataTables.bootstrap' %}",
-            },
-            shim: {
-                "bootstrap": { deps: ['jquery'] },
-                "hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout'] },
-                "ko.mapping": { deps: ['knockout'] },
-                "ko.global_handlers": { deps: ['knockout'] },
-                "ko.knockout_bindings": { deps: ['knockout'] },
-                "ko.inline_edit": { deps: ['knockout', 'hqDefine'] },
-                "ko.components": { deps: ['knockout', 'underscore'] },
-
-                // TODO: only if request.use_datatables
-                "datatables.bootstrap": { deps: ['datatables'] },
-
-                // TODO: specific to this file
-                "config.datatables": { deps: ['datatables.bootstrap'] },
-            },
-            map: {
-                "datatables.fixedColumns": {
-                    "datatables.net": "datatables",
-                },
-            },
-            deps: ['knockout', 'ko.mapping'],
-            callback: function (ko, mapping) {
-                ko.mapping = mapping;
-            }
-        });
-
-        {% block requirejs_entry %}{% endblock requirejs_entry %}
-    </script>
+{% block requirejs_shim %}
+    "config.datatables": { deps: ['datatables.bootstrap'] },
 {% endblock %}
 
 {% block page_breadcrumbs %}
