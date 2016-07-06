@@ -31,7 +31,7 @@ def should_use_sql_backend(domain_object_or_name):
             })
         return True
     else:
-        return domain_object and domain_object.use_sql_backend
+        return domain_object.use_sql_backend
 
 
 def _should_use_sql_backend_in_tests(domain_object_or_name):
