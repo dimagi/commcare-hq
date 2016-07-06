@@ -368,6 +368,10 @@
                         "select2": "{% static 'select2-3.5.2-legacy/select2' %}",
                         {% endif %}
 
+                        {% if request.use_select2_v4 %}
+                        "select2": "{% static 'select2/dist/js/select2.full.min' %}",
+                        {% endif %}
+
                         {% block requirejs_paths %}{% endblock %}
                     },
                     shim: {
@@ -496,7 +500,7 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_select2_v4 and not request.use_requirejs %} {# TODO: requirejs support #}
+        {% if request.use_select2_v4 and not request.use_requirejs %}
         {% compress js %}
         <script type="text/javascript" src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
