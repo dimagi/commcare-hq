@@ -1,6 +1,21 @@
 {% extends 'reports/filters/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
+    <div class="reports-filters-single-option">
+        <div class="initial-data hide">
+            {
+                {% if pagination.enabled %}
+                    "pagination": true,
+                    "url": "{{ pagination.url }}",
+                    "handler": "{{ pagination.handler }}",
+                    "action": "{{ pagination.action }}"
+                {% else %}
+                    "pagination": false,
+                    "selectOptions": {{ select.options|JSON }},
+                    "selectCurrent": "{{ select.selected|safe|default:'' }}"
+                {% endif %}
+            }
+        </div>
     {% if pagination.enabled %}
         <input id="{{ css_id }}"
                class="input form-control"
@@ -14,9 +29,11 @@
                 data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', {% if select.default_text %}optionsCaption: '{{ select.default_text }}', {% endif %}value: current_selection"
                 name="{{ slug }}"></select>
     {% endif %}
+    </div>
 {% endblock %}
 {% block filter_js %}
-<script type="text/javascript">
+<!-- TODO: uncomment this for pages not using requirejs, or give them module access, or something -->
+<!--script type="text/javascript">
     $(function () {
         {% if pagination.enabled %}
             $('#{{ css_id }}').select2({
@@ -63,4 +80,4 @@
             $('#{{ css_id }}').select2();
         {% endif %}
     });
-</script>{% endblock %}
+</script-->{% endblock %}

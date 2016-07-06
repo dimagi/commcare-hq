@@ -13,6 +13,7 @@
     <script type="text/javascript">
         requirejs.config({
             paths: {
+                // TODO: move this piece into style/base.html
                 "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
                 "hqDefine": "{% static 'hqwebapp/js/hqModules' %}",
                 "hq.helpers": "{% static 'style/js/hq.helpers' %}",
@@ -25,7 +26,17 @@
                 "ko.components": "{% static 'style/ko/components.ko' %}",
                 "underscore": "{% static 'underscore/underscore' %}",
 
-                "config.dataTables": "{% static 'reports/javascripts/config.dataTables.bootstrap' %}",
+                // TODO: only if request.use_datatables
+                "datatables": "{% static 'datatables/media/js/jquery.dataTables.min' %}",
+                "datatables.fixedColumns": "{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns' %}",
+                "datatables.bootstrap": "{% static 'datatables-bootstrap3/BS3/assets/js/datatables' %}",
+
+                // TODO: only if request.use_select2
+                "select2": "{% static 'select2-3.5.2-legacy/select2' %}",
+
+                // TODO: these are actually specific to this file
+                "filters": "{% static 'reports/javascripts/filters' %}",
+                "config.datatables": "{% static 'reports/javascripts/config.dataTables.bootstrap' %}",
             },
             shim: {
                 "bootstrap": { deps: ['jquery'] },
@@ -35,6 +46,19 @@
                 "ko.knockout_bindings": { deps: ['knockout'] },
                 "ko.inline_edit": { deps: ['knockout', 'hqDefine'] },
                 "ko.components": { deps: ['knockout', 'underscore'] },
+
+                // TODO: only if request.use_datatables
+                "datatables": { deps: ['jquery'] },
+                "datatables.fixedColumns": { deps: ['datatables'] },
+                "datatables.bootstrap": { deps: ['datatables', 'bootstrap'] },
+
+                // TODO: specific to this file
+                "config.datatables": { deps: ['datatables.fixedColumns', 'datatables.bootstrap'] },
+            },
+            map: {
+                "datatables.fixedColumns": {
+                    "datatables.net": "datatables",
+                },
             },
             deps: ['knockout', 'ko.mapping'],
             callback: function (ko, mapping) {

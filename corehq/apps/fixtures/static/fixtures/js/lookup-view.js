@@ -1,19 +1,18 @@
 define([
+    "filters",
     "jquery",
-    "knockout",
-    "ko.mapping",
-    "ko.global_handlers",
-    "ko.knockout_bindings",
+    "config.datatables",
     "hq.helpers",
-    "config.dataTables",
 ], function(
+    filters,
     $,
-    ko
+    datatablesConfig
 ) {
     "use strict";
+    filters.init();
     var initialPageData = $.parseJSON($("#initial-page-data").text());
     if (initialPageData.renderReportTables) {
-        var reportTables = new HQReportDataTables(initialPageData.reportTablesOptions);
+        var reportTables = new datatablesConfig.HQReportDataTables(initialPageData.reportTablesOptions);
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
         }

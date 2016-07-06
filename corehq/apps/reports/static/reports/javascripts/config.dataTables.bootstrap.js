@@ -318,4 +318,8 @@ jQuery.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) { return sortSpe
 
 jQuery.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) { return sortSpecial(a, b, false, convertDate); };
 
+return {
+    HQReportDataTables: HQReportDataTables,
+};
+
 }));
