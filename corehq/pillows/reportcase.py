@@ -2,6 +2,7 @@ import copy
 
 from django.conf import settings
 
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.elastic import get_es_new
@@ -10,6 +11,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
 from .base import convert_property_dict
 
 
@@ -28,13 +30,20 @@ class ReportCasePillow(CasePillow):
         return '8c10a7564b6af5052f8b86693bf6ac07'
 
     def change_transform(self, doc_dict):
-        return transform_case_to_report_es(doc_dict)
+        if not report_case_filter(doc_dict):
+            return transform_case_to_report_es(doc_dict)
+
+
+def report_case_filter(doc_dict):
+    """
+        :return: True to filter out doc
+    """
+    if doc_dict.get('domain', None) not in getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', []):
+        # full indexing is only enabled for select domains on an opt-in basis
+        return True
 
 
 def transform_case_to_report_es(doc_dict):
-    if doc_dict.get('domain', None) not in getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', []):
-        # full indexing is only enabled for select domains on an opt-in basis
-        return None
     doc_ret = copy.deepcopy(doc_dict)
     convert_property_dict(
         doc_ret,
@@ -51,7 +60,8 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=REPORT_CASE_INDEX_INFO,
-        doc_prep_fn=transform_case_to_report_es
+        doc_prep_fn=transform_case_to_report_es,
+        doc_filter_fn=report_case_filter,
     )
     kafka_change_feed = KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='report-cases-to-es')
     return ConstructedPillow(
@@ -62,4 +72,15 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
         change_processed_event_handler=MultiTopicCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
+    )
+
+
+def get_report_case_couch_reindexer():
+    return ResumableBulkElasticPillowReindexer(
+        name='ReportCaseToElasticsearchPillow',
+        doc_types=[CommCareCase],
+        elasticsearch=get_es_new(),
+        index_info=REPORT_CASE_INDEX_INFO,
+        doc_filter=report_case_filter,
+        doc_transform=transform_case_to_report_es,
     )
