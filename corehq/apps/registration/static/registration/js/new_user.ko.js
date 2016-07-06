@@ -85,7 +85,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
             });
 
         // ---------------------------------------------------------------------
-        self.email = ko.observable(defaults.email)
+        self.email = ko.observable()
             .extend({
                 required: {
                     message: django.gettext("Please specify an email."),
@@ -118,10 +118,14 @@ hqDefine('registration/js/new_user.ko.js', function () {
                     message: django.gettext("There is already a user with this email."),
                 }
             });
+        if (defaults.email) {
+            // triggers validation check on pre-filled emails
+            self.email(defaults.email);
+        }
         self.isEmailValidating = ko.observable(false);
         self.validatingEmailMsg = ko.observable(django.gettext("Checking email..."));
         self.emailDelayed.isValidating.subscribe(function (isValidating) {
-            self.isEmailValidating(isValidating);
+            self.isEmailValidating(isValidating && self.email.isValid());
             _private.resetEmailFeedback(isValidating);
         });
 
