@@ -1,4 +1,4 @@
-from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.app_manager.models import ApplicationBase, Application, RemoteApp
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
@@ -8,6 +8,7 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEven
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
 
 
 class AppPillow(AliasedElasticPillow):
@@ -51,4 +52,14 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100,
         ),
+    )
+
+
+def get_app_reindexer():
+    return ResumableBulkElasticPillowReindexer(
+        name='ApplicationToElasticsearchPillow',
+        doc_types=[Application, RemoteApp],
+        elasticsearch=get_es_new(),
+        index_info=APP_INDEX_INFO,
+        doc_transform=transform_app_for_es,
     )
