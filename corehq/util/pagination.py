@@ -250,6 +250,7 @@ class ResumableFunctionIterator(object):
             self.iteration_key,
             self.data_function,
             self.args_provider,
+            self.item_getter,
             self.event_handler
         )
 
