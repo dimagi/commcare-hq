@@ -2,7 +2,7 @@
 if (typeof define === 'function' && define.amd) {
     define(['jquery', 'knockout'], factory);
 } else {
-    factory(jQuery);
+    factory(jQuery, ko);
 }
 }(function ($, ko) {
 

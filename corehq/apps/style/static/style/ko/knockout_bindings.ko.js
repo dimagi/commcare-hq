@@ -2,7 +2,7 @@
 if (typeof define === 'function' && define.amd) {
     define(['knockout'], factory);
 } else {
-    factory();
+    factory(ko);
 }
 }(function (ko) {
 

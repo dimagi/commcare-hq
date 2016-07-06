@@ -409,7 +409,6 @@
         <script type="text/javascript" src="{% static 'style/js/hq-bug-report.js' %}"></script>
         <script type="text/javascript" src="{% static 'style/js/layout.js' %}"></script>
         <script type="text/javascript" src="{% static 'style/js/form_tools.js' %}"></script>
-        <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/toggles.js' %}"></script>
         <script type="text/javascript" src="{% static 'style/js/main.js' %}"></script>
@@ -440,8 +439,10 @@
         </script>
         {% endif %}
 
-        {% if not request.use_requirejs %} {# TODO: knockout no longer works on non-requirejs pages #}
+        {% if not request.use_requirejs %}
         {% include "style/includes/ko.html" %}
+        <!-- koApplyBindings in hq.helpers depends on knockout -->
+        <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
         {% endif %}
 
         {% if not request.use_requirejs %}

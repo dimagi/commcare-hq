@@ -2,7 +2,7 @@
 if (typeof define === 'function' && define.amd) {
     define(['jquery', 'knockout', 'underscore'], factory);
 } else {
-    factory(jQuery);
+    factory(jQuery, ko, _);
 }
 }(function ($, ko, _) {
 
