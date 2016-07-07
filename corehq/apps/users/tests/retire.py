@@ -5,6 +5,7 @@ import uuid
 from xml.etree import ElementTree
 
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -18,6 +19,7 @@ class RetireUserTestCase(TestCase):
 
     def setUp(self):
         super(RetireUserTestCase, self).setUp()
+        delete_all_users()
         self.domain = 'test'
         self.username = "fake-person@test.commcarehq.org"
         self.other_username = 'other-user@test.commcarehq.org'
@@ -30,8 +32,7 @@ class RetireUserTestCase(TestCase):
         self.other_user.save()
 
     def tearDown(self):
-        for user in CommCareUser.all():
-            user.delete()
+        delete_all_users()
         delete_all_cases()
         delete_all_xforms()
         super(RetireUserTestCase, self).tearDown()
