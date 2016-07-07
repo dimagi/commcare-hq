@@ -834,6 +834,11 @@ class LedgerReindexAccessor(ReindexAccessor):
         # note: in memory sorting and limit not necessary since we're only queyring a single DB
         return RawQuerySetWrapper(results)
 
+    def doc_to_json(self, doc):
+        json_doc = doc.to_json()
+        json_doc['_id'] = doc.ledger_reference.as_id()
+        return json_doc
+
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
 

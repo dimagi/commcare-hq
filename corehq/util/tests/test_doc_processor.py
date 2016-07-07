@@ -3,12 +3,21 @@ import uuid
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
+from django.test.utils import override_settings
 from fakecouch import FakeCouchDb
 
+from casexml.apps.case.mock import CaseFactory
+from corehq.form_processor.backends.sql.dbaccessors import (
+    FormReindexAccessor, ReindexAccessor, CaseReindexAccessor, LedgerReindexAccessor
+)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.form_processor.utils import TestFormMetadata
+from corehq.form_processor.utils.xform import get_simple_wrapped_form
 from corehq.util.doc_processor.couch import ResumableDocsByTypeIterator, CouchDocumentProvider
 from corehq.util.doc_processor.interface import (
     BaseDocProcessor, DocumentProcessor, BulkDocProcessor, BulkProcessingFailed
 )
+from corehq.util.doc_processor.sql import ResumableSqlModelIterator
 from corehq.util.pagination import TooManyRetries
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.chunked import chunked
@@ -141,6 +150,203 @@ class TestResumableDocsByTypeIterator(TestCase):
         self.itr = self.get_iterator()
         self.assertEqual(self.itr.progress_info, {"visited": "six"})
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[5:])
+
+
+class SimulateDeleteReindexAccessor(ReindexAccessor):
+    def __init__(self, wrapped_accessor, deleted_doc_ids=None):
+        self.deleted_doc_ids = deleted_doc_ids or []
+        self.wrapped_accessor = wrapped_accessor
+
+    @property
+    def startkey_attribute_name(self):
+        return self.wrapped_accessor.startkey_attribute_name
+
+    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+        return self.wrapped_accessor.get_docs(from_db, startkey, last_doc_pk, limit)
+
+    def get_doc(self, doc_id):
+        if doc_id in self.deleted_doc_ids:
+            return None
+        return self.wrapped_accessor.get_doc(doc_id)
+
+    def doc_to_json(self, doc):
+        return self.wrapped_accessor.doc_to_json(doc)
+
+
+class BaseResumableSqlModelIteratorTest(object):
+
+    @property
+    def reindex_accessor(self):
+        raise NotImplementedError
+
+    @classmethod
+    def create_docs(cls, domain, count):
+        raise NotImplementedError
+
+    @classmethod
+    def setUpClass(cls):
+        super(BaseResumableSqlModelIteratorTest, cls).setUpClass()
+        cls.domain = uuid.uuid4().hex
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+            cls.all_doc_ids = cls.create_docs(cls.domain, 9)
+            cls.first_doc_id = cls.all_doc_ids[0]
+
+    @classmethod
+    def tearDownClass(cls):
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers()
+        super(BaseResumableSqlModelIteratorTest, cls).tearDownClass()
+
+    def setUp(self):
+        super(BaseResumableSqlModelIteratorTest, self).setUp()
+        self.iteration_key = uuid.uuid4().hex
+        self.itr = self.get_iterator()
+
+    def tearDown(self):
+        self.itr.discard_state()
+
+    def get_iterator(self, deleted_doc_ids=None):
+        reindex_accessor = SimulateDeleteReindexAccessor(self.reindex_accessor, deleted_doc_ids)
+        return ResumableSqlModelIterator(self.iteration_key, reindex_accessor, 2)
+
+    def test_iteration(self):
+        self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids)
+
+    def test_resume_iteration(self):
+        itr = iter(self.itr)
+        self.assertEqual([next(itr)["_id"] for i in range(6)], self.all_doc_ids[:6])
+        # stop/resume iteration
+        self.itr = self.get_iterator()
+        self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
+
+    def test_resume_iteration_after_complete_iteration(self):
+        self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids)
+        # resume iteration
+        self.itr = self.get_iterator()
+        self.assertEqual([doc["_id"] for doc in self.itr], [])
+
+    def test_iteration_with_retry(self):
+        itr = iter(self.itr)
+        doc = next(itr)
+        self.itr.retry(doc['_id'])
+        self.assertEqual(doc["_id"], self.first_doc_id)
+        self.assertEqual([self.first_doc_id] + [d["_id"] for d in itr],
+                         self.all_doc_ids + [self.first_doc_id])
+
+    def test_iteration_complete_after_retry(self):
+        itr = iter(self.itr)
+        self.itr.retry(next(itr)['_id'])
+        list(itr)
+        self.itr = self.get_iterator()
+        self.assertEqual([doc["_id"] for doc in self.itr], [])
+
+    def test_iteration_with_max_retry(self):
+        itr = iter(self.itr)
+        doc = next(itr)
+        ids = [doc["_id"]]
+        self.assertEqual(doc["_id"], self.first_doc_id)
+        self.itr.retry(doc['_id'])
+        retries = 1
+        for doc in itr:
+            ids.append(doc["_id"])
+            if doc["_id"] == self.first_doc_id:
+                if retries < 3:
+                    self.itr.retry(doc['_id'])
+                    retries += 1
+                else:
+                    break
+        self.assertEqual(doc["_id"], self.first_doc_id)
+        with self.assertRaises(TooManyRetries):
+            self.itr.retry(doc['_id'])
+        self.assertEqual(ids, self.all_doc_ids + ([self.first_doc_id] * 3))
+        self.assertEqual(list(itr), [])
+        self.assertEqual(list(self.get_iterator()), [])
+
+    def test_iteration_with_missing_retry_doc(self):
+        iterator = self.get_iterator(deleted_doc_ids=self.first_doc_id)
+        itr = iter(iterator)
+        doc = next(itr)
+        self.assertEqual(doc["_id"], self.first_doc_id)
+        iterator.retry(doc['_id'])
+        self.assertEqual([self.first_doc_id] + [d["_id"] for d in itr], self.all_doc_ids)
+
+    def test_iteration_with_progress_info(self):
+        itr = iter(self.itr)
+
+        self.assertEqual([next(itr)["_id"] for i in range(6)], self.all_doc_ids[:6])
+        self.assertEqual(self.itr.progress_info, {})
+        self.itr.progress_info = {"visited": 6}
+        # stop/resume iteration
+        self.itr = self.get_iterator()
+        self.assertEqual(self.itr.progress_info, {"visited": 6})
+        self.itr.progress_info = {"visited": "six"}
+        # stop/resume iteration
+        self.itr = self.get_iterator()
+        self.assertEqual(self.itr.progress_info, {"visited": "six"})
+        self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class XFormResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestCase):
+    @property
+    def reindex_accessor(self):
+        return FormReindexAccessor()
+
+    @classmethod
+    def create_docs(cls, domain, count):
+        meta = TestFormMetadata(domain=domain)
+        form_ids = ["f-{}".format(i) for i in range(count)]
+        for form_id in form_ids:
+            get_simple_wrapped_form(form_id, metadata=meta)
+
+        return form_ids
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class CaseResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestCase):
+    @property
+    def reindex_accessor(self):
+        return CaseReindexAccessor()
+
+    @classmethod
+    def create_docs(cls, domain, count):
+        factory = CaseFactory(cls.domain)
+        return [factory.create_case().case_id for i in range(count)]
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class LedgerResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, TestCase):
+    @property
+    def reindex_accessor(self):
+        return LedgerReindexAccessor()
+
+    @classmethod
+    def create_docs(cls, domain, count):
+        from corehq.apps.commtrack.tests import get_single_balance_block
+        from corehq.apps.hqcase.utils import submit_case_blocks
+        from corehq.apps.commtrack.helpers import make_product
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+
+        cls.product = make_product(cls.domain, 'A Product', 'prodcode_a')
+
+        factory = CaseFactory(cls.domain)
+        case_ids = [factory.create_case().case_id for i in range(count)]
+
+        for case_id in case_ids:
+            submit_case_blocks([
+                get_single_balance_block(case_id, cls.product._id, 10)
+            ], domain)
+
+        return [
+            UniqueLedgerReference(case_id, 'stock', cls.product._id).as_id()
+            for case_id in case_ids
+        ]
+
+    @classmethod
+    def tearDownClass(cls):
+        super(LedgerResumableSqlModelIteratorTest, cls).tearDownClass()
+        cls.product.delete()
 
 
 class DemoProcessor(BaseDocProcessor):
