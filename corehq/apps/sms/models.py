@@ -1233,6 +1233,9 @@ class SelfRegistrationInvitation(models.Model):
     # True if we are assuming that the recipient has an Android phone
     android_only = models.BooleanField(default=False)
 
+    # True to make email address a required field on the self-registration page
+    require_email = models.BooleanField(default=False)
+
     class Meta:
         app_label = 'sms'
 
@@ -1390,7 +1393,7 @@ class SelfRegistrationInvitation(models.Model):
     @classmethod
     def initiate_workflow(cls, domain, phone_numbers, app_id=None,
             days_until_expiration=30, custom_first_message=None,
-            android_only=False):
+            android_only=False, require_email=False):
         """
         If app_id is passed in, then an additional SMS will be sent to Android
         phones containing a link to the latest starred build (or latest
@@ -1434,10 +1437,11 @@ class SelfRegistrationInvitation(models.Model):
                 created_date=datetime.utcnow(),
                 odk_url=odk_url,
                 android_only=android_only,
+                require_email=require_email,
             )
 
             if android_only:
-                invitation.phone_type = PHONE_TYPE_ANDROID
+                invitation.phone_type = cls.PHONE_TYPE_ANDROID
 
             invitation.save()
             invitation.send_step1_sms(custom_first_message)

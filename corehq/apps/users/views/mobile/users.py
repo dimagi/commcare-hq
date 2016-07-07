@@ -1024,9 +1024,11 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     @memoized
     def form(self):
         if self.request.method == 'POST':
-            return SelfRegistrationForm(self.request.POST, domain=self.domain)
+            return SelfRegistrationForm(self.request.POST, domain=self.domain,
+                require_email=self.invitation.require_email)
         else:
-            return SelfRegistrationForm(domain=self.domain)
+            return SelfRegistrationForm(domain=self.domain,
+                require_email=self.invitation.require_email)
 
     def get_context_data(self, **kwargs):
         context = super(CommCareUserSelfRegistrationView, self).get_context_data(**kwargs)
