@@ -180,11 +180,11 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(None, rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test')))
 
     def test_couch_rebuild_deleted_case(self):
-        """
-        Note: Can't run this on SQL because if a case gets hard deleted then there is no way to find
-        out which forms created / updated it without going through ALL the forms in the domain.
-        ie. there is no SQL equivalent to the "form_case_index/form_case_index" couch view
-        """
+        # Note: Can't run this on SQL because if a case gets hard deleted then
+        # there is no way to find out which forms created / updated it without
+        # going through ALL the forms in the domain. ie. there is no SQL
+        # equivalent to the "form_case_index/form_case_index" couch view
+
         case_id = _post_util(create=True)
         _post_util(case_id=case_id, p1='p1', p2='p2')
 
