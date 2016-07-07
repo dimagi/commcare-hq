@@ -68,14 +68,19 @@ class XFormPillow(HQPillow):
     default_mapping = XFORM_INDEX_INFO.mapping
 
     def change_transform(self, doc_dict):
-        return transform_xform_for_elasticsearch(doc_dict)
+        if not xform_pillow_filter(doc_dict):
+            return transform_xform_for_elasticsearch(doc_dict)
 
 
-def device_log_filter(doc_dict):
+def xform_pillow_filter(doc_dict):
     """
     :return: True to filter out doc
     """
-    return doc_dict.get('xmlns', None) == DEVICE_LOG_XMLNS
+    return (
+        doc_dict.get('xmlns', None) == DEVICE_LOG_XMLNS or
+        doc_dict.get('domain', None) is None or
+        doc_dict['form'] is None
+    )
 
 
 def transform_xform_for_elasticsearch(doc_dict, include_props=True):
@@ -83,64 +88,60 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
     Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
     or None, if the form should not be saved to elasticsearch
     """
-    if doc_dict.get('domain', None) is None or doc_dict['form'] is None:
-        # if there is no domain don't bother processing it
-        return None
-    else:
-        doc_ret = copy.deepcopy(doc_dict)
+    doc_ret = copy.deepcopy(doc_dict)
 
-        if 'meta' in doc_ret['form']:
-            if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
-                doc_ret['form']['meta']['timeEnd'] = None
-            if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
-                doc_ret['form']['meta']['timeStart'] = None
+    if 'meta' in doc_ret['form']:
+        if not is_valid_date(doc_ret['form']['meta'].get('timeEnd', None)):
+            doc_ret['form']['meta']['timeEnd'] = None
+        if not is_valid_date(doc_ret['form']['meta'].get('timeStart', None)):
+            doc_ret['form']['meta']['timeStart'] = None
 
-            # Some docs have their @xmlns and #text here
-            if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
-                doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
+        # Some docs have their @xmlns and #text here
+        if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
+            doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
 
-            app_version_info = get_app_version_info(
-                doc_ret['domain'],
-                doc_ret.get('build_id'),
-                doc_ret.get('version'),
-                doc_ret['form']['meta'],
-            )
-            doc_ret['form']['meta']['commcare_version'] = app_version_info.commcare_version
-            doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
-
-            try:
-                geo_point = GeoPointProperty().wrap(doc_ret['form']['meta']['location'])
-                doc_ret['form']['meta']['geo_point'] = geo_point.lat_lon
-            except (KeyError, BadValueError):
-                doc_ret['form']['meta']['geo_point'] = None
-                pass
+        app_version_info = get_app_version_info(
+            doc_ret['domain'],
+            doc_ret.get('build_id'),
+            doc_ret.get('version'),
+            doc_ret['form']['meta'],
+        )
+        doc_ret['form']['meta']['commcare_version'] = app_version_info.commcare_version
+        doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
 
         try:
-            user_id = doc_ret['form']['meta']['userID']
-        except KeyError:
-            user_id = None
-        doc_ret['user_type'] = get_user_type(user_id)
-        doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
+            geo_point = GeoPointProperty().wrap(doc_ret['form']['meta']['location'])
+            doc_ret['form']['meta']['geo_point'] = geo_point.lat_lon
+        except (KeyError, BadValueError):
+            doc_ret['form']['meta']['geo_point'] = None
+            pass
 
-        case_blocks = extract_case_blocks(doc_ret)
-        for case_dict in case_blocks:
-            for date_modified_key in ['date_modified', '@date_modified']:
-                if not is_valid_date(case_dict.get(date_modified_key, None)):
-                    if case_dict.get(date_modified_key) == '':
-                        case_dict[date_modified_key] = None
-                    else:
-                        case_dict.pop(date_modified_key, None)
+    try:
+        user_id = doc_ret['form']['meta']['userID']
+    except KeyError:
+        user_id = None
+    doc_ret['user_type'] = get_user_type(user_id)
+    doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
 
-            # convert all mapped dict properties to nulls if they are empty strings
-            for object_key in ['index', 'attachment', 'create', 'update']:
-                if object_key in case_dict and not isinstance(case_dict[object_key], dict):
-                    case_dict[object_key] = None
+    case_blocks = extract_case_blocks(doc_ret)
+    for case_dict in case_blocks:
+        for date_modified_key in ['date_modified', '@date_modified']:
+            if not is_valid_date(case_dict.get(date_modified_key, None)):
+                if case_dict.get(date_modified_key) == '':
+                    case_dict[date_modified_key] = None
+                else:
+                    case_dict.pop(date_modified_key, None)
 
-        doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
-        if include_props:
-            form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
-            doc_ret["__props_for_querying"] = form_props
-        return doc_ret
+        # convert all mapped dict properties to nulls if they are empty strings
+        for object_key in ['index', 'attachment', 'create', 'update']:
+            if object_key in case_dict and not isinstance(case_dict[object_key], dict):
+                case_dict[object_key] = None
+
+    doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
+    if include_props:
+        form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
+        doc_ret["__props_for_querying"] = form_props
+    return doc_ret
 
 
 def prepare_sql_form_json_for_elasticsearch(sql_form_json):
@@ -207,7 +208,7 @@ def get_couch_form_reindexer():
         doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
-        doc_filter=device_log_filter,
+        doc_filter=xform_pillow_filter,
         doc_transform=transform_xform_for_elasticsearch
     )
 

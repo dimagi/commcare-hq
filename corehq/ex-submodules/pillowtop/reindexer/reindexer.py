@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
+from corehq.apps.change_feed.document_types import is_deletion
 from corehq.elastic import get_es_new
 from corehq.util.doc_processor.interface import BaseDocProcessor, BulkDocProcessor
 from pillowtop.es_utils import set_index_reindex_settings, \
@@ -129,7 +130,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
     @staticmethod
     def _doc_to_change(doc):
         return Change(
-            id=doc['_id'], sequence_id=None, document=doc, deleted=False
+            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc['doc_type'])
         )
 
 
