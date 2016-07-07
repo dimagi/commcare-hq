@@ -154,7 +154,7 @@ class LocationsTest(LocationTestBase):
         # children
         compare(
             [test_state1, test_state2],
-            self.user.location.children
+            self.user.location.get_children()
         )
 
         # parent and parent_id

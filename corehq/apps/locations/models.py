@@ -820,11 +820,9 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         """return list of all locations that have this location as an ancestor"""
         return list(self.sql_location.get_descendants().couch_locations())
 
-    @property
-    def children(self):
+    def get_children(self):
         """return list of immediate children of this location"""
-        return list(SQLLocation.objects.filter(parent=self.sql_location)
-                                       .couch_locations())
+        return self.sql_location.get_children().couch_locations()
 
     def linked_supply_point(self):
         return self.sql_location.linked_supply_point()
