@@ -117,9 +117,9 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         max_payload_size = pow(10, 8)  # ~ 100Mb
         payloads = prepare_bulk_payloads(bulk_changes, max_payload_size)
         if len(payloads) > 1:
-            pillow_logging.info("%s,payload split into %s parts" % (self.unique_key, len(payloads)))
+            pillow_logging.info("payload split into %s parts" % len(payloads))
 
-        pillow_logging.info("%s,sending payload,%s" % (self.unique_key, len(changes)))
+        pillow_logging.info("sending payload,%s" % len(changes))
 
         for payload in payloads:
             self.es.bulk(payload)
