@@ -79,9 +79,11 @@ from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
+from corehq.util.doc_processor.couch import CouchDocumentProvider
+from corehq.util.doc_processor.couch import CouchProcessorProgressLogger
 from corehq.util.doc_processor.interface import (
-    BaseDocProcessor, DOCS_SKIPPED_WARNING, CouchProcessorProgressLogger,
-    CouchDocumentProvider, DocumentProcessorController
+    BaseDocProcessor, DOCS_SKIPPED_WARNING,
+    DocumentProcessorController
 )
 from couchdbkit import ResourceConflict
 
