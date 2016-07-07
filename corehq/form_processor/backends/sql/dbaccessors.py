@@ -1,9 +1,12 @@
 import logging
+from abc import ABCMeta, abstractproperty
+from abc import abstractmethod
 from itertools import groupby
 from datetime import datetime
 
 import itertools
 
+import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
 
@@ -60,6 +63,72 @@ doc_type_to_state = {
 def get_cursor(model):
     db = db_for_read_write(model)
     return connections[db].cursor()
+
+
+class ReindexAccessor(six.with_metaclass(ABCMeta)):
+
+    @abstractproperty
+    def startkey_attribute_name(self):
+        """
+        :return: The name of the attribute to filter successive batches by e.g. 'received_on'
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_doc(self, doc_id):
+        """
+        :param doc_id: ID of the doc
+        :return: The doc with the given ID
+        """
+        raise NotImplementedError
+
+    def doc_to_json(self, doc):
+        """
+        :param doc:
+        :return: The JSON representation of the doc
+        """
+        return doc.to_json()
+
+    @abstractmethod
+    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+        """Get a batch of
+        :param from_db: The DB alias to query
+        :param startkey: The filter value to start from e.g. form.received_on
+        :param last_doc_pk: The primary key of the last doc from the previous batch
+        :param limit: Desired batch size
+        :return: List of documents
+        """
+        raise NotImplementedError
+
+
+class FormReindexAccessor(ReindexAccessor):
+
+    @property
+    def startkey_attribute_name(self):
+        return 'received_on'
+
+    def get_doc(self, doc_id):
+        try:
+            return FormAccessorSQL.get_form(doc_id)
+        except XFormNotFound:
+            pass
+
+    def doc_to_json(self, doc):
+        from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
+        return add_couch_properties_to_sql_form_json(
+            doc.to_json(include_attachments=True)
+        )
+
+    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+        received_on_since = startkey or datetime.min
+        last_id = last_doc_pk or -1
+        results = XFormInstanceSQL.objects.raw(
+            'SELECT * FROM get_all_forms_received_since(%s, %s, %s)',
+            [received_on_since, last_id, limit],
+            using=from_db
+        )
+        # note: in memory sorting and limit not necessary since we're only queyring a single DB
+        return RawQuerySetWrapper(results)
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -333,6 +402,29 @@ class FormAccessorSQL(AbstractFormAccessor):
             'SELECT * FROM get_all_forms_received_since(%s, %s, %s)',
             [received_on_since, last_id, limit],
             using=using
+        )
+        # note: in memory sorting and limit not necessary since we're only queyring a single DB
+        return RawQuerySetWrapper(results)
+
+
+class CaseReindexAccessor(ReindexAccessor):
+    @property
+    def startkey_attribute_name(self):
+        return 'server_modified_on'
+
+    def get_doc(self, doc_id):
+        try:
+            return CaseAccessorSQL.get_case(doc_id)
+        except CaseNotFound:
+            pass
+
+    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+        server_modified_on_since = startkey or datetime.min
+        last_id = last_doc_pk or -1
+        results = CommCareCaseSQL.objects.raw(
+            'SELECT * FROM get_all_cases_modified_since(%s, %s, %s)',
+            [server_modified_on_since, last_id, limit],
+            using=from_db
         )
         # note: in memory sorting and limit not necessary since we're only queyring a single DB
         return RawQuerySetWrapper(results)
@@ -718,7 +810,33 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return affected_count
 
 
+class LedgerReindexAccessor(ReindexAccessor):
+    @property
+    def startkey_attribute_name(self):
+        return 'last_modified'
+
+    def get_doc(self, doc_id):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        ref = UniqueLedgerReference.from_id(doc_id)
+        try:
+            return LedgerAccessorSQL.get_ledger_value(**ref._asdict())
+        except CaseNotFound:
+            pass
+
+    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+        modified_since = startkey or datetime.min
+        last_id = last_doc_pk or -1
+        results = LedgerValue.objects.raw(
+            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s, %s)',
+            [modified_since, last_id, limit],
+            using=from_db
+        )
+        # note: in memory sorting and limit not necessary since we're only queyring a single DB
+        return RawQuerySetWrapper(results)
+
+
 class LedgerAccessorSQL(AbstractLedgerAccessor):
+
     @staticmethod
     def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
         assert isinstance(case_ids, list)
