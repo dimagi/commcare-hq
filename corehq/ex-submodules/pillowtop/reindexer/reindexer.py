@@ -3,8 +3,8 @@ from abc import ABCMeta, abstractmethod
 import six
 
 from corehq.elastic import get_es_new
-from corehq.util.doc_processor import BaseDocProcessor, BulkDocProcessor
-from pillowtop.dao.couch import CouchDocumentStore
+from corehq.util.doc_processor import BaseDocProcessor, BulkDocProcessor, CouchDocumentProvider, \
+    CouchProcessorProgressLogger
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 from pillowtop.feed.interface import Change
@@ -139,6 +139,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
 
     def __init__(self, name, doc_types, elasticsearch, index_info,
                  doc_filter=None, doc_transform=None, chunk_size=1000):
+        self.name = name
         self.es = elasticsearch
         self.index_info = index_info
         self.chunk_size = chunk_size
@@ -158,11 +159,15 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         _clean_index(self.es, self.index_info)
 
     def reindex(self):
+        iteration_key = "{}_{}_{}".format(self.index_info.index, self.name, 'reindex')
+        doc_provider = CouchDocumentProvider(iteration_key, self.doc_type_map)
+        progress_logger = CouchProcessorProgressLogger(self.doc_type_map)
         processor = BulkDocProcessor(
-            self.doc_type_map,
+            doc_provider,
             self.doc_processor,
             reset=self.reset,
-            chunk_size=self.chunk_size
+            chunk_size=self.chunk_size,
+            progress_logger=progress_logger
         )
 
         if self.reset or not processor.has_started():
