@@ -79,7 +79,7 @@ from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
-from corehq.util.couch_doc_processor import (
+from corehq.util.doc_processor import (
     BaseDocProcessor, DOCS_SKIPPED_WARNING, CouchProcessorProgressLogger,
     CouchDocumentProvider, DocumentProcessor
 )

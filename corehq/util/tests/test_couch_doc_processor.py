@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
 
-from corehq.util.couch_doc_processor import (
+from corehq.util.doc_processor import (
     ResumableDocsByTypeIterator, BaseDocProcessor,
     DocumentProcessor, BulkDocProcessor, BulkProcessingFailed, CouchDocumentProvider
 )
