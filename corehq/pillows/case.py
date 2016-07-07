@@ -7,10 +7,9 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
-from corehq.pillows.mappings.case_mapping import CASE_MAPPING, CASE_INDEX, CASE_ES_TYPE, CASE_ES_ALIAS
-from corehq.form_processor.change_providers import SqlCaseChangeProvider
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.utils import get_user_type
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from dimagi.utils.couch import LockManager
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
@@ -18,11 +17,7 @@ from pillowtop.es_utils import doc_exists
 from pillowtop.listener import lock_manager
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import get_default_reindexer_for_elastic_pillow, \
-    ResumableBulkElasticPillowReindexer
-from .base import HQPillow
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ResumableBulkElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
 from .base import HQPillow
 
 UNKNOWN_DOMAIN = "__nodomain__"
@@ -118,9 +113,13 @@ def get_couch_case_to_elasticsearch_pillow(pillow_id='CouchCaseToElasticsearchPi
 
 
 def get_couch_case_reindexer():
+    iteration_key = "CouchCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
+    doc_provider = CouchDocumentProvider(iteration_key, doc_types=[
+        CommCareCase,
+        ("CommCareCase-Deleted", CommCareCase)
+    ])
     return ResumableBulkElasticPillowReindexer(
-        name="CouchCaseToElasticsearchPillow",
-        doc_types=[CommCareCase],
+        doc_provider,
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
         doc_transform=transform_case_for_elasticsearch
