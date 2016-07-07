@@ -6,6 +6,7 @@
             <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
             <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
         </div>
+        <br/>
     {% endif %}
     <p>
         <a class="btn {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}btn-warning{% else %}btn-primary{% endif %}"
