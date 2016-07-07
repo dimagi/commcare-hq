@@ -15,7 +15,7 @@ from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils.xform import get_simple_wrapped_form
 from corehq.util.doc_processor.couch import ResumableDocsByTypeIterator, CouchDocumentProvider
 from corehq.util.doc_processor.interface import (
-    BaseDocProcessor, DocumentProcessor, BulkDocProcessor, BulkProcessingFailed
+    BaseDocProcessor, DocumentProcessorController, BulkDocProcessor, BulkProcessingFailed
 )
 from corehq.util.doc_processor.sql import ResumableSqlModelIterator
 from corehq.util.pagination import TooManyRetries
@@ -443,7 +443,7 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
 
 
 class TestCouchDocProcessor(BaseCouchDocProcessorTest):
-    processor_class = DocumentProcessor
+    processor_class = DocumentProcessorController
 
     def _test_processor(self, expected_processed, doc_idents, ignore_docs=None, skip_docs=None):
         doc_processor, processor = self._get_processor(ignore_docs=ignore_docs, skip_docs=skip_docs)

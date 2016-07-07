@@ -256,6 +256,9 @@ class ResumableFunctionIterator(object):
 
 
 class ResumableIteratorEventHandler(PaginationEventHandler):
+    """Used to save the iteration progress at the beginning
+    of each page.
+    """
     def __init__(self, iterator):
         self.iterator = iterator
 

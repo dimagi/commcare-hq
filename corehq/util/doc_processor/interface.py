@@ -19,6 +19,7 @@ DOCS_SKIPPED_WARNING = """
 
 
 class BaseDocProcessor(six.with_metaclass(ABCMeta)):
+    """Base class for processors that get passed"""
 
     def __enter__(self):
         pass
@@ -107,7 +108,7 @@ class DocumentProvider(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
 
-class DocumentProcessor(object):
+class DocumentProcessorController(object):
     """Process Docs
 
     :param document_provider: A ``DocumentProvider`` object
@@ -256,7 +257,7 @@ class BulkDocProcessorEventHandler(PaginationEventHandler):
             raise BulkProcessingFailed("Processor has gone away")
 
 
-class BulkDocProcessor(DocumentProcessor):
+class BulkDocProcessor(DocumentProcessorController):
     """Process docs in batches
 
     The bulk doc processor will send a batch of documents to the document

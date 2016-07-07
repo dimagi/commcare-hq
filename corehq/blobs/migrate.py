@@ -81,7 +81,7 @@ from corehq.blobs.models import BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
 from corehq.util.doc_processor.interface import (
     BaseDocProcessor, DOCS_SKIPPED_WARNING, CouchProcessorProgressLogger,
-    CouchDocumentProvider, DocumentProcessor
+    CouchDocumentProvider, DocumentProcessorController
 )
 from couchdbkit import ResourceConflict
 
@@ -282,7 +282,7 @@ class Migrator(object):
         iteration_key = self.slug + "-blob-migration"
         document_provider = CouchDocumentProvider(iteration_key, self.doc_types)
 
-        processor = DocumentProcessor(
+        processor = DocumentProcessorController(
             document_provider,
             doc_migrator,
             reset,
