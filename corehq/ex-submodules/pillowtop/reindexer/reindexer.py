@@ -3,8 +3,7 @@ from abc import ABCMeta, abstractmethod
 import six
 
 from corehq.elastic import get_es_new
-from corehq.util.doc_processor import BaseDocProcessor, BulkDocProcessor, CouchDocumentProvider, \
-    CouchProcessorProgressLogger
+from corehq.util.doc_processor.interface import BaseDocProcessor, BulkDocProcessor
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 from pillowtop.feed.interface import Change

@@ -5,9 +5,9 @@ from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
 
-from corehq.util.doc_processor import (
-    ResumableDocsByTypeIterator, BaseDocProcessor,
-    DocumentProcessor, BulkDocProcessor, BulkProcessingFailed, CouchDocumentProvider
+from corehq.util.doc_processor.couch import ResumableDocsByTypeIterator, CouchDocumentProvider
+from corehq.util.doc_processor.interface import (
+    BaseDocProcessor, DocumentProcessor, BulkDocProcessor, BulkProcessingFailed
 )
 from corehq.util.pagination import TooManyRetries
 from dimagi.ext.couchdbkit import Document

@@ -8,7 +8,7 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicChe
 from corehq.elastic import get_es_new
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
-from corehq.util.doc_processor import CouchDocumentProvider
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor

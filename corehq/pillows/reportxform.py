@@ -5,7 +5,7 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicChe
 from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.doc_processor import CouchDocumentProvider
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
 from pillowtop.checkpoints.manager import PillowCheckpoint

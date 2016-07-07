@@ -9,7 +9,7 @@ from corehq.blobs.s3db import maybe_not_found
 from corehq.blobs.tests.util import (
     TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB, TemporaryS3BlobDB
 )
-from corehq.util.doc_processor import ResumableDocsByTypeIterator
+from corehq.util.doc_processor.couch import ResumableDocsByTypeIterator
 from corehq.util.test_utils import trap_extra_setup
 
 from django.conf import settings

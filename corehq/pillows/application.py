@@ -4,7 +4,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
-from corehq.util.doc_processor import CouchDocumentProvider
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.listener import AliasedElasticPillow
 from pillowtop.pillow.interface import ConstructedPillow

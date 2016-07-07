@@ -14,7 +14,7 @@ from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
-from corehq.util.doc_processor import CouchDocumentProvider
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
