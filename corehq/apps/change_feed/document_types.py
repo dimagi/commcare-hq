@@ -41,7 +41,7 @@ def _get_primary_type(raw_doc_type):
         return WEB_USER
     elif raw_doc_type in ('Group', 'Group-Deleted'):
         return GROUP
-    elif raw_doc_type in app_doc_types().keys():
+    elif raw_doc_type in app_doc_types():
         return APP
     else:
         # at some point we may want to make this more granular

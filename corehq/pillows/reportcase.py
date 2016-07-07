@@ -36,11 +36,10 @@ class ReportCasePillow(CasePillow):
 
 def report_case_filter(doc_dict):
     """
-        :return: True to filter out doc
+    :return: True to filter out doc
     """
-    if doc_dict.get('domain', None) not in getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', []):
-        # full indexing is only enabled for select domains on an opt-in basis
-        return True
+    # full indexing is only enabled for select domains on an opt-in basis
+    return doc_dict.get('domain', None) not in getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
 
 
 def transform_case_to_report_es(doc_dict):
