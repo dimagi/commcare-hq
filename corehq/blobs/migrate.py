@@ -131,7 +131,8 @@ class BaseDocMigrator(BaseDocProcessor):
     load_attachments = False
 
     def __init__(self, slug, couchdb, filename=None):
-        super(BaseDocMigrator, self).__init__(slug)
+        super(BaseDocMigrator, self).__init__()
+        self.slug = slug
         self.couchdb = couchdb
         self.dirpath = None
         self.filename = filename
