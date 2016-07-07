@@ -106,8 +106,7 @@ class CouchDocumentProvider(DocumentProvider):
     def __init__(self, iteration_key, doc_types):
         self.iteration_key = iteration_key
 
-        self.doc_type_map = dict(
-            t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
+        self.doc_type_map = doc_type_list_to_dict(doc_types)
 
         if len(doc_types) != len(self.doc_type_map):
             raise ValueError("Invalid (duplicate?) doc types")
@@ -128,3 +127,9 @@ class CouchDocumentProvider(DocumentProvider):
             get_doc_count_by_type(self.couchdb, doc_type)
             for doc_type in self.doc_type_map
         )
+
+
+def doc_type_list_to_dict(doc_types):
+    return dict(
+        t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types
+    )

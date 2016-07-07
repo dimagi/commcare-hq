@@ -35,7 +35,8 @@ class BaseMigrationTest(TestCase):
         self.discard_migration_state(self.slug)
         self._old_flags = {}
         self.docs_to_delete = []
-        for model in mod.MIGRATIONS[self.slug].doc_type_map.values():
+
+        for model in doc_type_list_to_dict(mod.MIGRATIONS[self.slug].doc_types).values():
             self._old_flags[model] = model.migrating_blobs_from_couch
             model.migrating_blobs_from_couch = True
 
@@ -65,7 +66,7 @@ class BaseMigrationTest(TestCase):
 
     @property
     def doc_types(self):
-        return set(mod.MIGRATIONS[self.slug].doc_type_map)
+        return set(doc_type_list_to_dict(mod.MIGRATIONS[self.slug].doc_types))
 
     def do_migration(self, docs, num_attachments=1):
         self.docs_to_delete.extend(docs)
