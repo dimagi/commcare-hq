@@ -1,4 +1,4 @@
-from mock import MagicMock
+from mock import MagicMock, patch
 import os
 import uuid
 
@@ -7,14 +7,17 @@ from django.test import TestCase
 from elasticsearch import ConnectionError
 from testil import tempdir
 
+from casexml.apps.case.tests.util import delete_all_xforms
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests import TestXmlMixin
+from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.cleanup.management.commands.fix_forms_and_apps_with_missing_xmlns import (
     generate_random_xmlns,
     set_xmlns_on_form,
 )
+from corehq.apps.cleanup.tasks import fix_xforms_with_missing_xmlns
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -37,6 +40,11 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         cls.es = get_es_new()
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
             initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
+
+    def setUp(self):
+        super(TestFixFormsWithMissingXmlns, self).setUp()
+        delete_all_apps()
+        delete_all_xforms()
 
     @classmethod
     def tearDownClass(cls):
@@ -207,6 +215,44 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
             False
         )
         self.assertNoMissingXmlnss()
+
+    def test_fix_xforms_with_missing_xmlns_task(self):
+        """Tests the ability to find anomalies that violate our asssumptions
+        about all applications and builds being fixes
+        """
+
+        good_form, bad_form, good_xform, bad_xforms = self.build_app_with_bad_form()
+        self._refresh_pillow()
+
+        with tempdir() as tmp:
+            with patch('corehq.apps.cleanup.tasks.UNDEFINED_XMLNS_LOG_DIR', tmp):
+                stats, log_file_path = fix_xforms_with_missing_xmlns()
+
+            self.assertTrue(
+                (DOMAIN, bad_xforms[0].build_id) in stats['builds_with_undefined_xmlns']
+            )
+            self.assertEqual(stats['not_fixed_undefined_xmlns'][DOMAIN], len(bad_xforms))
+
+    def test_fix_xforms_with_missing_xmlns_task_fixed(self):
+        """Tests the ability to fix xforms with the periodic cron task
+        """
+
+        good_form, bad_form, good_xform, bad_xforms = self.build_app_with_bad_form()
+        # Fix bad builds
+        for bad_xform in bad_xforms:
+            app = Application.get(bad_xform.build_id)
+            for form in app.get_forms():
+                if form.xmlns == 'undefined':
+                    form.xmlns = 'my-fixed-xmlns'
+            app.save()
+
+        self._refresh_pillow()
+
+        with tempdir() as tmp:
+            with patch('corehq.apps.cleanup.tasks.UNDEFINED_XMLNS_LOG_DIR', tmp):
+                stats, log_file_path = fix_xforms_with_missing_xmlns()
+
+            self.assertTrue(stats['fixed'][DOMAIN], len(bad_xforms))
 
     def assertNoMissingXmlnss(self, delete_apps=True):
         submissions = XFormInstance.get_db().view(
