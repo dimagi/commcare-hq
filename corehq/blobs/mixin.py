@@ -438,7 +438,7 @@ def bulk_atomic_blobs(docs):
     contexts = [d.atomic_blobs(save) for d in docs if hasattr(d, "atomic_blobs")]
     with nested(*contexts):
         for doc in docs:
-            if isinstance(doc, DeferredBlobMixin):
+            if isinstance(doc, DeferredBlobMixin) and doc._deferred_blobs:
                 for name, info in list(doc._deferred_blobs.iteritems()):
                     doc.put_attachment(name=name, **info)
                 assert not doc._deferred_blobs, doc._deferred_blobs
