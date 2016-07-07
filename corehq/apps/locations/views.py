@@ -303,7 +303,7 @@ class NewLocationView(BaseLocationView):
 
     @property
     def parent_pages(self):
-        selected = self.location.location_id or self.location.parent_id
+        selected = self.location.location_id or self.location.parent_location_id
         breadcrumbs = [{
             'title': LocationsListView.page_title,
             'url': reverse(
@@ -353,7 +353,7 @@ class NewLocationView(BaseLocationView):
             'form': self.location_form,
             'location': self.location,
             'consumption': self.consumption,
-            'locations': load_locs_json(self.domain, self.location.parent_id,
+            'locations': load_locs_json(self.domain, self.location.parent_location_id,
                                         user=self.request.couch_user),
             'form_tab': self.form_tab,
         }

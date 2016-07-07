@@ -49,10 +49,10 @@ def sync_facility_to_supply_point(domain, facility):
         'longitude': facility.longitude,
     }
     parent_sp = None
-    if facility.parent_id:
-        parent_sp = get_supply_point(domain, facility.parent_id)
+    if facility.parent_location_id:
+        parent_sp = get_supply_point(domain, facility.parent_location_id)
         if not parent_sp:
-            raise BadParentException('No matching supply point with code %s found' % facility.parent_id)
+            raise BadParentException('No matching supply point with code %s found' % facility.parent_location_id)
 
     if supply_point is None:
         if parent_sp:
@@ -63,7 +63,7 @@ def sync_facility_to_supply_point(domain, facility):
         return facility_loc.linked_supply_point()
     else:
         facility_loc = supply_point.location
-        if parent_sp and facility_loc.parent_id != parent_sp.location.location_id:
+        if parent_sp and facility_loc.parent_location_id != parent_sp.location.location_id:
             raise BadParentException('You are trying to move a location. This is currently not supported.')
 
         should_save = apply_updates(facility_loc, facility_dict)
