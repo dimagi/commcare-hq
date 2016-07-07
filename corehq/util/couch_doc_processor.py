@@ -147,6 +147,42 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
         return True
 
 
+class ProcessorProgressLogger(object):
+    def progress_starting(self, total, previously_visited):
+        print("Processing {} documents{}: ...".format(
+            total,
+            " (~{} already processed)".format(previously_visited) if previously_visited else ""
+        ))
+
+    def document_skipped(self, doc_dict):
+        print("Skip: {doc_type} {_id}".format(**doc_dict))
+
+    def progress(self, total, processed, visited, time_elapsed, time_remaining):
+        print("Processed {}/{} of {} documents in {} ({} remaining)"
+              .format(processed, visited, total, time_elapsed, time_remaining))
+
+    def progress_complete(self, total, processed, visited, previously_visited, filtered):
+        print("Processed {}/{} of {} documents ({} previously processed, {} filtered out).".format(
+            processed,
+            visited,
+            total,
+            previously_visited,
+            filtered
+        ))
+
+
+class CouchProcessorProgressLogger(object):
+    def __init__(self, doc_type_map):
+        self.doc_type_map = doc_type_map
+
+    def progress_starting(self, total, previously_visited):
+        print("Processing {} documents{}: {}...".format(
+            total,
+            " (~{} already processed)".format(previously_visited) if previously_visited else "",
+            ", ".join(sorted(self.doc_type_map))
+        ))
+
+
 class CouchDocumentProcessor(object):
     """Process Couch Docs
 
@@ -163,14 +199,16 @@ class CouchDocumentProcessor(object):
     100 would exceed available memory.
     :param view_event_handler: instance of PaginateViewLogHandler to be notified of
     view events.
+    :param progress_logger: instance of ProcessorProgressLogger used to log progress
     """
     def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2,
-                 chunk_size=100, view_event_handler=None):
+                 chunk_size=100, view_event_handler=None, progress_logger=None):
         self.doc_type_map = doc_type_map
         self.doc_processor = doc_processor
         self.reset = reset
         self.max_retry = max_retry
         self.chunk_size = chunk_size
+        self.progress_logger = progress_logger or CouchProcessorProgressLogger(self.doc_type_map)
 
         self.couchdb = next(iter(doc_type_map.values())).get_db()
         assert all(m.get_db() is self.couchdb for m in doc_type_map.values()), \
@@ -232,11 +270,7 @@ class CouchDocumentProcessor(object):
             # evenly distributed across the entire set.
             self.visited = int(round(float(self.total) / old_total * info["visited"]))
             self.previously_visited = self.visited
-        print("Processing {} documents{}: {}...".format(
-            self.total,
-            " (~{} already processed)".format(self.visited) if self.visited else "",
-            ", ".join(sorted(self.doc_type_map))
-        ))
+        self.progress_logger.progress_starting(self.total, self.previously_visited)
 
         self.start = datetime.now()
 
@@ -268,7 +302,7 @@ class CouchDocumentProcessor(object):
                 if not self.doc_processor.handle_skip(doc):
                     raise
                 else:
-                    print("Skip: {doc_type} {_id}".format(**doc))
+                    self.progress_logger.document_skipped(doc)
                     self.skipped += 1
 
     def _update_progress(self):
@@ -278,20 +312,21 @@ class CouchDocumentProcessor(object):
 
         if self.attempted % self.chunk_size == 0:
             elapsed, remaining = self.timing
-            print("Processed {}/{} of {} documents in {} ({} remaining)"
-                  .format(self.processed, self.visited, self.total, elapsed, remaining))
+            self.progress_logger.progress(
+                self.processed, self.visited, self.total, elapsed, remaining
+            )
 
     def _processing_complete(self):
         if self.session_visited:
             self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
         self.doc_processor.processing_complete(self.skipped)
-        print("Processed {}/{} of {} documents ({} previously processed, {} filtered out).".format(
+        self.progress_logger.progress_complete(
             self.processed,
             self.visited,
             self.total,
             self.previously_visited,
             self.session_visited - self.attempted
-        ))
+        )
         if self.skipped:
             print(DOCS_SKIPPED_WARNING.format(self.skipped))
 
@@ -357,5 +392,6 @@ class BulkDocProcessor(CouchDocumentProcessor):
             self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
 
             elapsed, remaining = self.timing
-            print("Processed {}/{} of {} documents in {} ({} remaining)"
-                  .format(self.processed, self.visited, self.total, elapsed, remaining))
+            self.progress_logger.progress(
+                self.total, self.processed, self.visited, elapsed, remaining
+            )
