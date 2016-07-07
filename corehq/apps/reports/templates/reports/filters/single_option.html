@@ -31,53 +31,15 @@
     {% endif %}
     </div>
 {% endblock %}
+
 {% block filter_js %}
-<!-- TODO: uncomment this for pages not using requirejs, or give them module access, or something -->
-<!--script type="text/javascript">
-    $(function () {
-        {% if pagination.enabled %}
-            $('#{{ css_id }}').select2({
-                ajax: {
-                    url: '{{ pagination.url }}',
-                    type: 'POST',
-                    dataType: 'json',
-                    quietMills: 250,
-                    data: function (term, page) {
-                        return {
-                            q: term,
-                            page: page,
-                            handler: '{{ pagination.handler }}',
-                            action: '{{ pagination.action }}'
-                        }
-                    },
-                    results: function (data, page) {
-                        if (data.success) {
-                            var limit = data.limit;
-                            var hasMore = (page * limit) < data.total;
-                            return {
-                                results: data.items,
-                                more: hasMore
-                            };
-                        } else {
-                            console.log(data.error);
-                        }
-                    }
-                },
-                allowClear: true,
-                initSelection: function (elem, callback) {
-                    var val = $(elem).val();
-                    callback({
-                        id: val,
-                        text: val
-                    });
-                }
-            });
-        {% else %}
-            $('#{{ css_id }}').parent().koApplyBindings({
-                select_params: {{ select.options|JSON }},
-                current_selection: ko.observable('{{ select.selected|safe|default:'' }}'),
-            });
-            $('#{{ css_id }}').select2();
-        {% endif %}
-    });
-</script-->{% endblock %}
+<script type="text/javascript">
+    if (!USE_REQUIREJS) {
+        $.when(
+            $.getScript("{% static 'reports/javascripts/filters.js' %}")
+        ).done(function() {
+            hqImport('reports/javascripts/filters.js').init();
+        });
+    }
+</script>
+{% endblock %}

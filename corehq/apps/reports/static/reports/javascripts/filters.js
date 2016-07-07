@@ -1,13 +1,12 @@
-define([
-    "jquery",
-    "knockout",
-    "underscore",
-    "select2",
-], function(
-    $,
-    ko,
-    _
-) {
+(function (factory) {
+if (typeof define === 'function' && define.amd) {
+    define(['jquery', 'knockout', 'underscore', 'select2'], factory);
+} else {
+    hqDefine('reports/javascripts/filters.js', function() {
+        return factory(jQuery, ko, _);
+    });
+}
+}(function ($, ko, _) {
     "use strict";
 
     var initSingleOption = function() {
@@ -67,4 +66,4 @@ define([
             initSingleOption();
         },
     };
-});
+}));
