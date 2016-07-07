@@ -1,5 +1,5 @@
 import weakref
-from abc import ABCMeta, abstractproperty
+from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
 import six
@@ -179,20 +179,22 @@ class CouchProcessorProgressLogger(ProcessorProgressLogger):
         ))
 
 
-class DocumentProvider(object):
+class DocumentProvider(six.with_metaclass(ABCMeta)):
+    @abstractmethod
     def get_document_iterator(self, chunk_size, event_handler=None):
         """
         :param chunk_size: Maximum number of records to read from the database at one time
         :param event_handler: instance of ``PaginateViewLogHandler`` to be notified of view events.
         :return: an instance of ``ResumableFunctionIterator``
         """
-        pass
+        raise NotImplementedError
 
+    @abstractmethod
     def get_total_document_count(self):
         """
         :return: the total count of documents expected
         """
-        pass
+        raise NotImplementedError
 
 
 class CouchDocumentProvider(DocumentProvider):
