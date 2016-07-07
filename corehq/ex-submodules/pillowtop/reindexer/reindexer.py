@@ -143,13 +143,10 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         self.es = elasticsearch
         self.index_info = index_info
         self.chunk_size = chunk_size
-
-        self.doc_type_map = dict(
-            t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
-        if len(doc_types) != len(self.doc_type_map):
-            raise ValueError("Invalid (duplicate?) doc types")
-
-        self.doc_processor = BulkPillowReindexProcessor(self.es, self.index_info, doc_filter, doc_transform)
+        self.doc_types = doc_types
+        self.doc_processor = BulkPillowReindexProcessor(
+            self.es, self.index_info, doc_filter, doc_transform
+        )
 
     def consume_options(self, options):
         self.reset = options.pop("reset", False)
@@ -160,8 +157,8 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
 
     def reindex(self):
         iteration_key = "{}_{}_{}".format(self.index_info.index, self.name, 'reindex')
-        doc_provider = CouchDocumentProvider(iteration_key, self.doc_type_map)
-        progress_logger = CouchProcessorProgressLogger(self.doc_type_map)
+        doc_provider = CouchDocumentProvider(iteration_key, self.doc_types)
+        progress_logger = CouchProcessorProgressLogger(self.doc_types)
         processor = BulkDocProcessor(
             doc_provider,
             self.doc_processor,

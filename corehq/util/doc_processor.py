@@ -166,16 +166,16 @@ class ProcessorProgressLogger(object):
 
 class CouchProcessorProgressLogger(ProcessorProgressLogger):
     """
-    :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
+    :param doc_types: List of doc_types that are being processed
     """
-    def __init__(self, doc_type_map):
-        self.doc_type_map = doc_type_map
+    def __init__(self, doc_types):
+        self.doc_types = [t[0] if isinstance(t, tuple) else t.__name__ for t in doc_types]
 
     def progress_starting(self, total, previously_visited):
         print("Processing {} documents{}: {}...".format(
             total,
             " (~{} already processed)".format(previously_visited) if previously_visited else "",
-            ", ".join(sorted(self.doc_type_map))
+            ", ".join(sorted(self.doc_types))
         ))
 
 
@@ -203,15 +203,20 @@ class CouchDocumentProvider(DocumentProvider):
     All documents must live in the same couch database.
 
     :param iteration_key: unique key to identify the document iterator
-    :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
+    :param doc_types: Dict of `doc_type_name: model_class` pairs.
     """
-    def __init__(self, iteration_key, doc_type_map):
+    def __init__(self, iteration_key, doc_types):
         self.iteration_key = iteration_key
-        self.doc_type_map = doc_type_map
 
-        self.couchdb = next(iter(doc_type_map.values())).get_db()
-        assert all(m.get_db() is self.couchdb for m in doc_type_map.values()), \
-            "documents must live in same couch db: %s" % repr(doc_type_map)
+        self.doc_type_map = dict(
+            t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
+
+        if len(doc_types) != len(self.doc_type_map):
+            raise ValueError("Invalid (duplicate?) doc types")
+
+        self.couchdb = next(iter(self.doc_type_map.values())).get_db()
+        assert all(m.get_db() is self.couchdb for m in self.doc_type_map.values()), \
+            "documents must live in same couch db: %s" % repr(self.doc_type_map)
 
     def get_document_iterator(self, chunk_size, event_handler=None):
         return ResumableDocsByTypeIterator(

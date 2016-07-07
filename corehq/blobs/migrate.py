@@ -270,17 +270,18 @@ class Migrator(object):
     def __init__(self, slug, doc_types, doc_migrator_class):
         self.slug = slug
         self.doc_migrator_class = doc_migrator_class
-        self.doc_type_map = dict(
-            t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
-        if len(doc_types) != len(self.doc_type_map):
-            raise ValueError("Invalid (duplicate?) doc types")
-        self.couchdb = next(iter(self.doc_type_map.values())).get_db()
+        self.doc_types = doc_types
+        first_type = doc_types[0]
+        self.couchdb = (first_type[0] if isinstance(first_type, tuple) else first_type).get_db()
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         doc_migrator = self.doc_migrator_class(self.slug, self.couchdb, filename)
-        progress_logger = CouchProcessorProgressLogger(self.doc_type_map)
+
+        progress_logger = CouchProcessorProgressLogger(self.doc_types)
+
         iteration_key = self.slug + "-blob-migration"
-        document_provider = CouchDocumentProvider(iteration_key, self.doc_type_map)
+        document_provider = CouchDocumentProvider(iteration_key, self.doc_types)
+
         processor = DocumentProcessor(
             document_provider,
             doc_migrator,

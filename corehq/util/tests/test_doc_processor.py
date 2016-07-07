@@ -219,7 +219,7 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
         self.db.reset()
 
     def _get_processor(self, chunk_size=2, ignore_docs=None, skip_docs=None, reset=False, doc_types=None):
-        doc_types = doc_types or {'Bar': Bar}
+        doc_types = doc_types or [Bar]
         doc_processor = DemoProcessor()
         doc_provider = CouchDocumentProvider(self.processor_slug, doc_types)
         processor = self.processor_class(
@@ -357,7 +357,7 @@ class TestBulkDocProcessor(BaseCouchDocProcessorTest):
         self.db.add_view("all_docs/by_doc_type", self._get_view_results(4, chunk_size, doc_type="Foo"))
         self.db.update_view("all_docs/by_doc_type", self._get_view_results(4, chunk_size, doc_type="Bar"))
 
-        doc_types = {'Bar': Bar, 'Foo': Bar}
+        doc_types = [Bar, ('Foo', Bar)]
         doc_processor, processor = self._get_processor(chunk_size=chunk_size, doc_types=doc_types)
         processor, skipped = processor.run()
         self.assertEqual(processor, 8)
