@@ -125,7 +125,10 @@ def utcnow_sans_milliseconds():
 
 def today_or_tomorrow(date, inclusive=True):
     today = datetime.datetime.combine(datetime.datetime.today(), datetime.time())
+    if isinstance(date, datetime.date):
+        today = today.date()
     day_after_tomorrow = today + datetime.timedelta(days=2)
+
     return today <= date + datetime.timedelta(days=1 if inclusive else 0) < day_after_tomorrow
 
 
@@ -318,7 +321,7 @@ class DateSpan(object):
         elif self.enddate < self.startdate:
             return _("You can't have an end date of {end} after start date of {start}").format(
                 end=self.enddate, start=self.startdate)
-        elif self.startdate < datetime.datetime(1900, 01, 01) or self.enddate < datetime.datetime(1900, 01, 01):
+        elif self.startdate.year < 1900:
             return _("You can't use dates earlier than the year 1900")
         elif self.max_days is not None:
             delta = self.enddate - self.startdate
