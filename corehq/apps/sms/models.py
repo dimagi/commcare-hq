@@ -1310,8 +1310,6 @@ class SelfRegistrationInvitation(models.Model):
             message
         )
 
-        """
-        # Until odk 2.24 gets released to the Google Play store, this part won't work
         if self.odk_url:
             app_info_url = absolute_reverse(InvitationAppInfoView.urlname,
                 args=[self.domain, self.token])
@@ -1322,7 +1320,6 @@ class SelfRegistrationInvitation(models.Model):
                 self.phone_number,
                 message,
             )
-        """
 
     def expire(self):
         self.expiration_date = datetime.utcnow().date() - timedelta(days=1)
