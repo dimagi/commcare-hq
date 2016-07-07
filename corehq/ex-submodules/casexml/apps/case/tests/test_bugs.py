@@ -8,7 +8,7 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
-from casexml.apps.case.tests.util import delete_all_cases
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.receiverwrapper import submit_form_locally
@@ -35,6 +35,7 @@ class CaseBugTest(TestCase, TestFileMixin):
     def setUp(self):
         super(CaseBugTest, self).setUp()
         delete_all_cases()
+        delete_all_xforms()
 
     def test_conflicting_ids(self):
         """
@@ -138,7 +139,7 @@ class CaseBugTest(TestCase, TestFileMixin):
     @run_with_all_backends
     def testSubmitToDeletedCase(self):
         # submitting to a deleted case should succeed and affect the case
-        case_id = 'immagetdeleted'
+        case_id = uuid.uuid4().hex
         xform, [case] = post_case_blocks([
             CaseBlock(create=True, case_id=case_id, user_id='whatever',
                 update={'foo': 'bar'}).as_xml()
