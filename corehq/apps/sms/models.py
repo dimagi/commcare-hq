@@ -1230,6 +1230,9 @@ class SelfRegistrationInvitation(models.Model):
     phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
     registered_date = models.DateTimeField(null=True)
 
+    # True if we are assuming that the recipient has an Android phone
+    android_only = models.BooleanField(default=False)
+
     class Meta:
         app_label = 'sms'
 
@@ -1259,6 +1262,11 @@ class SelfRegistrationInvitation(models.Model):
 
     def send_step1_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
+
+        if self.android_only:
+            self.send_step2_android_sms(custom_message)
+            return
+
         send_sms(
             self.domain,
             None,
@@ -1275,17 +1283,24 @@ class SelfRegistrationInvitation(models.Model):
             get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,), domain=self.domain)
         )
 
-    def send_step2_android_sms(self):
+    def send_step2_android_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
         from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
 
         registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
             args=[self.domain, self.token])
+
+        if custom_message:
+            message = custom_message.format(registration_url)
+        else:
+            message = get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,),
+                domain=self.domain)
+
         send_sms(
             self.domain,
             None,
             self.phone_number,
-            get_message(MSG_MOBILE_WORKER_ANDROID_INVITATION, context=(registration_url,), domain=self.domain)
+            message
         )
 
         """
@@ -1374,7 +1389,8 @@ class SelfRegistrationInvitation(models.Model):
 
     @classmethod
     def initiate_workflow(cls, domain, phone_numbers, app_id=None,
-            days_until_expiration=30, custom_first_message=None):
+            days_until_expiration=30, custom_first_message=None,
+            android_only=False):
         """
         If app_id is passed in, then an additional SMS will be sent to Android
         phones containing a link to the latest starred build (or latest
@@ -1409,7 +1425,7 @@ class SelfRegistrationInvitation(models.Model):
             expiration_date = (datetime.utcnow().date() +
                 timedelta(days=days_until_expiration))
 
-            invitation = cls.objects.create(
+            invitation = cls(
                 domain=domain,
                 phone_number=phone_number,
                 token=uuid.uuid4().hex,
@@ -1417,8 +1433,13 @@ class SelfRegistrationInvitation(models.Model):
                 expiration_date=expiration_date,
                 created_date=datetime.utcnow(),
                 odk_url=odk_url,
+                android_only=android_only,
             )
 
+            if android_only:
+                invitation.phone_type = PHONE_TYPE_ANDROID
+
+            invitation.save()
             invitation.send_step1_sms(custom_first_message)
             success_numbers.append(phone_number)
 
