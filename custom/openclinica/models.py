@@ -542,5 +542,5 @@ class Subject(object):
         for event in case.get_subcases():
             for form in originals_first(event.get_forms()):
                 # Pass audit log ID by reference to increment it for each audit log
-                subject.add_data(form.form, form, getattr(event, 'event_type'), audit_log_id_ref)
+                subject.add_data(form.form, form, event, audit_log_id_ref)
         return subject
