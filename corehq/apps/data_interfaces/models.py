@@ -89,7 +89,8 @@ class AutomaticUpdateRule(models.Model):
 
     def apply_rule(self, case, now):
         """
-        Returns True if the case was closed, False otherwise.
+        :return: True to stop processing further rules on the case (e.g., the
+        case is closed or deleted), False otherwise
         """
         if self.deleted:
             raise Exception("Attempted to call apply_rule on a deleted rule")
@@ -100,12 +101,8 @@ class AutomaticUpdateRule(models.Model):
         if not isinstance(case, (CommCareCase, CommCareCaseSQL)) or case.domain != self.domain:
             raise Exception("Invalid case given")
 
-        if case.is_deleted:
-            # Exclude deleted cases
-            return False
-
-        if case.closed:
-            return False
+        if case.is_deleted or case.closed:
+            return True
 
         if self.rule_matches_case(case, now):
             return self.apply_actions(case)
