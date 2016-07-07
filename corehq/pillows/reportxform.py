@@ -6,7 +6,8 @@ from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.doc_processor import CouchDocumentProvider
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
+    XFormDuplicate, SubmissionErrorLog
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
@@ -84,7 +85,16 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
 
 def get_report_xform_couch_reindexer():
     iteration_key = "ReportXFormToElasticsearchPillow_{}_reindexer".format(REPORT_XFORM_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, [XFormInstance])
+    doc_provider = CouchDocumentProvider(iteration_key, doc_types=[
+        XFormInstance,
+        XFormArchived,
+        XFormError,
+        XFormDeprecated,
+        XFormDuplicate,
+        ('XFormInstance-Deleted', XFormInstance),
+        ('HQSubmission', XFormInstance),
+        SubmissionErrorLog,
+    ])
     return ResumableBulkElasticPillowReindexer(
         doc_provider,
         elasticsearch=get_es_new(),
