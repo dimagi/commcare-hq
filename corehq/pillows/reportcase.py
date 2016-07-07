@@ -77,7 +77,10 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
 
 def get_report_case_couch_reindexer():
     iteration_key = "ReportCaseToElasticsearchPillow_{}_reindexer".format(REPORT_CASE_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, [CommCareCase])
+    doc_provider = CouchDocumentProvider(iteration_key, [
+        CommCareCase,
+        ('CommCareCase-Deleted', CommCareCase),
+    ])
     return ResumableBulkElasticPillowReindexer(
         doc_provider,
         elasticsearch=get_es_new(),
