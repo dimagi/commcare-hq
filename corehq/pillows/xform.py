@@ -14,6 +14,7 @@ from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
+from corehq.util.doc_processor import CouchDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
@@ -189,18 +190,19 @@ def get_couch_xform_to_elasticsearch_pillow(pillow_id='CouchXFormToElasticsearch
 
 
 def get_couch_form_reindexer():
+    iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
+    doc_provider = CouchDocumentProvider(iteration_key, doc_types=[
+        XFormInstance,
+        XFormArchived,
+        XFormError,
+        XFormDeprecated,
+        XFormDuplicate,
+        ('XFormInstance-Deleted', XFormInstance),
+        ('HQSubmission', XFormInstance),
+        SubmissionErrorLog,
+    ])
     return ResumableBulkElasticPillowReindexer(
-        name="CouchXFormToElasticsearchPillow",
-        doc_types=[
-            XFormInstance,
-            XFormArchived,
-            XFormError,
-            XFormDeprecated,
-            XFormDuplicate,
-            ('XFormInstance-Deleted', XFormInstance),
-            ('HQSubmission', XFormInstance),
-            SubmissionErrorLog,
-        ],
+        doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_filter=device_log_filter,

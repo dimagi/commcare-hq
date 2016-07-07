@@ -137,13 +137,12 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
 class ResumableBulkElasticPillowReindexer(Reindexer):
     reset = False
 
-    def __init__(self, name, doc_types, elasticsearch, index_info,
+    def __init__(self, doc_provider, elasticsearch, index_info,
                  doc_filter=None, doc_transform=None, chunk_size=1000):
-        self.name = name
+        self.doc_provider = doc_provider
         self.es = elasticsearch
         self.index_info = index_info
         self.chunk_size = chunk_size
-        self.doc_types = doc_types
         self.doc_processor = BulkPillowReindexProcessor(
             self.es, self.index_info, doc_filter, doc_transform
         )
@@ -156,15 +155,11 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         _clean_index(self.es, self.index_info)
 
     def reindex(self):
-        iteration_key = "{}_{}_{}".format(self.index_info.index, self.name, 'reindex')
-        doc_provider = CouchDocumentProvider(iteration_key, self.doc_types)
-        progress_logger = CouchProcessorProgressLogger(self.doc_types)
         processor = BulkDocProcessor(
-            doc_provider,
+            self.doc_provider,
             self.doc_processor,
             reset=self.reset,
             chunk_size=self.chunk_size,
-            progress_logger=progress_logger
         )
 
         if self.reset or not processor.has_started():
