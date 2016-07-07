@@ -36,11 +36,10 @@ class ReportCasePillow(CasePillow):
 
 def report_case_filter(doc_dict):
     """
-        :return: True to filter out doc
+    :return: True to filter out doc
     """
-    if doc_dict.get('domain', None) not in getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', []):
-        # full indexing is only enabled for select domains on an opt-in basis
-        return True
+    # full indexing is only enabled for select domains on an opt-in basis
+    return doc_dict.get('domain', None) not in getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
 
 
 def transform_case_to_report_es(doc_dict):
@@ -78,7 +77,10 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
 def get_report_case_couch_reindexer():
     return ResumableBulkElasticPillowReindexer(
         name='ReportCaseToElasticsearchPillow',
-        doc_types=[CommCareCase],
+        doc_types=[
+            CommCareCase,
+            ('CommCareCase-Deleted', CommCareCase),
+        ],
         elasticsearch=get_es_new(),
         index_info=REPORT_CASE_INDEX_INFO,
         doc_filter=report_case_filter,
