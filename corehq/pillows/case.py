@@ -113,7 +113,10 @@ def get_couch_case_to_elasticsearch_pillow(pillow_id='CouchCaseToElasticsearchPi
 def get_couch_case_reindexer():
     return ResumableBulkElasticPillowReindexer(
         name="CouchCaseToElasticsearchPillow",
-        doc_types=[CommCareCase],
+        doc_types=[
+            CommCareCase,
+            ('CommCareCase-Deleted', CommCareCase),
+        ],
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
         doc_transform=transform_case_for_elasticsearch

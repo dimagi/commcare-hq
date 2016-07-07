@@ -77,7 +77,10 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
 def get_report_case_couch_reindexer():
     return ResumableBulkElasticPillowReindexer(
         name='ReportCaseToElasticsearchPillow',
-        doc_types=[CommCareCase],
+        doc_types=[
+            CommCareCase,
+            ('CommCareCase-Deleted', CommCareCase),
+        ],
         elasticsearch=get_es_new(),
         index_info=REPORT_CASE_INDEX_INFO,
         doc_filter=report_case_filter,
