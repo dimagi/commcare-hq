@@ -340,15 +340,14 @@ class ProjectHealthDashboard(ProjectReport):
         return six_month_summary
 
     def export_summary(self, six_months):
-        return build_worksheet(
-                title="Six Month Performance Summary",
-                headers=['month', 'num_high_performing_users', 'num_low_performing_users',
-                         'total_active', 'total_inactive', 'total_num_users'],
-                rows=[[monthly_summary.month.isoformat(), monthly_summary.number_of_performing_users,
-                      monthly_summary.number_of_low_performing_users, monthly_summary.active,
-                      monthly_summary.inactive, monthly_summary.total_users_by_month]
-                      for monthly_summary in six_months]
-                )
+        return build_worksheet(title="Six Month Performance Summary",
+                               headers=['month', 'num_high_performing_users', 'num_low_performing_users',
+                                        'total_active', 'total_inactive', 'total_num_users'],
+                               rows=[[monthly_summary.month.isoformat(),
+                                      monthly_summary.number_of_performing_users,
+                                      monthly_summary.number_of_low_performing_users, monthly_summary.active,
+                                      monthly_summary.inactive, monthly_summary.total_users_by_month]
+                                     for monthly_summary in six_months])
 
     @property
     def export_table(self):
