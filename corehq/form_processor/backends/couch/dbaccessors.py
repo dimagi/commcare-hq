@@ -69,7 +69,17 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_with_attachments(form_id):
         doc = XFormInstance.get_db().get(form_id, attachments=True)
-        return doc_types()[doc['doc_type']].wrap(doc)
+        doc = doc_types()[doc['doc_type']].wrap(doc)
+        if doc.external_blobs:
+            for name, meta in doc.external_blobs.iteritems():
+                with doc.fetch_attachment(name, stream=True) as content:
+                    doc.deferred_put_attachment(
+                        content,
+                        name,
+                        content_type=meta.content_type,
+                        content_length=meta.content_length,
+                    )
+        return doc
 
     @staticmethod
     def get_attachment_content(form_id, attachment_id):

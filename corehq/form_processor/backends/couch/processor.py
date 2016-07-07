@@ -74,7 +74,10 @@ class FormProcessorCouch(object):
         # swap the revs
         new_xform._rev, existing_xform._rev = existing_xform._rev, new_xform._rev
         existing_xform.doc_type = XFormDeprecated.__name__
-        return XFormDeprecated.wrap(existing_xform.to_json()), new_xform
+        deprecated = XFormDeprecated.wrap(existing_xform.to_json())
+        if existing_xform._deferred_blobs:
+            deprecated._deferred_blobs = existing_xform._deferred_blobs.copy()
+        return deprecated, new_xform
 
     @classmethod
     def deduplicate_xform(cls, xform):
@@ -87,6 +90,9 @@ class FormProcessorCouch(object):
 
     @classmethod
     def assign_new_id(cls, xform):
+        if xform.external_blobs:
+            assert set(xform.external_blobs).issubset(xform._deferred_blobs), \
+                "some blobs would be lost"
         new_id = XFormInstance.get_db().server.next_uuid()
         xform._id = new_id
         return xform
