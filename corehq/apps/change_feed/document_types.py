@@ -57,7 +57,7 @@ def _make_document_type(raw_doc_type, primary_type, document):
         return _domain_doc_type_constructor(raw_doc_type, document)
     else:
         return DocumentMetadata(
-            raw_doc_type, primary_type, None, _get_domain(document), _is_deletion(raw_doc_type)
+            raw_doc_type, primary_type, None, _get_domain(document), is_deletion(raw_doc_type)
         )
 
 
@@ -67,20 +67,20 @@ def _get_document_type(document_or_none):
 
 def _case_doc_type_constructor(raw_doc_type, document):
     return DocumentMetadata(
-        raw_doc_type, CASE, document.get('type', None), _get_domain(document), _is_deletion(raw_doc_type)
+        raw_doc_type, CASE, document.get('type', None), _get_domain(document), is_deletion(raw_doc_type)
     )
 
 
 def _form_doc_type_constructor(raw_doc_type, document):
     return DocumentMetadata(
-        raw_doc_type, FORM, document.get('xmlns', None), _get_domain(document), _is_deletion(raw_doc_type)
+        raw_doc_type, FORM, document.get('xmlns', None), _get_domain(document), is_deletion(raw_doc_type)
     )
 
 
 def _domain_doc_type_constructor(raw_doc_type, document):
-    is_deletion = raw_doc_type == 'Domain-DUPLICATE' or _is_deletion(raw_doc_type)
+    is_deletion_ = raw_doc_type == 'Domain-DUPLICATE' or is_deletion(raw_doc_type)
     return DocumentMetadata(
-        raw_doc_type, DOMAIN, None, document.get('name', None), is_deletion
+        raw_doc_type, DOMAIN, None, document.get('name', None), is_deletion_
     )
 
 
@@ -114,6 +114,6 @@ def _get_domain(document):
     return document.get('domain', None)
 
 
-def _is_deletion(raw_doc_type):
+def is_deletion(raw_doc_type):
     # can be overridden
     return raw_doc_type.endswith(DELETED_SUFFIX)
