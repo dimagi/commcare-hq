@@ -357,20 +357,20 @@ class ProjectHealthDashboard(ProjectReport):
 
         header = ['user_id', 'username', 'last_month_forms', 'delta_last_month',
                   'this_month_forms', 'delta_this_month', 'is_performing']
+
+        def extract_user_stat(user_list):
+            return [[user.user_id, user.username, user.num_forms_submitted, user.delta_forms,
+                    user.num_forms_submitted_next_month, user.delta_forms_next_month,
+                    user.is_performing] for user in user_list]
+
         return [
             self.export_summary(six_months_reports),
             build_worksheet(title="Inactive Users", headers=header,
-                            rows=[[user.user_id, user.username, user.num_forms_submitted, user.delta_forms,
-                                   user.num_forms_submitted_next_month, user.delta_forms_next_month,
-                                   user.is_performing] for user in last_month.get_dropouts()]),
+                            rows=extract_user_stat(last_month.get_dropouts())),
             build_worksheet(title="Low Performing Users", headers=header,
-                            rows=[[user.user_id, user.username, user.num_forms_submitted, user.delta_forms,
-                                  user.num_forms_submitted_next_month, user.delta_forms_next_month,
-                                  user.is_performing] for user in last_month.get_unhealthy_users()]),
+                            rows=extract_user_stat(last_month.get_unhealthy_users())),
             build_worksheet(title="New Performing Users", headers=header,
-                            rows=[[user.user_id, user.username, user.num_forms_submitted, user.delta_forms,
-                                   user.num_forms_submitted_next_month, user.delta_forms_next_month,
-                                   user.is_performing] for user in last_month.get_unhealthy_users()]),
+                            rows=extract_user_stat(last_month.get_newly_performing())),
         ]
 
     @property
