@@ -169,6 +169,7 @@ class OtaRestoreTest(TestCase, TestFileMixin):
             </create>
             <update>
                 <external_id>someexternal</external_id>
+                <date_opened>2010-06-29T13:42:50.000000Z</date_opened>
             </update>
         </case>""".format(user_id=self.restore_user.user_id)
         check_xml_line_by_line(
