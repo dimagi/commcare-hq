@@ -85,6 +85,8 @@ class FormProcessorCouch(object):
         # but a new doc_id, and a doc_type of XFormDuplicate
         xform.doc_type = XFormDuplicate.__name__
         dupe = XFormDuplicate.wrap(xform.to_json())
+        if xform._deferred_blobs:
+            dupe._deferred_blobs = xform._deferred_blobs.copy()
         dupe.problem = "Form is a duplicate of another! (%s)" % xform._id
         return cls.assign_new_id(dupe)
 
