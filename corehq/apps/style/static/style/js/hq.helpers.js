@@ -1,4 +1,4 @@
-/* global define */
+/* global define, jQuery */
 (function (factory) {
     if (typeof define === 'function' && define.amd) {
         define(['jquery', 'knockout'], factory);

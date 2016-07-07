@@ -1,12 +1,12 @@
-/* global define */
+/* global define, jQuery */
 (function (factory) {
-if (typeof define === 'function' && define.amd) {
-    define(['jquery', 'knockout', 'underscore', 'select2'], factory);
-} else {
-    hqDefine('reports/javascripts/filters.js', function() {
-        return factory(jQuery, ko, _);
-    });
-}
+    if (typeof define === 'function' && define.amd) {
+        define(['jquery', 'knockout', 'underscore', 'select2'], factory);
+    } else {
+        hqDefine('reports/javascripts/filters.js', function() {
+            return factory(jQuery, ko, _);
+        });
+    }
 }(function ($, ko, _) {
     "use strict";
 
@@ -27,7 +27,7 @@ if (typeof define === 'function' && define.amd) {
                                 page: page,
                                 handler: initialData.handler,
                                 action: initialData.action,
-                            }
+                            };
                         },
                         results: function (data, page) {
                             if (data.success) {
@@ -38,16 +38,16 @@ if (typeof define === 'function' && define.amd) {
                                     more: hasMore,
                                 };
                             } else {
-                                console.log(data.error);
+                                console.log(data.error);    // eslint-disable-line no-console
                             }
-                        }
+                        },
                     },
                     allowClear: true,
                     initSelection: function (elem, callback) {
                         var val = $(elem).val();
                         callback({
                             id: val,
-                            text: val
+                            text: val,
                         });
                     },
                 });

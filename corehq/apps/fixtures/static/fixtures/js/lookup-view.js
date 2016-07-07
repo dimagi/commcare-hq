@@ -25,6 +25,6 @@ define([
 
     $('.header-popover').popover({
         trigger: 'hover',
-        placement: 'bottom'
+        placement: 'bottom',
     });
 });

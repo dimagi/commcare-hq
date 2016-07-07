@@ -14,7 +14,6 @@ define([
     var somethingWentWrong = $("#FailText").text();
     var initialPageData = $.parseJSON($("#initial-page-data").text()),
         FixtureDownloadUrl = initialPageData.FixtureDownloadUrl,
-        FixtureFileDownloadUrl = initialPageData.FixtureFileDownloadUrl,
         TableViewUrl = initialPageData.TableViewUrl,
         DataTypeUrl = initialPageData.DataTypeUrl,
         UpdateTableUrl = initialPageData.UpdateTableUrl;

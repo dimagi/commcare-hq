@@ -1,4 +1,4 @@
-/* global define */
+/* global define, jQuery */
 (function (factory) {
     if (typeof define === 'function' && define.amd) {
         define(['jquery', 'datatables.bootstrap'], factory);
@@ -321,10 +321,8 @@ jQuery.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) { return sortSpe
 
 jQuery.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) { return sortSpecial(a, b, false, convertDate); };
 
-var module = {
+return {
     HQReportDataTables: function(options) { return new HQReportDataTables(options); },
 };
-
-return module;
 
 }));
