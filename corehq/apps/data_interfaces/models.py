@@ -1,6 +1,8 @@
 import re
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es.cases import CaseES
+from corehq.form_processor.exceptions import CaseNotFound
+from couchdbkit.exceptions import ResourceNotFound
 from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
 from django.db import models
@@ -63,6 +65,14 @@ class AutomaticUpdateRule(models.Model):
         return results.doc_ids
 
     def rule_matches_case(self, case, now):
+        try:
+            return self._rule_matches_case(case, now)
+        except (CaseNotFound, ResourceNotFound):
+            # This might happen if the rule references a parent case and the
+            # parent case is not found
+            return False
+
+    def _rule_matches_case(self, case, now):
         if case.type != self.case_type:
             return False
 
