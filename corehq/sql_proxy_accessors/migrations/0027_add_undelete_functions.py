@@ -14,7 +14,7 @@ migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_proxy_accessors', '0025_index_changes'),
+        ('sql_proxy_accessors', '0026_remove_get_ledger_values_for_product_ids.py'),
     ]
 
     operations = [
