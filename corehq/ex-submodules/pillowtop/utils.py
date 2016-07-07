@@ -161,16 +161,17 @@ def build_bulk_payload(index_info, changes, doc_transform=None):
                     "_id": change.id
                 }
             }
-        doc = change.get_document()
-        doc = doc_transform(doc)
-        yield {
-            "index": {
-                "_index": index_info.index,
-                "_type": index_info.type,
-                "_id": doc['_id']
+        elif not change.deleted:
+            doc = change.get_document()
+            doc = doc_transform(doc)
+            yield {
+                "index": {
+                    "_index": index_info.index,
+                    "_type": index_info.type,
+                    "_id": doc['_id']
+                }
             }
-        }
-        yield doc
+            yield doc
 
 
 def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
