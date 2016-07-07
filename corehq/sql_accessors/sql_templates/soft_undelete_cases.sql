@@ -7,7 +7,6 @@ CREATE FUNCTION soft_undelete_cases(
 BEGIN
     UPDATE form_processor_commcarecasesql SET
         deleted = FALSE,
-        server_modified_on = p_server_modified_on,
         deletion_id = NULL,
         deleted_on = NULL
     WHERE
