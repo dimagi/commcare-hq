@@ -1,9 +1,10 @@
+/* global define, jQuery */
 (function (factory) {
-if (typeof define === 'function' && define.amd) {
-    define(['jquery', 'knockout', 'underscore'], factory);
-} else {
-    factory(jQuery, ko, _);
-}
+    if (typeof define === 'function' && define.amd) {
+        define(['jquery', 'knockout', 'underscore'], factory);
+    } else {
+        factory(jQuery, ko, _);
+    }
 }(function ($, ko, _) {
 
 var components = {

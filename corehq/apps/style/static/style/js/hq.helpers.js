@@ -1,14 +1,15 @@
+/* global define */
 (function (factory) {
-if (typeof define === 'function' && define.amd) {
-    define(['jquery', 'knockout'], factory);
-} else {
-    factory(jQuery, ko);
-}
+    if (typeof define === 'function' && define.amd) {
+        define(['jquery', 'knockout'], factory);
+    } else {
+        factory(jQuery, ko);
+    }
 }(function ($, ko) {
 
 var clearAnnouncement = function (announcementID) {
     $.ajax({
-        url: '/announcements/clear/' + announcementID
+        url: '/announcements/clear/' + announcementID,
     });
 };
 

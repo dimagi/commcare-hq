@@ -1,11 +1,12 @@
+/* global define */
 (function (factory) {
-if (typeof define === 'function' && define.amd) {
-    define(['jquery', 'datatables.bootstrap'], factory);
-} else {
-    hqDefine('reports/javascripts/config.dataTables.bootstrap.js', function() {
-        return factory(jQuery);
-    });
-}
+    if (typeof define === 'function' && define.amd) {
+        define(['jquery', 'datatables.bootstrap'], factory);
+    } else {
+        hqDefine('reports/javascripts/config.dataTables.bootstrap.js', function() {
+            return factory(jQuery);
+        });
+    }
 }(function ($) {
 
 var HQReportDataTables = function(options) {

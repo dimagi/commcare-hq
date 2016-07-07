@@ -1,9 +1,10 @@
+/* global define */
 (function (factory) {
-if (typeof define === 'function' && define.amd) {
-    define(['knockout'], factory);
-} else {
-    factory(ko);
-}
+    if (typeof define === 'function' && define.amd) {
+        define(['knockout'], factory);
+    } else {
+        factory(ko);
+    }
 }(function (ko) {
 
 ko.bindingHandlers.staticChecked = {

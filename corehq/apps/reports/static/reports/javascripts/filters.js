@@ -1,3 +1,4 @@
+/* global define */
 (function (factory) {
 if (typeof define === 'function' && define.amd) {
     define(['jquery', 'knockout', 'underscore', 'select2'], factory);
@@ -13,8 +14,8 @@ if (typeof define === 'function' && define.amd) {
         _.each($(".reports-filters-single-option"), function(el) {
             var initialData = $.parseJSON($(el).find(".initial-data").text());
             if (initialData.pagination) {
-                var $el = $(el).find("input");
-                $el.select2({
+                var $input = $(el).find("input");
+                $input.select2({
                     ajax: {
                         url: initialData.url,
                         type: 'POST',
@@ -34,7 +35,7 @@ if (typeof define === 'function' && define.amd) {
                                 var hasMore = (page * limit) < data.total;
                                 return {
                                     results: data.items,
-                                    more: hasMore
+                                    more: hasMore,
                                 };
                             } else {
                                 console.log(data.error);
@@ -48,15 +49,15 @@ if (typeof define === 'function' && define.amd) {
                             id: val,
                             text: val
                         });
-                    }
+                    },
                 });
             } else {
-                var $el = $(el).find("select");
-                $el.parent().koApplyBindings({
+                var $select = $(el).find("select");
+                $select.parent().koApplyBindings({
                     select_params: initialData.selectOptions,
                     current_selection: ko.observable(initialData.selectCurrent),
                 });
-                $el.select2();
+                $select.select2();
             }
         });
     };

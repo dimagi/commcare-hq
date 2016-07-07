@@ -1,3 +1,4 @@
+/* global define, standardHQReport */
 /**
  *  Handles fixtures' "View Table" page.
  */
