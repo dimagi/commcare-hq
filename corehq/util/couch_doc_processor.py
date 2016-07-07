@@ -171,7 +171,10 @@ class ProcessorProgressLogger(object):
         ))
 
 
-class CouchProcessorProgressLogger(object):
+class CouchProcessorProgressLogger(ProcessorProgressLogger):
+    """
+    :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
+    """
     def __init__(self, doc_type_map):
         self.doc_type_map = doc_type_map
 
@@ -201,6 +204,12 @@ class DocumentProvider(object):
 
 
 class CouchDocumentProvider(DocumentProvider):
+    """Document provider for couch documents.
+
+    All documents must live in the same couch database.
+
+    :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
+    """
     def __init__(self, doc_type_map):
         self.doc_type_map = doc_type_map
 
@@ -222,37 +231,33 @@ class CouchDocumentProvider(DocumentProvider):
         )
 
 
-class CouchDocumentProcessor(object):
-    """Process Couch Docs
+class DocumentProcessor(object):
+    """Process Docs
 
-    :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
-    :param doc_processor: A `BaseDocProcessor` object used to
-    process documents.
+    :param document_provider: A ``DocumentProvider`` object
+    :param doc_processor: A ``BaseDocProcessor`` object used to process documents.
     :param reset: Reset existing processor state (if any), causing all
     documents to be reconsidered for processing, if this is true.
-    :param max_retry: Number of times to retry processing a document
-    before giving up.
+    :param max_retry: Number of times to retry processing a document before giving up.
     :param chunk_size: Maximum number of records to read from couch at
     one time. It may be necessary to use a smaller chunk size if the
     records being processed are very large and the default chunk size of
     100 would exceed available memory.
-    :param view_event_handler: instance of PaginateViewLogHandler to be notified of
-    view events.
-    :param progress_logger: instance of ProcessorProgressLogger used to log progress
+    :param event_handler: A ``PaginateViewLogHandler`` object to be notified of pagination events.
+    :param progress_logger: A ``ProcessorProgressLogger`` object to notify of progress events.
     """
-    def __init__(self, doc_type_map, doc_processor, reset=False, max_retry=2,
-                 chunk_size=100, view_event_handler=None, progress_logger=None):
-        self.doc_type_map = doc_type_map
+    def __init__(self, document_provider, doc_processor, reset=False, max_retry=2,
+                 chunk_size=100, event_handler=None, progress_logger=None):
         self.doc_processor = doc_processor
         self.reset = reset
         self.max_retry = max_retry
         self.chunk_size = chunk_size
-        self.progress_logger = progress_logger or CouchProcessorProgressLogger(self.doc_type_map)
+        self.progress_logger = progress_logger or ProcessorProgressLogger()
 
-        self.document_provider = CouchDocumentProvider(doc_type_map)
+        self.document_provider = document_provider
 
         self.document_iterator = self.document_provider.get_document_iterator(
-            self.doc_processor.unique_key, chunk_size, view_event_handler
+            self.doc_processor.unique_key, chunk_size, event_handler
         )
 
         self.visited = 0
@@ -377,8 +382,8 @@ class BulkDocProcessorEventHandler(PaginationEventHandler):
             raise BulkProcessingFailed("Processor has gone away")
 
 
-class BulkDocProcessor(CouchDocumentProcessor):
-    """Process couch docs for a single doc type in batches
+class BulkDocProcessor(DocumentProcessor):
+    """Process docs in batches
 
     The bulk doc processor will send a batch of documents to the document
     processor. If the processor does not respond with True then
@@ -389,20 +394,24 @@ class BulkDocProcessor(CouchDocumentProcessor):
     depending on how they are being filtered by the
     document processor but will never exceed ``chunk_size``.
 
-    :param doc_type_map: Dict containing a single `doc_type_name: model_class` pair.
-    :param doc_processor: A `BaseDocProcessor` object used to
-    process documents.
+    :param document_provider: A ``DocumentProvider`` object
+    :param doc_processor: A ``BaseDocProcessor`` object used to process documents.
     :param reset: Reset existing processor state (if any), causing all
     documents to be reconsidered for processing, if this is true.
+    :param max_retry: Number of times to retry processing a document before giving up.
     :param chunk_size: Maximum number of records to read from couch at
     one time. It may be necessary to use a smaller chunk size if the
     records being processed are very large and the default chunk size of
     100 would exceed available memory.
+    :param progress_logger: A ``ProcessorProgressLogger`` object to notify of progress events.
     """
-    def __init__(self, doc_type_map, doc_processor, reset=False, chunk_size=100):
+    def __init__(self, document_provider, doc_processor, reset=False, max_retry=2,
+                 chunk_size=100, progress_logger=None):
+
+        event_handler = BulkDocProcessorEventHandler(self)
         super(BulkDocProcessor, self).__init__(
-            doc_type_map, doc_processor, reset=reset, chunk_size=chunk_size,
-            view_event_handler=BulkDocProcessorEventHandler(self)
+            document_provider, doc_processor, reset, max_retry, chunk_size,
+            event_handler, progress_logger
         )
         self.changes = []
 

@@ -5,8 +5,10 @@ from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
 
-from corehq.util.couch_doc_processor import ResumableDocsByTypeIterator, BaseDocProcessor, \
-    CouchDocumentProcessor, BulkDocProcessor, BulkProcessingFailed
+from corehq.util.couch_doc_processor import (
+    ResumableDocsByTypeIterator, BaseDocProcessor,
+    DocumentProcessor, BulkDocProcessor, BulkProcessingFailed, CouchDocumentProvider
+)
 from corehq.util.pagination import TooManyRetries
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.chunked import chunked
@@ -224,13 +226,14 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
     def _get_processor(self, chunk_size=2, ignore_docs=None, skip_docs=None, reset=False, doc_types=None):
         doc_types = doc_types or {'Bar': Bar}
         doc_processor = DemoProcessor(self.processor_slug)
+        doc_provider = CouchDocumentProvider(doc_types)
         processor = self.processor_class(
-            doc_types,
+            doc_provider,
             doc_processor,
             chunk_size=chunk_size,
             reset=reset
         )
-        processor.docs_by_type.couch_db = self.db
+        processor.document_iterator.couch_db = self.db
         if ignore_docs:
             doc_processor.ignore_docs = ignore_docs
         if skip_docs:
@@ -239,7 +242,7 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
 
 
 class TestCouchDocProcessor(BaseCouchDocProcessorTest):
-    processor_class = CouchDocumentProcessor
+    processor_class = DocumentProcessor
 
     def _test_processor(self, expected_processed, doc_idents, ignore_docs=None, skip_docs=None):
         doc_processor, processor = self._get_processor(ignore_docs=ignore_docs, skip_docs=skip_docs)
