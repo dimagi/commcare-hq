@@ -183,6 +183,45 @@ class CouchProcessorProgressLogger(object):
         ))
 
 
+class DocumentProvider(object):
+    def get_document_iterator(self, iteration_key, chunk_size, event_handler=None):
+        """
+        :param iteration_key: the unique key used to identify this iteration
+        :param chunk_size: Maximum number of records to read from the database at one time
+        :param event_handler: instance of ``PaginateViewLogHandler`` to be notified of view events.
+        :return: an instance of ``ResumableFunctionIterator``
+        """
+        pass
+
+    def get_total_document_count(self):
+        """
+        :return: the total count of documents expected
+        """
+        pass
+
+
+class CouchDocumentProvider(DocumentProvider):
+    def __init__(self, doc_type_map):
+        self.doc_type_map = doc_type_map
+
+        self.couchdb = next(iter(doc_type_map.values())).get_db()
+        assert all(m.get_db() is self.couchdb for m in doc_type_map.values()), \
+            "documents must live in same couch db: %s" % repr(doc_type_map)
+
+    def get_document_iterator(self, iteration_key, chunk_size, event_handler=None):
+        return ResumableDocsByTypeIterator(
+            self.couchdb, self.doc_type_map, iteration_key,
+            chunk_size=chunk_size, view_event_handler=event_handler
+        )
+
+    def get_total_document_count(self):
+        from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
+        return sum(
+            get_doc_count_by_type(self.couchdb, doc_type)
+            for doc_type in self.doc_type_map
+        )
+
+
 class CouchDocumentProcessor(object):
     """Process Couch Docs
 
@@ -210,13 +249,10 @@ class CouchDocumentProcessor(object):
         self.chunk_size = chunk_size
         self.progress_logger = progress_logger or CouchProcessorProgressLogger(self.doc_type_map)
 
-        self.couchdb = next(iter(doc_type_map.values())).get_db()
-        assert all(m.get_db() is self.couchdb for m in doc_type_map.values()), \
-            "documents must live in same couch db: %s" % repr(doc_type_map)
+        self.document_provider = CouchDocumentProvider(doc_type_map)
 
-        self.docs_by_type = ResumableDocsByTypeIterator(
-            self.couchdb, doc_type_map, doc_processor.unique_key, chunk_size=chunk_size,
-            view_event_handler=view_event_handler
+        self.document_iterator = self.document_provider.get_document_iterator(
+            self.doc_processor.unique_key, chunk_size, view_event_handler
         )
 
         self.visited = 0
@@ -229,7 +265,7 @@ class CouchDocumentProcessor(object):
         self.start = None
 
     def has_started(self):
-        return bool(self.docs_by_type.progress_info)
+        return bool(self.document_iterator.progress_info)
 
     @property
     def session_visited(self):
@@ -255,15 +291,12 @@ class CouchDocumentProcessor(object):
         return elapsed, remaining
 
     def _setup(self):
-        from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
-
-        self.total = sum(get_doc_count_by_type(self.couchdb, doc_type)
-                    for doc_type in self.doc_type_map)
+        self.total = self.document_provider.get_total_document_count()
 
         if self.reset:
-            self.docs_by_type.discard_state()
-        elif self.docs_by_type.progress_info:
-            info = self.docs_by_type.progress_info
+            self.document_iterator.discard_state()
+        elif self.document_iterator.progress_info:
+            info = self.document_iterator.progress_info
             old_total = info["total"]
             # Estimate already visited based on difference of old/new
             # totals. The theory is that new or deleted records will be
@@ -280,7 +313,7 @@ class CouchDocumentProcessor(object):
         """
         self._setup()
         with self.doc_processor:
-            for doc in self.docs_by_type:
+            for doc in self.document_iterator:
                 self._process_doc(doc)
                 self._update_progress()
 
@@ -297,7 +330,7 @@ class CouchDocumentProcessor(object):
             self.processed += 1
         else:
             try:
-                self.docs_by_type.retry(doc['_id'], self.max_retry)
+                self.document_iterator.retry(doc['_id'], self.max_retry)
             except TooManyRetries:
                 if not self.doc_processor.handle_skip(doc):
                     raise
@@ -308,7 +341,7 @@ class CouchDocumentProcessor(object):
     def _update_progress(self):
         self.visited += 1
         if self.visited % self.chunk_size == 0:
-            self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
+            self.document_iterator.progress_info = {"visited": self.visited, "total": self.total}
 
         if self.attempted % self.chunk_size == 0:
             elapsed, remaining = self.timing
@@ -318,7 +351,7 @@ class CouchDocumentProcessor(object):
 
     def _processing_complete(self):
         if self.session_visited:
-            self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
+            self.document_iterator.progress_info = {"visited": self.visited, "total": self.total}
         self.doc_processor.processing_complete(self.skipped)
         self.progress_logger.progress_complete(
             self.processed,
@@ -389,7 +422,7 @@ class BulkDocProcessor(CouchDocumentProcessor):
     def _update_progress(self):
         self.visited += 1
         if self.visited % self.chunk_size == 0:
-            self.docs_by_type.progress_info = {"visited": self.visited, "total": self.total}
+            self.document_iterator.progress_info = {"visited": self.visited, "total": self.total}
 
             elapsed, remaining = self.timing
             self.progress_logger.progress(
