@@ -12,7 +12,9 @@ class ResumableDocsByTypeArgsProvider(PaginatedViewArgsProvider):
 
     def get_next_args(self, result, *last_args, **last_view_kwargs):
         try:
-            return super(ResumableDocsByTypeArgsProvider, self).get_next_args(result, *last_args, **last_view_kwargs)
+            return super(ResumableDocsByTypeArgsProvider, self).get_next_args(
+                result, *last_args, **last_view_kwargs
+            )
         except StopIteration:
             last_doc_type = last_view_kwargs["startkey"][0]
             # skip doc types already processed
