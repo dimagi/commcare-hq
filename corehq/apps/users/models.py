@@ -1530,7 +1530,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return CaseAccessors(self.domain).get_case_ids_by_owners([self.user_id])
 
     def _get_deleted_form_ids(self):
-        return FormAccessors(self.domain).get_deleted_form_ids_for_user(self.domain, self.user_id)
+        return FormAccessors(self.domain).get_deleted_form_ids_for_user(self.user_id)
 
     def _get_deleted_case_ids(self):
         return CaseAccessors(self.domain).get_deleted_case_ids_by_owner(self.user_id)
