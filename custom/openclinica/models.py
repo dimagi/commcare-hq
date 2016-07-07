@@ -2,6 +2,7 @@ from collections import defaultdict
 import hashlib
 import re
 from lxml import etree
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
 from custom.openclinica.const import (
@@ -311,7 +312,8 @@ class Subject(object):
         self.dob = None
 
         # We need the domain to get study metadata for study events and item groups
-        self._domain = domain
+        self._domain = Domain.get_by_name(domain)
+        self._domain_name = domain
 
         # This subject's data. Stored as subject[study_event_oid][i][form_oid][item_group_oid][j][item_oid]
         # (Study events and item groups are lists because they can repeat.)
@@ -333,10 +335,10 @@ class Subject(object):
         if len(self.data[item.study_event_oid]):
             study_event = self.data[item.study_event_oid][-1]
             if study_event.is_repeating and study_event.case_id != case_id:
-                study_event = StudyEvent(self._domain, item.study_event_oid, case_id)
+                study_event = StudyEvent(self._domain_name, item.study_event_oid, case_id)
                 self.data[item.study_event_oid].append(study_event)
         else:
-            study_event = StudyEvent(self._domain, item.study_event_oid, case_id)
+            study_event = StudyEvent(self._domain_name, item.study_event_oid, case_id)
             self.data[item.study_event_oid].append(study_event)
         return study_event
 
@@ -349,7 +351,7 @@ class Subject(object):
         study_event = self.get_study_event(item, form, case_id)
         oc_form = study_event.forms[item.form_oid]
         if not oc_form[item.item_group_oid]:
-            oc_form[item.item_group_oid].append(ItemGroup(self._domain, item.item_group_oid))
+            oc_form[item.item_group_oid].append(ItemGroup(self._domain_name, item.item_group_oid))
         item_group = oc_form[item.item_group_oid][-1]
         return item_group, study_event
 
@@ -388,8 +390,8 @@ class Subject(object):
 
     def _get_oc_user(self, user_id):
         if user_id not in self.mobile_workers:
-            cc_user = self._get_cc_user(self._domain, user_id)
-            oc_user = get_oc_user(self._domain, cc_user)
+            cc_user = self._get_cc_user(self._domain_name, user_id)
+            oc_user = get_oc_user(self._domain_name, cc_user)
             if oc_user is None:
                 raise OpenClinicaIntegrationError(
                     'OpenClinica user not found for CommCare user "{}"'.format(cc_user.username))
@@ -425,7 +427,7 @@ class Subject(object):
                         'new_value': answer,
                         'value_type': question,
                     }]
-                mu_oid = get_item_measurement_unit(self._domain, item)
+                mu_oid = get_item_measurement_unit(self._domain_name, item)
                 if mu_oid:
                     item_dict['measurement_unit_oid'] = mu_oid
 
@@ -437,13 +439,13 @@ class Subject(object):
     def add_item_group(self, item, form):
         study_event = self.get_study_event(item, form)
         oc_form = study_event.forms[item.form_oid]
-        item_group = ItemGroup(self._domain, item.item_group_oid)
+        item_group = ItemGroup(self._domain_name, item.item_group_oid)
         oc_form[item.item_group_oid].append(item_group)
 
     def add_data(self, data, form, event_case, audit_log_id_ref):
         def get_next_item(event_id, question_list):
             for question_ in question_list:
-                item_ = get_question_item(self._domain, event_id, question_)
+                item_ = get_question_item(self._domain_name, event_id, question_)
                 if item_:
                     return item_
             return None
@@ -473,7 +475,7 @@ class Subject(object):
                 self.add_data(value, form, event_case, audit_log_id_ref)
             else:
                 # key is a question and value is its answer
-                item = get_question_item(self._domain, event_id, key)
+                item = get_question_item(self._domain_name, event_id, key)
                 if item is None:
                     # This is a CommCare-only question or form
                     continue
@@ -542,5 +544,5 @@ class Subject(object):
         for event in case.get_subcases():
             for form in originals_first(event.get_forms()):
                 # Pass audit log ID by reference to increment it for each audit log
-                subject.add_data(form.form, form, getattr(event, 'event_type'), audit_log_id_ref)
+                subject.add_data(form.form, form, event, audit_log_id_ref)
         return subject
