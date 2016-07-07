@@ -96,17 +96,11 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
 
 
 class BulkPillowReindexProcessor(BaseDocProcessor):
-    def __init__(self, name, es_client, index_info, doc_filter=None, doc_transform=None):
-        super(BulkPillowReindexProcessor, self).__init__(index_info.index)
-        self.name = name
+    def __init__(self, es_client, index_info, doc_filter=None, doc_transform=None):
         self.doc_transform = doc_transform
         self.doc_filter = doc_filter
         self.es = es_client
         self.index_info = index_info
-
-    @property
-    def unique_key(self):
-        return "{}_{}_{}".format(self.slug, self.name, 'reindex')
 
     def should_process(self, doc):
         if self.doc_filter:
@@ -154,7 +148,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         if len(doc_types) != len(self.doc_type_map):
             raise ValueError("Invalid (duplicate?) doc types")
 
-        self.doc_processor = BulkPillowReindexProcessor(name, self.es, self.index_info, doc_filter, doc_transform)
+        self.doc_processor = BulkPillowReindexProcessor(self.es, self.index_info, doc_filter, doc_transform)
 
     def consume_options(self, options):
         self.reset = options.pop("reset", False)

@@ -144,10 +144,6 @@ class BaseDocMigrator(BaseDocProcessor):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.backup_file.close()
 
-    @property
-    def unique_key(self):
-        return self.slug + "-blob-migration"
-
     def handle_skip(self, doc):
         return True  # ignore
 
@@ -283,7 +279,8 @@ class Migrator(object):
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         doc_migrator = self.doc_migrator_class(self.slug, self.couchdb, filename)
         progress_logger = CouchProcessorProgressLogger(self.doc_type_map)
-        document_provider = CouchDocumentProvider(self.doc_type_map)
+        iteration_key = self.slug + "-blob-migration"
+        document_provider = CouchDocumentProvider(iteration_key, self.doc_type_map)
         processor = DocumentProcessor(
             document_provider,
             doc_migrator,

@@ -95,18 +95,11 @@ DOCS_SKIPPED_WARNING = """
 
 class BaseDocProcessor(six.with_metaclass(ABCMeta)):
 
-    def __init__(self, slug):
-        self.slug = slug
-
     def __enter__(self):
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
-
-    @abstractproperty
-    def unique_key(self):
-        return self.slug
 
     def process_doc(self, doc):
         """Process a single document
@@ -187,9 +180,8 @@ class CouchProcessorProgressLogger(ProcessorProgressLogger):
 
 
 class DocumentProvider(object):
-    def get_document_iterator(self, iteration_key, chunk_size, event_handler=None):
+    def get_document_iterator(self, chunk_size, event_handler=None):
         """
-        :param iteration_key: the unique key used to identify this iteration
         :param chunk_size: Maximum number of records to read from the database at one time
         :param event_handler: instance of ``PaginateViewLogHandler`` to be notified of view events.
         :return: an instance of ``ResumableFunctionIterator``
@@ -208,18 +200,20 @@ class CouchDocumentProvider(DocumentProvider):
 
     All documents must live in the same couch database.
 
+    :param iteration_key: unique key to identify the document iterator
     :param doc_type_map: Dict of `doc_type_name: model_class` pairs.
     """
-    def __init__(self, doc_type_map):
+    def __init__(self, iteration_key, doc_type_map):
+        self.iteration_key = iteration_key
         self.doc_type_map = doc_type_map
 
         self.couchdb = next(iter(doc_type_map.values())).get_db()
         assert all(m.get_db() is self.couchdb for m in doc_type_map.values()), \
             "documents must live in same couch db: %s" % repr(doc_type_map)
 
-    def get_document_iterator(self, iteration_key, chunk_size, event_handler=None):
+    def get_document_iterator(self, chunk_size, event_handler=None):
         return ResumableDocsByTypeIterator(
-            self.couchdb, self.doc_type_map, iteration_key,
+            self.couchdb, self.doc_type_map, self.iteration_key,
             chunk_size=chunk_size, view_event_handler=event_handler
         )
 
@@ -256,9 +250,7 @@ class DocumentProcessor(object):
 
         self.document_provider = document_provider
 
-        self.document_iterator = self.document_provider.get_document_iterator(
-            self.doc_processor.unique_key, chunk_size, event_handler
-        )
+        self.document_iterator = self.document_provider.get_document_iterator(chunk_size, event_handler)
 
         self.visited = 0
         self.previously_visited = 0

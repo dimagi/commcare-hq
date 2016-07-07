@@ -144,18 +144,13 @@ class TestResumableDocsByTypeIterator(TestCase):
 
 
 class DemoProcessor(BaseDocProcessor):
-    def __init__(self, slug, ignore_docs=None, skip_docs=None):
-        super(DemoProcessor, self).__init__(slug)
+    def __init__(self, ignore_docs=None, skip_docs=None):
         self.skip_docs = skip_docs
         self.ignore_docs = ignore_docs or []
         self.docs_processed = set()
 
     def should_process(self, doc):
         return doc['_id'] not in self.ignore_docs
-
-    @property
-    def unique_key(self):
-        return self.slug + '-test'
 
     def process_doc(self, doc):
         doc_id = doc['_id']
@@ -225,8 +220,8 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
 
     def _get_processor(self, chunk_size=2, ignore_docs=None, skip_docs=None, reset=False, doc_types=None):
         doc_types = doc_types or {'Bar': Bar}
-        doc_processor = DemoProcessor(self.processor_slug)
-        doc_provider = CouchDocumentProvider(doc_types)
+        doc_processor = DemoProcessor()
+        doc_provider = CouchDocumentProvider(self.processor_slug, doc_types)
         processor = self.processor_class(
             doc_provider,
             doc_processor,
