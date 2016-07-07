@@ -308,7 +308,7 @@ class ProjectHealthDashboard(ProjectReport):
         last_month_summary = None
         performance_threshold = get_performance_threshold(self.domain)
         filtered_users = self.get_users_by_filter()
-        for i in range(-5, 1):
+        for i in range(-6, 1):
             year, month = add_months(now.year, now.month, i)
             month_as_date = datetime.date(year, month, 1)
             this_month_summary = MonthlyPerformanceSummary(
@@ -325,7 +325,7 @@ class ProjectHealthDashboard(ProjectReport):
                 this_month_summary.set_num_inactive_users(len(this_month_summary.get_dropouts()))
             this_month_summary.set_percent_active()
             last_month_summary = this_month_summary
-        return six_month_summary
+        return six_month_summary[1:]
 
     @property
     def template_context(self):

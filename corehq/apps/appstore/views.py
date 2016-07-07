@@ -236,12 +236,6 @@ class ProjectInformationView(BaseCommCareExchangeSectionView):
         }
 
 
-def appstore_api(request):
-    params, facets = parse_args_for_es(request)
-    results = es_snapshot_query(params, facets)
-    return HttpResponse(json.dumps(results), content_type="application/json")
-
-
 def es_snapshot_query(params, facets=None, terms=None, sort_by="snapshot_time", start_at=None, size=None):
     if terms is None:
         terms = ['is_approved', 'sort_by', 'search']
