@@ -88,7 +88,7 @@ class UserSelfRegistrationValidation(Validation):
                 FieldDefinition('custom_user_data', False, dict),
             ])
 
-            phone_number = user_info['phone_number']
+            phone_number = apply_leniency(user_info['phone_number'])
             if phone_number in phone_numbers:
                 raise SelfRegistrationValidationException(
                     {'users': 'phone_number cannot be reused within a request: {}'.format(phone_number)}
