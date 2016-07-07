@@ -148,13 +148,13 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_base_properties(self, element):
         super(V2CaseXMLGenerator, self).add_base_properties(element)
         from corehq.apps.users.cases import get_owner_id
-        if self.case.opened_on:
-            element.append(safe_element("date_opened", json_format_datetime(self.case.opened_on)))
         element.append(safe_element('owner_id', get_owner_id(self.case)))
 
     def add_custom_properties(self, element):
         if self.case.external_id:
             element.append(safe_element('external_id', self.case.external_id))
+        if self.case.opened_on:
+            element.append(safe_element("date_opened", json_format_datetime(self.case.opened_on)))
         super(V2CaseXMLGenerator, self).add_custom_properties(element)
 
     def add_indices(self, element):
@@ -212,7 +212,6 @@ class CaseDBXMLGenerator(V2CaseXMLGenerator):
 
     def add_base_properties(self, element):
         element.append(self.get_case_name_element())
-        element.append(safe_element("date_opened", json_format_datetime(self.case.opened_on)))
         if self.case.modified_on:
             element.append(safe_element("last_modified", json_format_datetime(self.case.modified_on)))
 

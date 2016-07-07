@@ -101,7 +101,7 @@ class CaseBlock(dict):
         self._id = case_id
         now = datetime.utcnow()
         date_modified = date_modified or now
-        date_opened = date_opened or now
+        date_opened = date_opened or date_modified
         update = copy.copy(update) if update else {}
         index = copy.copy(index) if index else {}
 
@@ -119,7 +119,6 @@ class CaseBlock(dict):
         self['update'] = update
 
         create_or_update = {
-            'date_opened':                  date_opened,
             self.CASE_TYPE:                 case_type,
             'case_name':                    case_name,
         }
@@ -138,6 +137,7 @@ class CaseBlock(dict):
             })
         self['update'].update({
             'external_id':              external_id,
+            'date_opened':              date_opened,
         })
 
         # fail if user specifies both, say, case_name='Johnny' and update={'case_name': 'Johnny'}
