@@ -6,8 +6,9 @@ import corehq.blobs.migrate as mod
 from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.s3db import maybe_not_found
-from corehq.blobs.tests.util import (TemporaryFilesystemBlobDB,
-    TemporaryMigratingBlobDB, TemporaryS3BlobDB)
+from corehq.blobs.tests.util import (
+    TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB, TemporaryS3BlobDB
+)
 from corehq.util.doc_processor import ResumableDocsByTypeIterator
 from corehq.util.test_utils import trap_extra_setup
 
