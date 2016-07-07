@@ -1065,6 +1065,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
                 self.form.cleaned_data.get('password'),
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',
+                user_data=self.invitation.custom_user_data,
             )
             # Since the user is being created by following the link and token
             # we sent to their phone by SMS, we can verify their phone number

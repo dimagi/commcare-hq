@@ -177,7 +177,7 @@ class UserSelfRegistrationResource(HqBaseResource):
         bundle = self.full_hydrate(bundle)
         self.registration_result = SelfRegistrationInvitation.initiate_workflow(
             bundle.request.domain,
-            [user_info.phone_number for user_info in bundle.obj.users],
+            bundle.obj.users,
             app_id=bundle.obj.app_id,
             custom_first_message=bundle.obj.custom_registration_message,
             android_only=bundle.obj.android_only,

@@ -24,6 +24,7 @@ from corehq.apps.sms.api import (
     DomainScopeValidationError,
     MessageMetadata,
 )
+from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
@@ -2083,7 +2084,7 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
                 app_id = self.invitations_form.cleaned_data.get('app_id')
                 result = SelfRegistrationInvitation.initiate_workflow(
                     self.domain,
-                    phone_numbers,
+                    [SelfRegistrationUserInfo(p) for p in phone_numbers],
                     app_id=app_id
                 )
                 success_numbers, invalid_format_numbers, numbers_in_use = result

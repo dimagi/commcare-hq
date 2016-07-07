@@ -1236,6 +1236,10 @@ class SelfRegistrationInvitation(models.Model):
     # True to make email address a required field on the self-registration page
     require_email = models.BooleanField(default=False)
 
+    # custom user data that will be set to the CommCareUser's user_data property
+    # when it is created
+    custom_user_data = jsonfield.JSONField(default=dict)
+
     class Meta:
         app_label = 'sms'
 
@@ -1391,7 +1395,7 @@ class SelfRegistrationInvitation(models.Model):
         return app.get_short_odk_url(with_media=True)
 
     @classmethod
-    def initiate_workflow(cls, domain, phone_numbers, app_id=None,
+    def initiate_workflow(cls, domain, users, app_id=None,
             days_until_expiration=30, custom_first_message=None,
             android_only=False, require_email=False):
         """
@@ -1411,8 +1415,8 @@ class SelfRegistrationInvitation(models.Model):
         if app_id:
             odk_url = cls.get_app_odk_url(domain, app_id)
 
-        for phone_number in phone_numbers:
-            phone_number = apply_leniency(phone_number)
+        for user_info in users:
+            phone_number = apply_leniency(user_info.phone_number)
             try:
                 CommCareMobileContactMixin.validate_number_format(phone_number)
             except InvalidFormatException:
@@ -1438,6 +1442,7 @@ class SelfRegistrationInvitation(models.Model):
                 odk_url=odk_url,
                 android_only=android_only,
                 require_email=require_email,
+                custom_user_data=user_info.custom_user_data or {},
             )
 
             if android_only:
