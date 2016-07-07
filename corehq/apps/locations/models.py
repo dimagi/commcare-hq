@@ -314,9 +314,10 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     def lineage(self):
         return list(self.get_ancestors(ascending=True).location_ids())
 
-    @property
-    def get_id(self):
-        return self.location_id
+    # # A few aliases for location_id to be compatible with couch locs
+    _id = property(lambda self: self.location_id)
+    get_id = property(lambda self: self.location_id)
+    group_id = property(lambda self: self.location_id)
 
     @property
     def products(self):
@@ -841,7 +842,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         This just returns the location's id. It used to add
         a prefix.
         """
-        return self._id
+        return self.location_id
 
     @property
     def location_type_object(self):
