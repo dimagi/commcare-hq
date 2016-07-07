@@ -9,7 +9,7 @@ from corehq.blobs.s3db import maybe_not_found
 from corehq.blobs.tests.util import (
     TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB, TemporaryS3BlobDB
 )
-from corehq.util.doc_processor.couch import ResumableDocsByTypeIterator
+from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_list_to_dict
 from corehq.util.test_utils import trap_extra_setup
 
 from django.conf import settings
@@ -53,12 +53,11 @@ class BaseMigrationTest(TestCase):
 
     @staticmethod
     def discard_migration_state(slug):
-        doc_types = mod.MIGRATIONS[slug].doc_type_map
-        ResumableDocsByTypeIterator(
-            list(doc_types.values())[0].get_db(),
-            doc_types,
-            slug + "-blob-migration",
-        ).discard_state()
+        migrator = mod.MIGRATIONS[slug]
+        iterator = CouchDocumentProvider(
+            slug + "-blob-migration", migrator.doc_types
+        ).get_document_iterator(1)
+        iterator.discard_state()
         mod.BlobMigrationState.objects.filter(slug=slug).delete()
 
     # abstract property, must be overridden in base class
