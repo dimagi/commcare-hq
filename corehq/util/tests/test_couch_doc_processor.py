@@ -155,7 +155,7 @@ class DemoProcessor(BaseDocProcessor):
     def unique_key(self):
         return self.slug + '-test'
 
-    def process_doc(self, doc, couchdb):
+    def process_doc(self, doc):
         doc_id = doc['_id']
         if self.skip_docs and doc_id in self.skip_docs:
             return False

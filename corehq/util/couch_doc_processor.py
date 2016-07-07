@@ -108,26 +108,24 @@ class BaseDocProcessor(six.with_metaclass(ABCMeta)):
     def unique_key(self):
         return self.slug
 
-    def process_doc(self, doc, couchdb):
+    def process_doc(self, doc):
         """Process a single document
 
         :param doc: The document dict to be processed.
-        :param couchdb: Couchdb database associated with the docs.
         :returns: True if doc was processed successfully else False. If this returns False
         the document migration will be retried later.
         """
         raise NotImplementedError
 
-    def process_bulk_docs(self, docs, couchdb):
+    def process_bulk_docs(self, docs):
         """Process a batch of documents. The default implementation passes
         each doc in turn to ``process_doc``.
 
         :param docs: A list of document dicts to be processed.
-        :param couchdb: Couchdb database associated with the docs.
         :returns: True if doc was processed successfully else False.
         If this returns False the processing will be halted.
         """
-        return all(self.process_doc(doc, couchdb) for doc in docs)
+        return all(self.process_doc(doc) for doc in docs)
 
     def handle_skip(self, doc):
         """Called when a document is going to be skipped i.e. it has been
@@ -260,7 +258,7 @@ class CouchDocumentProcessor(object):
         if not self.doc_processor.should_process(doc):
             return
 
-        ok = self.doc_processor.process_doc(doc, self.couchdb)
+        ok = self.doc_processor.process_doc(doc)
         if ok:
             self.processed += 1
         else:
@@ -346,7 +344,7 @@ class BulkDocProcessor(CouchDocumentProcessor):
 
     def process_chunk(self):
         """Called by the BulkDocProcessorLogHandler"""
-        ok = self.doc_processor.process_bulk_docs(self.changes, self.couchdb)
+        ok = self.doc_processor.process_bulk_docs(self.changes)
         if ok:
             self.processed += len(self.changes)
             self.changes = []

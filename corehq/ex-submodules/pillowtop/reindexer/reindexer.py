@@ -113,11 +113,11 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
             return not self.doc_filter(doc)
         return True
 
-    def process_bulk_docs(self, docs, couchdb):
+    def process_bulk_docs(self, docs):
         if len(docs) == 0:
             return True
 
-        changes = [self._doc_to_change(doc, couchdb) for doc in docs]
+        changes = [self._doc_to_change(doc) for doc in docs]
 
         bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform)
 
@@ -134,10 +134,9 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         return True
 
     @staticmethod
-    def _doc_to_change(doc, couchdb):
+    def _doc_to_change(doc):
         return Change(
-            id=doc['_id'], sequence_id=None, document=doc, deleted=False,
-            document_store=CouchDocumentStore(couchdb)
+            id=doc['_id'], sequence_id=None, document=doc, deleted=False
         )
 
 

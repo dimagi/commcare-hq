@@ -125,8 +125,9 @@ class BaseDocMigrator(BaseDocProcessor):
     # If true, load attachment content before migrating.
     load_attachments = False
 
-    def __init__(self, slug, filename=None):
+    def __init__(self, slug, couchdb, filename=None):
         super(BaseDocMigrator, self).__init__(slug)
+        self.couchdb = couchdb
         self.dirpath = None
         self.filename = filename
         if filename is None:
@@ -147,9 +148,9 @@ class BaseDocMigrator(BaseDocProcessor):
     def handle_skip(self, doc):
         return True  # ignore
 
-    def _prepare_doc(self, doc, couchdb):
+    def _prepare_doc(self, doc):
         if self.load_attachments:
-            obj = BlobHelper(doc, couchdb)
+            obj = BlobHelper(doc, self.couchdb)
             doc["_attachments"] = {
                 name: {
                     "content_type": meta["content_type"],
@@ -175,20 +176,19 @@ class BaseDocMigrator(BaseDocProcessor):
         self.backup_file.write('{}\n'.format(json.dumps(backup_doc)))
         self.backup_file.flush()
 
-    def process_doc(self, doc, couchdb):
+    def process_doc(self, doc):
         """Migrate a single document
 
         :param doc: The document dict to be migrated.
-        :param couchdb: Couchdb database in which to save migrated doc.
         :returns: True if doc was migrated else False. If this returns False
         the document migration will be retried later.
         """
-        self._prepare_doc(doc, couchdb)
+        self._prepare_doc(doc)
         self._backup_doc(doc)
-        return self._do_migration(doc, couchdb)
+        return self._do_migration(doc)
 
     @abstractmethod
-    def _do_migration(self, doc, couchdb):
+    def _do_migration(self, doc):
         raise NotImplementedError
 
     def processing_complete(self, skipped):
@@ -204,10 +204,10 @@ class CouchAttachmentMigrator(BaseDocMigrator):
 
     load_attachments = True
 
-    def _do_migration(self, doc, couchdb):
+    def _do_migration(self, doc):
         attachments = doc.pop("_attachments")
         external_blobs = doc.setdefault("external_blobs", {})
-        obj = BlobHelper(doc, couchdb)
+        obj = BlobHelper(doc, self.couchdb)
         try:
             with obj.atomic_blobs():
                 for name, data in list(attachments.iteritems()):
@@ -228,8 +228,8 @@ class CouchAttachmentMigrator(BaseDocMigrator):
 
 class BlobDbBackendMigrator(BaseDocMigrator):
 
-    def __init__(self, slug, filename=None):
-        super(BlobDbBackendMigrator, self).__init__(slug, filename)
+    def __init__(self, slug, couchdb, filename=None):
+        super(BlobDbBackendMigrator, self).__init__(slug, couchdb, filename)
         self.db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
@@ -237,8 +237,8 @@ class BlobDbBackendMigrator(BaseDocMigrator):
             raise MigrationError(
                 "Expected to find migrating blob db backend (got %r)" % self.db)
 
-    def _do_migration(self, doc, couchdb):
-        obj = BlobHelper(doc, couchdb)
+    def _do_migration(self, doc):
+        obj = BlobHelper(doc, self.couchdb)
         bucket = obj._blobdb_bucket()
         assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
         for name, meta in obj.blobs.iteritems():
@@ -275,9 +275,10 @@ class Migrator(object):
             t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
         if len(doc_types) != len(self.doc_type_map):
             raise ValueError("Invalid (duplicate?) doc types")
+        self.couchdb = next(iter(self.doc_type_map.values())).get_db()
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
-        doc_migrator = self.doc_migrator_class(self.slug, filename)
+        doc_migrator = self.doc_migrator_class(self.slug, self.couchdb, filename)
         processor = CouchDocumentProcessor(
             self.doc_type_map,
             doc_migrator,
