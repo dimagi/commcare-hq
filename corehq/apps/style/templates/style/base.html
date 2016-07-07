@@ -252,16 +252,18 @@
             {% endif %}
 
             {% if not no_header %}
-                <div id="unsupported-browser" class="alert alert-error alert-block alert-full" style="display: none;">
-                    <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
-                    <p>
-                        {% blocktrans %}
-                        We recommend
-                        <a href="https://www.google.com/chrome">Chrome</a>
-                        or <a href="http://www.mozilla.org/">Firefox</a>.
-                        {% endblocktrans %}
-                    </p>
-                </div>
+                <!--[if IE]>
+                    <div id="unsupported-browser" class="alert alert-error alert-block alert-full">
+                        <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
+                        <p>
+                            {% blocktrans %}
+                            We recommend
+                            <a href="https://www.google.com/chrome">Chrome</a>
+                            or <a href="http://www.mozilla.org/">Firefox</a>.
+                            {% endblocktrans %}
+                        </p>
+                    </div>
+                <![endif]-->
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-sm-12">
@@ -521,14 +523,6 @@
         {# 30 Day Trial #}
         {% include 'style/includes/modal_30_day_trial.html' %}
 
-        <!--[if IE]>
-        <script>
-            $(function () {
-                $('#unsupported-browser').show();
-            });
-        </script>
-        <![endif]-->
-        
         {% block js-inline %}{% endblock js-inline %}
 
     </body>
