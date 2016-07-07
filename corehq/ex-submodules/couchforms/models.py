@@ -437,7 +437,7 @@ class SubmissionErrorLog(XFormError):
             md5=hashlib.md5(instance).hexdigest(),
             problem=message,
         )
-        log.deferred_put_attachment(instance, ATTACHMENT_NAME, context_type="text/xml")
+        log.deferred_put_attachment(instance, ATTACHMENT_NAME, content_type="text/xml")
         return log
 
 
