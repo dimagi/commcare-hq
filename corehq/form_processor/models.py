@@ -1266,6 +1266,10 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
             case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
         )
 
+    @property
+    def ledger_id(self):
+        return self.ledger_reference.as_id()
+
     def to_json(self):
         from .serializers import LedgerValueSerializer
         serializer = LedgerValueSerializer(self)

@@ -48,6 +48,7 @@ class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
 
 
 class XFormInstanceSQLSerializer(DeletableModelSerializer):
+    _id = serializers.CharField(source='form_id')
     history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     auth_context = serializers.DictField()
@@ -176,6 +177,8 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
 
 
 class LedgerValueSerializer(serializers.ModelSerializer):
+    _id = serializers.CharField(source='ledger_id')
+
     class Meta:
         model = LedgerValue
         exclude = ('id',)
