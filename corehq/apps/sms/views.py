@@ -2088,6 +2088,7 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
                     [SelfRegistrationUserInfo(p) for p in phone_numbers],
                     app_id=app_id,
                     custom_first_message=custom_registration_message,
+                    android_only=self.invitations_form.android_only,
                 )
                 success_numbers, invalid_format_numbers, numbers_in_use = result
                 if success_numbers:

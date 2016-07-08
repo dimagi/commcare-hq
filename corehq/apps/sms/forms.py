@@ -997,6 +997,15 @@ class BackendMapForm(Form):
 
 
 class SendRegistrationInviationsForm(Form):
+
+    PHONE_TYPE_ANDROID_ONLY = 'ANDROID'
+    PHONE_TYPE_ANY = 'ANY'
+
+    PHONE_CHOICES = (
+        (PHONE_TYPE_ANDROID_ONLY, ugettext_lazy("Android Only")),
+        (PHONE_TYPE_ANY, ugettext_lazy("Android or Other")),
+    )
+
     phone_numbers = TrimmedCharField(
         label=ugettext_lazy("Phone Number(s)"),
         required=True,
@@ -1023,6 +1032,16 @@ class SendRegistrationInviationsForm(Form):
         required=False,
         widget=forms.Textarea,
     )
+
+    phone_type = ChoiceField(
+        label=ugettext_lazy("Recipient phones are"),
+        required=False,
+        choices=PHONE_CHOICES,
+    )
+
+    @property
+    def android_only(self):
+        return self.cleaned_data.get('phone_type') == self.PHONE_TYPE_ANDROID_ONLY
 
     def set_app_id_choices(self):
         app_ids = get_built_app_ids(self.domain)
@@ -1070,6 +1089,7 @@ class SendRegistrationInviationsForm(Form):
                     ),
                     data_bind='visible: showCustomRegistrationMessage',
                 ),
+                'phone_type',
                 active=False
             ),
             crispy.Div(
