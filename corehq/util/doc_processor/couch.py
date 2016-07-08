@@ -39,7 +39,7 @@ def resumable_docs_by_type_iterator(db, doc_types, iteration_key, chunk_size=100
     and may include deleted documents.
 
     :param db: Couchdb database.
-    :param doc_types: A list of doc type names to iterate on.
+    :param doc_types: A list of doc type names to iterate on (can't be empty).
     :param iteration_key: A unique key identifying the iteration. This
     key will be used in combination with `doc_types` to maintain state
     about an iteration that is in progress. The state will be maintained
