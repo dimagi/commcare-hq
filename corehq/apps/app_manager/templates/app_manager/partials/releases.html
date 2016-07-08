@@ -309,9 +309,6 @@
                     <h4 class="modal-title">{% trans "Revert to Version?" %}</h4>
                 </div>
                 <div class="modal-body">
-                    <p>{% blocktrans %}
-                     Are you sure you want to revert to version <span data-bind="text: version"></span>?</p>
-                    {% endblocktrans %}
                     {% if vellum_case_management %}
                         <div class='alert alert-danger' data-bind="visible: !vellum_case_management()">
                             {% blocktrans %}
@@ -320,6 +317,9 @@
                             {% endblocktrans %}
                         </div>
                     {% endif %}
+                    <p>{% blocktrans %}
+                     Are you sure you want to revert to version <span data-bind="text: version"></span>?</p>
+                    {% endblocktrans %}
                 </div>
                 <div class="modal-footer">
                     <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
