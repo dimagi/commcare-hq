@@ -9,7 +9,7 @@ from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 from pillowtop.feed.interface import Change
 from pillowtop.logger import pillow_logging
-from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload
+from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload, ErrorCollector
 
 
 class Reindexer(six.with_metaclass(ABCMeta)):
@@ -112,8 +112,9 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
             return True
 
         changes = [self._doc_to_change(doc) for doc in docs]
+        error_collector = ErrorCollector()
 
-        bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform)
+        bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform, error_collector)
 
         max_payload_size = pow(10, 8)  # ~ 100Mb
         payloads = prepare_bulk_payloads(bulk_changes, max_payload_size)
@@ -124,6 +125,9 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
 
         for payload in payloads:
             self.es.bulk(payload)
+
+        for change, exception in error_collector.errors:
+            pillow_logging.error("Unable to process change %s: %s", change.id, exception)
 
         return True
 
