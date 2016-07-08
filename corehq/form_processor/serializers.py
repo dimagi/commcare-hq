@@ -49,6 +49,7 @@ class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
 
 class XFormInstanceSQLSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='form_id')
+    doc_type = serializers.CharField()
     history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     auth_context = serializers.DictField()
