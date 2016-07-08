@@ -65,10 +65,6 @@ class FormDisplay(object):
             lang=self.lang
         )
 
-    @property
-    def other_columns(self):
-        return [self.form["form"].get(field) for field in self.report.other_fields]
-
 
 class _FormType(object):
 
