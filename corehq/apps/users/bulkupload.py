@@ -492,9 +492,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         except ValidationError:
                             raise UserUploadError(_("User has an invalid email address"))
 
-                        if not email.islower():
-                            raise UserUploadError(_("Email address must be lower case: {}".format(email)))
-                        user.email = email
+                        user.email = email.lower()
                     if is_active is not None:
                         user.is_active = is_active
 

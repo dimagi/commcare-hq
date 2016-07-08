@@ -185,10 +185,10 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["email"] = 'IlOvECaPs@gmaiL.Com'
 
-        results = bulk_upload_async(
+        bulk_upload_async(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
             list([])
         )
-        self.assertIn('must be lower case', results['messages']['rows'][0]['flag'])
+        self.assertEqual(self.user.email, updated_user_spec['email'].lower())
