@@ -23,7 +23,7 @@ from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
-from pillowtop.reindexer.reindexer import PillowReindexer
+from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer
 
 
 def transform_case_for_elasticsearch(doc_dict):
@@ -126,7 +126,7 @@ def get_case_search_reindexer(domain=None):
         # The db hasn't been intialized yet, so skip this reindex and complain.
         return _fail_gracefully_and_tell_admins()
     else:
-        return PillowReindexer(
+        return PillowChangeProviderReindexer(
             get_case_search_to_elasticsearch_pillow(),
             change_provider=change_provider
         )

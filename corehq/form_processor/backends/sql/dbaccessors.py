@@ -3,6 +3,8 @@ from itertools import groupby
 from datetime import datetime
 
 import itertools
+
+from django.conf import settings
 from django.db import connections, InternalError, transaction
 
 from corehq.form_processor.exceptions import (
@@ -305,23 +307,35 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_all_forms_received_since(received_on_since=None, chunk_size=500):
-        return _batch_iterate(
-            batch_fn=FormAccessorSQL.get_forms_received_since,
-            next_start_from_fn=lambda form: form.received_on,
+        """Iterate through all forms in the entire database, optionally received since
+        a specific date
+        """
+
+        return _batch_iterate_over_shards(
+            batch_fn=FormAccessorSQL._get_forms_received_since,
+            next_start_args=lambda form: (form.received_on, form.id),
             start_from=received_on_since,
             chunk_size=chunk_size
         )
 
     @staticmethod
-    def get_forms_received_since(received_on_since=None, limit=500):
+    def _get_forms_received_since(received_on_since=None, last_id=None, limit=500, using=None):
+        """
+        Function to be used with ``_batch_iterate_over_shards`` to iterate over all
+        forms in the entire database.
+
+        :param using: alternate DB alias to query against
+        :return:
+        """
         received_on_since = received_on_since or datetime.min
+        last_id = last_id or -1
         results = XFormInstanceSQL.objects.raw(
-            'SELECT * FROM get_all_forms_received_since(%s, %s)',
-            [received_on_since, limit]
+            'SELECT * FROM get_all_forms_received_since(%s, %s, %s)',
+            [received_on_since, last_id, limit],
+            using=using
         )
-        # sort and add additional limit in memory in case the sharded setup returns more than
-        # the requested number of cases
-        return sorted(results, key=lambda form: form.received_on)[:limit]
+        # note: in memory sorting and limit not necessary since we're only queyring a single DB
+        return RawQuerySetWrapper(results)
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -517,28 +531,38 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_all_cases_modified_since(server_modified_on_since=None, chunk_size=500):
-        return _batch_iterate(
-            CaseAccessorSQL.get_cases_modified_since,
-            next_start_from_fn=lambda case: case.server_modified_on,
+        """
+        Iterate through all cases in the entire database, optionally modified since
+        a specific date
+        :param server_modified_on_since:
+        :param chunk_size:
+        :return: generator of cases
+        """
+        return _batch_iterate_over_shards(
+            CaseAccessorSQL._get_cases_modified_since,
+            next_start_args=lambda case: (case.server_modified_on, case.id),
             start_from=server_modified_on_since,
             chunk_size=chunk_size
         )
 
     @staticmethod
-    def get_cases_modified_since(server_modified_on_since=None, limit=500):
+    def _get_cases_modified_since(server_modified_on_since=None, last_id=None, limit=500, using=None):
         """
-        Iterate through all cases in the entire database, optionally modified since
-        a specific date
+        Function to be used with ``_batch_iterate_over_shards`` to iterate over all
+        cases in the entire database.
+
+        :param using: alternate DB alias to query against
+        :return:
         """
-        if server_modified_on_since is None:
-            server_modified_on_since = datetime.min
+        server_modified_on_since = server_modified_on_since or datetime.min
+        last_id = last_id or -1
         results = CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_all_cases_modified_since(%s, %s)',
-            [server_modified_on_since, limit]
+            'SELECT * FROM get_all_cases_modified_since(%s, %s, %s)',
+            [server_modified_on_since, last_id, limit],
+            using=using
         )
-        # sort and add additional limit in memory in case the sharded setup returns more than
-        # the requested number of cases
-        return sorted(results, key=lambda case: case.server_modified_on)[:limit]
+        # note: in memory sorting and limit not necessary since we're only queyring a single DB
+        return RawQuerySetWrapper(results)
 
     @staticmethod
     @transaction.atomic
@@ -705,28 +729,35 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def get_all_ledgers_modified_since(modified_since=None, chunk_size=500):
-        return _batch_iterate(
-            batch_fn=LedgerAccessorSQL.get_ledgers_modified_since,
-            next_start_from_fn=lambda ledger: ledger.last_modified,
+        """
+        Iterate through all ledger_values in the entire database, optionally modified since
+        a specific date
+        """
+        return _batch_iterate_over_shards(
+            batch_fn=LedgerAccessorSQL._get_ledgers_modified_since,
+            next_start_args=lambda ledger: (ledger.last_modified, ledger.id),
             start_from=modified_since,
             chunk_size=chunk_size
         )
 
     @staticmethod
-    def get_ledgers_modified_since(modified_since=None, limit=500):
+    def _get_ledgers_modified_since(modified_since=None, last_id=None, limit=500, using=None):
         """
-        Iterate through all ledger_values in the entire database, optionally modified since
-        a specific date
+        Function to be used with ``_batch_iterate_over_shards`` to iterate over all
+        ledgers in the entire database.
+
+        :param using: alternate DB alias to query against
+        :return:
         """
-        if modified_since is None:
-            modified_since = datetime.min
+        modified_since = modified_since or datetime.min
+        last_id = last_id or -1
         results = LedgerValue.objects.raw(
-            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s)',
-            [modified_since, limit]
+            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s, %s)',
+            [modified_since, last_id, limit],
+            using=using
         )
-        # sort and add additional limit in memory in case the sharded setup returns more than
-        # the requested number of ledgers
-        return sorted(results, key=lambda ledger: ledger.last_modified)[:limit]
+        # note: in memory sorting and limit not necessary since we're only queyring a single DB
+        return RawQuerySetWrapper(results)
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
@@ -873,28 +904,49 @@ def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, c
         setattr(obj, cached_attrib_name, list(group))
 
 
-def _batch_iterate(batch_fn, next_start_from_fn, start_from=None, chunk_size=500):
+def _batch_iterate_over_shards(batch_fn, next_start_args, start_from=None, chunk_size=500):
     """
     Iterate through a function in batches. Assumes the following signatures:
 
-    batch_fn(start_from, limit) - a function that returns sorted data in batches
-    next_start_from_fn(item) - a function that returns a "start_from" for a item for the next batch
+    batch_fn(start_from, last_id, limit=limit, using=db_alias) - a function that returns sorted data in batches
+    next_start_args(item) - a function that returns a tuple of "start_from" and "last_id" for the next batch.
+    The key is used to exclude duplicate items.
     """
+    # TODO: implement this https://wiki.postgresql.org/images/3/35/Pagination_Done_the_PostgreSQL_Way.pdf
     start_from = start_from or datetime.min
-    # todo: this will greedily query the same data multiple times in a sharded setup. We should make it smarter
-    batch = batch_fn(start_from, limit=chunk_size)
-    while batch:
-        for item in batch:
-            yield item
-            next_start_from = next_start_from_fn(item)
+    if not settings.USE_PARTITIONED_DATABASE:
+        db_list = [None]  # use the default database
+    else:
+        from corehq.sql_db.config import PartitionConfig
+        partition_config = PartitionConfig()
+        db_list = partition_config.get_form_processing_dbs()
 
-        if len(batch) == chunk_size:
-            # we got a full chunk so keep checking for more
-            assert next_start_from > start_from  # make sure we are making progress
-            start_from = next_start_from
-            batch = batch_fn(start_from, limit=chunk_size)
-        else:
-            batch = []  # equivalent to return
+    db_status = {db: {'start_from': start_from, 'last_id': None, 'has_more': True} for db in db_list}
+
+    has_more = True
+    while has_more:
+        for db_alias in db_list:
+            if not db_status[db_alias]['has_more']:
+                continue
+
+            db_start_from = db_status[db_alias]['start_from']
+            last_id = db_status[db_alias]['last_id']
+            batch = batch_fn(db_start_from, last_id, limit=chunk_size, using=db_alias)
+            batch_size = len(batch)
+
+            for item in batch:
+                yield item
+
+            if batch_size == chunk_size:
+                # we got a full chunk so keep checking for more
+                next_start_from, next_last_id = next_start_args(item)
+                assert next_start_from > db_start_from  # make sure we are making progress
+                db_status[db_alias]['start_from'] = next_start_from
+                db_status[db_alias]['last_id'] = next_last_id
+            else:
+                db_status[db_alias]['has_more'] = False
+
+        has_more = any(status['has_more'] for status in db_status.values())
 
 
 class RawQuerySetWrapper(object):

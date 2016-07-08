@@ -81,10 +81,16 @@ class SyncRequestContributor(SuiteContributorByModule):
                     ),
                 ),
 
-                instances=[Instance(
-                    id=SESSION_INSTANCE,
-                    src='jr://instance/session'
-                )],
+                instances=[
+                    Instance(
+                        id=SESSION_INSTANCE,
+                        src='jr://instance/session'
+                    ),
+                    Instance(
+                        id='casedb',
+                        src='jr://instance/casedb'
+                    ),
+                ],
 
                 session=SyncRequestSession(
                     queries=[

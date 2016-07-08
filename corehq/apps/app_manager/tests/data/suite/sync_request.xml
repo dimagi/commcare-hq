@@ -12,6 +12,7 @@
       </display>
     </command>
     <instance id="querysession" src="jr://instance/session"/>
+    <instance id="casedb" src="jr://instance/casedb"/>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/"
              storage-instance="results">

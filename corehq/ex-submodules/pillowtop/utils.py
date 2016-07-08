@@ -150,6 +150,30 @@ def get_pillow_json(pillow_config):
     }
 
 
+def build_bulk_payload(index_info, changes, doc_transform=None):
+    doc_transform = doc_transform or (lambda x: x)
+    for change in changes:
+        if change.deleted and change.id:
+            yield {
+                "delete": {
+                    "_index": index_info.index,
+                    "_type": index_info.type,
+                    "_id": change.id
+                }
+            }
+        elif not change.deleted:
+            doc = change.get_document()
+            doc = doc_transform(doc)
+            yield {
+                "index": {
+                    "_index": index_info.index,
+                    "_type": index_info.type,
+                    "_id": doc['_id']
+                }
+            }
+            yield doc
+
+
 def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
     payloads = ['']
     for bulk_chunk in chunked(bulk_changes, chunk_size):

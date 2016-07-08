@@ -268,7 +268,7 @@ class TestExpandedColumn(TestCase):
         columns to null than it does for comparing to non-null values. e.g.
             "my_column = 4" vs "my_column is NULL"
         """
-        field_name = 'my_field'
+        field_name = 'field_name_with_CAPITAL_letters'
         submitted_vals = [None, None, 'foo']
         data_source, _ = self._build_report(submitted_vals, field=field_name)
 

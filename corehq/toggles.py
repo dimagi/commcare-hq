@@ -306,6 +306,13 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ASYNC_RESTORE = StaticToggle(
+    'async_restore',
+    'Generate restore response in an asynchronous task to prevent timeouts',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 REPORT_BUILDER_BETA_GROUP = StaticToggle(
     'report_builder_beta_group',
     'RB beta group',
@@ -757,9 +764,10 @@ VIEW_BUILD_SOURCE = StaticToggle(
 
 USE_SQL_BACKEND = StaticToggle(
     'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing (beta)',
+    'Uses a sql backend instead of a couch backend for form processing',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    description="This flag is deprecated. All new domains now use the sql backend."
 )
 
 
@@ -815,14 +823,6 @@ CASE_LIST_DISTANCE_SORT = StaticToggle(
 )
 
 
-NOTIFICATIONS = StaticToggle(
-    'hq_notifications',
-    'Shows notification icon when announcements need to be made',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
-)
-
-
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project performance dashboard in the reports navigation',
@@ -860,9 +860,3 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
 )
-
-
-def enable_toggles_for_scale_beta(domain):
-    USE_SQL_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)
-    NEW_EXPORTS.set(domain, True, namespace=NAMESPACE_DOMAIN)
-    TF_USES_SQLITE_BACKEND.set(domain, True, namespace=NAMESPACE_DOMAIN)

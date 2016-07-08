@@ -52,6 +52,7 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -2733,7 +2734,15 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
-    search_config = SchemaListProperty(CaseSearch)
+    search_config = SchemaProperty(CaseSearch)
+
+    @classmethod
+    def wrap(cls, data):
+        # lazy migration to accommodate search_config as empty list
+        # http://manage.dimagi.com/default.asp?231186
+        if data.get('search_config') == []:
+            data['search_config'] = {}
+        return super(AdvancedModule, cls).wrap(data)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -3511,7 +3520,12 @@ class CustomDatespanFilter(ReportAppFilter):
     date_number2 = StringProperty()
 
     def get_filter_value(self, user, ui_filter):
-        today = datetime.date.today()
+        assert user is not None, (
+            "CustomDatespanFilter.get_filter_value must be called "
+            "with an OTARestoreUser object, not None")
+
+        timezone = get_timezone_for_domain(user.user_id, user.domain)
+        today = ServerTime(datetime.datetime.utcnow()).user_time(timezone).done().date()
         start_date = end_date = None
         days = int(self.date_number)
         if self.operator == 'between':
@@ -3589,19 +3603,29 @@ class CustomMonthFilter(ReportAppFilter):
             _, last_day = calendar.monthrange(date.year, date.month)
             return last_day
 
-        # Find the start and end dates of period 0
         start_of_month = int(self.start_of_month)
-        end_date = datetime.date.today()
-        start_day = start_of_month if start_of_month > 0 else get_last_day(end_date) + start_of_month
-        end_of_month = end_date if end_date.day >= start_day else get_last_month(end_date)
-        start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+        today = datetime.date.today()
+        if start_of_month > 0:
+            start_day = start_of_month
+        else:
+            # start_of_month is zero or negative. Work backwards from the end of the month
+            start_day = get_last_day(today) + start_of_month
 
         # Loop over months backwards for period > 0
+        month = today if today.day >= start_day else get_last_month(today)
         for i in range(int(self.period)):
-            end_of_month = get_last_month(end_of_month)
-            end_date = start_date - datetime.timedelta(days=1)
-            start_day = start_of_month if start_of_month > 0 else get_last_day(end_of_month) + start_of_month
-            start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+            month = get_last_month(month)
+
+        if start_of_month > 0:
+            start_date = datetime.date(month.year, month.month, start_day)
+            days = get_last_day(start_date) - 1
+            end_date = start_date + datetime.timedelta(days=days)
+        else:
+            start_day = get_last_day(month) + start_of_month
+            start_date = datetime.date(month.year, month.month, start_day)
+            next_month = datetime.date(month.year, month.month, get_last_day(month)) + datetime.timedelta(days=1)
+            end_day = get_last_day(next_month) + start_of_month - 1
+            end_date = datetime.date(next_month.year, next_month.month, end_day)
 
         return DateSpan(startdate=start_date, enddate=end_date)
 
@@ -4270,7 +4294,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
-    vellum_case_management = BooleanProperty(default=False)
+    vellum_case_management = BooleanProperty(default=True)
 
     build_profiles = SchemaDictProperty(BuildProfile)
 
@@ -5579,6 +5603,8 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
+
+    vellum_case_management = False
 
     def is_remote_app(self):
         return True

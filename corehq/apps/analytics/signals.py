@@ -15,6 +15,7 @@ from corehq.apps.users.models import WebUser, CouchUser
 from corehq.apps.accounting.models import (
     ProBonoStatus,
     SoftwarePlanEdition,
+    SoftwarePlanVisibility,
     Subscription,
     SubscriptionType,
 )
@@ -50,7 +51,7 @@ def update_subscription_properties_by_user(couch_user):
 
 def get_subscription_properties_by_user(couch_user):
 
-    def _is_paying_subscription(subscription):
+    def _is_paying_subscription(subscription, plan_version):
         NON_PAYING_SERVICE_TYPES = [
             SubscriptionType.TRIAL,
             SubscriptionType.EXTENDED_TRIAL,
@@ -62,9 +63,11 @@ def get_subscription_properties_by_user(couch_user):
             ProBonoStatus.YES,
             ProBonoStatus.DISCOUNTED,
         ]
-        paying = subscription.service_type not in NON_PAYING_SERVICE_TYPES
-        paying = paying and subscription.pro_bono_status not in NON_PAYING_PRO_BONO_STATUSES
-        return paying
+        return (plan_version.plan.visibility != SoftwarePlanVisibility.TRIAL and
+                subscription.service_type not in NON_PAYING_SERVICE_TYPES and
+                subscription.pro_bono_status not in NON_PAYING_PRO_BONO_STATUSES and
+                plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY)
+
 
     # Note: using "yes" and "no" instead of True and False because spec calls
     # for using these values. (True is just converted to "True" in KISSmetrics)
@@ -76,7 +79,7 @@ def get_subscription_properties_by_user(couch_user):
         subscribed_editions.append(plan_version.plan.edition)
         if subscription is not None:
             all_subscriptions.append(subscription)
-        if subscription is not None and _is_paying_subscription(subscription):
+        if subscription is not None and _is_paying_subscription(subscription, plan_version):
             paying_subscribed_editions.append(plan_version.plan.edition)
 
     def _is_one_of_editions(edition):
