@@ -31,7 +31,7 @@ class ResumableDocsByTypeArgsProvider(PaginatedViewArgsProvider):
         return last_args, last_view_kwargs
 
 
-def ResumableDocsByTypeIterator(db, doc_types, iteration_key, chunk_size=100, view_event_handler=None):
+def resumable_docs_by_type_iterator(db, doc_types, iteration_key, chunk_size=100, view_event_handler=None):
     """Perform one-time resumable iteration over documents by type
 
     Iteration can be efficiently stopped and resumed. The iteration may
@@ -116,7 +116,7 @@ class CouchDocumentProvider(DocumentProvider):
             "documents must live in same couch db: %s" % repr(self.doc_type_map)
 
     def get_document_iterator(self, chunk_size, event_handler=None):
-        return ResumableDocsByTypeIterator(
+        return resumable_docs_by_type_iterator(
             self.couchdb, self.doc_type_map, self.iteration_key,
             chunk_size=chunk_size, view_event_handler=event_handler
         )

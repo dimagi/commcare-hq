@@ -13,7 +13,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils.xform import get_simple_wrapped_form
-from corehq.util.doc_processor.couch import ResumableDocsByTypeIterator, CouchDocumentProvider
+from corehq.util.doc_processor.couch import resumable_docs_by_type_iterator, CouchDocumentProvider
 from corehq.util.doc_processor.interface import (
     BaseDocProcessor, DocumentProcessorController, BulkDocProcessor, BulkProcessingFailed
 )
@@ -69,7 +69,7 @@ class TestResumableDocsByTypeIterator(TestCase):
         return doc
 
     def get_iterator(self):
-        return ResumableDocsByTypeIterator(self.db, self.doc_types, self.iteration_key, 2)
+        return resumable_docs_by_type_iterator(self.db, self.doc_types, self.iteration_key, 2)
 
     def test_iteration(self):
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys)
