@@ -8,7 +8,7 @@ from corehq.util.pagination import ResumableFunctionIterator
 class ResumableDocsByTypeArgsProvider(PaginatedViewArgsProvider):
     def __init__(self, initial_view_kwargs, doc_types):
         super(ResumableDocsByTypeArgsProvider, self).__init__(initial_view_kwargs)
-        self.doc_types = doc_types
+        self.doc_types = list(doc_types)
 
     def get_next_args(self, result, *last_args, **last_view_kwargs):
         try:
