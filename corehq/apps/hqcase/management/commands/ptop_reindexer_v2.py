@@ -50,6 +50,11 @@ class Command(BaseCommand):
                     action='store_true',
                     dest='reset',
                     help='Reset a resumable reindex'),
+        make_option('--chunksize',
+                    type="int",
+                    action='store',
+                    dest='chunksize',
+                    help='Skip important confirmation warnings.'),
     )
 
     def handle(self, index, *args, **options):

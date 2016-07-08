@@ -149,6 +149,9 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
 
     def consume_options(self, options):
         self.reset = options.pop("reset", False)
+        chunk_size = options.pop("chunksize", None)
+        if chunk_size:
+            self.chunk_size = chunk_size
         return options
 
     def clean(self):
