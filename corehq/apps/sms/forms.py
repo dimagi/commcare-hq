@@ -1023,19 +1023,19 @@ class SendRegistrationInviationsForm(Form):
     )
 
     registration_message_type = ChoiceField(
-        required=False,
+        required=True,
         choices=DEFAULT_CUSTOM_CHOICES,
     )
 
     custom_registration_message = TrimmedCharField(
-        label=ugettext_lazy("Custom Registration Message"),
+        label=ugettext_lazy("Registration Message"),
         required=False,
         widget=forms.Textarea,
     )
 
     phone_type = ChoiceField(
         label=ugettext_lazy("Recipient phones are"),
-        required=False,
+        required=True,
         choices=PHONE_CHOICES,
     )
 
@@ -1063,8 +1063,8 @@ class SendRegistrationInviationsForm(Form):
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
-        self.helper.label_class = 'col-sm-3'
-        self.helper.field_class = 'col-sm-9'
+        self.helper.label_class = 'col-sm-4'
+        self.helper.field_class = 'col-sm-8'
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 'app_id',
@@ -1073,6 +1073,7 @@ class SendRegistrationInviationsForm(Form):
                     placeholder=_("Enter phone number(s) in international "
                         "format. Example: +27..., +91...,"),
                 ),
+                'phone_type',
                 InlineField('action'),
                 css_class='modal-body',
             ),
@@ -1089,7 +1090,6 @@ class SendRegistrationInviationsForm(Form):
                     ),
                     data_bind='visible: showCustomRegistrationMessage',
                 ),
-                'phone_type',
                 active=False
             ),
             crispy.Div(
