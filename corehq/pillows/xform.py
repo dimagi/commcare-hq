@@ -11,7 +11,6 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicChe
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.change_providers import SqlFormChangeProvider
-from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
@@ -141,14 +140,6 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
     return doc_ret
 
 
-def prepare_sql_form_json_for_elasticsearch(sql_form_json):
-    prepped_form = transform_xform_for_elasticsearch(sql_form_json)
-    if prepped_form:
-        add_couch_properties_to_sql_form_json(prepped_form)
-
-    return prepped_form
-
-
 def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPillow'):
     checkpoint = PillowCheckpoint(
         'sql-xforms-to-elasticsearch',
@@ -156,7 +147,7 @@ def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPill
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
-        doc_prep_fn=prepare_sql_form_json_for_elasticsearch
+        doc_prep_fn=transform_xform_for_elasticsearch
     )
     return ConstructedPillow(
         name=pillow_id,
