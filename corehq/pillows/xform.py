@@ -152,42 +152,23 @@ def prepare_sql_form_json_for_elasticsearch(sql_form_json):
     return prepped_form
 
 
-def get_sql_xform_to_elasticsearch_pillow(pillow_id='SqlXFormToElasticsearchPillow'):
+def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow'):
     checkpoint = PillowCheckpoint(
-        'sql-xforms-to-elasticsearch',
-    )
-    form_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
-        doc_prep_fn=prepare_sql_form_json_for_elasticsearch
-    )
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.FORM_SQL], group_id='sql-forms-to-es'),
-        processor=form_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
-        ),
-    )
-
-
-def get_couch_xform_to_elasticsearch_pillow(pillow_id='CouchXFormToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'couch-xforms-to-elasticsearch',
+        'all-xforms-to-elasticsearch',
     )
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch
     )
+    kafka_change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='forms-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.FORM], group_id='couch-forms-to-es'),
+        change_feed=kafka_change_feed,
         processor=form_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
     )
 

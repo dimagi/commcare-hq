@@ -40,5 +40,16 @@ class Migration(migrations.Migration):
                     CheckpointTopic('sql-cases-to-elasticsearch', topics.CASE_SQL)
                 ]
             ),
-            delete_checkpoint('all-cases-to-elasticsearch'))
+            delete_checkpoint('all-cases-to-elasticsearch')
+        ),
+        HqRunPython(
+            merge_checkpoints(
+                'all-xforms-to-elasticsearch',
+                [
+                    CheckpointTopic('couch-xforms-to-elasticsearch', topics.FORM),
+                    CheckpointTopic('sql-xforms-to-elasticsearch', topics.FORM_SQL)
+                ]
+            ),
+            delete_checkpoint('all-xforms-to-elasticsearch')
+        ),
     ]
