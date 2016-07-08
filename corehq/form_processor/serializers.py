@@ -54,7 +54,7 @@ class XFormInstanceSQLSerializer(DeletableModelSerializer):
     form = serializers.JSONField(source='form_data')
     auth_context = serializers.DictField()
     openrosa_headers = serializers.DictField()
-    attachments = serializers.JSONField(source='serialized_attachments')
+    external_blobs = serializers.JSONField(source='serialized_attachments')
 
     class Meta:
         model = XFormInstanceSQL
