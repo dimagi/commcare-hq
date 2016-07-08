@@ -6,6 +6,7 @@ from collections import defaultdict
 from celery.schedules import crontab
 from celery.task import periodic_task
 
+from django.conf import settings
 from django.core.management import call_command
 
 from corehq.apps.hqwebapp.tasks import mail_admins_async
@@ -14,7 +15,7 @@ from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns imp
     CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
 
 
-UNDEFINED_XMLNS_LOG_DIR = '/tmp/'
+UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
 
 
 def json_handler(obj):
