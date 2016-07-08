@@ -178,7 +178,7 @@ class CaseBlock(dict):
         format_datetime = format_datetime or json_format_datetime
         case = ElementTree.Element('case')
         order = ['case_id', 'date_modified', 'create', 'update', 'close',
-                 self.CASE_TYPE, 'user_id', 'case_name', 'external_id', 'date_opened', 'owner_id']
+                 self.CASE_TYPE, 'user_id', 'case_name', 'external_id', 'owner_id', 'date_opened']
 
         def sort_key(item):
             word, _ = item
