@@ -49,7 +49,7 @@ from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    InitiateAddSMSBackendForm, SubscribeSMSForm,
                                    SettingsForm, SHOW_ALL, SHOW_INVALID, HIDE_ALL, ENABLED, DISABLED,
-                                   DEFAULT, CUSTOM, SendRegistrationInviationsForm,
+                                   DEFAULT, CUSTOM, SendRegistrationInvitationsForm,
                                    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
                                    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
 from corehq.apps.sms.util import get_contact, get_sms_backend_classes, ContactNotFoundException
@@ -1995,9 +1995,9 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     @memoized
     def invitations_form(self):
         if self.request.method == 'POST':
-            return SendRegistrationInviationsForm(self.request.POST, domain=self.domain)
+            return SendRegistrationInvitationsForm(self.request.POST, domain=self.domain)
         else:
-            return SendRegistrationInviationsForm(domain=self.domain)
+            return SendRegistrationInvitationsForm(domain=self.domain)
 
     @property
     @memoized

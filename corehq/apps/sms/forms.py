@@ -996,7 +996,7 @@ class BackendMapForm(Form):
         return self._clean_backend_id(value)
 
 
-class SendRegistrationInviationsForm(Form):
+class SendRegistrationInvitationsForm(Form):
 
     PHONE_TYPE_ANDROID_ONLY = 'ANDROID'
     PHONE_TYPE_ANY = 'ANY'
@@ -1058,7 +1058,7 @@ class SendRegistrationInviationsForm(Form):
             raise Exception('Expected kwargs: domain')
         self.domain = kwargs.pop('domain')
 
-        super(SendRegistrationInviationsForm, self).__init__(*args, **kwargs)
+        super(SendRegistrationInvitationsForm, self).__init__(*args, **kwargs)
         self.set_app_id_choices()
 
         self.helper = FormHelper()
