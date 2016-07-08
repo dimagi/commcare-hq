@@ -4,13 +4,13 @@ from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.es import CaseES
+from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
-from corehq.pillows.case import (
-    CasePillow
-)
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
+from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
 
 
@@ -22,12 +22,12 @@ class CasePillowTest(TestCase):
         super(CasePillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         with trap_extra_setup(ConnectionError):
-            self.pillow = CasePillow()
-        self.elasticsearch = self.pillow.get_es_new()
-        delete_es_index(self.pillow.es_index)
+            self.elasticsearch = get_es_new()
+            initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
+        delete_es_index(CASE_INDEX_INFO.index)
 
     def tearDown(self):
-        ensure_index_deleted(self.pillow.es_index)
+        ensure_index_deleted(CASE_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super(CasePillowTest, self).tearDown()
 
@@ -55,7 +55,7 @@ class CasePillowTest(TestCase):
         with process_kafka_changes('CaseToElasticsearchPillow'):
             with process_couch_changes('DefaultChangeFeedPillow'):
                 CaseAccessors(self.domain).soft_delete_cases([case_id])
-        self.elasticsearch.indices.refresh(self.pillow.es_index)
+        self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
 
         # ensure not there anymore
         results = CaseES().run()
@@ -67,5 +67,5 @@ class CasePillowTest(TestCase):
         with process_kafka_changes('CaseToElasticsearchPillow'):
             with process_couch_changes('DefaultChangeFeedPillow'):
                 create_and_save_a_case(self.domain, case_id, case_name)
-        self.elasticsearch.indices.refresh(self.pillow.es_index)
+        self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
         return case_id, case_name
