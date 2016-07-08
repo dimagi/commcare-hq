@@ -63,7 +63,7 @@ class XFormInstanceSQLSerializer(DeletableModelSerializer):
     def __init__(self, *args, **kwargs):
         include_attachments = kwargs.pop('include_attachments', False)
         if not include_attachments:
-            self.fields.pop('attachments')
+            self.fields.pop('external_blobs')
         super(XFormInstanceSQLSerializer, self).__init__(*args, **kwargs)
 
 
