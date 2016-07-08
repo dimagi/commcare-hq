@@ -4,7 +4,7 @@ import logging
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -72,42 +72,23 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_sql_case_to_elasticsearch_pillow(pillow_id='SqlCaseToElasticsearchPillow'):
+def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow'):
     checkpoint = PillowCheckpoint(
-        'sql-cases-to-elasticsearch',
+        'all-cases-to-elasticsearch',
     )
     case_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
+    kafka_change_feed = KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='cases-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], group_id='sql-cases-to-es'),
+        change_feed=kafka_change_feed,
         processor=case_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
-        ),
-    )
-
-
-def get_couch_case_to_elasticsearch_pillow(pillow_id='CouchCaseToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'couch-cases-to-elasticsearch',
-    )
-    case_processor = ElasticProcessor(
-        elasticsearch=get_es_new(),
-        index_info=CASE_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch
-    )
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.CASE], group_id='couch-cases-to-es'),
-        processor=case_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
     )
 

@@ -122,19 +122,19 @@
         "name": "CasePillow",
         "unique_id": "85e1a25ff57c5892b6fa95caf949ae4c"
     },
+    "CaseToElasticsearchPillow": {
+        "advertised_name": "CaseToElasticsearchPillow",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "all-cases-to-elasticsearch",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "CaseToElasticsearchPillow"
+    },
     "CaseSearchToElasticsearchPillow": {
         "advertised_name": "CaseSearchToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "case-search-to-elasticsearch",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CaseSearchToElasticsearchPillow"
-    },
-    "CouchCaseToElasticsearchPillow": {
-        "advertised_name": "CouchCaseToElasticsearchPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "couch-cases-to-elasticsearch",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "CouchCaseToElasticsearchPillow"
     },
     "CouchXFormToElasticsearchPillow": {
         "advertised_name": "CouchXFormToElasticsearchPillow",
@@ -456,13 +456,6 @@
         "checkpoint_id": "report-xforms-to-elasticsearch",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ReportXFormToElasticsearchPillow"
-    },
-    "SqlCaseToElasticsearchPillow": {
-        "advertised_name": "SqlCaseToElasticsearchPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "sql-cases-to-elasticsearch",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "SqlCaseToElasticsearchPillow"
     },
     "SqlSMSPillow": {
         "advertised_name": "SqlSMSPillow",
