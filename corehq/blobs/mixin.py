@@ -433,8 +433,7 @@ def bulk_atomic_blobs(docs):
 
     :param docs: A list of model objects.
     """
-    # TODO test with all non-atomic_blobs docs
-    save = lambda:None
+    save = lambda: None
     contexts = [d.atomic_blobs(save) for d in docs if hasattr(d, "atomic_blobs")]
     with nested(*contexts):
         for doc in docs:
