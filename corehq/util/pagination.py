@@ -67,7 +67,8 @@ def paginate_function(data_function, args_provider, event_handler=PaginationEven
     by the ``args_provider``
 
     :param data_function: function to paginate. Must return an list of data elements.
-    :param args_provider: An instance of the ``ArgsProvider`` class.
+    :param args_provider: An instance of the ``ArgsProvider`` class which is used to
+    generate the arguments that get passed to ``data_function``
     :param event_handler: class to be notified on page start and page end.
     """
     total_emitted = 0
