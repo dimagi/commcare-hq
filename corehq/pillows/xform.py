@@ -80,7 +80,7 @@ def xform_pillow_filter(doc_dict):
     )
 
 
-def transform_xform_for_elasticsearch(doc_dict, include_props=True):
+def transform_xform_for_elasticsearch(doc_dict):
     """
     Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
     or None, if the form should not be saved to elasticsearch
@@ -135,9 +135,6 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
                 case_dict[object_key] = None
 
     doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
-    if include_props:
-        form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
-        doc_ret["__props_for_querying"] = form_props
     return doc_ret
 
 
