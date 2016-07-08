@@ -1,4 +1,4 @@
-{% extends "reports/base_template.html" %}
+{% extends "reports/standard/base_template.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block head %}
@@ -151,7 +151,7 @@
     {% endblocktrans %}
 </p>
 {% endblock page_title %}
-{% block reportcontent %}
+{% block dashboard %}
     <h2>{% trans "Last Month Stats" %}</h2>
 <table class="table lead">
     <thead>

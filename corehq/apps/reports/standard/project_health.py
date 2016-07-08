@@ -264,6 +264,13 @@ class ProjectHealthDashboard(ProjectReport):
     emailable = True
     asynchronous = False
 
+    @property
+    @memoized
+    def template_report(self):
+        if self.is_rendered_as_email:
+            self.report_template_path = "reports/project_health/project_health_email.html"
+        return super(ProjectHealthDashboard, self).template_report
+
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return PROJECT_HEALTH_DASHBOARD.enabled(domain)
