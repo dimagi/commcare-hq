@@ -47,7 +47,7 @@ CUSTOM = "CUSTOM"
 
 DEFAULT_CUSTOM_CHOICES = (
     (DEFAULT, ugettext_noop("Default")),
-    (CUSTOM, ugettext_noop("Specify:")),
+    (CUSTOM, ugettext_noop("Custom")),
 )
 
 MESSAGE_COUNTER_CHOICES = (
@@ -1013,6 +1013,17 @@ class SendRegistrationInviationsForm(Form):
         widget=forms.HiddenInput(),
     )
 
+    registration_message_type = ChoiceField(
+        required=False,
+        choices=DEFAULT_CUSTOM_CHOICES,
+    )
+
+    custom_registration_message = TrimmedCharField(
+        label=ugettext_lazy("Custom Registration Message"),
+        required=False,
+        widget=forms.Textarea,
+    )
+
     def set_app_id_choices(self):
         app_ids = get_built_app_ids(self.domain)
         choices = []
@@ -1046,6 +1057,21 @@ class SendRegistrationInviationsForm(Form):
                 InlineField('action'),
                 css_class='modal-body',
             ),
+            hqcrispy.FieldsetAccordionGroup(
+                _("Advanced"),
+                crispy.Field(
+                    'registration_message_type',
+                    data_bind='value: registration_message_type',
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'custom_registration_message',
+                        placeholder=_("Enter registration SMS"),
+                    ),
+                    data_bind='visible: showCustomRegistrationMessage',
+                ),
+                active=False
+            ),
             crispy.Div(
                 twbscrispy.StrictButton(
                     _("Cancel"),
@@ -1070,6 +1096,15 @@ class SendRegistrationInviationsForm(Form):
         for phone_number in phone_list:
             validate_phone_number(phone_number)
         return list(set(phone_list))
+
+    def clean_custom_registration_message(self):
+        value = self.cleaned_data.get('custom_registration_message')
+        if self.cleaned_data.get('registration_message_type') == CUSTOM:
+            if not value:
+                raise ValidationError(_("Please enter a message"))
+            return value
+
+        return None
 
 
 class InitiateAddSMSBackendForm(Form):

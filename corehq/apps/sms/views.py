@@ -2082,10 +2082,12 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
             if self.invitations_form.is_valid():
                 phone_numbers = self.invitations_form.cleaned_data.get('phone_numbers')
                 app_id = self.invitations_form.cleaned_data.get('app_id')
+                custom_registration_message = self.invitations_form.cleaned_data.get('custom_registration_message')
                 result = SelfRegistrationInvitation.initiate_workflow(
                     self.domain,
                     [SelfRegistrationUserInfo(p) for p in phone_numbers],
-                    app_id=app_id
+                    app_id=app_id,
+                    custom_first_message=custom_registration_message,
                 )
                 success_numbers, invalid_format_numbers, numbers_in_use = result
                 if success_numbers:
