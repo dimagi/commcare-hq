@@ -1,9 +1,11 @@
+from copy import deepcopy
 from django.test import TestCase
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
 from corehq.apps.users.bulkupload import UserLocMapping, SiteCodeToSupplyPointCache
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
 from mock import patch
@@ -88,6 +90,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def setUp(self):
         super(TestUserBulkUpload, self).setUp()
+        delete_all_users()
         self.domain_name = 'mydomain'
         self.domain = Domain(name=self.domain_name)
         self.domain.save()
@@ -148,7 +151,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         """
         Test that bulk upload doesn't choke if the user's name is a number
         """
-        from copy import deepcopy
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["name"] = 1234
 
@@ -165,7 +167,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         This test confirms that a name of None doesn't set the users name to
         "None" or anything like that.
         """
-        from copy import deepcopy
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["name"] = None
 
@@ -176,3 +177,18 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             list([])
         )
         self.assertEqual(self.user.full_name, "")
+
+    def test_upper_case_email(self):
+        """
+        Ensure that bulk upload throws a proper error when the email has caps in it
+        """
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["email"] = 'IlOvECaPs@gmaiL.Com'
+
+        results = bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+        self.assertIn('must be lower case', results['messages']['rows'][0]['flag'])
