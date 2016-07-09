@@ -4294,7 +4294,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
-    vellum_case_management = BooleanProperty(default=True)
+    vellum_case_management = BooleanProperty(default=False)
 
     build_profiles = SchemaDictProperty(BuildProfile)
 
@@ -5244,7 +5244,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, application_version, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang],
+                  application_version=application_version, vellum_case_management=True)
         return app
 
     def add_module(self, module):
@@ -5603,8 +5604,6 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-
-    vellum_case_management = False
 
     def is_remote_app(self):
         return True
