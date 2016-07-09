@@ -10,10 +10,13 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
+from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
+from corehq.util.doc_processor.couch import CouchDocumentProvider
+from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
@@ -190,18 +193,19 @@ def get_couch_xform_to_elasticsearch_pillow(pillow_id='CouchXFormToElasticsearch
 
 
 def get_couch_form_reindexer():
+    iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
+    doc_provider = CouchDocumentProvider(iteration_key, doc_types=[
+        XFormInstance,
+        XFormArchived,
+        XFormError,
+        XFormDeprecated,
+        XFormDuplicate,
+        ('XFormInstance-Deleted', XFormInstance),
+        ('HQSubmission', XFormInstance),
+        SubmissionErrorLog,
+    ])
     return ResumableBulkElasticPillowReindexer(
-        name="CouchXFormToElasticsearchPillow",
-        doc_types=[
-            XFormInstance,
-            XFormArchived,
-            XFormError,
-            XFormDeprecated,
-            XFormDuplicate,
-            ('XFormInstance-Deleted', XFormInstance),
-            ('HQSubmission', XFormInstance),
-            SubmissionErrorLog,
-        ],
+        doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_filter=xform_pillow_filter,
@@ -230,9 +234,11 @@ def get_app_form_submission_tracker_pillow(pillow_id='AppFormSubmissionTrackerPi
 
 
 def get_sql_form_reindexer():
-    return ElasticPillowReindexer(
-        pillow=get_sql_xform_to_elasticsearch_pillow(),
-        change_provider=SqlFormChangeProvider(),
+    iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
+    doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor())
+    return ResumableBulkElasticPillowReindexer(
+        doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
+        doc_transform=prepare_sql_form_json_for_elasticsearch
     )

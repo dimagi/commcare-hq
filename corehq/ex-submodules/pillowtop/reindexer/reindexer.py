@@ -4,8 +4,7 @@ import six
 
 from corehq.apps.change_feed.document_types import is_deletion
 from corehq.elastic import get_es_new
-from corehq.util.couch_doc_processor import BaseDocProcessor, BulkDocProcessor
-from pillowtop.dao.couch import CouchDocumentStore
+from corehq.util.doc_processor.interface import BaseDocProcessor, BulkDocProcessor
 from pillowtop.es_utils import set_index_reindex_settings, \
     set_index_normal_settings, get_index_info_from_pillow, initialize_mapping_if_necessary
 from pillowtop.feed.interface import Change
@@ -97,37 +96,31 @@ class ElasticPillowReindexer(PillowChangeProviderReindexer):
 
 
 class BulkPillowReindexProcessor(BaseDocProcessor):
-    def __init__(self, name, es_client, index_info, doc_filter=None, doc_transform=None):
-        super(BulkPillowReindexProcessor, self).__init__(index_info.index)
-        self.name = name
+    def __init__(self, es_client, index_info, doc_filter=None, doc_transform=None):
         self.doc_transform = doc_transform
         self.doc_filter = doc_filter
         self.es = es_client
         self.index_info = index_info
-
-    @property
-    def unique_key(self):
-        return "{}_{}_{}".format(self.slug, self.name, 'reindex')
 
     def should_process(self, doc):
         if self.doc_filter:
             return not self.doc_filter(doc)
         return True
 
-    def process_bulk_docs(self, docs, couchdb):
+    def process_bulk_docs(self, docs):
         if len(docs) == 0:
             return True
 
-        changes = [self._doc_to_change(doc, couchdb) for doc in docs]
+        changes = [self._doc_to_change(doc) for doc in docs]
 
         bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform)
 
         max_payload_size = pow(10, 8)  # ~ 100Mb
         payloads = prepare_bulk_payloads(bulk_changes, max_payload_size)
         if len(payloads) > 1:
-            pillow_logging.info("%s,payload split into %s parts" % (self.unique_key, len(payloads)))
+            pillow_logging.info("payload split into %s parts" % len(payloads))
 
-        pillow_logging.info("%s,sending payload,%s" % (self.unique_key, len(changes)))
+        pillow_logging.info("sending payload,%s" % len(changes))
 
         for payload in payloads:
             self.es.bulk(payload)
@@ -135,28 +128,24 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         return True
 
     @staticmethod
-    def _doc_to_change(doc, couchdb):
+    def _doc_to_change(doc):
         return Change(
-            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc['doc_type']),
-            document_store=CouchDocumentStore(couchdb)
+            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc['doc_type'])
         )
 
 
 class ResumableBulkElasticPillowReindexer(Reindexer):
     reset = False
 
-    def __init__(self, name, doc_types, elasticsearch, index_info,
+    def __init__(self, doc_provider, elasticsearch, index_info,
                  doc_filter=None, doc_transform=None, chunk_size=1000):
+        self.doc_provider = doc_provider
         self.es = elasticsearch
         self.index_info = index_info
         self.chunk_size = chunk_size
-
-        self.doc_type_map = dict(
-            t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
-        if len(doc_types) != len(self.doc_type_map):
-            raise ValueError("Invalid (duplicate?) doc types")
-
-        self.doc_processor = BulkPillowReindexProcessor(name, self.es, self.index_info, doc_filter, doc_transform)
+        self.doc_processor = BulkPillowReindexProcessor(
+            self.es, self.index_info, doc_filter, doc_transform
+        )
 
     def consume_options(self, options):
         self.reset = options.pop("reset", False)
@@ -167,10 +156,10 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
 
     def reindex(self):
         processor = BulkDocProcessor(
-            self.doc_type_map,
+            self.doc_provider,
             self.doc_processor,
             reset=self.reset,
-            chunk_size=self.chunk_size
+            chunk_size=self.chunk_size,
         )
 
         if self.reset or not processor.has_started():
