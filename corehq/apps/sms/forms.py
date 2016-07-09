@@ -1039,9 +1039,19 @@ class SendRegistrationInvitationsForm(Form):
         choices=PHONE_CHOICES,
     )
 
+    make_email_required = ChoiceField(
+        label=ugettext_lazy("Make email required at registration"),
+        required=True,
+        choices=ENABLED_DISABLED_CHOICES,
+    )
+
     @property
     def android_only(self):
         return self.cleaned_data.get('phone_type') == self.PHONE_TYPE_ANDROID_ONLY
+
+    @property
+    def require_email(self):
+        return self.cleaned_data.get('make_email_required') == ENABLED
 
     def set_app_id_choices(self):
         app_ids = get_built_app_ids(self.domain)
@@ -1090,6 +1100,7 @@ class SendRegistrationInvitationsForm(Form):
                     ),
                     data_bind='visible: showCustomRegistrationMessage',
                 ),
+                'make_email_required',
                 active=False
             ),
             crispy.Div(

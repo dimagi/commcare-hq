@@ -2089,6 +2089,7 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
                     app_id=app_id,
                     custom_first_message=custom_registration_message,
                     android_only=self.invitations_form.android_only,
+                    require_email=self.invitations_form.require_email,
                 )
                 success_numbers, invalid_format_numbers, numbers_in_use = result
                 if success_numbers:
