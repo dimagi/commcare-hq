@@ -303,9 +303,12 @@ def invalid_location_type(location_type, parent_obj, parent_relationships):
 
 class LocationTypeRow(object):
     def __init__(row):
-        level_name = row.get('Level Name', '')
-        owns_cases = (row.get('Owns Cases (Y/N) ') or '').lower() == 'y'
-        view_child_cases = (row.get('Owns Cases (Y/N) ') or '').lower() == 'y'
+        self.level_name = row.get('Level Name', '')
+        self.owns_cases = (row.get('Owns Cases (Y/N) ') or '').lower() == 'y'
+        self.view_child_cases = (row.get('Owns Cases (Y/N) ') or '').lower() == 'y'
+        self.do_delete = row.get(self.titles['do_delete'], 'N').lower() in ['y', 'yes']
+        # a reason for hardfail of import, to be displayed back to user
+        self.hardfail_reason = None
 
 
 class LocationRow(object):
@@ -327,7 +330,7 @@ class LocationRow(object):
         self.gps_lat = row.get(self.titles['gps_lat'])
         self.gps_lang = row.get(self.titles['gps_lang'])
         self.do_delete = row.get(self.titles['do_delete'], 'N').lower() in ['y', 'yes']
-        self.has_problem = None
+        self.hardfail_reason = None
         self.warnings = []
 
     def validate_extra_data(self):
@@ -345,6 +348,9 @@ class LocationUploadResult(object):
 
 
 class LocationAccessorMixin(object):
+    """
+    A collection of existing locations to pre-upload
+    """
     @memoized
     @property
     def old_locations(self):
@@ -370,12 +376,20 @@ class LocationAccessorMixin(object):
 
 
 class LocationTypeHelper(object):
-
+    """
+    A collection of valiadted location type rows and helper methods that
+    NewLocationImporter.import_locations() can use
+    """
     def __init__(self, type_rows):
         self.type_rows = type_rows
-        types = self.domain_obj.location_types
-        index_by_types = {lt.name: lt for lt in types}
-        index_by_parent = {lt.parent_type: lt for lt in types}
+        self.index_by_level = {lt.level_name: lt for lt in type_rows}
+        self.parents_by_level = {lt.level_name: lt.parent_type for lt in type_rows}
+
+    def is_valid_child_parent(self, child_level, parent_level):
+        # returns True if child_level is actual child_level of parent_level
+        parent_type = self.parents_by_level.get(child_level)
+        return parent_type.level_name == parent_level
+
 
 
 
@@ -401,39 +415,29 @@ class NewLocationImporter(LocationAccessorMixin):
         return sheets_by_title
 
     def run(self):
-        # if any type has a ptoblem this would raise
         result = LocationUploadResult()
         type_rows = self.import_types(result)
+
         if result.sucess:
-            location_rows = self.import_locations(result)
+            location_types_helper = LocationTypeHelper(type_rows)
+            location_rows = self.import_locations(result, location_types_helper)
 
         if result.sucess:
             self.commit_changes(type_rows, location_rows, result)
 
         return result
 
-    def import_types(result):
-        # Validates given locations types, returns list of LocationTypeRow
+    def import_types(self, result):
+        # Validates given locations types, returns list of LocationTypeRow to be saved
         # can't point to itself
         # no cycles
-        # no do-delete
+        # no type should point to to-be-deleted types
         # valid expand to and from
-        # return [LTRow]
-        types_by_parent = {}
-        top_row = type_by_name(TOP)
-        while children:
-            for c in children:
-                children.append(types_by_parent(c))
+        # if the import should hardfail, result.success should be set to False
+        # and a error-message for hardfail can be set on errored LocationTypeRow.hardfail_reason
+        return []
 
-        def _children(row):
-            ret = []
-            while x 
-            for r in types_by_parent(row.name):
-                ret.append(r)
-            return ret
-
-
-    def import_locations(result):
+    def import_locations(self, result, location_types_helper):
 
         # Failures Modes?
             # if same location_id/site_code/level_name occur twice, should the first one succeed
@@ -441,18 +445,8 @@ class NewLocationImporter(LocationAccessorMixin):
             # Assumption: We should hardfail on everything, because we can't determine which item
             # in the duplicated items get pointed from children
 
-            # if parent of a location has a problem should all of its descendents fail too
-        # validate location_types
-            # all old location_types are listed
-            # a location sheet exist for all types
-            # types are unique in types-sheet (no duplicates
-            # types have no cycles
-            # valid values for 'Expand From' and 'Sync To'
-        # save all location_types
-
         old_locations = self.old_locations
         old_location_ids = [l.id for l in old_locations]
-
 
         seen_loc_ids = []
         seen_site_codes = []
@@ -472,7 +466,7 @@ class NewLocationImporter(LocationAccessorMixin):
             else:
                 if location.site_code:
                     loc_id = location._id or loc_id_by_site_code(location.site_code) or None
-                    site_code = location.site_code 
+                    site_code = location.site_code
                 else:
                     loc_id, site_code = None, None
             # add to index
@@ -484,28 +478,24 @@ class NewLocationImporter(LocationAccessorMixin):
             # check for duplicates
             if loc_id:
                 if loc_id not in old_location_ids:
-                    location.has_problem = "Unknown Location ID"
+                    location.hardfail_reason = "Unknown Location ID"
                     # hardfail unknown
                     # unknown_loc_ids.append(loc_id)
                 if loc_id in seen_loc_ids:
-                    location.has_problem = "duplicate location_id"
+                    location.hardfail_reason = "duplicate location_id"
                     # hardfail duplicate
                     # duplicate_loc_ids.append(loc_id)
             if site_code:
                 if site_code in seen_site_codes:
-                    location.has_problem = "duplicate site_code"
+                    location.hardfail_reason = "duplicate site_code"
                     # hardfail
             if not site_code and no loc_id:
                 # ignore and warning
                 result.warning("No id or site_code for row at {}".format(count))
 
-            # track to_be_deleted
-            if location.do_delete:
-                location.has_problem = "to be deleted"
-
             # get parent_location
             if location.parent in [loc_id, site_code]:
-                location.has_problem = "Pointing to itself"
+                location.hardfail_reason = "Pointing to itself"
             if location.parent in old_location_ids:
                 # parent ref must be a location_id
                 parent_location_row = location_rows_by_id.get(location.parent, None)
@@ -513,31 +503,34 @@ class NewLocationImporter(LocationAccessorMixin):
                 # parent ref must be a site_code
                 parent_location_row = location_rows_by_site_code.get(location.parent, None)
 
+            # validate eligibile parent
             if not parent_location_row:
-                location.has_problem = "Unknown parent"
-            elif parent_location_row.has_problem:
-                location.has_problem = "Problem with parent: ()".format(parent_location_row.has_problem)
+                location.hardfail_reason = "Unknown parent"
+            if parent_location.do_delete and not location.do_delete:
+                location.hardfail_reason = "Pointing to a to-be-deleted location"
+            elif parent_location_row.hardfail_reason:
+                location.hardfail_reason = "Problem with parent: ()".format(parent_location_row.hardfail_reason)
 
             # parent child validation
             TOP = "TOP"
             location_level = location.level or TOP
-            parent_level = parent_location.level
-            if not valid_relation(location_level, parent_level):
-                location.has_problem = "Invalid parent location"
+            parent_level = parent_location_row.level
+            if not location_type_helper.is_valid_child_parent(location_level, parent_level):
+                location.hardfail_reason = "Invalid parent location"
 
             # validate extra information
             warnings, data_errors = location.validate_extra_data()
             location.warnings = warnings
             if data_errors:
-                location.has_problem = data_errors
+                location.hardfail_reason = data_errors
 
-            if not location.has_problem:
+            if not location.hardfail_reason:
                 valid_location_rows.append(location)
             else:
                 result.sucess = False
                 error_messages = "Problem with row at index {count}: {problem} ".format(
                     count=count,
-                    problem=location.has_problem
+                    problem=location.hardfail_reason
                 )
 
             seen_loc_ids.append(loc_id)
@@ -551,3 +544,7 @@ class NewLocationImporter(LocationAccessorMixin):
                 )
             )
         return valid_location_rows
+
+        self.commit_changes(self, type_rows, location_rows, result):
+            # should be called after all validation is done, this is where actual save happens
+            return False
