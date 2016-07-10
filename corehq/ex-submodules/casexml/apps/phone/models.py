@@ -176,7 +176,7 @@ class OTARestoreCommCareUser(OTARestoreUser):
     def get_commtrack_location_id(self):
         from corehq.apps.commtrack.util import get_commtrack_location_id
 
-        return get_commtrack_location_id(self._couch_user, domain)
+        return get_commtrack_location_id(self._couch_user, self.domain)
 
     def get_owner_ids(self):
         return self._couch_user.get_owner_ids(self.domain)
