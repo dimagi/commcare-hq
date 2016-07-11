@@ -141,8 +141,7 @@ class ResumableFunctionIterator(object):
         self.args_provider = args_provider
         self.item_getter = item_getter
         self.event_handler = event_handler
-        self.iteration_name = '{}/{}'.format(iteration_key, data_function.__name__)
-        self.iteration_id = hashlib.sha1(self.iteration_name).hexdigest()
+        self.iteration_id = hashlib.sha1(self.iteration_key).hexdigest()
 
         self.couch_db = get_db('meta')
         self._state = None
@@ -156,7 +155,7 @@ class ResumableFunctionIterator(object):
                 # new iteration
                 self._state = ResumableIteratorState(
                     _id=self.iteration_id,
-                    name=self.iteration_name,
+                    name=self.iteration_key,
                     timestamp=datetime.utcnow()
                 )
         return self._state
