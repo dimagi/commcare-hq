@@ -90,10 +90,8 @@ class RebuildStockStateTest(TestCase):
 
     @run_with_all_backends
     def test_case_actions(self):
-        """
-        make sure that when a case is rebuilt (using rebuild_case)
-        stock transactions show up as well
-        """
+        # make sure that when a case is rebuilt (using rebuild_case)
+        # stock transactions show up as well
         form_id = self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
         case_id = self.case.case_id
         rebuild_case_from_forms(self.domain, case_id, RebuildWithReason(reason='test'))
