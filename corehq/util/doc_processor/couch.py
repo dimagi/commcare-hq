@@ -102,12 +102,13 @@ class CouchDocumentProvider(DocumentProvider):
     :param doc_types: An ordered sequence. Each item in the sequence should be
     either a doc type class or a tuple ``(doc_type_name_string, doc_type_class)``
     if the doc type name is different from the model class name.
+    Note that the order of the sequence should never change while the iteration is
+    in progress to avoid skipping doc types.
     """
     def __init__(self, iteration_key, doc_types):
         self.iteration_key = iteration_key
 
-        self.doc_types = doc_type_tuples_to_list(doc_types)
-        self.doc_type_map = doc_type_tuples_to_dict(doc_types)
+        assert isinstance(doc_type_tuples, list)
 
         if len(doc_types) != len(self.doc_type_map):
             raise ValueError("Invalid (duplicate?) doc types")
