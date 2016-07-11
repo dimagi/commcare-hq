@@ -12,7 +12,7 @@ from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.es import AppES
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.pillows.application import AppPillow, get_app_to_elasticsearch_pillow
+from corehq.pillows.application import get_app_to_elasticsearch_pillow
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
@@ -36,23 +36,6 @@ class AppPillowTest(TestCase):
     def tearDown(self):
         ensure_index_deleted(APP_INDEX_INFO.index)
         super(AppPillowTest, self).tearDown()
-
-    def test_app_pillow_couch(self):
-        since = get_current_seq(Application.get_db())
-
-        name = 'app-{}'.format(uuid.uuid4().hex)
-        app = self._create_app(name)
-        pillow = AppPillow()
-        pillow.process_changes(since, forever=False)
-        self.es.indices.refresh(APP_INDEX_INFO.index)
-
-        # verify there
-        results = AppES().run()
-        self.assertEqual(1, results.total)
-        app_doc = results.hits[0]
-        self.assertEqual(self.domain, app_doc['domain'])
-        self.assertEqual(app['_id'], app_doc['_id'])
-        self.assertEqual(name, app_doc['name'])
 
     def test_app_pillow_kafka(self):
         consumer = get_test_kafka_consumer(topics.APP)
