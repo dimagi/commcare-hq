@@ -17,7 +17,7 @@ from corehq.util.doc_processor.couch import resumable_docs_by_type_iterator, Cou
 from corehq.util.doc_processor.interface import (
     BaseDocProcessor, DocumentProcessorController, BulkDocProcessor, BulkProcessingFailed
 )
-from corehq.util.doc_processor.sql import ResumableSqlModelIterator
+from corehq.util.doc_processor.sql import resumable_sql_model_iterator
 from corehq.util.pagination import TooManyRetries
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.chunked import chunked
@@ -208,7 +208,7 @@ class BaseResumableSqlModelIteratorTest(object):
 
     def get_iterator(self, deleted_doc_ids=None):
         reindex_accessor = SimulateDeleteReindexAccessor(self.reindex_accessor, deleted_doc_ids)
-        return ResumableSqlModelIterator(self.iteration_key, reindex_accessor, 2)
+        return resumable_sql_model_iterator(self.iteration_key, reindex_accessor, 2)
 
     def test_iteration(self):
         self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids)
