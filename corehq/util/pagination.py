@@ -220,19 +220,19 @@ class ResumableFunctionIterator(object):
         self.state.retry[item_id] = retries
         self._save_state()
 
-    @property
-    def progress_info(self):
-        """Extra progress information
+    def get_iterator_detail(self, key):
+        """Get the detail value value for the given key
+        """
+        return self.state.progress.get(key, None)
 
-        This property can be used to store and retrieve extra progress
+    def set_iterator_detail(self, key, value):
+        """Set the detail value for the given key.
+
+        This can be used to store and retrieve extra
         information associated with the iteration. The information is
         persisted with the iteration state in couch.
         """
-        return self.state.progress
-
-    @progress_info.setter
-    def progress_info(self, info):
-        self.state.progress = info
+        self.state.progress[key] = value
         self._save_state()
 
     def _save_state(self):
