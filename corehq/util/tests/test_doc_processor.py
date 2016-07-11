@@ -47,7 +47,7 @@ class TestResumableDocsByTypeIterator(TestCase):
     def setUp(self):
         self.domain = "TEST"
         self.sorted_keys = ["{}-{}".format(n, i)
-            for n in ["bar", "baz", "foo"]
+            for n in ["foo", "bar", "baz"]
             for i in range(3)]
         self.iteration_key = uuid.uuid4().hex
         self.itr = self.get_iterator()
@@ -91,9 +91,9 @@ class TestResumableDocsByTypeIterator(TestCase):
         itr = iter(self.itr)
         doc = next(itr)
         self.itr.retry(doc['_id'])
-        self.assertEqual(doc["_id"], "bar-0")
-        self.assertEqual(["bar-0"] + [d["_id"] for d in itr],
-                         self.sorted_keys + ["bar-0"])
+        self.assertEqual(doc["_id"], "foo-0")
+        self.assertEqual(["foo-0"] + [d["_id"] for d in itr],
+                         self.sorted_keys + ["foo-0"])
 
     def test_iteration_complete_after_retry(self):
         itr = iter(self.itr)
@@ -106,35 +106,35 @@ class TestResumableDocsByTypeIterator(TestCase):
         itr = iter(self.itr)
         doc = next(itr)
         ids = [doc["_id"]]
-        self.assertEqual(doc["_id"], "bar-0")
+        self.assertEqual(doc["_id"], "foo-0")
         self.itr.retry(doc['_id'])
         retries = 1
         for doc in itr:
             ids.append(doc["_id"])
-            if doc["_id"] == "bar-0":
+            if doc["_id"] == "foo-0":
                 if retries < 3:
                     self.itr.retry(doc['_id'])
                     retries += 1
                 else:
                     break
-        self.assertEqual(doc["_id"], "bar-0")
+        self.assertEqual(doc["_id"], "foo-0")
         with self.assertRaises(TooManyRetries):
             self.itr.retry(doc['_id'])
-        self.assertEqual(ids, self.sorted_keys + ["bar-0", "bar-0", "bar-0"])
+        self.assertEqual(ids, self.sorted_keys + ["foo-0", "foo-0", "foo-0"])
         self.assertEqual(list(itr), [])
         self.assertEqual(list(self.get_iterator()), [])
 
     def test_iteration_with_missing_retry_doc(self):
         itr = iter(self.itr)
         doc = next(itr)
-        self.assertEqual(doc["_id"], "bar-0")
+        self.assertEqual(doc["_id"], "foo-0")
         self.itr.retry(doc['_id'])
         self.db.delete_doc(doc)
         try:
-            self.assertEqual(["bar-0"] + [d["_id"] for d in itr],
+            self.assertEqual(["foo-0"] + [d["_id"] for d in itr],
                              self.sorted_keys)
         finally:
-            self.create_doc("Bar", 0)
+            self.create_doc("Foo", 0)
 
     def test_iteration_with_progress_info(self):
         itr = iter(self.itr)
