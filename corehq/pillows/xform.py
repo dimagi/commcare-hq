@@ -7,11 +7,10 @@ from jsonobject.exceptions import BadValueError
 
 from casexml.apps.case.xform import extract_case_blocks, get_case_ids_from_form
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
-from corehq.form_processor.change_providers import SqlFormChangeProvider
 from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
@@ -24,8 +23,7 @@ from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDep
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.processors.form import AppFormSubmissionTrackerProcessor
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ResumableBulkElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
 from .base import HQPillow
 
 UNKNOWN_VERSION = 'XXX'
@@ -210,26 +208,6 @@ def get_couch_form_reindexer():
         index_info=XFORM_INDEX_INFO,
         doc_filter=xform_pillow_filter,
         doc_transform=transform_xform_for_elasticsearch
-    )
-
-
-def get_app_form_submission_tracker_pillow(pillow_id='AppFormSubmissionTrackerPillow'):
-    """
-    This gets a pillow which iterates through all forms and marks the corresponding app
-    as having submissions. This could be expanded to be more generic and include
-    other processing that needs to happen on each form
-    """
-    checkpoint = PillowCheckpoint('app-form-submission-tracker')
-    form_processor = AppFormSubmissionTrackerProcessor()
-    change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor')
-    return ConstructedPillow(
-        name=pillow_id,
-        checkpoint=checkpoint,
-        change_feed=change_feed,
-        processor=form_processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed,
-        ),
     )
 
 
