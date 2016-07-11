@@ -342,7 +342,7 @@ class FormRepeater(Repeater):
     def allowed_to_forward(self, payload):
         return (
             payload.xmlns != DEVICE_LOG_XMLNS and
-            (not self.white_listed_forms_xmlns or payload.xmlns in self.white_listed_forms_xmlns)
+            (not self.white_listed_form_xmlns or payload.xmlns in self.white_listed_form_xmlns)
         )
 
     def get_url(self, repeat_record):
