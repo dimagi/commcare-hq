@@ -1,6 +1,9 @@
 from abc import ABCMeta, abstractmethod
 
 import six
+import time
+
+from datetime import datetime
 
 from corehq.apps.change_feed.document_types import is_deletion
 from corehq.elastic import get_es_new
@@ -10,6 +13,9 @@ from pillowtop.es_utils import set_index_reindex_settings, \
 from pillowtop.feed.interface import Change
 from pillowtop.logger import pillow_logging
 from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload, ErrorCollector
+
+MAX_TRIES = 3
+RETRY_TIME_DELAY_FACTOR = 15
 
 
 class Reindexer(six.with_metaclass(ABCMeta)):
@@ -111,25 +117,53 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         if len(docs) == 0:
             return True
 
+        pillow_logging.info("Processing batch of %s docs", len((docs)))
+
         changes = [self._doc_to_change(doc) for doc in docs]
         error_collector = ErrorCollector()
 
         bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform, error_collector)
 
+        for change, exception in error_collector.errors:
+            pillow_logging.error("Error procesing doc %s: %s", change.id, exception)
+
         max_payload_size = pow(10, 8)  # ~ 100Mb
         payloads = prepare_bulk_payloads(bulk_changes, max_payload_size)
         if len(payloads) > 1:
-            pillow_logging.info("payload split into %s parts" % len(payloads))
-
-        pillow_logging.info("sending payload,%s" % len(changes))
+            pillow_logging.info("Payload split into %s parts" % len(payloads))
 
         for payload in payloads:
-            self.es.bulk(payload)
-
-        for change, exception in error_collector.errors:
-            pillow_logging.error("Unable to process change %s: %s", change.id, exception)
+            success = self._send_payload_with_retries(payload)
+            if not success:
+                # stop the reindexer if we're unable to send a payload to ES
+                return False
 
         return True
+
+    def _send_payload_with_retries(self, payload):
+        pillow_logging.info("Sending payload to ES")
+
+        retries = 0
+        bulk_start = datetime.utcnow()
+        success = False
+        while retries < MAX_TRIES:
+            if retries:
+                retry_time = (datetime.utcnow() - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR
+                pillow_logging.warning("\tRetrying in %s seconds" % retry_time)
+                time.sleep(retry_time)
+                pillow_logging.warning("\tRetrying now ...")
+                # reset timestamp when looping again
+                bulk_start = datetime.utcnow()
+
+            try:
+                self.es.bulk(payload)
+                success = True
+                break
+            except Exception:
+                retries += 1
+                pillow_logging.exception("\tException sending payload to ES")
+
+        return success
 
     @staticmethod
     def _doc_to_change(doc):
