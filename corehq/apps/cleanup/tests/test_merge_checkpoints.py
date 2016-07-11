@@ -7,8 +7,8 @@ from pillowtop.models import DjangoPillowCheckpoint
 class TestMergeCheckpoints(SimpleTestCase):
     def test_merge_sequence(self):
         checkpoints_topics = [
-            (DjangoPillowCheckpoint(sequence=0, sequence_format='text'), ['form']),
-            (DjangoPillowCheckpoint(sequence=2, sequence_format='text'), ['sql-form']),
+            (DjangoPillowCheckpoint(sequence=0, sequence_format='text'), 'form'),
+            (DjangoPillowCheckpoint(sequence=2, sequence_format='text'), 'sql-form'),
         ]
         sequence = get_merged_sequence(checkpoints_topics)
         self.assertEqual(sequence, {
@@ -22,9 +22,9 @@ class TestMergeCheckpoints(SimpleTestCase):
 
     def test_merge_sequence_min(self):
         checkpoints_topics = [
-            (DjangoPillowCheckpoint(sequence=3, sequence_format='text'), ['form']),
-            (DjangoPillowCheckpoint(sequence=0, sequence_format='text'), ['form']),
-            (DjangoPillowCheckpoint(sequence=2, sequence_format='text'), ['sql-form']),
+            (DjangoPillowCheckpoint(sequence=3, sequence_format='text'), 'form'),
+            (DjangoPillowCheckpoint(sequence=0, sequence_format='text'), 'form'),
+            (DjangoPillowCheckpoint(sequence=2, sequence_format='text'), 'sql-form'),
         ]
         sequence = get_merged_sequence(checkpoints_topics)
         self.assertEqual(sequence, {
@@ -34,15 +34,15 @@ class TestMergeCheckpoints(SimpleTestCase):
 
     def test_merge_sequence_mixed_format(self):
         checkpoints_topics = [
-            (DjangoPillowCheckpoint(sequence=5, sequence_format='text'), ['form']),
-            (DjangoPillowCheckpoint(sequence='8', sequence_format='text'), ['form']),
+            (DjangoPillowCheckpoint(sequence=5, sequence_format='text'), 'form'),
+            (DjangoPillowCheckpoint(sequence='8', sequence_format='text'), 'form'),
             (
                 DjangoPillowCheckpoint(sequence='{"form": 2, "sql-form": 3}', sequence_format='json'),
-                ['form', 'sql-form']
+                None
             ),
             (
                 DjangoPillowCheckpoint(sequence='{"case": 9, "sql-case": 7}', sequence_format='json'),
-                ['case', 'sql-case']
+                None
             ),
         ]
         sequence = get_merged_sequence(checkpoints_topics)

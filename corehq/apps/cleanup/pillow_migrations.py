@@ -5,6 +5,7 @@ from django.conf import settings
 from casexml.apps.case.models import CommCareCase
 import logging
 
+from corehq.apps.change_feed import topics
 from pillowtop.checkpoints.manager import DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.checkpoints.util import construct_checkpoint_doc_id_from_name
 from pillowtop.utils import get_pillow_config_by_name
@@ -54,6 +55,9 @@ def merge_kafka_pillow_checkpoints(new_checkpoint_id, checkpoint_topics, migrati
             except DjangoPillowCheckpoint.DoesNotExist:
                 logging.warning('Checkpoint not found: {}'.format(checkpoint_id))
                 continue
+
+            if topic:
+                assert topic in topics.ALL, "Unknown topic: {}".format(topic)
 
             checkpoint_doc_topics.append((checkpoint_doc, topic))
 
