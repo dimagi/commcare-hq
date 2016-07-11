@@ -79,10 +79,14 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
-        FormplayerFrontend.request("clearForm");
+        if(resp.status === "success") {
+            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("apps:list");
+            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
+        } else {
+            showError(resp.output, $("#cloudcare-notifications"));
+        }
         // TODO form linking
-        FormplayerFrontend.trigger("apps:list");
-        showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
     };
     data.formplayerEnabled = true;
     var sess = new WebFormSession(data);
