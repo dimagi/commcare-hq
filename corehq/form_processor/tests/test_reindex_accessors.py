@@ -83,10 +83,10 @@ class BaseUnshardedAccessorMixin(object):
         docs = self._get_docs(self.middle, limit=2)
         self.assertEqual(self._get_doc_ids(docs), self.second_batch[:2])
 
-        last_doc = self.reindex_accessor().get_doc(self.second_batch[0])
+        last_doc = self.accessor_class().get_doc(self.second_batch[0])
 
         docs = self._get_docs(self.middle, last_doc_pk=last_doc.pk, limit=2)
-        self.assertEqual(self._get_doc_ids(docs), self.second_batch[1:3 ])
+        self.assertEqual(self._get_doc_ids(docs), self.second_batch[1:3])
 
 
 
