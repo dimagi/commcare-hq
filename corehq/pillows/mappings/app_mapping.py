@@ -1,7 +1,7 @@
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-APP_INDEX = es_index("hqapps_2016-07-08_1445")
+APP_INDEX = es_index("hqapps_2016-07-11_2128")
 APP_MAPPING={'_meta': {'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -117,6 +117,19 @@ APP_MAPPING={'_meta': {'created': None},
                                            'forms': {'dynamic': False,
                                                      'properties': {'actions': {'dynamic': False,
                                                                                 'properties': {'case_preload': {'dynamic': False,
+                                                                                                                'properties': {'condition': {'dynamic': False,
+                                                                                                                                             'properties': {'answer': {'type': 'string'},
+                                                                                                                                                            'doc_type': {'index': 'not_analyzed',
+                                                                                                                                                                         'type': 'string'},
+                                                                                                                                                            'question': {'type': 'string'},
+                                                                                                                                                            'type': {'type': 'string'}},
+                                                                                                                                             'type': 'object'},
+                                                                                                                               'doc_type': {'index': 'not_analyzed',
+                                                                                                                                            'type': 'string'},
+                                                                                                                               'preload': {'dynamic': False,
+                                                                                                                                           'type': 'object'}},
+                                                                                                                'type': 'object'},
+                                                                                               'load_from_form': {'dynamic': False,
                                                                                                                 'properties': {'condition': {'dynamic': False,
                                                                                                                                              'properties': {'answer': {'type': 'string'},
                                                                                                                                                             'doc_type': {'index': 'not_analyzed',
