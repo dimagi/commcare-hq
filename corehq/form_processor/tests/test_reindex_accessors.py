@@ -65,7 +65,6 @@ class BaseReindexAccessorTest(object):
         self.assertEqual(0, len(self._get_docs(self.end)))
 
 
-
 class BaseUnshardedAccessorMixin(object):
     @classmethod
     def setUpClass(cls):
@@ -87,7 +86,6 @@ class BaseUnshardedAccessorMixin(object):
 
         docs = self._get_docs(self.middle, last_doc_pk=last_doc.pk, limit=2)
         self.assertEqual(self._get_doc_ids(docs), self.second_batch[1:3])
-
 
 
 class BaseShardedAccessorMixin(object):
@@ -114,7 +112,7 @@ class BaseCaseReindexAccessorTest(BaseReindexAccessorTest):
     @classmethod
     def _create_docs(cls, count):
         case_ids = [uuid.uuid4().hex for i in range(count)]
-        forms = [create_form_for_test(cls.domain, case_id=case_id) for case_id in case_ids]
+        [create_form_for_test(cls.domain, case_id=case_id) for case_id in case_ids]
         return CaseAccessorSQL.get_cases(case_ids, ordered=True)
 
     @classmethod
