@@ -19,8 +19,9 @@ class UsersMiddleware(object):
                 break
         if not found_domain_app:
             raise django.core.exceptions.MiddlewareNotUsed
-    
+
     def process_view(self, request, view_func, view_args, view_kwargs):
+        request.analytics_enabled = True
         if 'domain' in view_kwargs:
             request.domain = view_kwargs['domain']
         if 'org' in view_kwargs:
@@ -28,6 +29,8 @@ class UsersMiddleware(object):
         if request.user and request.user.is_authenticated():
             request.couch_user = CouchUser.get_by_username(
                 request.user.username, strict=False)
+            if not request.couch_user.analytics_enabled:
+                request.analytics_enabled = False
             if 'domain' in view_kwargs:
                 domain = request.domain
                 if not request.couch_user:
