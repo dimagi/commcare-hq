@@ -247,6 +247,18 @@ class FormAccessorSQL(AbstractFormAccessor):
         publish_form_saved(form)
 
     @staticmethod
+    def soft_undelete_forms(domain, form_ids):
+        assert isinstance(form_ids, list)
+        problem = 'Restored on {}'.format(datetime.utcnow())
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT soft_undelete_forms(%s, %s, %s) as affected_count',
+                [domain, form_ids, problem]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.affected_count for result in results])
+
+    @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
@@ -794,6 +806,28 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             )
             results = fetchall_as_namedtuple(cursor)
             return {result.case_type for result in results}
+
+    @staticmethod
+    def soft_undelete_cases(domain, case_ids):
+        assert isinstance(case_ids, list)
+
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT soft_undelete_cases(%s, %s) as affected_count',
+                [domain, case_ids]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.affected_count for result in results])
+
+    @staticmethod
+    def get_deleted_case_ids_by_owner(domain, owner_id):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_deleted_case_ids_by_owner(%s, %s)',
+                [domain, owner_id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
 
     @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
