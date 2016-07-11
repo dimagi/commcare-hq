@@ -392,38 +392,6 @@ class FormAccessorSQL(AbstractFormAccessor):
             results = fetchall_as_namedtuple(cursor)
             return [result.form_id for result in results]
 
-    @staticmethod
-    def get_all_forms_received_since(received_on_since=None, chunk_size=500):
-        """Iterate through all forms in the entire database, optionally received since
-        a specific date
-        """
-
-        return _batch_iterate_over_shards(
-            batch_fn=FormAccessorSQL._get_forms_received_since,
-            next_start_args=lambda form: (form.received_on, form.id),
-            start_from=received_on_since,
-            chunk_size=chunk_size
-        )
-
-    @staticmethod
-    def _get_forms_received_since(received_on_since=None, last_id=None, limit=500, using=None):
-        """
-        Function to be used with ``_batch_iterate_over_shards`` to iterate over all
-        forms in the entire database.
-
-        :param using: alternate DB alias to query against
-        :return:
-        """
-        received_on_since = received_on_since or datetime.min
-        last_id = last_id or -1
-        results = XFormInstanceSQL.objects.raw(
-            'SELECT * FROM get_all_forms_received_since(%s, %s, %s)',
-            [received_on_since, last_id, limit],
-            using=using
-        )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
-        return RawQuerySetWrapper(results)
-
 
 class CaseReindexAccessor(ReindexAccessor):
     @property
@@ -640,41 +608,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cursor.execute('SELECT delete_all_cases(%s)', [domain])
 
     @staticmethod
-    def get_all_cases_modified_since(server_modified_on_since=None, chunk_size=500):
-        """
-        Iterate through all cases in the entire database, optionally modified since
-        a specific date
-        :param server_modified_on_since:
-        :param chunk_size:
-        :return: generator of cases
-        """
-        return _batch_iterate_over_shards(
-            CaseAccessorSQL._get_cases_modified_since,
-            next_start_args=lambda case: (case.server_modified_on, case.id),
-            start_from=server_modified_on_since,
-            chunk_size=chunk_size
-        )
-
-    @staticmethod
-    def _get_cases_modified_since(server_modified_on_since=None, last_id=None, limit=500, using=None):
-        """
-        Function to be used with ``_batch_iterate_over_shards`` to iterate over all
-        cases in the entire database.
-
-        :param using: alternate DB alias to query against
-        :return:
-        """
-        server_modified_on_since = server_modified_on_since or datetime.min
-        last_id = last_id or -1
-        results = CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_all_cases_modified_since(%s, %s, %s)',
-            [server_modified_on_since, last_id, limit],
-            using=using
-        )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
-        return RawQuerySetWrapper(results)
-
-    @staticmethod
     @transaction.atomic
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
@@ -889,38 +822,6 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
             [case_ids, section_id, entry_id, date_start, date_end]
         ))
-
-    @staticmethod
-    def get_all_ledgers_modified_since(modified_since=None, chunk_size=500):
-        """
-        Iterate through all ledger_values in the entire database, optionally modified since
-        a specific date
-        """
-        return _batch_iterate_over_shards(
-            batch_fn=LedgerAccessorSQL._get_ledgers_modified_since,
-            next_start_args=lambda ledger: (ledger.last_modified, ledger.id),
-            start_from=modified_since,
-            chunk_size=chunk_size
-        )
-
-    @staticmethod
-    def _get_ledgers_modified_since(modified_since=None, last_id=None, limit=500, using=None):
-        """
-        Function to be used with ``_batch_iterate_over_shards`` to iterate over all
-        ledgers in the entire database.
-
-        :param using: alternate DB alias to query against
-        :return:
-        """
-        modified_since = modified_since or datetime.min
-        last_id = last_id or -1
-        results = LedgerValue.objects.raw(
-            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s, %s)',
-            [modified_since, last_id, limit],
-            using=using
-        )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
-        return RawQuerySetWrapper(results)
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
