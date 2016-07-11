@@ -66,6 +66,7 @@ def get_cursor(model):
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
+    # TODO: implement this https://wiki.postgresql.org/images/3/35/Pagination_Done_the_PostgreSQL_Way.pdf
 
     @abstractproperty
     def startkey_attribute_name(self):
@@ -966,51 +967,6 @@ def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, c
     for obj_id, group in prefetched_groups:
         obj = objects_by_id[obj_id]
         setattr(obj, cached_attrib_name, list(group))
-
-
-def _batch_iterate_over_shards(batch_fn, next_start_args, start_from=None, chunk_size=500):
-    """
-    Iterate through a function in batches. Assumes the following signatures:
-
-    batch_fn(start_from, last_id, limit=limit, using=db_alias) - a function that returns sorted data in batches
-    next_start_args(item) - a function that returns a tuple of "start_from" and "last_id" for the next batch.
-    The key is used to exclude duplicate items.
-    """
-    # TODO: implement this https://wiki.postgresql.org/images/3/35/Pagination_Done_the_PostgreSQL_Way.pdf
-    start_from = start_from or datetime.min
-    if not settings.USE_PARTITIONED_DATABASE:
-        db_list = [None]  # use the default database
-    else:
-        from corehq.sql_db.config import PartitionConfig
-        partition_config = PartitionConfig()
-        db_list = partition_config.get_form_processing_dbs()
-
-    db_status = {db: {'start_from': start_from, 'last_id': None, 'has_more': True} for db in db_list}
-
-    has_more = True
-    while has_more:
-        for db_alias in db_list:
-            if not db_status[db_alias]['has_more']:
-                continue
-
-            db_start_from = db_status[db_alias]['start_from']
-            last_id = db_status[db_alias]['last_id']
-            batch = batch_fn(db_start_from, last_id, limit=chunk_size, using=db_alias)
-            batch_size = len(batch)
-
-            for item in batch:
-                yield item
-
-            if batch_size == chunk_size:
-                # we got a full chunk so keep checking for more
-                next_start_from, next_last_id = next_start_args(item)
-                assert next_start_from > db_start_from  # make sure we are making progress
-                db_status[db_alias]['start_from'] = next_start_from
-                db_status[db_alias]['last_id'] = next_last_id
-            else:
-                db_status[db_alias]['has_more'] = False
-
-        has_more = any(status['has_more'] for status in db_status.values())
 
 
 class RawQuerySetWrapper(object):
