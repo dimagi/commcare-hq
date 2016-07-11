@@ -104,7 +104,6 @@ class BaseShardedAccessorMixin(object):
         accessor = self.accessor_class()
         all_docs = []
         for from_db in self.partion_config.get_form_processing_dbs():
-            print '---------', from_db, self.accessor_class
             all_docs.extend(accessor.get_docs(from_db, start))
         return all_docs
 
