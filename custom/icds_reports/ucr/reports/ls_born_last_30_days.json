@@ -1,0 +1,108 @@
+{
+  "domains": [
+    "icds-test",
+    "icds-sql",
+    "icds-cas"
+  ],
+  "report_id": "static-ls_born_last_30_days",
+  "data_source_table": "static-child_health_cases",
+  "config": {
+    "title": "LS - Born in last 30 days (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "display": "Date of Birth",
+        "field": "dob",
+        "type": "date",
+        "slug": "dob"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by Supervisor",
+        "field": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "slug": "supervisor_id"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "owner_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "weighed_birth_open_count",
+        "field": "weighed_birth_open_count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "weighed_birth_open_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "lbw_open_count",
+        "field": "lbw_open_count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "lbw_open_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "open_count",
+        "field": "open_count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "open_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "timely_bf_open_count",
+        "field": "timely_bf_open_count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "timely_bf_open_count"
+      }
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}

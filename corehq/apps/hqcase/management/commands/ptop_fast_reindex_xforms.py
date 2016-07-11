@@ -17,11 +17,30 @@ class Command(ElasticReindexer):
 
     sort_key_include_docs = True
 
-    def get_extra_view_kwargs(self):
-        return {
-            'startkey': ['XFormInstance'],
-            'endkey': ['XFormInstance', {}],
-        }
+    def full_couch_view_iter(self):
+        # copied from couchforms/_design/filters/xforms.js
+        doc_types = [
+            'XFormInstance',
+            'XFormArchived',
+            'XFormError',
+            'XFormDeprecated',
+            'XFormDuplicate',
+            'XFormInstance-Deleted',
+            'HQSubmission',
+            'SubmissionErrorLog',
+        ]
+
+        for doc_type in doc_types:
+            rows = self.paginate_view(
+                self.db,
+                self.view_name,
+                reduce=False,
+                include_docs=True,
+                startkey=[doc_type],
+                endkey=[doc_type, {}],
+            )
+            for row in rows:
+                yield row
 
     def handle(self, *args, **options):
         if not options.get('bulk', False):

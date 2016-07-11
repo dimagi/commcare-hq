@@ -306,6 +306,13 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ASYNC_RESTORE = StaticToggle(
+    'async_restore',
+    'Generate restore response in an asynchronous task to prevent timeouts',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 REPORT_BUILDER_BETA_GROUP = StaticToggle(
     'report_builder_beta_group',
     'RB beta group',
@@ -813,14 +820,6 @@ CASE_LIST_DISTANCE_SORT = StaticToggle(
     'Allow sorting by distance from current location in the case list',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-
-NOTIFICATIONS = StaticToggle(
-    'hq_notifications',
-    'Shows notification icon when announcements need to be made',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
 )
 
 

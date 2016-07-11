@@ -13,6 +13,7 @@
     <script>
         $('#new-user-btn').click(function() {
            analytics.workflow('Clicked "Create Account" Button');
+           _kmq.push(["trackClick", "create_account_clicked", "Clicked Create Account (old)"]);
         });
     </script>
 {% endblock %}

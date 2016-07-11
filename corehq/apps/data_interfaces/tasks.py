@@ -104,9 +104,8 @@ def run_case_update_rules_for_domain(domain, now=None):
 
         for case in CaseAccessors(domain).iter_cases(case_ids):
             for rule in rules:
-                closed = rule.apply_rule(case, now)
-                if closed:
-                    # If the case has been closed, stop processing further rules
+                stop_processing = rule.apply_rule(case, now)
+                if stop_processing:
                     break
 
         for rule in rules:

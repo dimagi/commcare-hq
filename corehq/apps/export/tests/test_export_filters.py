@@ -29,7 +29,7 @@ from corehq.apps.export.tests.util import (
 )
 from corehq.apps.groups.models import Group
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.case import CasePillow
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -55,26 +55,25 @@ class ExportFilterResultTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.case_pillow = CasePillow(online=False)
 
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
             es = get_es_new()
             cls.tearDownClass()
-            completely_initialize_pillow_index(cls.case_pillow)
+            initialize_index_and_mapping(es, CASE_INDEX_INFO)
             initialize_index_and_mapping(es, GROUP_INDEX_INFO)
             initialize_index_and_mapping(es, XFORM_INDEX_INFO)
 
         case = new_case(closed=True)
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(closed=False)
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(closed=True, owner_id="foo")
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(closed=False, owner_id="bar")
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
         group = Group(_id=uuid.uuid4().hex, users=["foo", "bar"])
         cls.group_id = group._id
@@ -92,13 +91,13 @@ class ExportFilterResultTest(SimpleTestCase):
         form = new_form(form={"meta": {"userID": uuid.uuid4().hex}})
         send_to_elasticsearch('forms', form.to_json())
 
-        es.indices.refresh(cls.case_pillow.es_index)
+        es.indices.refresh(CASE_INDEX_INFO.index)
         es.indices.refresh(XFORM_INDEX_INFO.index)
         es.indices.refresh(GROUP_INDEX_INFO.index)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(cls.case_pillow.es_index)
+        ensure_index_deleted(CASE_INDEX_INFO.index)
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         ensure_index_deleted(GROUP_INDEX_INFO.index)
 

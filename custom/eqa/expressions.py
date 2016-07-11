@@ -7,11 +7,12 @@ STATUSES = {
     (1, 0): "Improved",
     (0, 1): "**Declined**",
     (1, 1): "Satisfactory",
-    (0, 0): "**needs improvement**",
-    (99, 0): "**needs improvement**",
-    (0, 99): "**needs improvement**",
+    (0, 0): "**Needs improvement**",
+    (99, 0): "**Needs improvement**",
+    (0, 99): "**Needs improvement**",
     (99, 1): "Satisfactory",
-    (1, 99): "Satisfactory"
+    (1, 99): "Satisfactory",
+    (99, 99): "Other",
 }
 
 
