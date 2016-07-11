@@ -326,8 +326,10 @@ def track_periodic_data():
     """
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
-    users_to_domains = UserES().web_users().last_logged_in(gte=six_months_ago).fields(['domains', 'email'])\
-                               .run().hits
+    users_to_domains = (UserES().web_users().
+                        last_logged_in(gte=six_months_ago).fields(['domains', 'email'])
+                        .analytics_enabled()
+                        .run().hits)
     # users_to_domains is a list of dicts
     domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
         .aggregations.domain.counts_by_bucket()
