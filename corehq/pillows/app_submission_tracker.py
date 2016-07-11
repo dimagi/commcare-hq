@@ -94,7 +94,6 @@ def get_couch_app_form_submission_tracker_reindexer():
         XFormError,
         XFormDeprecated,
         XFormDuplicate,
-        ('XFormInstance-Deleted', XFormInstance),
         ('HQSubmission', XFormInstance),
         SubmissionErrorLog,
     ])
