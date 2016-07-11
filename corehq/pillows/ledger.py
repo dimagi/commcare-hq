@@ -2,17 +2,19 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.locations.models import SQLLocation
 from corehq.elastic import get_es_new
+from corehq.form_processor.backends.sql.dbaccessors import LedgerReindexAccessor
 from corehq.form_processor.change_providers import (
-    LedgerV2ChangeProvider, _ledger_v1_to_change
+    _ledger_v1_to_change
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
+from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.quickcache import quickcache
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ResumableBulkElasticPillowReindexer
 
 
 @quickcache(['case_id'])
@@ -75,11 +77,13 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
 
 
 def get_ledger_v2_reindexer():
-    return ElasticPillowReindexer(
-        pillow=get_ledger_to_elasticsearch_pillow(),
-        change_provider=LedgerV2ChangeProvider(),
+    iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer".format(LEDGER_INDEX_INFO.index)
+    doc_provider = SqlDocumentProvider(iteration_key, LedgerReindexAccessor())
+    return ResumableBulkElasticPillowReindexer(
+        doc_provider,
         elasticsearch=get_es_new(),
         index_info=LEDGER_INDEX_INFO,
+        doc_transform=_prepare_ledger_for_es
     )
 
 

@@ -3,12 +3,12 @@ from xml.etree import ElementTree
 from corehq.apps.importer.util import get_importer_error_message
 from dimagi.utils.couch.database import is_bigcouch
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.importer.const import LookupErrors, ImportErrors
 from corehq.apps.importer import util as importer_util
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from soil import DownloadBase
 from dimagi.utils.prime_views import prime_views
 from couchdbkit.exceptions import ResourceNotFound
@@ -187,7 +187,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         extras = {}
         if parent_id:
             try:
-                parent_case = CommCareCase.get(parent_id)
+                parent_case = CaseAccessors(domain).get_case(parent_id)
 
                 if parent_case.domain == domain:
                     extras['index'] = {
@@ -208,6 +208,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                     parent_ref: (parent_type, parent_case._id)
                 }
 
+        case_name = fields_to_update.pop('name', None)
         if not case:
             id = uuid.uuid4().hex
 
@@ -221,6 +222,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                     owner_id=owner_id,
                     user_id=user_id,
                     case_type=config.case_type,
+                    case_name=case_name or '',
                     update=fields_to_update,
                     **extras
                 )
@@ -237,6 +239,8 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 extras['owner_id'] = owner_id
             if to_close == 'yes':
                 extras['close'] = True
+            if case_name is not None:
+                extras['case_name'] = case_name
 
             try:
                 caseblock = CaseBlock(

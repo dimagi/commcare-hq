@@ -211,3 +211,12 @@ def get_all_case_owner_ids(domain):
         endkey=key + [{}],
     ).all()
     return set([row['key'][1] for row in submitted])
+
+
+def get_deleted_case_ids_by_owner(owner_id):
+    return [r["id"] for r in CommCareCase.get_db().view(
+        'deleted_data/deleted_cases_by_user',
+        startkey=[owner_id],
+        endkey=[owner_id, {}],
+        reduce=False,
+    )]

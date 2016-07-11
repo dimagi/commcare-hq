@@ -25,15 +25,6 @@
     "data_source": [
       {
         "id": "static-{domain}-static-asr_2_3_person_cases",
-        "filter": [
-          {
-            "type": "daterange",
-            "column": "dob",
-            "operator": "between",
-            "end": 4017,
-            "start": 6576
-          }
-        ],
         "columns": [
           {
             "column_name": "open_count",
