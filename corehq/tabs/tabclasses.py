@@ -1466,7 +1466,7 @@ class AdminTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import AuthenticateAs
+            from corehq.apps.hqadmin.views import AuthenticateAs, VCMMigrationView
             admin_operations.extend([
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
@@ -1479,6 +1479,8 @@ class AdminTab(UITab):
                  'url': reverse('raw_couch')},
                 {'title': _('Check Call Center UCR tables'),
                  'url': reverse('callcenter_ucr_check')},
+                {'title': _('Manage VCM Migration'),
+                 'url': reverse(VCMMigrationView.urlname)},
             ])
         return [
             (_('Administrative Reports'), [

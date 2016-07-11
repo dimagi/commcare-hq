@@ -10,7 +10,8 @@ from .views import (
     ManagementCommandsView,
     CallcenterUCRCheck,
     DimagisphereView,
-    DownloadGIRView)
+    DownloadGIRView,
+    VCMMigrationView)
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
@@ -30,6 +31,8 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^management_commands/$', ManagementCommandsView.as_view(),
         name=ManagementCommandsView.urlname),
     url(r'^run_command/$', 'run_command', name="run_management_command"),
+    url(r'^vcm_migration/$', VCMMigrationView.as_view(),
+        name=VCMMigrationView.urlname),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
     url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),

@@ -65,3 +65,9 @@ class AuthenticateAsForm(forms.Form):
                 )
             )
         )
+
+
+class VCMMigrationForm(forms.Form):
+    domain = forms.CharField(
+        label="Migrate this project",
+        widget=forms.TextInput(attrs={"data-bind": "typeahead: domain_names"}))
