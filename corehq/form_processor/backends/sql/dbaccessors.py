@@ -248,6 +248,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
+        from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
         deletion_date = deletion_date or datetime.utcnow()
         with get_cursor(XFormInstanceSQL) as cursor:
@@ -256,7 +257,12 @@ class FormAccessorSQL(AbstractFormAccessor):
                 [domain, form_ids, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
+            affected_count = sum([result.affected_count for result in results])
+
+        for form_id in form_ids:
+            publish_form_deleted(domain, form_id)
+
+        return affected_count
 
     @staticmethod
     @transaction.atomic

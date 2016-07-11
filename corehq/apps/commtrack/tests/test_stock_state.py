@@ -33,7 +33,7 @@ class StockStateBehaviorTest(StockStateTest):
         self.ct_settings.save()
 
     def test_stock_state(self):
-        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+        with process_kafka_changes('LedgerToElasticsearchPillow'):
             self.report(25, 5)
             self.report(10, 0)
 
@@ -148,7 +148,7 @@ class StockStateConsumptionTest(StockStateTest):
 
     def test_none_with_no_defaults(self):
         # need to submit something to have a state initialized
-        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+        with process_kafka_changes('LedgerToElasticsearchPillow'):
             self.report(25, 0)
 
         state = StockState.objects.get(
@@ -161,7 +161,7 @@ class StockStateConsumptionTest(StockStateTest):
 
     def test_pre_set_defaults(self):
         set_default_monthly_consumption_for_domain(self.domain.name, 5 * 30)
-        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+        with process_kafka_changes('LedgerToElasticsearchPillow'):
             self.report(25, 0)
         state = StockState.objects.get(
             section_id='stock',
@@ -172,7 +172,7 @@ class StockStateConsumptionTest(StockStateTest):
         self.assertEqual(5, float(state.get_daily_consumption()))
 
     def test_defaults_set_after_report(self):
-        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+        with process_kafka_changes('LedgerToElasticsearchPillow'):
             self.report(25, 0)
         set_default_monthly_consumption_for_domain(self.domain.name, 5 * 30)
 

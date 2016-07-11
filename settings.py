@@ -1489,24 +1489,14 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
         },
         {
-            'name': 'SqlXFormToElasticsearchPillow',
+            'name': 'XFormToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
         },
         {
-            'name': 'CouchXFormToElasticsearchPillow',
+            'name': 'CaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_couch_xform_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'SqlCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'CouchCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_couch_case_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
         },
         {
             'name': 'UnknownUsersPillow',
