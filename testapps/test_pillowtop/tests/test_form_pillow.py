@@ -9,7 +9,7 @@ from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer, get_current_kafka_seq
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.userreports.tests.utils import doc_to_change
-from corehq.pillows.xform import get_app_form_submission_tracker_pillow
+from corehq.pillows.app_submission_tracker import get_app_form_submission_tracker_pillow
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata, get_simple_form_xml
 

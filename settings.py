@@ -1442,7 +1442,7 @@ PILLOWTOPS = {
         {
             'name': 'AppFormSubmissionTrackerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_app_form_submission_tracker_pillow',
+            'instance': 'corehq.pillows.app_submission_tracker.get_app_form_submission_tracker_pillow',
         },
     ],
     'core_ext': [
