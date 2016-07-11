@@ -105,12 +105,15 @@ class CouchDocumentProvider(DocumentProvider):
     Note that the order of the sequence should never change while the iteration is
     in progress to avoid skipping doc types.
     """
-    def __init__(self, iteration_key, doc_types):
+    def __init__(self, iteration_key, doc_type_tuples):
         self.iteration_key = iteration_key
 
         assert isinstance(doc_type_tuples, list)
 
-        if len(doc_types) != len(self.doc_type_map):
+        self.doc_types = doc_type_tuples_to_list(doc_type_tuples)
+        self.doc_type_map = doc_type_tuples_to_dict(doc_type_tuples)
+
+        if len(doc_type_tuples) != len(self.doc_type_map):
             raise ValueError("Invalid (duplicate?) doc types")
 
         self.couchdb = next(iter(self.doc_type_map.values())).get_db()

@@ -82,7 +82,7 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
 
 def get_report_xform_couch_reindexer():
     iteration_key = "ReportXFormToElasticsearchPillow_{}_reindexer".format(REPORT_XFORM_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, doc_types=[
+    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
         XFormInstance,
         XFormArchived,
         XFormError,
