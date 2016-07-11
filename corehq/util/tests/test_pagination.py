@@ -124,7 +124,7 @@ class TestResumableFunctionIterator(SimpleTestCase):
         self.assertEqual(list(self.get_iterator()), [])
 
     def test_iteration_with_missing_retry_doc(self):
-        iterator = self.get_iterator("0")
+        iterator = self.get_iterator(missing_items=["0"])
         itr = iter(iterator)
         item = next(itr)
         self.assertEqual(item, 0)

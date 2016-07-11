@@ -81,12 +81,6 @@ class TestResumableDocsByTypeIterator(TestCase):
         self.itr = self.get_iterator()
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[5:])
 
-    def test_resume_iteration_after_complete_iteration(self):
-        self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys)
-        # resume iteration
-        self.itr = self.get_iterator()
-        self.assertEqual([doc["_id"] for doc in self.itr], [])
-
     def test_iteration_with_retry(self):
         itr = iter(self.itr)
         doc = next(itr)
@@ -94,62 +88,6 @@ class TestResumableDocsByTypeIterator(TestCase):
         self.assertEqual(doc["_id"], "foo-0")
         self.assertEqual(["foo-0"] + [d["_id"] for d in itr],
                          self.sorted_keys + ["foo-0"])
-
-    def test_iteration_complete_after_retry(self):
-        itr = iter(self.itr)
-        self.itr.retry(next(itr)['_id'])
-        list(itr)
-        self.itr = self.get_iterator()
-        self.assertEqual([doc["_id"] for doc in self.itr], [])
-
-    def test_iteration_with_max_retry(self):
-        itr = iter(self.itr)
-        doc = next(itr)
-        ids = [doc["_id"]]
-        self.assertEqual(doc["_id"], "foo-0")
-        self.itr.retry(doc['_id'])
-        retries = 1
-        for doc in itr:
-            ids.append(doc["_id"])
-            if doc["_id"] == "foo-0":
-                if retries < 3:
-                    self.itr.retry(doc['_id'])
-                    retries += 1
-                else:
-                    break
-        self.assertEqual(doc["_id"], "foo-0")
-        with self.assertRaises(TooManyRetries):
-            self.itr.retry(doc['_id'])
-        self.assertEqual(ids, self.sorted_keys + ["foo-0", "foo-0", "foo-0"])
-        self.assertEqual(list(itr), [])
-        self.assertEqual(list(self.get_iterator()), [])
-
-    def test_iteration_with_missing_retry_doc(self):
-        itr = iter(self.itr)
-        doc = next(itr)
-        self.assertEqual(doc["_id"], "foo-0")
-        self.itr.retry(doc['_id'])
-        self.db.delete_doc(doc)
-        try:
-            self.assertEqual(["foo-0"] + [d["_id"] for d in itr],
-                             self.sorted_keys)
-        finally:
-            self.create_doc("Foo", 0)
-
-    def test_iteration_with_progress_info(self):
-        itr = iter(self.itr)
-
-        self.assertEqual([next(itr)["_id"] for i in range(6)], self.sorted_keys[:6])
-        self.assertEqual(self.itr.progress_info, {})
-        self.itr.progress_info = {"visited": 6}
-        # stop/resume iteration
-        self.itr = self.get_iterator()
-        self.assertEqual(self.itr.progress_info, {"visited": 6})
-        self.itr.progress_info = {"visited": "six"}
-        # stop/resume iteration
-        self.itr = self.get_iterator()
-        self.assertEqual(self.itr.progress_info, {"visited": "six"})
-        self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[5:])
 
 
 class SimulateDeleteReindexAccessor(ReindexAccessor):
@@ -220,12 +158,6 @@ class BaseResumableSqlModelIteratorTest(object):
         self.itr = self.get_iterator()
         self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
 
-    def test_resume_iteration_after_complete_iteration(self):
-        self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids)
-        # resume iteration
-        self.itr = self.get_iterator()
-        self.assertEqual([doc["_id"] for doc in self.itr], [])
-
     def test_iteration_with_retry(self):
         itr = iter(self.itr)
         doc = next(itr)
@@ -233,58 +165,6 @@ class BaseResumableSqlModelIteratorTest(object):
         self.assertEqual(doc["_id"], self.first_doc_id)
         self.assertEqual([self.first_doc_id] + [d["_id"] for d in itr],
                          self.all_doc_ids + [self.first_doc_id])
-
-    def test_iteration_complete_after_retry(self):
-        itr = iter(self.itr)
-        self.itr.retry(next(itr)['_id'])
-        list(itr)
-        self.itr = self.get_iterator()
-        self.assertEqual([doc["_id"] for doc in self.itr], [])
-
-    def test_iteration_with_max_retry(self):
-        itr = iter(self.itr)
-        doc = next(itr)
-        ids = [doc["_id"]]
-        self.assertEqual(doc["_id"], self.first_doc_id)
-        self.itr.retry(doc['_id'])
-        retries = 1
-        for doc in itr:
-            ids.append(doc["_id"])
-            if doc["_id"] == self.first_doc_id:
-                if retries < 3:
-                    self.itr.retry(doc['_id'])
-                    retries += 1
-                else:
-                    break
-        self.assertEqual(doc["_id"], self.first_doc_id)
-        with self.assertRaises(TooManyRetries):
-            self.itr.retry(doc['_id'])
-        self.assertEqual(ids, self.all_doc_ids + ([self.first_doc_id] * 3))
-        self.assertEqual(list(itr), [])
-        self.assertEqual(list(self.get_iterator()), [])
-
-    def test_iteration_with_missing_retry_doc(self):
-        iterator = self.get_iterator(deleted_doc_ids=self.first_doc_id)
-        itr = iter(iterator)
-        doc = next(itr)
-        self.assertEqual(doc["_id"], self.first_doc_id)
-        iterator.retry(doc['_id'])
-        self.assertEqual([self.first_doc_id] + [d["_id"] for d in itr], self.all_doc_ids)
-
-    def test_iteration_with_progress_info(self):
-        itr = iter(self.itr)
-
-        self.assertEqual([next(itr)["_id"] for i in range(6)], self.all_doc_ids[:6])
-        self.assertEqual(self.itr.progress_info, {})
-        self.itr.progress_info = {"visited": 6}
-        # stop/resume iteration
-        self.itr = self.get_iterator()
-        self.assertEqual(self.itr.progress_info, {"visited": 6})
-        self.itr.progress_info = {"visited": "six"}
-        # stop/resume iteration
-        self.itr = self.get_iterator()
-        self.assertEqual(self.itr.progress_info, {"visited": "six"})
-        self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
