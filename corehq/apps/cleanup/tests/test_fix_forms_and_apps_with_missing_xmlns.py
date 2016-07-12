@@ -3,7 +3,6 @@ import os
 import uuid
 
 from django.core.management import call_command
-from django.core import mail
 from django.test import TestCase
 from elasticsearch import ConnectionError
 from testil import tempdir
@@ -227,13 +226,14 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
         with tempdir() as tmp:
             with patch('corehq.apps.cleanup.tasks.UNDEFINED_XMLNS_LOG_DIR', tmp):
-                stats, log_file_path = fix_xforms_with_missing_xmlns()
+                with patch('corehq.apps.cleanup.tasks.mail_admins_async') as mocked_mail:
+                    stats, log_file_path = fix_xforms_with_missing_xmlns()
+                    self.assertTrue(mocked_mail.delay.called)
 
             self.assertTrue(
                 (DOMAIN, bad_xforms[0].build_id) in stats['builds_with_undefined_xmlns']
             )
             self.assertEqual(stats['not_fixed_undefined_xmlns'][DOMAIN], len(bad_xforms))
-            self.assertEqual(len(mail.outbox), 1)
 
     def test_fix_xforms_with_missing_xmlns_task_fixed(self):
         """Tests the ability to fix xforms with the periodic cron task
@@ -252,10 +252,11 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
 
         with tempdir() as tmp:
             with patch('corehq.apps.cleanup.tasks.UNDEFINED_XMLNS_LOG_DIR', tmp):
-                stats, log_file_path = fix_xforms_with_missing_xmlns()
+                with patch('corehq.apps.cleanup.tasks.mail_admins_async') as mocked_mail:
+                    stats, log_file_path = fix_xforms_with_missing_xmlns()
+                    self.assertTrue(mocked_mail.delay.called)
 
-            self.assertTrue(stats['fixed'][DOMAIN], len(bad_xforms))
-            self.assertEqual(len(mail.outbox), 1)
+        self.assertTrue(stats['fixed'][DOMAIN], len(bad_xforms))
 
     def assertNoMissingXmlnss(self, delete_apps=True):
         submissions = XFormInstance.get_db().view(
