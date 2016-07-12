@@ -1413,7 +1413,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
-        'corehq.pillows.application.AppPillow',
+        {
+            'name': 'ApplicationToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
+        },
         {
             'name': 'GroupPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1452,11 +1456,6 @@ PILLOWTOPS = {
             'name': 'AppDbChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
-        },
-        {
-            'name': 'ApplicationToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
         },
         {
             'name': 'DefaultChangeFeedPillow',
