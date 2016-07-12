@@ -29,7 +29,6 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
 from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
-from corehq.toggles import OPENLMIS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 
@@ -291,7 +290,6 @@ class SetupTab(UITab):
             EditProductView,
             ProductFieldsView,
         )
-        from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
             commcare_supply_setup = [
@@ -350,13 +348,6 @@ class SetupTab(UITab):
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
             ]
-            if OPENLMIS.enabled(self.domain):
-                commcare_supply_setup.append(
-                    # external sync
-                    {
-                        'title': FacilitySyncView.page_title,
-                        'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
-                    })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
