@@ -17,6 +17,8 @@ def should_use_sql_backend(domain_object_or_name):
         domain_name = domain_object_or_name
         domain_object = Domain.get_by_name(domain_name)
 
+    if domain_object is None:
+        return False
     toggle_enabled = USE_SQL_BACKEND.enabled(domain_name)
     if toggle_enabled:
         try:

@@ -488,7 +488,7 @@ def bug_report(req):
     report['feature_flags'] = toggles.toggles_dict(username=report['username'],
                                                    domain=report['domain']).keys()
     report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
-    report['scale_backend'] = should_use_sql_backend(report['domain'])
+    report['scale_backend'] = should_use_sql_backend(report['domain']) if report['domain'] else False
 
     try:
         couch_user = CouchUser.get_by_username(report['username'])
