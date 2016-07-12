@@ -7,5 +7,11 @@ from contextlib import contextmanager
 def get_temp_file():
     fd, name = tempfile.mkstemp()
     yield fd, name
-    os.close(fd)
-    os.unlink(name)
+    try:
+        os.close(fd)
+    except OSError:  # The file has already been closed.
+        pass
+    try:
+        os.unlink(name)
+    except OSError:  # The file has already been deleted.
+        pass
