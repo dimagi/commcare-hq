@@ -44,6 +44,25 @@ class DatespanFilter(BaseReportFilter):
         })
 
 
+class HiddenLastMonthDateFilter(DatespanFilter):
+    """
+    A filter that returns last month as datespan
+    but is hidden since datespan should be fixed to last month
+    """
+    template = "reports/filters/month_datespan.html"
+    label = ugettext_lazy("Date Range")
+    slug = "datespan"
+    inclusive = True
+
+    @property
+    def datespan(self):
+        now = datetime.datetime.utcnow()
+        last_month = DateSpan.from_month(now.month - 1, now.year)
+        self.request.datespan = last_month
+        self.context.update(dict(datespan=last_month))
+        return last_month
+
+
 class SingleDateFilter(BaseReportFilter):
     """
     A filter that returns a single date
