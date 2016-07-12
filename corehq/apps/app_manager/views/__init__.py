@@ -46,10 +46,6 @@ from corehq.apps.app_manager.views.apps import (
     view_app,
     export_gzip
 )
-from corehq.apps.app_manager.views.cli import (
-    direct_ccz,
-    list_apps,
-)
 from corehq.apps.app_manager.views.download import (
     download_app_strings,
     download_file,

@@ -36,6 +36,16 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^copy/gzip$', 'export_gzip', name='gzip_app')
 )
 
+
+# Begins with /a/<domain>/apps/api/
+api_urls = patterns('corehq.apps.app_manager.views.api',
+    url(r'^list_apps/$', 'list_apps', name='list_apps'),
+    url(r'^(?P<app_id>[\w-]+)/get_app_versions/$', 'get_app_versions', name='get_app_versions'),
+    url(r'^(?P<app_id>[\w-]+)/download_ccz/$', 'direct_ccz', name='direct_ccz'),
+    url(r'^download_ccz/$', 'deprecated_direct_ccz'),
+)
+
+
 urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^$', 'view_app', name='default_app'),
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', 'xform_display'),
@@ -133,8 +143,7 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^revert/(?P<app_id>[\w-]+)/$', 'revert_to_copy'),
     url(r'^delete_copy/(?P<app_id>[\w-]+)/$', 'delete_copy'),
 
-    url(r'^api/list_apps/$', 'list_apps', name='list_apps'),
-    url(r'^api/download_ccz/$', 'direct_ccz', name='direct_ccz'),
+    url(r'^api/', include(api_urls)),
     url(r'^download/(?P<app_id>[\w-]+)/$', 'download_index', name='download_index'),
     # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
