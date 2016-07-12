@@ -35,7 +35,9 @@ def get_reindex_commands(alias_name):
             add_demo_user_to_user_index,
             ('ptop_reindexer_v2', {'index': 'groups-to-user'}),
         ],
-        'hqapps': ['ptop_fast_reindex_apps'],
+        'hqapps': [
+            ('ptop_reindexer_v2', {'index': 'app'})
+        ],
         'hqgroups': [('ptop_reindexer_v2', {'index': 'group'})],
         'report_xforms': ['ptop_fast_reindex_reportxforms'],
         'report_cases': ['ptop_fast_reindex_reportcases'],
