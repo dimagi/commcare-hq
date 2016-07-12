@@ -61,6 +61,29 @@ class ArgsProvider(object):
         raise StopIteration
 
 
+class ArgsListProvider(ArgsProvider):
+    """Argument provider for iterating over a function by providing
+    a sequence of keyword arguments.
+    :param kwargs_list: Sequence of keyword arguments to iterate over.
+    """
+    def __init__(self, kwargs_list):
+        self.kwargs_list = list(kwargs_list)
+
+    def get_initial_args(self):
+        return [], self.kwargs_list[0]
+
+    def get_next_args(self, result, *last_args, **last_kwargs):
+        # all docs for the current key have been processed
+        # move on to the next key combo
+        kwargs_index = self.kwargs_list.index(last_kwargs) + 1
+        self.kwargs_list = self.kwargs_list[kwargs_index:]
+        try:
+            next_kwargs = self.kwargs_list[0]
+        except IndexError:
+            raise StopIteration
+        return last_args, next_kwargs
+
+
 def paginate_function(data_function, args_provider, event_handler=PaginationEventHandler()):
     """
     Repeatedly call a data provider function with successive sets of arguments provided
