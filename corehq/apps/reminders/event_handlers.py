@@ -145,7 +145,7 @@ def _add_parent_case_to_template_params(case, result):
 def _add_owner_to_template_params(case, result):
     owner = get_wrapped_owner(get_owner_id(case))
     if owner:
-        result['owner'] = _get_obj_template_info(owner)
+        result['case']['owner'] = _get_obj_template_info(owner)
 
 
 def _add_modified_by_to_template_params(case, result):
@@ -155,7 +155,7 @@ def _add_modified_by_to_template_params(case, result):
         return
 
     if modified_by:
-        result['modified_by'] = _get_obj_template_info(modified_by)
+        result['case']['modified_by'] = _get_obj_template_info(modified_by)
 
 
 def get_message_template_params(case=None):
