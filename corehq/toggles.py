@@ -441,13 +441,6 @@ TRANSFER_DOMAIN = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DHIS2_DOMAIN = StaticToggle(
-    'dhis2_domain',
-    'Enable DHIS2 integration for this domain',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
 PRIME_RESTORE = StaticToggle(
     'prime_restore',
     'Prime restore cache',
