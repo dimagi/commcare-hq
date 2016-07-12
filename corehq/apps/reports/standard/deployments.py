@@ -11,6 +11,8 @@ from casexml.apps.phone.analytics import get_sync_logs_for_user
 from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
+
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -82,9 +84,10 @@ class ApplicationStatusReport(DeploymentsReport):
     slug = "app_status"
     emailable = True
     exportable = True
-    fields = ['corehq.apps.reports.filters.users.UserTypeFilter',
-              'corehq.apps.reports.filters.select.GroupFilter',
-              'corehq.apps.reports.filters.select.SelectApplicationFilter']
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+        'corehq.apps.reports.filters.select.SelectApplicationFilter'
+    ]
 
     @property
     def headers(self):
@@ -103,18 +106,14 @@ class ApplicationStatusReport(DeploymentsReport):
 
     @property
     @memoized
-    def override_user_ids(self):
-        # attempt to speed up finding users when app is selected
-        app_id = self.request_params.get(SelectApplicationFilter.slug, None)
-        group_id = self.request_params.get(GroupFilter.slug, None)
-
-        if group_id:
-            # this is fast enough
-            return None
-        elif app_id:
-            return get_all_user_ids_submitted(self.domain, app_id)
-
-        return None
+    def users(self):
+        mobile_user_and_group_slugs = self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+            self.domain,
+            mobile_user_and_group_slugs,
+            include_inactive=False
+        )
+        return users_data.combined_users
 
     @property
     def rows(self):

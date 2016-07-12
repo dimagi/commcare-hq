@@ -9,8 +9,6 @@ from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.tour.tours import REPORT_BUILDER_NO_ACCESS, \
-    REPORT_BUILDER_ACCESS
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.form_processor.utils.general import use_sqlite_backend
@@ -236,19 +234,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
-        self._init_tours()
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
-
-    def _init_tours(self):
-        """
-        Add properties to the request for any tour that might be active
-        """
-        if self.request.user.is_authenticated():
-            tours = ((REPORT_BUILDER_ACCESS, 1), (REPORT_BUILDER_NO_ACCESS, 2))
-            for tour, step in tours:
-                if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
-                    self.request.guided_tour = tour.get_tour_data(self.request, step)
-                    break  # Only one of these tours may be active.
 
     @property
     def language(self):
@@ -803,7 +789,10 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
         send_html_email_async.delay(
             subject, email, body,
             email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-            ga_tracking_info={'cd4': request.domain})
+            ga_tracking_info={
+                'cd4': request.domain,
+                'cd10': report_slug
+            })
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
@@ -811,7 +800,10 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
             send_html_email_async.delay(
                 subject, recipient, body,
                 email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
-                ga_tracking_info={'cd4': request.domain})
+                ga_tracking_info={
+                    'cd4': request.domain,
+                    'cd10': report_slug
+                })
 
     return HttpResponse()
 
@@ -1800,6 +1792,7 @@ class EditFormInstance(View):
                 'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),
                 'sessionData': edit_session_data,
                 'returnUrl': reverse('render_form_data', args=[domain, instance_id]),
+                'domain': domain,
             }
         })
         return render(request, 'reports/form/edit_submission.html', context)

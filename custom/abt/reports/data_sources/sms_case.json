@@ -1,5 +1,6 @@
 {
   "domains": [
+    "airs",
     "airs-testing",
     "airsbenin",
     "airstanzania",
@@ -273,28 +274,6 @@
         "expression": {
           "default": 0,
           "cases": {
-            "Senegal": {
-              "default": 0,
-              "cases": {
-                "Kaolack": 31816
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_1_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
             "Rwanda": {
               "default": 0,
               "cases": {
@@ -466,7 +445,10 @@
             "Senegal": {
               "default": 0,
               "cases": {
-                "Nioro": 31816
+                "nioro": 123407,
+                "malem_hodar": 5445,
+                "koungheul": 45995,
+                "koumpentoum": 45704
               },
               "type": "switch",
               "switch_on": {
@@ -725,12 +707,32 @@
             "Senegal": {
               "default": 0,
               "cases": {
-                "Keur Tapha": 5742,
-                "Porokhane 2": 5173,
-                "Keur Maba 1": 4442,
-                "Keur Maba 2": 4588,
-                "Keur Moussa": 6349,
-                "Porokhane 1": 5522
+                "nioro_site": 13141,
+                "nioro": 13141,
+                "porokhane": 12703,
+                "keur_moussa": 7182,
+                "keur_maba": 9812,
+                "keur_tapha": 6764,
+                "ndrame_escale": 11244,
+                "wakh_ngouna": 11679,
+                "taiba_niassene_1": 9294,
+                "taiba_niassene_2": 10019,
+                "keur_madiabel_1": 9374,
+                "keur_madiabel_2": 8752,
+                "kaymor_1": 6821,
+                "kaymor_2": 6622,
+                "ndioum_ngainth": 5445,
+                "koungheul_": 12846,
+                "ida_mouride": 9305,
+                "missirah": 7734,
+                "saly_escale": 8545,
+                "gainthe_pathe": 7565,
+                "koumpentoum": 10648,
+                "malem_niani": 6100,
+                "mereto": 5218,
+                "payar": 8738,
+                "bamba": 10648,
+                "kouthia_gaidy": 4352
               },
               "type": "switch",
               "switch_on": {
@@ -1147,7 +1149,7 @@
         "expression": {
           "default": 0,
           "cases": {
-            "Senegal": 31816,
+            "Senegal": 220551,
             "Rwanda": 144417,
             "Zambia": 539348,
             "Ethiopia": 708258,

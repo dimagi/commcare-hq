@@ -64,9 +64,11 @@ class SupervisionData(ILSData):
     def rows(self):
         rows = []
         if self.config['location_id'] and self.config['org_summary']:
-            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+            locations = SQLLocation.active_objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
-                facilities = loc.get_descendants().filter(location_type__administrative=False).count()
+                facilities = loc.get_descendants().filter(
+                    location_type__administrative=False, is_archived=False
+                ).count()
                 org_summary = OrganizationSummary.objects.filter(
                     date__range=(self.config['startdate'], self.config['enddate']),
                     location_id=loc.location_id
@@ -128,7 +130,7 @@ class DistrictSupervisionData(ILSData):
     def rows(self):
         rows = []
         if self.config['location_id']:
-            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+            locations = SQLLocation.active_objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
                 total_responses = 0
                 total_possible = 0

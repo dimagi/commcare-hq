@@ -99,7 +99,6 @@ class UCLAPatientFluff(fluff.IndicatorDocument):
     document_filter = CustomFilter(lambda c: c.type == 'participant')
 
     group_by = ('domain', )
-    save_direct_to_sql = True
     kafka_topic = topics.CASE
 
     name = flat_field(lambda case: case.full_name)

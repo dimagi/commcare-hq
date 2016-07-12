@@ -92,7 +92,7 @@ class OtaRestoreTest(TestCase, TestFileMixin):
         delete_all_cases()
         delete_all_sync_logs()
         restore_config = RestoreConfig(project=self.project, restore_user=self.restore_user)
-        restore_config.cache.delete(restore_config._initial_cache_key())
+        restore_config.cache.delete(restore_config._initial_cache_key)
         super(OtaRestoreTest, self).tearDown()
 
     def testUserRestore(self):

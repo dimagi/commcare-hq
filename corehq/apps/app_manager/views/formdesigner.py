@@ -33,6 +33,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
+from corehq.apps.tour import tours
 
 
 logger = logging.getLogger(__name__)
@@ -114,6 +115,10 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             for f in form.get_phase().get_forms()
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
+
+    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) \
+        and app.vellum_case_management and form.requires_case():
+        request.guided_tour = tours.VELLUM_CASE_MANAGEMENT.get_tour_data()
 
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
@@ -199,7 +204,7 @@ def get_form_data_schema(request, domain, form_unique_id):
     try:
         data.append(get_session_schema(form))
         if form and form.requires_case():
-            data.append(get_casedb_schema(app))  # TODO use domain instead of app
+            data.append(get_casedb_schema(form))
     except Exception as e:
         return HttpResponseBadRequest(e)
 

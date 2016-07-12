@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests import TestXmlMixin, AppFactory
 from django.test.testcases import SimpleTestCase
 from mock import patch, MagicMock
+import re
 
 
 @patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
@@ -93,8 +94,9 @@ class SchemaTest(SimpleTestCase):
     def setUp(self):
         self.factory = AppFactory()
 
-    def test_get_casedb_schema_empty_app(self):
-        schema = util.get_casedb_schema(self.factory.app)
+    def test_get_casedb_schema_form_without_cases(self):
+        survey = self.add_form()
+        schema = util.get_casedb_schema(survey)
         self.assert_has_kv_pairs(schema, {
             "id": "casedb",
             "uri": "jr://instance/casedb",
@@ -105,24 +107,66 @@ class SchemaTest(SimpleTestCase):
         })
 
     def test_get_casedb_schema_with_form(self):
-        self.add_form("village")
-        schema = util.get_casedb_schema(self.factory.app)
+        village = self.add_form("village")
+        schema = util.get_casedb_schema(village)
         self.assertEqual(len(schema["subsets"]), 1, schema["subsets"])
         self.assert_has_kv_pairs(schema["subsets"][0], {
-            'id': 'village',
+            'id': 'case',
+            'name': 'village',
             'key': '@case_type',
             'structure': {'case_name': {}},
             'related': None,
         })
 
     def test_get_casedb_schema_with_related_case_types(self):
-        self.add_form("family")
+        family = self.add_form("family")
         village = self.add_form("village")
         self.factory.form_opens_case(village, case_type='family', is_subcase=True)
-        schema = util.get_casedb_schema(self.factory.app)
+        schema = util.get_casedb_schema(family)
         subsets = {s["id"]: s for s in schema["subsets"]}
-        self.assertEqual(subsets["village"]["related"], None)
-        self.assertDictEqual(subsets["family"]["related"], {"parent": "village"})
+        self.assertEqual(subsets["parent"]["related"], None)
+        self.assertDictEqual(subsets["case"]["related"], {"parent": "parent"})
+
+    def test_get_casedb_schema_with_multiple_parent_case_types(self):
+        referral = self.add_form("referral")
+        child = self.add_form("child")
+        self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
+        pregnancy = self.add_form("pregnancy")
+        self.factory.form_opens_case(pregnancy, case_type='referral', is_subcase=True)
+        schema = util.get_casedb_schema(referral)
+        subsets = {s["id"]: s for s in schema["subsets"]}
+        self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$',
+                        subsets["parent"]["name"]))
+        self.assertEqual(subsets["parent"]["structure"], {"case_name": {}})
+
+    def test_get_casedb_schema_with_deep_hierarchy(self):
+        child = self.add_form("child")
+        parent = self.add_form("parent")
+        self.factory.form_opens_case(parent, case_type='child', is_subcase=True)
+        grandparent = self.add_form("grandparent")
+        self.factory.form_opens_case(grandparent, case_type='parent', is_subcase=True)
+        greatgrandparent = self.add_form("greatgrandparent")
+        self.factory.form_opens_case(greatgrandparent, case_type='grandparent', is_subcase=True)
+        schema = util.get_casedb_schema(child)
+        self.assertEqual([s["name"] for s in schema["subsets"]],
+                         ["child", "parent (parent)", "grandparent (grandparent)"])
+        schema = util.get_casedb_schema(parent)
+        self.assertEqual([s["name"] for s in schema["subsets"]],
+                         ["parent", "parent (grandparent)", "grandparent (greatgrandparent)"])
+        schema = util.get_casedb_schema(grandparent)
+        self.assertEqual([s["name"] for s in schema["subsets"]],
+                         ["grandparent", "parent (greatgrandparent)"])
+
+    def test_get_casedb_schema_with_parent_case_property_update(self):
+        family = self.add_form("family", {"parent/has_well": "/data/village_has_well"})
+        village = self.add_form("village")
+        self.factory.form_opens_case(village, case_type='family', is_subcase=True)
+        schema = util.get_casedb_schema(family)
+        subsets = {s["id"]: s for s in schema["subsets"]}
+        self.assertDictEqual(subsets["case"]["related"], {"parent": "parent"})
+        self.assertEqual(subsets["case"]["structure"]["case_name"], {})
+        #self.assertEqual(subsets["parent"]["structure"]["has_well"], {}) TODO
+        self.assertNotIn("parent/has_well", subsets["case"]["structure"])
 
     def test_get_session_schema_for_module_with_no_case_type(self):
         form = self.add_form()
@@ -142,32 +186,9 @@ class SchemaTest(SimpleTestCase):
         self.assertDictEqual(schema["structure"]["case_id"], {
             "reference": {
                 "source": "casedb",
-                "subset": "village",
+                "subset": "case",
                 "key": "@case_id",
             },
-        })
-
-    def test_get_session_schema_form_parent_child_case(self):
-        self.factory.new_basic_module('child visit', 'child')
-        m2, m2f0 = self.factory.new_basic_module('child visit', 'visit')
-        self.factory.form_requires_case(m2f0, parent_case_type='child')
-
-        schema = util.get_session_schema(m2f0)
-        self.assertDictEqual(schema["structure"], {
-            'parent_id': {
-                "reference": {
-                    "source": "casedb",
-                    "subset": "child",
-                    "key": "@case_id",
-                }
-            },
-            'case_id': {
-                "reference": {
-                    "source": "casedb",
-                    "subset": "visit",
-                    "key": "@case_id",
-                }
-            }
         })
 
     def test_get_session_schema_advanced_form(self):
@@ -178,59 +199,8 @@ class SchemaTest(SimpleTestCase):
         self.assertDictEqual(schema["structure"]["case_id_load_visit_0"], {
             "reference": {
                 "source": "casedb",
-                "subset": "visit",
+                "subset": "case",
                 "key": "@case_id",
-            },
-        })
-
-    def test_get_session_schema_advanced_form_multiple_cases(self):
-        self.factory.new_advanced_module('visit history', 'child')
-        m2, m2f0 = self.factory.new_advanced_module('visit history', 'visit')
-        self.factory.form_requires_case(m2f0, 'child')
-        self.factory.form_requires_case(m2f0, 'visit', parent_case_type='child')
-
-        schema = util.get_session_schema(m2f0)
-        self.assertDictEqual(schema["structure"], {
-            'case_id_load_child_0': {
-                "reference": {
-                    "source": "casedb",
-                    "subset": "child",
-                    "key": "@case_id",
-                }
-            },
-            'case_id_load_visit_0': {
-                "reference": {
-                    "source": "casedb",
-                    "subset": "visit",
-                    "key": "@case_id",
-                }
-            }
-        })
-
-    def test_get_session_schema_form_child_module(self):
-        self.module_0, m0f0 = self.factory.new_basic_module('parent', 'gold-fish')
-        self.module_1, m1f0 = self.factory.new_basic_module('child', 'guppy', parent_module=self.module_0)
-        self.factory.form_requires_case(m0f0)
-        self.factory.form_opens_case(m0f0, 'guppy', is_subcase=True)
-
-        self.factory.form_requires_case(m1f0, 'gold-fish')
-        self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
-
-        schema = util.get_session_schema(m1f0)
-        self.assertDictEqual(schema["structure"], {
-            'case_id': {
-                "reference": {
-                    "source": "casedb",
-                    "subset": "gold-fish",
-                    "key": "@case_id",
-                }
-            },
-            'case_id_guppy': {
-                "reference": {
-                    "source": "casedb",
-                    "subset": "guppy",
-                    "key": "@case_id",
-                }
             },
         })
 
@@ -245,9 +215,13 @@ class SchemaTest(SimpleTestCase):
         for key, value in expected_dict.items():
             self.assertEqual(test_dict[key], value)
 
-    def add_form(self, case_type=None):
+    def add_form(self, case_type=None, case_updates=None):
         module_id = len(self.factory.app.modules)
         module, form = self.factory.new_basic_module(module_id, case_type)
         if case_type:
             self.factory.form_opens_case(form, case_type)
+        if case_updates:
+            assert case_type, 'case_type is required with case_updates'
+            self.factory.form_requires_case(
+                form, case_type=case_type, update=case_updates)
         return form

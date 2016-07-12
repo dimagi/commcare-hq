@@ -185,6 +185,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'report': self.config,
+            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
         }
 
     @property
@@ -299,18 +300,7 @@ class ReportBuilderPaywall(ReportBuilderPaywallBase):
     urlname = 'report_builder_paywall'
 
     def dispatch(self, request, *args, **kwargs):
-        self._init_tour()
         return super(ReportBuilderPaywall, self).dispatch(request, *args, **kwargs)
-
-    def _init_tour(self):
-        """
-        Add properties to the request if the tour should be active
-        """
-        if self.request.user.is_authenticated():
-            tour = tours.REPORT_BUILDER_NO_ACCESS
-            step = 1
-            if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
-                self.request.guided_tour = tour.get_tour_data(self.request, step)
 
 
 class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
@@ -929,7 +919,8 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'data_source': self.config,
-            'read_only': self.read_only
+            'read_only': self.read_only,
+            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
         }
 
     @property
