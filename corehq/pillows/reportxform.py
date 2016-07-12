@@ -11,7 +11,7 @@ from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 from .mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
-from .xform import XFormPillow
+from .xform import XFormPillow, xform_pillow_filter
 
 COMPUTED_CASEBLOCKS_KEY = '_case_blocks'
 
@@ -38,9 +38,8 @@ def report_xform_filter(doc_dict):
     :return: True to filter out doc
     """
     domain = doc_dict.get('domain', None)
-    if not domain or domain not in getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', []):
-        # full indexing is only enabled for select domains on an opt-in basis
-        return True
+    # full indexing is only enabled for select domains on an opt-in basis
+    return xform_pillow_filter(doc_dict) or domain not in getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
 
 
 def transform_xform_for_report_forms_index(doc_dict):
