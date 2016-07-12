@@ -115,10 +115,7 @@ class FormReindexAccessor(ReindexAccessor):
             pass
 
     def doc_to_json(self, doc):
-        from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
-        return add_couch_properties_to_sql_form_json(
-            doc.to_json(include_attachments=True)
-        )
+        return doc.to_json(include_attachments=True)
 
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         received_on_since = startkey or datetime.min
