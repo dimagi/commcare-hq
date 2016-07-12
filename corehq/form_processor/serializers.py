@@ -42,7 +42,7 @@ class XFormInstanceSQLSerializer(DeletableModelSerializer):
 
     class Meta:
         model = XFormInstanceSQL
-        exclude = ('id',)
+        exclude = ('id','form_id')
 
     def __init__(self, *args, **kwargs):
         include_attachments = kwargs.pop('include_attachments', False)
