@@ -5,13 +5,11 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicChe
 from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.doc_processor.couch import CouchDocumentProvider
-from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
-    XFormDuplicate, SubmissionErrorLog
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
+from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 from .mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from .xform import XFormPillow
 
@@ -80,22 +78,14 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
     )
 
 
-def get_report_xform_couch_reindexer():
-    iteration_key = "ReportXFormToElasticsearchPillow_{}_reindexer".format(REPORT_XFORM_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-        XFormInstance,
-        XFormArchived,
-        XFormError,
-        XFormDeprecated,
-        XFormDuplicate,
-        ('XFormInstance-Deleted', XFormInstance),
-        ('HQSubmission', XFormInstance),
-        SubmissionErrorLog,
-    ])
-    return ResumableBulkElasticPillowReindexer(
-        doc_provider,
+def get_report_xforms_reindexer():
+    """Returns a reindexer that will only reindex data from enabled domains
+    """
+    domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
+    change_provider = get_domain_form_change_provider(domains=domains)
+    return ElasticPillowReindexer(
+        pillow=get_report_xform_to_elasticsearch_pillow(),
+        change_provider=change_provider,
         elasticsearch=get_es_new(),
-        index_info=REPORT_XFORM_INDEX_INFO,
-        doc_filter=report_xform_filter,
-        doc_transform=transform_xform_for_report_forms_index,
+        index_info=REPORT_XFORM_INDEX_INFO
     )
