@@ -406,3 +406,9 @@ def new_api_key(request):
     api_key.key = api_key.generate_key()
     api_key.save()
     return HttpResponse(api_key.key)
+
+
+class EnableSuperuserView(BaseMyAccountView):
+    urlname = 'enable_superuser'
+    page_title = ugettext_lazy("Enable Superuser")
+    template_name = 'settings/enable_superuser.html'
