@@ -1453,7 +1453,6 @@ PILLOWTOPS = {
     ],
     'core_ext': [
         'corehq.pillows.reportcase.ReportCasePillow',
-        'corehq.pillows.reportxform.ReportXFormPillow',
         {
             'name': 'AppDbChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',

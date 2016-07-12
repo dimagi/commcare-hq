@@ -4,33 +4,13 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
-from corehq.pillows.xform import transform_xform_for_elasticsearch
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
+from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
-from .mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
-from .xform import XFormPillow, xform_pillow_filter
-
-COMPUTED_CASEBLOCKS_KEY = '_case_blocks'
-
-
-class ReportXFormPillow(XFormPillow):
-    """
-    an extension to XFormPillow that provides for indexing of arbitrary data fields
-    within the xform
-    """
-    es_alias = "report_xforms"
-    es_type = "report_xform"
-    es_index = REPORT_XFORM_INDEX_INFO.index
-
-    #type level mapping
-    default_mapping = REPORT_XFORM_INDEX_INFO.mapping
-
-    def change_transform(self, doc_dict):
-        if not report_xform_filter(doc_dict):
-            return transform_xform_for_report_forms_index(doc_dict)
 
 
 def report_xform_filter(doc_dict):

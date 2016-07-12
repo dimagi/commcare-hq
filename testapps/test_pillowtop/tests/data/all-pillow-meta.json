@@ -409,23 +409,6 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ReportCaseToElasticsearchPillow"
     },
-    "ReportXFormPillow": {
-        "advertised_name": "corehq.pillows.reportxform.ReportXFormPillow.test_report_xforms_20150406_1136.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.reportxform.ReportXFormPillow.test_report_xforms_20150406_1136.testhq",
-        "couch_filter": "couchforms/xforms",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "es_alias": "report_xforms",
-        "es_index": "test_report_xforms_20150406_1136",
-        "es_type": "report_xform",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.reportxform.ReportXFormPillow",
-        "include_docs": false,
-        "name": "ReportXFormPillow",
-        "unique_id": "test_report_xforms_20150406_1136"
-    },
     "ReportXFormToElasticsearchPillow": {
         "advertised_name": "ReportXFormToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",

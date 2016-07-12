@@ -9,7 +9,6 @@ from corehq.sql_db.operations import HqRunPython
 def migrate_report_es_pillows(apps, schema_editor):
     pillow_names = [
         "ReportCasePillow",
-        "ReportXFormPillow",
     ]
     migrate_legacy_pillows(apps, pillow_names)
 
