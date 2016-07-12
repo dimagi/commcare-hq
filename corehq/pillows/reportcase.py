@@ -2,17 +2,16 @@ import copy
 
 from django.conf import settings
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
-from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
+from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 from .base import convert_property_dict
 
 
@@ -75,16 +74,14 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
     )
 
 
-def get_report_case_couch_reindexer():
-    iteration_key = "ReportCaseToElasticsearchPillow_{}_reindexer".format(REPORT_CASE_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, [
-        CommCareCase,
-        ('CommCareCase-Deleted', CommCareCase),
-    ])
-    return ResumableBulkElasticPillowReindexer(
-        doc_provider,
+def get_report_case_reindexer():
+    """Returns a reindexer that will only reindex data from enabled domains
+    """
+    domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
+    change_provider = get_domain_case_change_provider(domains=domains)
+    return ElasticPillowReindexer(
+        pillow=get_report_case_to_elasticsearch_pillow(),
+        change_provider=change_provider,
         elasticsearch=get_es_new(),
-        index_info=REPORT_CASE_INDEX_INFO,
-        doc_filter=report_case_filter,
-        doc_transform=transform_case_to_report_es,
+        index_info=REPORT_CASE_INDEX_INFO
     )

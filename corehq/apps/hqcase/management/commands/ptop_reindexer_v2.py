@@ -16,8 +16,8 @@ from corehq.pillows.domain import get_domain_reindexer
 from corehq.pillows.group import get_group_reindexer
 from corehq.pillows.groups_to_user import get_groups_to_user_reindexer
 from corehq.pillows.ledger import get_ledger_v2_reindexer, get_ledger_v1_reindexer
-from corehq.pillows.reportcase import get_report_case_couch_reindexer
 from corehq.pillows.reportxform import get_report_xform_couch_reindexer
+from corehq.pillows.reportcase import get_report_case_reindexer
 from corehq.pillows.sms import get_sms_reindexer
 from corehq.pillows.user import get_user_reindexer
 from corehq.pillows.xform import get_couch_form_reindexer, get_sql_form_reindexer
@@ -76,7 +76,7 @@ class Command(BaseCommand):
             'ledger-v2': get_ledger_v2_reindexer,
             'ledger-v1': get_ledger_v1_reindexer,
             'sms': get_sms_reindexer,
-            'report-case': get_report_case_couch_reindexer,
+            'report-case': get_report_case_reindexer,
             'report-xform': get_report_xform_couch_reindexer,
             'app': get_app_reindexer,
             'couch-app-form-submission': get_couch_app_form_submission_tracker_reindexer,
