@@ -67,13 +67,12 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
 
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
-        template: "#case-view-item-template",
 
         getTemplate: function () {
-            if (this.options.tiles) {
-                return "#case-tile-view-item-template";
-            } else {
+            if (_.isNull(this.options.tiles)) {
                 return "#case-view-item-template";
+            } else {
+                return "#case-tile-view-item-template";
             }
         },
 
@@ -121,7 +120,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         tagName: "div",
         template: "#case-view-list-template",
         childView: MenuList.CaseView,
-        childViewContainer: "div",
+        childViewContainer: ".case-container",
 
         initialize: function (options) {
             this.tiles = options.tiles;
