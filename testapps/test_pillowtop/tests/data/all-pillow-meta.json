@@ -38,23 +38,6 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "AppDbChangeFeedPillow"
     },
-    "AppPillow": {
-        "advertised_name": "corehq.pillows.application.AppPillow.test_hqapps_2016-07-11_2128.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.application.AppPillow.test_hqapps_2016-07-11_2128.testhq",
-        "couch_filter": "app_manager/all_apps",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__apps",
-        "document_class": "ApplicationBase",
-        "es_alias": "hqapps",
-        "es_index": "test_hqapps_2016-07-11_2128",
-        "es_type": "app",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.application.AppPillow",
-        "include_docs": true,
-        "name": "AppPillow",
-        "unique_id": "test_hqapps_2016-07-11_2128"
-    },
     "ApplicationBlobDeletionPillow": {
         "advertised_name": "ApplicationBlobDeletionPillow",
         "change_feed_type": "CouchChangeFeed",
