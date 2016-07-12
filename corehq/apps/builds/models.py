@@ -32,7 +32,8 @@ class CommCareBuild(Document):
     build_number = IntegerProperty()
     version = SemanticVersionProperty()
     time = DateTimeProperty()
-    
+    j2me_enabled = BooleanProperty(default=True)
+
     def put_file(self, payload, path, filename=None):
         """
         Add an attachment to the build (useful for constructing the build)
@@ -88,6 +89,13 @@ class CommCareBuild(Document):
                 raise
         return self
 
+    @classmethod
+    def create_without_artifacts(cls, version, build_number):
+        self = cls(build_number=build_number, version=version,
+                   time=datetime.utcnow(), j2me_enabled=False)
+        self.save()
+        return self
+
     def minor_release(self):
         major, minor, _ = self.version.split('.')
         return int(major), int(minor)
@@ -132,6 +140,18 @@ class CommCareBuild(Document):
     def all_builds(cls):
         return cls.view('builds/all', include_docs=True, reduce=False)
 
+    @classmethod
+    @quickcache([], timeout=5 * 60)
+    #This seems to be not working.
+    def j2me_enabled_builds(cls):
+        """
+        Fetch version numbers for CommCareBuilds compatible with J2ME
+        """
+        j2me_enabled_builds = []
+        for version_build in cls.all_builds():
+            if version_build.j2me_enabled:
+                j2me_enabled_builds.append(version_build.version)
+        return j2me_enabled_builds
 
 class BuildSpec(DocumentSchema):
     version = StringProperty()
@@ -239,6 +259,16 @@ class CommCareBuildConfig(Document):
         else:
             return self.menu
 
+    @classmethod
+    def j2me_enabled_configs(cls):
+        """
+        Fetch labels for CommCareBuilds compatible with J2ME
+        """
+        j2me_enabled_configs = []
+        for version_config in cls.fetch().menu:
+            if version_config.j2me_enabled:
+                j2me_enabled_configs.append(version_config.label)
+        return j2me_enabled_configs
 
 class BuildRecord(BuildSpec):
     signed = BooleanProperty(default=True)

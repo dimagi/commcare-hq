@@ -41,7 +41,7 @@ from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
-
+from corehq.apps.builds.models import CommCareBuildConfig
 
 def _get_error_counts(domain, app_id, version_numbers):
     res = (UserErrorEntry.objects
@@ -75,8 +75,10 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_configs()
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
+        app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
