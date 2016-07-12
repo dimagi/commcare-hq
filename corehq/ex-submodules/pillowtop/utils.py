@@ -149,8 +149,18 @@ def get_pillow_json(pillow_config):
         'hours_since_last': hours_since_last
     }
 
+ChangeError = namedtuple('ChangeError', 'change exception')
 
-def build_bulk_payload(index_info, changes, doc_transform=None):
+
+class ErrorCollector(object):
+    def __init__(self):
+        self.errors = []
+
+    def add_error(self, error):
+        self.errors.append(error)
+
+
+def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
     doc_transform = doc_transform or (lambda x: x)
     for change in changes:
         if change.deleted and change.id:
@@ -161,16 +171,22 @@ def build_bulk_payload(index_info, changes, doc_transform=None):
                     "_id": change.id
                 }
             }
-        doc = change.get_document()
-        doc = doc_transform(doc)
-        yield {
-            "index": {
-                "_index": index_info.index,
-                "_type": index_info.type,
-                "_id": doc['_id']
-            }
-        }
-        yield doc
+        elif not change.deleted:
+            try:
+                doc = change.get_document()
+                doc = doc_transform(doc)
+                yield {
+                    "index": {
+                        "_index": index_info.index,
+                        "_type": index_info.type,
+                        "_id": doc['_id']
+                    }
+                }
+                yield doc
+            except Exception as e:
+                if not error_collector:
+                    raise
+                error_collector.add_error(ChangeError(change, e))
 
 
 def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):

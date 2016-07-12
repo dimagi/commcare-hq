@@ -1,10 +1,11 @@
-from .document_types import CASE, FORM, DOMAIN, META
+from .document_types import CASE, FORM, DOMAIN, META, APP
 
 # this is redundant but helps avoid import warnings until nothing references these
 CASE = CASE
 FORM = FORM
 DOMAIN = DOMAIN
 META = META
+APP = APP
 
 # new models
 CASE_SQL = 'case-sql'
@@ -28,6 +29,7 @@ ALL = (
     META,
     SMS,
     WEB_USER,
+    APP,
 )
 
 

@@ -47,14 +47,22 @@ class Command(BaseCommand):
             default=False,
             help="Don't do the actual modifications, but still log what would be affected"
         ),
+        make_option(
+            '--noinput',
+            action='store_true',
+            dest='noinput',
+            default=False,
+            help="Run the command without interactive input"
+        )
     )
 
     def handle(self, *args, **options):
 
         dry_run = options.get("dry_run", True)
+        noinput = options.get("noinput", False)
         log_path = args[0].strip()
 
-        if not options.get('no_input', False) and not dry_run:
+        if not noinput and not dry_run:
             confirm = raw_input(
                 u"""
                 Are you sure you want to fix XFormInstances with "undefined" xmlns?

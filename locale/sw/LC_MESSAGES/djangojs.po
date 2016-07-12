@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-06-21 19:47+0000\n"
+"POT-Creation-Date: 2016-07-12 15:21+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -61,19 +61,19 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:93
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:94
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:97
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:98
 msgid "Error saving!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:99
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:100
 msgid "Unknown error: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:102
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:103
 msgid ""
 "This can happen if you loaded CloudCare from a different address than the "
 "server address"
@@ -130,6 +130,30 @@ msgstr ""
 
 #: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:209
 msgid "Upload "
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:82
+msgid "Please enter your name."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:91
+msgid "Please specify an email."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:118
+msgid "There is already a user with this email."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:126
+msgid "Checking email..."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:136
+msgid "Please specify a password."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:152
+msgid "Please specify a project name."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:22
@@ -228,6 +252,14 @@ msgstr ""
 
 #: corehq/apps/style/static/style/ko/components/inline_edit.js:66
 msgid "You have unsaved changes."
+msgstr ""
+
+#: corehq/apps/style/static/style/ko/password_validators.ko.js:12
+msgid "Your password is too weak! Try adding numbers or symbols."
+msgstr ""
+
+#: corehq/apps/style/static/style/ko/validators.ko.js:10
+msgid "Not a valid email"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:229

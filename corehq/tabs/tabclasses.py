@@ -657,7 +657,6 @@ class MessagingTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/sms/',
         '/a/{domain}/reminders/',
-        '/a/{domain}/reports/message_log/',
         '/a/{domain}/data/edit/case_groups/',
     )
 
@@ -791,16 +790,6 @@ class MessagingTab(UITab):
                             'urlname': CopyBroadcastView.urlname,
                         },
                     ],
-                    'show_in_dropdown': True,
-                },
-            ])
-
-        if self.can_use_outbound_sms:
-            from corehq.apps.reports.standard.sms import MessageLogReport
-            messages_urls.extend([
-                {
-                    'title': _('Message Log'),
-                    'url': MessageLogReport.get_url(domain=self.domain),
                     'show_in_dropdown': True,
                 },
             ])
