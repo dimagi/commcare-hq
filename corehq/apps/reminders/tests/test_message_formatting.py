@@ -61,11 +61,36 @@ class MessageTestCase(TestCase):
         cls.location.delete()
         cls.location_type.delete()
 
-    def test_message(self):
+    def test_render_context(self):
         message = 'The EDD for client with ID {case.external_id} is approaching in {case.edd.days_until} days.'
-        case_json = {'external_id': 123, 'edd': datetime.utcnow() + timedelta(days=30)}
-        expected = 'The EDD for client with ID 123 is approaching in 30 days.'
-        self.assertEqual(Message.render(message, case=case_json), expected)
+        context = {'case': {'external_id': 123, 'edd': datetime.utcnow() + timedelta(days=30)}}
+        self.assertEqual(
+            Message.render(message, **context),
+            'The EDD for client with ID 123 is approaching in 30 days.'
+        )
+
+    def test_render_nested_context(self):
+        message = 'Case name {case.name}, Parent name {case.parent.name}'
+        context = {'case': {'name': 'abc', 'parent': {'name': 'def'}}}
+        self.assertEqual(
+            Message.render(message, **context),
+            'Case name abc, Parent name def'
+        )
+
+    def test_render_missing_references(self):
+        message = 'Case name {case.name}, Case id {case.external_id}, Parent name {case.parent.name}'
+        context = {'case': {'name': 'abc'}}
+        self.assertEqual(
+            Message.render(message, **context),
+            'Case name abc, Case id (?), Parent name (?)'
+        )
+
+        message = 'Ref {ref1} {ref1.ref2}'
+        context = {'case': {'name': 'abc'}}
+        self.assertEqual(
+            Message.render(message, **context),
+            'Ref (?) (?)'
+        )
 
     def create_child_case(self, owner=None, modified_by=None):
         owner = owner or self.mobile_user
