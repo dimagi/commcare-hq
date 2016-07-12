@@ -19,8 +19,7 @@
     </style>
 {% endblock %}
 
-{% block js-inline %}
-{% include "reports/standard/partials/report_loader.html" %}
+{% block js-inline %}{{ block.super }}
 <script type="text/javascript">
     // "Performing / Active User Trends" Chart
     function setupCharts() {
@@ -151,7 +150,7 @@
     {% endblocktrans %}
 </p>
 {% endblock page_title %}
-{% block dashboard %}
+{% block reportcontent %}
     <h2>{% trans "Last Month Stats" %}</h2>
 <table class="table lead">
     <thead>
