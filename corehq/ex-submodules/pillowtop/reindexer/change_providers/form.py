@@ -82,9 +82,8 @@ class SqlDomainXFormChangeProvider(ChangeProvider):
 
 
 def get_domain_form_change_provider(domains):
-    real_domains = {domain for domain in domains if Domain.get_by_name(domain)}
-    sql_domains = {domain for domain in real_domains if should_use_sql_backend(domain)}
-    couch_domains = set(real_domains) - sql_domains
+    sql_domains = {domain for domain in domains if should_use_sql_backend(domain)}
+    couch_domains = set(domains) - sql_domains
 
     return CompositeChangeProvider([
         SqlDomainXFormChangeProvider(sql_domains),
