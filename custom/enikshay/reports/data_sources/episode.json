@@ -307,6 +307,15 @@
             {
                 "filter": {
                     "type": "named",
+                    "name": "transgender"
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "transgender"
+            },
+            {
+                "filter": {
+                    "type": "named",
                     "name": "pulmonary"
                 },
                 "type": "boolean",
@@ -388,9 +397,34 @@
                         }
                     ]
                 },
-                "display_name": "test_purpose_diagnostic",
+                "display_name": "new_smear_positive_pulmonary_TB_under_15",
                 "type": "boolean",
                 "column_id": "new_smear_positive_pulmonary_TB_under_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "under_15"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB_over_15",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB_over_15"
             }
         ],
         "named_filters": {
@@ -457,6 +491,40 @@
                 },
                 "type": "boolean_expression",
                 "property_value": "pulmonary"
+            },
+            "transgender":{
+                "operator": "eq",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "sex"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
+                        }
+                    }
+                },
+                "type": "boolean_expression",
+                "property_value": "t"
             },
             "male": {
                 "operator": "eq",
