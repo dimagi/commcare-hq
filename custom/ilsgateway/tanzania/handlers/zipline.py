@@ -31,7 +31,9 @@ class ZiplineGenericHandler(KeywordHandler):
         text_split = text.split()
         product_codes = text_split[::2]
         quantities = text_split[1::2]
-        if len(product_codes) != len(quantities):
+
+        product_codes_len = len(product_codes)
+        if product_codes_len == 0 or product_codes_len != len(quantities):
             raise ParseError(self.error_message)
         self._check_quantities(quantities)
         self._check_product_codes(product_codes)

@@ -185,7 +185,7 @@ REC_CONFIRMATION = _(
 )
 
 REC_HELP = _(
-    "Please send your emergency request in the format: rec <product> <quantity> ..."
+    "Please send your receipt in the format: rec <product> <quantity> ..."
 )
 
 REC_ERROR = _(
