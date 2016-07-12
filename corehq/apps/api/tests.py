@@ -1,3 +1,4 @@
+import base64
 import json
 import uuid
 from datetime import datetime
@@ -1641,9 +1642,14 @@ class TestConfigurableReportDataResource(APIResourceTest):
             endpoint += "?" + urlencode(get_params or {})
         return endpoint
 
+    def setUp(self):
+        credentials = base64.b64encode("{}:{}".format(self.username, self.password))
+        self.client.defaults['HTTP_AUTHORIZATION'] = 'Basic ' + credentials
+
     @classmethod
     def setUpClass(cls):
         super(TestConfigurableReportDataResource, cls).setUpClass()
+
         case_type = "my_case_type"
         field_name = "my_field"
 
