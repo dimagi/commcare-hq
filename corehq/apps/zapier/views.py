@@ -61,7 +61,12 @@ class UnsubscribeView(View):
         return super(UnsubscribeView, self).dispatch(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)
-        url = data['target_url']
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return HttpResponse(status=400)
+        url = data.get('target_url')
+        if not url:
+            return HttpResponse(status=400)
         delete_subscription_with_url(url)
         return HttpResponse('OK')

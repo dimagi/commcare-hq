@@ -2,6 +2,7 @@ from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
+from tastypie.http import HttpForbidden
 from tastypie.paginator import Paginator
 from tastypie.resources import convert_post_to_patch, ModelResource, Resource
 from tastypie.utils import dict_strip_unicode_keys
@@ -576,12 +577,14 @@ class DomainForms(Resource):
     def obj_get_list(self, bundle, **kwargs):
         application_id = bundle.request.GET.get('application_id')
         if not application_id:
-            raise NotFound('You have to choose application.')
+            raise NotFound('application_id parameter required')
 
         domain = kwargs['domain']
         couch_user = CouchUser.from_django_user(bundle.request.user)
         if not ZAPIER_INTEGRATION.enabled(domain) or not couch_user.is_member_of(domain):
-            return []
+            raise ImmediateHttpResponse(
+                HttpForbidden('You are not allowed to get list of forms for this domain')
+            )
 
         results = []
         application = Application.get(docid=application_id)
