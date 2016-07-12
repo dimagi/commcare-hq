@@ -15,13 +15,13 @@ body {
     grid-template-columns: repeat(12, 60px) min-content 60px;
     grid-template-rows: repeat(6, 60px) min-content 60px;
     background-color: #fff;
-    color: #444;
-    border-color: #444;
+    color: #685c53;
+    border-color: #685c53;
 }
 
 .box {
-    border-color: #444;
-    color: #444;
+    border-color: #685c53;
+    color: #685c53;
     font-size: 100%;
 }
 
