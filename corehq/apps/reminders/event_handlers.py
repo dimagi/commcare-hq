@@ -155,7 +155,7 @@ def _add_modified_by_to_template_params(case, result):
         return
 
     if modified_by:
-        result['case']['modified_by'] = _get_obj_template_info(modified_by)
+        result['case']['last_modified_by'] = _get_obj_template_info(modified_by)
 
 
 def get_message_template_params(case=None):
@@ -178,7 +178,7 @@ def get_message_template_params(case=None):
             }
         }
         "owner": ... dict with selected info for the case owner ...
-        "modified_by": ... dict with selected info for the user who last modified the case ...
+        "last_modified_by": ... dict with selected info for the user who last modified the case ...
     }
     """
     result = {}

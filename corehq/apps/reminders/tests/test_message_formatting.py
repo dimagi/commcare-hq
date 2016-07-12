@@ -139,12 +139,12 @@ class MessageTestCase(TestCase):
             child_expected_result = {'case': child_case.to_json()}
             child_expected_result['case']['parent'] = parent_case.to_json()
             child_expected_result['case']['owner'] = self.get_expected_template_params_for_mobile()
-            child_expected_result['case']['modified_by'] = self.get_expected_template_params_for_mobile()
+            child_expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(child_case), child_expected_result)
 
             parent_expected_result = {'case': parent_case.to_json()}
             parent_expected_result['case']['owner'] = self.get_expected_template_params_for_mobile()
-            parent_expected_result['case']['modified_by'] = self.get_expected_template_params_for_mobile()
+            parent_expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(parent_case), parent_expected_result)
 
     @run_with_all_backends
@@ -152,25 +152,25 @@ class MessageTestCase(TestCase):
         with self.create_parent_case(owner=self.mobile_user) as case:
             expected_result = {'case': case.to_json()}
             expected_result['case']['owner'] = self.get_expected_template_params_for_mobile()
-            expected_result['case']['modified_by'] = self.get_expected_template_params_for_mobile()
+            expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(case), expected_result)
 
         with self.create_parent_case(owner=self.web_user) as case:
             expected_result = {'case': case.to_json()}
             expected_result['case']['owner'] = self.get_expected_template_params_for_web()
-            expected_result['case']['modified_by'] = self.get_expected_template_params_for_mobile()
+            expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(case), expected_result)
 
         with self.create_parent_case(owner=self.group) as case:
             expected_result = {'case': case.to_json()}
             expected_result['case']['owner'] = self.get_expected_template_params_for_group()
-            expected_result['case']['modified_by'] = self.get_expected_template_params_for_mobile()
+            expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(case), expected_result)
 
         with self.create_parent_case(owner=self.couch_location) as case:
             expected_result = {'case': case.to_json()}
             expected_result['case']['owner'] = self.get_expected_template_params_for_location()
-            expected_result['case']['modified_by'] = self.get_expected_template_params_for_mobile()
+            expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(case), expected_result)
 
     @run_with_all_backends
@@ -178,11 +178,11 @@ class MessageTestCase(TestCase):
         with self.create_parent_case(modified_by=self.mobile_user, owner=self.couch_location) as case:
             expected_result = {'case': case.to_json()}
             expected_result['case']['owner'] = self.get_expected_template_params_for_location()
-            expected_result['case']['modified_by'] = self.get_expected_template_params_for_mobile()
+            expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(case), expected_result)
 
         with self.create_parent_case(modified_by=self.web_user, owner=self.couch_location) as case:
             expected_result = {'case': case.to_json()}
             expected_result['case']['owner'] = self.get_expected_template_params_for_location()
-            expected_result['case']['modified_by'] = self.get_expected_template_params_for_web()
+            expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_web()
             self.assertEqual(get_message_template_params(case), expected_result)
