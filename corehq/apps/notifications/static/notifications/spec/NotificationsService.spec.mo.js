@@ -36,16 +36,19 @@ describe('NotificationsService Unit Tests', function() {
                     content: "Test",
                     url: "#",
                     type: "info",
-                    date: "Today"
+                    date: "Today",
+                    activated: "2016-07-12T12:20:52.527"
                 },
                 {
                     isRead: true,
                     content: "Test 2",
                     url: "#",
                     type: "alert",
-                    date: "Today"
+                    date: "Today",
+                    activated: "2016-07-12T10:21:30.105"
                 }
-            ]
+            ],
+            lastSeenNotification: "2016-07-12T10:21:30.105"
         });
         assert.isTrue(viewModel.hasUnread());
         assert.equal(viewModel.notifications().length, 2);

@@ -39,6 +39,7 @@ class Notification(models.Model):
                 'id': note.id,
                 'url': note.url,
                 'date': '{dt:%B} {dt.day}'.format(dt=note.activated),
+                'activated': note.activated,
                 'content': note.content,
                 'type': note.type,
                 'isRead': (index > 4 or note.pk in read_notifications),
@@ -50,6 +51,12 @@ class Notification(models.Model):
     def mark_as_read(self, user):
         self.users_read.add(user)
 
+    def set_as_last_seen(self, user):
+        LastSeenNotification.objects.update_or_create(
+            user=user,
+            defaults={'date': self.activated}
+        )
+
     def activate(self):
         self.is_active = True
         self.activated = datetime.datetime.now()
@@ -59,3 +66,15 @@ class Notification(models.Model):
         self.is_active = False
         self.activated = None
         self.save()
+
+
+class LastSeenNotification(models.Model):
+    user = models.ForeignKey(User, unique=True)
+    date = models.DateTimeField()
+
+    @classmethod
+    def get_last_see_notification_date_for_user(cls, user):
+        try:
+            return LastSeenNotification.objects.get(user=user).date
+        except LastSeenNotification.DoesNotExist:
+            return None
