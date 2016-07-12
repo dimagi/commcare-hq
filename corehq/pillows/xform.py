@@ -20,7 +20,7 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
