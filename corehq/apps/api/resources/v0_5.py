@@ -1,7 +1,7 @@
 from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
-from tastypie.exceptions import BadRequest, ImmediateHttpResponse
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.paginator import Paginator
 from tastypie.resources import convert_post_to_patch, ModelResource, Resource
 from tastypie.utils import dict_strip_unicode_keys
@@ -576,7 +576,7 @@ class DomainForms(Resource):
     def obj_get_list(self, bundle, **kwargs):
         application_id = bundle.request.GET.get('application_id')
         if not application_id:
-            return []
+            raise NotFound('You have to choose application.')
 
         domain = kwargs['domain']
         couch_user = CouchUser.from_django_user(bundle.request.user)
