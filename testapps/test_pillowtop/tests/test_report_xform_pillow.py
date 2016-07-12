@@ -13,7 +13,7 @@ from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.reportxform import ReportXFormPillow, get_report_xform_to_elasticsearch_pillow, \
-    get_report_xform_couch_reindexer
+    get_report_xforms_reindexer
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, get_form_ready_to_save
 from couchforms.models import XFormInstance
@@ -141,8 +141,7 @@ class ReportXformReindexerTest(TestCase):
         # excluded form
         self._create_form('unsupported')
 
-        reindexer = get_report_xform_couch_reindexer()
-        reindexer.consume_options({'reset': True})
+        reindexer = get_report_xforms_reindexer()
         reindexer.reindex()
 
         # verify there
