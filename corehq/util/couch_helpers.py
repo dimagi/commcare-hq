@@ -115,6 +115,45 @@ class PaginatedViewArgsProvider(ArgsProvider):
             raise StopIteration
 
 
+class MultiKeyViewArgsProvider(PaginatedViewArgsProvider):
+    """Argument provider for iterating over a view using multiple keys.
+    :param keys: Sequence of view keys to iterate over. Each key should be a list
+    and all keys must have the same length.
+    """
+    def __init__(self, keys, include_docs=False, chunk_size=1000):
+        self.keys = list(keys)
+        self.key_length = len(self.keys[0])
+        assert all(len(key) == self.key_length for key in self.keys), "All keys must be the same length"
+        super(MultiKeyViewArgsProvider, self).__init__({
+            'limit': chunk_size,
+            'include_docs': include_docs,
+            'reduce': False,
+            'startkey': self.keys[0],
+            'endkey': self.keys[0] + [{}]
+        })
+
+    def get_next_args(self, result, *last_args, **last_view_kwargs):
+        try:
+            return super(MultiKeyViewArgsProvider, self).get_next_args(
+                result, *last_args, **last_view_kwargs
+            )
+        except StopIteration:
+            # all docs for the current key have been processed
+            # move on to the next key combo
+            last_key = last_view_kwargs["startkey"][:self.key_length]
+            key_index = self.keys.index(last_key) + 1
+            self.keys = self.keys[key_index:]
+            try:
+                next_key = self.keys[0]
+            except IndexError:
+                raise StopIteration
+            last_view_kwargs.pop('skip', None)
+            last_view_kwargs.pop("startkey_docid", None)
+            last_view_kwargs['startkey'] = next_key
+            last_view_kwargs['endkey'] = next_key + [{}]
+        return last_args, last_view_kwargs
+
+
 def paginate_view(db, view_name, chunk_size, event_handler=PaginationEventHandler(), **view_kwargs):
     """
     intended as a more performant drop-in replacement for
