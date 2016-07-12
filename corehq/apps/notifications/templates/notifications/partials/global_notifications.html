@@ -1,9 +1,11 @@
 {% load i18n %}
 <script>
-    $('#notification-link').click(function() {
-        ga_track_event('Notification', 'Opened Message', this.href);
+    $(function() {
+        $('#notification-link').click(function() {
+            ga_track_event('Notification', 'Opened Message', this.href);
+        });
+        window.analytics.trackUsageLink($('#notification-icon'), 'Notification', 'Clicked Bell Icon')
     });
-    analytics.trackUsageLink($('#notification-icon'), 'Notification', 'Clicked Bell Icon')
 </script>
 <li id="js-settingsmenu-notifications" class="dropdown">
     <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown" id="notification-icon">

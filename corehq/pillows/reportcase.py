@@ -8,6 +8,7 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicChe
 from corehq.elastic import get_es_new
 from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
@@ -75,9 +76,13 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
 
 
 def get_report_case_couch_reindexer():
+    iteration_key = "ReportCaseToElasticsearchPillow_{}_reindexer".format(REPORT_CASE_INDEX_INFO.index)
+    doc_provider = CouchDocumentProvider(iteration_key, [
+        CommCareCase,
+        ('CommCareCase-Deleted', CommCareCase),
+    ])
     return ResumableBulkElasticPillowReindexer(
-        name='ReportCaseToElasticsearchPillow',
-        doc_types=[CommCareCase],
+        doc_provider,
         elasticsearch=get_es_new(),
         index_info=REPORT_CASE_INDEX_INFO,
         doc_filter=report_case_filter,

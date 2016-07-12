@@ -33,6 +33,10 @@ class KafkaChangeFeed(ChangeFeed):
     def __unicode__(self):
         return u'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
 
+    @property
+    def topics(self):
+        return self._topics
+
     def _get_single_topic_or_fail(self):
         if len(self._topics) != 1:
             raise ValueError("This function requires a single topic but found {}!".format(self._topics))

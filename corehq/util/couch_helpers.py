@@ -1,9 +1,9 @@
 import base64
-import datetime
 import hashlib
 import threading
 from copy import copy
 from mimetypes import guess_type
+from corehq.util.pagination import paginate_function, PaginationEventHandler, ArgsProvider
 
 
 class CouchAttachmentsBuilder(object):
@@ -98,43 +98,24 @@ class CouchAttachmentsBuilder(object):
         return copy(self._dict)
 
 
-class PaginateViewEventHandler(object):
+class PaginatedViewArgsProvider(ArgsProvider):
+    def __init__(self, initial_view_kwargs):
+        self.initial_view_kwargs = initial_view_kwargs
 
-    def log(self, message):
-        # subclasses can override this to actually log something
-        # built in implementation swallows it
-        pass
+    def get_initial_args(self):
+        return [], self.initial_view_kwargs
 
-    def view_starting(self, db, view_name, kwargs, total_emitted):
-        self.log(u'Fetching rows {}-{} from couch'.format(
-            total_emitted,
-            total_emitted + kwargs['limit'] - 1)
-        )
-        startkey = kwargs.get('startkey')
-        self.log(u'  startkey={!r}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
-
-    def view_ending(self, db, view_name, kwargs, total_emitted, time):
-        self.log('View call took {}'.format(time))
+    def get_next_args(self, result, *last_args, **last_view_kwargs):
+        if result:
+            last_view_kwargs['startkey'] = result['key']
+            last_view_kwargs['startkey_docid'] = result['id']
+            last_view_kwargs['skip'] = 1
+            return [], last_view_kwargs
+        else:
+            raise StopIteration
 
 
-class DelegatingViewEventHandler(PaginateViewEventHandler):
-    def __init__(self, handlers=None):
-        self.handlers = handlers or []
-
-    def add_handler(self, handler):
-        self.handlers.add(handler)
-
-    def view_starting(self, db, view_name, kwargs, total_emitted):
-        for handler in self.handlers:
-            handler.view_starting(db, view_name, kwargs, total_emitted)
-
-    def view_ending(self, db, view_name, kwargs, total_emitted, time):
-        for handler in self.handlers:
-            handler.view_ending(db, view_name, kwargs, total_emitted, time)
-
-
-def paginate_view(db, view_name, chunk_size,
-                  log_handler=PaginateViewEventHandler(), **view_kwargs):
+def paginate_view(db, view_name, chunk_size, event_handler=PaginationEventHandler(), **view_kwargs):
     """
     intended as a more performant drop-in replacement for
 
@@ -165,24 +146,14 @@ def paginate_view(db, view_name, chunk_size,
         raise ValueError('paginate_view cannot be called with skip')
 
     view_kwargs['limit'] = chunk_size
-    total_emitted = 0
-    len_results = -1
-    while len_results:
-        log_handler.view_starting(db, view_name, view_kwargs, total_emitted)
-        start_time = datetime.datetime.utcnow()
-        results = db.view(view_name, **view_kwargs)
-        len_results = len(results)
 
-        for result in results:
-            yield result
+    def call_view(**view_kwargs):
+        return db.view(view_name, **view_kwargs)
 
-        total_emitted += len_results
-        log_handler.view_ending(db, view_name, view_kwargs, total_emitted,
-                                datetime.datetime.utcnow() - start_time)
-        if len_results:
-            view_kwargs['startkey'] = result['key']
-            view_kwargs['startkey_docid'] = result['id']
-            view_kwargs['skip'] = 1
+    args_provider = PaginatedViewArgsProvider(view_kwargs)
+
+    for result in paginate_function(call_view, args_provider, event_handler):
+        yield result
 
 
 _override_db = threading.local()

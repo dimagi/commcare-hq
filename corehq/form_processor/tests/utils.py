@@ -23,7 +23,7 @@ class FormProcessorTestUtils(object):
 
     @classmethod
     @unit_testing_only
-    def delete_all_cases_forms_ledgers(cls, domain):
+    def delete_all_cases_forms_ledgers(cls, domain=None):
         cls.delete_all_ledgers(domain)
         cls.delete_all_cases(domain)
         cls.delete_all_xforms(domain)
