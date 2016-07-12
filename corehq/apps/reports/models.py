@@ -784,12 +784,15 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             attach_excel = getattr(self, 'attach_excel', False)
             content, excel_files = get_scheduled_report_response(
                 self.owner, self.domain, self._id, attach_excel=attach_excel)
+            slugs = [r.report_slug for r in self.configs]
 
             for email in emails:
                 body = render_full_report_notification(None, content, email, self).content
                 send_html_email_async.delay(
                     title, email, body, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=excel_files, ga_track=True, ga_tracking_info={'cd4': self.domain})
+                    file_attachments=excel_files, ga_track=True,
+                    ga_tracking_info={'cd4': self.domain,
+                                      'cd10': ', '.join(slugs)})
 
     def remove_recipient(self, email):
         try:

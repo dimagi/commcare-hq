@@ -602,7 +602,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
-FORMPLAYER_URL = 'http://localhost:8090'
+FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### Couchlog config #######
 
@@ -1413,7 +1413,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
-        'corehq.pillows.application.AppPillow',
+        {
+            'name': 'ApplicationToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
+        },
         {
             'name': 'GroupPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1442,7 +1446,7 @@ PILLOWTOPS = {
         {
             'name': 'AppFormSubmissionTrackerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_app_form_submission_tracker_pillow',
+            'instance': 'corehq.pillows.app_submission_tracker.get_app_form_submission_tracker_pillow',
         },
     ],
     'core_ext': [
@@ -1452,11 +1456,6 @@ PILLOWTOPS = {
             'name': 'AppDbChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
-        },
-        {
-            'name': 'ApplicationToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
         },
         {
             'name': 'DefaultChangeFeedPillow',
@@ -1489,24 +1488,14 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
         },
         {
-            'name': 'SqlXFormToElasticsearchPillow',
+            'name': 'XFormToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
         },
         {
-            'name': 'CouchXFormToElasticsearchPillow',
+            'name': 'CaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_couch_xform_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'SqlCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'CouchCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_couch_case_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
         },
         {
             'name': 'UnknownUsersPillow',

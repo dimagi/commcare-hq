@@ -194,7 +194,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.sp2 = loc2.linked_supply_point()
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-    @process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER)
+    @process_kafka_changes('LedgerToElasticsearchPillow')
     def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime, **submit_extras):
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
@@ -621,7 +621,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         # archive and confirm commtrack data is deleted
         form = FormAccessors(self.domain.name).get_form(second_form_id)
-        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+        with process_kafka_changes('LedgerToElasticsearchPillow'):
             form.archive()
 
         if should_use_sql_backend(self.domain):
@@ -639,7 +639,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             self.assertIsNone(state.daily_consumption)
 
         # unarchive and confirm commtrack data is restored
-        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+        with process_kafka_changes('LedgerToElasticsearchPillow'):
             form.unarchive()
         _assert_initial_state()
 

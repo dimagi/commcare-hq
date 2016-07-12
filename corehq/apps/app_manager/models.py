@@ -5603,7 +5603,7 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-
+    
     vellum_case_management = False
 
     def is_remote_app(self):
