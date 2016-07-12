@@ -48,7 +48,6 @@
             }
 
             var newest_notification = notifications[0];
-
             var newest_notification_date = new Date(newest_notification.activated());
             var last_seen_notification_date = new Date(self.lastSeenNotificationDate());
             return last_seen_notification_date >= newest_notification_date;
@@ -78,10 +77,10 @@
                     self.lastSeenNotificationDate(data.activated);
                 })
                 .fail(function(jqXHR, textStatus, errorThrown) {
-                    console.log(errorThrown);
+                    console.log(errorThrown); // eslint-disable-line no-console
                     self.hasError(true);
-                })
-        }
+                });
+        };
     };
 
     $.fn.startNotificationsService = function (rmiUrl) {
