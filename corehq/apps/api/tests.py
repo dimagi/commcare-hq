@@ -1812,7 +1812,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
         cls.report_configuration.save()
 
     def test_fetching_data(self):
-        self.client.login(username=self.username, password=self.password)
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id))
 
@@ -1823,7 +1822,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
         self.assertEqual(len(response_dict["data"]), len(self.cases))
 
     def test_page_size(self):
-        self.client.login(username=self.username, password=self.password)
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id, {"limit": 1}))
         response_dict = json.loads(response.content)
@@ -1835,7 +1833,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
 
     def test_page_start(self):
-        self.client.login(username=self.username, password=self.password)
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id, {"start": 2}))
         response_dict = json.loads(response.content)
@@ -1843,7 +1840,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
         self.assertEqual(len(response_dict["data"]), len(self.cases) - 2)
 
     def test_filtering(self):
-        self.client.login(username=self.username, password=self.password)
         response = self.client.get(self.single_endpoint(
             self.report_configuration._id, {"my_field_filter": "foo"})
         )
@@ -1879,11 +1875,15 @@ class TestConfigurableReportDataResource(APIResourceTest):
             wrong_domain.name, user_in_wrong_domain_name, user_in_wrong_domain_password
         )
         user_in_wrong_domain.save()
-
-        self.client.login(username=user_in_wrong_domain_name, password=user_in_wrong_domain_password)
-        response = self.client.get(
-            self.single_endpoint(self.report_configuration._id))
-        self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
-
-        wrong_domain.delete()
-        user_in_wrong_domain.delete()
+        credentials = base64.b64encode("{}:{}".format(
+            user_in_wrong_domain_name, user_in_wrong_domain_password)
+        )
+        try:
+            response = self.client.get(
+                self.single_endpoint(self.report_configuration._id),
+                HTTP_AUTHORIZATION='Basic ' + credentials
+            )
+            self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
+        finally:
+            wrong_domain.delete()
+            user_in_wrong_domain.delete()
