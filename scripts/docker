@@ -152,8 +152,8 @@ else
 
     XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
     if [ -n "$DOCKER_MACHINE_NAME" ]; then
-        # docker toolbox: create data dir in virtualbox VM, but not on tmpfs
-        DOCKER_DATA_HOME=/data
+        # docker toolbox: create dockerhq dir in virtualbox VM, but not on tmpfs
+        DOCKER_DATA_HOME=/mnt/sda1/var/lib/dockerhq
         docker-machine ssh $DOCKER_MACHINE_NAME sudo mkdir -p $DOCKER_DATA_HOME
         KAFKA_ADVERTISED_HOST_NAME=$(docker-machine ip $DOCKER_MACHINE_NAME)
     else
