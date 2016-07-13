@@ -73,7 +73,8 @@ API_LIST = (
         locations.v0_5.LocationResource,
         locations.v0_5.LocationTypeResource,
         v0_5.SimpleReportConfigurationResource,
-        DomainForms
+        v0_5.ConfigurableReportDataResource,
+        DomainForms,
     )),
 )
 

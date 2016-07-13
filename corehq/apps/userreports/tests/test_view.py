@@ -2,6 +2,7 @@ import json
 import uuid
 
 from mock import patch
+from django.http import HttpRequest
 
 from django.test import TestCase
 from casexml.apps.case.signals import case_post_save
@@ -138,7 +139,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         )
         report_config.save()
 
-        view = ConfigurableReport()
+        view = ConfigurableReport(request=HttpRequest())
         view._domain = cls.domain
         view._lang = "en"
         view._report_config_id = report_config._id
