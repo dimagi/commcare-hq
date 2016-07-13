@@ -53,7 +53,7 @@ class KafkaChangeFeed(ChangeFeed):
         timeout = -1 if forever else MIN_TIMEOUT
 
         start_from_latest = since is None
-        reset = 'smallest' if not start_from_latest else 'largest'
+        reset = 'earliest' if not start_from_latest else 'latest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
         if not start_from_latest:
             if isinstance(since, dict):
