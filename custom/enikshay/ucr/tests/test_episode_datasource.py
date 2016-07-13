@@ -41,11 +41,6 @@ class BaseEnikshayDatasourceTest(TestCase, TestFileMixin):
         super(BaseEnikshayDatasourceTest, cls).tearDownClass()
         cls._call_center_domain_mock.stop()
 
-    def setUp(self):
-        super(BaseEnikshayDatasourceTest, self).setUp()
-        self._create_case_structure()
-        self.query = self._rebuild_table_get_query_object()
-
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
 
@@ -58,7 +53,7 @@ class BaseEnikshayDatasourceTest(TestCase, TestFileMixin):
 class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
     datasource_filename = 'episode'
 
-    def _create_case_structure(self):
+    def _create_case_structure(self, lab_result="TB detected"):
         person = CaseStructure(
             case_id='person',
             attrs={
@@ -82,7 +77,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                     opened_on=datetime(1989, 6, 11, 0, 0),
                     patient_type="new",
                     hiv_status="reactive",
-                    lab_result="TB detected"
+                    lab_result=lab_result
                 )
             },
             indices=[CaseIndex(
@@ -95,8 +90,10 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self.factory.create_or_update_cases([episode])
 
     def test_sputum_positive(self):
-        self.assertEqual(self.query.count(), 1)
-        row = self.query.first()
+        self._create_case_structure(lab_result="TB detected")
+        query = self._rebuild_table_get_query_object()
+        self.assertEqual(query.count(), 1)
+        row = query.first()
 
         self.assertEqual(row.male, 1)
         self.assertEqual(row.female, 0)
@@ -115,3 +112,17 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
 
         self.assertEqual(row.new_smear_positive_pulmonary_TB_under_15, 1)
         self.assertEqual(row.new_smear_positive_pulmonary_TB_over_15, 0)
+
+    def test_sputum_negative(self):
+        self._create_case_structure(lab_result="TB not detected")
+        query = self._rebuild_table_get_query_object()
+        self.assertEqual(query.count(), 1)
+        row = query.first()
+
+        self.assertEqual(row.new_smear_negative_pulmonary_TB, 1)
+        self.assertEqual(row.new_smear_negative_pulmonary_TB_male, 1)
+        self.assertEqual(row.new_smear_negative_pulmonary_TB_female, 0)
+        self.assertEqual(row.new_smear_negative_pulmonary_TB_transgender, 0)
+
+        self.assertEqual(row.new_smear_negative_pulmonary_TB_under_15, 1)
+        self.assertEqual(row.new_smear_negative_pulmonary_TB_over_15, 0)

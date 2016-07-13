@@ -533,6 +533,179 @@
                 "display_name": "new_smear_positive_pulmonary_TB_transgender",
                 "type": "boolean",
                 "column_id": "new_smear_positive_pulmonary_TB_transgender"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB_male",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB_male"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB_female",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB_female"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB_transgender",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB_transgender"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "under_15"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB_under_15",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB_under_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "under_15"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB_over_15",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB_over_15"
             }
         ],
         "named_filters": {
@@ -599,6 +772,16 @@
                 },
                 "type": "boolean_expression",
                 "property_value": "pulmonary"
+            },
+            "extra_pulmonary": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "disease_classification"
+                },
+                "type": "boolean_expression",
+                "property_value": "extra_pulmonary"
             },
             "transgender": {
                 "operator": "eq",

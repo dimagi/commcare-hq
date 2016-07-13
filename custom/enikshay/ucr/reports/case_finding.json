@@ -139,6 +139,84 @@
                 "transform": {
                 },
                 "calculate_total": false
+            },
+            {
+                "display": "New Smear Negative pulmonary TB [0-14 years old]",
+                "column_id": "new_smear_negative_pulmonary_TB_under_15",
+                "type": "field",
+                "field": "new_smear_negative_pulmonary_TB_under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Negative pulmonary TB [15 years old and over]",
+                "column_id": "new_smear_negative_pulmonary_TB_over_15",
+                "type": "field",
+                "field": "new_smear_negative_pulmonary_TB_over_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Negative pulmonary TB [ALL]",
+                "column_id": "new_smear_negative_pulmonary_TB",
+                "type": "field",
+                "field": "new_smear_negative_pulmonary_TB",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Negative pulmonary TB [Male]",
+                "column_id": "new_smear_negative_pulmonary_TB_male",
+                "type": "field",
+                "field": "new_smear_negative_pulmonary_TB_male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Negative pulmonary TB [Female]",
+                "column_id": "new_smear_negative_pulmonary_TB_female",
+                "type": "field",
+                "field": "new_smear_negative_pulmonary_TB_female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Negative pulmonary TB [Transgender]",
+                "column_id": "new_smear_negative_pulmonary_TB_transgender",
+                "type": "field",
+                "field": "new_smear_negative_pulmonary_TB_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
             }
         ]
     }
