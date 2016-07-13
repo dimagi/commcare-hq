@@ -7,7 +7,7 @@ from uuid import uuid4
 from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.exceptions import ArgumentError
 
-SAFENAME = re.compile("^[a-z0-9_./-]+$", re.IGNORECASE)
+SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 NOT_SET = object()
 
 
