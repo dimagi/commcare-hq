@@ -109,8 +109,9 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
     @property
     def rows(self):
         audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
-        for res in self.es_results['hits'].get('hits', []):
-            case = CommCareCase.wrap(res['_source'])
+        query = self._build_query().case_type(CC_SUBJECT_CASE_TYPE)
+        for result in query.scroll():
+            case = CommCareCase.wrap(result)
             if not self.is_subject_selected(case):
                 continue
             subject = Subject.wrap(case, audit_log_id_ref)
@@ -133,7 +134,7 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
         ODM XML document.
         """
         audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
-        query = self._build_query().start(0).size(SIZE_LIMIT)
+        query = self._build_query().case_type(CC_SUBJECT_CASE_TYPE).start(0).size(SIZE_LIMIT)
         for result in query.scroll():
             case = CommCareCase.wrap(result)
             if not self.is_subject_selected(case):
