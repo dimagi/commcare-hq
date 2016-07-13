@@ -3,7 +3,6 @@
 {% block filter_content %}
     <div class="row">
         <div class="col-xs-6">
-                        <!-- Since a lot parts of commcarehq are using 'startdate' and 'enddate' parameters, we could keep them for backward compatibility -->
             <input type="hidden"
                    id="{{ css_id }}_startdate"
                    name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}startdate"
