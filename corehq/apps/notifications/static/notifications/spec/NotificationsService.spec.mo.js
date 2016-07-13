@@ -51,12 +51,19 @@ describe('NotificationsService Unit Tests', function() {
             lastSeenNotification: "2016-07-12T10:21:30.105",
         });
         assert.isTrue(viewModel.hasUnread());
+        assert.isFalse(viewModel.seen());
         assert.equal(viewModel.notifications().length, 2);
         assert.isTrue(viewModel.notifications()[0].isInfo());
         assert.isFalse(viewModel.notifications()[0].isAlert());
         assert.isFalse(viewModel.notifications()[1].isInfo());
         assert.isTrue(viewModel.notifications()[1].isAlert());
         assert.isFalse(viewModel.hasError());
+
+        fakePromise.successCallback({
+            lastSeenNotificationDate: "2016-07-12T12:20:52.527",
+        });
+        viewModel.bellClickHandler();
+        assert.isTrue(viewModel.seen());
 
         viewModel.notifications()[0].markAsRead();
         assert.isTrue(viewModel.notifications()[0].isRead());

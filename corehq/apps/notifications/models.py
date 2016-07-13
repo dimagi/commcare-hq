@@ -10,6 +10,10 @@ NOTIFICATION_TYPES = (
 )
 
 
+class IllegalModelStateException(Exception):
+    pass
+
+
 class Notification(models.Model):
     content = models.CharField(max_length=140)
     url = models.URLField()
@@ -52,9 +56,11 @@ class Notification(models.Model):
         self.users_read.add(user)
 
     def set_as_last_seen(self, user):
+        if not self.is_active:
+            raise IllegalModelStateException("Only active notification can be marked as last seen")
         LastSeenNotification.objects.update_or_create(
             user=user,
-            defaults={'date': self.activated}
+            defaults={'last_seen_date': self.activated}
         )
 
     def activate(self):
@@ -70,11 +76,11 @@ class Notification(models.Model):
 
 class LastSeenNotification(models.Model):
     user = models.ForeignKey(User, unique=True)
-    date = models.DateTimeField()
+    last_seen_date = models.DateTimeField()
 
     @classmethod
-    def get_last_see_notification_date_for_user(cls, user):
+    def get_last_seen_notification_date_for_user(cls, user):
         try:
-            return LastSeenNotification.objects.get(user=user).date
+            return LastSeenNotification.objects.get(user=user).last_seen_date
         except LastSeenNotification.DoesNotExist:
             return None

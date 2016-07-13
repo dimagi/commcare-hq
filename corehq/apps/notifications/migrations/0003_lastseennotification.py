@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='LastSeenNotification',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('date', models.DateTimeField()),
+                ('last_seen_date', models.DateTimeField()),
                 ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, unique=True)),
             ],
             options={

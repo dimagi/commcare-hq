@@ -42,15 +42,20 @@
         });
 
         self.seen = ko.computed(function() {
+
+            if (!self.hasUnread()) {
+                return true;
+            }
+
             var notifications = self.notifications();
             if (notifications.length === 0) {
                 return true;
             }
 
-            var newest_notification = notifications[0];
-            var newest_notification_date = new Date(newest_notification.activated());
-            var last_seen_notification_date = new Date(self.lastSeenNotificationDate());
-            return last_seen_notification_date >= newest_notification_date;
+            var newestNotification = notifications[0];
+            var newestNotificationDate = new Date(newestNotification.activated());
+            var lastSeenNotificationDate = new Date(self.lastSeenNotificationDate());
+            return lastSeenNotificationDate >= newestNotificationDate;
         });
 
         self.init = function () {
