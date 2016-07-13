@@ -56,21 +56,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     ajax_pagination = True
     include_inactive = True
 
-    # Feature preview flag for Submit History Filters
-    def __init__(self, request, **kwargs):
-        if feature_previews.SUBMIT_HISTORY_FILTERS.enabled(request.domain):
-            # create a new instance attribute instead of modifying the
-            # class attribute
-            self.fields = self.fields + [
-                'corehq.apps.reports.filters.forms.FormDataFilter',
-                'corehq.apps.reports.filters.forms.CustomFieldFilter',
-            ]
-        super(SubmitHistoryMixin, self).__init__(request, **kwargs)
-
-    @property
-    def other_fields(self):
-        return filter(None, self.request.GET.get('custom_field', "").split(","))
-
     @property
     def default_datespan(self):
         return datespan_from_beginning(self.domain_object, self.timezone)
@@ -117,12 +102,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                         )
                     }
                 }
-            }
-
-        props = truthy_only(self.request.GET.get('form_data', '').split(','))
-        for prop in props:
-            yield {
-                'term': {'__props_for_querying': prop}
             }
 
         if HQUserType.UNKNOWN not in ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs):
@@ -206,7 +185,6 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
         if self.show_extra_columns:
             h.append(DataTablesColumn(_("Sync Log")))
 
-        h.extend([DataTablesColumn(field) for field in self.other_fields])
         return DataTablesHeader(*h)
 
     @property
@@ -224,4 +202,4 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
 
             if self.show_extra_columns:
                 row.append(form.get('last_sync_token', ''))
-            yield row + display.other_columns
+            yield row

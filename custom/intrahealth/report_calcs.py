@@ -39,12 +39,13 @@ def numeric_value(val):
 
 def get_product_id(product_name, domain):
     try:
-        return SQLProduct.objects.get(name=product_name, domain=domain).product_id
+        return SQLProduct.objects.get(is_archived=False, name=product_name, domain=domain).product_id
     except SQLProduct.DoesNotExist:
         k = PRODUCT_NAMES.get(product_name.lower())
         if k:
             try:
-                return SQLProduct.objects.get(name__iexact=k,
+                return SQLProduct.objects.get(is_archived=False,
+                                              name__iexact=k,
                                               domain=domain).product_id
             except SQLProduct.DoesNotExist:
                 return
@@ -318,7 +319,7 @@ class DureeMoyenneLivraison(fluff.Calculator):
     def total(self, form):
         value = form.form['duree_moyenne_livraison'] if form.form['duree_moyenne_livraison'] else 0
         yield {
-            'date': form.form['mois_visite'],
+            'date': form.form['mois_visite'] or None,  # coerce empty strings to None
             'value': value
         }
 

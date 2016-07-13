@@ -1,9 +1,11 @@
 from django.http import Http404
 from tastypie import http
+from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
+from tastypie.http import HttpForbidden
 from tastypie.paginator import Paginator
-from tastypie.resources import convert_post_to_patch, ModelResource
+from tastypie.resources import convert_post_to_patch, ModelResource, Resource
 from tastypie.utils import dict_strip_unicode_keys
 
 from collections import namedtuple
@@ -19,6 +21,8 @@ from corehq.apps.api.resources.v0_1 import (
     CustomResourceMeta,
 )
 from corehq.apps.api.util import get_obj
+from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 
 from casexml.apps.stock.models import StockTransaction
@@ -29,9 +33,10 @@ from corehq.apps.userreports.models import ReportConfiguration, \
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
-from corehq.apps.users.models import CommCareUser, WebUser, Permissions
+from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
+from corehq.toggles import ZAPIER_INTEGRATION
 
 from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
@@ -670,3 +675,73 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
     class Meta(CustomResourceMeta):
         list_allowed_methods = []
         detail_allowed_methods = ["get"]
+
+
+UserDomain = namedtuple('UserDomain', 'domain_name project_name')
+UserDomain.__new__.__defaults__ = ('', '')
+
+
+class UserDomainsResource(Resource):
+    domain_name = fields.CharField(attribute='domain_name')
+    project_name = fields.CharField(attribute='project_name')
+
+    class Meta:
+        resource_name = 'user_domains'
+        authentication = ApiKeyAuthentication()
+        object_class = UserDomain
+        include_resource_uri = False
+
+    def obj_get_list(self, bundle, **kwargs):
+        return self.get_object_list(bundle.request)
+
+    def get_object_list(self, request):
+        couch_user = CouchUser.from_django_user(request.user)
+        results = []
+        for domain in couch_user.get_domains():
+            if not ZAPIER_INTEGRATION.enabled(domain):
+                continue
+            domain_object = Domain.get_by_name(domain)
+            results.append(UserDomain(
+                domain_name=domain_object.name,
+                project_name=domain_object.hr_name or domain_object.name
+            ))
+        return results
+
+
+Form = namedtuple('Form', 'form_xmlns form_name')
+Form.__new__.__defaults__ = ('', '')
+
+
+class DomainForms(Resource):
+    form_xmlns = fields.CharField(attribute='form_xmlns')
+    form_name = fields.CharField(attribute='form_name')
+
+    class Meta:
+        resource_name = 'domain_forms'
+        authentication = ApiKeyAuthentication()
+        object_class = Form
+        include_resource_uri = False
+
+    def obj_get_list(self, bundle, **kwargs):
+        application_id = bundle.request.GET.get('application_id')
+        if not application_id:
+            raise NotFound('application_id parameter required')
+
+        domain = kwargs['domain']
+        couch_user = CouchUser.from_django_user(bundle.request.user)
+        if not ZAPIER_INTEGRATION.enabled(domain) or not couch_user.is_member_of(domain):
+            raise ImmediateHttpResponse(
+                HttpForbidden('You are not allowed to get list of forms for this domain')
+            )
+
+        results = []
+        application = Application.get(docid=application_id)
+        if not application:
+            return []
+        forms_objects = application.get_forms(bare=False)
+        for form_object in forms_objects:
+            form = form_object['form']
+            module = form_object['module']
+            form_name = '{} > {} > {}'.format(application.name, module.name['en'], form.name['en'])
+            results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
+        return results
