@@ -1299,10 +1299,15 @@ class MySettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.settings.views import MyAccountSettingsView, \
-            MyProjectsList, ChangeMyPasswordView, TwoFactorProfileView
+        from corehq.apps.settings.views import (
+            ChangeMyPasswordView,
+            EnableSuperuserView,
+            MyAccountSettingsView,
+            MyProjectsList,
+            TwoFactorProfileView,
+        )
         items = [
-            (_("Manage My Settings"), (
+            [_("Manage My Settings"), [
                 {
                     'title': _(MyAccountSettingsView.page_title),
                     'url': reverse(MyAccountSettingsView.urlname),
@@ -1319,8 +1324,13 @@ class MySettingsTab(UITab):
                     'title': _(TwoFactorProfileView.page_title),
                     'url': reverse(TwoFactorProfileView.urlname),
                 }
-            ))
+            ]]
         ]
+        if self.couch_user and self.couch_user.is_dimagi:
+            items[0][1].append({
+                'title': _(EnableSuperuserView.page_title),
+                'url': reverse(EnableSuperuserView.urlname),
+            })
         return items
 
 
