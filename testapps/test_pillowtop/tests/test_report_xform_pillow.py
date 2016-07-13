@@ -73,7 +73,6 @@ class ReportXformReindexerTest(TestCase):
         with trap_extra_setup(ConnectionError):
             self.elasticsearch = get_es_new()
             ensure_index_deleted(REPORT_XFORM_INDEX_INFO.index)
-            initialize_index_and_mapping(self.elasticsearch, REPORT_XFORM_INDEX_INFO)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
