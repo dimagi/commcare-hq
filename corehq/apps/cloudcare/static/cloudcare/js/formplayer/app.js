@@ -74,15 +74,15 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
 
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
-    data.xform_url = FormplayerFrontend.request('currentUser').formplayer_url;
+    var user = FormplayerFrontend.request('currentUser');
+    data.xform_url = user.formplayer_url;
+    data.domain = user.domain;
     data.formplayerEnabled = true;
-    //TODO yeah
-    data.domain = "test";
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
-        if(resp.status === "success") {
+        if (resp.status === "success") {
             FormplayerFrontend.request("clearForm");
             FormplayerFrontend.trigger("apps:list");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
@@ -115,21 +115,20 @@ FormplayerFrontend.on("start", function (options) {
 FormplayerFrontend.on("sync", function () {
     var user = FormplayerFrontend.request('currentUser');
     var username = user.username;
+    var domain = user.domain;
     var formplayer_url = user.formplayer_url;
     var resp = $.ajax({
-        url: formplayer_url,
+        url: formplayer_url + "/sync-db",
         dataType: "json",
-        data: {"username": username},
+        data: JSON.stringify({"username": username, "domain": domain}),
+        type: 'POST',
+        crossDomain: {crossDomain: true},
+        xhrFields: {withCredentials: true},
+        contentType: "application/json",
     });
-    //$('#sync-button').disableButton();
     tfLoading();
     resp.done(function (data) {
-        var hasError = data.status === "error";
-        tfSyncComplete(hasError);
-        if (hasError) {
-            console.error(data.message);
-        }
-        //$('#sync-button').enableButton();
+        tfSyncComplete(false);
     });
     resp.error(function (data) {
         tfSyncComplete(true);
