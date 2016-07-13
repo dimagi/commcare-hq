@@ -10,7 +10,6 @@ from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
@@ -93,8 +92,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
             setattr(form_pair.wrapped_form, 'external_blobs', attachment_dict)
             form_pair.json_form['external_blobs'] = attachment_dict
 
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
-            add_couch_properties_to_sql_form_json(form_pair.json_form)
         es_form = transform_xform_for_elasticsearch(form_pair.json_form)
         send_to_elasticsearch('forms', es_form)
         self.es.indices.refresh(self.es_index_info.index)

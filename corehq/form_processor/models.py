@@ -263,6 +263,13 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
         return self.state & self.DELETED == self.DELETED
 
     @property
+    def doc_type(self):
+        from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
+        if self.is_deleted:
+            return 'XFormInstance' + DELETED_SUFFIX
+        return {v: k for k, v in doc_type_to_state.items()}.get(self.state, 'XFormInstance')
+
+    @property
     @memoized
     def attachments(self):
         from couchforms.const import ATTACHMENT_NAME
@@ -1265,6 +1272,10 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
         return UniqueLedgerReference(
             case_id=self.case_id, section_id=self.section_id, entry_id=self.entry_id
         )
+
+    @property
+    def ledger_id(self):
+        return self.ledger_reference.as_id()
 
     def to_json(self):
         from .serializers import LedgerValueSerializer
