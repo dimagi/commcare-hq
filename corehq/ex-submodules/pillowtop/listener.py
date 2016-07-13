@@ -4,7 +4,6 @@ from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundErro
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 from django.db.utils import InterfaceError as DjangoInterfaceError
 from datetime import datetime, timedelta
-import hashlib
 import traceback
 import math
 import time
