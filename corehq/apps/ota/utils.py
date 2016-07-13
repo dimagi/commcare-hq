@@ -117,12 +117,12 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privel
 
         else:
             if user_domain != domain:
-                message = u"{} was not in the domain {}".format(username, domain)
-
                 # In this case we may be dealing with a WebUser
                 user = WebUser.get_by_username(as_user)
                 if user and domain in user.domains:
                     message = None
+                else:
+                    message = u"{} was not in the domain {}".format(username, domain)
 
     return message is None, message
 
