@@ -1,3 +1,7 @@
+from kafka.protocol.offset import OffsetResetStrategy
+from kafka.structs import OffsetRequestPayload
+
+from corehq.apps.change_feed.connection import get_kafka_client
 from .document_types import CASE, FORM, DOMAIN, META, APP
 
 # this is redundant but helps avoid import warnings until nothing references these
@@ -35,3 +39,17 @@ ALL = (
 
 def get_topic(document_type_object):
     return document_type_object.primary_type
+
+
+def get_topic_offset(topic):
+    assert topic in ALL
+    return get_all_offsets()[topic]
+
+
+def get_all_offsets():
+    client = get_kafka_client()
+    offset_requests = [OffsetRequestPayload(topic, 0, OffsetResetStrategy.LATEST, 1) for topic in ALL]
+    responses = client.send_offset_request(offset_requests)
+    return {
+        r.topic: r.offsets[0] for r in responses
+    }
