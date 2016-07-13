@@ -40,7 +40,7 @@ def get_reindex_commands(alias_name):
         ],
         'hqgroups': [('ptop_reindexer_v2', {'index': 'group'})],
         'report_xforms': [('ptop_reindexer_v2', {'index': 'report-xform'})],
-        'report_cases': ['ptop_fast_reindex_reportcases'],
+        'report_cases': [('ptop_reindexer_v2', {'index': 'report-case'})],
         'case_search': [('ptop_reindexer_v2', {'index': 'case-search'})],
         'ledgers': [
             ('ptop_reindexer_v2', {'index': 'ledger-v1'}),

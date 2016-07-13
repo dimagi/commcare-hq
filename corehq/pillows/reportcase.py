@@ -5,7 +5,6 @@ from django.conf import settings
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.elastic import get_es_new
-from corehq.pillows.case import CasePillow
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
@@ -13,25 +12,6 @@ from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 from .base import convert_property_dict
-
-
-class ReportCasePillow(CasePillow):
-    """
-    Simple/Common Case properties Indexer
-    an extension to CasePillow that provides for indexing of custom case properties
-    """
-    es_alias = "report_cases"
-    es_type = "report_case"
-    es_index = REPORT_CASE_INDEX_INFO.index
-    default_mapping = REPORT_CASE_INDEX_INFO.mapping
-
-    @classmethod
-    def get_unique_id(cls):
-        return '8c10a7564b6af5052f8b86693bf6ac07'
-
-    def change_transform(self, doc_dict):
-        if not report_case_filter(doc_dict):
-            return transform_case_to_report_es(doc_dict)
 
 
 def report_case_filter(doc_dict):
