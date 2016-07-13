@@ -144,14 +144,12 @@ class CommCareBuild(Document):
     @quickcache([], timeout=5 * 60)
     #This seems to be not working.
     def j2me_enabled_builds(cls):
-        """
-        Fetch version numbers for CommCareBuilds compatible with J2ME
-        """
-        j2me_enabled_builds = []
-        for version_build in cls.all_builds():
-            if version_build.j2me_enabled:
-                j2me_enabled_builds.append(version_build.version)
-        return j2me_enabled_builds
+        return [build for build in cls.all_builds() if build.j2me_enabled]
+
+    @classmethod
+    def j2me_enabled_builds_versions(cls):
+        return map(lambda x: x.version, cls.j2me_enabled_builds())
+
 
 class BuildSpec(DocumentSchema):
     version = StringProperty()
@@ -260,15 +258,18 @@ class CommCareBuildConfig(Document):
             return self.menu
 
     @classmethod
+    @quickcache([], timeout=5 * 60)
+    #This seems to be not working.
     def j2me_enabled_configs(cls):
-        """
-        Fetch labels for CommCareBuilds compatible with J2ME
-        """
-        j2me_enabled_configs = []
-        for version_config in cls.fetch().menu:
-            if version_config.j2me_enabled:
-                j2me_enabled_configs.append(version_config.label)
-        return j2me_enabled_configs
+        return [build for build in cls.fetch().menu if build.j2me_enabled]
+
+    @classmethod
+    def j2me_enabled_configs_labels(cls):
+        return map(lambda x: x.label, cls.j2me_enabled_configs())
+
+    @classmethod
+    def latest_j2me_enabled_config(cls):
+        return cls.j2me_enabled_configs()[-1]
 
 class BuildRecord(BuildSpec):
     signed = BooleanProperty(default=True)

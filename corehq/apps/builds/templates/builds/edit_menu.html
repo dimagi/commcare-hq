@@ -1,6 +1,8 @@
 {% extends 'style/base_page.html' %}
 {% load hq_shared_tags %}
 {% load compress %}
+{% load i18n %}
+
 
 {% block js-inline %}{{ block.super }}
     <script>
@@ -152,10 +154,10 @@ Editing CommCare Builds
                     <thead>
                         <tr>
                             <th></th>
-                            <th>Version</th>
-                            <th>Label</th>
-                            <th>Superuser Only</th>
-                            <th>J2me Enabled</th>
+                            <th>{% trans "Version" %}</th>
+                            <th>{% trans "Label" %}</th>
+                            <th>{% trans "Superuser Only" %}</th>
+                            <th>{% trans "J2me Enabled" %}</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -191,7 +193,7 @@ Editing CommCare Builds
                         <td colspan="5">
                             <button data-bind="click: addVersion" class="btn btn-default">
                                 <i class="fa fa-plus"></i>
-                                Add a Version
+                                {% trans "Add a Version" %}
                             </button>
                         </td>
                     </tr>
@@ -233,7 +235,7 @@ Editing CommCare Builds
     <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">
-                Import a new build from the build server
+                {% trans "Import a new build from the build server" %}
             </h3>
         </div>
         <div class="panel-body">
@@ -254,7 +256,7 @@ Editing CommCare Builds
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="control-label col-sm-3" for="import_build_name">
-                        Source for artifacts.zip
+                        {% trans "Source for artifacts.zip" %}
                     </label>
                     <div class="col-sm-8">
                         <input id="import_build_name" type="text" name="source" class="form-control" />
@@ -262,7 +264,7 @@ Editing CommCare Builds
                 </div>
                 <div class="form-group">
                     <label class="control-label col-sm-3" for="import_build_version">
-                        Version*
+                        {% trans "Version*" %}
                     </label>
                     <div class="col-sm-8">
                         <input id="import_build_version" type="text" name="version" class="form-control" />
@@ -270,7 +272,7 @@ Editing CommCare Builds
                 </div>
                 <div class="form-group">
                     <label class="control-label col-sm-3" for="import_build_build_number">
-                        Build Number*
+                        {% trans "Build Number*" %}
                     </label>
                     <div class="col-sm-8">
                         <input id="import_build_build_number" type="text" name="build_number" class="form-control" />

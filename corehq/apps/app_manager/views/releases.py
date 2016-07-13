@@ -75,7 +75,7 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
-    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_configs()
+    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_configs_labels()
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
         app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
@@ -104,7 +104,8 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
-        'build_profile_access': build_profile_access
+        'build_profile_access': build_profile_access,
+        'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.

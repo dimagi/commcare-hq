@@ -90,7 +90,7 @@ class EditMenuView(BasePageView):
             'doc': self.doc,
             'all_versions': get_all_versions(
                 [v['build']['version'] for v in self.doc['menu']]),
-            'j2me_enabled_versions': CommCareBuild.j2me_enabled_builds()
+            'j2me_enabled_versions': CommCareBuild.j2me_enabled_builds_versions()
         }
 
     @property
