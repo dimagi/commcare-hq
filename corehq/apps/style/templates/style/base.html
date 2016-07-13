@@ -362,7 +362,10 @@
         <script type="text/javascript" src="{% static '/notifications/js/NotificationsService.ko.js' %}"></script>
         <script type="text/javascript">
             $(function () {
-                $('#js-settingsmenu-notifications').startNotificationsService('{% url 'notifications_service' %}');
+                var $notificationsMenu = $('#js-settingsmenu-notifications');
+                if ($notificationsMenu.length > 0) {
+                    $notificationsMenu.startNotificationsService('{% url 'notifications_service' %}');
+                }
             });
         </script>
         {% endif %}
