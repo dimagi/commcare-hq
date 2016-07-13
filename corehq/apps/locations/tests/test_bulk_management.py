@@ -1,5 +1,6 @@
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles
 from corehq.apps.locations.bulk_management import bulk_update_organization
 
 # These example types and trees mirror the information available in the upload files
@@ -111,3 +112,43 @@ class TestBulkManagement(TestCase):
 
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(DELETE_SUFFOLK)
+
+
+class TestTreeUtils(SimpleTestCase):
+    def test_no_issues(self):
+        assert_no_cycles([
+            ("State", None),
+            ("County", "State"),
+            ("City", "County"),
+            ("Region", "State"),
+            ("District", "Region"),
+        ])
+
+    def test_bad_parent_ref(self):
+        with self.assertRaises(TreeError) as e:
+            assert_no_cycles([
+                ("County", "State"),  # State doesn't exist
+                ("City", "County"),
+                ("Region", "State"),  # State doesn't exist
+                ("District", "Region"),
+            ])
+        self.assertItemsEqual(
+            e.exception.affected_nodes,
+            ["County", "Region"]
+        )
+
+    def test_has_cycle(self):
+        with self.assertRaises(TreeError) as e:
+            assert_no_cycles([
+                ("State", None),
+                ("County", "State"),
+                ("City", "County"),
+                # These three cycle:
+                ("Region", "Village"),
+                ("District", "Region"),
+                ("Village", "District"),
+            ])
+        self.assertItemsEqual(
+            e.exception.affected_nodes,
+            ["Region", "District", "Village"]
+        )
