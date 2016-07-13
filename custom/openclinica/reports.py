@@ -40,6 +40,7 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
 
     @property
     def headers(self):
+        # These match the values returned by rows()
         return DataTablesHeader(
             DataTablesColumn('Subject Key'),
             DataTablesColumn('Study Subject ID'),
@@ -51,10 +52,13 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
 
     @staticmethod
     def subject_headers():
+        # These match the values returned by get_all_rows()
         return [
-            # odm_export_subject.xml expects these to be subject attributes
             'subject_key',
             'study_subject_id',
+            'enrollment_date',
+            'sex',
+            'dob',
             'events'
         ]
 
@@ -132,9 +136,12 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
 
         CdiscOdmExportWriter will render this using the odm_export.xml template to combine subjects into a single
         ODM XML document.
+
+        The values are also used to register new subjects if the web service is enabled.
         """
         audit_log_id_ref = {'id': 0}  # To exclude audit logs, set `custom.openclinica.const.AUDIT_LOGS = False`
         query = self._build_query().case_type(CC_SUBJECT_CASE_TYPE).start(0).size(SIZE_LIMIT)
+        rows = []
         for result in query.scroll():
             case = CommCareCase.wrap(result)
             if not self.is_subject_selected(case):
@@ -148,4 +155,5 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
                 subject.dob,
                 subject.get_export_data(),
             ]
-            yield row
+            rows.append(row)
+        return rows
