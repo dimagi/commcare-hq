@@ -24,7 +24,7 @@ feedparser==5.1.3
 ghdiff==0.4
 gunicorn==19.4
 lxml==3.4.4
-kafka-python==0.9.4
+kafka-python==1.2.4
 mock==0.8.0
 openpyxl==2.2.5
 Pillow==2.7.0
