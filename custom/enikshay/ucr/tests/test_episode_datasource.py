@@ -53,7 +53,7 @@ class BaseEnikshayDatasourceTest(TestCase, TestFileMixin):
 class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
     datasource_filename = 'episode'
 
-    def _create_case_structure(self, lab_result="TB detected"):
+    def _create_case_structure(self, lab_result="TB detected", disease_classification="pulmonary"):
         person = CaseStructure(
             case_id='person',
             attrs={
@@ -72,7 +72,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                 'case_type': 'episode',
                 "update": dict(
                     person_name="Ramsey Bolton",
-                    disease_classification="pulmonary",
+                    disease_classification=disease_classification,
                     person_id="person",
                     opened_on=datetime(1989, 6, 11, 0, 0),
                     patient_type="new",
@@ -126,3 +126,17 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
 
         self.assertEqual(row.new_smear_negative_pulmonary_TB_under_15, 1)
         self.assertEqual(row.new_smear_negative_pulmonary_TB_over_15, 0)
+
+    def test_extra_pulmonary(self):
+        self._create_case_structure(lab_result="TB detected", disease_classification="extra_pulmonary")
+        query = self._rebuild_table_get_query_object()
+        self.assertEqual(query.count(), 1)
+        row = query.first()
+
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB, 1)
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_male, 1)
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_female, 0)
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_transgender, 0)
+
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_under_15, 1)
+        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_over_15, 0)

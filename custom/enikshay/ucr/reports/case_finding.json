@@ -63,7 +63,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Positive pulmonary TB [0-14 years old]",
+                "display": "New Smear Positive Pulmonary TB [0-14 years old]",
                 "column_id": "new_smear_positive_pulmonary_TB_under_15",
                 "type": "field",
                 "field": "new_smear_positive_pulmonary_TB_under_15",
@@ -76,7 +76,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Positive pulmonary TB [15 years old and over]",
+                "display": "New Smear Positive Pulmonary TB [15 years old and over]",
                 "column_id": "new_smear_positive_pulmonary_TB_over_15",
                 "type": "field",
                 "field": "new_smear_positive_pulmonary_TB_over_15",
@@ -89,7 +89,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Positive pulmonary TB [ALL]",
+                "display": "New Smear Positive Pulmonary TB [ALL]",
                 "column_id": "new_smear_positive_pulmonary_TB",
                 "type": "field",
                 "field": "new_smear_positive_pulmonary_TB",
@@ -102,7 +102,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Positive pulmonary TB [Male]",
+                "display": "New Smear Positive Pulmonary TB [Male]",
                 "column_id": "new_smear_positive_pulmonary_TB_male",
                 "type": "field",
                 "field": "new_smear_positive_pulmonary_TB_male",
@@ -115,7 +115,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Positive pulmonary TB [Female]",
+                "display": "New Smear Positive Pulmonary TB [Female]",
                 "column_id": "new_smear_positive_pulmonary_TB_female",
                 "type": "field",
                 "field": "new_smear_positive_pulmonary_TB_female",
@@ -128,7 +128,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Positive pulmonary TB [Transgender]",
+                "display": "New Smear Positive Pulmonary TB [Transgender]",
                 "column_id": "new_smear_positive_pulmonary_TB_transgender",
                 "type": "field",
                 "field": "new_smear_positive_pulmonary_TB_transgender",
@@ -141,7 +141,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Negative pulmonary TB [0-14 years old]",
+                "display": "New Smear Negative Pulmonary TB [0-14 years old]",
                 "column_id": "new_smear_negative_pulmonary_TB_under_15",
                 "type": "field",
                 "field": "new_smear_negative_pulmonary_TB_under_15",
@@ -154,7 +154,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Negative pulmonary TB [15 years old and over]",
+                "display": "New Smear Negative Pulmonary TB [15 years old and over]",
                 "column_id": "new_smear_negative_pulmonary_TB_over_15",
                 "type": "field",
                 "field": "new_smear_negative_pulmonary_TB_over_15",
@@ -167,7 +167,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Negative pulmonary TB [ALL]",
+                "display": "New Smear Negative Pulmonary TB [ALL]",
                 "column_id": "new_smear_negative_pulmonary_TB",
                 "type": "field",
                 "field": "new_smear_negative_pulmonary_TB",
@@ -180,7 +180,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Negative pulmonary TB [Male]",
+                "display": "New Smear Negative Pulmonary TB [Male]",
                 "column_id": "new_smear_negative_pulmonary_TB_male",
                 "type": "field",
                 "field": "new_smear_negative_pulmonary_TB_male",
@@ -193,7 +193,7 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Negative pulmonary TB [Female]",
+                "display": "New Smear Negative Pulmonary TB [Female]",
                 "column_id": "new_smear_negative_pulmonary_TB_female",
                 "type": "field",
                 "field": "new_smear_negative_pulmonary_TB_female",
@@ -206,10 +206,88 @@
                 "calculate_total": false
             },
             {
-                "display": "New Smear Negative pulmonary TB [Transgender]",
+                "display": "New Smear Negative Pulmonary TB [Transgender]",
                 "column_id": "new_smear_negative_pulmonary_TB_transgender",
                 "type": "field",
                 "field": "new_smear_negative_pulmonary_TB_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive Extra Pulmonary TB [0-14 years old]",
+                "column_id": "new_smear_positive_extra_pulmonary_TB_under_15",
+                "type": "field",
+                "field": "new_smear_positive_extra_pulmonary_TB_under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive Extra Pulmonary TB [15 years old and over]",
+                "column_id": "new_smear_positive_extra_pulmonary_TB_over_15",
+                "type": "field",
+                "field": "new_smear_positive_extra_pulmonary_TB_over_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive Extra Pulmonary TB [ALL]",
+                "column_id": "new_smear_positive_extra_pulmonary_TB",
+                "type": "field",
+                "field": "new_smear_positive_extra_pulmonary_TB",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive Extra Pulmonary TB [Male]",
+                "column_id": "new_smear_positive_extra_pulmonary_TB_male",
+                "type": "field",
+                "field": "new_smear_positive_extra_pulmonary_TB_male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive Extra Pulmonary TB [Female]",
+                "column_id": "new_smear_positive_extra_pulmonary_TB_female",
+                "type": "field",
+                "field": "new_smear_positive_extra_pulmonary_TB_female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive Extra Pulmonary TB [Transgender]",
+                "column_id": "new_smear_positive_extra_pulmonary_TB_transgender",
+                "type": "field",
+                "field": "new_smear_positive_extra_pulmonary_TB_transgender",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
