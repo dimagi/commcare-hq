@@ -231,11 +231,11 @@ def location_map_case_id(user):
 def get_commtrack_location_id(user, domain):
     if (
         user and
-        user.get_domain_membership(domain.name) and
-        user.get_domain_membership(domain.name).location_id and
+        user.get_domain_membership(domain) and
+        user.get_domain_membership(domain).location_id and
         domain.commtrack_enabled
     ):
-        return user.get_domain_membership(domain.name).location_id
+        return user.get_domain_membership(domain).location_id
     else:
         return None
 
