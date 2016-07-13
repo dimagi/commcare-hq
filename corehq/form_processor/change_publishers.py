@@ -35,6 +35,18 @@ def change_meta_from_sql_form(form):
     )
 
 
+def publish_form_deleted(domain, form_id):
+    producer.send_change(topics.FORM_SQL, ChangeMeta(
+        document_id=form_id,
+        data_source_type=data_sources.FORM_SQL,
+        data_source_name='form-sql',
+        document_type='XFormInstance',
+        document_subtype=None,
+        domain=domain,
+        is_deletion=True,
+    ))
+
+
 def publish_case_saved(case, send_post_save_signal=True):
     """
     Publish the change to kafka and run case post-save signals.

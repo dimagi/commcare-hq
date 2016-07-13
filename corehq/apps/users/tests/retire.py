@@ -5,11 +5,12 @@ import uuid
 from xml.etree import ElementTree
 
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.form_processor.tests.utils import run_with_all_backends
 
@@ -18,6 +19,7 @@ class RetireUserTestCase(TestCase):
 
     def setUp(self):
         super(RetireUserTestCase, self).setUp()
+        delete_all_users()
         self.domain = 'test'
         self.username = "fake-person@test.commcarehq.org"
         self.other_username = 'other-user@test.commcarehq.org'
@@ -30,11 +32,40 @@ class RetireUserTestCase(TestCase):
         self.other_user.save()
 
     def tearDown(self):
-        for user in CommCareUser.all():
-            user.delete()
+        delete_all_users()
         delete_all_cases()
         delete_all_xforms()
         super(RetireUserTestCase, self).tearDown()
+
+    @run_with_all_backends
+    def test_unretire_user(self):
+        case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
+
+        caseblocks = []
+        for i, case_id in enumerate(case_ids):
+            owner_id = self.commcare_user._id
+
+            caseblocks.append(CaseBlock(
+                create=True,
+                case_id=case_id,
+                owner_id=owner_id,
+                user_id=owner_id,
+            ).as_string())
+        xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)
+
+        self.commcare_user.retire()
+        cases = CaseAccessors(self.domain).get_cases(case_ids)
+        self.assertTrue(all(map(lambda c: c.is_deleted, cases)))
+        self.assertEqual(len(cases), 3)
+        form = FormAccessors(self.domain).get_form(xform.form_id)
+        self.assertTrue(form.is_deleted)
+
+        self.commcare_user.unretire()
+        cases = CaseAccessors(self.domain).get_cases(case_ids)
+        self.assertFalse(all(map(lambda c: c.is_deleted, cases)))
+        self.assertEqual(len(cases), 3)
+        form = FormAccessors(self.domain).get_form(xform.form_id)
+        self.assertFalse(form.is_deleted)
 
     @run_with_all_backends
     def test_deleted_indices_removed(self):

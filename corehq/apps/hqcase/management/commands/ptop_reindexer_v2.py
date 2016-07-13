@@ -1,7 +1,12 @@
 from copy import deepcopy
 from optparse import make_option
+
 from django.core.management import BaseCommand, CommandError
 
+from corehq.pillows.app_submission_tracker import (
+    get_couch_app_form_submission_tracker_reindexer,
+    get_sql_app_form_submission_tracker_reindexer
+)
 from corehq.pillows.application import get_app_reindexer
 from corehq.pillows.case import (
     get_couch_case_reindexer, get_sql_case_reindexer
@@ -15,9 +20,7 @@ from corehq.pillows.reportcase import get_report_case_couch_reindexer
 from corehq.pillows.reportxform import get_report_xform_couch_reindexer
 from corehq.pillows.sms import get_sms_reindexer
 from corehq.pillows.user import get_user_reindexer
-from corehq.pillows.xform import (
-    get_couch_form_reindexer, get_sql_form_reindexer
-)
+from corehq.pillows.xform import get_couch_form_reindexer, get_sql_form_reindexer
 
 
 def clean_options(options):
@@ -50,6 +53,11 @@ class Command(BaseCommand):
                     action='store_true',
                     dest='reset',
                     help='Reset a resumable reindex'),
+        make_option('--chunksize',
+                    type="int",
+                    action='store',
+                    dest='chunksize',
+                    help='Skip important confirmation warnings.'),
     )
 
     def handle(self, index, *args, **options):
@@ -71,6 +79,8 @@ class Command(BaseCommand):
             'report-case': get_report_case_couch_reindexer,
             'report-xform': get_report_xform_couch_reindexer,
             'app': get_app_reindexer,
+            'couch-app-form-submission': get_couch_app_form_submission_tracker_reindexer,
+            'sql-app-form-submission': get_sql_app_form_submission_tracker_reindexer,
         }
         if index not in reindex_fns:
             raise CommandError('Supported indices to reindex are: {}'.format(','.join(reindex_fns.keys())))

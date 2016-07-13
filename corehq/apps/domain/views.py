@@ -586,7 +586,7 @@ def test_repeater(request, domain):
         format = format or RegisterGenerator.default_format_by_repeater(repeater_class)
         generator_class = RegisterGenerator.generator_class_by_repeater_format(repeater_class, format)
         generator = generator_class(repeater_class())
-        fake_post = generator.get_test_payload()
+        fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
 
         try:

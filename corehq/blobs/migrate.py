@@ -79,7 +79,12 @@ from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
-from corehq.util.couch_doc_processor import BaseDocProcessor, DOCS_SKIPPED_WARNING, CouchDocumentProcessor
+from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
+from corehq.util.doc_processor.couch import CouchProcessorProgressLogger
+from corehq.util.doc_processor.interface import (
+    BaseDocProcessor, DOCS_SKIPPED_WARNING,
+    DocumentProcessorController
+)
 from couchdbkit import ResourceConflict
 
 # models to be migrated
@@ -125,8 +130,10 @@ class BaseDocMigrator(BaseDocProcessor):
     # If true, load attachment content before migrating.
     load_attachments = False
 
-    def __init__(self, slug, filename=None):
-        super(BaseDocMigrator, self).__init__(slug)
+    def __init__(self, slug, couchdb, filename=None):
+        super(BaseDocMigrator, self).__init__()
+        self.slug = slug
+        self.couchdb = couchdb
         self.dirpath = None
         self.filename = filename
         if filename is None:
@@ -140,16 +147,12 @@ class BaseDocMigrator(BaseDocProcessor):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.backup_file.close()
 
-    @property
-    def unique_key(self):
-        return self.slug + "-blob-migration"
-
     def handle_skip(self, doc):
         return True  # ignore
 
-    def _prepare_doc(self, doc, couchdb):
+    def _prepare_doc(self, doc):
         if self.load_attachments:
-            obj = BlobHelper(doc, couchdb)
+            obj = BlobHelper(doc, self.couchdb)
             doc["_attachments"] = {
                 name: {
                     "content_type": meta["content_type"],
@@ -175,20 +178,19 @@ class BaseDocMigrator(BaseDocProcessor):
         self.backup_file.write('{}\n'.format(json.dumps(backup_doc)))
         self.backup_file.flush()
 
-    def process_doc(self, doc, couchdb):
+    def process_doc(self, doc):
         """Migrate a single document
 
         :param doc: The document dict to be migrated.
-        :param couchdb: Couchdb database in which to save migrated doc.
         :returns: True if doc was migrated else False. If this returns False
         the document migration will be retried later.
         """
-        self._prepare_doc(doc, couchdb)
+        self._prepare_doc(doc)
         self._backup_doc(doc)
-        return self._do_migration(doc, couchdb)
+        return self._do_migration(doc)
 
     @abstractmethod
-    def _do_migration(self, doc, couchdb):
+    def _do_migration(self, doc):
         raise NotImplementedError
 
     def processing_complete(self, skipped):
@@ -204,10 +206,10 @@ class CouchAttachmentMigrator(BaseDocMigrator):
 
     load_attachments = True
 
-    def _do_migration(self, doc, couchdb):
+    def _do_migration(self, doc):
         attachments = doc.pop("_attachments")
         external_blobs = doc.setdefault("external_blobs", {})
-        obj = BlobHelper(doc, couchdb)
+        obj = BlobHelper(doc, self.couchdb)
         try:
             with obj.atomic_blobs():
                 for name, data in list(attachments.iteritems()):
@@ -228,8 +230,8 @@ class CouchAttachmentMigrator(BaseDocMigrator):
 
 class BlobDbBackendMigrator(BaseDocMigrator):
 
-    def __init__(self, slug, filename=None):
-        super(BlobDbBackendMigrator, self).__init__(slug, filename)
+    def __init__(self, slug, couchdb, filename=None):
+        super(BlobDbBackendMigrator, self).__init__(slug, couchdb, filename)
         self.db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
@@ -237,8 +239,8 @@ class BlobDbBackendMigrator(BaseDocMigrator):
             raise MigrationError(
                 "Expected to find migrating blob db backend (got %r)" % self.db)
 
-    def _do_migration(self, doc, couchdb):
-        obj = BlobHelper(doc, couchdb)
+    def _do_migration(self, doc):
+        obj = BlobHelper(doc, self.couchdb)
         bucket = obj._blobdb_bucket()
         assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
         for name, meta in obj.blobs.iteritems():
@@ -271,19 +273,27 @@ class Migrator(object):
     def __init__(self, slug, doc_types, doc_migrator_class):
         self.slug = slug
         self.doc_migrator_class = doc_migrator_class
-        self.doc_type_map = dict(
-            t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types)
-        if len(doc_types) != len(self.doc_type_map):
-            raise ValueError("Invalid (duplicate?) doc types")
+        self.doc_types = doc_types
+        first_type = doc_types[0]
+        self.couchdb = (first_type[0] if isinstance(first_type, tuple) else first_type).get_db()
+
+        sorted_types = sorted(doc_type_tuples_to_dict(self.doc_types))
+        self.iteration_key = "{}-blob-migration/{}".format(self.slug, " ".join(sorted_types))
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
-        doc_migrator = self.doc_migrator_class(self.slug, filename)
-        processor = CouchDocumentProcessor(
-            self.doc_type_map,
+        doc_migrator = self.doc_migrator_class(self.slug, self.couchdb, filename)
+
+        progress_logger = CouchProcessorProgressLogger(self.doc_types)
+
+        document_provider = CouchDocumentProvider(self.iteration_key, self.doc_types)
+
+        processor = DocumentProcessorController(
+            document_provider,
             doc_migrator,
             reset,
             max_retry,
-            chunk_size
+            chunk_size,
+            progress_logger=progress_logger
         )
         return processor.run()
 
@@ -329,7 +339,7 @@ def assert_migration_complete(slug):
 
         migrator = MIGRATIONS[slug]
         total = 0
-        for doc_type, model_class in migrator.doc_type_map.items():
+        for doc_type, model_class in doc_type_tuples_to_dict(migrator.doc_types).items():
             total += get_doc_count_by_type(model_class.get_db(), doc_type)
         if total > 500:
             message = MIGRATION_INSTRUCTIONS.format(slug=slug, total=total)

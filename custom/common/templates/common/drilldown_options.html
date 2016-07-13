@@ -32,18 +32,15 @@
 
 {% block filter_js %}
 <script type="text/javascript">
-    $.when(
-        $.getScript("{% static 'reports/ko/report_filter.drilldown_options.js' %}"),
-        $.getScript("{% static 'common/ko/report_filter.drilldown_options.js' %}")
-    ).done(function () {
-       $('#{{ css_id }}').drilldownOptionFilter({
-           drilldown_map: {{ option_map|JSON }},
-           controls: {{ controls|JSON }},
-           selected: {{ selected|JSON }},
-           notifications: {{ notifications|JSON }}
-       });
+    $.getScript("{% static 'reports/ko/report_filter.drilldown_options.js' %}").done(function(){
+        $.getScript("{% static 'common/ko/report_filter.drilldown_options.js' %}").done(function () {
+            $('#{{ css_id }}').drilldownOptionFilter({
+                    drilldown_map: {{ option_map|JSON }},
+                    controls: {{ controls|JSON }},
+                    selected: {{ selected|JSON }},
+                    notifications: {{ notifications|JSON }}
+            });
+        });
     });
-
-
 </script>
 {% endblock %}

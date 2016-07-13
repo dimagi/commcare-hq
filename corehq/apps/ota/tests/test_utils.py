@@ -117,6 +117,16 @@ class RestorePermissionsTest(TestCase):
         self.assertFalse(is_permitted)
         self.assertIsNotNone(message)
 
+    def test_web_user_as_other_web_user(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_user,
+            self.web_user.username,
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
     def test_super_user_as_user_other_domain(self):
         """
         Superusers should be able to restore as other mobile users even if it's the wrong domain
@@ -172,6 +182,15 @@ class GetRestoreUserTest(TestCase):
                 self.domain,
                 self.web_user,
                 '{}@{}'.format(self.commcare_user.raw_username, self.domain)
+            )
+        )
+
+    def test_get_restore_user_as_web_user(self):
+        self.assertIsNotNone(
+            get_restore_user(
+                self.domain,
+                self.web_user,
+                self.web_user.username,
             )
         )
 

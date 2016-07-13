@@ -1,13 +1,14 @@
-from datetime import datetime
+from datetime import datetime, date
 from django.test import SimpleTestCase
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
     NumericFilter, DynamicChoiceListFilter, Choice
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
-    CHOICE_DELIMITER, NumericFilterValue
+    CHOICE_DELIMITER, NumericFilterValue, DateFilterValue
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import ReportFilter
+from dimagi.utils.dates import DateSpan
 
 
 class FilterTestCase(SimpleTestCase):
@@ -299,3 +300,34 @@ class DynamicChoiceListFilterTestCase(SimpleTestCase):
         ]
         for i, s in enumerate(test_strings):
             self.assertListEqual(choices[0:i + 1], filter.value(dynoslug=s))
+
+
+class DateFilterOffsetTest(SimpleTestCase):
+    def _computed_dates(self, actual_startdate, actual_enddate):
+        filter = ReportFilter(
+            compare_as_string=False,
+            field=u'submission_date',
+            slug=u'submitted_on',
+            type=u'date',
+            required=False
+        )
+        value = DateSpan(actual_startdate, actual_enddate)
+        filter_value = DateFilterValue(filter, value)
+        computed_values = filter_value.to_sql_values()
+        startdate = computed_values['%s_startdate' % filter.slug]
+        enddate = computed_values['%s_enddate' % filter.slug]
+        return startdate, enddate
+
+    def test_date_objects(self):
+        start, end = date(2015, 1, 1), date(2015, 1, 2)
+        computed_start, computed_end = self._computed_dates(start, end)
+        self.assertEqual(computed_start, start)
+        self.assertEqual(computed_end, end)
+
+    def test_datetime_objects(self):
+        # computed_enddate should be last minute of the enddate
+        start, end = datetime(2015, 1, 1), datetime(2015, 1, 2)
+        computed_start, computed_end = self._computed_dates(start, end)
+        self.assertEqual(computed_start, start)
+        self.assertNotEqual(computed_end, end)
+        self.assertEqual((computed_end - end).days, 0)

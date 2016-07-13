@@ -1,5 +1,5 @@
 {
-  "form_id": null,
+  "_id": null,
   "app_id": null,
   "auth_context": {
     "authenticated": false,
@@ -23,5 +23,6 @@
   "problem": null,
   "state": 1,
   "orig_id": null,
-  "deprecated_form_id": null
+  "deprecated_form_id": null,
+  "doc_type": "XFormInstance"
 }

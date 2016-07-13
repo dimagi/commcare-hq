@@ -80,6 +80,11 @@
             var currentUrl = useLegacyBulkExportUrl ? $scope.legacy_bulk_download_url : $scope.bulk_download_url;
             input.closest("form").attr("action", currentUrl);
         };
+        $scope.downloadRequested = function($event) {
+            var $btn = $($event.target);
+            $btn.addClass('disabled');
+            $btn.text(gettext('Download Requested'));
+        };
         $scope.selectAll = function () {
             _.each($scope.exports, function (exp) {
                 exp.addedToBulk = true;
