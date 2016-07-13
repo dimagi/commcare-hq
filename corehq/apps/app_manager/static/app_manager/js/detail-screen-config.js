@@ -565,7 +565,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
                    ? COMMCAREHQ.icons.PAPERCLIP : null);
-                this.field = uiElement.input().val(this.original.field).setIcon(icon);
+                this.field = uiElement.input(this.original.field).setIcon(icon);
 
                 // Make it possible to observe changes to this.field
                 // note that observableVal is read only!
