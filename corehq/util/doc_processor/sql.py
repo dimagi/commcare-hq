@@ -37,7 +37,7 @@ class SqlModelArgsProvider(ArgsProvider):
             return [next_db, datetime.min, None], {}
 
 
-def ResumableSqlModelIterator(iteration_key, reindex_accessor, chunk_size=100, event_handler=None):
+def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100, event_handler=None):
     """Perform one-time resumable iteration over documents
 
     Iteration can be efficiently stopped and resumed. The iteration may
@@ -81,7 +81,7 @@ class SqlDocumentProvider(DocumentProvider):
         self.reindex_accessor = reindex_accessor
 
     def get_document_iterator(self, chunk_size, event_handler=None):
-        return ResumableSqlModelIterator(
+        return resumable_sql_model_iterator(
             self.iteration_key, self.reindex_accessor,
             chunk_size=chunk_size, event_handler=event_handler
         )
