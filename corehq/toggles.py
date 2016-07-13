@@ -860,3 +860,11 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
 )
+
+
+ZAPIER_INTEGRATION = StaticToggle(
+    'zapier_integration',
+    'Allow to use domain in Zapier application',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
