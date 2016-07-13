@@ -1,17 +1,18 @@
-from copy import copy
 import json
-from dimagi.utils.logging import notify_error
+from copy import copy
+
 from django.conf import settings
 from kafka import KafkaConsumer
-from kafka.common import ConsumerTimeout, KafkaConfigurationError, KafkaUnavailableError
+from kafka.structs import TopicPartition
+
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-import logging
+from corehq.apps.change_feed.topics import get_all_offsets
+from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
 
-
-MIN_TIMEOUT = 100
+MIN_TIMEOUT = 200
 
 
 class KafkaChangeFeed(ChangeFeed):
@@ -76,18 +77,23 @@ class KafkaChangeFeed(ChangeFeed):
 
             def _make_offset_tuple(topic):
                 if topic in self._processed_topic_offsets:
-                    return (topic, self._partition, self._processed_topic_offsets[topic])
+                    return TopicPartition(topic, self._partition), self._processed_topic_offsets[topic]
                 else:
-                    return (topic, self._partition)
+                    return TopicPartition(topic, self._partition), 0
 
-            offsets = [_make_offset_tuple(topic) for topic in self._topics]
             # this is how you tell the consumer to start from a certain point in the sequence
-            consumer.set_topic_partitions(*offsets)
+            for topic in self._topics:
+                topic_partition, offset = _make_offset_tuple(topic)
+                if offset:
+                    consumer.seek(topic_partition, offset)
+                else:
+                    consumer.seek_to_beginning(topic_partition)
+
         try:
             for message in consumer:
                 self._processed_topic_offsets[message.topic] = message.offset
                 yield change_from_kafka_message(message)
-        except ConsumerTimeout:
+        except StopIteration:
             assert not forever, 'Kafka pillow should not timeout when waiting forever!'
             # no need to do anything since this is just telling us we've reached the end of the feed
 
@@ -99,42 +105,33 @@ class KafkaChangeFeed(ChangeFeed):
         }
 
     def get_current_offsets(self):
-        consumer = self._get_consumer(MIN_TIMEOUT, auto_offset_reset='smallest')
-        try:
-            # we have to fetch the changes to populate the highwater offsets
-            # todo: there is likely a cleaner way to do this
-            changes = list(consumer)
-        except ConsumerTimeout:
-            pass
-        except (KafkaConfigurationError, KafkaUnavailableError) as e:
-            # kafka seems to be having issues. log it and move on
-            logging.exception(u'Problem getting latest offsets form kafka for {}: {}'.format(
-                self,
-                e,
-            ))
-            return None
-
-        highwater_offsets = consumer.offsets('highwater')
+        offsets = get_all_offsets()
         return {
-            topic: highwater_offsets[(topic, self._partition)]
-            for topic in self._topics
+            topic: offsets[topic] for topic in self._topics
         }
 
     def get_latest_change_id(self):
         topic = self._get_single_topic_or_fail()
         return self.get_current_offsets().get(topic)
 
-    def _get_consumer(self, timeout, auto_offset_reset='smallest'):
+    def _get_consumer(self, timeout, auto_offset_reset='earliest'):
         config = {
-            'group_id': self._group_id,
+            # 'group_id': self._group_id,
             'bootstrap_servers': [settings.KAFKA_URL],
             'consumer_timeout_ms': timeout,
             'auto_offset_reset': auto_offset_reset,
+            'enable_auto_commit': False
         }
-        return KafkaConsumer(
-            *self._topics,
+        consumer = KafkaConsumer(
             **config
         )
+        # Manual topic assignment through this method does not use the
+        # consumer's group management functionality. As such, there will be
+        # no rebalance operation triggered when group membership or cluster
+        # and topic metadata change.
+        consumer.assign([TopicPartition(topic, 0) for topic in self._topics])
+
+        return consumer
 
 
 class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
