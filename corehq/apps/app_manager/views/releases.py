@@ -1,6 +1,7 @@
 import json
 import uuid
 
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
@@ -344,6 +345,10 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
             self.second_app_id = self.kwargs["second_app_id"]
             self.first_app = Application.get(self.first_app_id)
             self.second_app = Application.get(self.second_app_id)
+            if not (request.couch_user.is_member_of(self.first_app.domain)
+                    and request.couch_user.is_member_of(self.second_app.domain)):
+                raise PermissionDenied()
+
         except (ResourceNotFound, KeyError):
             raise Http404()
 
