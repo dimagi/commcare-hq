@@ -6,7 +6,8 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
-from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer, get_current_kafka_seq
+from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.pillows.app_submission_tracker import get_app_form_submission_tracker_pillow
@@ -58,7 +59,6 @@ class FormPillowTest(TestCase):
     def test_form_pillow_non_existant_build_id(self):
         consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
-
         form = self._make_form(build_id='not-here')
 
         # confirm change made it to kafka
@@ -125,7 +125,4 @@ class FormPillowTest(TestCase):
     def _get_kafka_seq(self):
         # KafkaChangeFeed listens for multiple topics (form, form-sql) in the form pillow,
         # so we need to provide a dict of seqs to kafka
-        return {
-            topics.FORM_SQL: get_current_kafka_seq(topics.FORM_SQL),
-            topics.FORM: get_current_kafka_seq(topics.FORM)
-        }
+        return get_multi_topic_offset([topics.FORM, topics.FORM_SQL])

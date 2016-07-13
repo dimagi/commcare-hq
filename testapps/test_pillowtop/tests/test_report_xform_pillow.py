@@ -4,7 +4,8 @@ from elasticsearch.exceptions import ConnectionError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import get_default_couch_db_change_feed_pillow
-from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer, get_current_multi_topic_seq
+from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.es import FormES
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -79,7 +80,7 @@ class ReportXformPillowTest(TestCase):
     def test_report_xform_kafka_pillow(self):
         consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
         # have to get the seq id before the change is processed
-        kafka_seq = get_current_multi_topic_seq([topics.FORM, topics.FORM_SQL])
+        kafka_seq = get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
         couch_seq = get_current_seq(XFormInstance.get_db())
 
         # make a form

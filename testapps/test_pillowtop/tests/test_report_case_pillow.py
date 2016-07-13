@@ -7,7 +7,8 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import get_default_couch_db_change_feed_pillow
-from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer, get_current_multi_topic_seq
+from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
+from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.es import CaseES
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
@@ -77,7 +78,7 @@ class ReportCasePillowTest(TestCase):
     def test_report_case_kafka_pillow(self):
         consumer = get_test_kafka_consumer(topics.CASE, topics.CASE_SQL)
         # have to get the seq id before the change is processed
-        kafka_seq = get_current_multi_topic_seq([topics.CASE, topics.CASE_SQL])
+        kafka_seq = get_multi_topic_offset([topics.CASE, topics.CASE_SQL])
         couch_seq = get_current_seq(CommCareCase.get_db())
 
         # make a case

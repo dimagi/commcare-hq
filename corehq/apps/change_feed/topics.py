@@ -46,6 +46,11 @@ def get_topic_offset(topic):
     return get_all_offsets()[topic]
 
 
+def get_multi_topic_offset(topics):
+    offsets = get_all_offsets()
+    return {topic: offsets[topic] for topic in topics}
+
+
 def get_all_offsets():
     client = get_kafka_client()
     offset_requests = [OffsetRequestPayload(topic, 0, OffsetResetStrategy.LATEST, 1) for topic in ALL]
