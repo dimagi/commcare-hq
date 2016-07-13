@@ -134,19 +134,19 @@
 {% endblock %}
 
 {% block page_title %}
-Editing CommCare Builds
+{% trans "Editing CommCare Builds" %}
 {% endblock %}
 
 {% block page_content %}
     {% if success %}
         <div class="alert alert-success">Your changes have been saved</div>
     {% endif %}
-    <div class="alert alert-info"><strong>Editing {{ doc.ID }}</strong></div>
+    <div class="alert alert-info"><strong>{% trans "Editing" %} {{ doc.ID }}</strong></div>
 
 
     <div class="panel panel-default">
         <div class="panel-heading">
-            <h3 class="panel-title">Menu Options</h3>
+            <h3 class="panel-title">{% trans "Menu Options" %}</h3>
         </div>
         <div class="panel-body">
             <form id="menu-form" class="form-horizontal" action="." method="POST">{% csrf_token %}
@@ -205,7 +205,7 @@ Editing CommCare Builds
                     <legend>Defaults</legend>
                     <div class="form-group">
                         <label class="control-label col-sm-3" for="select-default-1">
-                            Default 1.x Build
+                            {% trans "Default 1.x Build" %}
                         </label>
                         <div class="col-sm-8">
                             <select class="form-control" id="select-default-1" data-bind="
@@ -215,7 +215,7 @@ Editing CommCare Builds
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-3" for="select-default-2">
-                            Default 2.x Build
+                            {% trans "Default 2.x Build" %}
                         </label>
                         <div class="col-sm-8">
                             <select class="form-control" id="select-default-2" data-bind="
@@ -240,17 +240,22 @@ Editing CommCare Builds
         </div>
         <div class="panel-body">
             <ol>
-                <li><a href="http://jenkins.dimagi.com/view/CommCare%20Mobile/" target="_blank">Browse builds</a></li>
-                <li>Click on a CommCare version (example: "commcare-mobile-2.13", <strong>NOT</strong> "commcare-odk-2.13")</li>
-                <li>Click on the most recent successful build in the table at left</li>
-                <li>Click "Build Artifacts" -> "application" -> "posttmp"</li>
-                <li>Right-click on "artifacts.zip" and select "Copy Link Address"</li>
-                <li>Paste the address into the box below</li>
-                <li>Click Submit</li>
-                <li>Wait until the page loads. If successful click back and refresh to see your new build.</li>
+                <li><a href="http://jenkins.dimagi.com/view/CommCare%20Mobile/" target="_blank">{% trans "Browse builds" %}</a></li>
+                <li>{% blocktrans %}
+                      Click on a CommCare version (example: "commcare-mobile-2.13",
+                      <strong>NOT</strong>
+                      "commcare-odk-2.13")
+                    {% endblocktrans %}
+                </li>
+                <li>{% trans "Click on the most recent successful build in the table at left" %}</li>
+                <li>{% trans "Click 'Build Artifacts' -> 'application' -> 'posttmp'" %}</li>
+                <li>{% trans "Right-click on 'artifacts.zip' and select 'Copy Link Address'" %}</li>
+                <li>{% trans "Paste the address into the box below" %}</li>
+                <li>{% trans "Click Submit" %}</li>
+                <li>{% trans "Wait until the page loads. If successful click back and refresh to see your new build." %}</li>
             </ol>
             <div id="build-note">
-                <strong>Note: Adding version without artifacts would make the corresponding app builds incompatible with Java phones</strong>
+                <strong>{% trans "Note: Adding version without artifacts would make the corresponding app builds incompatible with Java phones" %}</strong>
             </div>
             <form class="form-horizontal" action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">
                 {% csrf_token %}
@@ -280,7 +285,7 @@ Editing CommCare Builds
                 </div>
                 <div class="form-actions">
                     <div class="col-sm-offset-3">
-                        <button type="submit" class="btn btn-primary">Import Build</button>
+                        <button type="submit" class="btn btn-primary">{% trans "Import Build" %}</button>
                     </div>
                 </div>
             </form>
