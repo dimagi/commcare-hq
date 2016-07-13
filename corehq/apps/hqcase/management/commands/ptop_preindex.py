@@ -39,7 +39,7 @@ def get_reindex_commands(alias_name):
             ('ptop_reindexer_v2', {'index': 'app'})
         ],
         'hqgroups': [('ptop_reindexer_v2', {'index': 'group'})],
-        'report_xforms': ['ptop_fast_reindex_reportxforms'],
+        'report_xforms': [('ptop_reindexer_v2', {'index': 'report-xform'})],
         'report_cases': ['ptop_fast_reindex_reportcases'],
         'case_search': [('ptop_reindexer_v2', {'index': 'case-search'})],
         'ledgers': [
