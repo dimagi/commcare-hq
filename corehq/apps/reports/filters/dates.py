@@ -4,6 +4,7 @@ from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
 from corehq.apps.reports.filters.base import BaseReportFilter
 import datetime
+from dimagi.utils.dates import add_months
 
 
 class DatespanFilter(BaseReportFilter):
@@ -57,7 +58,8 @@ class HiddenLastMonthDateFilter(DatespanFilter):
     @property
     def datespan(self):
         now = datetime.datetime.utcnow()
-        last_month = DateSpan.from_month(now.month - 1, now.year)
+        year, month = add_months(now.year, now.month, -1)
+        last_month = DateSpan.from_month(month, year)
         self.request.datespan = last_month
         self.context.update(dict(datespan=last_month))
         return last_month
