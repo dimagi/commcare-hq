@@ -24,45 +24,6 @@
         ],
         "columns": [
             {
-                "display": "Female",
-                "column_id": "female",
-                "type": "field",
-                "field": "female",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Male",
-                "column_id": "male",
-                "type": "field",
-                "field": "male",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Under 15",
-                "column_id": "under_15",
-                "type": "field",
-                "field": "under_15",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
                 "display": "New Smear Positive Pulmonary TB [0-14 years old]",
                 "column_id": "new_smear_positive_pulmonary_TB_under_15",
                 "type": "field",
