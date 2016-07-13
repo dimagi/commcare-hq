@@ -1,0 +1,145 @@
+{
+    "domains": [
+        "enikshay-test"
+    ],
+    "data_source_table": "episode",
+    "report_id": "case_finding",
+    "config": {
+        "description": "Initial mockup of the case finding report",
+        "title": "Case Finding Report (DRAFT)",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": [],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "required": false,
+                "display": "Case Open Date",
+                "field": "opened_on",
+                "type": "date",
+                "slug": "opened_on"
+            }
+        ],
+        "columns": [
+            {
+                "display": "Female",
+                "column_id": "female",
+                "type": "field",
+                "field": "female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Male",
+                "column_id": "male",
+                "type": "field",
+                "field": "male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Under 15",
+                "column_id": "under_15",
+                "type": "field",
+                "field": "under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive pulmonary TB [0-14 years old]",
+                "column_id": "new_smear_positive_pulmonary_TB_under_15",
+                "type": "field",
+                "field": "new_smear_positive_pulmonary_TB_under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive pulmonary TB [15 years old and over]",
+                "column_id": "new_smear_positive_pulmonary_TB_over_15",
+                "type": "field",
+                "field": "new_smear_positive_pulmonary_TB_over_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive pulmonary TB [ALL]",
+                "column_id": "new_smear_positive_pulmonary_TB",
+                "type": "field",
+                "field": "new_smear_positive_pulmonary_TB",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive pulmonary TB [Male]",
+                "column_id": "new_smear_positive_pulmonary_TB_male",
+                "type": "field",
+                "field": "new_smear_positive_pulmonary_TB_male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive pulmonary TB [Female]",
+                "column_id": "new_smear_positive_pulmonary_TB_female",
+                "type": "field",
+                "field": "new_smear_positive_pulmonary_TB_female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "New Smear Positive pulmonary TB [Transgender]",
+                "column_id": "new_smear_positive_pulmonary_TB_transgender",
+                "type": "field",
+                "field": "new_smear_positive_pulmonary_TB_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}
