@@ -266,7 +266,7 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     def doc_type(self):
         from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
         if self.is_deleted:
-            return 'XFormIntance' + DELETED_SUFFIX
+            return 'XFormInstance' + DELETED_SUFFIX
         return {v: k for k, v in doc_type_to_state.items()}.get(self.state, 'XFormInstance')
 
     @property
