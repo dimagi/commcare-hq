@@ -390,6 +390,24 @@
                         {
                             "type": "named",
                             "name": "pulmonary"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
                         },
                         {
                             "type": "named",
@@ -425,6 +443,72 @@
                 "display_name": "new_smear_positive_pulmonary_TB_over_15",
                 "type": "boolean",
                 "column_id": "new_smear_positive_pulmonary_TB_over_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB_female",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB_female"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB_male",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB_male"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB_transgender",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB_transgender"
             }
         ],
         "named_filters": {
@@ -492,7 +576,7 @@
                 "type": "boolean_expression",
                 "property_value": "pulmonary"
             },
-            "transgender":{
+            "transgender": {
                 "operator": "eq",
                 "expression": {
                     "value_expression": {

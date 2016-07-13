@@ -107,5 +107,10 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self.assertEqual(row.age_in_days, 666)
         self.assertEqual(row.under_15, 1)
 
+        self.assertEqual(row.new_smear_positive_pulmonary_TB, 1)
+        self.assertEqual(row.new_smear_positive_pulmonary_TB_male, 1)
+        self.assertEqual(row.new_smear_positive_pulmonary_TB_female, 0)
+        self.assertEqual(row.new_smear_positive_pulmonary_TB_transgender, 0)
+
         self.assertEqual(row.new_smear_positive_pulmonary_TB_under_15, 1)
         self.assertEqual(row.new_smear_positive_pulmonary_TB_over_15, 0)
