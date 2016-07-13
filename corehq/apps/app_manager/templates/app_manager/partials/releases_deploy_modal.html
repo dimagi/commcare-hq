@@ -185,9 +185,11 @@
                                 </li>
                             </ol>
                             <p data-bind="if: !reveal_java_download()">
-                                {% trans "This version is not compatible with Java Phones. Please create a new build with latest J2ME supported version, "%}
+                                {% blocktrans %}
+                                This version is not compatible with Java Phones. Please create a new build with latest J2ME supported version,
                                 {{ lastest_j2me_enabled_build }}
-                                {% trans "to install on Java Phone." %}
+                                to install on Java Phone.
+                                {% endblocktrans %}
                             </p>
                         </div>
                     </div>
