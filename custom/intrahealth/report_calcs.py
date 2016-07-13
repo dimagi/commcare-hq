@@ -319,7 +319,7 @@ class DureeMoyenneLivraison(fluff.Calculator):
     def total(self, form):
         value = form.form['duree_moyenne_livraison'] if form.form['duree_moyenne_livraison'] else 0
         yield {
-            'date': form.form['mois_visite'],
+            'date': form.form['mois_visite'] or None,  # coerce empty strings to None
             'value': value
         }
 
