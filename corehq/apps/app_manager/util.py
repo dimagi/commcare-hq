@@ -57,6 +57,16 @@ USER_CASE_XPATH_SUBSTRING_MATCHES = [
 ]
 
 
+def app_doc_types():
+    from corehq.apps.app_manager.models import Application, RemoteApp
+    return {
+        'Application': Application,
+        'Application-Deleted': Application,
+        'RemoteApp': RemoteApp,
+        'RemoteApp-Deleted': RemoteApp,
+    }
+
+
 def _prepare_xpath_for_validation(xpath):
     prepared_xpath = xpath.lower()
     prepared_xpath = prepared_xpath.replace('"', "'")
@@ -214,7 +224,15 @@ class ParentCasePropertyBuilder(object):
         case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
 
         for m_case_type, form in self.forms_info:
-            case_properties.update(self.get_case_updates(form, case_type))
+            updates = self.get_case_updates(form, case_type)
+            if include_parent_properties:
+                case_properties.update(updates)
+            else:
+                # HACK exclude case updates that reference properties like "parent/property_name"
+                # TODO add parent property updates to the parent case type(s) of m_case_type
+                # Currently if a property is only ever updated via parent property
+                # reference, then I think it will not appear in the schema.
+                case_properties.update(p for p in updates if "/" not in p)
 
         parent_types, contributed_properties = \
             self.get_parent_types_and_contributed_properties(case_type)
@@ -461,16 +479,10 @@ def is_sort_only_column(column):
 
 
 def get_correct_app_class(doc):
-    from corehq.apps.app_manager.models import Application, RemoteApp
     try:
-        return {
-            'Application': Application,
-            'Application-Deleted': Application,
-            "RemoteApp": RemoteApp,
-            "RemoteApp-Deleted": RemoteApp,
-        }[doc['doc_type']]
+        return app_doc_types()[doc['doc_type']]
     except KeyError:
-        raise DocTypeError()
+        raise DocTypeError(doc['doc_type'])
 
 
 def all_apps_by_domain(domain):

@@ -101,7 +101,7 @@ class RestorePermissionsTest(TestCase):
         is_permitted, message = is_permitted_to_restore(
             self.domain,
             self.web_user,
-            u'{}'.format(self.commcare_user),  # Malformed, should include domain
+            self.commcare_user.raw_username,  # Malformed, should include domain
             True,
         )
         self.assertFalse(is_permitted)
@@ -111,7 +111,7 @@ class RestorePermissionsTest(TestCase):
         is_permitted, message = is_permitted_to_restore(
             self.domain,
             self.web_user,
-            u'{}@wrong-domain'.format(self.commcare_user),  # Malformed, should include domain
+            u'{}@wrong-domain'.format(self.commcare_user.raw_username),
             True,
         )
         self.assertFalse(is_permitted)

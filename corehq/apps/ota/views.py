@@ -110,7 +110,6 @@ def get_restore_params(request):
         'version': request.GET.get('version', "1.0"),
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
-        'force_restore_mode': request.GET.get('mode'),
         'as_user': request.GET.get('as'),
         'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP)
     }
@@ -120,7 +119,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None, as_user=None, has_data_cleanup_privelege=False):
-
     # not a view just a view util
     is_permitted, message = is_permitted_to_restore(
         domain,
@@ -141,6 +139,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
+    async_restore = toggles.ASYNC_RESTORE.enabled(domain)
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -149,14 +148,14 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             version=version,
             state_hash=state,
             include_item_count=items,
-            force_restore_mode=force_restore_mode,
             app=app,
         ),
         cache_settings=RestoreCacheSettings(
-            force_cache=force_cache,
+            force_cache=force_cache or async_restore,
             cache_timeout=cache_timeout,
             overwrite_cache=overwrite_cache
         ),
+        async=async_restore
     )
     return restore_config.get_response(), restore_config.timing_context
 

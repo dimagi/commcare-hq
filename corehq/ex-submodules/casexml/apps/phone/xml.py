@@ -26,10 +26,11 @@ def tostring(element):
     return ElementTree.tostring(element, encoding="utf-8")
 
 
-def get_sync_element(restore_id):
+def get_sync_element(restore_id=None):
     elem = safe_element("Sync")
     elem.attrib = {"xmlns": SYNC_XMLNS}
-    elem.append(safe_element("restore_id", restore_id))
+    if restore_id is not None:
+        elem.append(safe_element("restore_id", restore_id))
     return elem
 
 
@@ -133,4 +134,12 @@ def get_data_element(name, dict):
         sub_el = safe_element("data", v)
         sub_el.attrib = {"key": k}
         elem.append(sub_el)
+    return elem
+
+
+def get_progress_element(done=0, total=0, retry_after=0):
+    elem = safe_element("progress")
+    elem.set('done', str(done))
+    elem.set('total', str(total))
+    elem.set('retry-after', str(retry_after))
     return elem

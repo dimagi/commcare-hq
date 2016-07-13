@@ -1,3 +1,4 @@
+import weakref
 from datetime import datetime
 import subprocess
 import time
@@ -6,7 +7,8 @@ import sys
 
 from django.core.management.base import NoArgsCommand
 import json
-from corehq.util.couch_helpers import paginate_view, PaginateViewLogHandler
+from corehq.util.couch_helpers import paginate_view
+from corehq.util.pagination import PaginationEventHandler
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_settings, \
     get_index_info_from_pillow, initialize_index_and_mapping
@@ -22,13 +24,25 @@ RETRY_DELAY = 60
 RETRY_TIME_DELAY_FACTOR = 15
 
 
-class ReindexLogHandler(PaginateViewLogHandler):
+class ReindexEventHandler(PaginationEventHandler):
 
     def __init__(self, reindexer):
-        self.reindexer = reindexer
+        self.reindexer_ref = weakref.ref(reindexer)
 
-    def log(self, message):
-        self.reindexer.log(message)
+    def page_start(self, total_emitted, *args, **kwargs):
+        reindexer = self.reindexer_ref()
+        if reindexer:
+            reindexer.log(u'Fetching rows {}-{} from couch'.format(
+                total_emitted,
+                total_emitted + kwargs['limit'] - 1)
+            )
+            startkey = kwargs.get('startkey')
+            reindexer.log(u'  startkey={!r}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
+
+    def page_end(self, total_emitted, duration, *args, **kwargs):
+        reindexer = self.reindexer_ref()
+        if reindexer:
+            reindexer.log('View call took {}'.format(duration))
 
 
 class PtopReindexer(NoArgsCommand):
@@ -128,8 +142,8 @@ class PtopReindexer(NoArgsCommand):
     def paginate_view(self, *args, **kwargs):
         if 'chunk_size' not in kwargs:
             kwargs['chunk_size'] = self.chunk_size
-        if 'log_handler' not in kwargs:
-            kwargs['log_handler'] = ReindexLogHandler(self)
+        if 'event_handler' not in kwargs:
+            kwargs['event_handler'] = ReindexEventHandler(self)
         return paginate_view(*args, **kwargs)
 
     def full_couch_view_iter(self):

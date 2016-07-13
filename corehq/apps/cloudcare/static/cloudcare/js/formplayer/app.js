@@ -82,36 +82,14 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
-        //TODO: Old Touchforms gets the "submit-all" action then returns the XML to the frontend
-        // to be submitted (here). Is there any reason FormPlayer shouldn't do the submitting itself?
-        var xml = resp.output;
-        var postUrl = resp.postUrl;
-        $.ajax({
-            type: 'POST',
-            url: postUrl,
-            data: xml,
-            success: function () {
-                FormplayerFrontend.request("clearForm");
-                // TODO form linking
-                FormplayerFrontend.trigger("apps:list");
-                showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
-            },
-            error: function (resp, status, message) {
-                if (message) {
-                    message = gettext("Error saving!") + message;
-                } else {
-                    message = gettext("Unknown error: ") + status + " " + resp.status;
-                    if (resp.status === 0) {
-                        message = (message + ". "
-                        + gettext("This can happen if you loaded CloudCare from a different address than the server address") + " (" + postUrl + ")");
-                    }
-                }
-                data.onerror({message: message});
-                // TODO change submit button text to something other than
-                // "Submitting..." and prevent "All changes saved!" message
-                // banner at top of the form.
-            },
-        });
+        if(resp.status === "success") {
+            FormplayerFrontend.request("clearForm");
+            FormplayerFrontend.trigger("apps:list");
+            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
+        } else {
+            showError(resp.output, $("#cloudcare-notifications"));
+        }
+        // TODO form linking
     };
     data.formplayerEnabled = true;
     var sess = new WebFormSession(data);

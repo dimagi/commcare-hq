@@ -1,6 +1,8 @@
 import re
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.es.cases import CaseES
+from corehq.form_processor.exceptions import CaseNotFound
+from couchdbkit.exceptions import ResourceNotFound
 from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
 from django.db import models
@@ -63,6 +65,14 @@ class AutomaticUpdateRule(models.Model):
         return results.doc_ids
 
     def rule_matches_case(self, case, now):
+        try:
+            return self._rule_matches_case(case, now)
+        except (CaseNotFound, ResourceNotFound):
+            # This might happen if the rule references a parent case and the
+            # parent case is not found
+            return False
+
+    def _rule_matches_case(self, case, now):
         if case.type != self.case_type:
             return False
 
@@ -89,7 +99,8 @@ class AutomaticUpdateRule(models.Model):
 
     def apply_rule(self, case, now):
         """
-        Returns True if the case was closed, False otherwise.
+        :return: True to stop processing further rules on the case (e.g., the
+        case is closed or deleted), False otherwise
         """
         if self.deleted:
             raise Exception("Attempted to call apply_rule on a deleted rule")
@@ -100,12 +111,8 @@ class AutomaticUpdateRule(models.Model):
         if not isinstance(case, (CommCareCase, CommCareCaseSQL)) or case.domain != self.domain:
             raise Exception("Invalid case given")
 
-        if case.is_deleted:
-            # Exclude deleted cases
-            return False
-
-        if case.closed:
-            return False
+        if case.is_deleted or case.closed:
+            return True
 
         if self.rule_matches_case(case, now):
             return self.apply_actions(case)
