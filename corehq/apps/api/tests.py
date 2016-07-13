@@ -1871,19 +1871,17 @@ class TestConfigurableReportDataResource(APIResourceTest):
         user_in_wrong_domain_name = 'Mallory'
         user_in_wrong_domain_password = '1337haxor'
         wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
+        self.addCleanup(wrong_domain.delete)
         user_in_wrong_domain = WebUser.create(
             wrong_domain.name, user_in_wrong_domain_name, user_in_wrong_domain_password
         )
+        self.addCleanup(user_in_wrong_domain.delete)
         user_in_wrong_domain.save()
         credentials = base64.b64encode("{}:{}".format(
             user_in_wrong_domain_name, user_in_wrong_domain_password)
         )
-        try:
-            response = self.client.get(
-                self.single_endpoint(self.report_configuration._id),
-                HTTP_AUTHORIZATION='Basic ' + credentials
-            )
-            self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
-        finally:
-            wrong_domain.delete()
-            user_in_wrong_domain.delete()
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id),
+            HTTP_AUTHORIZATION='Basic ' + credentials
+        )
+        self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
