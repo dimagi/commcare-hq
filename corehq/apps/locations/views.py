@@ -46,6 +46,7 @@ from .permissions import (
 )
 from .models import Location, LocationType, SQLLocation
 from .forms import LocationForm, UsersAtLocationForm
+from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
 
@@ -245,20 +246,11 @@ class LocationTypesView(BaseLocationView):
         """
         Return loc types in order from parents to children
         """
+        assert_no_cycles([
+            (lt['pk'], lt['parent_type']) for lt in loc_types
+        ])
+
         lt_dict = {lt['pk']: lt for lt in loc_types}
-
-        # Make sure there are no cycles
-        for loc_type in loc_types:
-            visited = set()
-
-            def step(lt):
-                assert lt['name'] not in visited, \
-                    "There's a loc type cycle, we need to prohibit that"
-                visited.add(lt['name'])
-                if lt['parent_type']:
-                    step(lt_dict[lt['parent_type']])
-            step(loc_type)
-
         hierarchy = {}
 
         def insert_loc_type(loc_type):
