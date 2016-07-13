@@ -7,6 +7,7 @@ from corehq.apps.es import CaseES
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
+from corehq.pillows.reportcase import get_report_case_reindexer
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -60,3 +61,40 @@ class ReportCasePillowTest(TestCase):
                 create_and_save_a_case(domain, case_id, case_name)
         self.elasticsearch.indices.refresh(REPORT_CASE_INDEX_INFO.index)
         return case_id, case_name
+
+
+@override_settings(ES_CASE_FULL_INDEX_DOMAINS=[DOMAIN])
+class ReportCaseReindexerTest(TestCase):
+
+    def setUp(self):
+        super(ReportCaseReindexerTest, self).setUp()
+        FormProcessorTestUtils.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_cases()
+        with trap_extra_setup(ConnectionError):
+            self.elasticsearch = get_es_new()
+            ensure_index_deleted(REPORT_CASE_INDEX_INFO.index)
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms()
+        FormProcessorTestUtils.delete_all_cases()
+        ensure_index_deleted(REPORT_CASE_INDEX_INFO.index)
+        super(ReportCaseReindexerTest, self).tearDown()
+
+    @run_with_all_backends
+    def test_report_case_reindexer(self):
+        cases_included = set()
+        for i in range(3):
+            case = create_and_save_a_case(DOMAIN, uuid.uuid4().hex, 'case_name-{}'.format(i))
+            cases_included.add(case.case_id)
+
+        # excluded case
+        create_and_save_a_case('unsupported', uuid.uuid4().hex, 'unsupported')
+
+        reindexer = get_report_case_reindexer()
+        reindexer.reindex()
+
+        # verify there
+        results = CaseES("report_cases").run()
+        self.assertEqual(3, results.total, results.hits)
+        ids_in_es = {doc['_id'] for doc in results.hits}
+        self.assertEqual(cases_included, ids_in_es)
