@@ -1,6 +1,6 @@
 from couchdbkit import ResourceNotFound
 
-from corehq.util.couch_helpers import PaginatedViewArgsProvider, MultiKeyViewArgsProvider
+from corehq.util.couch_helpers import MultiKeyViewArgsProvider
 from corehq.util.doc_processor.interface import DocumentProvider, ProcessorProgressLogger
 from corehq.util.pagination import ResumableFunctionIterator
 

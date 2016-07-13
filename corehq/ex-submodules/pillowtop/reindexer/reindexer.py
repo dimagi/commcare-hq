@@ -64,7 +64,7 @@ class PillowChangeProviderReindexer(PillowReindexer):
             try:
                 self.pillow.process_change(change)
             except Exception:
-                pillow_logging.exception("Uable to process change: %s", change.id)
+                pillow_logging.exception("Unable to process change: %s", change.id)
 
 
 def _clean_index(es, index_info):

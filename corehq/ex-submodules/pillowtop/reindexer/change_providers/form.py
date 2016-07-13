@@ -1,4 +1,3 @@
-from corehq.apps.domain.models import Domain
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, doc_type_to_state
 from corehq.form_processor.change_publishers import change_meta_from_sql_form
 from corehq.form_processor.utils.general import should_use_sql_backend

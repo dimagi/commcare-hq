@@ -73,8 +73,6 @@ class ArgsListProvider(ArgsProvider):
         return [], self.kwargs_list[0]
 
     def get_next_args(self, result, *last_args, **last_kwargs):
-        # all docs for the current key have been processed
-        # move on to the next key combo
         kwargs_index = self.kwargs_list.index(last_kwargs) + 1
         self.kwargs_list = self.kwargs_list[kwargs_index:]
         try:

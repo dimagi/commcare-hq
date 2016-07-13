@@ -5,7 +5,7 @@ from unittest import TestCase
 from django.test import SimpleTestCase
 from fakecouch import FakeCouchDb
 
-from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state, FormAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
 from couchforms.models import XFormInstance
 from pillowtop.reindexer.change_providers.form import CouchXFormDomainChangeProvider, SqlDomainXFormChangeProvider
