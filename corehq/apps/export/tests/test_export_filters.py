@@ -5,7 +5,7 @@ from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.export.esaccessors import get_case_export_base_query
 from corehq.apps.export.export import (
-    _get_export_documents,
+    _get_export_documents_scroll,
 )
 from corehq.apps.export.filters import (
     GroupOwnerFilter,
@@ -104,7 +104,7 @@ class ExportFilterResultTest(SimpleTestCase):
     def test_filter_combination(self):
         owner_filter = OwnerFilter(DEFAULT_USER)
         closed_filter = IsClosedFilter(False)
-        doc_generator = _get_export_documents(
+        doc_generator = _get_export_documents_scroll(
             CaseExportInstance(domain=DOMAIN, case_type=DEFAULT_CASE_TYPE),
             [owner_filter, closed_filter]
         )
@@ -112,7 +112,7 @@ class ExportFilterResultTest(SimpleTestCase):
 
     def test_group_filters(self):
         group_filter = GroupOwnerFilter(self.group_id)
-        doc_generator = _get_export_documents(
+        doc_generator = _get_export_documents_scroll(
             CaseExportInstance(domain=DOMAIN, case_type=DEFAULT_CASE_TYPE),
             [group_filter]
         )
@@ -128,7 +128,7 @@ class ExportFilterResultTest(SimpleTestCase):
         Confirm that the FormSubmittedByFilter works when None is one of the
         arguments.
         """
-        doc_generator = _get_export_documents(
+        doc_generator = _get_export_documents_scroll(
             FormExportInstance(domain=DOMAIN, app_id=DEFAULT_APP_ID, xmlns=DEFAULT_XMLNS),
             [FormSubmittedByFilter([uuid.uuid4().hex, None, uuid.uuid4().hex])]
         )
