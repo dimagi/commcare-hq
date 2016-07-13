@@ -10,7 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from corehq.apps.export.export import get_export_download, get_export_documents
+from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.utils import use_new_exports
@@ -1678,7 +1678,7 @@ class GenericDownloadNewExportMixin(object):
     def _check_export_size(self, export_instances, filters):
         count = 0
         for instance in export_instances:
-            count += get_export_documents(instance, filters).count()
+            count += get_export_size(instance, filters)
         if count > MAX_EXPORTABLE_ROWS:
             raise ExportAsyncException(
                 _("This export contains " + count + " rows. Please change the " +
