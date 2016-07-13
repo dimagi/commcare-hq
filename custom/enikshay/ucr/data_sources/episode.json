@@ -385,6 +385,10 @@
                     "filters": [
                         {
                             "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
                             "name": "new_patient"
                         },
                         {
@@ -401,6 +405,10 @@
                 "filter": {
                     "type": "and",
                     "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
                         {
                             "type": "named",
                             "name": "new_patient"
@@ -423,6 +431,10 @@
                 "filter": {
                     "type": "and",
                     "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
                         {
                             "type": "named",
                             "name": "new_patient"
@@ -450,6 +462,10 @@
                     "filters": [
                         {
                             "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
                             "name": "new_patient"
                         },
                         {
@@ -472,6 +488,10 @@
                     "filters": [
                         {
                             "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
                             "name": "new_patient"
                         },
                         {
@@ -492,6 +512,10 @@
                 "filter": {
                     "type": "and",
                     "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
                         {
                             "type": "named",
                             "name": "new_patient"
@@ -653,6 +677,16 @@
                 },
                 "type": "boolean_expression",
                 "property_value": "reactive"
+            },
+            "sputum_positive": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "lab_result"
+                },
+                "type": "boolean_expression",
+                "property_value": "TB detected"
             }
         },
         "named_expressions": {

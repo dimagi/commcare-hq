@@ -81,7 +81,8 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                     person_id="person",
                     opened_on=datetime(1989, 6, 11, 0, 0),
                     patient_type="new",
-                    hiv_status="reactive"
+                    hiv_status="reactive",
+                    lab_result="TB detected"
                 )
             },
             indices=[CaseIndex(
@@ -93,7 +94,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         )
         self.factory.create_or_update_cases([episode])
 
-    def test_indicators(self):
+    def test_sputum_positive(self):
         self.assertEqual(self.query.count(), 1)
         row = self.query.first()
 
