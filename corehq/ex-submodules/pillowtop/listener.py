@@ -1,5 +1,6 @@
 from functools import wraps
 import logging
+from couchdbkit.exceptions import ResourceNotFound
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 from django.db.utils import InterfaceError as DjangoInterfaceError
@@ -191,7 +192,11 @@ class BasicPillow(PillowBase):
             return changes_dict.get_document()
         else:
             # todo: remove this in favor of always using get_document() above
-            return self.get_couch_db().open_doc(id)
+            try:
+                return self.get_couch_db().open_doc(id)
+            except ResourceNotFound:
+                # doc was likely hard-deleted. treat like a deletion
+                return None
 
     def change_transform(self, doc_dict):
         """
