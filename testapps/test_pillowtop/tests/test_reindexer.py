@@ -68,13 +68,8 @@ class PillowtopReindexerTest(TestCase):
         FormProcessorTestUtils.delete_all_cases()
         case = _create_and_save_a_case()
 
-        extra_options = {}
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
-            index_id = 'sql-case'
-        else:
-            index_id = 'case'
-            extra_options = {'reset': True}
-        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, **extra_options)
+        index_id = 'sql-case' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'case'
+        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, reset=True)
 
         self._assert_case_is_in_es(case)
 
@@ -114,13 +109,8 @@ class PillowtopReindexerTest(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         form = create_and_save_a_form(DOMAIN)
 
-        extra_options = {}
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
-            index_id = 'sql-form'
-        else:
-            index_id = 'form'
-            extra_options = {'reset': True}
-        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, **extra_options)
+        index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
+        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, reset=True)
 
         self._assert_form_is_in_es(form)
 
