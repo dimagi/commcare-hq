@@ -99,7 +99,7 @@ class CouchDocumentProvider(DocumentProvider):
 
     :param iteration_key: unique key to identify the document iterator. Must be unique
     across all document iterators.
-    :param doc_types: An ordered sequence. Each item in the sequence should be
+    :param doc_type_tuples: An ordered sequence where each item in the sequence should be
     either a doc type class or a tuple ``(doc_type_name_string, doc_type_class)``
     if the doc type name is different from the model class name.
     Note that the order of the sequence should never change while the iteration is
