@@ -955,6 +955,7 @@ class Subscriber(models.Model):
             downgraded_privileges = downgraded_privileges or change_status_result.downgraded_privs
             upgraded_privileges = upgraded_privileges or change_status_result.upgraded_privs
 
+        # TODO - remove once cause is fixed
         if isinstance(self.domain, Domain):
             self.domain = self.domain.name
 
