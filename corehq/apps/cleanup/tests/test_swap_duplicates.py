@@ -5,7 +5,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from testil import tempdir
 
-from corehq.apps.app_manager.tests import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import \
     FIXED_FORM_PROBLEM_TEMPLATE, BAD_FORM_PROBLEM_TEMPLATE
 from corehq.apps.receiverwrapper import submit_form_locally

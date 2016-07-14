@@ -11,7 +11,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL, LedgerReindexAccessor
 )
 from corehq.form_processor.models import LedgerValue, CommCareCaseSQL
-from corehq.form_processor.tests import FormProcessorTestUtils, PartitionConfig, create_form_for_test
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, PartitionConfig, create_form_for_test
 
 
 class BaseReindexAccessorTest(object):
