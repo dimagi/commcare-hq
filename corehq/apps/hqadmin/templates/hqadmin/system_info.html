@@ -166,7 +166,17 @@
 
             self.width = function() {
                 return (self.seq * 100) / self.db_offset;
-            }
+            };
+
+            self.status = function() {
+                if (self.width() > 98) {
+                    return 'progress-bar-success';
+                } else if (self.width() < 50) {
+                    return 'progress-bar-danger';
+                } else if (self.width() < 75) {
+                    return 'progress-bar-warning';
+                }
+            };
         }
 
         function PillowModel(pillow) {
@@ -515,7 +525,7 @@
                             <div class="row">
                               <div class="col-xs-6 col-sm-4">
                                   <div class="progress">
-                                        <div class="progress-bar progress-bar-striped active" data-bind="style: {width: width() + '%'}"></div>
+                                        <div class="progress-bar progress-bar-striped" data-bind="style: {width: width() + '%'}, css: status()"></div>
                                     </div>
                               </div>
                               <div class="col-xs-4 col-sm-2">
