@@ -5,6 +5,7 @@ from corehq.apps.sms.messages import (
     _MESSAGES,
     MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_JAVA_INVITATION,
+    MSG_MOBILE_WORKER_ANDROID_INVITATION,
     MSG_REGISTRATION_WELCOME_MOBILE_WORKER,
 )
 from corehq.apps.sms.models import SQLMobileBackendMapping, SelfRegistrationInvitation, SMS, OUTGOING
@@ -16,8 +17,9 @@ from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from mock import patch
 
 
-def get_app_odk_url():
-    return 'http://localhost/testapp'
+DUMMY_APP_ODK_URL = 'http://localhost/testapp'
+DUMMY_REGISTRATION_URL = 'http://localhost/register'
+DUMMY_APP_INFO_URL = 'http://localhost/appinfo'
 
 
 class RegistrationTestCase(BaseSMSTest):
@@ -52,15 +54,26 @@ class RegistrationTestCase(BaseSMSTest):
 
         super(RegistrationTestCase, self).tearDown()
 
-    def _get_last_sms(self):
-        result = SMS.objects.filter(domain=self.domain).order_by('-date')[:1]
-        return result[0] if len(result) > 0 else None
+    def _get_last_sms(self, count=1, direction=None, phone_number=None):
+        result = SMS.objects.filter(domain=self.domain)
+        if direction:
+            result = result.filter(direction=direction)
 
-    def assertLastOutgoingSMS(self, phone_number, text):
-        sms = self._get_last_sms()
-        self.assertEqual(sms.direction, OUTGOING)
-        self.assertEqual(sms.phone_number, phone_number)
-        self.assertEqual(sms.text, text)
+        if phone_number:
+            result = result.filter(phone_number=phone_number)
+
+        result = list(result[:count])
+        self.assertEqual(len(result), count)
+        return result
+
+    def assertLastOutgoingSMS(self, phone_number, expected_texts):
+        result = self._get_last_sms(
+            count=len(expected_texts),
+            direction=OUTGOING,
+            phone_number=phone_number
+        )
+        actual_texts = set([sms.text for sms in result])
+        self.assertEqual(actual_texts, set(expected_texts))
 
     def _get_sms_registration_invitation(self):
         # implicitly assert there is only one of these
@@ -100,7 +113,7 @@ class RegistrationTestCase(BaseSMSTest):
         user_data = {'abc': 'def'}
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=get_app_odk_url()):
+        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL):
             SelfRegistrationInvitation.initiate_workflow(
                 self.domain,
                 [SelfRegistrationUserInfo('999123', user_data)],
@@ -110,14 +123,14 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=get_app_odk_url(),
+            odk_url=DUMMY_APP_ODK_URL,
             phone_type=None,
             android_only=False,
             require_email=False,
             custom_user_data=user_data,
         )
 
-        self.assertLastOutgoingSMS('+999123', _MESSAGES[MSG_MOBILE_WORKER_INVITATION_START])
+        self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_MOBILE_WORKER_INVITATION_START]])
 
         # Choose phone type 'other'
         incoming('+999123', '2', self.backend.hq_api_id)
@@ -125,14 +138,14 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=get_app_odk_url(),
+            odk_url=DUMMY_APP_ODK_URL,
             phone_type=SelfRegistrationInvitation.PHONE_TYPE_OTHER,
             android_only=False,
             require_email=False,
             custom_user_data=user_data,
         )
 
-        self.assertLastOutgoingSMS('+999123', _MESSAGES[MSG_MOBILE_WORKER_JAVA_INVITATION].format(self.domain))
+        self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_MOBILE_WORKER_JAVA_INVITATION].format(self.domain)])
 
         # Register over SMS
         incoming('+999123', 'JOIN {} WORKER test'.format(self.domain), self.backend.hq_api_id)
@@ -140,4 +153,51 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertIsNotNone(user)
         self.assertEqual(user.user_data, user_data)
 
-        self.assertLastOutgoingSMS('+999123', _MESSAGES[MSG_REGISTRATION_WELCOME_MOBILE_WORKER])
+        self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_REGISTRATION_WELCOME_MOBILE_WORKER]])
+
+    def test_android_registration_from_invite(self):
+        self.domain_obj.sms_mobile_worker_registration_enabled = True
+        self.domain_obj.enable_registration_welcome_sms_for_mobile_worker = True
+        self.domain_obj.save()
+
+        user_data = {'abc': 'def'}
+
+        # Initiate Registration Workflow
+        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL):
+            SelfRegistrationInvitation.initiate_workflow(
+                self.domain,
+                [SelfRegistrationUserInfo('999123', user_data)],
+                app_id=self.app_id,
+            )
+
+        self.assertRegistrationInvitation(
+            phone_number='999123',
+            app_id=self.app_id,
+            odk_url=DUMMY_APP_ODK_URL,
+            phone_type=None,
+            android_only=False,
+            require_email=False,
+            custom_user_data=user_data,
+        )
+
+        self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_MOBILE_WORKER_INVITATION_START]])
+
+        # Choose phone type 'android'
+        with patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
+                patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            incoming('+999123', '1', self.backend.hq_api_id)
+
+        self.assertRegistrationInvitation(
+            phone_number='999123',
+            app_id=self.app_id,
+            odk_url=DUMMY_APP_ODK_URL,
+            phone_type=SelfRegistrationInvitation.PHONE_TYPE_ANDROID,
+            android_only=False,
+            require_email=False,
+            custom_user_data=user_data,
+        )
+
+        self.assertLastOutgoingSMS('+999123', [
+            _MESSAGES[MSG_MOBILE_WORKER_ANDROID_INVITATION].format(DUMMY_REGISTRATION_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+        ])

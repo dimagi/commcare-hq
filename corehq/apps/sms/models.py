@@ -1290,12 +1290,23 @@ class SelfRegistrationInvitation(models.Model):
             get_message(MSG_MOBILE_WORKER_JAVA_INVITATION, context=(self.domain,), domain=self.domain)
         )
 
+    def get_user_registration_url(self):
+        return absolute_reverse(
+            CommCareUserSelfRegistrationView.urlname,
+            args=[self.domain, self.token]
+        )
+
+    def get_app_info_url(self):
+        return absolute_reverse(
+            InvitationAppInfoView.urlname,
+            args=[self.domain, self.token]
+        )
+
     def send_step2_android_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
         from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
 
-        registration_url = absolute_reverse(CommCareUserSelfRegistrationView.urlname,
-            args=[self.domain, self.token])
+        registration_url = self.get_user_registration_url()
 
         if custom_message:
             message = custom_message.format(registration_url)
@@ -1311,8 +1322,7 @@ class SelfRegistrationInvitation(models.Model):
         )
 
         if self.odk_url:
-            app_info_url = absolute_reverse(InvitationAppInfoView.urlname,
-                args=[self.domain, self.token])
+            app_info_url = self.get_app_info_url()
             message = '[commcare app - do not delete] %s' % app_info_url
             send_sms(
                 self.domain,
