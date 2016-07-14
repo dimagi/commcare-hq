@@ -161,13 +161,19 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <a data-toggle="collapse"
-                           data-parent="#deploy-accordion" href="#panel-java"
-                           data-bind="click: function() { track_deploy_type('Download to Java Phone'); },"
+                           data-parent="#deploy-accordion"
+                           data-bind="
+                           click: function() { track_deploy_type('Download to Java Phone'); },
+                           attr: {
+                               href: '#' + id() + '_download_java',
+                               'data-target': '#' + id() + '_download_java'
+                            }
+                           "
                            aria-expanded="true" aria-controls="panel-java">
                             {% trans "Download to Java Phone" %}
                         </a>
                     </div>
-                    <div class="panel-collapse collapse" id="panel-java">
+                    <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_download_java'}">
                         <div class="panel-body">
                             <ol>
                                 <li>
@@ -191,13 +197,19 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">
                             <a data-toggle="collapse"
-                               data-parent="#deploy-accordion" href="#panel-sms"
-                               data-bind="click: function() { track_deploy_type('Send to phone via SMS'); }, click: function() { generate_short_url('short_url'); }"
+                               data-parent="#deploy-accordion"
+                               data-bind="
+                                   click: onSMSPanelClick,
+                                   attr: {
+                                      href: '#' + id() + '_sms',
+                                      'data-target': '#' + id() + '_sms'
+                                   }
+                                "
                                aria-expanded="true" aria-controls="panel-sms">
                             {% trans "Send to phone via SMS" %}
                         </a>
                     </div>
-                    <div class="panel-collapse collapse" id="panel-sms">
+                    <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
                         <div class="panel-body">
                             <div data-bind="bootstrapTabs: true">
                                 <div class="tabbable">

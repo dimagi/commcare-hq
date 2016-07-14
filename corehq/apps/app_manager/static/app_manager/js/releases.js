@@ -37,6 +37,11 @@ hqDefine('app_manager/js/releases.js', function () {
             self.generating_url(false);
         };
 
+        self.onSMSPanelClick = function() {
+            track_deploy_type('Send to phone via SMS');
+            self.generate_short_url('short_url');
+        }
+
         self.build_profile.subscribe(self.changeAppCode);
 
         self.should_generate_url = function(url_type) {
