@@ -1,4 +1,5 @@
 import pytz
+import string
 from datetime import timedelta, datetime, date, time
 import re
 from collections import namedtuple
@@ -208,7 +209,7 @@ class MessageVariable(object):
     def __init__(self, variable):
         self.variable = variable
 
-    def __unicode__(self):
+    def __repr__(self):
         return unicode(self.variable)
 
     @property
@@ -233,19 +234,24 @@ class MessageVariable(object):
             return MessageVariable(self.variable[item])
         except Exception:
             pass
-        return "(?)"
+        return MessageVariable('(?)')
+
+
+class MessageParamDict(dict):
+    def __missing__(self, key):
+        return MessageVariable('(?)')
 
 
 class Message(object):
 
     def __init__(self, template, **params):
         self.template = template
-        self.params = {}
+        self.params = MessageParamDict()
         for key, value in params.items():
             self.params[key] = MessageVariable(value)
 
     def __unicode__(self):
-        return self.template.format(**self.params)
+        return string.Formatter().vformat(self.template, (), self.params)
 
     @classmethod
     def render(cls, template, **params):

@@ -54,16 +54,6 @@ def preview_values_by_name(domain):
             for toggle_name, toggle in all_previews_by_name().items()}
 
 
-SUBMIT_HISTORY_FILTERS = FeaturePreview(
-    slug='submit_history_filters',
-    label=_("Advanced Submit History Filters"),
-    description=_("Filter the forms in the Submit History report by data in "
-        "the form submissions. Add extra columns to the report that represent "
-        "data in the forms."),
-    # privilege=privileges.
-    # help_link='https://confluence.dimagi.com/display/SPEC/Feature+Preiview+aka+Labs+Specification'
-)
-
 CALC_XPATHS = FeaturePreview(
     slug='calc_xpaths',
     label=_('Custom Calculations in Case List'),

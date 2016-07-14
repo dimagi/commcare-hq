@@ -11,7 +11,6 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicChe
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
-from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.couch import CouchDocumentProvider
@@ -81,7 +80,7 @@ def xform_pillow_filter(doc_dict):
     )
 
 
-def transform_xform_for_elasticsearch(doc_dict, include_props=True):
+def transform_xform_for_elasticsearch(doc_dict):
     """
     Given an XFormInstance, return a copy that is ready to be sent to elasticsearch,
     or None, if the form should not be saved to elasticsearch
@@ -136,18 +135,7 @@ def transform_xform_for_elasticsearch(doc_dict, include_props=True):
                 case_dict[object_key] = None
 
     doc_ret["__retrieved_case_ids"] = list(get_case_ids_from_form(doc_dict))
-    if include_props:
-        form_props = ["%s:%s" % (k, v) for k, v in flatten(doc_ret['form']).iteritems()]
-        doc_ret["__props_for_querying"] = form_props
     return doc_ret
-
-
-def prepare_sql_form_json_for_elasticsearch(sql_form_json):
-    prepped_form = transform_xform_for_elasticsearch(sql_form_json)
-    if prepped_form:
-        add_couch_properties_to_sql_form_json(prepped_form)
-
-    return prepped_form
 
 
 def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow'):
@@ -173,7 +161,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow'):
 
 def get_couch_form_reindexer():
     iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, doc_types=[
+    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
         XFormInstance,
         XFormArchived,
         XFormError,
@@ -199,5 +187,5 @@ def get_sql_form_reindexer():
         doc_provider,
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
-        doc_transform=prepare_sql_form_json_for_elasticsearch
+        doc_transform=transform_xform_for_elasticsearch
     )

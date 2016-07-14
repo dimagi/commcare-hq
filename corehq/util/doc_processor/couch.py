@@ -53,9 +53,6 @@ def resumable_docs_by_type_iterator(db, doc_types, iteration_key, chunk_size=100
     def data_function(**view_kwargs):
         return db.view('all_docs/by_doc_type', **view_kwargs)
 
-    doc_types = sorted(doc_types)
-    data_function.__name__ = " ".join(doc_types)
-
     view_kwargs = {
         'limit': chunk_size,
         'include_docs': True,
@@ -85,7 +82,7 @@ class CouchProcessorProgressLogger(ProcessorProgressLogger):
     :param doc_types: List of doc_types that are being processed
     """
     def __init__(self, doc_types):
-        self.doc_types = [t[0] if isinstance(t, tuple) else t.__name__ for t in doc_types]
+        self.doc_types = doc_type_tuples_to_list(doc_types)
 
     def progress_starting(self, total, previously_visited):
         print("Processing {} documents{}: {}...".format(
@@ -100,15 +97,23 @@ class CouchDocumentProvider(DocumentProvider):
 
     All documents must live in the same couch database.
 
-    :param iteration_key: unique key to identify the document iterator
-    :param doc_types: Dict of `doc_type_name: model_class` pairs.
+    :param iteration_key: unique key to identify the document iterator. Must be unique
+    across all document iterators.
+    :param doc_type_tuples: An ordered sequence where each item in the sequence should be
+    either a doc type class or a tuple ``(doc_type_name_string, doc_type_class)``
+    if the doc type name is different from the model class name.
+    Note that the order of the sequence should never change while the iteration is
+    in progress to avoid skipping doc types.
     """
-    def __init__(self, iteration_key, doc_types):
+    def __init__(self, iteration_key, doc_type_tuples):
         self.iteration_key = iteration_key
 
-        self.doc_type_map = doc_type_list_to_dict(doc_types)
+        assert isinstance(doc_type_tuples, list)
 
-        if len(doc_types) != len(self.doc_type_map):
+        self.doc_types = doc_type_tuples_to_list(doc_type_tuples)
+        self.doc_type_map = doc_type_tuples_to_dict(doc_type_tuples)
+
+        if len(doc_type_tuples) != len(self.doc_type_map):
             raise ValueError("Invalid (duplicate?) doc types")
 
         self.couchdb = next(iter(self.doc_type_map.values())).get_db()
@@ -117,7 +122,7 @@ class CouchDocumentProvider(DocumentProvider):
 
     def get_document_iterator(self, chunk_size, event_handler=None):
         return resumable_docs_by_type_iterator(
-            self.couchdb, self.doc_type_map, self.iteration_key,
+            self.couchdb, self.doc_types, self.iteration_key,
             chunk_size=chunk_size, view_event_handler=event_handler
         )
 
@@ -129,7 +134,11 @@ class CouchDocumentProvider(DocumentProvider):
         )
 
 
-def doc_type_list_to_dict(doc_types):
+def doc_type_tuples_to_dict(doc_types):
     return dict(
         t if isinstance(t, tuple) else (t.__name__, t) for t in doc_types
     )
+
+
+def doc_type_tuples_to_list(doc_types):
+    return list(doc_type_tuples_to_dict(doc_types))
