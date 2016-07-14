@@ -1,8 +1,7 @@
 import itertools
 import uuid
-from unittest import TestCase
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
