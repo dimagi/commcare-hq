@@ -1394,9 +1394,6 @@ class Subscription(models.Model):
             renewed_subscription.is_active = True
         renewed_subscription.save()
 
-        # transfer existing credit lines to the renewed subscription
-        self.transfer_credits(renewed_subscription)
-
         # record renewal from old subscription
         SubscriptionAdjustment.record_adjustment(
             self, method=adjustment_method, note=note, web_user=web_user,
