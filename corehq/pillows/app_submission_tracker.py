@@ -99,7 +99,7 @@ class AppFormSubmissionReindexer(Reindexer):
 
 def get_couch_app_form_submission_tracker_reindexer():
     iteration_key = "CouchAppFormSubmissionTrackerPillow_reindexer"
-    doc_provider = CouchDocumentProvider(iteration_key, doc_types=[
+    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
         XFormInstance,
         XFormArchived,
         XFormError,
@@ -108,7 +108,7 @@ def get_couch_app_form_submission_tracker_reindexer():
         ('HQSubmission', XFormInstance),
         SubmissionErrorLog,
     ])
-    return AppFormSubmissionReindexer(doc_provider, COUCH, XFormInstance.get_db().name)
+    return AppFormSubmissionReindexer(doc_provider, COUCH, XFormInstance.get_db().dbname)
 
 
 def get_sql_app_form_submission_tracker_reindexer():
