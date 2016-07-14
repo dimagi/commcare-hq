@@ -76,7 +76,7 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
-    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_configs_labels()
+    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
         app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
@@ -191,7 +191,7 @@ def save_copy(request, domain, app_id):
     )
     lang, langs = get_langs(request, app)
     # Set if build is supported for Java Phones
-    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_configs_labels()
+    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
     return json_response({
         "saved_app": copy,

@@ -147,7 +147,7 @@ class CommCareBuild(Document):
         return [build for build in cls.all_builds() if build.j2me_enabled]
 
     @classmethod
-    def j2me_enabled_builds_versions(cls):
+    def j2me_enabled_build_versions(cls):
         return map(lambda x: x.version, cls.j2me_enabled_builds())
 
 
@@ -265,7 +265,7 @@ class CommCareBuildConfig(Document):
         return [build for build in cls.fetch().menu if build.j2me_enabled]
 
     @classmethod
-    def j2me_enabled_configs_labels(cls):
+    def j2me_enabled_config_labels(cls):
         return map(lambda x: x.label, cls.j2me_enabled_configs())
 
     @classmethod
