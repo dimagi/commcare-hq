@@ -130,6 +130,7 @@ class RegistrationTestCase(BaseSMSTest):
             android_only=False,
             require_email=False,
             custom_user_data=user_data,
+            status=SelfRegistrationInvitation.STATUS_PENDING,
         )
 
         self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_MOBILE_WORKER_INVITATION_START]])
@@ -145,6 +146,7 @@ class RegistrationTestCase(BaseSMSTest):
             android_only=False,
             require_email=False,
             custom_user_data=user_data,
+            status=SelfRegistrationInvitation.STATUS_PENDING,
         )
 
         self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_MOBILE_WORKER_JAVA_INVITATION].format(self.domain)])
@@ -157,6 +159,10 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)
 
         self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_REGISTRATION_WELCOME_MOBILE_WORKER]])
+
+        self.assertRegistrationInvitation(
+            status=SelfRegistrationInvitation.STATUS_REGISTERED,
+        )
 
     def test_android_registration_from_invite(self):
         self.domain_obj.sms_mobile_worker_registration_enabled = True
@@ -181,6 +187,7 @@ class RegistrationTestCase(BaseSMSTest):
             android_only=False,
             require_email=False,
             custom_user_data=user_data,
+            status=SelfRegistrationInvitation.STATUS_PENDING,
         )
 
         self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_MOBILE_WORKER_INVITATION_START]])
@@ -198,6 +205,7 @@ class RegistrationTestCase(BaseSMSTest):
             android_only=False,
             require_email=False,
             custom_user_data=user_data,
+            status=SelfRegistrationInvitation.STATUS_PENDING,
         )
 
         self.assertLastOutgoingSMS('+999123', [
@@ -220,3 +228,7 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertEqual(user.user_data, user_data)
         self.assertEqual(user.email, 'new_user@dimagi.com')
         self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)
+
+        self.assertRegistrationInvitation(
+            status=SelfRegistrationInvitation.STATUS_REGISTERED,
+        )
