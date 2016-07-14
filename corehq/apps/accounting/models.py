@@ -2807,6 +2807,7 @@ class PaymentMethod(models.Model):
 
     class Meta:
         app_label = 'accounting'
+        unique_together = ('web_user', 'method_type')
 
 
 class StripePaymentMethod(PaymentMethod):
