@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession */
+/*global Marionette, Backbone, WebFormSession, Util */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -117,17 +117,15 @@ FormplayerFrontend.on("sync", function () {
     var username = user.username;
     var domain = user.domain;
     var formplayer_url = user.formplayer_url;
-    var resp = $.ajax({
+    var options = {
         url: formplayer_url + "/sync-db",
-        dataType: "json",
         data: JSON.stringify({"username": username, "domain": domain}),
-        type: 'POST',
-        crossDomain: {crossDomain: true},
-        xhrFields: {withCredentials: true},
-        contentType: "application/json",
-    });
+    };
+    Util.setCrossDomainAjaxOptions(options);
+    var resp = $.ajax(options);
     tfLoading();
-    resp.done(function (data) {
+    resp.done(function () {
+        hideLoading();
         tfSyncComplete(false);
     });
     resp.error(function (data) {
