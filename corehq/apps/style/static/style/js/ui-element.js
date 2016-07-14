@@ -189,7 +189,7 @@ var uiElement;
                                 break;
                             }
                         }
-                        this.$edit_view.val(this.value.toString());
+                        this.$edit_view.val(String(this.value || ''));
                         this.$noedit_view.text(label);
                         return this;
                     }
