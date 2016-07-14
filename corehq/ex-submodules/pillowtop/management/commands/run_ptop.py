@@ -36,6 +36,15 @@ class Command(NoArgsCommand):
                     dest='pillow_name',
                     default=None,
                     help="Run a single specific pillow name from settings.PILLOWTOPS list"),
+        make_option('--optimize',
+                    action='store_true',
+                    default=False,
+                    dest='optimize',
+                    help=(
+                        'Runs a pillow optimized by only loading necessary apps. Must be used with'
+
+                        'pillow-name. See manage.py for how it is used.'
+                    ))
     )
 
     def handle_noargs(self, **options):
