@@ -143,9 +143,10 @@
 
 
     function setupUsersTables(){
-        var low_performing = {{last_month.get_unhealthy_users|JSON}}
-        var inactive = {{last_month.get_dropouts|JSON}}
-        var high_performing = {{last_month.get_newly_performing|JSON}}
+        var low_performing = {{last_month.get_unhealthy_users|JSON}};
+        var inactive = {{last_month.get_dropouts|JSON}};
+        console.log(inactive);
+        var high_performing = {{last_month.get_newly_performing|JSON}};
 
         var ListViewModel = function(items){
             var self = this;

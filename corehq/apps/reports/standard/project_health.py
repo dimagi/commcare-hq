@@ -1,3 +1,4 @@
+from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext_noop
 from corehq.apps.data_analytics.models import MALTRow
@@ -20,23 +21,8 @@ def get_performance_threshold(domain_name):
     return Domain.get_by_name(domain_name).internal.performance_threshold or 15
 
 
-class UserActivityStub(jsonobject.JsonObject):
-
-    user_id = jsonobject.StringProperty()
-    username = jsonobject.StringProperty()
-    num_forms_submitted = jsonobject.IntegerProperty()
-    is_performing = jsonobject.BooleanProperty()
-
-    def __init__(self, user_id, username, num_forms_submitted, is_performing, previous_stub=None, next_stub=None):
-        self._previous_stub = previous_stub
-        self._next_stub = next_stub
-
-        super(UserActivityStub, self).__init__(
-            user_id=user_id,
-            username=username,
-            num_forms_submitted=num_forms_submitted,
-            is_performing=is_performing,
-        )
+class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms_submitted', 'delta_forms',
+                       'delta_forms_next_month', 'is_performing', 'previous_stub', 'next_stub'])):
 
     @property
     def is_active(self):
@@ -44,16 +30,16 @@ class UserActivityStub(jsonobject.JsonObject):
 
     @property
     def is_newly_performing(self):
-        return self.is_performing and (self._previous_stub is None or not self._previous_stub.is_performing)
+        return self.is_performing and (self.previous_stub is None or not self.previous_stub.is_performing)
 
     @property
     def delta_forms(self):
-        previous_forms = 0 if self._previous_stub is None else self._previous_stub.num_forms_submitted
+        previous_forms = 0 if self.previous_stub is None else self.previous_stub.num_forms_submitted
         return self.num_forms_submitted - previous_forms
 
     @property
     def num_forms_submitted_next_month(self):
-        return self._next_stub.num_forms_submitted if self._next_stub else 0
+        return self.next_stub.num_forms_submitted if self.next_stub else 0
 
     @property
     def delta_forms_next_month(self):
@@ -181,6 +167,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 user_id=row.user_id,
                 username=raw_username(row.username),
                 num_forms_submitted=row.num_of_forms,
+                delta_forms=0,
+                delta_forms_next_month=0,
                 is_performing=row.num_of_forms >= self.performance_threshold,
                 previous_stub=None,
                 next_stub=None,
@@ -199,6 +187,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                     user_id=user_stub.user_id,
                     username=user_stub.username,
                     num_forms_submitted=user_stub.num_forms_submitted,
+                    delta_forms=user_stub.delta_forms,
+                    delta_forms_next_month=user_stub.delta_forms_next_month,
                     is_performing=user_stub.is_performing,
                     previous_stub=previous_stubs.get(user_stub.user_id),
                     next_stub=next_stubs.get(user_stub.user_id),
@@ -209,6 +199,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                     user_id=previous_stub.user_id,
                     username=previous_stub.username,
                     num_forms_submitted=0,
+                    delta_forms=previous_stub.delta_forms,
+                    delta_forms_next_month=previous_stub.delta_forms_next_month,
                     is_performing=False,
                     previous_stub=previous_stub,
                     next_stub=next_stubs.get(missing_user_id),
@@ -226,7 +218,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 CommCareUser.get(stub.user_id).is_deleted(),
                 self.get_all_user_stubs_with_extra_data()
             )
-            return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
+            sorted_unhealthy_users = sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
+            unhealthy_users = [user._asdict() for user in sorted_unhealthy_users]
+            return unhealthy_users
 
     def get_dropouts(self):
         """
@@ -239,7 +233,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 CommCareUser.get(stub.user_id).is_deleted(),
                 self.get_all_user_stubs_with_extra_data()
             )
-            return sorted(dropouts, key=lambda stub: stub.delta_forms)
+            sorted_dropouts = sorted(dropouts, key=lambda stub: stub.delta_forms)
+            dropouts = [user._asdict() for user in sorted_dropouts]
+            return dropouts
 
     def get_newly_performing(self):
         """
@@ -247,12 +243,14 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         after not performing last month.
         """
         if self._previous_summary:
-            dropouts = filter(
+            high_performers = filter(
                 lambda stub: stub.is_newly_performing and not
                 CommCareUser.get(stub.user_id).is_deleted(),
                 self.get_all_user_stubs_with_extra_data()
             )
-            return sorted(dropouts, key=lambda stub: -stub.delta_forms)
+            sorted_high_performers = sorted(high_performers, key=lambda stub: -stub.delta_forms)
+            high_performers = [user._asdict() for user in sorted_high_performers]
+            return high_performers
 
 
 class ProjectHealthDashboard(ProjectReport):
