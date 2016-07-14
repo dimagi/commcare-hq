@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles
 from corehq.apps.locations.bulk_management import bulk_update_organization
@@ -28,8 +28,6 @@ BASIC_LOCATION_TREE = [
 ]
 
 MOVE_SUFFOLK_TO_FLORIDA = [
-    # ('name', 'site_code', 'location_type', 'parent_code', 'location_id',
-    # 'external_id', 'latitude', 'longitude'),
     ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
     # this is the only changed line (parent is changed to florida)
     ('Suffolk', 'suffolk', 'county', 'florida', '2345', '', '', ''),
@@ -42,8 +40,6 @@ MOVE_SUFFOLK_TO_FLORIDA = [
 ]
 
 DELETE_SUFFOLK = [
-    # ('name', 'site_code', 'location_type', 'parent_code', 'location_id',
-    # 'external_id', 'latitude', 'longitude', 'delete'),
     ('Massachusetts', 'mass', 'state', '', '1234', '', '', '', ''),
     # These next two are marked as 'delete'
     ('Suffolk', 'suffolk', 'county', 'mass', '2345', '', '', '', 'delete'),
@@ -103,7 +99,6 @@ class TestBulkManagement(TestCase):
         self.create_location_types(FLAT_LOCATION_TYPES)
         self.create_locations(BASIC_LOCATION_TREE)
 
-        # the functionality that's yet to be created
         bulk_update_organization(
             self.domain,
             FLAT_LOCATION_TYPES,
