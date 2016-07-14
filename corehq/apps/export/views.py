@@ -878,6 +878,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
     def download_export_form(self):
         return self.filter_form_class(
             self.domain_object,
+            timezone=self.timezone,
             initial={
                 'type_or_group': 'type',
             },
@@ -896,7 +897,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
 
     def _get_filter_form(self, filter_form_data):
         filter_form = self.filter_form_class(
-            self.domain_object, filter_form_data
+            self.domain_object, self.timezone, filter_form_data,
         )
         if not filter_form.is_valid():
             raise ExportFormValidationException()
