@@ -128,26 +128,22 @@ def get_export_file(export_instances, filters, progress_tracker=None):
     with writer.open(export_instances):
         for export_instance in export_instances:
             # TODO: Don't get the docs multiple times if you don't have to
-            docs = _get_export_documents_scroll(export_instance, filters)
+            docs = _get_export_documents(export_instance, filters)
             _write_export_instance(writer, export_instance, docs, progress_tracker)
 
     return ExportFile(writer.path, writer.format)
 
 
-def _get_export_documents_scroll(export_instance, filters):
-    # size here limits each scroll request, not the total number of results
-    return _get_export_documents(export_instance, filters, size=1000).scroll()
-
-
-def _get_export_documents(export_instance, filters, size=0):
+def _get_export_documents(export_instance, filters):
     query = _get_base_query(export_instance)
     for filter in filters:
         query = query.filter(filter.to_es_filter())
-    return query.size(size)
+    # size here limits each scroll request, not the total number of results
+    return query.size(1000).scroll()
 
 
 def get_export_size(export_instance, filters):
-    return _get_export_documents(export_instance, filters).count()
+    return _get_export_documents(export_instance, filters).count
 
 
 def _write_export_instance(writer, export_instance, documents, progress_tracker=None):
