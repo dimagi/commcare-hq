@@ -1195,6 +1195,7 @@ class XForm(WrappedNode):
         if form.get_app().enable_auto_gps:
             if form.get_auto_gps_capture():
                 self.add_pollsensor(ref=self.resolve_path("meta/location"))
+                self.add_pollsensor(ref=self.resolve_path("meta/location"), event="xforms-revalidate")
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
                 self.add_pollsensor()
 
