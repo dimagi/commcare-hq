@@ -433,9 +433,11 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
         kwargs['export_is_legacy'] = False
         return kwargs
 
+
 class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
     def __init__(self, domain_object, timezone, *args, **kwargs):
         super(GenericFilterCaseExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
+
 
 class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
     _export_type = 'case'
