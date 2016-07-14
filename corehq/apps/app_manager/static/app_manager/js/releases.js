@@ -34,7 +34,7 @@ hqDefine('app_manager/js/releases.js', function () {
 
         self.track_deploy_type = function(type) {
             ga_track_event('App Manager', 'Deploy Type', type);
-        }
+        };
 
         self.changeAppCode = function () {
             self.app_code(null);
