@@ -10,6 +10,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount, Subscription,
     CreditAdjustmentReason,
 )
+from corehq.apps.accounting.tasks import deactivate_subscriptions
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
@@ -336,6 +337,7 @@ class TestCreditTransfers(BaseAccountingTest):
         second_sub.save()
 
         third_sub = second_sub.renew_subscription()
+        deactivate_subscriptions(second_sub.date_end)
         third_credits = self._ensure_transfer(second_credits)
         for credit_line in third_credits:
             self.assertEqual(credit_line.subscription.pk, third_sub.pk)
