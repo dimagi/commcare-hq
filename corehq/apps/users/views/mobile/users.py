@@ -88,10 +88,17 @@ DEFAULT_USER_LIST_LIMIT = 10
 
 
 class EditCommCareUserView(BaseEditUserView):
-    template_name = "users/edit_commcare_user.html"
     urlname = "edit_commcare_user"
     user_update_form_class = UpdateCommCareUserInfoForm
     page_title = ugettext_noop("Edit Mobile Worker")
+
+    @property
+    @memoized
+    def template_name(self):
+        if self.editable_user.is_deleted():
+            return "users/deleted_account.html"
+        else:
+            return "users/edit_commcare_user.html"
 
     @use_multiselect
     @method_decorator(require_can_edit_commcare_users)
@@ -124,8 +131,6 @@ class EditCommCareUserView(BaseEditUserView):
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
             if not user:
                 raise Http404()
-            if user.is_deleted():
-                self.template_name = "users/deleted_account.html"
             return user
         except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
