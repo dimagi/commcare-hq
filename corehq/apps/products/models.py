@@ -292,6 +292,12 @@ class ProductManager(ProductQueriesMixin, models.Manager):
         return ProductQuerySet(self.model, using=self._db)
 
 
+class OnlyActiveProductManager(ProductManager):
+
+    def get_queryset(self):
+        return super(OnlyActiveProductManager, self).get_queryset().filter(is_archived=False)
+
+
 class SQLProduct(models.Model):
     """
     A SQL based clone of couch Products.
@@ -316,6 +322,7 @@ class SQLProduct(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = ProductManager()
+    active_objects = OnlyActiveProductManager()
 
     def __unicode__(self):
         return u"{} ({})".format(self.name, self.domain)
