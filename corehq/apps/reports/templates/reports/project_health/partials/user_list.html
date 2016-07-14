@@ -5,30 +5,31 @@
         <tr>
             <th></th>
             <th colspan="4">{% trans "Change in Forms Submitted" %}</th>
+            <th colspan="2">{% trans "Number of Forms Submitted" %}</th>
         </tr>
         <tr>
             <th>{% trans "Username" %}</th>
-            <th colspan="2">{% trans "Last Month Change" %}</th>
-            <th>{% trans "Last Month # Forms" %}</th>
+            <th colspan="2">{% trans "Last Month" %}</th>
             <th colspan="2">{% trans "This Month" %}</th>
-            <th>{% trans "This Month # Forms" %}</th>
+            <th>{% trans "Last Month" %}</th>
+            <th>{% trans "This Month" %}</th>
         </tr>
     </thead>
 
      <tbody data-bind="foreach: pagedList">
          <tr>
              <td data-bind="text: username"></td>
-             <td width="20px"><span class="fa" data-bind="css: delta_forms > 0 ? 'fa-chevron-up':'fa-chevron-down',
+             <td><span class="fa" data-bind="css: delta_forms > 0 ? 'fa-chevron-up':'fa-chevron-down',
              style: {color: delta_forms > 0 ? '#006400': '#8b0000'}"></span></td>
              <td title="{% trans 'Change in Forms Submitted Since Two Months Ago' %}"
                  data-bind="text: delta_forms">
              </td>
-             <td data-bind="text: num_forms_submitted"></td>
-             <td width="20px"><span class="fa" data-bind="css: delta_forms_next_month > 0 ? 'fa-chevron-up':'fa-chevron-down',
+             <td><span class="fa" data-bind="css: delta_forms_next_month > 0 ? 'fa-chevron-up':'fa-chevron-down',
              style: {color: delta_forms_next_month > 0 ? '#006400': '#8b0000'}"></span></td>
              <td title="{% trans 'Change in Forms Submitted Since Two Months Ago' %}"
                  data-bind="text: delta_forms_next_month">
              </td>
+             <td data-bind="text: num_forms_submitted"></td>
              <td data-bind="text: num_forms_submitted_next_month"></td>
          </tr>
      </tbody>
