@@ -61,9 +61,6 @@
     analytics.workflow('Visited the Release Manager');
 </script>
 <script>
-    function track_deploy_type(type) {
-        ga_track_event('App Manager', 'Deploy Type', type);
-    }
     $(function () {
         gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
     });
