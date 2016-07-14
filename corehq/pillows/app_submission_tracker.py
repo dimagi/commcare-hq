@@ -2,6 +2,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
     change_meta_from_doc_meta_and_document
+from corehq.apps.change_feed.data_sources import FORM_SQL, COUCH
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
@@ -36,21 +37,28 @@ def get_app_form_submission_tracker_pillow(pillow_id='AppFormSubmissionTrackerPi
 
 
 class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
-    def __init__(self, pillow_processor):
+    def __init__(self, pillow_processor, data_source_type, data_source_name):
         self.pillow_processor = pillow_processor
+        self.data_source_type = data_source_type
+        self.data_source_name = data_source_name
 
     def process_doc(self, doc):
-        change = self._doc_to_change(doc)
-        self.pillow_processor.process_change(None, change)
+        change = self._doc_to_change(doc, self.data_source_type, self.data_source_name)
+        try:
+            self.pillow_processor.process_change(None, change)
+        except Exception:
+            return False
+        else:
+            return True
 
     @staticmethod
-    def _doc_to_change(doc):
+    def _doc_to_change(doc, data_source_type, data_source_name):
         doc_meta = get_doc_meta_object_from_document(doc)
         change_meta = change_meta_from_doc_meta_and_document(
             doc_meta=doc_meta,
             document=doc,
-            data_source_type=None,
-            data_source_name=None,
+            data_source_type=data_source_type,
+            data_source_name=data_source_name,
         )
         return Change(
             id=change_meta.document_id,
@@ -65,15 +73,18 @@ class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
 class AppFormSubmissionReindexer(Reindexer):
     reset = False
 
-    def __init__(self, doc_provider, chunk_size=1000):
+    def __init__(self, doc_provider, data_source_type, data_source_name, chunk_size=1000):
         self.doc_provider = doc_provider
         self.chunk_size = chunk_size
         self.doc_processor = AppFormSubmissionReindexDocProcessor(
-            AppFormSubmissionTrackerProcessor()
+            AppFormSubmissionTrackerProcessor(),
+            data_source_type,
+            data_source_name,
         )
 
     def consume_options(self, options):
         self.reset = options.pop("reset", False)
+        self.chunk_size = options.pop("chunksize", self.chunk_size)
         return options
 
     def reindex(self):
@@ -97,10 +108,10 @@ def get_couch_app_form_submission_tracker_reindexer():
         ('HQSubmission', XFormInstance),
         SubmissionErrorLog,
     ])
-    return AppFormSubmissionReindexer(doc_provider)
+    return AppFormSubmissionReindexer(doc_provider, COUCH, XFormInstance.get_db().name)
 
 
 def get_sql_app_form_submission_tracker_reindexer():
     iteration_key = "SqlAppFormSubmissionTrackerPillow_reindexer"
     doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor())
-    return AppFormSubmissionReindexer(doc_provider)
+    return AppFormSubmissionReindexer(doc_provider, FORM_SQL, 'form_processor_xforminstancesql')
