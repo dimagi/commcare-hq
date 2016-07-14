@@ -955,6 +955,9 @@ class Subscriber(models.Model):
             downgraded_privileges = downgraded_privileges or change_status_result.downgraded_privs
             upgraded_privileges = upgraded_privileges or change_status_result.upgraded_privs
 
+        if isinstance(self.domain, Domain):
+            self.domain = self.domain.name
+
         if downgraded_privileges:
             Subscriber._process_downgrade(self.domain, downgraded_privileges, new_plan_version)
 
