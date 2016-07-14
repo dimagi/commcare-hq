@@ -8,12 +8,14 @@ from corehq.apps.sms.messages import (
     MSG_MOBILE_WORKER_ANDROID_INVITATION,
     MSG_REGISTRATION_WELCOME_MOBILE_WORKER,
 )
-from corehq.apps.sms.models import SQLMobileBackendMapping, SelfRegistrationInvitation, SMS, OUTGOING
+from corehq.apps.sms.models import (SQLMobileBackendMapping, SelfRegistrationInvitation,
+    SMS, OUTGOING, PhoneNumber)
 from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from django.test import Client
 from mock import patch
 
 
@@ -152,6 +154,7 @@ class RegistrationTestCase(BaseSMSTest):
         user = CommCareUser.get_by_username(format_username('test', self.domain))
         self.assertIsNotNone(user)
         self.assertEqual(user.user_data, user_data)
+        self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)
 
         self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_REGISTRATION_WELCOME_MOBILE_WORKER]])
 
@@ -201,3 +204,19 @@ class RegistrationTestCase(BaseSMSTest):
             _MESSAGES[MSG_MOBILE_WORKER_ANDROID_INVITATION].format(DUMMY_REGISTRATION_URL),
             '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
         ])
+
+        invite = self._get_sms_registration_invitation()
+        c = Client()
+        response = c.post('/a/{}/settings/users/commcare/register/{}/'.format(self.domain, invite.token), {
+            'username': 'new_user',
+            'password': 'abc',
+            'password2': 'abc',
+            'email': 'new_user@dimagi.com',
+        })
+        self.assertEqual(response.status_code, 200)
+
+        user = CommCareUser.get_by_username(format_username('new_user', self.domain))
+        self.assertIsNotNone(user)
+        self.assertEqual(user.user_data, user_data)
+        self.assertEqual(user.email, 'new_user@dimagi.com')
+        self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)

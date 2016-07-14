@@ -1291,12 +1291,14 @@ class SelfRegistrationInvitation(models.Model):
         )
 
     def get_user_registration_url(self):
+        from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
         return absolute_reverse(
             CommCareUserSelfRegistrationView.urlname,
             args=[self.domain, self.token]
         )
 
     def get_app_info_url(self):
+        from corehq.apps.sms.views import InvitationAppInfoView
         return absolute_reverse(
             InvitationAppInfoView.urlname,
             args=[self.domain, self.token]
@@ -1304,7 +1306,6 @@ class SelfRegistrationInvitation(models.Model):
 
     def send_step2_android_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
-        from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
 
         registration_url = self.get_user_registration_url()
 

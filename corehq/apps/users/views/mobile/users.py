@@ -1063,6 +1063,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
                 self.domain,
                 self.form.cleaned_data.get('username'),
                 self.form.cleaned_data.get('password'),
+                email=self.form.cleaned_data.get('email'),
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',
                 user_data=self.invitation.custom_user_data,
