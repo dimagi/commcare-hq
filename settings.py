@@ -385,7 +385,6 @@ HQ_APPS = (
     'custom.care_pathways',
     'custom.common',
 
-    'custom.dhis2',
     'custom.icds_reports',
 )
 
@@ -1232,7 +1231,6 @@ COUCHDB_APPS = [
     'crs_reports',
     'grapevine',
     'uth',
-    'dhis2',
     'openclinica',
 
     # custom reports
