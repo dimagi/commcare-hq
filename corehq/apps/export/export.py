@@ -136,7 +136,7 @@ def get_export_file(export_instances, filters, progress_tracker=None):
 
 def _get_export_documents_scroll(export_instance, filters):
     # size here limits each scroll request, not the total number of results
-    return _get_export_documents(export_instance, filters, size=100).scroll()
+    return _get_export_documents(export_instance, filters, size=1000).scroll()
 
 
 def _get_export_documents(export_instance, filters, size=0):
