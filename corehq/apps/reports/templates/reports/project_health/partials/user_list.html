@@ -30,10 +30,11 @@
      </tbody>
 
 </table>
-<div class="pagination">
-    <ul><li data-bind="css: { disabled: pageIndex() === 0 }"><a href="#" data-bind="click: previousPage">Previous</a></li></ul>
-    <ul data-bind="foreach: allPages">
-        <li data-bind="css: { active: $data.pageNumber === ($root.pageIndex() + 1) }"><a href="#" data-bind="text: $data.pageNumber, click: function() { $root.moveToPage($data.pageNumber-1); }"></a></li>
+<div>
+    <ul class="pagination">
+        <li class="page-item"><a href="#" data-bind="click: previousPage">Previous</a></li></ul>
+    <ul class="pagination" data-bind="foreach: allPages">
+        <li class="page-item"><a href="#" data-bind="text: $data.pageNumber, click: function() { $root.moveToPage($data.pageNumber-1); }"></a></li>
     </ul>
-    <ul><li data-bind="css: { disabled: pageIndex() === maxPageIndex() }"><a href="#" data-bind="click: nextPage">Next</a></li></ul>
+    <ul class="pagination"><li class="page-item"><a href="#" data-bind="click: nextPage">Next</a></li></ul>
 </div>
