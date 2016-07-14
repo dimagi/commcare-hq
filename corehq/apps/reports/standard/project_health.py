@@ -1,4 +1,3 @@
-from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext_noop
 from corehq.apps.data_analytics.models import MALTRow
@@ -21,8 +20,23 @@ def get_performance_threshold(domain_name):
     return Domain.get_by_name(domain_name).internal.performance_threshold or 15
 
 
-class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms_submitted',
-                                               'is_performing', 'previous_stub', 'next_stub'])):
+class UserActivityStub(jsonobject.JsonObject):
+
+    user_id = jsonobject.StringProperty()
+    username = jsonobject.StringProperty()
+    num_forms_submitted = jsonobject.IntegerProperty()
+    is_performing = jsonobject.BooleanProperty()
+
+    def __init__(self, user_id, username, num_forms_submitted, is_performing, previous_stub=None, next_stub=None):
+        self._previous_stub = previous_stub
+        self._next_stub = next_stub
+
+        super(UserActivityStub, self).__init__(
+            user_id=user_id,
+            username=username,
+            num_forms_submitted=num_forms_submitted,
+            is_performing=is_performing,
+        )
 
     @property
     def is_active(self):
@@ -30,16 +44,16 @@ class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms
 
     @property
     def is_newly_performing(self):
-        return self.is_performing and (self.previous_stub is None or not self.previous_stub.is_performing)
+        return self.is_performing and (self._previous_stub is None or not self._previous_stub.is_performing)
 
     @property
     def delta_forms(self):
-        previous_forms = 0 if self.previous_stub is None else self.previous_stub.num_forms_submitted
+        previous_forms = 0 if self._previous_stub is None else self._previous_stub.num_forms_submitted
         return self.num_forms_submitted - previous_forms
 
     @property
     def num_forms_submitted_next_month(self):
-        return self.next_stub.num_forms_submitted if self.next_stub else 0
+        return self._next_stub.num_forms_submitted if self._next_stub else 0
 
     @property
     def delta_forms_next_month(self):
