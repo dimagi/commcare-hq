@@ -16,6 +16,7 @@ class TestDemoUser(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestDemoUser, cls).setUpClass()
         delete_all_users()
         cls.domain = 'main-domain'
         cls.project = create_domain(cls.domain)

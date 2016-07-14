@@ -25,7 +25,7 @@ def json_handler(obj):
         return json.JSONEncoder().default(obj)
 
 
-@periodic_task(run_every=crontab(day_of_week=[1, 4]))  # every Monday and Thursday
+@periodic_task(run_every=crontab(day_of_week=[1, 4], hour=0, minute=0))  # every Monday and Thursday
 def fix_xforms_with_missing_xmlns():
     log_file_name = 'undefined_xmlns.{}-timestamp.log'.format(int(time()))
     log_file_path = os.path.join(UNDEFINED_XMLNS_LOG_DIR, log_file_name)

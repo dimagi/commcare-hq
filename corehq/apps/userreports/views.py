@@ -68,7 +68,7 @@ from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,
     get_datasource_config,
     get_report_config,
-    is_report_config_id_static,
+    report_config_id_is_static,
     id_is_static,
 )
 from corehq.apps.userreports.reports.builder.forms import (
@@ -197,7 +197,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
 
     @property
     def read_only(self):
-        return is_report_config_id_static(self.report_id) if self.report_id is not None else False
+        return report_config_id_is_static(self.report_id) if self.report_id is not None else False
 
     @property
     @memoized

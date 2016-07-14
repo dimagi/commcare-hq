@@ -146,7 +146,7 @@ class WorldVisionChildFluff(fluff.IndicatorDocument):
     kafka_topic = topics.CASE
 
     name = flat_field(lambda case: case.name)
-    mother_id = flat_field(lambda case: case.indices[0]['referenced_id'])
+    mother_id = flat_field(lambda case: case.indices[0]['referenced_id'] if case.indices else None)
     lvl_4 = flat_field(partial(referenced_case_attribute, field_name='phc'))
     lvl_3 = flat_field(partial(referenced_case_attribute, field_name='block'))
     lvl_2 = flat_field(partial(referenced_case_attribute, field_name='district'))

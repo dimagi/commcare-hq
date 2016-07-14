@@ -348,6 +348,7 @@ HQ_APPS = (
     'corehq.doctypemigrations',
     'corehq.blobs',
     'corehq.apps.case_search',
+    'corehq.apps.zapier.apps.ZapierConfig',
 
     # custom reports
     'a5288',
@@ -384,7 +385,6 @@ HQ_APPS = (
     'custom.care_pathways',
     'custom.common',
 
-    'custom.dhis2',
     'custom.icds_reports',
 )
 
@@ -1231,7 +1231,6 @@ COUCHDB_APPS = [
     'crs_reports',
     'grapevine',
     'uth',
-    'dhis2',
     'openclinica',
 
     # custom reports
@@ -1624,6 +1623,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_30_days.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
+
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json')
 ]
 
 
@@ -1659,6 +1660,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
+
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
