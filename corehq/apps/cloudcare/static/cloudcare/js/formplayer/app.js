@@ -124,7 +124,7 @@ FormplayerFrontend.on("sync", function () {
     resp.done(function () {
         tfSyncComplete(false);
     });
-    resp.error(function (data) {
+    resp.error(function () {
         tfSyncComplete(true);
     });
 });
