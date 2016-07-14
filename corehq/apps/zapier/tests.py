@@ -126,6 +126,7 @@ class TestZapierIntegration(TestCase):
             [ZAPIER_URL, self.web_user.get_id, TEST_DOMAIN, FORM_XMLNS]
         )
         self.assertIsNotNone(subscription.repeater_id)
+        self.assertNotEqual(subscription.repeater_id, '')
 
     def test_unsubscribe(self):
         ZapierSubscription.objects.create(
