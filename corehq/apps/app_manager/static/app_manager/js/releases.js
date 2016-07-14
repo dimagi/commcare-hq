@@ -40,7 +40,7 @@ hqDefine('app_manager/js/releases.js', function () {
         self.onSMSPanelClick = function() {
             track_deploy_type('Send to phone via SMS');
             self.generate_short_url('short_url');
-        }
+        };
 
         self.build_profile.subscribe(self.changeAppCode);
 
