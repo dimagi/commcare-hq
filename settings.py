@@ -348,7 +348,7 @@ HQ_APPS = (
     'corehq.doctypemigrations',
     'corehq.blobs',
     'corehq.apps.case_search',
-    'corehq.apps.zapier',
+    'corehq.apps.zapier.apps.ZapierConfig',
 
     # custom reports
     'a5288',
