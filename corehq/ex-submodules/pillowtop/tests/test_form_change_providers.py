@@ -75,6 +75,7 @@ class TestSqlDomainFormChangeProvider(TestCase):
     def tearDownClass(cls):
         for domain in cls.domains:
             FormProcessorTestUtils.delete_all_sql_forms(domain)
+        super(TestSqlDomainFormChangeProvider, cls).tearDownClass()
 
     def test_change_provider(self):
         provider = SqlDomainXFormChangeProvider(self.domains, chunk_size=2)
