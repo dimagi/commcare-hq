@@ -234,7 +234,7 @@ def system_ajax(request):
         supervisor_status = all_pillows_supervisor_status([meta['name'] for meta in pillow_meta])
         for meta in pillow_meta:
             meta.update(supervisor_status[meta['name']])
-        return json_response(sorted(pillow_meta, key=lambda m: m['name']))
+        return json_response(sorted(pillow_meta, key=lambda m: m['name'].lower()))
     elif type == 'stale_pillows':
         es_index_status = [
             escheck.check_case_es_index(interval=3),
