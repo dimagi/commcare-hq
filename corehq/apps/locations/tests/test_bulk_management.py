@@ -1,12 +1,14 @@
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles
-from corehq.apps.locations.bulk_management import bulk_update_organization
+from corehq.apps.locations.bulk_management import (
+    bulk_update_organization,
+    LocationTypeStub,
+    LocationStub,
+    LocationTreeValidator,
+)
 
 # These example types and trees mirror the information available in the upload files
-
-# TODO What fields should be editable in the upload?
-# Look at what's editable in the UI, especially with commtrack enabled versus disabled
 
 FLAT_LOCATION_TYPES = [
     # ('name', 'code', 'parent_code', 'shares_cases', 'view_descendants'),
@@ -14,6 +16,25 @@ FLAT_LOCATION_TYPES = [
     ('County', 'county', 'state', False, True),
     ('City', 'city', 'county', True, False),
 ]
+
+DUPLICATE_TYPE_CODES = [
+    # ('name', 'code', 'parent_code', 'shares_cases', 'view_descendants'),
+    ('State', 'state', '', False, False),
+    ('County', 'county', 'state', False, True),
+    ('City', 'city', 'county', True, False),
+    ('Other County', 'county', 'state', False, True),
+]
+
+CYCLIC_LOCATION_TYPES = [
+    ('State', 'state', '', False, False),
+    ('County', 'county', 'state', False, True),
+    ('City', 'city', 'county', True, False),
+    # These three cycle:
+    ('Region', 'region', 'village', False, False),
+    ('District', 'district', 'region', False, True),
+    ('Village', 'village', 'district', True, False),
+]
+
 BASIC_LOCATION_TREE = [
     # ('name', 'site_code', 'location_type', 'parent_code', 'location_id',
     # 'external_id', 'latitude', 'longitude'),
@@ -49,6 +70,41 @@ DELETE_SUFFOLK = [
     ('Florida', 'florida', 'state', '', '5432', '', '', '', ''),
     ('Duval', 'duval', 'county', 'florida', '5433', '', '', '', ''),
     ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', '', ''),
+]
+
+MAKE_SUFFOLK_A_STATE_INVALID = [
+    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
+    # This still lists mass as a parent, which is invalid,
+    # plus, Boston (a city), can't have a state as a parent
+    ('Suffolk', 'suffolk', 'state', 'mass', '2345', '', '', ''),
+    ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', ''),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
+    ('Florida', 'florida', 'state', '', '5432', '', '', ''),
+    ('Duval', 'duval', 'county', 'florida', '5433', '', '', ''),
+    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', ''),
+]
+
+MAKE_SUFFOLK_A_STATE_VALID = [
+    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
+    ('Suffolk', 'suffolk', 'state', '', '2345', '', '', ''),
+    ('Boston', 'boston', 'county', 'suffolk', '2346', '', '', ''),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
+    ('Florida', 'florida', 'state', '', '5432', '', '', ''),
+    ('Duval', 'duval', 'county', 'florida', '5433', '', '', ''),
+    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', ''),
+]
+
+DUPLICATE_SITE_CODES = [
+    # ('name', 'site_code', 'location_type', 'parent_code', 'location_id',
+    # 'external_id', 'latitude', 'longitude'),
+    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
+    ('Suffolk', 'suffolk', 'county', 'mass', '2345', '', '', ''),
+    ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', ''),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
+    ('East Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
 ]
 
 
@@ -147,3 +203,38 @@ class TestTreeUtils(SimpleTestCase):
             e.exception.affected_nodes,
             ["Region", "District", "Village"]
         )
+
+
+def get_errors(location_types, locations):
+    return LocationTreeValidator(
+        [LocationTypeStub(*loc_type) for loc_type in location_types],
+        [LocationStub(*loc) for loc in locations],
+    ).errors
+
+
+class TestTreeValidator(SimpleTestCase):
+    def test_good_location_set(self):
+        errors = get_errors(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE)
+        self.assertEqual(len(errors), 0)
+
+    def test_cyclic_location_types(self):
+        errors = get_errors(CYCLIC_LOCATION_TYPES, BASIC_LOCATION_TREE)
+        self.assertEqual(len(errors), 3)
+
+    def test_bad_type_change(self):
+        errors = get_errors(FLAT_LOCATION_TYPES, MAKE_SUFFOLK_A_STATE_INVALID)
+        self.assertEqual(len(errors), 2)
+
+    def test_good_type_change(self):
+        errors = get_errors(FLAT_LOCATION_TYPES, MAKE_SUFFOLK_A_STATE_VALID)
+        self.assertEqual(len(errors), 0)
+
+    def test_duplicate_type_codes(self):
+        errors = get_errors(DUPLICATE_TYPE_CODES, BASIC_LOCATION_TREE)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("county", errors[0])
+
+    def test_duplicate_site_code(self):
+        errors = get_errors(FLAT_LOCATION_TYPES, DUPLICATE_SITE_CODES)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("cambridge", errors[0])
