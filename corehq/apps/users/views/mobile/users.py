@@ -93,7 +93,6 @@ class EditCommCareUserView(BaseEditUserView):
     page_title = ugettext_noop("Edit Mobile Worker")
 
     @property
-    @memoized
     def template_name(self):
         if self.editable_user.is_deleted():
             return "users/deleted_account.html"
