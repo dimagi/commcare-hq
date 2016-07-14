@@ -309,7 +309,7 @@ class TestCreditTransfers(BaseAccountingTest):
             edition=SoftwarePlanEdition.STANDARD
         )
         first_sub = Subscription.new_domain_subscription(
-            self.account, self.domain, advanced_plan
+            self.account, self.domain.name, advanced_plan
         )
 
         product_credit = CreditLine.add_credit(
