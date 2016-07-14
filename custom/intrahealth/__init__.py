@@ -100,8 +100,8 @@ def get_products_id(form, property):
         k = PRODUCT_NAMES.get(product[property].lower())
         if k is not None:
             try:
-                code = SQLProduct.objects.get(name__iexact=k,
-                                              domain=get_domain(form)).product_id
+                code = SQLProduct.active_objects.get(name__iexact=k,
+                                                     domain=get_domain(form)).product_id
                 products.append(code)
             except SQLProduct.DoesNotExist:
                 pass
@@ -123,8 +123,8 @@ def get_rupture_products_ids(form):
             product_name = PRODUCT_NAMES.get(PRODUCT_MAPPING[k[8:-3]].lower())
             if product_name is not None:
                 try:
-                    prd = SQLProduct.objects.get(name__iexact=product_name,
-                                                 domain=get_domain(form))
+                    prd = SQLProduct.active_objects.get(name__iexact=product_name,
+                                                        domain=get_domain(form))
                     result.append(prd.product_id)
                 except SQLProduct.DoesNotExist:
                     pass
