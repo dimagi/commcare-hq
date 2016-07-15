@@ -1,4 +1,4 @@
-{% extends "reports_core/base_template_new.html" %}
+{% extends "reports/standard/base_template.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block head %}
@@ -17,11 +17,6 @@
             min-height: 200px;
         }
     </style>
-{% endblock %}
-{% block js %}{{ block.super }}
-    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.util.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}
@@ -148,16 +143,15 @@
 </script>
 {% endblock %}
 
-{% block main_column_content %}
-    <h1>{% trans "Project Performance Dashboard" %}</h1>
-    <p class="lead">
-        {% blocktrans %}
-        A summary of the overall health of your project based on how your users are doing over time.
-        {% endblocktrans %}
-    </p>
-    {% block filter_panel %}
-        {% include "reports/standard/partials/filter_panel.html" %}
-    {% endblock %}
+{% block page_title %}
+<h1>{% trans "Project Performance Dashboard" %}</h1>
+<p class="lead">
+    {% blocktrans %}
+    A summary of the overall health of your project based on how your users are doing over time.
+    {% endblocktrans %}
+</p>
+{% endblock page_title %}
+{% block dashboard %}
     <h2>{% trans "Last Month Stats" %}</h2>
 <table class="table lead">
     <thead>

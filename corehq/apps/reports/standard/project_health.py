@@ -261,6 +261,8 @@ class ProjectHealthDashboard(ProjectReport):
     ]
 
     exportable = True
+    emailable = True
+    asynchronous = False
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
