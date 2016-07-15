@@ -1,6 +1,6 @@
 from collections import namedtuple
 import datetime
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
@@ -253,11 +253,12 @@ def build_worksheet(title, headers, rows):
 
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
-    name = ugettext_noop("Project Performance")
-    base_template = "reports/project_health/project_health_dashboard.html"
+    name = ugettext_lazy("Project Performance")
+    report_template_path = "reports/project_health/project_health_dashboard.html"
 
     fields = [
         'corehq.apps.reports.filters.location.LocationGroupFilter',
+        'corehq.apps.reports.filters.dates.HiddenLastMonthDateFilter',
     ]
 
     exportable = True
