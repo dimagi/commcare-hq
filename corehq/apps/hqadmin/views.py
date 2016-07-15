@@ -5,7 +5,7 @@ import json
 import socket
 import csv
 import os
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
@@ -34,6 +34,7 @@ from couchdbkit import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
@@ -72,7 +73,7 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 
 from . import service_checks, escheck
-from .forms import AuthenticateAsForm, BrokenBuildsForm, VCMMigrationForm
+from .forms import AuthenticateAsForm, BrokenBuildsForm
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy, VCMMigration
 from .reporting.reports import get_project_spaces, get_stats_data
@@ -469,18 +470,31 @@ class VCMMigrationView(BaseAdminSectionView):
         domain_audit = namedtuple('domain_audit', 'name emailed migrated notes')
         context = get_hqadmin_base_context(self.request)
         context.update({
-            'audits': VCMMigration.objects.all(),
+            'audits': VCMMigration.objects.order_by('-migrated', '-emailed', 'domain'),
             'url': reverse(self.urlname),
         })
         return context
 
     def post(self, request, *args, **kwargs):
-        if self.request.POST['notes']:
+        action = self.request.POST['action']
+        if action == 'notes':
             m = VCMMigration.objects.get(domain=self.request.POST['domain'])
             m.notes = self.request.POST['notes']
             m.save()
-            return json_response({'status': 'success'})
-        return self.get(request, *args, **kwargs)
+        else:
+            domains = self.request.POST['domains'].split(",")
+            for d in domains:
+                m = VCMMigration.objects.get(domain=d)
+                if action == 'email':
+                    send_mail_async.delay(
+                        _(u'Upcoming migration to easy references.'),
+                            'Upcoming migration to easy references. Two weeks from now.',
+                            settings.CCHQ_BUG_REPORT_EMAIL,
+                            m.admins,
+                            fail_silently=False)
+                    m.emailed = datetime.now()
+                    m.save()
+        return json_response({'status': 'success'})
 
 
 @require_POST

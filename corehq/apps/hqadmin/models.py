@@ -5,6 +5,8 @@ from dimagi.utils.parsing import json_format_datetime
 from pillowtop.utils import get_pillow_by_name
 from pillowtop.exceptions import PillowNotFoundError
 
+from corehq.apps.users.models import WebUser
+
 
 class HqDeploy(Document):
     date = DateTimeProperty()
@@ -67,3 +69,7 @@ class VCMMigration(models.Model):
     emailed = models.DateTimeField(null=True)
     migrated = models.DateTimeField(null=True)
     notes = models.TextField(null=True)
+
+    @property
+    def admins(self):
+        return [admin.email or admin.username for admin in WebUser.get_admins_by_domain(self.domain)]

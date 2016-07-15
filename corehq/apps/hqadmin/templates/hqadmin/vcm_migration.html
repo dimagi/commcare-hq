@@ -17,6 +17,18 @@
             }
         }
 
+        function shiftClick($checkbox) {
+            if ($checkbox.prop('checked')) {
+                var $tr = $checkbox.closest("tr");
+                selectNeighbors($tr, function($row) {
+                    return $row.prev("tr");
+                });
+                selectNeighbors($tr, function($row) {
+                    return $row.next("tr");
+                });
+            }
+        }
+
         $(function() {
             $("#migrations th button").click(function() {
                 var $button = $(this),
@@ -31,47 +43,84 @@
             });
 
             $("#migrations tbody td:not(:first-child):not(:last-child)").css("cursor", "pointer").click(function(evt) {
-                var $tr = $(this).closest("tr"),
-                    $checkbox = $tr.find("input[type='checkbox']");
-                $checkbox.click();
-
-                // Shift+click to select multiple rows
-                if (evt.shiftKey && $checkbox.prop('checked')) {
-                    selectNeighbors($tr, function($row) {
-                        return $row.prev("tr");
-                    });
-                    selectNeighbors($tr, function($row) {
-                        return $row.next("tr");
-                    });
+                var $checkbox = $(this).closest("tr").find("input[type='checkbox']");
+                $checkbox.trigger('click');
+                if (evt.shiftKey) {
+                    shiftClick($checkbox);
                 }
+            });
+
+            $("#migrations input[type='checkbox']").on("click", function(evt) {
+                if (evt.shiftKey) {
+                    shiftClick($(this));
+                }
+            });
+
+            $("#bulk-actions button").click(function() {
+                var $button = $(this),
+                    action = $button.data("action"),
+                    domains = _.map($("#migrations :checked"), function(c) { return $(c).data("domain"); });
+                if (!domains.length) {
+                    alert("No domains selected");
+                    return;
+                }
+                if (!confirm('Are you sure you want to ' + action + ' these ' + domains.length + ' domains?')) {
+                    return;
+                }
+                $button.siblings().andSelf().attr("disabled", true).addClass("disabled");
+                $.ajax({
+                    url: '{{ url }}',
+                    type: 'POST',
+                    data: {
+                        action: action,
+                        domains: domains.join(","),
+                    },
+                    success: function() {
+                        alert_user('Success! Best to refresh this page.', 'success');
+                    },
+                    error: function() {
+                        alert_user('Error taking action.', 'danger');
+                    },
+                });
             });
         })
     </script>
 {% endblock %}
 
 {% block page_content %}
+    <div id="bulk-actions">
+        <button class="btn btn-default" data-action="email"><i class="fa fa-envelope"></i> Email Selected Domains</button>
+        <button class="btn btn-default hide" data-action="migrate"><i class="fa fa-gears"></i> Migrate Selected Domains</button>
+    </div>
+    <br />
     <div class="text-muted">Shift+Click to select multiple rows</div>
     <table class="table table-condensed table-striped table-hover" id="migrations">
         <thead>
-            <th class="col-sm-1"></th>
-            <th class="col-sm-1"></th>
-            <th class="col-sm-2">Domain</th>
-            <th class="col-sm-2 text-center">
+            <th></th>
+            <th></th>
+            <th>Domain</th>
+            <th>Admins</th>
+            <th class="text-center">
                 Emailed?
                 <br /><button class="btn btn-default btn-xs">Hide emailed</button>
             </th>
-            <th class="col-sm-2 text-center">
+            <th class="text-center">
                 Migrated?
                 <br /><button class="btn btn-default btn-xs">Hide migrated</button>
             </th>
-            <th class="col-sm-4">Notes</th>
+            <th>Notes</th>
         </thead>
         <tbody>
         {% for a in audits %}
             <tr>
-                <td class="text-center"><input type="checkbox" /></td>
+                <td class="text-center"><input type="checkbox" data-domain="{{ a.domain }}" /></td>
                 <td class="text-center">{{ forloop.counter }}</td>
                 <td>{{ a.domain }}</td>
+                <td>
+                    {% for email in a.admins %}
+                        <div>{{ email }}</div>
+                    {% endfor %}
+                </td>
                 <td class="text-center">
                     {% if a.emailed %}
                         {{ a.emailed|date }}
@@ -87,7 +136,7 @@
                         value: '{% if a.notes %}{{ a.notes|escapejs }}{% endif %}',
                         rows: 1,
                         url: '{{ url }}',
-                        saveParams: {'domain': '{{ a.domain }}'},
+                        saveParams: {'action': 'notes', 'domain': '{{ a.domain }}'},
                         saveValueName: 'notes',
                         placeholder: '&nbsp;'.repeat(20),
                     ">
