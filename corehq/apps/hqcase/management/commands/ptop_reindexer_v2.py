@@ -57,7 +57,15 @@ class Command(BaseCommand):
                     type="int",
                     action='store',
                     dest='chunksize',
-                    help='Skip important confirmation warnings.'),
+                    help='Number of docs to process at a time'),
+
+        # for ES reindexers
+        make_option('--in-place',
+                    type="int",
+                    action='store_true',
+                    dest='in-place',
+                    default=False,
+                    help='Run the reindex in place - assuming it is against a live index.'),
     )
 
     def handle(self, index, *args, **options):
