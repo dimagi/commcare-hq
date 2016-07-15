@@ -43,13 +43,13 @@ class CacheInvalidateProcessor(PillowProcessor):
         return ["%s :: %s" % (gc.generation_key, gc._get_generation()) for gc in self.gen_caches]
 
     def process_change(self, pillow_instance, change):
+        self.process_doc(change.get_document(), change.deleted)
+
+    def process_doc(self, doc, is_deleted):
         """
         This function does actual cache invalidation. It's also called manually
         by directly invalidated things.
         """
-        self.process_doc(change.get_document(), change.deleted)
-
-    def process_doc(self, doc, is_deleted):
         doc_id = doc['_id']
         if doc_id.startswith('pillowtop_corehq.pillows'):
             return None
