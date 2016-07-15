@@ -232,3 +232,93 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertRegistrationInvitation(
             status=SelfRegistrationInvitation.STATUS_REGISTERED,
         )
+
+    def test_android_only_registration_from_invite(self):
+        self.domain_obj.sms_mobile_worker_registration_enabled = True
+        self.domain_obj.enable_registration_welcome_sms_for_mobile_worker = True
+        self.domain_obj.save()
+
+        # Initiate Registration Workflow
+        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL), \
+                patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
+                patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            SelfRegistrationInvitation.initiate_workflow(
+                self.domain,
+                [SelfRegistrationUserInfo('999123')],
+                app_id=self.app_id,
+                android_only=True,
+            )
+
+        self.assertRegistrationInvitation(
+            phone_number='999123',
+            app_id=self.app_id,
+            odk_url=DUMMY_APP_ODK_URL,
+            phone_type=SelfRegistrationInvitation.PHONE_TYPE_ANDROID,
+            android_only=True,
+            require_email=False,
+            custom_user_data={},
+            status=SelfRegistrationInvitation.STATUS_PENDING,
+        )
+
+        self.assertLastOutgoingSMS('+999123', [
+            _MESSAGES[MSG_MOBILE_WORKER_ANDROID_INVITATION].format(DUMMY_REGISTRATION_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+        ])
+
+        invite = self._get_sms_registration_invitation()
+        c = Client()
+        response = c.post('/a/{}/settings/users/commcare/register/{}/'.format(self.domain, invite.token), {
+            'username': 'new_user',
+            'password': 'abc',
+            'password2': 'abc',
+            'email': 'new_user@dimagi.com',
+        })
+        self.assertEqual(response.status_code, 200)
+
+        user = CommCareUser.get_by_username(format_username('new_user', self.domain))
+        self.assertIsNotNone(user)
+        self.assertEqual(user.user_data, {})
+        self.assertEqual(user.email, 'new_user@dimagi.com')
+        self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)
+
+        self.assertRegistrationInvitation(
+            status=SelfRegistrationInvitation.STATUS_REGISTERED,
+        )
+
+    def test_custom_message_for_normal_workflow(self):
+        self.domain_obj.sms_mobile_worker_registration_enabled = True
+        self.domain_obj.enable_registration_welcome_sms_for_mobile_worker = True
+        self.domain_obj.save()
+
+        # Initiate Registration Workflow
+        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL):
+            SelfRegistrationInvitation.initiate_workflow(
+                self.domain,
+                [SelfRegistrationUserInfo('999123')],
+                app_id=self.app_id,
+                custom_first_message='Custom Message',
+            )
+
+        self.assertLastOutgoingSMS('+999123', ['Custom Message'])
+
+    def test_custom_message_for_android_only_workflow(self):
+        self.domain_obj.sms_mobile_worker_registration_enabled = True
+        self.domain_obj.enable_registration_welcome_sms_for_mobile_worker = True
+        self.domain_obj.save()
+
+        # Initiate Registration Workflow
+        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL), \
+                patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
+                patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            SelfRegistrationInvitation.initiate_workflow(
+                self.domain,
+                [SelfRegistrationUserInfo('999123')],
+                app_id=self.app_id,
+                android_only=True,
+                custom_first_message='Sign up here: {}',
+            )
+
+        self.assertLastOutgoingSMS('+999123', [
+            'Sign up here: {}'.format(DUMMY_REGISTRATION_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+        ])
