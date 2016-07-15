@@ -130,8 +130,8 @@ var uiElement;
     };
 
     uiElement = {
-        input: function () {
-            return new Input($('<input type="text" class="form-control"/>'), function ($elem) {
+        input: function (value) {
+            return new Input($('<input type="text" class="form-control"/>').val(value), function ($elem) {
                 return $elem.val();
             }, function ($elem, value) {
                 return $elem.val(value);
@@ -189,7 +189,7 @@ var uiElement;
                                 break;
                             }
                         }
-                        this.$edit_view.val(this.value.toString());
+                        this.$edit_view.val(String(this.value || ''));
                         this.$noedit_view.text(label);
                         return this;
                     }

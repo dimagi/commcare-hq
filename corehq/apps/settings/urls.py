@@ -7,7 +7,13 @@ from corehq.apps.products.urls import settings_urls as product_settings
 from corehq.apps.programs.urls import settings_urls as program_settings
 from corehq.apps.locations.urls import settings_urls as location_settings
 
-from corehq.apps.settings.views import MyAccountSettingsView, DefaultMySettingsView, MyProjectsList, ChangeMyPasswordView
+from corehq.apps.settings.views import (
+    ChangeMyPasswordView,
+    DefaultMySettingsView,
+    EnableSuperuserView,
+    MyAccountSettingsView,
+    MyProjectsList,
+)
 
 urlpatterns = patterns(
     'corehq.apps.settings.views',
@@ -15,6 +21,7 @@ urlpatterns = patterns(
     url(r'^settings/$', MyAccountSettingsView.as_view(), name=MyAccountSettingsView.urlname),
     url(r'^projects/$', MyProjectsList.as_view(), name=MyProjectsList.urlname),
     url(r'^password/$', ChangeMyPasswordView.as_view(), name=ChangeMyPasswordView.urlname),
+    url(r'^superuser/$', EnableSuperuserView.as_view(), name=EnableSuperuserView.urlname),
     url(r'new_api_key/$', 'new_api_key', name='new_api_key'),
 )
 

@@ -36,14 +36,24 @@ class StockSummaryReportData(EmailReportData):
             DataTablesColumn(_('% Facilities Overstocked')),
         ])
 
+    def _last_transaction_for_product_in_period(self):
+        transactions = StockTransaction.objects.filter(
+            report__domain=self.domain,
+            report__date__range=(self.config['startdate'], self.config['enddate']),
+            type__in=['stockonhand', 'stockout']
+        ).distinct('case_id', 'product_id').order_by('case_id', 'product_id', '-report__date', '-pk')
+        location_to_transactions = defaultdict(list)
+        for transaction in transactions:
+            location_to_transactions[transaction.case_id].append(transaction)
+        return location_to_transactions
+
     @property
     def rows(self):
         def percent(x, y):
             return "%d%% <small>(%d)</small>" % (x * 100 / (y or 1), x)
 
-        def _stock_status(status, loc):
-            daily = status.get_daily_consumption() or 0
-            state = status.stock_on_hand / ((daily * 30) or 1)
+        def _stock_status(transaction, daily_consumption, loc):
+            state = transaction.stock_on_hand / ((daily_consumption * 30) or 1)
             if state == 0.0:
                 return "stockout"
             elif state < loc.location_type.understock_threshold:
@@ -61,21 +71,32 @@ class StockSummaryReportData(EmailReportData):
             row_data[product.name] = {'total_fac': 0, 'reported_fac': 0,
                                       'stockout': 0, 'low': 0, 'overstock': 0, 'adequate': 0}
 
+        transactions = self._last_transaction_for_product_in_period()
+        stock_states = StockState.objects.filter(
+            sql_location__in=locations
+        ).values_list('case_id', 'product_id', 'daily_consumption')
+
+        location_product_to_consumption = {
+            (case_id, product_id): daily_consumption or 0
+            for case_id, product_id, daily_consumption in stock_states
+        }
+
         for location in locations:
             location_products = list(location.products.exclude(is_archived=True))
-            stock_states = StockState.objects.filter(
-                case_id=location.supply_point_id,
-                section_id=STOCK_SECTION_TYPE,
-                sql_product__in=location_products
-            )
 
             for product in location_products:
                 row_data[product.name]['total_fac'] += 1
 
-            for state in stock_states:
-                p_name = state.sql_product.name
+            for transaction in transactions.get(location.supply_point_id, []):
+                sql_product = transaction.sql_product
+                if sql_product not in location_products:
+                    continue
+                p_name = sql_product.name
                 row_data[p_name]['reported_fac'] += 1
-                s = _stock_status(state, location)
+                daily_consumption = location_product_to_consumption.get(
+                    (location.supply_point_id, transaction.product_id), 0
+                )
+                s = _stock_status(transaction, daily_consumption, location)
                 row_data[p_name][s] += 1
 
         rows = []
@@ -183,19 +204,21 @@ class EmailReportingData(EWSData):
         def percent(x, y, text):
             return "%d%s<small> (%d/%d)</small>" % (x * 100 / (y or 1), text, x, y)
 
-        locations = self.get_locations(self.config['location_id'], self.config['domain'])
+        locations = self.location.get_descendants().exclude(is_archived=True, location_type__administrative=True)
         reported = StockTransaction.objects.filter(
-            case_id__in=locations, report__date__range=[self.config['startdate'],
-                                                        self.config['enddate']]).distinct('case_id').count()
+            case_id__in=[location.supply_point_id for location in locations],
+            report__date__range=[self.config['startdate'], self.config['enddate']]
+        ).distinct('case_id').count()
         completed = 0
-        all_products_count = SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).count()
         for loc in locations:
-            products_count = SQLLocation.objects.get(supply_point_id=loc)._products.count()
-            products_count = products_count if products_count else all_products_count
-            st = StockTransaction.objects.filter(
-                case_id=loc, report__date__range=[self.config['startdate'],
-                                                  self.config['enddate']]).distinct('product_id').count()
-            if products_count == st:
+            products = set(
+                loc.products.values_list('product_id', flat=True)
+            )
+            st = set(StockTransaction.objects.filter(
+                case_id=loc.supply_point_id,
+                report__date__range=[self.config['startdate'], self.config['enddate']]
+            ).distinct('product_id').values_list('product_id', flat=True))
+            if len(products) != 0 and not products - st:
                 completed += 1
 
         return [[percent(reported, len(locations), '% of facilities are reporting'),

@@ -1,5 +1,5 @@
 {
-    "form_id": "7H46J37FGH3",
+    "_id": "7H46J37FGH3",
     "form": {
         "#type": "general",
         "@xmlns": "http://openrosa.org/app/general",
@@ -66,7 +66,8 @@
     "state": 1,
     "orig_id": null,
     "user_id": "f7f0c79e-8b79-11df-b7de-005056c00008",
-    "deprecated_form_id": null
+    "deprecated_form_id": null,
+    "doc_type": "XFormInstance"
 }
 
 

@@ -441,13 +441,6 @@ TRANSFER_DOMAIN = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DHIS2_DOMAIN = StaticToggle(
-    'dhis2_domain',
-    'Enable DHIS2 integration for this domain',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
 PRIME_RESTORE = StaticToggle(
     'prime_restore',
     'Prime restore cache',
@@ -604,13 +597,6 @@ OPENCLINICA = StaticToggle(
     'openclinica',
     'Offer OpenClinica settings and CDISC ODM export',
     TAG_ONE_OFF,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
-OPENLMIS = StaticToggle(
-    'openlmis',
-    'Offer OpenLMIS settings',
-    TAG_UNKNOWN,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -859,4 +845,12 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     'Notify when UCR rebuilds finish or error.',
     TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
+)
+
+
+ZAPIER_INTEGRATION = StaticToggle(
+    'zapier_integration',
+    'Allow to use domain in Zapier application',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )

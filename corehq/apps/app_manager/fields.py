@@ -262,7 +262,7 @@ class ApplicationDataRMIHelper(object):
         return unknown_forms
 
     @staticmethod
-    def _sorkey_form(form):
+    def _sort_key_form(form):
         app_id = form['app']['id']
         if form.get('has_app', False):
             order = 0 if not form.get('app_deleted') else 1
@@ -305,7 +305,7 @@ class ApplicationDataRMIHelper(object):
                 form['show_xmlns'] = True
                 unknown_forms.append(form)
         forms.extend(self._attach_unknown_suggestions(unknown_forms))
-        return sorted(forms, key=self._sorkey_form)
+        return sorted(forms, key=self._sort_key_form)
 
     @property
     @memoized

@@ -28,6 +28,7 @@ class FakeFile(object):
 class _AuthTest(TestCase):
 
     def setUp(self):
+        super(_AuthTest, self).setUp()
         self._set_up_domain()
 
         try:
@@ -70,6 +71,7 @@ class _AuthTest(TestCase):
 
     def tearDown(self):
         self.user.delete()
+        super(_AuthTest, self).tearDown()
 
     def _test_post(self, file_path, authtype=None, client=None,
                    expected_status=201, expected_auth_context=None,
