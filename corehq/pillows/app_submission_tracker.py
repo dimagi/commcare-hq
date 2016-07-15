@@ -51,6 +51,13 @@ class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
         else:
             return True
 
+    def handle_skip(self, doc):
+        print 'Unable to process form {} with build {}'.format(
+            doc['_id'],
+            doc.get('build_id')
+        )
+        return True
+
     @staticmethod
     def _doc_to_change(doc, data_source_type, data_source_name):
         doc_meta = get_doc_meta_object_from_document(doc)
@@ -99,7 +106,7 @@ class AppFormSubmissionReindexer(Reindexer):
 
 def get_couch_app_form_submission_tracker_reindexer():
     iteration_key = "CouchAppFormSubmissionTrackerPillow_reindexer"
-    doc_provider = CouchDocumentProvider(iteration_key, doc_types=[
+    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
         XFormInstance,
         XFormArchived,
         XFormError,
@@ -108,7 +115,7 @@ def get_couch_app_form_submission_tracker_reindexer():
         ('HQSubmission', XFormInstance),
         SubmissionErrorLog,
     ])
-    return AppFormSubmissionReindexer(doc_provider, COUCH, XFormInstance.get_db().name)
+    return AppFormSubmissionReindexer(doc_provider, COUCH, XFormInstance.get_db().dbname)
 
 
 def get_sql_app_form_submission_tracker_reindexer():

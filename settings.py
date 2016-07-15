@@ -348,7 +348,7 @@ HQ_APPS = (
     'corehq.doctypemigrations',
     'corehq.blobs',
     'corehq.apps.case_search',
-    'corehq.apps.zapier',
+    'corehq.apps.zapier.apps.ZapierConfig',
 
     # custom reports
     'a5288',
@@ -367,7 +367,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
-    'custom.openlmis',
     'custom.logistics',
     'custom.ilsgateway',
     'custom.zipline',
@@ -1450,8 +1449,6 @@ PILLOWTOPS = {
         },
     ],
     'core_ext': [
-        'corehq.pillows.reportcase.ReportCasePillow',
-        'corehq.pillows.reportxform.ReportXFormPillow',
         {
             'name': 'AppDbChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1623,6 +1620,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_30_days.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
+
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json')
 ]
 
 
@@ -1658,6 +1657,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
+
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
