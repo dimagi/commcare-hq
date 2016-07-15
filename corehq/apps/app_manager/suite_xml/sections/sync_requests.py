@@ -62,9 +62,7 @@ class SyncRequestContributor(SuiteContributorByModule):
                     # count(
                     #   instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]
                     # ) = 0
-                    relevant=XPath.count(
-                        CaseIDXPath(QuerySessionXPath('case_id').instance()).case()
-                    ) + ' = 0',
+                    relevant=module.search_config.relevant,
                     data=[
                         QueryData(
                             key='case_id',

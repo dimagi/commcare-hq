@@ -22,7 +22,9 @@ from corehq.apps.app_manager.const import (
     CAREPLAN_GOAL,
     CAREPLAN_TASK,
     USERCASE_TYPE,
-    APP_V1)
+    APP_V1,
+    CLAIM_DEFAULT_RELEVANT_CONDITION,
+)
 from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
@@ -698,11 +700,18 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
         if search_properties.get('properties') is not None:
-            module.search_config = CaseSearch(properties=[
-                CaseSearchProperty.wrap(p)
-                for p in _update_search_properties(module, search_properties.get('properties'), lang)
-            ])
-        # TODO: Add UI and controller support for CaseSearch.command_label
+            module.search_config = CaseSearch(
+                properties=[CaseSearchProperty.wrap(p)
+                            for p in _update_search_properties(
+                                    module,
+                                    search_properties.get('properties'), lang
+                            )],
+                relevant=(
+                    search_properties.get('relevant')
+                    if search_properties.get('relevant') is not None
+                    else CLAIM_DEFAULT_RELEVANT_CONDITION
+                )
+            )
 
     resp = {}
     app.save(resp)

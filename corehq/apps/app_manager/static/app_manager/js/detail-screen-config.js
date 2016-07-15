@@ -197,7 +197,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
     };
 
     var searchViewModel = function (searchProperties, lang, saveButton) {
-        var self = this;
+        var self = this,
+            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0";
 
         var SearchProperty = function (name, label) {
             var self = this;
@@ -205,6 +206,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             self.label = ko.observable(label);
         };
 
+        self.relevant = ko.observable();
+        self.default_relevant = ko.observable(true);
         self.searchProperties = ko.observableArray();
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
@@ -244,9 +247,21 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         };
 
+        self._getRelevant = function() {
+            if (self.default_relevant()) {
+                if (self.relevant().trim() === "") {
+                    return DEFAULT_CLAIM_RELEVANT;
+                } else {
+                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.relevant().trim() + ")";
+                }
+            }
+            return self.relevant().trim();
+        };
+
         self.serialize = function () {
             return {
                 properties: self._getProperties(),
+                relevant: self._getRelevant(),
             };
         };
     };
