@@ -8,7 +8,6 @@ from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.app_manager.models import Application, PreloadAction
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import XForm
-from corehq.apps.domain.models import Domain
 
 
 logger = logging.getLogger('app_migration')
