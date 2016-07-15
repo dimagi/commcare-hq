@@ -319,6 +319,11 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
     """
 
     def post_list(self, request, **kwargs):
+        # this should be ideally on class.meta.authentication.is_authenticated
+        # but it's a one-off, so keeping it here
+        if not v0_1._api_access_allowed(request):
+            return HttpResponseForbidden()
+
         domain = kwargs.get('domain')
         request.domain = domain
         username = request.POST.get('username')

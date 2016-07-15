@@ -5,6 +5,8 @@ import json
 
 # Django imports
 import datetime
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.couch import UserQuerySetAdapter
 from corehq.apps.domain.auth import determine_authtype_from_header
 from dimagi.utils.couch.database import iter_docs
@@ -69,6 +71,12 @@ def api_auth(view_func):
     return _inner
 
 
+def api_access_allowed(request):
+    # Checks if request.user or request.domain has API access permission
+    return (request.user.is_superuser or
+            (hasattr(request, 'domain') and domain_has_privilege(request.domain, privileges.API_ACCESS)))
+
+
 class LoginAndDomainAuthentication(Authentication):
 
     def __init__(self, allow_session_auth=False, *args, **kwargs):
@@ -115,6 +123,13 @@ class LoginAndDomainAuthentication(Authentication):
             response = wrapped_dummy(request, **kwargs)
         except PermissionDenied:
             response = HttpResponseForbidden()
+
+        if not api_access_allowed(request):
+            response = HttpResponse(
+                json.dumps({"error": "Your current plan does not have access to this feature"}),
+                content_type="application/json",
+                status=401
+            )
 
         if response == PASSED_AUTH:
             return True
