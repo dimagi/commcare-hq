@@ -136,15 +136,13 @@ def get_pillow_json(pillow_config):
     else:
         time_since_last = ''
         hours_since_last = None
-    try:
-        db_seq = pillow.get_change_feed().get_latest_change_id()
-    except ValueError:
-        db_seq = None
+    offsets = pillow.get_change_feed().get_current_offsets()
     return {
         'name': pillow_config.name,
-        'seq': force_seq_int(checkpoint.wrapped_sequence),
+        'seq_format': checkpoint.sequence_format,
+        'seq': checkpoint.wrapped_sequence,
         'old_seq': force_seq_int(checkpoint.old_sequence) or 0,
-        'db_seq': force_seq_int(db_seq),
+        'offsets': offsets,
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }

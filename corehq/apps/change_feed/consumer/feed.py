@@ -7,7 +7,7 @@ from kafka.structs import TopicPartition
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-from corehq.apps.change_feed.topics import get_all_offsets
+from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
@@ -111,14 +111,11 @@ class KafkaChangeFeed(ChangeFeed):
         }
 
     def get_current_offsets(self):
-        offsets = get_all_offsets()
-        return {
-            topic: offsets[topic] for topic in self._topics
-        }
+        return get_multi_topic_offset(self.topics)
 
     def get_latest_change_id(self):
         topic = self._get_single_topic_or_fail()
-        return self.get_current_offsets().get(topic)
+        return get_topic_offset(topic)
 
     def _get_consumer(self, timeout, auto_offset_reset='earliest'):
         config = {

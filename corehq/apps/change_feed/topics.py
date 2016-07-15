@@ -42,19 +42,24 @@ def get_topic(document_type_object):
 
 
 def get_topic_offset(topic):
-    assert topic in ALL
-    return get_all_offsets()[topic]
+    """
+    :returns: The kafka offset for the topic."""
+    return get_multi_topic_offset([topic])[topic]
 
 
 def get_multi_topic_offset(topics):
-    offsets = get_all_offsets()
-    return {topic: offsets[topic] for topic in topics}
-
-
-def get_all_offsets():
+    """
+    :returns: A dict of offsets keyed by topic"""
+    assert set(topics) <= set(ALL)
     client = get_kafka_client()
-    offset_requests = [OffsetRequestPayload(topic, 0, OffsetResetStrategy.LATEST, 1) for topic in ALL]
+    offset_requests = [OffsetRequestPayload(topic, 0, OffsetResetStrategy.LATEST, 1) for topic in topics]
     responses = client.send_offset_request(offset_requests)
     return {
         r.topic: r.offsets[0] for r in responses
     }
+
+
+def get_all_offsets():
+    """
+    :returns: A dict of offsets keyed by topic"""
+    return get_multi_topic_offset(ALL)
