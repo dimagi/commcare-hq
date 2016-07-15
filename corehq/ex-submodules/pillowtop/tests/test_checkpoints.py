@@ -44,19 +44,18 @@ class PillowCheckpointDbTest(TestCase):
         self.assertTrue(bool(created))
 
     def test_create_initial_checkpoint(self):
-        checkpoint, created = self.checkpoint.get_or_create_wrapped()
+        checkpoint = self.checkpoint.get_or_create_wrapped()
         self.assertEqual('0', checkpoint.sequence)
-        self.assertTrue(bool(created))
 
     def test_db_changes_returned(self):
         self.checkpoint.get_or_create_wrapped()
         self.save_checkpoint(self._checkpoint_id, '1')
-        checkpoint = self.checkpoint.get_or_create_wrapped().document
+        checkpoint = self.checkpoint.get_or_create_wrapped()
         self.assertEqual('1', checkpoint.sequence)
 
     def test_verify_unchanged_ok(self):
         self.checkpoint.get_or_create_wrapped()
-        checkpoint = self.checkpoint.get_or_create_wrapped(verify_unchanged=True).document
+        checkpoint = self.checkpoint.get_or_create_wrapped(verify_unchanged=True)
         self.assertEqual('0', checkpoint.sequence)
 
     def test_verify_unchanged_fail(self):
@@ -78,19 +77,15 @@ class PillowCheckpointDbTest(TestCase):
             self.checkpoint.update_to('2')
 
     def test_touch_checkpoint_noop(self):
-        checkpoint, created = self.checkpoint.get_or_create_wrapped()
-        self.assertTrue(created)
-        first_checkpoint, created = self.checkpoint.get_or_create_wrapped()
-        self.assertFalse(created)
+        first_checkpoint = self.checkpoint.get_or_create_wrapped()
         self.checkpoint.touch(min_interval=10)
-        second_checkpoint, created = self.checkpoint.get_or_create_wrapped()
-        self.assertFalse(created)
+        second_checkpoint = self.checkpoint.get_or_create_wrapped()
         self.assertEqual(first_checkpoint.timestamp, second_checkpoint.timestamp)
 
     def test_touch_checkpoint_update(self):
-        timestamp = self.checkpoint.get_or_create_wrapped().document.timestamp
+        timestamp = self.checkpoint.get_or_create_wrapped().timestamp
         time.sleep(.1)
         self.checkpoint.touch(min_interval=0)
-        timestamp_back = self.checkpoint.get_or_create_wrapped().document.timestamp
+        timestamp_back = self.checkpoint.get_or_create_wrapped().timestamp
         self.assertNotEqual(timestamp_back, timestamp)
 
