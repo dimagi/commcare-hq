@@ -4,7 +4,6 @@ import HTMLParser
 import json
 import socket
 import csv
-import os
 from datetime import timedelta, date, datetime
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
@@ -467,7 +466,6 @@ class VCMMigrationView(BaseAdminSectionView):
 
     @property
     def page_context(self):
-        domain_audit = namedtuple('domain_audit', 'name emailed migrated notes')
         context = get_hqadmin_base_context(self.request)
         context.update({
             'audits': VCMMigration.objects.order_by('-migrated', '-emailed', 'domain'),
@@ -488,10 +486,10 @@ class VCMMigrationView(BaseAdminSectionView):
                 if action == 'email':
                     send_mail_async.delay(
                         _(u'Upcoming migration to easy references.'),
-                            'Upcoming migration to easy references. Two weeks from now.',
-                            settings.CCHQ_BUG_REPORT_EMAIL,
-                            m.admins,
-                            fail_silently=False)
+                        _('Upcoming migration to easy references. Two weeks from now.'),
+                        settings.CCHQ_BUG_REPORT_EMAIL,
+                        m.admins,
+                        fail_silently=False)
                     m.emailed = datetime.now()
                     m.save()
         return json_response({'status': 'success'})
