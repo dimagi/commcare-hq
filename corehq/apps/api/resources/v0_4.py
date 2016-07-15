@@ -6,8 +6,9 @@ from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
 from tastypie.exceptions import BadRequest
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, RequirePermissionAuthentication, \
-    _safe_bool
+from corehq.apps.api.auth import CustomResourceMeta, RequirePermissionAuthentication, \
+    DomainAdminAuthentication, api_access_allowed
+from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from couchforms.models import doc_types
@@ -186,7 +187,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
         return bundle
 
     class Meta(CustomResourceMeta):
-        authentication = v0_1.DomainAdminAuthentication()
+        authentication = DomainAdminAuthentication()
         object_class = Repeater
         resource_name = 'data-forwarding'
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -321,7 +322,7 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
     def post_list(self, request, **kwargs):
         # this should be ideally on class.meta.authentication.is_authenticated
         # but it's a one-off, so keeping it here
-        if not v0_1._api_access_allowed(request):
+        if not api_access_allowed(request):
             return HttpResponseForbidden()
 
         domain = kwargs.get('domain')
