@@ -57,12 +57,6 @@ class PillowtopReindexerTest(TestCase):
         self.assertEqual('Domain', domain_doc['doc_type'])
         delete_es_index(DOMAIN_INDEX)
 
-    def test_case_reindexer(self):
-        FormProcessorTestUtils.delete_all_cases()
-        case = _create_and_save_a_case()
-        call_command('ptop_fast_reindex_cases', noinput=True, bulk=True)
-        self._assert_case_is_in_es(case)
-
     @run_with_all_backends
     def test_case_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_cases()

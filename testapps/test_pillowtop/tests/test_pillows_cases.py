@@ -3,7 +3,7 @@ from django.test import TestCase
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.api.es import report_term_filter
 from corehq.pillows.base import VALUE_TAG
-from corehq.pillows.case import CasePillow
+from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.reportcase import transform_case_to_report_es
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
@@ -484,9 +484,8 @@ class testReportCaseProcessing(TestCase):
         case_owner_id = CASE_WITH_OWNER_ID
         case_no_owner_id = CASE_NO_OWNER_ID
 
-        pillow = CasePillow(online=False)
-        changed_with_owner_id = pillow.change_transform(case_owner_id)
-        changed_with_no_owner_id = pillow.change_transform(case_no_owner_id)
+        changed_with_owner_id = transform_case_for_elasticsearch(case_owner_id)
+        changed_with_no_owner_id = transform_case_for_elasticsearch(case_no_owner_id)
 
         self.assertEqual(changed_with_owner_id.get("owner_id"), "testuser")
         self.assertEqual(changed_with_no_owner_id.get("owner_id"), "testuser")
