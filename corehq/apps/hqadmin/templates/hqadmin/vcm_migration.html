@@ -30,6 +30,12 @@
         }
 
         $(function() {
+            $("#email-popover").popover({
+                trigger: "focus",
+                placement: "right",
+                title: "{{ email_subject|escapejs }}",
+                content: "{{ email_body|escapejs }}",
+            });
             $("#migrations th button").click(function() {
                 var $button = $(this),
                     $table = $button.closest("table"),
@@ -102,6 +108,7 @@
             <th>Admins</th>
             <th class="text-center">
                 Emailed?
+                <br /><a href='javascript:void(0)' id='email-popover'>view email</a>
                 <br /><button class="btn btn-default btn-xs">Hide emailed</button>
             </th>
             <th class="text-center">

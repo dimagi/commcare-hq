@@ -464,11 +464,18 @@ class VCMMigrationView(BaseAdminSectionView):
     page_title = ugettext_lazy("Vellum Case Management Migration")
     template_name = 'hqadmin/vcm_migration.html'
 
+    email_subject = _("Upcoming migration to easy references.")
+    email_body = ('''
+        Upcoming migration to easy references. Two weeks from now.
+    ''')
+
     @property
     def page_context(self):
         context = get_hqadmin_base_context(self.request)
         context.update({
             'audits': VCMMigration.objects.order_by('-migrated', '-emailed', 'domain'),
+            'email_body': self.email_body,
+            'email_subject': self.email_subject,
             'url': reverse(self.urlname),
         })
         return context
@@ -485,8 +492,8 @@ class VCMMigrationView(BaseAdminSectionView):
                 m = VCMMigration.objects.get(domain=d)
                 if action == 'email':
                     send_mail_async.delay(
-                        _(u'Upcoming migration to easy references.'),
-                        _('Upcoming migration to easy references. Two weeks from now.'),
+                        self.email_subject,
+                        self.email_body,
                         settings.SUPPORT_EMAIL,
                         m.admins,
                         fail_silently=False)

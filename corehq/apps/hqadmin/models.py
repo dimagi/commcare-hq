@@ -2,6 +2,7 @@ from django.db import models
 
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.decorators.memoized import memoized
 from pillowtop.utils import get_pillow_by_name
 from pillowtop.exceptions import PillowNotFoundError
 
@@ -71,5 +72,6 @@ class VCMMigration(models.Model):
     notes = models.TextField(null=True)
 
     @property
+    @memoized
     def admins(self):
         return [admin.email or admin.username for admin in WebUser.get_admins_by_domain(self.domain)]
