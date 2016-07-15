@@ -8,7 +8,7 @@ def _get_cache_processor():
     return CacheInvalidateProcessor()
 
 
-def invalidate_document(document, couch_db, deleted=False):
+def invalidate_document(document, deleted=False):
     """
     Invalidates a document in the cached_core caching framework.
     """
