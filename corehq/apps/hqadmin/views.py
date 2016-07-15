@@ -489,7 +489,7 @@ class VCMMigrationView(BaseAdminSectionView):
                     send_mail_async.delay(
                         _(u'Upcoming migration to easy references.'),
                             'Upcoming migration to easy references. Two weeks from now.',
-                            settings.CCHQ_BUG_REPORT_EMAIL,
+                            settings.SUPPORT_EMAIL,
                             m.admins,
                             fail_silently=False)
                     m.emailed = datetime.now()
