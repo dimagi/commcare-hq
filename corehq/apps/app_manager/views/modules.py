@@ -701,11 +701,13 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     if search_properties is not None:
         if search_properties.get('properties') is not None:
             module.search_config = CaseSearch(
-                properties=[CaseSearchProperty.wrap(p)
-                            for p in _update_search_properties(
-                                    module,
-                                    search_properties.get('properties'), lang
-                            )],
+                properties=[
+                    CaseSearchProperty.wrap(p)
+                    for p in _update_search_properties(
+                        module,
+                        search_properties.get('properties'), lang
+                    )
+                ],
                 relevant=(
                     search_properties.get('relevant')
                     if search_properties.get('relevant') is not None
