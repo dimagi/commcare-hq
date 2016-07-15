@@ -697,9 +697,11 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
-        module.search_config = CaseSearch(properties=[
-            CaseSearchProperty.wrap(p) for p in _update_search_properties(module, search_properties, lang)
-        ])
+        if search_properties.get('properties') is not None:
+            module.search_config = CaseSearch(properties=[
+                CaseSearchProperty.wrap(p)
+                for p in _update_search_properties(module, search_properties.get('properties'), lang)
+            ])
         # TODO: Add UI and controller support for CaseSearch.command_label
 
     resp = {}
