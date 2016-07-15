@@ -60,3 +60,10 @@ class PillowCheckpointSeqStore(models.Model):
             return None
 
         return store
+
+
+class VCMMigration(models.Model):
+    domain = models.CharField(max_length=255, null=False, unique=True)
+    emailed = models.DateTimeField(null=True)
+    migrated = models.DateTimeField(null=True)
+    notes = models.TextField(null=True)

@@ -4,6 +4,7 @@ import HTMLParser
 import json
 import socket
 import csv
+import os
 from datetime import timedelta, date
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
@@ -73,7 +74,7 @@ from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_co
 from . import service_checks, escheck
 from .forms import AuthenticateAsForm, BrokenBuildsForm, VCMMigrationForm
 from .history import get_recent_changes, download_changes
-from .models import HqDeploy
+from .models import HqDeploy, VCMMigration
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
 
@@ -463,29 +464,22 @@ class VCMMigrationView(BaseAdminSectionView):
     page_title = ugettext_lazy("Vellum Case Management Migration")
     template_name = 'hqadmin/vcm_migration.html'
 
-    domain = None
-
     @property
     def page_context(self):
+        domain_audit = namedtuple('domain_audit', 'name emailed migrated notes')
         context = get_hqadmin_base_context(self.request)
-        #context['form'] = VCMMigrationForm(domain=self.domain)
+        context.update({
+            'audits': VCMMigration.objects.all(),
+            'url': reverse(self.urlname),
+        })
         return context
 
-    #jls
     def post(self, request, *args, **kwargs):
-        import pdb; pdb.set_trace()
-        '''
-        form = AuthenticateAsForm(self.request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            request.user = User.objects.get(username=username)
-
-            # http://stackoverflow.com/a/2787747/835696
-            # This allows us to bypass the authenticate call
-            request.user.backend = 'django.contrib.auth.backends.ModelBackend'
-            login(request, request.user)
-            return HttpResponseRedirect('/')
-        '''
+        if self.request.POST['notes']:
+            m = VCMMigration.objects.get(domain=self.request.POST['domain'])
+            m.notes = self.request.POST['notes']
+            m.save()
+            return json_response({'status': 'success'})
         return self.get(request, *args, **kwargs)
 
 
