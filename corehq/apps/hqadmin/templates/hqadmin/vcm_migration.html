@@ -18,7 +18,7 @@
         }
 
         $(function() {
-            $("#domain-audits th button").click(function() {
+            $("#migrations th button").click(function() {
                 var $button = $(this),
                     $table = $button.closest("table"),
                     col = $table.find("thead th").index($button.closest("th"));
@@ -30,10 +30,12 @@
                 $button.replaceWith($("<div class='text-muted'>" + $button.text().replace("Hide", "Hid") + "</div>"));
             });
 
-            $("#domain-audits tbody td:not(:first-child):not(:last-child)").css("cursor", "pointer").click(function(evt) {
+            $("#migrations tbody td:not(:first-child):not(:last-child)").css("cursor", "pointer").click(function(evt) {
                 var $tr = $(this).closest("tr"),
                     $checkbox = $tr.find("input[type='checkbox']");
                 $checkbox.click();
+
+                // Shift+click to select multiple rows
                 if (evt.shiftKey && $checkbox.prop('checked')) {
                     selectNeighbors($tr, function($row) {
                         return $row.prev("tr");
@@ -48,7 +50,8 @@
 {% endblock %}
 
 {% block page_content %}
-    <table class="table table-condensed" id="domain-audits">
+    <div class="text-muted">Shift+Click to select multiple rows</div>
+    <table class="table table-condensed table-striped table-hover" id="migrations">
         <thead>
             <th class="col-sm-1"></th>
             <th class="col-sm-1"></th>
