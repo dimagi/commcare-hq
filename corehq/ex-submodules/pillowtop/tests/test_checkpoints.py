@@ -69,7 +69,7 @@ class PillowCheckpointDbTest(TestCase):
         self.checkpoint.get_or_create_wrapped()
         for seq in ['1', '5', '22']:
             self.checkpoint.update_to(seq)
-            self.assertEqual(seq, self.checkpoint.get_or_create_wrapped().document.sequence)
+            self.assertEqual(seq, self.checkpoint.get_current_sequence_id())
 
     def test_update_verify_unchanged_fail(self):
         self.checkpoint.get_or_create_wrapped()
