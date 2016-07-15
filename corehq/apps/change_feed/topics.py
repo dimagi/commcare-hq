@@ -49,7 +49,7 @@ def get_topic_offset(topic):
 def get_multi_topic_offset(topics):
     """
     :returns: A dict of offsets keyed by topic"""
-    assert set(topics) < set(ALL)
+    assert set(topics) <= set(ALL)
     client = get_kafka_client()
     offset_requests = [OffsetRequest(topic, 0, -1, 1) for topic in topics]
     responses = client.send_offset_request(offset_requests)
