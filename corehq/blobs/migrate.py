@@ -79,7 +79,7 @@ from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMigrationState
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
-from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_list_to_dict
+from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
 from corehq.util.doc_processor.couch import CouchProcessorProgressLogger
 from corehq.util.doc_processor.interface import (
     BaseDocProcessor, DOCS_SKIPPED_WARNING,
@@ -277,13 +277,15 @@ class Migrator(object):
         first_type = doc_types[0]
         self.couchdb = (first_type[0] if isinstance(first_type, tuple) else first_type).get_db()
 
+        sorted_types = sorted(doc_type_tuples_to_dict(self.doc_types))
+        self.iteration_key = "{}-blob-migration/{}".format(self.slug, " ".join(sorted_types))
+
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         doc_migrator = self.doc_migrator_class(self.slug, self.couchdb, filename)
 
         progress_logger = CouchProcessorProgressLogger(self.doc_types)
 
-        iteration_key = self.slug + "-blob-migration"
-        document_provider = CouchDocumentProvider(iteration_key, self.doc_types)
+        document_provider = CouchDocumentProvider(self.iteration_key, self.doc_types)
 
         processor = DocumentProcessorController(
             document_provider,
@@ -337,7 +339,7 @@ def assert_migration_complete(slug):
 
         migrator = MIGRATIONS[slug]
         total = 0
-        for doc_type, model_class in doc_type_list_to_dict(migrator.doc_types).items():
+        for doc_type, model_class in doc_type_tuples_to_dict(migrator.doc_types).items():
             total += get_doc_count_by_type(model_class.get_db(), doc_type)
         if total > 500:
             message = MIGRATION_INSTRUCTIONS.format(slug=slug, total=total)

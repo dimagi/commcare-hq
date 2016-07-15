@@ -4,7 +4,7 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 
 from .models import DemoUserRestore
 
@@ -101,8 +101,9 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privel
         message = u"{} was not in the domain {}".format(couch_user.username, domain)
     elif couch_user.is_web_user() and domain not in couch_user.domains and not couch_user.is_superuser:
         message = u"{} was not in the domain {}".format(couch_user.username, domain)
-    elif ((couch_user.is_web_user() and domain in couch_user.domains and as_user is not None) or
-            (couch_user.is_superuser and as_user is not None)):
+    elif (couch_user.is_web_user() and
+            couch_user.is_member_of(domain) and
+            as_user is not None):
         if not has_data_cleanup_privelege and not couch_user.is_superuser:
             message = u"{} does not have permissions to restore as {}".format(
                 couch_user.username,
@@ -117,7 +118,13 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privel
 
         else:
             if user_domain != domain:
-                message = u"{} was not in the domain {}".format(username, domain)
+                # In this case we may be dealing with a WebUser
+                user = WebUser.get_by_username(as_user)
+                if user and user.is_member_of(domain):
+                    message = None
+                else:
+                    message = u"{} was not in the domain {}".format(username, domain)
+
     return message is None, message
 
 
@@ -131,16 +138,29 @@ def get_restore_user(domain, couch_user, as_user):
         a restore user for. If None will get restore of the couch_user.
     :returns: An instance of OTARestoreUser
     """
+    restore_user = None
     if couch_user.is_commcare_user():
         restore_user = couch_user.to_ota_restore_user()
     elif (couch_user.is_web_user() and as_user is not None):
-        username = as_user.split('@')[0]
-        domain = as_user.split('@')[1]
-        if username != couch_user.raw_username and domain == domain:
-            commcare_user = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
-            if not commcare_user:
+        if '@' in as_user:
+            _, user_domain = as_user.split('@')
+        else:
+            user_domain = None
+        # Likely a mobile worker because username contains domain
+        if domain == user_domain:
+            user = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
+            if not user:
                 return None
-            restore_user = commcare_user.to_ota_restore_user()
+            restore_user = user.to_ota_restore_user()
+        # Likely a web user
+        else:
+            user = WebUser.get_by_username(as_user)
+            if not user:
+                return None
+            elif domain not in user.domains:
+                return None
+            restore_user = user.to_ota_restore_user(domain)
+
     elif couch_user.is_web_user():
         restore_user = couch_user.to_ota_restore_user(domain)
 

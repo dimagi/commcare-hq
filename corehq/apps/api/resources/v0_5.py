@@ -1,3 +1,4 @@
+from django.http import Http404
 from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
@@ -27,9 +28,14 @@ from corehq.apps.es import UserES
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
-from corehq.apps.userreports.models import ReportConfiguration
-from corehq.util import get_document_or_404
+from corehq.apps.userreports.models import ReportConfiguration, \
+    StaticReportConfiguration, report_config_id_is_static
+from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.view import query_dict_to_dict, \
+    get_filter_values
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser
+from corehq.util import get_document_or_404
+from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from corehq.toggles import ZAPIER_INTEGRATION
 
 from . import v0_1, v0_4, CouchResourceMixin
@@ -502,6 +508,139 @@ class StockTransactionResource(HqBaseResource, ModelResource):
         return bundle
 
 
+ConfigurableReportData = namedtuple("ConfigurableReportData", [
+    "data", "id", "domain", "total_records", "get_params", "next_page"
+])
+
+
+class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin):
+    """
+    A resource that replicates the behavior of the ajax part of the
+    ConfigurableReport view.
+    """
+    data = fields.ListField(attribute="data", readonly=True)
+    total_records = fields.IntegerField(attribute="total_records", readonly=True)
+    next_page = fields.CharField(attribute="next_page", readonly=True)
+
+    LIMIT_DEFAULT = 50
+    LIMIT_MAX = 50
+
+    def _get_start_param(self, bundle):
+        try:
+            start = int(bundle.request.GET.get('start', 0))
+            if start < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest("start must be a positive integer.")
+        return start
+
+    def _get_limit_param(self, bundle):
+        try:
+            limit = int(bundle.request.GET.get('limit', self.LIMIT_DEFAULT))
+            if limit < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise BadRequest("limit must be a positive integer.")
+
+        if limit > self.LIMIT_MAX:
+            raise BadRequest("Limit may not exceed {}.".format(self.LIMIT_MAX))
+        return limit
+
+    def _get_next_page(self, domain, id_, start, limit, total_records, get_query_dict):
+        if total_records > start + limit:
+            start += limit
+            new_get_params = get_query_dict.copy()
+            new_get_params["start"] = start
+            # limit has not changed, but it may not have been present in get params before.
+            new_get_params["limit"] = limit
+            return reverse('api_dispatch_detail', kwargs=dict(
+                api_name=self._meta.api_name,
+                resource_name=self._meta.resource_name,
+                domain=domain,
+                pk=id_,
+            )) + "?" + new_get_params.urlencode()
+        else:
+            return ""
+
+    def _get_report_data(self, report_config, domain, start, limit, get_params):
+        report = ReportFactory.from_spec(report_config)
+
+        filter_values = get_filter_values(
+            report_config.ui_filters,
+            query_dict_to_dict(get_params, domain)
+        )
+        report.set_filter_values(filter_values)
+
+        page = list(report.get_data(start=start, limit=limit))
+        total_records = report.get_total_records()
+        return page, total_records
+
+    def obj_get(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        pk = kwargs['pk']
+        start = self._get_start_param(bundle)
+        limit = self._get_limit_param(bundle)
+
+        report_config = self._get_report_configuration(pk, domain)
+        page, total_records = self._get_report_data(
+            report_config, domain, start, limit, bundle.request.GET)
+
+        return ConfigurableReportData(
+            data=page,
+            total_records=total_records,
+            id=report_config._id,
+            domain=domain,
+            get_params=bundle.request.GET,
+            next_page=self._get_next_page(
+                domain,
+                report_config._id,
+                start,
+                limit,
+                total_records,
+                bundle.request.GET,
+            )
+        )
+
+    def _get_report_configuration(self, id_, domain):
+        """
+        Fetch the required ReportConfiguration object
+        :param id_: The id of the ReportConfiguration
+        :param domain: The domain of the ReportConfiguration
+        :return: A ReportConfiguration
+        """
+        if report_config_id_is_static(id_):
+            report_config = StaticReportConfiguration.by_id(id_)
+            if report_config.domain != domain:
+                raise NotFound
+        else:
+            try:
+                report_config = get_document_or_not_found(ReportConfiguration, domain, id_)
+            except DocumentNotFound:
+                raise NotFound
+        return report_config
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'domain': get_obj(bundle_or_obj).domain,
+            'pk': get_obj(bundle_or_obj).id,
+        }
+
+    def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):
+        uri = super(ConfigurableReportDataResource, self).get_resource_uri(bundle_or_obj, url_name)
+        if bundle_or_obj is not None and uri:
+            get_params = get_obj(bundle_or_obj).get_params.copy()
+            if "start" not in get_params:
+                get_params["start"] = 0
+            if "limit" not in get_params:
+                get_params["limit"] = self.LIMIT_DEFAULT
+            uri += "?{}".format(get_params.urlencode())
+        return uri
+
+    class Meta(CustomResourceMeta):
+        list_allowed_methods = []
+        detail_allowed_methods = ["get"]
+
+
 class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     filters = fields.ListField(readonly=True)
@@ -511,7 +650,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         obj_filters = bundle.obj.filters
         return [{
             "datatype": f["datatype"],
-            "field": f["field"]
+            "slug": f["slug"]
         } for f in obj_filters]
 
     def dehydrate_columns(self, bundle):
@@ -521,8 +660,17 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
         pk = kwargs['pk']
-        report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
+        try:
+            report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
+        except Http404 as e:
+            raise NotFound(e.message)
         return report_configuration
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {
+            'domain': get_obj(bundle_or_obj).domain,
+            'pk': get_obj(bundle_or_obj)._id,
+        }
 
     class Meta(CustomResourceMeta):
         list_allowed_methods = []

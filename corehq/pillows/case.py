@@ -95,7 +95,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow'):
 
 def get_couch_case_reindexer():
     iteration_key = "CouchCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, doc_types=[
+    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
         CommCareCase,
         ("CommCareCase-Deleted", CommCareCase)
     ])

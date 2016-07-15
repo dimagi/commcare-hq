@@ -181,7 +181,7 @@ def post_xform(instance_xml, attachments=None, domain='test-domain'):
 
 
 @nottest
-def create_form_for_test(domain, case_id=None, attachments=None, save=True):
+def create_form_for_test(domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -203,7 +203,8 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True):
         xmlns='http://openrosa.org/formdesigner/form-processor',
         received_on=utcnow,
         user_id=user_id,
-        domain=domain
+        domain=domain,
+        state=state
     )
 
     attachments = attachments or {}
