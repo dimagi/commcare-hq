@@ -1,3 +1,8 @@
+import base64
+import json
+from corehq.apps.accounting.models import (BillingAccount, DefaultProductPlan,
+    SoftwarePlanEdition, SubscriptionAdjustment, Subscription)
+from corehq.apps.accounting.tests import generator
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming
@@ -12,16 +17,21 @@ from corehq.apps.sms.models import (SQLMobileBackendMapping, SelfRegistrationInv
     SMS, OUTGOING, PhoneNumber)
 from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from django.test import Client
+from django_prbac.models import Role
+from django.test import Client, TestCase
 from mock import patch
 
 
 DUMMY_APP_ODK_URL = 'http://localhost/testapp'
 DUMMY_REGISTRATION_URL = 'http://localhost/register'
 DUMMY_APP_INFO_URL = 'http://localhost/appinfo'
+
+
+def noop(*args, **kwargs):
+    pass
 
 
 class RegistrationTestCase(BaseSMSTest):
@@ -322,3 +332,106 @@ class RegistrationTestCase(BaseSMSTest):
             'Sign up here: {}'.format(DUMMY_REGISTRATION_URL),
             '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
         ])
+
+
+class RegistrationAPITestCase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(RegistrationAPITestCase, cls).setUpClass()
+        Role.get_cache().clear()
+        generator.instantiate_accounting()
+
+        cls.domain1, cls.account1, cls.subscription1 = cls.setup_domain('reg-api-test-1')
+        cls.domain2, cls.account2, cls.subscription2 = cls.setup_domain('reg-api-test-2')
+
+        cls.admin_user1 = cls.setup_webuser('admin@reg-api-test-1', cls.domain1, 'admin')
+        cls.read_only_user1 = cls.setup_webuser('readonly@reg-api-test-1', cls.domain1, 'read-only')
+        cls.admin_user2 = cls.setup_webuser('admin@reg-api-test-2', cls.domain2, 'admin')
+
+    @classmethod
+    def setup_domain(cls, name):
+        domain_obj = Domain(name=name, sms_mobile_worker_registration_enabled=True)
+        domain_obj.save()
+
+        plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
+        account = BillingAccount.get_or_create_account_by_domain(
+            name, created_by="automated-test-" + cls.__name__
+        )[0]
+        subscription = Subscription.new_domain_subscription(account, name, plan)
+        subscription.is_active = True
+        subscription.save()
+
+        domain_obj = Domain.get(domain_obj.get_id)
+        return (domain_obj, account, subscription)
+
+    @classmethod
+    def setup_webuser(cls, username, domain, role):
+        user = WebUser.create(domain.name, username, '{}-password'.format(username))
+        user.set_role(domain.name, role)
+        user.save()
+        return user
+
+    @classmethod
+    def tearDownClass(cls):
+        SubscriptionAdjustment.objects.all().delete()
+
+        for obj in [
+            cls.subscription1,
+            cls.account1,
+            cls.admin_user1,
+            cls.read_only_user1,
+            cls.domain1,
+            cls.subscription2,
+            cls.account2,
+            cls.admin_user2,
+            cls.domain2,
+        ]:
+            obj.delete()
+
+        super(RegistrationAPITestCase, cls).tearDownClass()
+
+    def setUp(self):
+        PhoneNumber.objects.all().delete()
+
+    def tearDown(self):
+        SelfRegistrationInvitation.objects.all().delete()
+        PhoneNumber.objects.all().delete()
+
+    def make_api_post(self, domain, username, password, payload):
+        c = Client()
+        auth = 'Basic ' + base64.b64encode('{}:{}'.format(username, password))
+        return c.post('/a/{}/api/v0_5/sms_user_registration/'.format(domain.name), json.dumps(payload),
+            HTTP_AUTHORIZATION=auth, content_type='application/json')
+
+    @patch('corehq.apps.sms.resources.v0_5.UserSelfRegistrationValidation._validate_app_id', new=noop)
+    def test_auth(self):
+
+        with patch.object(SelfRegistrationInvitation, 'initiate_workflow', return_value=([], [], [])):
+
+            payload = {'app_id': '123', 'users': [{'phone_number': '999123'}]}
+
+            # test wrong creds, right permission, right domain
+            response = self.make_api_post(self.domain1, 'admin@reg-api-test-1',
+                'wrong-password', payload)
+            self.assertEqual(response.status_code, 401)
+
+            # test right creds, right permission, right domain
+            response = self.make_api_post(self.domain1, 'admin@reg-api-test-1',
+                'admin@reg-api-test-1-password', payload)
+            self.assertEqual(response.status_code, 200)
+
+            # test right creds, wrong permission, right domain
+            response = self.make_api_post(self.domain1, 'readonly@reg-api-test-1',
+                'readonly@reg-api-test-1-password', payload)
+            self.assertEqual(response.status_code, 403)
+
+            # test right creds, right permission, wrong domain
+            response = self.make_api_post(self.domain1, 'admin@reg-api-test-2',
+                'admin@reg-api-test-2-password', payload)
+            self.assertEqual(response.status_code, 403)
+
+            # test right creds, right permission, right domain, for different domain
+            response = self.make_api_post(self.domain2, 'admin@reg-api-test-2',
+                'admin@reg-api-test-2-password', payload)
+            self.assertEqual(response.status_code, 200)
