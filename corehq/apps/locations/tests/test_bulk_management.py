@@ -97,8 +97,6 @@ MAKE_SUFFOLK_A_STATE_VALID = [
 ]
 
 DUPLICATE_SITE_CODES = [
-    # ('name', 'site_code', 'location_type', 'parent_code', 'location_id',
-    # 'external_id', 'latitude', 'longitude'),
     ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
     ('Suffolk', 'suffolk', 'county', 'mass', '2345', '', '', ''),
     ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', ''),
@@ -106,6 +104,15 @@ DUPLICATE_SITE_CODES = [
     ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
     ('East Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
 ]
+
+SAME_NAME_SAME_PARENT = [
+    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
+    # These two locations have the same name AND same parent
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
+    ('Cambridge', 'cambridge2', 'city', 'middlesex', '3458', '', '', ''),
+]
+
 
 
 class TestBulkManagement(TestCase):
@@ -238,3 +245,8 @@ class TestTreeValidator(SimpleTestCase):
         errors = get_errors(FLAT_LOCATION_TYPES, DUPLICATE_SITE_CODES)
         self.assertEqual(len(errors), 1)
         self.assertIn("cambridge", errors[0])
+
+    def test_same_name_same_parent(self):
+        errors = get_errors(FLAT_LOCATION_TYPES, SAME_NAME_SAME_PARENT)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("middlesex", errors[0])

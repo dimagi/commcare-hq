@@ -5,7 +5,7 @@ This includes support for changing location types, changing locations' parents,
 deleting things, and so on.  See the spec doc for specifics:
 https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 """
-from collections import namedtuple, Counter
+from collections import namedtuple, Counter, defaultdict
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -34,7 +34,6 @@ class LocationTreeValidator(object):
     def errors(self):
         # We want to find as many errors as possible up front, but some high
         # level errors make it unrealistic to keep validating
-
         basic_errors = (self._check_unique_type_codes() +
                         self._check_unique_location_codes())
         if basic_errors:
@@ -42,13 +41,19 @@ class LocationTreeValidator(object):
             # uniquely determine the relationships
             return basic_errors
 
+        # Make sure the location types make sense
         type_errors = self._validate_location_types()
         if type_errors:
             return type_errors
 
-        return filter(None, [
-            self._validate_location(loc) for loc in self.locations
+        # Check each location's position in the tree
+        errors = filter(None, [
+            self._validate_location_in_tree(loc) for loc in self.locations
         ])
+
+        # Location names must be unique among siblings
+        errors.extend(self._check_location_names())
+        return errors
 
     def _check_unique_type_codes(self):
         counts = Counter(lt.code for lt in self.location_types).items()
@@ -81,7 +86,7 @@ class LocationTreeValidator(object):
             ]
         return []
 
-    def _validate_location(self, location):
+    def _validate_location_in_tree(self, location):
         loc_type = self.types_by_code.get(location.location_type)
         if not loc_type:
             return "Location '{}' has an invalid type".format(location.site_code)
@@ -100,6 +105,18 @@ class LocationTreeValidator(object):
         if not parent or parent.location_type != correct_parent_type:
             return ("Location '{}' is a '{}', so it should have a parent that is a '{}'"
                     .format(location.site_code, location.location_type, correct_parent_type))
+
+    def _check_location_names(self):
+        locs_by_parent = defaultdict(list)
+        for loc in self.locations:
+            locs_by_parent[loc.parent_code].append(loc)
+
+        for parent, siblings in locs_by_parent.items():
+            counts = Counter(l.name for l in siblings).items()
+            for name, count in counts:
+                if count > 1:
+                    yield ("There are {} locations with the name '{}' under the parent '{}'"
+                           .format(count, name, parent))
 
 
 def bulk_update_organization(domain, location_types, locations):
