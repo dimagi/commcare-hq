@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, WebFormSession */
+/*global Marionette, Backbone, WebFormSession, Util */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -10,6 +10,7 @@ var showError = hqImport('cloudcare/js/util.js').showError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
+var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -71,15 +72,15 @@ FormplayerFrontend.reqres.setHandler('startForm', function (data) {
 
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
-    data.xform_url = FormplayerFrontend.request('currentUser').formplayer_url;
+    var user = FormplayerFrontend.request('currentUser');
+    data.xform_url = user.formplayer_url;
+    data.domain = user.domain;
     data.formplayerEnabled = true;
-    //TODO yeah
-    data.domain = "test";
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
-        if(resp.status === "success") {
+        if (resp.status === "success") {
             FormplayerFrontend.request("clearForm");
             FormplayerFrontend.trigger("apps:list");
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 2500);
@@ -107,4 +108,23 @@ FormplayerFrontend.on("start", function (options) {
             FormplayerFrontend.trigger("apps:list", options.apps);
         }
     }
+});
+
+FormplayerFrontend.on("sync", function () {
+    var user = FormplayerFrontend.request('currentUser');
+    var username = user.username;
+    var domain = user.domain;
+    var formplayer_url = user.formplayer_url;
+    var options = {
+        url: formplayer_url + "/sync-db",
+        data: JSON.stringify({"username": username, "domain": domain}),
+    };
+    Util.setCrossDomainAjaxOptions(options);
+    var resp = $.ajax(options);
+    resp.done(function () {
+        tfSyncComplete(false);
+    });
+    resp.error(function () {
+        tfSyncComplete(true);
+    });
 });
