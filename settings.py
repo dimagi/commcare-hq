@@ -1503,12 +1503,12 @@ PILLOWTOPS = {
     'cache': [
         {
             'name': 'CacheInvalidatePillow',
-            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_main_cache_invalidation_pillow',
         },
         {
             'name': 'UserCacheInvalidatePillow',
-            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
         },
     ],
