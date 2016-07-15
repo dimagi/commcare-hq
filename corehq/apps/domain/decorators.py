@@ -147,6 +147,36 @@ def api_key():
     return real_decorator
 
 
+def _superuser_auth_decorator(challenge_fn):
+    def _outer(fn):
+        @wraps(fn)
+        def safe_fn(request, *args, **kwargs):
+            if args:
+                domain_name, domain = load_domain(request, args[0])
+                if domain:
+                    raise Exception(
+                        "This decorator doesn't do domain-specific validation. Please use decorators "
+                        "based on _login_or_challenge for domain-specific auth and validation"
+                    )
+
+            @check_lockout
+            @challenge_fn
+            @require_superuser_or_developer
+            def _authenticate_fn(request, *args, **kwargs):
+                request.couch_user = couch_user = CouchUser.from_django_user(request.user)
+                if couch_user:
+                    clear_login_attempts(couch_user)
+                return fn(request, *args, **kwargs)
+            return _authenticate_fn(request, *args, **kwargs)
+        return safe_fn
+    return _outer
+
+# Use these decorators on superuser views that should not be accessible over sessions (e.g. API views)
+superuser_digest_auth = _superuser_auth_decorator(httpdigest)
+superuser_basic_auth = _superuser_auth_decorator(basicauth())
+superuser_apikey_auth = _superuser_auth_decorator(api_key())
+
+
 def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True):
     """
     kwargs:

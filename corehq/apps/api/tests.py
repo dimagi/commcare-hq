@@ -98,10 +98,6 @@ class APIResourceTest(TestCase):
         Role.get_cache().clear()
         generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        cls.list_endpoint = reverse('api_dispatch_list',
-                kwargs=dict(domain=cls.domain.name,
-                            api_name=cls.api_name,
-                            resource_name=cls.resource._meta.resource_name))
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
@@ -110,6 +106,17 @@ class APIResourceTest(TestCase):
         set_up_subscription(cls)
         cls.domain = Domain.get(cls.domain._id)
         cls.api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
+
+    @property
+    def list_endpoint(self):
+        return reverse(
+            'api_dispatch_list',
+            kwargs={
+                'domain': self.domain.name,
+                'api_name': self.api_name,
+                'resource_name': self.resource._meta.resource_name
+            }
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -1606,6 +1613,36 @@ class ILSLocationResourceTest(APIResourceTest, InternalTestMixin):
 
     def test_basic(self):
         self.assert_accessible_via_sessions(self.list_endpoint)
+
+
+class AdminWebResourceTest(APIResourceTest):
+    resource = v0_5.AdminWebUserResource
+    api_name = 'global'
+
+    def tearDown(self):
+        self.community_domain.delete()
+        self.new_user.delete()
+        super(AdminWebResourceTest, self).tearDown()
+
+    def test_basic(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 401)
+
+        self.community_domain = Domain.get_or_create_with_name('dm', is_active=True)
+        self.new_user = WebUser.create(self.community_domain.name, 'admin', 'pass', is_superuser=True)
+        self.new_user.save()
+
+        response = self._assert_auth_get_resource(self.list_endpoint, username='admin', password='pass')
+        self.assertEqual(response.status_code, 200)
+
+    @property
+    def list_endpoint(self):
+        return reverse(
+            'api_dispatch_list',
+            kwargs={
+                'api_name': self.api_name, 'resource_name': self.resource.Meta.resource_name
+            }
+        )
 
 
 class TestSimpleReportConfigurationResource(APIResourceTest):

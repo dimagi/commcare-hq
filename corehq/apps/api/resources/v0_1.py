@@ -37,7 +37,10 @@ from corehq.apps.domain.decorators import (
     api_key_auth,
     login_or_digest,
     login_or_basic,
-    login_or_api_key)
+    login_or_api_key,
+    superuser_digest_auth,
+    superuser_basic_auth,
+    superuser_apikey_auth)
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 
@@ -85,18 +88,23 @@ class LoginAndDomainAuthentication(Authentication):
             set this to True to allow session based access to this resource
         """
         super(LoginAndDomainAuthentication, self).__init__(*args, **kwargs)
-        if allow_session_auth:
-            self.decorator_map = {
+        self.allow_session_auth = allow_session_auth
+
+    @property
+    def decorator_map(self):
+        if self.allow_session_auth:
+            decorator_map = {
                 'digest': login_or_digest,
                 'basic': login_or_basic,
                 'api_key': login_or_api_key,
             }
         else:
-            self.decorator_map = {
+            decorator_map = {
                 'digest': digest_auth,
                 'basic': basic_auth,
                 'api_key': api_key_auth,
             }
+        return decorator_map
 
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[self._get_auth_decorator(request), api_auth], **kwargs)
@@ -109,15 +117,15 @@ class LoginAndDomainAuthentication(Authentication):
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'
 
-        def dummy(request, domain, **kwargs):
+        def dummy(request, domain=None, **kwargs):
             return PASSED_AUTH
 
         wrapped_dummy = dummy
         for wrapper in wrappers:
             wrapped_dummy = wrapper(wrapped_dummy)
 
-        if not kwargs.has_key('domain'):
-            kwargs['domain'] = request.domain
+        if 'domain' not in kwargs:
+            kwargs['domain'] = getattr(request, 'domain', None)
 
         try:
             response = wrapped_dummy(request, **kwargs)
@@ -167,22 +175,18 @@ class DomainAdminAuthentication(LoginAndDomainAuthentication):
 
 class AdminAuthentication(LoginAndDomainAuthentication):
 
-    @staticmethod
-    def _permission_check(couch_user, domain):
-        return (
-            couch_user.is_superuser or
-            IS_DEVELOPER.enabled(couch_user.username)
-        )
+    @property
+    def decorator_map(self):
+        return {
+            'digest': superuser_digest_auth,
+            'basic': superuser_basic_auth,
+            'api_key': superuser_apikey_auth,
+        }
 
     def is_authenticated(self, request, **kwargs):
-        decorator = require_permission_raw(
-            self._permission_check,
-            login_decorator=self._get_auth_decorator(request)
-        )
-        wrappers = [decorator, api_auth]
-        # passing the domain is a hack to work around non-domain-specific requests
-        # failing on auth
-        return self._auth_test(request, wrappers=wrappers, domain='dimagi', **kwargs)
+        decorator = self._get_auth_decorator(request)
+        wrappers = [decorator]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
 class HQThrottle(CacheThrottle):
