@@ -13,13 +13,13 @@ This email is a receipt for your prepayment of {{ amount }} for credits to your 
 {% trans 'Transaction No.' %}: {{ transaction_id }}
 
 {% blocktrans %}
-Thank you for using {{ product }}. If you have any questions, please don't
+Thank you for using CommCare. If you have any questions, please don't
 hesitate to contact {{ invoicing_contact_email }}.
 {% endblocktrans %}
 
 {% blocktrans %}
 Best Regards,
-The {{ product }} HQ Team
+The CommCare HQ Team
 www.commcarehq.org
 {% endblocktrans %}
 
