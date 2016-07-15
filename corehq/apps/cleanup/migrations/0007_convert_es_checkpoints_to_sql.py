@@ -13,7 +13,6 @@ def migrate_es_pillows(apps, schema_editor):
         'GroupPillow',
         'SMSPillow',
         'UserPillow',
-        'XFormPillow',
     ]
     migrate_legacy_pillows(apps, pillow_names)
 

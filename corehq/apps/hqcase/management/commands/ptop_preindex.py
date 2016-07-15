@@ -26,7 +26,7 @@ def get_reindex_commands(alias_name):
             ('ptop_reindexer_v2', {'index': 'sql-case'}),
         ],
         'xforms': [
-            'ptop_fast_reindex_xforms',
+            ('ptop_reindexer_v2', {'index': 'form'}),
             ('ptop_reindexer_v2', {'index': 'sql-form'}),
         ],
         # groupstousers indexing must happen after all users are indexed

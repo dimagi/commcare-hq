@@ -10,6 +10,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.quickcache import quickcache
 from pillowtop.es_utils import get_all_inferred_es_indices_from_pillows
 
@@ -80,6 +81,7 @@ def get_user_type(user_id):
 def get_all_expected_es_indices():
     for index_info in get_all_inferred_es_indices_from_pillows():
         yield index_info
+    yield XFORM_INDEX_INFO
     yield REPORT_CASE_INDEX_INFO
     yield REPORT_XFORM_INDEX_INFO
     yield APP_INDEX_INFO

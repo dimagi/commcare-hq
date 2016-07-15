@@ -536,23 +536,6 @@
         "include_docs": false,
         "name": "WorldVisionMotherFluffPillow"
     },
-    "XFormPillow": {
-        "advertised_name": "corehq.pillows.xform.XFormPillow.test_xforms_2016-06-09.testhq",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "corehq.pillows.xform.XFormPillow.test_xforms_2016-06-09.testhq",
-        "couch_filter": "couchforms/xforms",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": "XFormInstance",
-        "es_alias": "xforms",
-        "es_index": "test_xforms_2016-06-09",
-        "es_type": "xform",
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.xform.XFormPillow",
-        "include_docs": false,
-        "name": "XFormPillow",
-        "unique_id": "test_xforms_2016-06-09"
-    },
     "XFormToElasticsearchPillow": {
         "advertised_name": "XFormToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
