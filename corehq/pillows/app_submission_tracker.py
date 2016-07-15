@@ -51,6 +51,13 @@ class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
         else:
             return True
 
+    def handle_skip(self, doc):
+        print 'Unable to process form {} with build {}'.format(
+            doc['_id'],
+            doc.get('build_id')
+        )
+        return True
+
     @staticmethod
     def _doc_to_change(doc, data_source_type, data_source_name):
         doc_meta = get_doc_meta_object_from_document(doc)
