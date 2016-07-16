@@ -423,7 +423,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             .size(0)
         )
         if self.case_type:
-            query = query.filter(case_es.case_type(self.case_type))
+            query = query.case_type(self.case_type)
         else:
             query = query.filter(filters.NOT(case_es.case_type('commcare-user')))
 
@@ -451,11 +451,11 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return (
             FilterAggregation(key,
                 filters.AND(
-                    filters.date_range('modified_on', gte=start_date, lt=end_date),
+                    case_es.modified_range(gte=start_date, lt=end_date),
                 )
             )
-            .aggregation(FilterAggregation('active', filters.term('closed', False)))
-            .aggregation(FilterAggregation('closed', filters.term('closed', True)))
+            .aggregation(FilterAggregation('active', case_es.is_closed(False)))
+            .aggregation(FilterAggregation('closed', case_es.is_closed()))
         )
 
     class Row(object):
