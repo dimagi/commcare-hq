@@ -153,6 +153,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     emailable = True
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
+    ajax_pagination = True
 
     @property
     def shared_pagination_GET_params(self):
