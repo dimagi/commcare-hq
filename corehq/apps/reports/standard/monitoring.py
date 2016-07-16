@@ -245,6 +245,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return datetime.datetime.utcnow()
 
     @property
+    def total_records(self):
+        return len(self.user_ids)
+
+    @property
     def headers(self):
 
         def make_column(title, help_text, num_days):
