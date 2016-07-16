@@ -389,17 +389,25 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
-        es_results = self.es_queryset()
-        buckets = {user_id: bucket for user_id, bucket in es_results.aggregations.users.buckets_dict.items()}
+        es_results = self.es_queryset(
+            user_ids=self.paginated_user_ids,
+        )
+        buckets = es_results.aggregations.users.buckets_list
         if self.missing_users:
             buckets[None] = es_results.aggregations.missing_users.bucket
         rows = []
-        for user_id, user in self.users_by_id.items():
-            bucket = buckets.get(user_id, None)
+        for bucket in buckets:
+            user = self.users_by_id[bucket.key]
             rows.append(self.Row(self, user, bucket))
 
+        rows.sort(key=self.sort_key)
+
         self.total_row = self._total_row
-        return map(self._format_row, rows)
+        if len(rows) == self.pagination.count:
+            return map(self._format_row, rows)
+        else:
+            return map(self._format_row, rows[self.pagination.start:self.pagination.start+self.pagination.count])
+
 
     @property
     def _touched_total_aggregation(self):
@@ -450,7 +458,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def milestone_start(self):
         return ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
 
-    def es_queryset(self):
+    def es_queryset(self, user_ids):
         top_level_aggregation = (
             TermsAggregation('users', 'user_id')
             .aggregation(self._touched_total_aggregation)
@@ -468,7 +476,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         query = (
             case_es.CaseES()
             .domain(self.domain)
-            .user_ids_handle_unknown(self.user_ids)
+            .user_ids_handle_unknown(user_ids)
             .size(0)
         )
         if self.case_type:
@@ -515,22 +523,58 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             self.bucket = bucket
 
         def active_count(self, landmark_key):
-            return 0 if not self.bucket else getattr(self.bucket, landmark_key).result['active']['doc_count']
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get(landmark_key, None)
+                if landmark:
+                    return landmark['active']['doc_count']
+                return 0
 
         def modified_count(self, landmark_key):
-            return 0 if not self.bucket else getattr(self.bucket, landmark_key).doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get(landmark_key, None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def closed_count(self, landmark_key):
-            return 0 if not self.bucket else getattr(self.bucket, landmark_key).result['closed']['doc_count']
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get(landmark_key, None)
+                if landmark:
+                    return landmark['closed']['doc_count']
+                return 0
 
         def total_touched_count(self):
-            return 0 if not self.bucket else self.bucket.touched_total.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get('touched_total', None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def total_inactive_count(self):
-            return 0 if not self.bucket else self.bucket.inactive_total.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get('inactive_total', None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def total_active_count(self):
-            return 0 if not self.bucket else self.bucket.active_total.doc_count
+            if not self.bucket:
+                return 0
+            else:
+                landmark = self.bucket.result.get('active_total', None)
+                if landmark:
+                    return landmark['doc_count']
+                return 0
 
         def header(self):
             return self.report.get_user_link(self.user)['html']
