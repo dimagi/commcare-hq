@@ -109,7 +109,7 @@ def touched_total_aggregation(gt=None, gte=None, lt=None, lte=None):
     return aggregations.FilterAggregation(
         'touched_total',
         filters.AND(
-            filters.date_range('modified_on', gt, gte, lt, lte),
+            modified_range(gt, gte, lt, lte),
         )
     )
 
@@ -118,6 +118,7 @@ def open_case_aggregation(name='open_case', gt=None, gte=None, lt=None, lte=None
     return aggregations.FilterAggregation(
         name,
         filters.AND(
-            filters.date_range('modified_on', gt, gte, lt, lte),
-            filters.term('closed', False))
+            modified_range(gt, gte, lt, lte),
+            is_closed(False),
+        )
     )
