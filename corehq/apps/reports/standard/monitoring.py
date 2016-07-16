@@ -307,7 +307,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def _touched_total_aggregation(self):
-        return case_es.touched_total_aggreation(gte=self.milestone_start, lt=self.end_date)
+        return case_es.touched_total_aggregation(gte=self.milestone_start, lt=self.end_date)
 
     @property
     def _active_total_aggregation(self):
