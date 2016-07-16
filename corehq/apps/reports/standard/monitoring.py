@@ -337,6 +337,31 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         else:
             return "landmark_%d" % (landmark,)
 
+    @property
+    def sort_key(self):
+        def _sort(row):
+            column_num = self.request_params.get('iSortCol_0', 0)
+            num_columns = self.request_params.get('iColumns', 15)
+            if column_num == 0:
+                return row.user
+            elif column_num == (num_columns - 2):
+                return row.total_active_count()
+            elif column_num == (num_columns - 1):
+                return row.total_inactive_count()
+            else:
+                landmark = column_num // 4
+                sub_col = column_num % 4
+                if sub_col == 1:
+                    return row.modified_count('landmark_' + str(landmark))
+                elif sub_col == 2:
+                    return row.active_count('landmark_' + str(landmark))
+                elif sub_col == 3:
+                    return row.modified_count('landmark_' + str(landmark))
+                else:
+                    return None # Can't actually select this in the UI
+
+        return _sort
+
     def _format_row(self, row):
         cells = [row.header()]
         total_touched = row.total_touched_count()
