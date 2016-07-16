@@ -292,6 +292,25 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         return self.users_by_id.keys()
 
     @property
+    @memoized
+    def paginated_users(self):
+        if self.sort_column is None:
+            return sorted(
+                    self.all_users, key=lambda u: u.raw_username, reverse=self.pagination.desc
+            )[self.pagination.start:self.pagination.start + self.pagination.count]
+        return self.all_users
+
+    @property
+    @memoized
+    def paginated_users_by_id(self):
+        return [(user.user_id, user) for user in self.paginated_users]
+
+    @property
+    @memoized
+    def paginated_user_ids(self):
+        return [user.user_id for user in self.paginated_users]
+
+    @property
     def sort_column(self):
         column_num = self.request_params.get('iSortCol_0', 0)
         num_columns = self.request_params.get('iColumns', 15)
