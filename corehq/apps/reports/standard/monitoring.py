@@ -409,6 +409,19 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         else:
             return map(self._format_row, rows[self.pagination.start:self.pagination.start+self.pagination.count])
 
+    @property
+    def get_all_rows(self):
+        es_results = self.es_queryset(user_ids=self.all_user_ids)
+        buckets = es_results.aggregations.users.buckets_list
+        if self.missing_users:
+            buckets[None] = es_results.aggregations.missing_users.bucket
+        rows = []
+        for bucket in buckets:
+            user = self.users_by_id[bucket.key]
+            rows.append(self.Row(self, user, bucket))
+
+        self.total_row = self._total_row
+        return map(self._format_row, rows)
 
     @property
     def _touched_total_aggregation(self):
