@@ -460,6 +460,11 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         top_level_aggregation = self.add_landmark_aggregations(top_level_aggregation, self.end_date)
 
+
+        if self.sort_column:
+            order = "desc" if self.pagination.desc else "asc"
+            top_level_aggregation = top_level_aggregation.order(self.sort_column, order)
+
         query = (
             case_es.CaseES()
             .domain(self.domain)
