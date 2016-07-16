@@ -34,6 +34,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
 from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
+from corehq.apps.reports.filters.select import CaseTypeFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.models import HQUserType
@@ -152,6 +153,26 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     emailable = True
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
+
+    @property
+    def shared_pagination_GET_params(self):
+        params = [
+            dict(
+                name=EMWF.slug,
+                value=EMWF.get_value(self.request, self.domain)),
+            dict(
+                name=CaseTypeFilter.slug,
+                value=CaseTypeFilter.get_value(self.request, self.domain)),
+            dict(
+                name='milestone',
+                value=self.request.GET.get('milestone')
+            ),
+            dict(
+                name='landmark',
+                value=self.request.GET.get('landmark')
+            )
+        ]
+        return params
 
     @property
     def landmark_columns(self):
