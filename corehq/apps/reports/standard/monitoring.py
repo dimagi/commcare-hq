@@ -391,6 +391,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def rows(self):
         es_results = self.es_queryset(
             user_ids=self.paginated_user_ids,
+            size=self.pagination.start+self.pagination.count
         )
         buckets = es_results.aggregations.users.buckets_list
         if self.missing_users:
@@ -458,7 +459,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def milestone_start(self):
         return ServerTime(self.utc_now - self.milestone).phone_time(self.timezone).done()
 
-    def es_queryset(self, user_ids):
+    def es_queryset(self, user_ids, size=None):
         top_level_aggregation = (
             TermsAggregation('users', 'user_id')
             .aggregation(self._touched_total_aggregation)
@@ -468,6 +469,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         top_level_aggregation = self.add_landmark_aggregations(top_level_aggregation, self.end_date)
 
+        if size:
+            top_level_aggregation.size(size)
 
         if self.sort_column:
             order = "desc" if self.pagination.desc else "asc"
