@@ -291,6 +291,33 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def user_ids(self):
         return self.users_by_id.keys()
 
+    @property
+    def sort_column(self):
+        column_num = self.request_params.get('iSortCol_0', 0)
+        num_columns = self.request_params.get('iColumns', 15)
+        if column_num == 0:
+            return None # user
+        elif column_num == (num_columns - 2):
+            return "active_total"
+        elif column_num == (num_columns - 1):
+            return "inactive_total"
+        else:
+            landmark = column_num // 4
+            sub_col = column_num % 4
+            if sub_col == 1:
+                column = "" # this will sort by doc_count
+            elif sub_col == 2:
+                column = "active"
+            elif sub_col == 3:
+                column = "closed"
+            else:
+                return None # Can't actually select this in the UI
+
+        if column:
+            return "landmark_%d>%s" % (landmark, column)
+        else:
+            return "landmark_%d" % (landmark,)
+
     def _format_row(self, row):
         cells = [row.header()]
         total_touched = row.total_touched_count()
