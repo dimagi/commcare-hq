@@ -182,10 +182,12 @@ class GroupsToUserReindexerTest(TestCase):
     ]
 
     def setUp(self):
+        super(GroupsToUserReindexerTest, self).setUp()
         delete_all_groups()
 
     @classmethod
     def setUpClass(cls):
+        super(GroupsToUserReindexerTest, cls).setUpClass()
         cls.es = get_es_new()
         ensure_index_deleted(USER_INDEX)
         initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
@@ -193,6 +195,7 @@ class GroupsToUserReindexerTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(USER_INDEX)
+        super(GroupsToUserReindexerTest, cls).tearDownClass()
 
     def test_groups_to_user_reindexer(self):
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
