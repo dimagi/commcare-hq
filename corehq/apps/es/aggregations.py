@@ -221,6 +221,11 @@ class TermsAggregation(Aggregation):
         query.body['order'] = {field: order}
         return query
 
+    def size(self, size):
+        query = deepcopy(self)
+        query.body['size'] = size
+        return query
+
 
 class SumResult(AggregationResult):
 
