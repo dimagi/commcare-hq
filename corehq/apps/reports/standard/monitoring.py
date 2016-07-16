@@ -503,7 +503,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return 0 if not self.bucket else self.bucket.active_total.doc_count
 
         def header(self):
-            return self.report.get_user_link(self.user)
+            return self.report.get_user_link(self.user)['html']
 
     class TotalRow(object):
 
