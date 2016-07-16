@@ -27,8 +27,7 @@ class FakeFile(object):
 
 class _AuthTest(TestCase):
 
-    def setUp(self):
-        super(_AuthTest, self).setUp()
+    def set_up_auth_test(self):
         self._set_up_domain()
 
         try:
@@ -234,6 +233,11 @@ class AuthTest(_AuthTest):
         project.secure_submissions = True
         project.save()
 
+    def setUp(self):
+        super(AuthTest, self).setUp()
+        super(AuthTest, self).set_up_auth_test()
+
+
 
 class InsecureAuthTest(_AuthTest):
 
@@ -243,3 +247,7 @@ class InsecureAuthTest(_AuthTest):
         project = create_domain(self.domain)
         project.secure_submissions = False
         project.save()
+
+    def setUp(self):
+        super(InsecureAuthTest, self).setUp()
+        super(InsecureAuthTest, self).set_up_auth_test()
