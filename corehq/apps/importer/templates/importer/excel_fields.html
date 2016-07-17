@@ -12,7 +12,9 @@
 
                 if (this.checked) {
                     var excelField = $(this).closest('tr').find(".excel_field");
-                    customField.val(excelField.val().replace(/[^\w\s]/gi, ''));
+                    var escapedValue = excelField.val().replace(/[^\w\s]/gi, '');
+                    escapedValue = escapedValue.replace(/[\s]/gi, '_');
+                    customField.val(escapedValue);
                     customField.closest('td').removeClass('hide');
                     caseField.closest('td').addClass('hide');
                 } else {
