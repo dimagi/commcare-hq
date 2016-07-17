@@ -145,12 +145,16 @@ class RestorePermissionsTest(TestCase):
 class GetRestoreUserTest(TestCase):
 
     domain = 'goats'
+    other_domain = 'sheep'
 
     @classmethod
     def setUpClass(cls):
         super(GetRestoreUserTest, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
+
+        cls.other_project = Domain(name=cls.other_domain)
+        cls.other_project.save()
 
         cls.web_user = WebUser.create(
             username='billy@goats.com',
@@ -162,12 +166,21 @@ class GetRestoreUserTest(TestCase):
             domain=cls.domain,
             password='***',
         )
+        cls.super_user = WebUser.create(
+            username='super@woman.com',
+            domain=cls.other_domain,
+            password='***',
+        )
+        cls.super_user.is_superuser = True
+        cls.super_user.save()
 
     @classmethod
     def tearDownClass(cls):
         super(GetRestoreUserTest, cls).tearDownClass()
         cls.web_user.delete()
         cls.commcare_user.delete()
+        cls.super_user.delete()
+        cls.other_project.delete()
         cls.project.delete()
 
     def test_get_restore_user_web_user(self):
@@ -191,6 +204,15 @@ class GetRestoreUserTest(TestCase):
                 self.domain,
                 self.web_user,
                 self.web_user.username,
+            )
+        )
+
+    def test_get_restore_user_as_super_user(self):
+        self.assertIsNotNone(
+            get_restore_user(
+                self.domain,
+                self.web_user,
+                self.super_user.username,
             )
         )
 
