@@ -1,4 +1,4 @@
-{% extends "cloudcare/base.html" %}
+{% extends 'style/full_screen.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
@@ -95,11 +95,7 @@
 {% block page_content %}
 
     <div id="menu-container">
-        <div id="menu-region" class="container">
-            <p>Here is static content in the web page. You'll notice that it gets replaced by our app as soon as we
-                start
-                it.</p>
-        </div>
+        <div id="menu-region" class="container"></div>
     </div>
 
     <!-- For now we won't touch this since the form entry code is coupled with it  -->
