@@ -13,7 +13,7 @@ class ElasticReindexTest(SimpleTestCase):
     def setUpClass(cls):
         cls.elasticsearch = get_es_new()
 
-    @override_settings(PILLOWTOPS={'test': ['pillowtop.tests.FakePillow']})
+    @override_settings(PILLOWTOPS={'test': ['pillowtop.tests.test_import_pillows.FakePillow']})
     def test_get_all_elastic_pillows_no_match(self):
         self.assertEqual(0, len(get_all_elasticsearch_pillow_classes()))
 
