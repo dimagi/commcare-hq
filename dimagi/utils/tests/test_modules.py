@@ -16,7 +16,7 @@ class ModulesTests(SimpleTestCase):
         self.assertEqual(fn, to_function)
 
     def test_to_function_package_level(self):
-        cls = to_function(u'dimagi.utils.tests.ModulesTests', failhard=True)
+        cls = to_function(u'dimagi.utils.tests.test_modules.ModulesTests', failhard=True)
         self.assertIsNotNone(cls)
         self.assertEqual(cls, ModulesTests)
 
