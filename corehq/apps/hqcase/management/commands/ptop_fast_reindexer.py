@@ -14,7 +14,7 @@ from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_sett
     get_index_info_from_pillow, initialize_index_and_mapping
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
-from pillowtop.listener import AliasedElasticPillow, PythonPillow
+from pillowtop.listener import AliasedElasticPillow
 
 CHUNK_SIZE = 10000
 POOL_SIZE = 15
@@ -340,9 +340,7 @@ class PtopReindexer(NoArgsCommand):
         self.send_bulk(bulk_slice, start, end)
 
     def finish_saving(self):
-        # python pillows may have some chunked up changes so make sure they get processed
-        if isinstance(self.pillow, PythonPillow) and self.pillow.use_chunking:
-            self.pillow.process_chunk()
+        pass
 
     def send_bulk(self, slice, start, end):
         doc_ids = [x['id'] for x in slice]
