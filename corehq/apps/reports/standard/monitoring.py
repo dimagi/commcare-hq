@@ -297,7 +297,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def paginated_users(self):
         if self.sort_column is None:
             return sorted(
-                    self.all_users, key=lambda u: u.raw_username, reverse=self.pagination.desc
+                self.all_users, key=lambda u: u.raw_username, reverse=self.pagination.desc
             )[self.pagination.start:self.pagination.start + self.pagination.count]
         return self.all_users
 
@@ -316,7 +316,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         column_num = self.request_params.get('iSortCol_0', 0)
         num_columns = self.request_params.get('iColumns', 15)
         if column_num == 0:
-            return None # user
+            return None  # user
         elif column_num == (num_columns - 2):
             return "active_total"
         elif column_num == (num_columns - 1):
@@ -325,13 +325,13 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             landmark = column_num // 4
             sub_col = column_num % 4
             if sub_col == 1:
-                column = "" # this will sort by doc_count
+                column = ""  # this will sort by doc_count
             elif sub_col == 2:
                 column = "active"
             elif sub_col == 3:
                 column = "closed"
             else:
-                return None # Can't actually select this in the UI
+                return None  # Can't actually select this in the UI
 
         if column:
             return "landmark_%d>%s" % (landmark, column)
@@ -359,7 +359,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
                 elif sub_col == 3:
                     return row.modified_count('landmark_' + str(landmark))
                 else:
-                    return None # Can't actually select this in the UI
+                    return None  # Can't actually select this in the UI
 
         return _sort
 
@@ -392,7 +392,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def rows(self):
         es_results = self.es_queryset(
             user_ids=self.paginated_user_ids,
-            size=self.pagination.start+self.pagination.count
+            size=self.pagination.start + self.pagination.count
         )
         buckets = es_results.aggregations.users.buckets_list
         if self.missing_users:
@@ -408,7 +408,10 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         if len(rows) == self.pagination.count:
             return map(self._format_row, rows)
         else:
-            return map(self._format_row, rows[self.pagination.start:self.pagination.start+self.pagination.count])
+            start = self.pagination.start
+            end = start + self.pagination.count
+            paginated_rows = rows[start:end]
+            return map(self._format_row, paginated_rows)
 
     @property
     def get_all_rows(self):
