@@ -1,5 +1,6 @@
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.toggles import EMG_AND_REC_SMS_HANDLERS
 from corehq.util.translation import localize
 from custom.ilsgateway.slab.handlers.transfer import TransferHandler
 
@@ -83,10 +84,12 @@ def handle(verified_contact, text, msg=None):
         ('la', 'um'): LossAndAdjustment,
         ('stockout', 'hakuna'): StockoutHandler,
         ('not',): not_function(args[0]) if args else None,
-        ('trans',): TransferHandler,
-        ('emg',): EmergencyHandler,
-        ('rec', ): ReceiptHandler
+        ('trans',): TransferHandler
     }
+
+    if EMG_AND_REC_SMS_HANDLERS.enabled(domain):
+        location_needed_handlers[('emg', )] = EmergencyHandler
+        location_needed_handlers[('rec',)] = ReceiptHandler
 
     handler_class = choose_handler(keyword, location_needed_handlers)
     if handler_class and not user.location_id:

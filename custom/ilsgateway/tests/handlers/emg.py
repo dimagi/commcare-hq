@@ -1,9 +1,15 @@
+from corehq.toggles import EMG_AND_REC_SMS_HANDLERS
 from custom.ilsgateway.tanzania.reminders import EMG_ERROR, EMG_HELP, INVALID_PRODUCT_CODE
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 from custom.zipline.models import EmergencyOrder
 
 
 class EmergencyTest(ILSTestScript):
+
+    @classmethod
+    def setUpClass(cls):
+        super(EmergencyTest, cls).setUpClass()
+        EMG_AND_REC_SMS_HANDLERS.set('domain:ils-test-domain', True)
 
     def tearDown(self):
         EmergencyOrder.objects.all().delete()
