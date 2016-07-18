@@ -110,7 +110,10 @@ class RebuildStockStateTest(TestCase):
 
         case_accessors = CaseAccessors(self.domain)
         case = case_accessors.get_case(self.case.case_id)
-        self.assertEqual(2, len(case.actions))
+        try:
+            self.assertTrue(any([action.is_ledger_transaction for action in case.actions]))
+        except AttributeError:
+            self.assertTrue('commtrack' in [action.action_type for action in case.actions])
         self.assertEqual([form.form_id], case.xform_ids[1:])
 
         # change the value to 50
@@ -121,6 +124,13 @@ class RebuildStockStateTest(TestCase):
             form_id=form.form_id,
         )
         case = case_accessors.get_case(self.case.case_id)
-        self.assertEqual(2, len(case.actions))
+
+        try:
+            # CaseTransaction
+            self.assertTrue(any([action.is_ledger_transaction for action in case.actions]))
+        except AttributeError:
+            # CaseAction
+            self.assertTrue('commtrack' in [action.action_type for action in case.actions])
+
         self._assert_stats(1, edit_quantity, edit_quantity)
         self.assertEqual([form.form_id], case.xform_ids[1:])
