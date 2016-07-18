@@ -1,6 +1,6 @@
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.products.models import Product
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import Location, SQLLocation, LocationType
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
@@ -106,9 +106,11 @@ def parent_child(domain):
                       data=dict(location_hierarchy_config(domain)).iteritems())
 
 
-def allowed_child_types(domain, parent):
-    parent_type = parent.location_type if parent else None
-    return parent_child(domain).get(parent_type, [])
+def allowed_child_types(domain, sql_location):
+    return (LocationType.objects
+            .filter(domain=domain,
+                    parent_type=sql_location.location_type if sql_location else None)
+            .values_list('name', flat=True))
 
 
 @quickcache(['domain'], timeout=60)

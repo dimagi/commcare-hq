@@ -76,7 +76,7 @@ class TestReportRunner(TestCase):
             bound_data={
                 'name': location.name,
                 'parent_id': new_parent_id,
-                'location_type': location.location_type,
+                'location_type': location.location_type_object,
                 'data-field-group': location.metadata['group']
             }
         )
@@ -88,7 +88,7 @@ class TestReportRunner(TestCase):
             bound_data={
                 'name': location.name,
                 'data-field-group': group,
-                'location_type': location.location_type,
+                'location_type': location.location_type_object,
                 'parent_id': location.parent_location_id
             }
         )

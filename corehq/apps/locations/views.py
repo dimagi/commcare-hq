@@ -4,7 +4,7 @@ import logging
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -33,7 +33,7 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import location_safe
-from corehq.util import reverse, get_document_or_404
+from corehq.util import reverse
 
 from .analytics import users_have_locations
 from .dbaccessors import get_users_assigned_to_locations
@@ -363,9 +363,9 @@ class NewLocationView(BaseLocationView):
     @memoized
     def location(self):
         parent_id = self.request.GET.get('parent')
-        parent = (get_document_or_404(Location, self.domain, parent_id)
+        parent = (get_object_or_404(SQLLocation, domain=self.domain, location_id=parent_id)
                   if parent_id else None)
-        return Location(domain=self.domain, parent=parent)
+        return SQLLocation(domain=self.domain, parent=parent)
 
     @property
     def consumption(self):
@@ -503,14 +503,8 @@ class EditLocationView(NewLocationView):
     @property
     @memoized
     def location(self):
-        try:
-            location = Location.get(self.location_id)
-            if location.domain != self.domain:
-                raise Http404()
-        except ResourceNotFound:
-            raise Http404()
-        else:
-            return location
+        return get_object_or_404(SQLLocation, domain=self.domain,
+                                 location_id=self.location_id)
 
     @property
     @memoized
