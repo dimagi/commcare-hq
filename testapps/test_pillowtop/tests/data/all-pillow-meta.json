@@ -60,16 +60,10 @@
         "name": "BlobDeletionPillow"
     },
     "CacheInvalidatePillow": {
-        "advertised_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
+        "advertised_name": "CacheInvalidatePillow",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "pillowtop_corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
-        "couch_filter": "hqadmin/not_case_form",
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow",
-        "include_docs": true,
+        "checkpoint_id": "cache_invalidate_pillow_test_commcarehq",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CacheInvalidatePillow"
     },
     "CareBiharFluffPillow": {
@@ -462,16 +456,10 @@
         "name": "UnknownUsersPillow"
     },
     "UserCacheInvalidatePillow": {
-        "advertised_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
+        "advertised_name": "UserCacheInvalidatePillow",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "pillowtop_corehq.pillows.cacheinvalidate.CacheInvalidatePillow.testhq",
-        "couch_filter": null,
-        "couchdb_type": "Database",
-        "couchdb_uri": "http://{COUCH_SERVER_ROOT}/test_commcarehq__users",
-        "document_class": null,
-        "extra_args": {},
-        "full_class_name": "corehq.pillows.cacheinvalidate.CacheInvalidatePillow",
-        "include_docs": true,
+        "checkpoint_id": "cache_invalidate_pillow_test_commcarehq__users",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UserCacheInvalidatePillow"
     },
     "UserGroupsDbKafkaPillow": {
