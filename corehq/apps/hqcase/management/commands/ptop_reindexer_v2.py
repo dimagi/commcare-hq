@@ -61,7 +61,6 @@ class Command(BaseCommand):
 
         # for ES reindexers
         make_option('--in-place',
-                    type="int",
                     action='store_true',
                     dest='in-place',
                     default=False,
