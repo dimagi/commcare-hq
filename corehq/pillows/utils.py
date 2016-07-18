@@ -1,10 +1,13 @@
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
+from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.quickcache import quickcache
@@ -77,6 +80,9 @@ def get_user_type(user_id):
 def get_all_expected_es_indices():
     for index_info in get_all_inferred_es_indices_from_pillows():
         yield index_info
+    yield REPORT_CASE_INDEX_INFO
+    yield REPORT_XFORM_INDEX_INFO
+    yield APP_INDEX_INFO
     yield DOMAIN_INDEX_INFO
     yield USER_INDEX_INFO
     yield GROUP_INDEX_INFO

@@ -106,6 +106,7 @@ if os.path.exists(_formdesigner_path):
     STATICFILES_DIRS += (('formdesigner', _formdesigner_path),)
 del _formdesigner_path
 
+LOG_HOME = FILEPATH
 COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
@@ -347,6 +348,7 @@ HQ_APPS = (
     'corehq.doctypemigrations',
     'corehq.blobs',
     'corehq.apps.case_search',
+    'corehq.apps.zapier.apps.ZapierConfig',
 
     # custom reports
     'a5288',
@@ -365,7 +367,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
-    'custom.openlmis',
     'custom.logistics',
     'custom.ilsgateway',
     'custom.zipline',
@@ -383,7 +384,6 @@ HQ_APPS = (
     'custom.care_pathways',
     'custom.common',
 
-    'custom.dhis2',
     'custom.icds_reports',
 )
 
@@ -602,7 +602,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
-FORMPLAYER_URL = 'http://localhost:8090'
+FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### Couchlog config #######
 
@@ -1230,7 +1230,6 @@ COUCHDB_APPS = [
     'crs_reports',
     'grapevine',
     'uth',
-    'dhis2',
     'openclinica',
 
     # custom reports
@@ -1413,7 +1412,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_user_pillow',
         },
-        'corehq.pillows.application.AppPillow',
+        {
+            'name': 'ApplicationToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.application.get_app_to_elasticsearch_pillow',
+        },
         {
             'name': 'GroupPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1442,12 +1445,15 @@ PILLOWTOPS = {
         {
             'name': 'AppFormSubmissionTrackerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_app_form_submission_tracker_pillow',
+            'instance': 'corehq.pillows.app_submission_tracker.get_app_form_submission_tracker_pillow',
         },
     ],
     'core_ext': [
-        'corehq.pillows.reportcase.ReportCasePillow',
-        'corehq.pillows.reportxform.ReportXFormPillow',
+        {
+            'name': 'AppDbChangeFeedPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
+        },
         {
             'name': 'DefaultChangeFeedPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1469,14 +1475,24 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
         },
         {
-            'name': 'SqlXFormToElasticsearchPillow',
+            'name': 'ReportCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_sql_xform_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
         },
         {
-            'name': 'SqlCaseToElasticsearchPillow',
+            'name': 'ReportXFormToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_sql_case_to_elasticsearch_pillow',
+            'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'XFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'CaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
         },
         {
             'name': 'UnknownUsersPillow',
@@ -1487,12 +1503,12 @@ PILLOWTOPS = {
     'cache': [
         {
             'name': 'CacheInvalidatePillow',
-            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_main_cache_invalidation_pillow',
         },
         {
             'name': 'UserCacheInvalidatePillow',
-            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
         },
     ],
@@ -1583,6 +1599,29 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_7_growth_monitoring_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_8_tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_9_vhnd_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'list_pnc_delivery_complications.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_above_6mo_nutrition.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_awc_days_open.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_awc_locations.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_awc_mgmt_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_beneficiary_feedback.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_born_last_30_days.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_child_nutrition_status.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_children_weighed.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_comp_feeding.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ebf.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_handwashing.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ifa_consumption.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_immun_complete.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_child_names.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_child_nutrition_status.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_lbw_pre_term.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_pregnant_women_names.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_30_days.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
+
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json')
 ]
 
 
@@ -1618,6 +1657,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
+
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [

@@ -5,10 +5,9 @@ from corehq.apps.api.es import report_term_filter
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_MAPPING
 
-from corehq.pillows.reportxform import ReportXFormPillow
+from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 
-
-CONCEPT_XFORM =  {
+CONCEPT_XFORM = {
    "_id": "concept_xform",
    "domain": "test-domain",
    "form": {
@@ -124,10 +123,9 @@ CONCEPT_XFORM =  {
 class TestReportXFormProcessing(SimpleTestCase):
 
     def testConvertAndRestoreReportXFormDicts(self):
-        pillow = ReportXFormPillow(online=False)
         orig = CONCEPT_XFORM
         orig['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
-        for_indexing = pillow.change_transform(orig)
+        for_indexing = transform_xform_for_report_forms_index(orig)
 
         restored = restore_property_dict(for_indexing)
 
@@ -165,7 +163,6 @@ class TestReportXFormProcessing(SimpleTestCase):
 
         this current form only captures
         """
-        pillow = ReportXFormPillow(online=False)
         orig = {
             '_id': 'nested_case_blocks',
             'form': {
@@ -247,7 +244,7 @@ class TestReportXFormProcessing(SimpleTestCase):
             }
         }
         orig['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
-        for_indexing = pillow.change_transform(orig)
+        for_indexing = transform_xform_for_report_forms_index(orig)
 
         self.assertEqual(orig['form']['case'], for_indexing['form']['case'])
         self.assertEqual(orig['form']['subcase_0']['case'], for_indexing['form']['subcase_0']['case'])
@@ -272,10 +269,9 @@ class TestReportXFormProcessing(SimpleTestCase):
 
         dict_props = ['index', 'attachment', 'create', 'update']
 
-        pillow = ReportXFormPillow(online=False)
         all_blank = copy.deepcopy(orig)
         all_blank['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
-        for_indexing = pillow.change_transform(all_blank)
+        for_indexing = transform_xform_for_report_forms_index(all_blank)
 
         for prop in dict_props:
             self.assertIsNone(for_indexing['form']['case'][prop])
@@ -285,7 +281,7 @@ class TestReportXFormProcessing(SimpleTestCase):
         for prop in dict_props:
             all_dicts['form']['case'][prop] = {}
 
-        for_index2 = pillow.change_transform(all_dicts)
+        for_index2 = transform_xform_for_report_forms_index(all_dicts)
         for prop in dict_props:
             self.assertIsNotNone(for_index2['form']['case'][prop])
 
@@ -339,9 +335,8 @@ class TestReportXFormProcessing(SimpleTestCase):
                 }
             }
         }
-        pillow = ReportXFormPillow(online=False)
         orig['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
-        for_indexing = pillow.change_transform(orig)
+        for_indexing = transform_xform_for_report_forms_index(orig)
         restored = restore_property_dict(for_indexing)
 
         self.assertNotEqual(orig['computed_'], for_indexing['computed_'])
@@ -379,10 +374,9 @@ class TestReportXFormProcessing(SimpleTestCase):
         self.assertEqual(known_terms_query, known_terms)
 
     def testConceptReportConversion(self):
-        pillow = ReportXFormPillow(online=False)
         orig = CONCEPT_XFORM
         orig['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
-        for_indexing = pillow.change_transform(orig)
+        for_indexing = transform_xform_for_report_forms_index(orig)
 
         self.assertTrue(isinstance(for_indexing['form']['last_visit'], dict))
         self.assertTrue('#value' in for_indexing['form']['last_visit'])

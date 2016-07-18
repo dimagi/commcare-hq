@@ -9,7 +9,6 @@ from corehq.apps.appstore.views import (
 
 urlpatterns = patterns('corehq.apps.appstore.views',
     url(r'^$', CommCareExchangeHomeView.as_view(), name=CommCareExchangeHomeView.urlname),
-    url(r'^api/', 'appstore_api', name='appstore_api'),
 
     url(r'^(?P<snapshot>[\w\.-]+)/info/$', ProjectInformationView.as_view(),
         name=ProjectInformationView.urlname),

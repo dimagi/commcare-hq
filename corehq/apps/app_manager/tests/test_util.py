@@ -157,6 +157,17 @@ class SchemaTest(SimpleTestCase):
         self.assertEqual([s["name"] for s in schema["subsets"]],
                          ["grandparent", "parent (greatgrandparent)"])
 
+    def test_get_casedb_schema_with_parent_case_property_update(self):
+        family = self.add_form("family", {"parent/has_well": "/data/village_has_well"})
+        village = self.add_form("village")
+        self.factory.form_opens_case(village, case_type='family', is_subcase=True)
+        schema = util.get_casedb_schema(family)
+        subsets = {s["id"]: s for s in schema["subsets"]}
+        self.assertDictEqual(subsets["case"]["related"], {"parent": "parent"})
+        self.assertEqual(subsets["case"]["structure"]["case_name"], {})
+        #self.assertEqual(subsets["parent"]["structure"]["has_well"], {}) TODO
+        self.assertNotIn("parent/has_well", subsets["case"]["structure"])
+
     def test_get_session_schema_for_module_with_no_case_type(self):
         form = self.add_form()
         schema = util.get_session_schema(form)
@@ -204,9 +215,13 @@ class SchemaTest(SimpleTestCase):
         for key, value in expected_dict.items():
             self.assertEqual(test_dict[key], value)
 
-    def add_form(self, case_type=None):
+    def add_form(self, case_type=None, case_updates=None):
         module_id = len(self.factory.app.modules)
         module, form = self.factory.new_basic_module(module_id, case_type)
         if case_type:
             self.factory.form_opens_case(form, case_type)
+        if case_updates:
+            assert case_type, 'case_type is required with case_updates'
+            self.factory.form_requires_case(
+                form, case_type=case_type, update=case_updates)
         return form

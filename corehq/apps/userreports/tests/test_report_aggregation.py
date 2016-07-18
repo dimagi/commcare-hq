@@ -1,3 +1,4 @@
+from django.http import HttpRequest
 from django.test import TestCase
 
 from corehq.apps.userreports.exceptions import UserReportsError
@@ -93,7 +94,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         return report_config
 
     def _create_view(self, report_config):
-        view = ConfigurableReport()
+        view = ConfigurableReport(request=HttpRequest())
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id

@@ -10,8 +10,7 @@ from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCaseSQL, CaseTransaction
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.form_processor.utils.xform import add_couch_properties_to_sql_form_json
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -26,7 +25,7 @@ from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.pillows.case import CasePillow, get_sql_case_to_elasticsearch_pillow
+from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.apps.reports.analytics.esaccessors import (
     get_submission_counts_by_user,
     get_completed_counts_by_user,
@@ -51,8 +50,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
-from pillowtop.es_utils import initialize_index_and_mapping, get_index_info_from_pillow
-from pillowtop.feed.interface import Change
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class BaseESAccessorsTest(SimpleTestCase):
@@ -94,8 +92,6 @@ class TestFormESAccessors(BaseESAccessorsTest):
             setattr(form_pair.wrapped_form, 'external_blobs', attachment_dict)
             form_pair.json_form['external_blobs'] = attachment_dict
 
-        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
-            add_couch_properties_to_sql_form_json(form_pair.json_form)
         es_form = transform_xform_for_elasticsearch(form_pair.json_form)
         send_to_elasticsearch('forms', es_form)
         self.es.indices.refresh(self.es_index_info.index)
@@ -863,17 +859,13 @@ class TestGroupESAccessors(SimpleTestCase):
 
 class TestCaseESAccessors(BaseESAccessorsTest):
 
-    es_index_info = get_index_info_from_pillow(CasePillow(online=False))
+    es_index_info = CASE_INDEX_INFO
 
     def setUp(self):
         super(TestCaseESAccessors, self).setUp()
         self.owner_id = 'batman'
         self.user_id = 'robin'
         self.case_type = 'heroes'
-        self.pillow = self._get_pillow()
-
-    def _get_pillow(self):
-        return CasePillow(online=False)
 
     def _send_case_to_es(self,
             domain=None,
@@ -900,8 +892,8 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             closed_by=user_id or self.user_id,
             actions=actions,
         )
-        self.pillow.change_transport(case.to_json())
-        self.pillow.get_es_new().indices.refresh(self.pillow.es_index)
+        send_to_elasticsearch('cases', case.to_json())
+        self.es.indices.refresh(CASE_INDEX_INFO.index)
         return case
 
     def test_get_active_case_counts(self):
@@ -1020,9 +1012,6 @@ class TestCaseESAccessors(BaseESAccessorsTest):
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestCaseESAccessorsSQL(TestCaseESAccessors):
 
-    def _get_pillow(self):
-        return get_sql_case_to_elasticsearch_pillow()
-
     def _send_case_to_es(self,
             domain=None,
             owner_id=None,
@@ -1050,12 +1039,7 @@ class TestCaseESAccessorsSQL(TestCaseESAccessors):
             server_date=opened_on,
         ))
 
-        change = Change(
-            id=case.case_id,
-            sequence_id='123',
-            document=case.to_json(),
-        )
-        self.pillow.process_change(change)
-        es = get_es_new()
-        es.indices.refresh(CASE_INDEX)
+        es_case = transform_case_for_elasticsearch(case.to_json())
+        send_to_elasticsearch('cases', es_case)
+        self.es.indices.refresh(CASE_INDEX)
         return case

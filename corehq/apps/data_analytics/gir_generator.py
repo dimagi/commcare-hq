@@ -43,7 +43,7 @@ class GIRTableGenerator(object):
     def classify_users(domain, monthspan):
         performing_users = []
         experienced_users = []
-        all_users, user_forms, sms = active_mobile_users(domain, monthspan.startdate, monthspan.enddate)
+        all_users, user_forms, sms = active_mobile_users(domain, monthspan.startdate, monthspan.computed_enddate)
         user_query = MALTRow.objects.filter(domain_name=domain).filter(month__lte=monthspan.startdate)\
             .values('user_id', 'month').distinct()
         user_months = defaultdict(int)
@@ -73,7 +73,7 @@ class GIRTableGenerator(object):
         months = (domain.internal.experienced_threshold or DEFAULT_EXPERIENCED_THRESHOLD) - 1
         threshold_month = add_months(monthspan.startdate.year, monthspan.startdate.month, -months)
         first_month = datetime.date(day=1, year=threshold_month[0], month=threshold_month[1])
-        all_users, users_dict, sms = active_mobile_users(domain, first_month, monthspan.enddate)
+        all_users, users_dict, sms = active_mobile_users(domain, first_month, monthspan.computed_enddate)
         return set(users_dict.keys()) | sms
 
     @staticmethod

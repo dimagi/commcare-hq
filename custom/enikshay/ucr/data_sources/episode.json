@@ -1,0 +1,1102 @@
+{
+    "domains": [
+        "enikshay-test"
+    ],
+    "config": {
+        "referenced_doc_type": "CommCareCase",
+        "engine_id": "ucr",
+        "description": "",
+        "base_item_expression": {
+        },
+        "table_id": "episode",
+        "display_name": "episode",
+        "configured_filter": {
+            "operator": "eq",
+            "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "type": "boolean_expression",
+            "property_value": "episode"
+        },
+        "configured_indicators": [
+            {
+                "display_name": "name",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "name",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "name"
+                }
+            },
+            {
+                "display_name": "opened_on",
+                "transform": {
+                },
+                "datatype": "datetime",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "opened_on",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "opened_on"
+                }
+            },
+            {
+                "display_name": "owner_id",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "owner_id",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                }
+            },
+            {
+                "display_name": "person/owner_id",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "owner_id"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "person_owner_id"
+            },
+            {
+                "display_name": "episode_type",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "episode_type",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "episode_type"
+                }
+            },
+            {
+                "display_name": "person_id",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "person_id",
+                "expression": {
+                    "datatype": null,
+                    "type": "named",
+                    "name": "person_id"
+                }
+            },
+            {
+                "display_name": "person_name",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "person_name",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "person_name"
+                }
+            },
+            {
+                "display_name": "modified_on",
+                "property_path": [],
+                "datatype": "datetime",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "modified_on",
+                "type": "raw",
+                "property_name": "modified_on"
+            },
+            {
+                "display_name": "person/dob",
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "dob"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "dob"
+            },
+            {
+                "display_name": "person/sex",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "sex"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "sex"
+            },
+            {
+                "display_name": "patient_type",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "patient_type"
+                },
+                "column_id": "patient_type"
+            },
+            {
+                "display_name": "basis_of_diagnosis",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "basis_of_diagnosis"
+                },
+                "column_id": "basis_of_diagnosis"
+            },
+            {
+                "display_name": "hiv_status",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "hiv_status"
+                },
+                "column_id": "hiv_status"
+            },
+            {
+                "display_name": "disease_classification",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "disease_classification"
+                },
+                "column_id": "disease_classification"
+            },
+            {
+                "display_name": "age_in_days",
+                "datatype": "integer",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "integer",
+                    "type": "named",
+                    "name": "age_in_days"
+                },
+                "column_id": "age_in_days"
+            },
+            {
+                "filter": {
+                    "type": "named",
+                    "name": "under_15"
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "under_15"
+            },
+            {
+                "filter": {
+                    "type": "named",
+                    "name": "new_patient"
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "new_patient"
+            },
+            {
+                "filter": {
+                    "type": "named",
+                    "name": "female"
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "female"
+            },
+            {
+                "filter": {
+                    "type": "named",
+                    "name": "male"
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "male"
+            },
+            {
+                "filter": {
+                    "type": "named",
+                    "name": "transgender"
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "transgender"
+            },
+            {
+                "filter": {
+                    "type": "named",
+                    "name": "pulmonary"
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "pulmonary"
+            },
+            {
+                "filter": {
+                    "type": "named",
+                    "name": "hiv_positive"
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "hiv_positive"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "male"
+                        },
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        }
+                    ]
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "hiv_positve_male"
+            },
+            {
+                "filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "purpose_of_testing"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                            "array_expression": {
+                                "type": "get_subcases",
+                                "case_id_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            },
+                            "type": "array_index",
+                            "index_expression": 0
+                        }
+                    },
+                    "property_value": "diagnostic_or_pretreatment"
+                },
+                "type": "boolean",
+                "display_name": "test_purpose_diagnostic",
+                "column_id": "test_purpose_diagnostic"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "under_15"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB_under_15",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB_under_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "under_15"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB_over_15",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB_over_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB_female",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB_female"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB_male",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB_male"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_pulmonary_TB_transgender",
+                "type": "boolean",
+                "column_id": "new_smear_positive_pulmonary_TB_transgender"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB_male",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB_male"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB_female",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB_female"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB_transgender",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB_transgender"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "under_15"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB_under_15",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB_under_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "sputum_positive"
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "pulmonary"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "under_15"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "new_smear_negative_pulmonary_TB_over_15",
+                "type": "boolean",
+                "column_id": "new_smear_negative_pulmonary_TB_over_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_extra_pulmonary_TB",
+                "type": "boolean",
+                "column_id": "new_smear_positive_extra_pulmonary_TB"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "under_15"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_extra_pulmonary_TB_under_15",
+                "type": "boolean",
+                "column_id": "new_smear_positive_extra_pulmonary_TB_under_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "named",
+                                "name": "under_15"
+                            }
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_extra_pulmonary_TB_over_15",
+                "type": "boolean",
+                "column_id": "new_smear_positive_extra_pulmonary_TB_over_15"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_extra_pulmonary_TB_female",
+                "type": "boolean",
+                "column_id": "new_smear_positive_extra_pulmonary_TB_female"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_extra_pulmonary_TB_male",
+                "type": "boolean",
+                "column_id": "new_smear_positive_extra_pulmonary_TB_male"
+            },
+            {
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "sputum_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "extra_pulmonary"
+                        },
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        }
+                    ]
+                },
+                "display_name": "new_smear_positive_extra_pulmonary_TB_transgender",
+                "type": "boolean",
+                "column_id": "new_smear_positive_extra_pulmonary_TB_transgender"
+            }
+        ],
+        "named_filters": {
+            "under_15": {
+                "operator": "lt",
+                "type": "boolean_expression",
+                "expression": {
+                    "datatype": "integer",
+                    "type": "named",
+                    "name": "age_in_days"
+                },
+                "property_value": 5475
+            },
+            "new_patient": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "patient_type"
+                },
+                "type": "boolean_expression",
+                "property_value": "new"
+            },
+            "female": {
+                "operator": "eq",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "sex"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
+                        }
+                    }
+                },
+                "type": "boolean_expression",
+                "property_value": "f"
+            },
+            "pulmonary": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "disease_classification"
+                },
+                "type": "boolean_expression",
+                "property_value": "pulmonary"
+            },
+            "extra_pulmonary": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "disease_classification"
+                },
+                "type": "boolean_expression",
+                "property_value": "extra_pulmonary"
+            },
+            "transgender": {
+                "operator": "eq",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "sex"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
+                        }
+                    }
+                },
+                "type": "boolean_expression",
+                "property_value": "t"
+            },
+            "male": {
+                "operator": "eq",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "sex"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
+                        }
+                    }
+                },
+                "type": "boolean_expression",
+                "property_value": "m"
+            },
+            "hiv_positive": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "hiv_status"
+                },
+                "type": "boolean_expression",
+                "property_value": "reactive"
+            },
+            "sputum_positive": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "lab_result"
+                },
+                "type": "boolean_expression",
+                "property_value": "TB detected"
+            }
+        },
+        "named_expressions": {
+            "person_id": {
+                "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                },
+                "type": "nested",
+                "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "indices"
+                    },
+                    "index_expression": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
+            },
+            "first_subcase": {
+                "type": "array_index",
+                "array_expression": {
+                    "type": "get_subcases",
+                    "case_id_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "_id"
+                    }
+                },
+                "index_expression": 0
+            },
+            "age_in_days": {
+                "type": "diff_days",
+                "from_date_expression": {
+                    "value_expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "dob"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
+                        }
+                    }
+                },
+                "to_date_expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "opened_on"
+                }
+            }
+        }
+    }
+}

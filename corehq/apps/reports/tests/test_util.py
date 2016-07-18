@@ -2,6 +2,7 @@ from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 from mock import Mock
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.util import create_export_filter
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
@@ -15,7 +16,13 @@ DOMAIN = 'test_domain'
 
 class ReportUtilTests(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(ReportUtilTests, cls).setUpClass()
+        create_domain(DOMAIN)
+
     def setUp(self):
+        super(ReportUtilTests, self).setUp()
         self.user = CommCareUser.create(DOMAIN, 'user1', '***')
         self.request = Mock()
         self.request.method = 'POST'
@@ -30,6 +37,7 @@ class ReportUtilTests(TestCase):
     def tearDown(self):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         self.user.delete()
+        super(ReportUtilTests, self).tearDown()
 
     def test_create_export_form_filter(self):
         filter_ = create_export_filter(self.request, DOMAIN, export_type='form')

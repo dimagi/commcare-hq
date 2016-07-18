@@ -63,6 +63,7 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
@@ -73,6 +74,11 @@ MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
+
+_soft_assert_domain_not_loaded = soft_assert(
+    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 class BillingAccountType(object):
@@ -947,6 +953,9 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
+        _soft_assert_domain_not_loaded(isinstance(self.domain, basestring), "domain is object")
+
+
         if new_plan_version is None:
             new_plan_version = DefaultProductPlan.get_default_plan()
 
@@ -1393,9 +1402,6 @@ class Subscription(models.Model):
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
         renewed_subscription.save()
-
-        # transfer existing credit lines to the renewed subscription
-        self.transfer_credits(renewed_subscription)
 
         # record renewal from old subscription
         SubscriptionAdjustment.record_adjustment(

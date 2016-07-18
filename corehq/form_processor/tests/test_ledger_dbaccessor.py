@@ -3,16 +3,12 @@ import uuid
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from corehq.form_processor.exceptions import LedgerSaveError
-
+from casexml.apps.case.mock import CaseFactory
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
-from casexml.apps.case.mock import CaseFactory
-
-from corehq.form_processor.tests import FormProcessorTestUtils
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-
-DOMAIN = 'ledger-db-tests'
+from corehq.form_processor.exceptions import LedgerSaveError
+from corehq.form_processor.tests import FormProcessorTestUtils
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -21,11 +17,12 @@ class LedgerDBAccessorTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(LedgerDBAccessorTest, cls).setUpClass()
-        FormProcessorTestUtils.delete_all_cases(DOMAIN)
-        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
-        cls.product_a = make_product(DOMAIN, 'A Product', 'prodcode_a')
-        cls.product_b = make_product(DOMAIN, 'B Product', 'prodcode_b')
-        cls.product_c = make_product(DOMAIN, 'C Product', 'prodcode_c')
+        cls.domain = uuid.uuid4().hex
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        cls.product_a = make_product(cls.domain, 'A Product', 'prodcode_a')
+        cls.product_b = make_product(cls.domain, 'B Product', 'prodcode_b')
+        cls.product_c = make_product(cls.domain, 'C Product', 'prodcode_c')
 
     @classmethod
     def tearDownClass(cls):
@@ -33,22 +30,22 @@ class LedgerDBAccessorTest(TestCase):
         cls.product_b.delete()
         cls.product_c.delete()
 
-        FormProcessorTestUtils.delete_all_cases(DOMAIN)
-        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         super(LedgerDBAccessorTest, cls).tearDownClass()
 
     def setUp(self):
         super(LedgerDBAccessorTest, self).setUp()
-        self.factory = CaseFactory(domain=DOMAIN)
+        self.factory = CaseFactory(domain=self.domain)
         self.case_one = self.factory.create_case()
         self.case_two = self.factory.create_case()
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_ledgers(DOMAIN)
+        FormProcessorTestUtils.delete_all_ledgers(self.domain)
         super(LedgerDBAccessorTest, self).tearDown()
 
     def _submit_ledgers(self, ledger_blocks):
-        return submit_case_blocks(ledger_blocks, DOMAIN).form_id
+        return submit_case_blocks(ledger_blocks, self.domain).form_id
 
     def _set_balance(self, balance, case_id, product_id):
         from corehq.apps.commtrack.tests import get_single_balance_block
@@ -169,9 +166,8 @@ class LedgerAccessorErrorTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        FormProcessorTestUtils.delete_all_cases(cls.domain)
-        FormProcessorTestUtils.delete_all_xforms(cls.domain)
-        FormProcessorTestUtils.delete_all_ledgers(cls.domain)
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         cls.product.delete()
         super(LedgerAccessorErrorTests, cls).tearDownClass()
 

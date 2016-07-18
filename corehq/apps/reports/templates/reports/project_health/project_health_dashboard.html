@@ -3,8 +3,13 @@
 {% load i18n %}
 {% block head %}
     <style>
-        #chart svg {
+        #perform_chart svg {
             height: 300px;
+            float: left;
+        }
+        #active_linechart svg {
+            height: 300px;
+            float: right;
         }
         .popover {
             max-width: 100%;
@@ -26,19 +31,19 @@
     function setupCharts() {
         var data = {{ six_months_reports|JSON }};
         var performingSeries = {
-            'key': 'performing',
+            'key': 'high performing',
             values: _.map(data, function(item) {
                 return {
-                    'x': item.month,
+                    'x': moment(item.month).format("MMMM YYYY"),
                     'y': item.performing
                 };
             })
         };
         var activeNonPerformingSeries = {
-            'key': 'active',
+            'key': 'low performing',
             values: _.map(data, function(item) {
                 return {
-                    'x': item.month,
+                    'x': moment(item.month).format("MMMM YYYY"),
                     'y': item.active - item.performing
                 };
             })
@@ -49,11 +54,64 @@
               .stacked(true)
             ;
             chart.yAxis.tickFormat(d3.format(',.0f'));
-            d3.select('#chart svg')
+            chart.color(["#004ebc", "#e53e30"]);
+            d3.select('#perform_chart svg')
                 .datum([performingSeries, activeNonPerformingSeries])
                 .call(chart);
             nv.utils.windowResize(chart.update);
             return chart;
+        });
+    }
+
+    function setupLineChart(){
+        var data = {{ six_months_reports|JSON }};
+
+        var proportionActiveSeries = [{
+            key: 'active users (%)',
+            values: _.map(data, function(item) {
+                return {
+                    x: moment(item.month),
+                    y: item.percent_active,
+                    z: item.inactive,
+                    u: item.total_users_by_month,
+                    a: item.active,
+                };
+            })
+        }];
+        nv.addGraph(function() {
+            var chart = nv.models.lineChart()
+                                 .margin({right: 50})
+                                 .showYAxis(true)
+                                 .showXAxis(true);
+
+            chart.yAxis.tickFormat(d3.format(".0%"));
+            chart.xScale(d3.time.scale());
+            chart.xAxis.showMaxMin(false)
+                        .ticks(6)
+                        .tickFormat(function(d){
+                            return moment(d).format("MMMM YYYY");
+                        });
+            chart.tooltipContent(function(key, x, y, e, graph){
+                var d = e.series.values[e.pointIndex];
+                return '<h3>' + key + '</h3>' +
+                       '<p>' +  y + ' in ' + x + '</p>' +
+                       '<p>' + 'number of active users: ' + d.a +
+                       '</p>' +
+                       '<p>' + 'number of inactive users: ' + d.z +
+                       '</p>' +
+                       '<p>' + 'number of total users: ' + d.u +
+                       '</p>'
+            })
+            d3.select('#active_linechart svg')
+                .datum(proportionActiveSeries)
+                .call(chart);
+
+            nv.utils.windowResize(function() {
+                chart.update()
+            });
+
+            return chart;
+
         });
     }
 
@@ -85,9 +143,11 @@
     $(function() {
         setupCharts();
         setupPopovers();
+        setupLineChart();
     });
 </script>
 {% endblock %}
+
 {% block main_column_content %}
     <h1>{% trans "Project Performance Dashboard" %}</h1>
     <p class="lead">
@@ -111,7 +171,7 @@
         </tr>
     </thead>
     <tr>
-        <td>{% trans "Performing users" %}
+        <td>{% trans "High Performing Users" %}
             <p class="text-muted"><small>{% blocktrans %}Users who submitted {{ threshold }} or more forms last month.{% endblocktrans %}</small></p>
         </td>
         <td>{{ last_month.number_of_performing_users }}</td>
@@ -122,23 +182,43 @@
     </tr>
     <tr>
         <td>
-            {% trans "All active users" %}
-            <p class="text-muted"><small>{% blocktrans %}Users who submitted any forms last month.{% endblocktrans %}</small></p>
+            {% trans "Low Performing Users" %}
+            <p class="text-muted"><small>{% blocktrans %}Active users who submitted less than {{ threhold }} forms last month.{% endblocktrans %}</small></p>
         </td>
-        <td>{{ last_month.active }}</td>
+        <td>{{ last_month.number_of_low_performing_users }}</td>
         <td>
-            {% chevron last_month.delta_active_pct %}
-            {{ last_month.delta_active_pct|floatformat }} %
+            {% reverse_chevron last_month.delta_low_performing_pct %}
+            {{ last_month.delta_low_performing_pct|floatformat }} %
+        </td>
+    </tr>
+    <tr>
+        <td>
+            {% trans "Inactive Users" %}
+            <p class="text-muted"><small>{% blocktrans %}Users who submitted no forms last month.{% endblocktrans %}</small></p>
+        </td>
+        <td>{{ last_month.number_of_inactive_users }}</td>
+        <td>
+            {% reverse_chevron last_month.delta_inactive_pct %}
+            {{ last_month.delta_inactive_pct|floatformat }} %
         </td>
     </tr>
 </table>
-<h2>{% trans "Performing / Active User Trends" %}</h2>
-    <p class="lead">
-        {% trans "How the counts of performing and active users have changed in the last six months." %}
-    </p>
-<div id="chart"><svg></svg></div>
+<div class="col-md-6">
+    <h2>{% trans "Active Users Trend" %}</h2>
+        <p class="lead">
+            {% trans "Proportion of users that are active (submitting at least one form) over time." %}
+        </p>
+    <div id="active_linechart"><svg></svg></div>
+</div>
+<div class="col-md-6">
+    <h2>{% trans "High / Low Performing User Trends" %}</h2>
+        <p class="lead">
+            {% trans "How the counts of high / low performing users have changed in the last six months." %}
+        </p>
+    <div id="perform_chart"><svg></svg></div>
+</div>
 <div class="col-md-4">
-    <h2>{% trans "Active, Non-Performing Users" %}</h2>
+    <h2>{% trans "Low Performing Users" %}</h2>
     <p class="lead">
         {% blocktrans %}
             These are people who used CommCare last month but didn't submit {{ threshold }} forms.
@@ -150,7 +230,7 @@
     {% endwith %}
 </div>
 <div class="col-md-4">
-    <h2>{% trans "Newly Inactive Users" %}</h2>
+    <h2>{% trans "New Inactive Users" %}</h2>
     <p class="lead">
         {% trans "These are people who stopped using CommCare last month. They could use a follow up!" %}
     </p>
@@ -159,7 +239,7 @@
     {% endwith %}
 </div>
 <div class="col-md-4">
-    <h2>{% trans "Newly Performing Users" %}</h2>
+    <h2>{% trans "New High Performing Users" %}</h2>
     <p class="lead">
         {% blocktrans %}
             These are people who submitted at least {{ threshold }} forms this month and didn't last month.

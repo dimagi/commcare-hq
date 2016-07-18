@@ -7,5 +7,8 @@
     };
     
     var invoiceModel = new InvoiceModel();
-    $('fieldset').koApplyBindings(invoiceModel);
+    // fieldset is not unique enough a css identifier
+    // historically this has taken the first one without checking
+    // todo: use a more specific identifier to make less brittle
+    $('fieldset').first().koApplyBindings(invoiceModel);
 }());

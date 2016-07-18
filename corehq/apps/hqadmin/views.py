@@ -234,7 +234,7 @@ def system_ajax(request):
         supervisor_status = all_pillows_supervisor_status([meta['name'] for meta in pillow_meta])
         for meta in pillow_meta:
             meta.update(supervisor_status[meta['name']])
-        return json_response(sorted(pillow_meta, key=lambda m: m['name']))
+        return json_response(sorted(pillow_meta, key=lambda m: m['name'].lower()))
     elif type == 'stale_pillows':
         es_index_status = [
             escheck.check_case_es_index(interval=3),
@@ -349,7 +349,7 @@ def pillow_operation_api(request):
     @any_toggle_enabled(SUPPORT)
     def reset_pillow(request):
         pillow.reset_checkpoint()
-        if supervisor.restart_pillow(pillow_name):
+        if PillowtopSupervisorApi().restart_pillow(pillow_name):
             return get_response()
         else:
             return get_response("Checkpoint reset but failed to restart pillow. "
@@ -357,24 +357,19 @@ def pillow_operation_api(request):
 
     @any_toggle_enabled(SUPPORT)
     def start_pillow(request):
-        if supervisor.start_pillow(pillow_name):
+        if PillowtopSupervisorApi().start_pillow(pillow_name):
             return get_response()
         else:
             return get_response('Unknown error')
 
     @any_toggle_enabled(SUPPORT)
     def stop_pillow(request):
-        if supervisor.stop_pillow(pillow_name):
+        if PillowtopSupervisorApi().stop_pillow(pillow_name):
             return get_response()
         else:
             return get_response('Unknown error')
 
     if pillow:
-        try:
-            supervisor = PillowtopSupervisorApi()
-        except Exception as e:
-            return get_response(str(e))
-
         try:
             if operation == 'reset_checkpoint':
                 reset_pillow(request)
@@ -385,7 +380,7 @@ def pillow_operation_api(request):
             if operation == 'refresh':
                 return get_response()
         except SupervisorException as e:
-                return get_response(str(e))
+            return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))
 

@@ -643,7 +643,7 @@ class UserInvitationView(object):
                 form = NewWebUserRegistrationForm(request.POST)
                 if form.is_valid():
                     # create the new user
-                    user = activate_new_user(form)
+                    user = activate_new_user(form, domain=invitation.domain)
                     user.save()
                     messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     self._invite(invitation, user)
@@ -661,10 +661,9 @@ class UserInvitationView(object):
                 if CouchUser.get_by_username(invitation.email):
                     return HttpResponseRedirect(reverse("login") + '?next=' +
                         reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
-                domain = Domain.get_by_name(invitation.domain)
                 form = NewWebUserRegistrationForm(initial={
                     'email': invitation.email,
-                    'hr_name': domain.display_name() if domain else invitation.domain,
+                    'hr_name': invitation.domain,
                     'create_domain': False,
                 })
 

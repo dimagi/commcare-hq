@@ -4,8 +4,9 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.api.es import report_term_filter
 from corehq.pillows.base import VALUE_TAG
 from corehq.pillows.case import CasePillow
-from corehq.pillows.reportcase import ReportCasePillow
-from corehq.pillows.reportxform import ReportXFormPillow
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
+from corehq.pillows.reportcase import transform_case_to_report_es
+from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import XFormPillow
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_MAPPING
 from corehq.util.test_utils import softer_assert
@@ -495,12 +496,11 @@ class testReportCaseProcessing(TestCase):
     @softer_assert
     def testReportXFormTransform(self):
         form = XFORM_SINGLE_CASE
-        report_pillow = ReportXFormPillow(online=False)
         form['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]
-        processed_form = report_pillow.change_transform(form)
-        mapping = report_pillow.default_mapping
+        processed_form = transform_xform_for_report_forms_index(form)
+        mapping = REPORT_XFORM_INDEX_INFO.mapping
 
-        #root level
+        # root level
         for k, v in processed_form['form'].items():
             if k in mapping['properties']['form']['properties']:
                 if isinstance(v, dict):
@@ -522,9 +522,7 @@ class testReportCaseProcessing(TestCase):
     def testReportCaseTransform(self):
         case = EXAMPLE_CASE
         case['domain'] = settings.ES_CASE_FULL_INDEX_DOMAINS[0]
-        report_pillow = ReportCasePillow(online=False)
-        processed_case = report_pillow.change_transform(case)
-        mapping = report_pillow.default_mapping
+        processed_case = transform_case_to_report_es(case)
 
         #known properties, not #value'd
         self.assertEqual(processed_case['user_id'], case['user_id'])

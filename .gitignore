@@ -36,6 +36,7 @@ dump.rdb
 .transifexrc
 python_env
 services
+KEEP_UNTIL__*
 
 submodules/formdesigner
 submodules/vellum/Vellum

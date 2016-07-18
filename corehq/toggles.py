@@ -306,6 +306,13 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ASYNC_RESTORE = StaticToggle(
+    'async_restore',
+    'Generate restore response in an asynchronous task to prevent timeouts',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 REPORT_BUILDER_BETA_GROUP = StaticToggle(
     'report_builder_beta_group',
     'RB beta group',
@@ -431,13 +438,6 @@ TRANSFER_DOMAIN = StaticToggle(
     'transfer_domain',
     'Transfer domains to different users',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-DHIS2_DOMAIN = StaticToggle(
-    'dhis2_domain',
-    'Enable DHIS2 integration for this domain',
-    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
@@ -597,13 +597,6 @@ OPENCLINICA = StaticToggle(
     'openclinica',
     'Offer OpenClinica settings and CDISC ODM export',
     TAG_ONE_OFF,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
-OPENLMIS = StaticToggle(
-    'openlmis',
-    'Offer OpenLMIS settings',
-    TAG_UNKNOWN,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -816,14 +809,6 @@ CASE_LIST_DISTANCE_SORT = StaticToggle(
 )
 
 
-NOTIFICATIONS = StaticToggle(
-    'hq_notifications',
-    'Shows notification icon when announcements need to be made',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
-)
-
-
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project performance dashboard in the reports navigation',
@@ -860,4 +845,12 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     'Notify when UCR rebuilds finish or error.',
     TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
+)
+
+
+ZAPIER_INTEGRATION = StaticToggle(
+    'zapier_integration',
+    'Allow to use domain in Zapier application',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )
