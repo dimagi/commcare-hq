@@ -18,11 +18,11 @@ class FluffPreindexPlugin(PreindexPlugin):
         self.dir = os.path.abspath(os.path.dirname(file))
 
     def _get_designs(self):
+        from fluff.pillow import FluffPillow
         designs = []
         for pillow in get_all_pillow_instances():
-            processor = getattr(pillow, '_processor', None)
-            if processor and hasattr(processor, 'indicator_class'):
-                app_label = processor.indicator_class._meta.app_label
+            if isinstance(pillow, FluffPillow):
+                app_label = pillow.indicator_class._meta.app_label
                 designs.append(DesignInfo(
                     app_label=self.app_label,
                     db=get_db(app_label),

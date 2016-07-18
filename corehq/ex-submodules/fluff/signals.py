@@ -6,7 +6,8 @@ import logging
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
 from django.conf import settings
-from pillowtop.utils import get_all_pillow_configs, get_all_pillow_instances
+
+from pillowtop.utils import get_all_pillow_instances
 from alembic.migration import MigrationContext
 from alembic.autogenerate import compare_metadata
 from fluff.util import metadata as fluff_metadata
@@ -51,14 +52,14 @@ class RebuildTableException(Exception):
 
 
 def catch_signal(sender, **kwargs):
+    from fluff.pillow import FluffPillow
     if settings.UNIT_TESTING or kwargs['using'] != DEFAULT_DB_ALIAS:
         return
 
     table_pillow_map = {}
     for pillow in get_all_pillow_instances():
-        processor = getattr(pillow, '_processor', None)
-        if processor and hasattr(processor, 'indicator_class'):
-            doc = processor.indicator_class()
+        if isinstance(pillow, FluffPillow):
+            doc = pillow.indicator_class()
             if doc.save_direct_to_sql:
                 table_pillow_map[doc._table.name] = {
                     'doc': doc,
