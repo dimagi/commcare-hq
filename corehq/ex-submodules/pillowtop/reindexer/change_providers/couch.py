@@ -36,11 +36,12 @@ class CouchViewChangeProvider(ChangeProvider):
 
 
 class CouchDomainDocTypeChangeProvider(ChangeProvider):
-    def __init__(self, couch_db, domains, doc_types, chunk_size=1000):
+    def __init__(self, couch_db, domains, doc_types, chunk_size=1000, event_handler=None):
         self.domains = domains
         self.doc_types = doc_types
         self.chunk_size = chunk_size
         self.couch_db = couch_db
+        self.event_handler = event_handler
 
     def iter_all_changes(self, start_from=None):
         if not self.domains:
@@ -56,7 +57,7 @@ class CouchDomainDocTypeChangeProvider(ChangeProvider):
 
         args_provider = MultiKeyViewArgsProvider(keys, include_docs=True, chunk_size=self.chunk_size)
 
-        for row in paginate_function(data_function, args_provider):
+        for row in paginate_function(data_function, args_provider, event_handler=self.event_handler):
             yield Change(
                 id=row['id'],
                 sequence_id=None,
