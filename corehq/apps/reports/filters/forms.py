@@ -13,7 +13,8 @@ from corehq.apps.reports.analytics.couchaccessors import (
 from corehq.apps.reports.analytics.esaccessors import (
     guess_form_name_from_submissions_using_xmlns,
 )
-from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter, BaseTagsFilter
+from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
+from corehq.const import MISSING_APP_ID
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 from dimagi.utils.decorators.memoized import memoized
 
@@ -21,7 +22,6 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
-MISSING_APP_ID = "_MISSING_APP_ID"
 
 PARAM_SLUG_STATUS = 'status'
 PARAM_SLUG_APP_ID = 'app_id'
@@ -355,7 +355,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
     @memoized
     def get_unknown_form_name(self, xmlns, app_id=None, none_if_not_found=False):
-        if app_id is not None and app_id != '_MISSING_APP_ID':
+        if app_id is not None and app_id != MISSING_APP_ID:
             try:
                 app = Application.get_db().get(app_id)
             except ResourceNotFound:
@@ -580,19 +580,3 @@ class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
         return [
             ('submission', _('Submission Time')),
         ]
-
-
-class FormDataFilter(BaseTagsFilter):
-    slug = 'form_data'
-    label = "Form Data"
-    advanced = True
-    help_text = "Filter by the value of a question in the form. Exact matches only."
-    placeholder = ugettext_noop("question id:value")
-
-
-class CustomFieldFilter(BaseTagsFilter):
-    slug = 'custom_field'
-    label = "Columns"
-    advanced = True
-    help_text = "Question ids entered here will appear as additonal columns in the report."
-    placeholder = ugettext_noop("question id")

@@ -90,7 +90,7 @@ class ExportConfiguration(object):
     @memoized
     def get_latest_schema(self):
         last_export = self.last_checkpoint()
-        schema = self.cleanup(dict(last_export.schema) if last_export else None)
+        schema = self.cleanup(dict(last_export.schema) if last_export and last_export.schema else None)
         doc_ids = last_export.get_new_ids(self.database) if last_export else self.all_doc_ids
         for doc in iter_docs(self.database, doc_ids):
             schema = extend_schema(schema, self.cleanup(doc))

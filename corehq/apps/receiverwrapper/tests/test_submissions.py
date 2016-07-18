@@ -19,6 +19,7 @@ class SubmissionTest(TestCase):
     maxDiff = None
 
     def setUp(self):
+        super(SubmissionTest, self).setUp()
         self.domain = create_domain("submit")
         self.couch_user = WebUser.create(None, "test", "foobar")
         self.couch_user.add_domain_membership(self.domain.name, is_admin=True)
@@ -34,6 +35,7 @@ class SubmissionTest(TestCase):
         FormProcessorTestUtils.delete_all_cases(self.domain.name)
         self.couch_user.delete()
         self.domain.delete()
+        super(SubmissionTest, self).tearDown()
 
     def _submit(self, formname, **extra):
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)
@@ -50,10 +52,7 @@ class SubmissionTest(TestCase):
         with open(file_path, "rb") as f:
             expected = json.load(f)
 
-        if '_id' in expected:
-            expected['_id'] = form_id
-        else:
-            expected['form_id'] = unicode(form_id)
+        expected['_id'] = form_id
         expected['xmlns'] = unicode(xmlns)
 
         return expected

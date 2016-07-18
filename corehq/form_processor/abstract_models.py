@@ -1,6 +1,6 @@
 import collections
 import logging
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 import six as six
 from couchdbkit import ResourceNotFound
@@ -121,6 +121,10 @@ class AbstractXFormInstance(object):
     def type(self):
         return self.form_data.get(const.TAG_TYPE, "")
 
+    @property
+    def name(self):
+        return self.form_data.get(const.TAG_NAME, "")
+
     @memoized
     def get_sync_token(self):
         from casexml.apps.phone.models import get_properly_wrapped_sync_log
@@ -180,10 +184,19 @@ class AbstractCommCareCase(object):
     def get_case_property(self, property):
         raise NotImplementedError
 
+    def get_closing_transactions(self):
+        raise NotImplementedError
+
+    def get_opening_transactions(self):
+        raise NotImplementedError
+
     def to_json(self):
         raise NotImplementedError()
 
     def to_api_json(self):
+        raise NotImplementedError()
+
+    def set_case_id(self, case_id):
         raise NotImplementedError()
 
     def _resolve_case_property(self, property_name, result):

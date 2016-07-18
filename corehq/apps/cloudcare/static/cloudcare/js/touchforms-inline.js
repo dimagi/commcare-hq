@@ -36,7 +36,7 @@
                         $.ajax({
                             type: 'POST',
                             url: options.submitUrl,
-                            data: xml,
+                            data: xml.output,
                             success: function () {
                                 $target.html(alertHtml('Form successfully submitted!', 'alert-success'));
                                 options.onsubmit();
@@ -55,6 +55,9 @@
                 });
                 data.onLoading = onLoading;
                 data.onLoadingComplete = onLoadingComplete;
+                data.uses_sql_backend = options.uses_sql_backend;
+                data.formplayerEnabled = options.formplayerEnabled;
+                data.domain = options.domain;
                 var sess = new WebFormSession(data);
                 sess.load($target, options.lang);
             }

@@ -1,0 +1,209 @@
+.navbar-hq-main-menu {
+  border: 1px solid #d5d5d5;
+  font-size: 13px;
+  #gradient > .vertical(#fdfdfd, #f4f4f4);
+  margin-bottom: 0px;
+
+  .navbar-brand {
+    padding: 11px;
+
+    // Standard HQ logo
+    // Custom domain logos use an actual image
+    > div {
+        background-image: url(/static/hqstyle/img/commcare-flower.png);
+        background-size: contain;
+        width: 38px;
+        height: 38px;
+
+        @media only screen and (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            background-image: url(/static/hqstyle/img/commcare-flower-lg.png);
+            width: 51px;
+        }
+    }
+  }
+
+  .nav > li:not(.active) > a:focus,
+  .nav > li:not(.active) > a:hover {
+    .transition(color .2s ease-in-out);
+    .transition(background .2s ease-in-out);
+    .box-shadow(inset 0 3px 8px @navbar-default-bg);
+    background-color: #edeff2;
+    color: #1557a2;
+    text-decoration: none;
+  }
+
+  .nav > li > a:hover,
+  .nav > li > a.hovered {
+    text-decoration: none;
+    background-color: @gray-lighter;
+  }
+
+  .nav > li.active {
+    .box-shadow(inset 0 3px 8px rgba(0, 0, 0, 0.125));
+  }
+}
+
+.navbar.navbar-hq-footer {
+  margin-bottom: 0px;
+  border-radius: 0px;
+  height: @navbar-footer-height;
+  min-height: @navbar-footer-height;
+  color: #ffffff;
+  text-align: center;
+  line-height: @navbar-footer-height - 1px;
+
+  a, a:link, a:visited {
+    color: @navbar-footer-link-color;
+    &.btn { color: #ffffff; }
+  }
+
+  a:hover {
+    color: @navbar-footer-link-color-hover;
+    &.btn { color: #ffffff; }
+  }
+  a.footer-link-img {
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}
+
+.nav-settings-bar {
+  > .navbar-nav {
+    padding-right: 10px;
+  }
+
+  > .navbar-btn {
+    margin-right: 10px;
+  }
+}
+
+@navbar-mobile-height: 40px;
+
+.navbar-mobile.navbar {
+  min-height: @navbar-mobile-height;
+  height: @navbar-mobile-height;
+
+  .navbar-brand {
+    padding: 3px 10px;
+    height: @navbar-mobile-height - 6;
+  }
+  .navbar-one {
+    float: right;
+  }
+  a, a:link, a:visited {
+    color: @cc-neutral-mid;
+  }
+}
+
+.mobile-nav {
+  padding: 3px 10px;
+}
+
+.navbar-hq-main-menu {
+  .btn-toolbar {
+    margin-top: 15px;
+    &.pull-right {
+      margin-right: 15px;
+    }
+
+    a.btn {
+      font-size: 13px;
+      padding: 4px 12px;
+      .caret {
+        margin-left: 5px;
+      }
+    }
+  }
+
+  .dropdown-header {
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-top: 5px;
+  }
+
+  .dropdown-menu > li > a:hover,
+  .dropdown-menu > li > a:focus {
+    background-color: @brand-primary;
+    color: #ffffff;
+  }
+}
+
+.navbar {
+  min-height:
+  @navbar-height;
+}
+.navbar-brand {
+  height: @navbar-height;
+}
+
+.navbar-vertical-align(@element-height) {
+  margin-top: ((@navbar-height - @element-height) / 2);
+  margin-bottom: ((@navbar-height - @element-height) / 2);
+}
+
+.navbar-toggle { .navbar-vertical-align(34px); }
+
+.navbar-btn {
+  .navbar-vertical-align(@input-height-base);
+
+  &.btn-sm {
+    .navbar-vertical-align(@input-height-small);
+  }
+  &.btn-xs {
+    .navbar-vertical-align(22);
+  }
+}
+
+.navbar-text {
+  .navbar-vertical-align(@line-height-computed);
+
+  @media (min-width: @grid-float-breakpoint) {
+    margin-left: @navbar-padding-horizontal;
+    margin-right: @navbar-padding-horizontal;
+  }
+}
+
+.navbar-nav {
+  // Uncollapse the nav
+  @media (min-width: @grid-float-breakpoint) {
+    > li > a {
+        padding-top:    @navbar-padding-vertical;
+        padding-bottom: @navbar-padding-vertical;
+    }
+  }
+}
+
+.navbar-form {
+  margin-left: -@navbar-padding-horizontal;
+  margin-right: -@navbar-padding-horizontal;
+  padding: 10px @navbar-padding-horizontal;
+}
+
+@media (min-width: @grid-float-breakpoint) {
+  .navbar-right {
+    margin-right: -@navbar-padding-horizontal;
+  }
+}
+
+.navbar-collapse {
+  padding-right: @navbar-padding-horizontal;
+  padding-left:  @navbar-padding-horizontal;
+}
+
+.container,
+.container-fluid {
+  > .navbar-collapse {
+    margin-right: -@navbar-padding-horizontal;
+    margin-left: -@navbar-padding-horizontal;
+  }
+}
+
+.navbar-toggle {
+  margin-right: @navbar-padding-horizontal;
+}
+
+.navbar-default {
+  background-color: #F4F4F4;
+}
+

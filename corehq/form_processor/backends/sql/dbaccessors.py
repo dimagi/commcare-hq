@@ -1,8 +1,13 @@
 import logging
+from abc import ABCMeta, abstractproperty
+from abc import abstractmethod
 from itertools import groupby
 from datetime import datetime
 
 import itertools
+
+import six
+from django.conf import settings
 from django.db import connections, InternalError, transaction
 
 from corehq.form_processor.exceptions import (
@@ -58,6 +63,73 @@ doc_type_to_state = {
 def get_cursor(model):
     db = db_for_read_write(model)
     return connections[db].cursor()
+
+
+class ReindexAccessor(six.with_metaclass(ABCMeta)):
+    # TODO: implement this https://wiki.postgresql.org/images/3/35/Pagination_Done_the_PostgreSQL_Way.pdf
+
+    @abstractproperty
+    def startkey_attribute_name(self):
+        """
+        :return: The name of the attribute to filter successive batches by e.g. 'received_on'
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_doc(self, doc_id):
+        """
+        :param doc_id: ID of the doc
+        :return: The doc with the given ID
+        """
+        raise NotImplementedError
+
+    def doc_to_json(self, doc):
+        """
+        :param doc:
+        :return: The JSON representation of the doc
+        """
+        return doc.to_json()
+
+    @abstractmethod
+    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+        """Get a batch of
+        :param from_db: The DB alias to query
+        :param startkey: The filter value to start from e.g. form.received_on
+        :param last_doc_pk: The primary key of the last doc from the previous batch
+        :param limit: Desired batch size
+        :return: List of documents
+        """
+        raise NotImplementedError
+
+
+class FormReindexAccessor(ReindexAccessor):
+
+    def __init__(self, include_attachments=True):
+        self.include_attachments = include_attachments
+
+    @property
+    def startkey_attribute_name(self):
+        return 'received_on'
+
+    def get_doc(self, doc_id):
+        try:
+            return FormAccessorSQL.get_form(doc_id)
+        except XFormNotFound:
+            pass
+
+    def doc_to_json(self, doc):
+        return doc.to_json(include_attachments=self.include_attachments)
+
+    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+        received_on_since = startkey or datetime.min
+        last_id = last_doc_pk or -1
+        results = XFormInstanceSQL.objects.raw(
+            'SELECT * FROM get_all_forms_received_since(%s, %s, %s)',
+            [received_on_since, last_id, limit],
+            using=from_db
+        )
+        # note: in memory sorting and limit not necessary since we're only queyring a single DB
+        return RawQuerySetWrapper(results)
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -163,16 +235,33 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def archive_form(form, user_id=None):
+        from corehq.form_processor.change_publishers import publish_form_saved
         FormAccessorSQL._archive_unarchive_form(form, user_id, True)
         form.state = XFormInstanceSQL.ARCHIVED
+        publish_form_saved(form)
 
     @staticmethod
     def unarchive_form(form, user_id=None):
+        from corehq.form_processor.change_publishers import publish_form_saved
         FormAccessorSQL._archive_unarchive_form(form, user_id, False)
         form.state = XFormInstanceSQL.NORMAL
+        publish_form_saved(form)
+
+    @staticmethod
+    def soft_undelete_forms(domain, form_ids):
+        assert isinstance(form_ids, list)
+        problem = 'Restored on {}'.format(datetime.utcnow())
+        with get_cursor(XFormInstanceSQL) as cursor:
+            cursor.execute(
+                'SELECT soft_undelete_forms(%s, %s, %s) as affected_count',
+                [domain, form_ids, problem]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.affected_count for result in results])
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
+        from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
         deletion_date = deletion_date or datetime.utcnow()
         with get_cursor(XFormInstanceSQL) as cursor:
@@ -181,7 +270,12 @@ class FormAccessorSQL(AbstractFormAccessor):
                 [domain, form_ids, deletion_date, deletion_id]
             )
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
+            affected_count = sum([result.affected_count for result in results])
+
+        for form_id in form_ids:
+            publish_form_deleted(domain, form_id)
+
+        return affected_count
 
     @staticmethod
     @transaction.atomic
@@ -299,29 +393,28 @@ class FormAccessorSQL(AbstractFormAccessor):
             results = fetchall_as_namedtuple(cursor)
             return [result.form_id for result in results]
 
-    @staticmethod
-    def get_all_forms_received_since(received_on_since=None, chunk_size=500):
-        return _batch_iterate(
-            batch_fn=FormAccessorSQL.get_forms_received_since,
-            next_start_from_fn=lambda form: form.received_on,
-            start_from=received_on_since,
-            chunk_size=chunk_size
-        )
 
-    @staticmethod
-    def get_forms_received_since(received_on_since=None, limit=500):
-        received_on_since = received_on_since or datetime.min
-        results = XFormInstanceSQL.objects.raw(
-            'SELECT * FROM get_all_forms_received_since(%s, %s)',
-            [received_on_since, limit]
-        )
-        # sort and add additional limit in memory in case the sharded setup returns more than
-        # the requested number of cases
-        return sorted(results, key=lambda form: form.received_on)[:limit]
+class CaseReindexAccessor(ReindexAccessor):
+    @property
+    def startkey_attribute_name(self):
+        return 'server_modified_on'
 
-    @staticmethod
-    def forms_have_multimedia(domain, app_id, xmlns):
-        raise NotImplementedError
+    def get_doc(self, doc_id):
+        try:
+            return CaseAccessorSQL.get_case(doc_id)
+        except CaseNotFound:
+            pass
+
+    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+        server_modified_on_since = startkey or datetime.min
+        last_id = last_doc_pk or -1
+        results = CommCareCaseSQL.objects.raw(
+            'SELECT * FROM get_all_cases_modified_since(%s, %s, %s)',
+            [server_modified_on_since, last_id, limit],
+            using=from_db
+        )
+        # note: in memory sorting and limit not necessary since we're only queyring a single DB
+        return RawQuerySetWrapper(results)
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -364,12 +457,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.form_id for result in results]
 
     @staticmethod
-    def get_indices(case_id):
-        return list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices(%s)', [case_id]))
+    def get_indices(domain, case_id):
+        return list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_case_indices(%s, %s)', [domain, case_id]
+        ))
 
     @staticmethod
-    def get_reverse_indices(case_id):
-        indices = list(CommCareCaseIndexSQL.objects.raw('SELECT * FROM get_case_indices_reverse(%s)', [case_id]))
+    def get_reverse_indices(domain, case_id):
+        indices = list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_case_indices_reverse(%s, %s)', [domain, case_id]
+        ))
 
         def _set_referenced_id(index):
             # see corehq/couchapps/case_indices/views/related/map.js
@@ -503,44 +600,13 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
-                [domain, owner_ids, closed]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
     @unit_testing_only
     def delete_all_cases(domain=None):
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute('SELECT delete_all_cases(%s)', [domain])
-
-    @staticmethod
-    def get_all_cases_modified_since(server_modified_on_since=None, chunk_size=500):
-        return _batch_iterate(
-            CaseAccessorSQL.get_cases_modified_since,
-            next_start_from_fn=lambda case: case.server_modified_on,
-            start_from=server_modified_on_since,
-            chunk_size=chunk_size
-        )
-
-    @staticmethod
-    def get_cases_modified_since(server_modified_on_since=None, limit=500):
-        """
-        Iterate through all cases in the entire database, optionally modified since
-        a specific date
-        """
-        if server_modified_on_since is None:
-            server_modified_on_since = datetime.min
-        results = CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_all_cases_modified_since(%s, %s)',
-            [server_modified_on_since, limit]
-        )
-        # sort and add additional limit in memory in case the sharded setup returns more than
-        # the requested number of cases
-        return sorted(results, key=lambda case: case.server_modified_on)[:limit]
 
     @staticmethod
     @transaction.atomic
@@ -594,20 +660,25 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
-                [domain, [owner_id], False]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=False)
 
     @staticmethod
     def get_closed_case_ids_for_owner(domain, owner_id):
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=[owner_id], is_closed=True)
+
+    @staticmethod
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
+        return CaseAccessorSQL._get_case_ids_in_domain(
+            domain, case_type=case_type, owner_ids=owner_ids, is_closed=False
+        )
+
+    @staticmethod
+    def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None):
+        owner_ids = list(owner_ids) if owner_ids else None
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT case_id FROM get_case_ids_in_domain_by_owners(%s, %s, %s)',
-                [domain, [owner_id], True]
+                'SELECT case_id FROM get_case_ids_in_domain(%s, %s, %s, %s)',
+                [domain, case_type, owner_ids, is_closed]
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
@@ -671,6 +742,28 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return {result.case_type for result in results}
 
     @staticmethod
+    def soft_undelete_cases(domain, case_ids):
+        assert isinstance(case_ids, list)
+
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT soft_undelete_cases(%s, %s) as affected_count',
+                [domain, case_ids]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return sum([result.affected_count for result in results])
+
+    @staticmethod
+    def get_deleted_case_ids_by_owner(domain, owner_id):
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_deleted_case_ids_by_owner(%s, %s)',
+                [domain, owner_id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
+    @staticmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
         from corehq.form_processor.change_publishers import publish_case_deleted
 
@@ -691,7 +784,38 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return affected_count
 
 
+class LedgerReindexAccessor(ReindexAccessor):
+    @property
+    def startkey_attribute_name(self):
+        return 'last_modified'
+
+    def get_doc(self, doc_id):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        ref = UniqueLedgerReference.from_id(doc_id)
+        try:
+            return LedgerAccessorSQL.get_ledger_value(**ref._asdict())
+        except CaseNotFound:
+            pass
+
+    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+        modified_since = startkey or datetime.min
+        last_id = last_doc_pk or -1
+        results = LedgerValue.objects.raw(
+            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s, %s)',
+            [modified_since, last_id, limit],
+            using=from_db
+        )
+        # note: in memory sorting and limit not necessary since we're only queyring a single DB
+        return RawQuerySetWrapper(results)
+
+    def doc_to_json(self, doc):
+        json_doc = doc.to_json()
+        json_doc['_id'] = doc.ledger_reference.as_id()
+        return json_doc
+
+
 class LedgerAccessorSQL(AbstractLedgerAccessor):
+
     @staticmethod
     def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
         assert isinstance(case_ids, list)
@@ -699,31 +823,6 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
             [case_ids, section_id, entry_id, date_start, date_end]
         ))
-
-    @staticmethod
-    def get_all_ledgers_modified_since(modified_since=None, chunk_size=500):
-        return _batch_iterate(
-            batch_fn=LedgerAccessorSQL.get_ledgers_modified_since,
-            next_start_from_fn=lambda ledger: ledger.last_modified,
-            start_from=modified_since,
-            chunk_size=chunk_size
-        )
-
-    @staticmethod
-    def get_ledgers_modified_since(modified_since=None, limit=500):
-        """
-        Iterate through all ledger_values in the entire database, optionally modified since
-        a specific date
-        """
-        if modified_since is None:
-            modified_since = datetime.min
-        results = LedgerValue.objects.raw(
-            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s)',
-            [modified_since, limit]
-        )
-        # sort and add additional limit in memory in case the sharded setup returns more than
-        # the requested number of ledgers
-        return sorted(results, key=lambda ledger: ledger.last_modified)[:limit]
 
     @staticmethod
     def get_ledger_values_for_case(case_id):
@@ -765,13 +864,6 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                     raise LedgerSaveError(e)
 
             ledger_value.clear_tracked_models()
-
-    @staticmethod
-    def get_ledger_values_for_product_ids(product_ids):
-        return RawQuerySetWrapper(LedgerValue.objects.raw(
-            'SELECT * FROM get_ledger_values_for_product_ids(%s)',
-            [product_ids]
-        ))
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
@@ -875,30 +967,6 @@ def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, c
     for obj_id, group in prefetched_groups:
         obj = objects_by_id[obj_id]
         setattr(obj, cached_attrib_name, list(group))
-
-
-def _batch_iterate(batch_fn, next_start_from_fn, start_from=None, chunk_size=500):
-    """
-    Iterate through a function in batches. Assumes the following signatures:
-
-    batch_fn(start_from, limit) - a function that returns sorted data in batches
-    next_start_from_fn(item) - a function that returns a "start_from" for a item for the next batch
-    """
-    start_from = start_from or datetime.min
-    # todo: this will greedily query the same data multiple times in a sharded setup. We should make it smarter
-    batch = batch_fn(start_from, limit=chunk_size)
-    while batch:
-        for item in batch:
-            yield item
-            next_start_from = next_start_from_fn(item)
-
-        if len(batch) == chunk_size:
-            # we got a full chunk so keep checking for more
-            assert next_start_from > start_from  # make sure we are making progress
-            start_from = next_start_from
-            batch = batch_fn(start_from, limit=chunk_size)
-        else:
-            batch = []  # equivalent to return
 
 
 class RawQuerySetWrapper(object):

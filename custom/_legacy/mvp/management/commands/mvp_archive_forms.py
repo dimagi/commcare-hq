@@ -1,5 +1,4 @@
 import csv
-import logging
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import LabelCommand
 from couchforms.models import XFormInstance

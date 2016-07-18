@@ -258,8 +258,8 @@ class ElasticSearchMapReport(GetParamsMixin, GenericTabularReport, GenericMapRep
     flush_layout = True
 
     @use_maps_async
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(ElasticSearchMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(ElasticSearchMapReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     def get_report(self):
         Report = to_function(self.data_source['report'])
@@ -484,8 +484,8 @@ class DemoMapReport(GenericMapReport):
     }
 
     @use_maps
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(DemoMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(DemoMapReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -576,8 +576,8 @@ class DemoMapReport2(GenericMapReport):
             or domain and toggles.DEMO_REPORTS.enabled(domain)
 
     @use_maps
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(DemoMapReport2, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(DemoMapReport2, self).decorator_dispatcher(request, *args, **kwargs)
 
 
 class GenericCaseListMap(GenericMapReport):
@@ -660,8 +660,8 @@ class DemoMapCaseList(GenericCaseListMap):
             or domain and toggles.DEMO_REPORTS.enabled(domain)
 
     @use_maps
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(DemoMapCaseList, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(DemoMapCaseList, self).decorator_dispatcher(request, *args, **kwargs)
 
 """
 metrics:

@@ -3,12 +3,27 @@ import os
 
 from datetime import datetime, timedelta
 
+import operator
+
+from django.template.loader import render_to_string
+
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.util.couch import get_document_or_not_found
 from dimagi.utils.dates import DateSpan
+
+
+OPERATORS = {
+    "==": operator.eq,
+    "!=": operator.ne,
+    ">": operator.gt,
+    ">=": operator.ge,
+    "<": operator.lt,
+    "<=": operator.le,
+    "in": operator.contains,
+}
 
 
 class MPRData(object):
@@ -23,11 +38,7 @@ class ICDSData(object):
 
     def __init__(self, domain, filters, report_id):
         report_config = ReportFactory.from_spec(
-            get_document_or_not_found(
-                ReportConfiguration,
-                domain,
-                report_id
-            )
+            StaticReportConfiguration.by_id(report_id.format(domain=domain))
         )
         report_config.set_filter_values(filters)
         self.report_config = report_config
@@ -100,8 +111,8 @@ class ICDSMixin(object):
                 for fil in config['filter']:
                     if 'type' in fil:
                         now = datetime.now()
-                        start_date = now if 'start' not in fil else now + timedelta(days=fil['start'])
-                        end_date = now if 'end' not in fil else now + timedelta(days=fil['end'])
+                        start_date = now if 'start' not in fil else now - timedelta(days=fil['start'])
+                        end_date = now if 'end' not in fil else now - timedelta(days=fil['end'])
                         datespan = DateSpan(start_date, end_date)
                         filters.update({fil['column']: datespan})
                     else:
@@ -118,21 +129,50 @@ class ICDSMixin(object):
                 column_name = column['column_name']
                 column_data = 0
                 if column_agg_func == 'sum':
-                    column_data = sum([x[column_name] for x in report_data])
+                    column_data = sum([x.get(column_name, 0) for x in report_data])
                 elif column_agg_func == 'count':
                     column_data = len(report_data)
                 elif column_agg_func == 'count_if':
-                    statement = '{0} {1} {2}'.format(
-                        column_name,
-                        column['condition']['operator'],
-                        column['condition']['value']
-                    )
-                    column_data = len([val for val in report_data if eval(statement)])
+                    value = column['condition']['value']
+                    op = column['condition']['operator']
+
+                    def check_condition(v):
+                        if isinstance(v, basestring):
+                            fil_v = str(value)
+                        elif isinstance(v, int):
+                            fil_v = int(value)
+                        else:
+                            fil_v = value
+
+                        if op == "in":
+                            return OPERATORS[op](fil_v, v)
+                        else:
+                            return OPERATORS[op](v, fil_v)
+
+                    column_data = len([val for val in report_data if check_condition(val[column_name])])
                 elif column_agg_func == 'avg':
-                    values = [x[column_name] for x in report_data]
+                    values = [x.get(column_name, 0) for x in report_data]
                     column_data = sum(values) / (len(values) or 1)
                 column_display = column_name if 'column_in_report' not in column else column['column_in_report']
                 data.update({
                     column_display: data.get(column_display, 0) + column_data
                 })
         return data
+
+
+class ICDSDataTableColumn(DataTablesColumn):
+
+    @property
+    def render_html(self):
+        column_params = dict(
+            title=self.html,
+            sort=self.sortable,
+            rotate=self.rotate,
+            css="span%d" % self.css_span if self.css_span > 0 else '',
+            rowspan=self.rowspan,
+            help_text=self.help_text,
+            expected=self.expected
+        )
+        return render_to_string("icds_reports/partials/column.html", dict(
+            col=column_params
+        ))

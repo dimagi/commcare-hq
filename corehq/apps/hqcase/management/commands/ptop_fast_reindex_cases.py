@@ -9,3 +9,7 @@ class Command(ElasticReindexer):
     doc_class = CommCareCase
     view_name = 'cases_by_owner/view'
     pillow_class = CasePillow
+
+    @staticmethod
+    def sort_key(row):
+        return row['doc'].get('server_modified_on', 'None')

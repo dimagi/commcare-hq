@@ -3,7 +3,6 @@ from tastypie import fields
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.api.resources import (
-    CouchResourceMixin,
     dict_object,
     DomainSpecificResourceMixin,
     HqBaseResource,

@@ -1,5 +1,4 @@
 import StringIO
-import logging
 import zipfile
 from django.core.cache import cache
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareVideo

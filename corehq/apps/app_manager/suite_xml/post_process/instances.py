@@ -1,6 +1,5 @@
 from collections import defaultdict
 import re
-from corehq.apps.app_manager.exceptions import UnknownInstanceError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
 from dimagi.utils.decorators.memoized import memoized

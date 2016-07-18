@@ -33,6 +33,7 @@ class CaseBugTest(TestCase, TestFileMixin):
     root = os.path.dirname(__file__)
 
     def setUp(self):
+        super(CaseBugTest, self).setUp()
         delete_all_cases()
 
     def test_conflicting_ids(self):
@@ -158,6 +159,7 @@ class CaseBugTest(TestCase, TestFileMixin):
 class TestCaseHierarchy(TestCase):
 
     def setUp(self):
+        super(TestCaseHierarchy, self).setUp()
         delete_all_cases()
 
     @run_with_all_backends

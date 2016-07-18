@@ -8,12 +8,21 @@ from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT
 def safe_pow_fn(a, b):
     raise InvalidExpression
 
+
+def safe_range(start, *args):
+    ret = range(start, *args)
+    if len(ret) < 100:
+        return ret
+    return None
+
+
 SAFE_OPERATORS = copy.copy(DEFAULT_OPERATORS)
 SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
 
 FUNCTIONS = DEFAULT_FUNCTIONS
 FUNCTIONS.update({
-    'timedelta_to_seconds': lambda x: x.total_seconds() if isinstance(x, timedelta) else None
+    'timedelta_to_seconds': lambda x: x.total_seconds() if isinstance(x, timedelta) else None,
+    'range': safe_range
 })
 
 

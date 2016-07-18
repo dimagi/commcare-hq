@@ -17,8 +17,6 @@ from touchforms.formplayer import sms as tfsms
 from django.conf import settings
 from xml.etree.ElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.receiverwrapper.util import submit_form_locally
-from couchforms.models import XFormInstance
 import re
 
 COMMCONNECT_DEVICE_ID = "commconnect"

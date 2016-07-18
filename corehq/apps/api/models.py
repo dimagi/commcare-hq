@@ -2,12 +2,12 @@ from functools import wraps
 from couchdbkit.exceptions import ResourceNotFound
 from dimagi.ext.couchdbkit import *
 
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import check_password
 from django.http import HttpResponse
 from django.conf import settings
 
 import os
-from corehq.util.hash_compat import make_password
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"

@@ -37,6 +37,7 @@ from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
+from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
@@ -60,7 +61,6 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.reports.util import is_mobile_worker_with_report_access
-from corehq.apps.style.decorators import use_bootstrap3
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
@@ -382,7 +382,9 @@ def logout(req):
 
 @login_and_domain_required
 def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
-    return soil_views.retrieve_download(req, download_id, template, extra_context={'domain': domain})
+    next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
+    return soil_views.retrieve_download(req, download_id, template,
+                                        extra_context={'domain': domain, 'next_url': next_url})
 
 
 def dropbox_next_url(request, download_id):
@@ -486,6 +488,7 @@ def bug_report(req):
     report['feature_flags'] = toggles.toggles_dict(username=report['username'],
                                                    domain=report['domain']).keys()
     report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
+    report['scale_backend'] = should_use_sql_backend(report['domain']) if report['domain'] else False
 
     try:
         couch_user = CouchUser.get_by_username(report['username'])
@@ -521,6 +524,7 @@ def bug_report(req):
         u"User Agent: {user_agent}\n"
         u"Feature Flags: {feature_flags}\n"
         u"Feature Previews: {feature_previews}\n"
+        u"Is scale backend: {scale_backend}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)
@@ -575,31 +579,32 @@ def bug_report(req):
     return HttpResponse()
 
 
-def render_static(request, template):
+def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "style/bootstrap2/blank.html", {'tmpl': template})
+    return render(request, "style/blank.html",
+                  {'tmpl': template, 'page_name': page_name})
 
 
 def eula(request):
-    return render_static(request, "eula.html")
+    return render_static(request, "eula.html", _("End User License Agreement"))
 
 
 def cda(request):
-    return render_static(request, "cda.html")
+    return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
 
 def apache_license(request):
-    return render_static(request, "apache_license.html")
+    return render_static(request, "apache_license.html", _("Apache License"))
 
 
 def bsd_license(request):
-    return render_static(request, "bsd_license.html")
+    return render_static(request, "bsd_license.html", _("BSD License"))
 
 
 def product_agreement(request):
-    return render_static(request, "product_agreement.html")
+    return render_static(request, "product_agreement.html", _("Product Subscription Agreement"))
 
 
 def unsubscribe(request, user_id):
@@ -618,7 +623,7 @@ def unsubscribe(request, user_id):
 class BasePageView(TemplateView):
     urlname = None  # name of the view used in urls
     page_title = None  # what shows up in the <title>
-    template_name = 'style/bootstrap2/base_page.html'
+    template_name = 'style/base_page.html'
 
     @property
     def page_name(self):
@@ -679,7 +684,7 @@ class BasePageView(TemplateView):
 
 class BaseSectionPageView(BasePageView):
     section_name = ""
-    template_name = "style/bootstrap2/base_section.html"
+    template_name = "style/base_section.html"
 
     @property
     def section_url(self):
@@ -907,7 +912,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_update_form_response(self, update_form):
         return render_to_string(
-            'style/bootstrap2/partials/update_item_form.html', {
+            'style/partials/update_item_form.html', {
                 'form': update_form
             }
         )
@@ -1008,7 +1013,7 @@ def osdd(request, template='osdd.xml'):
 
 
 @require_superuser
-def maintenance_alerts(request, template='style/bootstrap2/maintenance_alerts.html'):
+def maintenance_alerts(request, template='style/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
 
     return render(request, template, {
@@ -1027,7 +1032,6 @@ class MaintenanceAlertsView(BasePageView):
     template_name = 'style/maintenance_alerts.html'
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(MaintenanceAlertsView, self).dispatch(request, *args, **kwargs)
 

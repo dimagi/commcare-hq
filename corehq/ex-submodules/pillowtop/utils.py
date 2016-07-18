@@ -17,6 +17,8 @@ from pillowtop.exceptions import PillowNotFoundError
 
 def get_pillow_instance(full_class_str):
     pillow_class = _import_class_or_function(full_class_str)
+    if pillow_class is None:
+        raise ValueError('No pillow class found for {}'.format(full_class_str))
     return pillow_class()
 
 
@@ -134,18 +136,55 @@ def get_pillow_json(pillow_config):
     else:
         time_since_last = ''
         hours_since_last = None
-    try:
-        db_seq = pillow.get_change_feed().get_latest_change_id()
-    except ValueError:
-        db_seq = None
+    offsets = pillow.get_change_feed().get_current_offsets()
     return {
         'name': pillow_config.name,
-        'seq': force_seq_int(checkpoint.wrapped_sequence),
+        'seq_format': checkpoint.sequence_format,
+        'seq': checkpoint.wrapped_sequence,
         'old_seq': force_seq_int(checkpoint.old_sequence) or 0,
-        'db_seq': force_seq_int(db_seq),
+        'offsets': offsets,
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
     }
+
+ChangeError = namedtuple('ChangeError', 'change exception')
+
+
+class ErrorCollector(object):
+    def __init__(self):
+        self.errors = []
+
+    def add_error(self, error):
+        self.errors.append(error)
+
+
+def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
+    doc_transform = doc_transform or (lambda x: x)
+    for change in changes:
+        if change.deleted and change.id:
+            yield {
+                "delete": {
+                    "_index": index_info.index,
+                    "_type": index_info.type,
+                    "_id": change.id
+                }
+            }
+        elif not change.deleted:
+            try:
+                doc = change.get_document()
+                doc = doc_transform(doc)
+                yield {
+                    "index": {
+                        "_index": index_info.index,
+                        "_type": index_info.type,
+                        "_id": doc['_id']
+                    }
+                }
+                yield doc
+            except Exception as e:
+                if not error_collector:
+                    raise
+                error_collector.add_error(ChangeError(change, e))
 
 
 def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):

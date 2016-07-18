@@ -181,7 +181,7 @@ class InvoiceResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = Invoice.api_objects.all().order_by('pk')
-        fields = ['id', 'tax_rate', 'balance', 'date_due', 'date_paid', 'date_created', 'date_received',
+        fields = ['id', 'tax_rate', 'balance', 'date_due', 'date_paid', 'date_created',
                   'date_start', 'date_end', 'is_hidden', 'is_hidden_to_ops', 'last_modified']
         resource_name = 'invoice'
 

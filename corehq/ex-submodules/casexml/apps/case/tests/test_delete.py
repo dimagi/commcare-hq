@@ -4,9 +4,12 @@ from casexml.apps.case.cleanup import safe_hard_delete
 from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
+from corehq.apps.change_feed import topics
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.utils.general import should_use_sql_backend
+from testapps.test_pillowtop.utils import capture_kafka_changes_context
 
 
 class TestHardDelete(TestCase):
@@ -26,7 +29,16 @@ class TestHardDelete(TestCase):
         self.assertEqual(2, len(case.xform_ids))
         for form_id in case.xform_ids:
             self.assertIsNotNone(self.formdb.get_form(form_id))
-        safe_hard_delete(case)
+
+        with capture_kafka_changes_context(topics.FORM_SQL, topics.CASE_SQL) as change_context:
+            safe_hard_delete(case)
+
+        if should_use_sql_backend(case.domain):
+            self.assertEqual(3, len(change_context.changes))
+            expected_ids = {case.case_id} | set(case.xform_ids)
+            self.assertEqual(expected_ids, {change.id for change in change_context.changes})
+            for change in change_context.changes:
+                self.assertTrue(change.deleted)
 
         with self.assertRaises(CaseNotFound):
             self.casedb.get_case(case.case_id)

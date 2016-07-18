@@ -14,15 +14,20 @@ class CopyApplicationForm(forms.Form):
     name = forms.CharField(required=False, label=_('Name'))
 
     def __init__(self, app_id, *args, **kwargs):
+        export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
+        fields = ['domain', 'name']
+        if export_zipped_apps_enabled:
+            self.fields['gzip'] = forms.FileField(required=False)
+            fields.append('gzip')
+
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.layout = Layout(
             Fieldset(
                 _('Copy Application'),
-                'domain',
-                'name',
+                *fields
             ),
             Hidden('app', app_id),
             hqcrispy.FormActions(

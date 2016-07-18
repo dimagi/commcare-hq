@@ -125,4 +125,12 @@ def process_verification(v, msg):
 
 
 def verification_response_ok(text):
-    return text == '123'
+    if not isinstance(text, basestring):
+        return False
+
+    parts = text.split()
+
+    if len(parts) == 0:
+        return False
+
+    return parts[0] == '123'

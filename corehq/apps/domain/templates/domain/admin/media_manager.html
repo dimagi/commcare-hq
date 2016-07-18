@@ -1,10 +1,10 @@
-{% extends "style/bootstrap3/base_section.html" %}
+{% extends "style/base_section.html" %}
 {% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block js %} {{ block.super }}
-<script type="text/javascript" src="{% new_static 'domain/js/media_manager.js' %}"></script>
+<script type="text/javascript" src="{% static 'domain/js/media_manager.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

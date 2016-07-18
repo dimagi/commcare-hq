@@ -15,11 +15,32 @@ class Command(ElasticReindexer):
 
     view_name = 'all_docs/by_doc_type'
 
-    def get_extra_view_kwargs(self):
-        return {
-            'startkey': ['XFormInstance'],
-            'endkey': ['XFormInstance', {}],
-        }
+    sort_key_include_docs = True
+
+    def full_couch_view_iter(self):
+        # copied from couchforms/_design/filters/xforms.js
+        doc_types = [
+            'XFormInstance',
+            'XFormArchived',
+            'XFormError',
+            'XFormDeprecated',
+            'XFormDuplicate',
+            'XFormInstance-Deleted',
+            'HQSubmission',
+            'SubmissionErrorLog',
+        ]
+
+        for doc_type in doc_types:
+            rows = self.paginate_view(
+                self.db,
+                self.view_name,
+                reduce=False,
+                include_docs=True,
+                startkey=[doc_type],
+                endkey=[doc_type, {}],
+            )
+            for row in rows:
+                yield row
 
     def handle(self, *args, **options):
         if not options.get('bulk', False):
@@ -33,3 +54,7 @@ class Command(ElasticReindexer):
         else:
             logging.warning('Unexpected input to custom_filter: {}'.format(view_row))
             return False
+
+    @staticmethod
+    def sort_key(row):
+        return row['doc'].get('received_on') or 'None'

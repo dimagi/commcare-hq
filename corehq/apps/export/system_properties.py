@@ -245,6 +245,12 @@ TOP_MAIN_CASE_TABLE_PROPERTIES = [
         help_text=_("The id of the case"),
         selected=True
     ),
+    ExportColumn(
+        label='name',
+        item=ExportItem(path=[PathNode(name='name')]),
+        help_text=_("The name of the case"),
+        selected=True
+    ),
 ]
 
 BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [

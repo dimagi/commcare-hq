@@ -2,6 +2,7 @@ import re
 from contextlib import contextmanager
 
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext
 from crispy_forms.bootstrap import FormActions as OriginalFormActions, InlineField, AccordionGroup
 from crispy_forms.layout import Field as OldField, LayoutObject
 from crispy_forms.utils import render_field, get_template_pack, flatatt
@@ -69,6 +70,32 @@ class StaticField(LayoutObject):
         context.update({
             'field_label': self.field_label,
             'field_value': self.field_value,
+        })
+        return render_to_string(self.template, context)
+
+
+class FormStepNumber(LayoutObject):
+    template = 'style/crispy/form_step_number.html'
+
+    def __init__(self, step_num, total_steps):
+        self.step_label = ugettext("Step {} of {}".format(step_num, total_steps))
+
+    def render(self, form, form_style, context, template_pack=None):
+        context.update({
+            'step_label': self.step_label,
+        })
+        return render_to_string(self.template, context)
+
+
+class ValidationMessage(LayoutObject):
+    template = 'style/crispy/validation_message.html'
+
+    def __init__(self, ko_observable):
+        self.ko_observable = ko_observable
+
+    def render(self, form, form_style, context, template_pack=None):
+        context.update({
+            'ko_observable': self.ko_observable,
         })
         return render_to_string(self.template, context)
 
@@ -166,7 +193,7 @@ class CrispyTemplate(object):
 
 
 class FieldWithHelpBubble(Field):
-    template = "field_with_help_bubble.html"
+    template = "style/crispy/field_with_help_bubble.html"
 
     def __init__(self, *args, **kwargs):
         super(FieldWithHelpBubble, self).__init__(*args, **kwargs)
@@ -174,7 +201,6 @@ class FieldWithHelpBubble(Field):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        self.template = "style/crispy/{}/{}".format(template_pack, self.template)
         context.update({
             'help_bubble_text': self.help_bubble_text,
         })
@@ -182,7 +208,7 @@ class FieldWithHelpBubble(Field):
 
 
 class LinkButton(LayoutObject):
-    template = "style/crispy/{template_pack}/link_button.html"
+    template = "style/crispy/link_button.html"
 
     def __init__(self, button_text, button_url, **kwargs):
         self.button_text = button_text
@@ -198,14 +224,12 @@ class LinkButton(LayoutObject):
                 self.attrs['class'] = kwargs.pop('css_class')
 
     def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        template = self.template.format(template_pack=template_pack)
         context.update({
             'button_text': self.button_text,
             'button_url': self.button_url,
             'button_attrs': flatatt(self.attrs if isinstance(self.attrs, dict) else {}),
         })
-        return render_to_string(template, context)
+        return render_to_string(self.template, context)
 
 
 class B3TextField(OldField):
@@ -213,10 +237,9 @@ class B3TextField(OldField):
     def __init__(self, field_name, text, *args, **kwargs):
         self.text = text
         super(B3TextField, self).__init__(field_name, *args, **kwargs)
-        self.template = 'style/crispy/bootstrap3/text_field.html'
+        self.template = 'style/crispy/text_field.html'
 
     def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
         context.update({
             'field_text': self.text,
         })
@@ -232,18 +255,8 @@ class B3TextField(OldField):
 
 
 class FieldsetAccordionGroup(AccordionGroup):
-    template = "style/crispy/{template_pack}/accordion_group.html"
-
-    def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        self.template = self.template.format(template_pack=template_pack)
-        return super(FieldsetAccordionGroup, self).render(form, form_style, context, template_pack)
+    template = "style/crispy/accordion_group.html"
 
 
 class HiddenFieldWithErrors(Field):
-    template = "style/crispy/{template_pack}/hidden_with_errors.html"
-
-    def render(self, form, form_style, context, template_pack=None):
-        template_pack = template_pack or get_template_pack()
-        self.template = self.template.format(template_pack=template_pack)
-        return super(HiddenFieldWithErrors, self).render(form, form_style, context, template_pack)
+    template = "style/crispy/hidden_with_errors.html"

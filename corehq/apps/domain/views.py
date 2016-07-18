@@ -11,6 +11,7 @@ import pytz
 from couchdbkit import ResourceNotFound
 import dateutil
 from django.core.paginator import Paginator
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import View
 from django.db.models import Sum
 from django.conf import settings
@@ -39,16 +40,13 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_ca
 
 from corehq.const import USER_DATE_FORMAT
 from corehq.tabs.tabclasses import ProjectSettingsTab
-from custom.dhis2.forms import Dhis2SettingsForm
-from custom.dhis2.models import Dhis2Settings
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_jquery_ui,
-    use_jquery_ui_multiselect,
     use_select2,
+    use_multiselect,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
@@ -72,6 +70,8 @@ from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.users.models import Invitation, CouchUser
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
+from custom.openclinica.forms import OpenClinicaSettingsForm
+from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
@@ -80,7 +80,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    EntryPoint, WireInvoice, SoftwarePlanVisibility, FeatureType,
+    EntryPoint, WireInvoice, FeatureType,
     StripePaymentMethod, LastPayment,
     UNLIMITED_FEATURE_USAGE,
 )
@@ -170,7 +170,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         if domain and domain.is_active:
             # mirrors logic in login_and_domain_required
             if (
-                request.couch_user.is_member_of(domain) or domain.is_public
+                request.couch_user.is_member_of(domain)
                 or (request.user.is_superuser and not domain.restrict_superusers)
                 or domain.is_snapshot
             ):
@@ -257,9 +257,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
 
     @property
     def required_plan_name(self):
-        return DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain_object, [self.missing_privilege]
-        )
+        return DefaultProductPlan.get_lowest_edition([self.missing_privilege])
 
     def get(self, request, *args, **kwargs):
         self.request = request
@@ -363,7 +361,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 
     @method_decorator(domain_admin_required)
     @use_select2
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -457,7 +454,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
     page_title = ugettext_lazy("My Timezone")
 
     @method_decorator(login_and_domain_required)
-    @use_bootstrap3
     def dispatch(self, *args, **kwargs):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
@@ -501,36 +497,35 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
-class EditDhis2SettingsView(BaseProjectSettingsView):
-    template_name = 'domain/admin/dhis2_settings.html'
-    urlname = 'dhis2_settings'
-    page_title = ugettext_lazy("DHIS2 API settings")
+class EditOpenClinicaSettingsView(BaseProjectSettingsView):
+    template_name = 'domain/admin/openclinica_settings.html'
+    urlname = 'oc_settings'
+    page_title = ugettext_lazy('OpenClinica settings')
 
-    @use_bootstrap3
+    @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        return super(EditDhis2SettingsView, self).dispatch(request, *args, **kwargs)
+        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
-    def dhis2_settings_form(self):
-        settings_ = Dhis2Settings.for_domain(self.domain_object.name)
-        initial = settings_.dhis2 if settings_ else {'enabled': False}
+    def openclinica_settings_form(self):
+        oc_settings = OpenClinicaSettings.for_domain(self.domain_object.name)
+        initial = dict(oc_settings.study) if oc_settings else {}
         if self.request.method == 'POST':
-            return Dhis2SettingsForm(self.request.POST, initial=initial)
-        return Dhis2SettingsForm(initial=initial)
+            return OpenClinicaSettingsForm(self.request.POST, initial=initial)
+        return OpenClinicaSettingsForm(initial=initial)
 
     @property
     def page_context(self):
-        return {
-            'dhis2_settings_form': self.dhis2_settings_form,
-        }
+        return {'openclinica_settings_form': self.openclinica_settings_form}
 
+    @method_decorator(sensitive_post_parameters('username', 'password'))
     def post(self, request, *args, **kwargs):
-        if self.dhis2_settings_form.is_valid():
-            if self.dhis2_settings_form.save(self.domain_object):
-                messages.success(request, _('DHIS2 API settings successfully updated'))
+        if self.openclinica_settings_form.is_valid():
+            if self.openclinica_settings_form.save(self.domain_object):
+                messages.success(request, _('OpenClinica settings successfully updated'))
             else:
-                messages.error(request, _('There seems to have been an error. Please try again.'))
+                messages.error(request, _('An error occurred. Please try again.'))
         return self.get(request, *args, **kwargs)
 
 
@@ -560,7 +555,7 @@ def test_repeater(request, domain):
         format = format or RegisterGenerator.default_format_by_repeater(repeater_class)
         generator_class = RegisterGenerator.generator_class_by_repeater_format(repeater_class, format)
         generator = generator_class(repeater_class())
-        fake_post = generator.get_test_payload()
+        fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
 
         try:
@@ -598,14 +593,12 @@ def logo(request, domain):
 class DomainAccountingSettings(BaseAdminProjectSettingsView):
 
     @method_decorator(login_and_domain_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
     @property
-    @memoized
     def product(self):
-        return SoftwareProductType.get_type_by_domain(self.domain_object)
+        return SoftwareProductType.COMMCARE
 
     @property
     @memoized
@@ -733,14 +726,16 @@ class DomainSubscriptionView(DomainAccountingSettings):
         def _get_feature_info(feature_rate):
             usage = FeatureUsageCalculator(feature_rate, self.domain).get_usage()
             feature_type = feature_rate.feature.feature_type
+            if feature_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
+                remaining = _('Unlimited')
+            else:
+                remaining = feature_rate.monthly_limit - usage
+                if remaining < 0:
+                    remaining = _("%d over limit") % (-1 * remaining)
             return {
                 'name': get_feature_name(feature_type, self.product),
                 'usage': usage,
-                'remaining': (
-                    feature_rate.monthly_limit - usage
-                    if feature_rate.monthly_limit != UNLIMITED_FEATURE_USAGE
-                    else _('Unlimited')
-                ),
+                'remaining': remaining,
                 'type': feature_type,
                 'recurring_interval': get_feature_recurring_interval(feature_type),
                 'subscription_credit': self._fmt_credit(self._credit_grand_total(
@@ -1097,9 +1092,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         return json_response({'success': True})
 
     def _get_items(self, request):
-        product_type = SoftwareProductType.get_type_by_domain(Domain.get_by_name(self.domain))
-
-        features = [{'type': get_feature_name(feature_type[0], product_type),
+        features = [{'type': get_feature_name(feature_type[0], SoftwareProductType.COMMCARE),
                      'amount': Decimal(request.POST.get(feature_type[0], 0))}
                     for feature_type in FeatureType.CHOICES
                     if Decimal(request.POST.get(feature_type[0], 0)) > 0]
@@ -1233,7 +1226,6 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(require_superuser)
-    @use_bootstrap3
     @use_jquery_ui
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -1318,12 +1310,6 @@ class SelectPlanView(DomainAccountingSettings):
             return DESC_BY_EDITION[self.edition]['name']
 
     @property
-    def is_non_ops_superuser(self):
-        if not self.request.couch_user.is_superuser:
-            return False
-        return not has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
-
-    @property
     def parent_pages(self):
         return [
             {
@@ -1362,7 +1348,6 @@ class SelectPlanView(DomainAccountingSettings):
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
                                 else ""),
-            'is_non_ops_superuser': self.is_non_ops_superuser,
         }
 
 
@@ -1372,7 +1357,6 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Privacy and Security")
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -1474,7 +1458,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     @memoized
     def selected_plan_version(self):
-        return DefaultProductPlan.get_default_plan_by_domain(self.domain, self.edition).plan.get_version()
+        return DefaultProductPlan.get_default_plan(self.edition).plan.get_version()
 
     @property
     def downgrade_messages(self):
@@ -1566,24 +1550,13 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     @property
     @memoized
     def billing_account_info_form(self):
-        initial = None
-        if self.edition == SoftwarePlanEdition.ENTERPRISE and self.request.couch_user.is_superuser:
-            initial = {
-                'company_name': "Dimagi",
-                'first_line': "585 Massachusetts Ave",
-                'second_line': "Suite 4",
-                'city': "Cambridge",
-                'state_province_region': "MA",
-                'postal_code': "02139",
-                'country': "US",
-            }
         if self.request.method == 'POST' and self.is_form_post:
             return ConfirmNewSubscriptionForm(
                 self.account, self.domain, self.request.couch_user.username,
-                self.selected_plan_version, self.current_subscription, data=self.request.POST, initial=initial
+                self.selected_plan_version, self.current_subscription, data=self.request.POST
             )
         return ConfirmNewSubscriptionForm(self.account, self.domain, self.request.couch_user.username,
-                                          self.selected_plan_version, self.current_subscription, initial=initial)
+                                          self.selected_plan_version, self.current_subscription)
 
     @property
     def page_context(self):
@@ -1596,8 +1569,6 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
-        if self.edition == SoftwarePlanEdition.ENTERPRISE and not self.request.couch_user.is_superuser:
-            return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name'].encode('utf-8')
@@ -1649,8 +1620,8 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         context = super(SubscriptionRenewalView, self).page_context
 
         current_privs = get_privileges(self.subscription.plan_version)
-        plan = DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain, current_privs, return_plan=False,
+        plan = DefaultProductPlan.get_lowest_edition(
+            current_privs, return_plan=False,
         ).lower()
 
         context['current_edition'] = (plan
@@ -1675,8 +1646,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def next_plan_version(self):
-        new_edition = self.request.POST.get('plan_edition').title()
-        plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, new_edition)
+        plan_version = DefaultProductPlan.get_default_plan(self.new_edition)
         if plan_version is None:
             log_accounting_error(
                 "Could not find a matching renewable plan "
@@ -1711,9 +1681,15 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             'next_plan': self.next_plan_version.user_facing_description,
         }
 
+    @property
+    def new_edition(self):
+        return self.request.POST.get('plan_edition').title()
+
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
+        if self.new_edition == SoftwarePlanEdition.ENTERPRISE:
+            return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         if self.confirm_form.is_valid():
             is_saved = self.confirm_form.save()
             if not is_saved:
@@ -1741,7 +1717,6 @@ class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("CommCare Exchange")
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -1761,7 +1736,6 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     strict_domain_fetching = True
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
@@ -2050,7 +2024,6 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/media_manager.html'
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2098,7 +2071,6 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2287,7 +2259,6 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
     template_name = 'domain/admin/domain_forwarding.html'
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2314,7 +2285,6 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
     repeater_form_class = GenericRepeaterForm
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2429,9 +2399,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
-    @use_bootstrap3
-    @use_jquery_ui
-    @use_jquery_ui_multiselect
+    @use_jquery_ui  # datepicker
+    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2464,6 +2433,9 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'phone_model',
             'commtrack_domain',
             'performance_threshold',
+            'experienced_threshold',
+            'amplifies_workers',
+            'amplifies_project',
             'business_unit',
             'workshop_region',
         ]
@@ -2529,7 +2501,6 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
 
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseInternalDomainSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2653,10 +2624,6 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     urlname = 'pro_bono_static'
     use_domain_field = True
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProBonoStaticView, self).dispatch(request, *args, **kwargs)
-
     @property
     def requesting_domain(self):
         return self.pro_bono_form.cleaned_data['domain']
@@ -2666,10 +2633,6 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
     use_domain_field = False
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProBonoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def requesting_domain(self):
@@ -2695,7 +2658,6 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/feature_previews.html'
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2743,7 +2705,6 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Feature Flags")
     template_name = 'domain/admin/feature_flags.html'
 
-    @use_bootstrap3
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
@@ -2814,7 +2775,6 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             return {'form': self.transfer_domain_form}
 
     @method_decorator(domain_admin_required)
-    @use_bootstrap3
     def dispatch(self, request, *args, **kwargs):
         if not TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
@@ -2914,7 +2874,6 @@ class PublicSMSRatesView(BasePageView, AsyncHandlerMixin):
     template_name = 'domain/admin/global_sms_rates.html'
     async_handlers = [PublicSMSRatesAsyncHandler]
 
-    @use_bootstrap3
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(PublicSMSRatesView, self).dispatch(request, *args, **kwargs)
@@ -2942,7 +2901,6 @@ class SMSRatesView(BaseAdminProjectSettingsView, AsyncHandlerMixin):
         SMSRatesSelect2AsyncHandler,
     ]
 
-    @use_bootstrap3
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(SMSRatesView, self).dispatch(request, *args, **kwargs)

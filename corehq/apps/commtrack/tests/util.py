@@ -18,6 +18,7 @@ from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.receiverwrapper import submit_form_locally
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 from corehq.util.decorators import require_debug_true
 from dimagi.utils.parsing import json_format_datetime
@@ -139,6 +140,7 @@ class CommTrackTest(TestCase):
     user_definitions = []
 
     def setUp(self):
+        super(CommTrackTest, self).setUp()
         # might as well clean house before doing anything
         delete_all_xforms()
         delete_all_cases()
@@ -186,13 +188,13 @@ class CommTrackTest(TestCase):
         delete_all_xforms()
         delete_all_cases()
         delete_all_sync_logs()
-        for u in self.users:
-            u.delete()
+        delete_all_users()
         self.domain.delete()  # domain delete cascades to everything else
+        super(CommTrackTest, self).tearDown()
 
 
 def get_ota_balance_xml(project, user):
-    xml = generate_restore_payload(project, user.to_casexml_user(), version=V2)
+    xml = generate_restore_payload(project, user.to_ota_restore_user(), version=V2)
     return extract_balance_xml(xml)
 
 

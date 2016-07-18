@@ -22,14 +22,14 @@ def domain_has_apps(domain):
     return len(results) > 0
 
 
-def get_latest_released_app_doc(domain, app_id, min_version=None):
+def get_latest_released_app_doc(domain, app_id):
     """Get the latest starred build for the application"""
     from .models import Application
     key = ['^ReleasedApplications', domain, app_id]
     app = Application.get_db().view(
         'app_manager/applications',
         startkey=key + [{}],
-        endkey=(key + [min_version]) if min_version is not None else key,
+        endkey=key,
         descending=True,
         include_docs=True,
         limit=1,
@@ -61,55 +61,79 @@ def get_latest_build_id(domain, app_id):
     return res['id'] if res else None
 
 
+def get_build_doc_by_version(domain, app_id, version):
+    from .models import Application
+    res = Application.get_db().view(
+        'app_manager/saved_app',
+        key=[domain, app_id, version],
+        include_docs=True,
+        reduce=False,
+        limit=1,
+    ).first()
+    return res['doc'] if res else None
+
+
+def wrap_app(app_doc, wrap_cls=None):
+    """Will raise DocTypeError if it can't figure out the correct class"""
+    from corehq.apps.app_manager.util import get_correct_app_class
+    cls = wrap_cls or get_correct_app_class(app_doc)
+    return cls.wrap(app_doc)
+
+
+def get_current_app(domain, app_id):
+    from .models import Application
+    app = Application.get_db().get(app_id)
+    if app.get('domain', None) != domain:
+        raise ResourceNotFound()
+    return wrap_app(app)
+
+
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
     """
-    Utility for getting an app, making sure it's in the domain specified, and wrapping it in the right class
-    (Application or RemoteApp).
+    Utility for getting an app, making sure it's in the domain specified, and
+    wrapping it in the right class (Application or RemoteApp).
 
+    'target' is only used if latest=True.  It should be set to one of:
+       'build', 'release', or 'save'
+
+    Here are some common usages and the simpler dbaccessor alternatives:
+        current_app = get_app(domain, app_id)
+                    = get_current_app(domain, app_id)
+        latest_released_build = get_app(domain, app_id, latest=True)
+                              = get_latest_released_app_doc(domain, app_id)
+        latest_build = get_app(domain, app_id, latest=True, target='build')
+                     = get_latest_build_doc(domain, app_id)
+    Use wrap_app() if you need the wrapped object.
     """
     from .models import Application
-    from corehq.apps.app_manager.util import get_correct_app_class
     if not app_id:
         raise Http404()
-    if latest:
-        try:
-            original_app = Application.get_db().get(app_id)
-        except ResourceNotFound:
-            raise Http404()
-        if not domain:
-            try:
-                domain = original_app['domain']
-            except Exception:
-                raise Http404()
+    try:
+        app = Application.get_db().get(app_id)
+    except ResourceNotFound:
+        raise Http404()
 
-        if original_app.get('copy_of'):
-            parent_app_id = original_app.get('copy_of')
-            min_version = original_app['version'] if original_app.get('is_released') else -1
-        else:
-            parent_app_id = original_app['_id']
-            min_version = -1
+    if latest:
+        if not domain:
+            domain = app['domain']
+
+        if app.get('copy_of'):
+            # The id passed in corresponds to a build
+            app_id = app.get('copy_of')
 
         if target == 'build':
-            app = get_latest_build_doc(domain, parent_app_id)
+            app = get_latest_build_doc(domain, app_id) or app
+        elif target == 'save':
+            pass  # just use the working copy of the app
         else:
-            app = get_latest_released_app_doc(domain, parent_app_id, min_version=min_version)
+            app = get_latest_released_app_doc(domain, app_id) or app
 
-        if not app:
-            # If no builds/starred-builds, act as if latest=False
-            app = original_app
-    else:
-        try:
-            app = Application.get_db().get(app_id)
-        except Exception:
-            raise Http404()
     if domain and app['domain'] != domain:
         raise Http404()
     try:
-        cls = wrap_cls or get_correct_app_class(app)
+        return wrap_app(app, wrap_cls=wrap_cls)
     except DocTypeError:
         raise Http404()
-    app = cls.wrap(app)
-    return app
 
 
 def get_apps_in_domain(domain, include_remote=True):
@@ -185,7 +209,26 @@ def get_built_app_ids_for_app_id(domain, app_id, version=None):
     return [result['id'] for result in results]
 
 
-def get_latest_built_app_ids_and_versions(domain, app_id=None):
+def get_built_app_ids_with_submissions_for_app_id(domain, app_id, version=None):
+    """
+    Returns all the built apps for an application id that have submissions.
+    If version is specified returns all apps after that version.
+    """
+    from .models import Application
+    key = [domain, app_id]
+    skip = 1 if version else 0
+    results = Application.get_db().view(
+        'apps_with_submissions/view',
+        startkey=key + [version],
+        endkey=key + [{}],
+        reduce=False,
+        include_docs=False,
+        skip=skip
+    ).all()
+    return [result['id'] for result in results]
+
+
+def get_latest_app_ids_and_versions(domain, app_id=None):
     """
     Returns all the latest app_ids and versions in a dictionary.
     :param domain: The domain to get the app from
@@ -194,21 +237,23 @@ def get_latest_built_app_ids_and_versions(domain, app_id=None):
     :returns: {app_id: latest_version}
     """
     from .models import Application
-    key = [domain, app_id] if app_id else [domain]
+    key = [domain]
 
     results = Application.get_db().view(
-        'app_manager/saved_app',
+        'app_manager/applications_brief',
         startkey=key + [{}],
         endkey=key,
         descending=True,
         reduce=False,
-        include_docs=False,
+        include_docs=True,
     ).all()
 
     latest_ids_and_versions = {}
+    if app_id:
+        results = filter(lambda r: r['value']['_id'] == app_id, results)
     for result in results:
-        app_id = result['key'][1]
-        version = result['key'][2]
+        app_id = result['value']['_id']
+        version = result['value']['version']
 
         # Since we have sorted, we know the first instance is the latest version
         if app_id not in latest_ids_and_versions:

@@ -1,10 +1,10 @@
 from functools import wraps
 import logging
+from couchdbkit.exceptions import ResourceNotFound
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 from django.db.utils import InterfaceError as DjangoInterfaceError
 from datetime import datetime, timedelta
-import hashlib
 import traceback
 import math
 import time
@@ -192,7 +192,11 @@ class BasicPillow(PillowBase):
             return changes_dict.get_document()
         else:
             # todo: remove this in favor of always using get_document() above
-            return self.get_couch_db().open_doc(id)
+            try:
+                return self.get_couch_db().open_doc(id)
+            except ResourceNotFound:
+                # doc was likely hard-deleted. treat like a deletion
+                return None
 
     def change_transform(self, doc_dict):
         """
@@ -504,23 +508,12 @@ class AliasedElasticPillow(BasicPillow):
     def send_bulk(self, payload):
         self.get_es_new().bulk(payload)
 
-    @staticmethod
-    def calc_mapping_hash(mapping):
-        return hashlib.md5(simplejson.dumps(mapping, sort_keys=True)).hexdigest()
-
     @classmethod
     def get_unique_id(cls):
         """
         a unique identifier for the pillow - typically the hash associated with the index
         """
-        # for legacy reasons this is the default until we remove it.
-        return cls.calc_meta()
-
-    @classmethod
-    def calc_meta(cls):
-        # todo: we should get rid of this and have subclasses override get_unique_id
-        # instead of calc_meta
-        raise NotImplementedError("Need to either override get_unique_id or implement your own meta calculator")
+        return cls.es_index
 
     def bulk_builder(self, changes):
         """
@@ -544,7 +537,7 @@ class AliasedElasticPillow(BasicPillow):
                                 }
                             }
                             yield tr
-            except Exception, ex:
+            except Exception as ex:
                 pillow_logging.error(
                     "Error on change: %s, %s" % (change['id'], ex)
                 )
@@ -586,27 +579,3 @@ def retry_on_connection_failure(fn):
                 raise
 
     return _inner
-
-
-class SQLPillowMixIn(object):
-
-    def change_trigger(self, changes_dict):
-        if changes_dict.get('deleted', False):
-            self.change_transport({'_id': changes_dict['id']}, delete=True)
-            return None
-        return super(SQLPillowMixIn, self).change_trigger(changes_dict)
-
-    @retry_on_connection_failure
-    @db.transaction.atomic
-    def change_transport(self, doc_dict, delete=False):
-        self.process_sql(doc_dict, delete)
-
-    def process_sql(self, doc_dict, delete=False):
-        pass
-
-
-class SQLPillow(SQLPillowMixIn, BasicPillow):
-
-    def __init__(self):
-        checkpoint = get_default_django_checkpoint_for_legacy_pillow_class(self.__class__)
-        super(SQLPillow, self).__init__(checkpoint=checkpoint)

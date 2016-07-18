@@ -1,4 +1,5 @@
 import os
+from django.conf import settings
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper import submit_form_locally
@@ -27,6 +28,8 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         self.assertNotEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_duplicate)
         self.assertTrue(self.ID in xform.problem)
+        if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+            self.assertEqual(self.ID, xform.orig_id)
 
     @run_with_all_backends
     def test_wrong_doc_type(self):

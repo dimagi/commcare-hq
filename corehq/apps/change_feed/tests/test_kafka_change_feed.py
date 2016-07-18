@@ -30,6 +30,20 @@ class KafkaChangeFeedTest(SimpleTestCase):
         for unexpected in unexpected_metas:
             self.assertTrue(unexpected.document_id not in found_change_ids)
 
+    @trap_extra_setup(KafkaUnavailableError)
+    def test_multiple_topics_with_partial_checkpoint(self):
+        feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed')
+        self.assertEqual(0, len(list(feed.iter_changes(since=None, forever=False))))
+        offsets = {'form': feed.get_current_offsets()['form']}
+        expected_metas = [publish_stub_change(topics.FORM), publish_stub_change(topics.CASE)]
+        changes = list(feed.iter_changes(since=offsets, forever=False))
+        # should include at least the form and the case (may have more than one case since not
+        # specifying a checkpoint rewinds it to the beginning of the feed)
+        self.assertTrue(len(changes) > 1)
+        found_change_ids = set([change.id for change in changes])
+        for expected_id in set([meta.document_id for meta in expected_metas]):
+            self.assertTrue(expected_id in found_change_ids)
+
 
 class KafkaCheckpointTest(TestCase):
 

@@ -31,11 +31,11 @@ Welcome to CommCareHQ's documentation!
    profiling
    elasticsearch
    es_query
-   dhis2_integration
    test_coverage
    advanced_app_features
    nfs
    forms_and_cases
+   messaging/messaging
 
 Tips for documenting
 --------------------

@@ -197,7 +197,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
     };
 
     var searchViewModel = function (searchProperties, lang, saveButton) {
-        var self = this;
+        var self = this,
+            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0";
 
         var SearchProperty = function (name, label) {
             var self = this;
@@ -205,6 +206,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             self.label = ko.observable(label);
         };
 
+        self.relevant = ko.observable();
+        self.default_relevant = ko.observable(true);
         self.searchProperties = ko.observableArray();
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
@@ -244,12 +247,26 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         };
 
+        self._getRelevant = function() {
+            if (self.default_relevant()) {
+                if (self.relevant().trim() === "") {
+                    return DEFAULT_CLAIM_RELEVANT;
+                } else {
+                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.relevant().trim() + ")";
+                }
+            }
+            return self.relevant().trim();
+        };
+
         self.serialize = function () {
-            return self._getProperties();
+            return {
+                properties: self._getProperties(),
+                relevant: self._getRelevant(),
+            };
         };
     };
 
-    var caseListLookupViewModel = function($el, state, saveButton) {
+    var caseListLookupViewModel = function($el, state, lang, saveButton) {
         'use strict';
         var self = this,
             detail_type = $el.data('detail-type');
@@ -316,6 +333,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 lookup_extras: _trimmed_extras(),
                 lookup_responses: _trimmed_responses(),
                 lookup_image: image_path,
+                lookup_display_results: self.lookup_display_results(),
+                lookup_field_header: self.lookup_field_header.val(),
+                lookup_field_template: self.lookup_field_template(),
             };
 
             return data;
@@ -414,6 +434,29 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         if (self.responses().length === 0){
             self.add_item('responses');
         }
+
+        self.lookup_display_results = ko.observable(state.lookup_display_results);
+        var invisible = "", visible = "";
+        if (state.lookup_field_header[lang]) {
+            visible = invisible = state.lookup_field_header[lang]
+        } else {
+            _.each(_.keys(state.lookup_field_header), function(lang) {
+                if (state.lookup_field_header[lang]) {
+                    visible = state.lookup_field_header[lang] + langcodeTag.LANG_DELIN + lang;
+                }
+            });
+        }
+
+        self.lookup_field_header = uiElement.input().val(
+            invisible
+        );
+        self.lookup_field_header.setVisibleValue(visible);
+        self.lookup_field_header.observableVal = ko.observable(self.lookup_field_header.val());
+        self.lookup_field_header.on('change', function () {
+            self.lookup_field_header.observableVal(self.lookup_field_header.val());
+            _fireChange();  // input node created too late for initSaveButtonListeners
+        });
+        self.lookup_field_template = ko.observable(state.lookup_field_template || '@case_id');
 
         self.show_add_extra = ko.computed(function(){
             if (self.extras().length){
@@ -539,7 +582,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
                    ? COMMCAREHQ.icons.PAPERCLIP : null);
-                this.field = uiElement.input().val(this.original.field).setIcon(icon);
+                this.field = uiElement.input(this.original.field).setIcon(icon);
 
                 // Make it possible to observe changes to this.field
                 // note that observableVal is read only!
@@ -605,8 +648,11 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     var o = {
                         lang: that.lang,
                         langs: that.screen.langs,
+                        module_id: that.screen.config.module_id,
                         items: that.original['enum'],
-                        modalTitle: 'Editing mapping for ' + that.original.field
+                        property_name: that.field,
+                        multimedia: that.screen.config.multimedia,
+                        values_are_icons: that.original.format == 'enum-image',
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());
@@ -677,6 +723,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         that.time_ago_extra.ui.detach();
 
                         if (this.val() === "enum" || this.val() === "enum-image") {
+                            that.enum_extra.values_are_icons(this.val() === 'enum-image');
                             that.format.ui.parent().append(that.enum_extra.ui);
                         } else if (this.val() === "graph") {
                             // Replace format select with edit button
@@ -1084,6 +1131,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.model = spec.model || 'case';
                 this.lang = spec.lang;
                 this.langs = spec.langs || [];
+                this.multimedia = spec.multimedia || {};
+                this.module_id = spec.module_id || '';
                 if (spec.hasOwnProperty('parentSelect') && spec.parentSelect) {
                     this.parentSelect = new module.ParentSelect({
                         active: spec.parentSelect.active,
@@ -1169,7 +1218,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         that.shortScreen.saveButton.fire("change");
                     });
                     var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
-                    this.caseListLookup = new caseListLookupViewModel($case_list_lookup_el, spec.state.short, this.shortScreen.saveButton);
+                    this.caseListLookup = new caseListLookupViewModel(
+                        $case_list_lookup_el,
+                        spec.state.short,
+                        spec.lang,
+                        this.shortScreen.saveButton
+                    );
                     // Set up case search
                     this.search = new searchViewModel(
                         spec.searchProperties || [],

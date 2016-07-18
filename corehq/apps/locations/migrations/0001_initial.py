@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 import mptt.fields
-import json_field.fields
+import jsonfield.fields
 
 
 class Migration(migrations.Migration):
@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
                 ('location_id', models.CharField(unique=True, max_length=100, db_index=True)),
                 ('site_code', models.CharField(max_length=255)),
                 ('external_id', models.CharField(max_length=255, null=True)),
-                ('metadata', json_field.fields.JSONField(default={}, help_text='Enter a valid JSON object')),
+                ('metadata', jsonfield.fields.JSONField(default=dict)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
                 ('is_archived', models.BooleanField(default=False)),

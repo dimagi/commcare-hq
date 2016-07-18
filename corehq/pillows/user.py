@@ -9,7 +9,7 @@ from corehq.elastic import (
 )
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.quickcache import quickcache
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor, PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -17,14 +17,16 @@ from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
 def update_unknown_user_from_form_if_necessary(es, doc_dict):
-    doc = doc_dict
-    user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc)
+    if doc_dict is None:
+        return
+
+    user_id, username, domain, xform_id = _get_user_fields_from_form_doc(doc_dict)
 
     if user_id in WEIRD_USER_IDS:
         user_id = None
 
     if (user_id and not _user_exists(user_id)
-            and not doc_exists_in_es('users', user_id)):
+            and not doc_exists_in_es(USER_INDEX_INFO, user_id)):
         doc_type = "AdminUser" if username == "admin" else "UnknownUser"
         doc = {
             "_id": user_id,

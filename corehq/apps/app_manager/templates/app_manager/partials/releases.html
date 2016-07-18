@@ -61,9 +61,6 @@
     analytics.workflow('Visited the Release Manager');
 </script>
 <script>
-    function track_deploy_type(type) {
-        ga_track_event('App Manager', 'Deploy Type', type);
-    }
     $(function () {
         gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
     });
@@ -73,7 +70,7 @@
 <div class="tabbable">
     <ul class="nav nav-tabs">
         <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-        <li><a href="#profiles-tab" data-toggle="tab">{% trans "Build Profiles" %}</a></li>
+        <li><a href="#profiles-tab" data-toggle="tab">{% trans "Application Profiles" %}</a></li>
     </ul>
     <div class="spacer"></div>
     <div class="tab-content">
@@ -129,7 +126,7 @@
         <tbody data-bind="visible: buildState, css: {hide: false}" class="hide">
             <tr data-bind="visible: buildState() == 'pending', css: {hide: false}" class="hide">
                 <td colspan="9">
-                    <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
                     <span class="label label-success">
                         {% trans "Please wait while your CommCare Application builds" %}
                     </span>
@@ -161,7 +158,7 @@
                         <i class="fa fa-remove"></i>
                     </a>
                     <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
-                        <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
                     </div>
 
                     <i class="fa fa-exclamation-circle" class="hide" data-bind="
@@ -259,7 +256,7 @@
             <tr>
                 <td colspan="9">
                     <div data-bind="visible: fetchState() === 'pending', css: {hide: false}" class="hide">
-                        <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
                     </div>
                     <div data-bind="visible: fetchState() === 'error', css: {hide: false}" class="hide">
                         <div class="alert alert-danger">
@@ -309,6 +306,14 @@
                     <h4 class="modal-title">{% trans "Revert to Version?" %}</h4>
                 </div>
                 <div class="modal-body">
+                    {% if vellum_case_management %}
+                        <div class='alert alert-danger' data-bind="visible: !vellum_case_management()">
+                            {% blocktrans %}
+                                This version uses an outdated form of case management.
+                                We advise against reverting back to this version.
+                            {% endblocktrans %}
+                        </div>
+                    {% endif %}
                     <p>{% blocktrans %}
                      Are you sure you want to revert to version <span data-bind="text: version"></span>?</p>
                     {% endblocktrans %}

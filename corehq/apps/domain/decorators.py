@@ -20,7 +20,6 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth,
     BASIC, DIGEST, API_KEY
 )
-from django_prbac.utils import has_privilege
 from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
@@ -33,7 +32,6 @@ from django_otp import match_token
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
-from corehq import privileges
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
@@ -59,6 +57,13 @@ def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
     return HttpResponseRedirect(nextURL)
 
 
+def _page_is_whitelist(path, domain):
+    pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
+    return bool([
+        x for x in pages_not_restricted_for_dimagi if x % {'domain': domain} == path
+    ])
+
+
 def domain_specific_login_redirect(request, domain):
     project = Domain.get_by_name(domain)
     login_url = reverse('login')
@@ -66,6 +71,7 @@ def domain_specific_login_redirect(request, domain):
 
 
 def login_and_domain_required(view_func):
+
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
         user = req.user
@@ -84,7 +90,7 @@ def login_and_domain_required(view_func):
                 else:
                     # some views might not have this set
                     couch_user = CouchUser.from_django_user(user)
-                if couch_user.is_member_of(domain) or domain.is_public:
+                if couch_user.is_member_of(domain):
                     if domain.two_factor_auth and not user.is_verified():
                         return TemplateResponse(
                             request=req,
@@ -94,7 +100,10 @@ def login_and_domain_required(view_func):
                     else:
                         return view_func(req, domain_name, *args, **kwargs)
 
-                elif user.is_superuser and not domain.restrict_superusers:
+                elif (
+                    _page_is_whitelist(req.path, domain_name) or
+                    not domain.restrict_superusers
+                ) and user.is_superuser:
                     # superusers can circumvent domain permissions.
                     return view_func(req, domain_name, *args, **kwargs)
                 elif domain.is_snapshot:
@@ -138,13 +147,21 @@ def api_key():
     return real_decorator
 
 
-def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False):
+def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True):
+    """
+    kwargs:
+        allow_cc_users: authorize non-WebUser users
+        allow_sessions: allow session based authorization
+    """
     # ensure someone is logged in, or challenge
     # challenge_fn should itself be a decorator that can handle authentication
     def _outer(fn):
         @wraps(fn)
         def safe_fn(request, domain, *args, **kwargs):
-            if not request.user.is_authenticated():
+            if request.user.is_authenticated() and allow_sessions:
+                return login_and_domain_required(fn)(request, domain, *args, **kwargs)
+            else:
+                # if sessions are blocked or user is not already authenticated, check for authentication
                 @check_lockout
                 @challenge_fn
                 @two_factor_check(api_key)
@@ -161,22 +178,12 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False):
                         return HttpResponseForbidden()
 
                 return _inner(request, domain, *args, **kwargs)
-            else:
-                return login_and_domain_required(fn)(request, domain, *args, **kwargs)
         return safe_fn
     return _outer
 
 
-def login_or_digest_ex(allow_cc_users=False):
-    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users)
-
-login_or_digest = login_or_digest_ex()
-
-
-def login_or_basic_ex(allow_cc_users=False):
-    return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users)
-
-login_or_basic = login_or_basic_ex()
+def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
 def login_or_digest_or_basic_or_apikey(default=BASIC):
@@ -195,11 +202,26 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
     return decorator
 
 
-def login_or_api_key_ex(allow_cc_users=False):
-    return _login_or_challenge(api_key(), allow_cc_users=allow_cc_users, api_key=True)
+def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(
+        api_key(),
+        allow_cc_users=allow_cc_users,
+        api_key=True,
+        allow_sessions=allow_sessions
+    )
 
 
+def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+# Use these decorators on views to allow sesson-auth or an extra authorization method
+login_or_digest = login_or_digest_ex()
+login_or_basic = login_or_basic_ex()
 login_or_api_key = login_or_api_key_ex()
+# Use these decorators on views to exclusively allow any one authorization method and not session based auth
+digest_auth = login_or_digest_ex(allow_sessions=False)
+basic_auth = login_or_basic_ex(allow_sessions=False)
+api_key_auth = login_or_api_key_ex(allow_sessions=False)
 
 
 def two_factor_check(api_key):
@@ -319,7 +341,10 @@ def domain_admin_required_ex(redirect_page_name=None):
             domain_name, domain = load_domain(request, domain)
             if not domain:
                 raise Http404()
-            if not request.couch_user.is_domain_admin(domain_name):
+
+            if not (
+                _page_is_whitelist(request.path, domain_name) and request.user.is_superuser
+            ) and not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
 

@@ -217,6 +217,7 @@ class SubscriptionInterface(AddItemInterface):
         'corehq.apps.accounting.interface.EndDateFilter',
         'corehq.apps.accounting.interface.DateCreatedFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SalesforceContractIDFilter',
         'corehq.apps.accounting.interface.ActiveStatusFilter',
         'corehq.apps.accounting.interface.DoNotInvoiceFilter',
@@ -311,6 +312,11 @@ class SubscriptionInterface(AddItemInterface):
         if subscriber is not None:
             queryset = queryset.filter(
                 subscriber__domain=subscriber,
+            )
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            queryset = queryset.filter(
+                account__name=account_name,
             )
         salesforce_contract_id = SalesforceContractIDFilter.get_value(self.request, self.domain)
         if salesforce_contract_id is not None:

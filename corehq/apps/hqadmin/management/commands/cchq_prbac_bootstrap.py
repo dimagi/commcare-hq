@@ -2,14 +2,12 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 # Standard library imports
-import sys
 import logging
 from optparse import make_option
 
 # Django imports
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
-from django.core.mail import mail_admins
 
 # External imports
 from corehq import privileges
@@ -162,8 +160,8 @@ class Command(BaseCommand):
              description='Allows for specifying custom intents'),
         Role(slug=privileges.ADVANCED_DOMAIN_SECURITY, name='Advanced Domain Security',
              description='Allows domains to set security policies for all web users'),
-        Role(slug=privileges.BUILD_PROFILES, name='Build Profiles',
-             description='Allows domains to create build profiles to customize app deploys')
+        Role(slug=privileges.BUILD_PROFILES, name='Application Profiles',
+             description='Allows domains to create application profiles to customize app deploys')
     ]
 
     BOOTSTRAP_PLANS = [

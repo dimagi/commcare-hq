@@ -6,10 +6,10 @@
     <input type="hidden" name="form_type" value="update-user" />
     <fieldset>
         <legend>{{ edit_user_form_title }}</legend>
-        <div class="control-group">
-            <label class="control-label">{% trans 'Username' %}</label>
-            <div class="controls">
-                <span class="input-xlarge uneditable-input">{{ couch_user.html_username|safe }}</span>
+        <div class="form-group">
+            <label class="control-label col-sm-3 col-md-2">{% trans 'Username' %}</label>
+            <div class="col-sm-9 col-md-8 col-lg-6">
+                <p class="form-control-static">{{ couch_user.html_username|safe }}</p>
             </div>
         </div>
         {% crispy form_user_update %}
@@ -17,7 +17,9 @@
             {% crispy data_fields_form %}
         {% endif %}
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary disable-on-submit" disabled>{% trans 'Update Information' %}</button>
+            <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+                <button type="submit" class="btn btn-primary disable-on-submit" disabled>{% trans 'Update Information' %}</button>
+            </div>
         </div>
     </fieldset>
 </form>
@@ -34,10 +36,12 @@
         {% else %}
         <legend>{% trans 'Location Settings' %}</legend>
         {% endif %}
-        {% include 'hqstyle/forms/basic_fieldset.html' with form=update_form %}
+        {% crispy update_form %}
     </fieldset>
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommCare Supply Settings' %}</button>
+        <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+            <button type="submit" class="btn btn-primary disable-on-submit">{% trans 'Update CommCare Supply Settings' %}</button>
+        </div>
     </div>
 </form>
 {% endif %}

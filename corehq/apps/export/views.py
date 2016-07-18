@@ -10,10 +10,10 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from corehq.apps.export.export import get_export_download
+from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.utils import use_new_exports
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
@@ -25,6 +25,7 @@ from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
+from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, \
     login_or_digest_or_basic_or_apikey
@@ -36,6 +37,7 @@ from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import (
     ExportNotFound,
     ExportAppException,
+    BadExportConfiguration,
     ExportFormValidationException,
     ExportAsyncException,
 )
@@ -52,10 +54,12 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
+    ExportInstance,
 )
 from corehq.apps.export.const import (
     FORM_EXPORT,
     CASE_EXPORT,
+    MAX_EXPORTABLE_ROWS,
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
@@ -73,7 +77,6 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.reports.tasks import rebuild_export_task
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_select2,
     use_daterangepicker,
     use_jquery_ui,
@@ -152,7 +155,6 @@ class BaseExportView(BaseProjectDataView):
     export_type = None
     is_async = True
 
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, *args, **kwargs):
         return super(BaseExportView, self).dispatch(*args, **kwargs)
@@ -447,7 +449,6 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
     filter_form_class = None
 
     @use_daterangepicker
-    @use_bootstrap3
     @use_select2
     @use_angular_js
     @method_decorator(login_and_domain_required)
@@ -790,11 +791,15 @@ class DownloadFormExportView(BaseDownloadExportView):
         """Checks to see if this form export has multimedia available to export
         """
         try:
-            export_object = self.get_export_schema(self.domain, self.export_id)
-            has_multimedia = FormAccessors(self.domain).forms_have_multimedia(
-                export_object.app_id,
-                getattr(export_object, 'xmlns', '')
-            )
+            export_object = self._get_export(self.domain, self.export_id)
+            if isinstance(export_object, ExportInstance):
+                has_multimedia = export_object.has_multimedia
+            else:
+                has_multimedia = forms_have_multimedia(
+                    self.domain,
+                    export_object.app_id,
+                    getattr(export_object, 'xmlns', '')
+                )
         except Exception as e:
             return format_angular_error(e.message)
         return format_angular_success({
@@ -809,7 +814,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         """
         try:
             filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-            filter_form = FilterFormCouchExportDownloadForm(
+            filter_form = self.filter_form_class(
                 self.domain_object, self.timezone, filter_form_data
             )
             if not filter_form.is_valid():
@@ -817,7 +822,7 @@ class DownloadFormExportView(BaseDownloadExportView):
                     _("Please check that you've submitted all required filters.")
                 )
             download = DownloadBase()
-            export_object = self.get_export_schema(self.domain, export_specs[0]['export_id'])
+            export_object = self._get_export(self.domain, export_specs[0]['export_id'])
             task_kwargs = filter_form.get_multimedia_task_kwargs(
                 export_object, download.download_id
             )
@@ -874,6 +879,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
     def download_export_form(self):
         return self.filter_form_class(
             self.domain_object,
+            timezone=self.timezone,
             initial={
                 'type_or_group': 'type',
             },
@@ -892,7 +898,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
 
     def _get_filter_form(self, filter_form_data):
         filter_form = self.filter_form_class(
-            self.domain_object, filter_form_data
+            self.domain_object, self.timezone, filter_form_data,
         )
         if not filter_form.is_valid():
             raise ExportFormValidationException()
@@ -904,7 +910,6 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     allow_bulk_export = True
     is_deid = False
 
-    @use_bootstrap3
     @use_select2
     @use_angular_js
     @method_decorator(login_and_domain_required)
@@ -1206,7 +1211,7 @@ class FormExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = FormExportSchema.get_stale_exports(self.domain)
         new_exports = get_form_export_instances(self.domain)
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        if use_new_exports(self.domain):
             exports += new_exports
         else:
             exports += revert_new_exports(new_exports)
@@ -1232,7 +1237,7 @@ class FormExportListView(BaseExportListView):
         return _("Select a Form to Export")
 
     def fmt_export_data(self, export):
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        if use_new_exports(self.domain):
             edit_view = EditNewCustomFormExportView
         else:
             edit_view = EditCustomFormExportView
@@ -1270,7 +1275,7 @@ class FormExportListView(BaseExportListView):
         if self.is_deid:
             raise Http404()
         try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain)
+            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_form_rmi_response()
         except Exception as e:
             return format_angular_error(
@@ -1287,7 +1292,7 @@ class FormExportListView(BaseExportListView):
 
         app_id = create_form.cleaned_data['application']
         form_xmlns = create_form.cleaned_data['form']
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        if use_new_exports(self.domain):
             cls = CreateNewCustomFormExportView
         else:
             cls = CreateCustomFormExportView
@@ -1331,7 +1336,7 @@ class CaseExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = CaseExportSchema.get_stale_exports(self.domain)
         new_exports = get_case_export_instances(self.domain)
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        if use_new_exports(self.domain):
             exports += new_exports
         else:
             exports += revert_new_exports(new_exports)
@@ -1349,7 +1354,7 @@ class CaseExportListView(BaseExportListView):
         return _("Select a Case Type to Export")
 
     def fmt_export_data(self, export):
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        if use_new_exports(self.domain):
             edit_view = EditNewCustomCaseExportView
         else:
             edit_view = EditCustomCaseExportView
@@ -1384,7 +1389,7 @@ class CaseExportListView(BaseExportListView):
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
         try:
-            rmi_helper = ApplicationDataRMIHelper(self.domain)
+            rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_case_rmi_response()
         except Exception as e:
             return format_angular_error(
@@ -1399,22 +1404,28 @@ class CaseExportListView(BaseExportListView):
         if not create_form.is_valid():
             raise ExportFormValidationException()
         case_type = create_form.cleaned_data['case_type']
-        if toggles.NEW_EXPORTS.enabled(self.domain):
+        app_id = create_form.cleaned_data['application']
+        if app_id == ApplicationDataRMIHelper.UNKNOWN_SOURCE:
+            app_id_param = ''
+        else:
+            app_id_param = '&app_id={}'.format(app_id)
+
+        if use_new_exports(self.domain):
             cls = CreateNewCustomCaseExportView
         else:
             cls = CreateCustomCaseExportView
         return reverse(
             cls.urlname,
             args=[self.domain],
-        ) + ('?export_tag="{export_tag}"'.format(
+        ) + ('?export_tag="{export_tag}"{app_id_param}'.format(
             export_tag=case_type,
+            app_id_param=app_id_param,
         ))
 
 
 class BaseNewExportView(BaseExportView):
     template_name = 'export/customize_export_new.html'
 
-    @use_bootstrap3
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseNewExportView, self).dispatch(request, *args, **kwargs)
@@ -1432,10 +1443,14 @@ class BaseNewExportView(BaseExportView):
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
             'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
+            'use_new_exports': use_new_exports(self.domain)
         }
 
     def commit(self, request):
         export = self.export_instance_cls.wrap(json.loads(request.body))
+        if self.domain != export.domain:
+            raise BadExportConfiguration()
+
         export.save()
         messages.success(
             request,
@@ -1468,7 +1483,6 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
             self.domain,
             app_id,
             xmlns,
-            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -1482,11 +1496,12 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
+        app_id = request.GET.get('app_id')
 
         schema = CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
+            app_id,
             case_type,
-            force_rebuild=True,
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -1588,6 +1603,7 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     def get_export_schema(self, export_instance):
         return CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
+            self.request.GET.get('app_id'),
             export_instance.case_type,
         )
 
@@ -1629,6 +1645,7 @@ class GenericDownloadNewExportMixin(object):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
         export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
         self._check_deid_permissions(export_instances)
+        self._check_export_size(export_instances, export_filters)
 
         return get_export_download(
             export_instances=export_instances,
@@ -1658,6 +1675,16 @@ class GenericDownloadNewExportMixin(object):
                         _("You do not have permission to export this "
                         "De-Identified export.")
                     )
+
+    def _check_export_size(self, export_instances, filters):
+        count = 0
+        for instance in export_instances:
+            count += get_export_size(instance, filters)
+        if count > MAX_EXPORTABLE_ROWS:
+            raise ExportAsyncException(
+                _("This export contains " + count + " rows. Please change the " +
+                "filters to be less than " + MAX_EXPORTABLE_ROWS + "rows.")
+            )
 
 
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):

@@ -125,15 +125,9 @@ def assume_alias(es, index, alias):
 
 
 def doc_exists(pillow, doc_id_or_dict):
-    """
-    Check if a document exists, by ID or the whole document.
-    """
-    if isinstance(doc_id_or_dict, basestring):
-        doc_id = doc_id_or_dict
-    else:
-        assert isinstance(doc_id_or_dict, dict)
-        doc_id = doc_id_or_dict['_id']
-    return pillow.get_es_new().exists(pillow.es_index, pillow.es_type, doc_id)
+    index_info = get_index_info_from_pillow(pillow)
+    from corehq.elastic import doc_exists_in_es
+    return doc_exists_in_es(index_info, doc_id_or_dict)
 
 
 def get_all_elasticsearch_pillow_classes():

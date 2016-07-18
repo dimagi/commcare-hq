@@ -1,0 +1,16 @@
+{% extends "mocha/base.html" %}
+{% load hq_shared_tags %}
+
+{% block dependencies %}
+    <script type="text/javascript" src="{% static 'knockout/dist/knockout.js' %}"></script>
+    <script src="{% static 'locations/ko/location_types.js' %}"></script>
+{% endblock %}
+
+{% block fixtures %}
+    <script src="{% static 'locations/spec/data/locations_data.js' %}"></script>
+{% endblock %}
+
+{% block mocha_tests %}
+    <script src="{% static 'locations/spec/types_spec.js' %}"></script>
+{% endblock %}
+

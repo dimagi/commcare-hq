@@ -18,7 +18,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Text,
 )
 from corehq.apps.app_manager.util import module_offers_search
-from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath
+from corehq.apps.app_manager.xpath import XPath, CaseTypeXpath, InstanceXpath, CaseIDXPath
 from corehq.apps.case_search.models import CALCULATED_DATA, MARK_AS_CLAIMED
 from corehq.util.view_utils import absolute_reverse
 
@@ -58,6 +58,7 @@ class SyncRequestContributor(SuiteContributorByModule):
             sync_request = SyncRequest(
                 post=SyncRequestPost(
                     url=absolute_reverse('claim_case', args=[domain]),
+                    relevant=module.search_config.relevant,
                     data=[
                         QueryData(
                             key='case_id',
@@ -74,10 +75,16 @@ class SyncRequestContributor(SuiteContributorByModule):
                     ),
                 ),
 
-                instances=[Instance(
-                    id=SESSION_INSTANCE,
-                    src='jr://instance/session'
-                )],
+                instances=[
+                    Instance(
+                        id=SESSION_INSTANCE,
+                        src='jr://instance/session'
+                    ),
+                    Instance(
+                        id='casedb',
+                        src='jr://instance/casedb'
+                    ),
+                ],
 
                 session=SyncRequestSession(
                     queries=[

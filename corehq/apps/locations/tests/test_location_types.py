@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
@@ -134,6 +134,36 @@ class TestLocationTypeOwnership(TestCase):
             set([parent_loc._id, grandchild_loc._id]),
             set([g._id for g in self.user.get_case_sharing_groups()])
         )
+
+
+class TestLocationTypeExpansions(SimpleTestCase):
+    def setUp(self):
+        self.city = LocationType(
+            domain='test_domain',
+            name='City',
+            code='city',
+        )
+        self.state = LocationType(
+            domain='test_domain',
+            name='State',
+            code='state',
+        )
+
+    def test_setting_expansion(self):
+        """Expansions should either be an expansion from the root, or from a particular level
+        """
+        self.assertFalse(self.city.expand_from_root)
+        self.city.expand_from = self.state
+        self.assertFalse(self.city.expand_from_root)
+        self.assertEqual(self.city.expand_from, self.state)
+
+        self.city.expand_from_root = True
+        self.assertTrue(self.city.expand_from_root)
+        self.assertIsNone(self.city.expand_from)
+
+        self.city.expand_from = self.state
+        self.assertFalse(self.city.expand_from_root)
+        self.assertEqual(self.city.expand_from, self.state)
 
 
 def make_loc_type(name, parent_type=None, domain='locations-test',

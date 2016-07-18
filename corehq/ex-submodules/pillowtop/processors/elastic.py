@@ -8,7 +8,8 @@ IDENTITY_FN = lambda x: x
 
 class ElasticProcessor(PillowProcessor):
 
-    def __init__(self, elasticsearch, index_info, doc_prep_fn=None):
+    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
+        self.doc_filter_fn = doc_filter_fn
         self.elasticsearch = elasticsearch
         self.index_info = index_info
         self.doc_transform_fn = doc_prep_fn or IDENTITY_FN
@@ -21,12 +22,15 @@ class ElasticProcessor(PillowProcessor):
             self._delete_doc_if_exists(change.id)
             return
 
-        # prepare doc for es
         doc = change.get_document()
         if doc is None:
             pillow_logging.warning("Unable to get document from change: {}".format(change))
             return
 
+        if self.doc_filter_fn and self.doc_filter_fn(doc):
+            return
+
+        # prepare doc for es
         doc_ready_to_save = self.doc_transform_fn(doc)
         # send it across
         send_to_elasticsearch(

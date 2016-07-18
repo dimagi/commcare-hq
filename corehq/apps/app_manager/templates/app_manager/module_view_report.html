@@ -5,8 +5,8 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% new_static 'app_manager/js/report-module.js' %}"></script>
-    <script type="text/javascript" src="{% new_static 'reports_core/js/choice-list-api.js' %}"></script>
+    <script src="{% static 'app_manager/js/report-module.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
     {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}

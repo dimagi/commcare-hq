@@ -1,6 +1,7 @@
-{% extends "style/bootstrap2/centered.html" %}
+{% extends "style/base_page.html" %}
 {% block title %}Error {% endblock %}
-{% block centered-content %}
+{% block page_name %}Error{% endblock %}
+{% block page_content %}
 <div id="bigfail"><p>:(</p></div>
 <p class="error">
 {% if error_message %}

@@ -369,6 +369,7 @@ class ExportTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ExportTest, cls).setUpClass()
         cls.case_pillow = CasePillow(online=False)
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
             completely_initialize_pillow_index(cls.case_pillow)
@@ -390,6 +391,7 @@ class ExportTest(SimpleTestCase):
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(cls.case_pillow.es_index)
+        super(ExportTest, cls).tearDownClass()
 
     def test_get_export_file(self):
         export_file = get_export_file(

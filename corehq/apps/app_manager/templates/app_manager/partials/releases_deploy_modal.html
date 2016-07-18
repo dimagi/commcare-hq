@@ -19,10 +19,16 @@
                 <a href="{% url "mobile_workers" domain %}">{% trans "create your first mobile worker" %}</a>.
             </div>
         {% else %}
-            <div class="panel-group" id="deploy-accordion">
+            <div class="panel-group" data-bind="attr: {id: 'deploy-accordion_' + id()}">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <a data-toggle="collapse" data-parent="#deploy-accordion" href="#panel-android" aria-expanded="true" aria-controls="panel-android">
+                        <a
+                            data-toggle="collapse"
+                            href="#panel-android"
+                            aria-expanded="true"
+                            aria-controls="panel-android"
+                            data-bind="attr: {'data-parent': '#deploy-accordion_' + id()}"
+                            >
                             {% trans "Download to Android" %}
                         </a>
                     </div>
@@ -47,9 +53,11 @@
                                                 </a>
                                                 {% trans "to your Android device." %}
                                             </p>
-                                            {% if build_profile_access and not app.is_remote_app %}
-                                            <label>{% trans "Build Profile" %}</label>
-                                            <select data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
+                                            {% if build_profile_access and not app.is_remote_app and app.build_profiles %}
+                                                <div class="form-inline">
+                                                    <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
+                                                        <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
+                                                </div>
                                             {% endif %}
                                             {% if multimedia_state.has_media %}
                                                 <div class="checkbox">
@@ -106,9 +114,11 @@
                                                 Offline install is unavailable for Remote Apps.
                                             </div>
                                             <div data-bind="if: hqImport('app_manager/js/app_manager.js').versionGE(build_spec.version(), '2.13.0') && allow_media_install()">
-                                                {% if build_profile_access and not app.is_remote_app %}
-                                                <label>{% trans "Build Profile" %}</label>
-                                                <select data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
+                                                {% if build_profile_access and not app.is_remote_app and app.build_profiles %}
+                                                <div class="form-inline">
+                                                    <label style="font-weight: normal">{% trans "Application Profile" %}:</label>
+                                                        <select style="width: 400px" data-bind="optstr: build_profiles(), value: build_profile" class="form-control"></select>
+                                                </div>
                                                 {% endif %}
                                                 <ol>
                                                     <li>
@@ -157,13 +167,19 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <a data-toggle="collapse"
-                           data-parent="#deploy-accordion" href="#panel-java"
-                           data-bind="click: function() { track_deploy_type('Download to Java Phone'); },"
+                           data-bind="
+                           click: function() { track_deploy_type('Download to Java Phone'); },
+                           attr: {
+                               href: '#' + id() + '_download_java',
+                               'data-target': '#' + id() + '_download_java',
+                               'data-parent': '#deploy-accordion_' + id()
+                            }
+                           "
                            aria-expanded="true" aria-controls="panel-java">
                             {% trans "Download to Java Phone" %}
                         </a>
                     </div>
-                    <div class="panel-collapse collapse" id="panel-java">
+                    <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_download_java'}">
                         <div class="panel-body">
                             <ol>
                                 <li>
@@ -187,13 +203,19 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">
                             <a data-toggle="collapse"
-                               data-parent="#deploy-accordion" href="#panel-sms"
-                               data-bind="click: function() { track_deploy_type('Send to phone via SMS'); }, click: function() { generate_short_url('short_url'); }"
+                               data-bind="
+                                   click: onSMSPanelClick,
+                                   attr: {
+                                      href: '#' + id() + '_sms',
+                                      'data-target': '#' + id() + '_sms',
+                                      'data-parent': '#deploy-accordion_' + id()
+                                   }
+                                "
                                aria-expanded="true" aria-controls="panel-sms">
                             {% trans "Send to phone via SMS" %}
                         </a>
                     </div>
-                    <div class="panel-collapse collapse" id="panel-sms">
+                    <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
                         <div class="panel-body">
                             <div data-bind="bootstrapTabs: true">
                                 <div class="tabbable">
@@ -232,7 +254,7 @@
                                                 </form>
                                             </div>
                                             <div data-bind="visible: $parent.generating_url()">
-                                                <img src="{% new_static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
                                             </div>
                                             <div data-bind="visible: !$parent.sms_url($index()) && !$parent.generating_url()">
                                                 <span class="label label-danger">
@@ -251,10 +273,13 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <a data-toggle="collapse"
-                               data-parent="#deploy-accordion" href="#panel-multimedia"
                                data-bind="
                                   click: function() { track_deploy_type('Download Multimedia'); },
-                                  attr: {href: '#' + id() + '_multimedia', 'data-target': '#' + id() + '_multimedia'}
+                                  attr: {
+                                    href: '#' + id() + '_multimedia',
+                                    'data-target': '#' + id() + '_multimedia',
+                                    'data-parent': '#deploy-accordion_' + id()
+                                  }
                                "
                                aria-expanded="true" aria-controls="panel-multimedia">
                                 {% trans 'Download Multimedia' %}

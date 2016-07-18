@@ -20,11 +20,13 @@ class Version2CaseParsingTest(TestCase):
     """
     
     def setUp(self):
+        super(Version2CaseParsingTest, self).setUp()
         delete_all_cases()
 
     @classmethod
     def tearDownClass(cls):
         delete_all_cases()
+        super(Version2CaseParsingTest, cls).tearDownClass()
 
     @run_with_all_backends
     def testParseCreate(self):

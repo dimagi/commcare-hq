@@ -40,7 +40,7 @@
     <script src="{% static 'nprogress/nprogress.js' %}"></script>
     <script src="{% static 'moment/min/moment.min.js' %}"></script>
 
-    <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+    <script src="{% static 'style/js/ui-element.js' %}"></script>
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
     <script src="{% static 'case/js/casexml.js' %}"></script>
     <script src="{% static 'backbone/backbone-min.js' %}"></script>
@@ -109,6 +109,10 @@
         {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
                 instanceViewerEnabled = true;
         {% endif %}
+        var formplayerEnabled = false;
+        {% if request|toggle_enabled:"USE_FORMPLAYER" %}
+                formplayerEnabled = true;
+        {% endif %}
         var username = "{{ request.user.username }}";
         var cloudCare = hqImport('cloudcare/js/backbone/apps.js');
         window.mainView = new cloudCare.AppMainView({
@@ -126,7 +130,8 @@
             renderFormRoot: renderFormRoot,
             instanceViewerEnabled: instanceViewerEnabled,
             username: username,
-            syncDbUrl: syncDbUrl
+            syncDbUrl: syncDbUrl,
+            formplayerEnabled: formplayerEnabled,
         });
 
         // TODO: when we figure out what to do about get params, use this
@@ -153,20 +158,6 @@
 {% endblock %}
 
 {% block page_navigation %}
-{% if request|toggle_enabled:"TF_USES_SQLITE_BACKEND" %}
-    <div class="nav-input" id="sync-container">
-        <button
-            class="btn btn-block btn-success"
-            type="button"
-            id="sync-button">
-            {% trans "Sync Data" %}
-        </button>
-        <small>
-            <i class="fa fa-info-circle"></i>&nbsp;
-            {% trans "Click to refresh the data and process all recently submitted cases" %}
-        </small>
-    </div>
-{% endif %}
     <section id="app-main" >
         <nav id="app-list" ></nav>
         <nav id="module-list" ></nav>
@@ -175,6 +166,16 @@
         <nav id="sessions"></nav>
 {% endif %}
     </section>
+{% if use_sqlite_backend %}
+    <div class="nav-input" id="sync-container">
+        <button
+            class="btn btn-block btn-info"
+            type="button"
+            id="sync-button">
+            {% trans "Sync Data" %}
+        </button>
+    </div>
+{% endif %}
 {% endblock %}
 
 {% block page_content %}

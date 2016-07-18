@@ -1,14 +1,7 @@
-from StringIO import StringIO
-from django.test.client import RequestFactory
-from datetime import datetime
 import getpass
 import urllib2
 from django.core.management.base import NoArgsCommand
-from restkit import Resource
-from corehq.util.dates import iso_string_to_datetime
 from pact.management.commands.constants import RETRY_LIMIT
-from pact.enums import PACT_DOMAIN
-from pact.utils import submit_xform
 
 
 class PactMigrateCommand(NoArgsCommand):

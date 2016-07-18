@@ -7,7 +7,6 @@ from django.test import TestCase
 from django.test.client import Client
 from mock import patch
 
-from corehq import toggles
 from corehq.apps.users.models import WebUser
 from corehq.apps.repeaters.models import AppStructureRepeater
 from corehq.apps.domain.models import Domain

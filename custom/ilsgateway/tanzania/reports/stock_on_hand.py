@@ -344,7 +344,7 @@ class DistrictSohPercentageTableData(ILSData):
         products = self.get_products()
 
         if self.config['location_id']:
-            locations = SQLLocation.objects.filter(parent__location_id=self.config['location_id'])
+            locations = SQLLocation.active_objects.filter(parent__location_id=self.config['location_id'])
             for loc in locations:
                 supply_point = loc.supply_point_id
 
@@ -421,6 +421,7 @@ class ProductSelectionPane(ILSData):
 class StockOnHandReport(DetailsReport):
     slug = "stock_on_hand"
     name = 'Stock On Hand'
+    exportable = True
 
     @property
     def title(self):

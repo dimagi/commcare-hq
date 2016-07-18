@@ -2,12 +2,13 @@ from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
     METHOD_EMAIL, CaseReminderHandler, EmailUsage)
+from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.ivr.models import Call
+from corehq.apps.locations.models import Location
 from corehq.apps.reminders.util import get_unverified_number_for_recipient
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
-from corehq.apps.sms.mixin import VerifiedNumber
 from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
@@ -15,7 +16,8 @@ from corehq.apps.sms.api import (
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.util import form_requires_input
 from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
+from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import (
     ExpectedCallback, CALLBACK_PENDING, CALLBACK_RECEIVED,
@@ -55,7 +57,7 @@ Each method accepts the following parameters:
                         will be list of CommCareUsers or CommCareCases.
                         
     verified_numbers    A dictionary of recipient.get_id : <first non-pending verified number>
-                        If the recipient doesn't have a verified VerifiedNumber entry, None is the 
+                        If the recipient doesn't have a verified PhoneNumber entry, None is the
                         corresponding value.
 
 Any changes to the reminder object made by the event handler method will be saved
@@ -82,7 +84,81 @@ def get_recipient_phone_number(reminder, recipient, verified_numbers):
     return (verified_number, unverified_number)
 
 
-def get_message_template_params(case):
+def _get_case_template_info(case):
+    return case.to_json()
+
+
+def _get_web_user_template_info(user):
+    return {
+        'name': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+    }
+
+
+def _get_mobile_user_template_info(user):
+    return {
+        'name': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+    }
+
+
+def _get_group_template_info(group):
+    return {
+        'name': group.name,
+    }
+
+
+def _get_location_template_info(location):
+    return {
+        'name': location.name,
+        'site_code': location.site_code,
+    }
+
+
+def _get_obj_template_info(obj):
+    if is_commcarecase(obj):
+        return _get_case_template_info(obj)
+    elif isinstance(obj, WebUser):
+        return _get_web_user_template_info(obj)
+    elif isinstance(obj, CommCareUser):
+        return _get_mobile_user_template_info(obj)
+    elif isinstance(obj, Group):
+        return _get_group_template_info(obj)
+    elif isinstance(obj, Location):
+        return _get_location_template_info(obj)
+
+    return {}
+
+
+def _add_case_to_template_params(case, result):
+    result['case'] = _get_obj_template_info(case)
+
+
+def _add_parent_case_to_template_params(case, result):
+    parent_case = case.parent
+    if parent_case:
+        result['case']['parent'] = _get_obj_template_info(parent_case)
+
+
+def _add_owner_to_template_params(case, result):
+    owner = get_wrapped_owner(get_owner_id(case))
+    if owner:
+        result['case']['owner'] = _get_obj_template_info(owner)
+
+
+def _add_modified_by_to_template_params(case, result):
+    try:
+        modified_by = CouchUser.get_by_user_id(case.modified_by)
+    except KeyError:
+        return
+
+    if modified_by:
+        result['case']['last_modified_by'] = _get_obj_template_info(modified_by)
+
+
+def get_message_template_params(case=None):
     """
     Data such as case properties can be referenced from reminder messages
     such as {case.name} which references the case's name. Add to this result
@@ -101,16 +177,16 @@ def get_message_template_params(case):
                 ...key:value parent case properties...
             }
         }
+        "owner": ... dict with selected info for the case owner ...
+        "last_modified_by": ... dict with selected info for the user who last modified the case ...
     }
     """
-    result = {"case": {}}
+    result = {}
     if case:
-        result["case"] = case.to_json()
-
-    parent_case = case.parent if case else None
-    result["case"]["parent"] = {}
-    if parent_case:
-        result["case"]["parent"] = parent_case.to_json()
+        _add_case_to_template_params(case, result)
+        _add_parent_case_to_template_params(case, result)
+        _add_owner_to_template_params(case, result)
+        _add_modified_by_to_template_params(case, result)
     return result
 
 
@@ -248,9 +324,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
             for session_id in reminder.xforms_session_ids:
                 session = get_session_by_session_id(session_id)
                 if session.end_time is None:
-                    vn = VerifiedNumber.view("phone_numbers/verified_number_by_owner_id",
-                                             key=session.connection_id,
-                                             include_docs=True).first()
+                    vn = verified_numbers.get(session.connection_id)
                     if vn is not None:
                         metadata = MessageMetadata(
                             workflow=get_workflow(handler),

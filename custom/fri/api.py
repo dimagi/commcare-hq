@@ -3,7 +3,6 @@ import re
 from dateutil.parser import parse
 from datetime import datetime, timedelta, date, time
 import pytz
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.util.timezones.conversions import PhoneTime
 from custom.fri.models import (

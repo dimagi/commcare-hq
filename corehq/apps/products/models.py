@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 import itertools
-import json_field
+import jsonfield
 
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -292,6 +292,12 @@ class ProductManager(ProductQueriesMixin, models.Manager):
         return ProductQuerySet(self.model, using=self._db)
 
 
+class OnlyActiveProductManager(ProductManager):
+
+    def get_queryset(self):
+        return super(OnlyActiveProductManager, self).get_queryset().filter(is_archived=False)
+
+
 class SQLProduct(models.Model):
     """
     A SQL based clone of couch Products.
@@ -309,13 +315,14 @@ class SQLProduct(models.Model):
     program_id = models.CharField(max_length=100, null=True, default='')
     cost = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     units = models.CharField(max_length=100, null=True, default='')
-    product_data = json_field.JSONField(
-        default={},
+    product_data = jsonfield.JSONField(
+        default=dict,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     objects = ProductManager()
+    active_objects = OnlyActiveProductManager()
 
     def __unicode__(self):
         return u"{} ({})".format(self.name, self.domain)

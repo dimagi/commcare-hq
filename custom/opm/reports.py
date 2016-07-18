@@ -32,10 +32,7 @@ from corehq.apps.reports.generic import ElasticTabularReport, GetParamsMixin
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, MonthYearMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
-from corehq.apps.reports.util import (
-    get_INFilter_bindparams,
-    make_form_couch_key,
-)
+from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.users.models import CouchUser
 from corehq.util.translation import localize
 from dimagi.utils.couch import get_redis_client
@@ -72,7 +69,7 @@ class SharedDataProvider(object):
         self.cases = cases
 
     def get_all_vhnd_forms(self):
-        key = make_form_couch_key(DOMAIN, xmlns=VHND_XMLNS)
+        key = ['submission xmlns', DOMAIN, VHND_XMLNS]
         return XFormInstance.get_db().view(
             'all_forms/view',
             startkey=key,
@@ -1019,11 +1016,9 @@ class HealthMapReport(BaseMixin, GenericMapReport, GetParamsMixin, CustomProject
         'report': 'custom.opm.reports.HealthMapSource',
     }
 
-    is_bootstrap3 = True
-
     @use_maps
-    def bootstrap3_dispatcher(self, request, *args, **kwargs):
-        super(HealthMapReport, self).bootstrap3_dispatcher(request, *args, **kwargs)
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(HealthMapReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @property
     def report_subtitles(self):

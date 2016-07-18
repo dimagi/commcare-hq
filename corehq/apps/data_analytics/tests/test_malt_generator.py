@@ -6,15 +6,17 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
+from corehq.apps.data_analytics.const import NOT_SET, YES
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
-from corehq.apps.sofabed.models import MISSING_APP_ID
-from corehq.pillows.xform import XFormPillow
+from corehq.const import MISSING_APP_ID
+from corehq.elastic import get_es_new
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 
 from dimagi.utils.dates import DateSpan
-from pillowtop.es_utils import completely_initialize_pillow_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class MaltGeneratorTest(TestCase):
@@ -35,23 +37,20 @@ class MaltGeneratorTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pillow = pillow = XFormPillow()
-        ensure_index_deleted(pillow.es_index)
-        completely_initialize_pillow_index(pillow)
+        cls.es = get_es_new()
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
         cls._setup_domain_user()
         cls._setup_apps()
         cls._setup_forms()
-        pillow.get_es_new().indices.refresh(pillow.es_index)
+        cls.es.indices.refresh(XFORM_INDEX_INFO.index)
         cls.run_malt_generation()
-
-    def setUp(self):
-        ensure_index_deleted(self.pillow.es_index)
-        completely_initialize_pillow_index(self.pillow)
 
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
         MALTRow.objects.all().delete()
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
 
     @classmethod
     def _setup_domain_user(cls):
@@ -121,7 +120,7 @@ class MaltGeneratorTest(TestCase):
         self._assert_malt_row_exists({
             'app_id': self.wam_app_id,
             'num_of_forms': 2,
-            'wam': MALTRow.YES,
+            'wam': YES,
         })
 
     def test_wam_not_set_malt_counts(self):
@@ -129,7 +128,7 @@ class MaltGeneratorTest(TestCase):
         self._assert_malt_row_exists({
             'app_id': self.non_wam_app_id,
             'num_of_forms': 3,
-            'wam': MALTRow.NOT_SET,
+            'wam': NOT_SET,
             'device_id': self.DEVICE_ID,
         })
 
@@ -137,7 +136,7 @@ class MaltGeneratorTest(TestCase):
         self._assert_malt_row_exists({
             'app_id': self.non_wam_app_id,
             'num_of_forms': 1,
-            'wam': MALTRow.NOT_SET,
+            'wam': NOT_SET,
             'device_id': COMMCONNECT_DEVICE_ID,
         })
 
@@ -146,5 +145,5 @@ class MaltGeneratorTest(TestCase):
         self._assert_malt_row_exists({
             'app_id': MISSING_APP_ID,
             'num_of_forms': 1,
-            'wam': MALTRow.NOT_SET,
+            'wam': NOT_SET,
         })

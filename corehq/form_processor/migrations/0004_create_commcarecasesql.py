@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import json_field.fields
+import jsonfield.fields
 import corehq.form_processor.abstract_models
 
 
@@ -31,8 +31,8 @@ class Migration(migrations.Migration):
                 ('closed_by', models.CharField(max_length=255)),
                 ('deleted', models.BooleanField(default=False)),
                 ('external_id', models.CharField(max_length=255)),
-                ('case_json', json_field.fields.JSONField(default='null', help_text='Enter a valid JSON object')),
-                ('attachments_json', json_field.fields.JSONField(default='null', help_text='Enter a valid JSON object')),
+                ('case_json', jsonfield.fields.JSONField(default='null')),
+                ('attachments_json', jsonfield.fields.JSONField(default='null')),
             ],
             options={
             },

@@ -1,5 +1,4 @@
 from collections import defaultdict
-from datetime import datetime
 from django.http import HttpResponse
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.cache import request_cache
@@ -9,7 +8,7 @@ from custom.ewsghana.reports.specific_reports.reporting_rates import ReportingRa
 from custom.ewsghana.reports.specific_reports.stock_status_report import ProductAvailabilityData
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, InputStock, \
     InventoryManagementData, UsersData
-from custom.ewsghana.utils import get_country_id, calculate_last_period
+from custom.ewsghana.utils import calculate_last_period
 
 
 class DashboardReport(MultiReport):

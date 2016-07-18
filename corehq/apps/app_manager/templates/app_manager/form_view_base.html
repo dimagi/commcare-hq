@@ -7,25 +7,29 @@
 {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <link rel="stylesheet" href="{% new_static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
+    <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
+{% endblock %}
+
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
     {% compress js %}
-    <script src="{% new_static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
-    <script src="{% new_static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
-    <script src="{% new_static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
+    <script src="{% static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
+    <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
+    <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     {% endcompress %}
-    <script src="{% new_static 'style/ko/knockout_subscribables.ko.js' %}"></script>
-    <script src="{% new_static 'jquery.caret/dist/jquery.caret-1.5.2.min.js' %}"></script>
+    <script src="{% static 'style/ko/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% static 'jquery.caret/dist/jquery.caret-1.5.2.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     {% if app.application_version == '2.0' %}
-        <script src="{% new_static 'app_manager/js/case-knockout-bindings.js' %}"></script>
-        <script src="{% new_static 'app_manager/js/case-config-utils.js' %}"></script>
+        <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+        <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
         {% block js_extra %}
-            <script src="{% new_static 'app_manager/js/case-config-ui-2.js' %}"></script>
+            <script src="{% static 'app_manager/js/case-config-ui-2.js' %}"></script>
         {% endblock %}
         <style>
             #open-referral-action,
@@ -39,8 +43,8 @@
             }
         </style>
     {% else %}
-        <script src="{% new_static 'app_manager/js/ejs.min.js' %}"></script>
-        <script src="{% new_static 'app_manager/js/case-config-ui-1.js' %}"></script>
+        <script src="{% static 'app_manager/js/ejs.min.js' %}"></script>
+        <script src="{% static 'app_manager/js/case-config-ui-1.js' %}"></script>
     {% endif %}
 
     {% include "app_manager/partials/form_filter/value-or-none-ui.html" %}
@@ -48,7 +52,7 @@
     {% include "app_manager/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% if allow_form_workflow %}
-        <script src="{% new_static 'app_manager/js/form_workflow.js' %}"></script>
+        <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
     <script>
         $(function(){
@@ -178,9 +182,13 @@
                 var labels = {};
                 labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
                 labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
-                labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module.name|trans:langs }}";
+                {% with module_name=module.name|trans:langs %}
+                labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
+                {% endwith %}
                 {% if module.root_module_id %}
-                labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ module.root_module.name|trans:langs }}";
+                {% with root_module_name=module.root_module.name|trans:langs %}
+                labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ root_module_name|escapejs }}";
+                {% endwith %}
                 {% endif %}
                 labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
 
@@ -309,13 +317,13 @@
                     {% trans "Case Management" %}
                 </a>
             </li>
-            {%  if allow_usercase or form.uses_usercase and form.form_type == 'module_form' %}
+            {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
                     {% trans "User Case Management" %}
                 </a>
             </li>
-            {%  endif %}
+            {% endif %}{% endif %}
             {% if form.form_type == 'advanced_form' and module.has_schedule %}
                  <li>
                      <a href="#visit-scheduler" data-toggle="tab">

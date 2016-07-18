@@ -2,6 +2,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from ..analytics import users_have_locations
 from ..dbaccessors import (get_users_by_location_id, get_user_ids_by_location,
                            get_one_user_at_location, get_user_docs_by_location,
@@ -17,6 +18,7 @@ class TestUsersByLocation(TestCase):
         cls.domain_obj = create_domain(cls.domain)
         bootstrap_location_types(cls.domain)
         delete_all_locations()
+        delete_all_users()
 
         def make_user(name, location):
             user = CommCareUser.create(cls.domain, name, 'password')

@@ -2,6 +2,8 @@ from collections import namedtuple
 
 from django.conf import settings
 from django.test import TestCase
+from django.test.utils import override_settings
+
 from casexml.apps.case.mock import CaseFactory, CaseBlock
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -21,13 +23,23 @@ class LedgerTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        FormProcessorTestUtils.delete_all_cases(DOMAIN)
-        FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        super(LedgerTests, cls).setUpClass()
         cls.product_a = make_product(DOMAIN, 'A Product', 'prodcode_a')
         cls.product_b = make_product(DOMAIN, 'B Product', 'prodcode_b')
         cls.product_c = make_product(DOMAIN, 'C Product', 'prodcode_c')
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.product_a.delete()
+        cls.product_b.delete()
+        cls.product_c.delete()
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(DOMAIN)
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers(DOMAIN)
+        super(LedgerTests, cls).tearDownClass()
+
     def setUp(self):
+        super(LedgerTests, self).setUp()
         self.interface = FormProcessorInterface(domain=DOMAIN)
         self.factory = CaseFactory(domain=DOMAIN)
         self.case = self.factory.create_case()

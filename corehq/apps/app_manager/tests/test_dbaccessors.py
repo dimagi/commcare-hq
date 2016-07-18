@@ -1,12 +1,18 @@
 from django.test import TestCase
 from corehq.apps.app_manager.dbaccessors import (
-    get_brief_apps_in_domain,
-    get_apps_in_domain,
     domain_has_apps,
-    get_built_app_ids_for_app_id,
     get_all_app_ids,
-    get_latest_built_app_ids_and_versions,
     get_all_built_app_ids_and_versions,
+    get_app,
+    get_apps_in_domain,
+    get_brief_apps_in_domain,
+    get_build_doc_by_version,
+    get_built_app_ids_for_app_id,
+    get_built_app_ids_with_submissions_for_app_id,
+    get_current_app,
+    get_latest_build_doc,
+    get_latest_app_ids_and_versions,
+    get_latest_released_app_doc,
 )
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
@@ -34,7 +40,12 @@ class DBAccessorsTest(TestCase, DocTestMixin):
 
         cls.decoy_apps = [
             # this one is a build
-            Application(domain=cls.domain, copy_of=cls.apps[0].get_id, version=cls.first_saved_version),
+            Application(
+                domain=cls.domain,
+                copy_of=cls.apps[0].get_id,
+                version=cls.first_saved_version,
+                has_submissions=True,
+            ),
             # this one is another build
             Application(domain=cls.domain, copy_of=cls.apps[0].get_id, version=12),
 
@@ -105,21 +116,32 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(len(app_ids), 1)
         self.assertEqual(self.decoy_apps[1].get_id, app_ids[0])
 
+    def test_get_built_app_ids_with_submissions_for_app_id(self):
+        app_ids = get_built_app_ids_with_submissions_for_app_id(self.domain, self.apps[0].get_id)
+        self.assertEqual(len(app_ids), 1)  # Should get the one that has_submissions
+
+        app_ids = get_built_app_ids_with_submissions_for_app_id(
+            self.domain,
+            self.apps[0].get_id,
+            self.first_saved_version
+        )
+        self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
+
     def test_get_all_app_ids_for_domain(self):
         app_ids = get_all_app_ids(self.domain)
         self.assertEqual(len(app_ids), 3)
 
     def test_get_latest_built_app_ids_and_versions(self):
-        build_ids_and_versions = get_latest_built_app_ids_and_versions(self.domain)
+        build_ids_and_versions = get_latest_app_ids_and_versions(self.domain)
         self.assertEqual(build_ids_and_versions, {
-            self.apps[0].get_id: 12,
-            '1234': 12,
+            self.apps[0].get_id: self.apps[0].version,
+            self.apps[1].get_id: self.apps[1].version,
         })
 
     def test_get_latest_built_app_ids_and_versions_with_app_id(self):
-        build_ids_and_versions = get_latest_built_app_ids_and_versions(self.domain, self.apps[0].get_id)
+        build_ids_and_versions = get_latest_app_ids_and_versions(self.domain, self.apps[0].get_id)
         self.assertEqual(build_ids_and_versions, {
-            self.apps[0].get_id: 12,
+            self.apps[0].get_id: self.apps[0].version,
         })
 
     def test_get_all_built_app_ids_and_versions(self):
@@ -128,3 +150,64 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(len(app_build_verions), 3)
         self.assertEqual(len(filter(lambda abv: abv.app_id == '1234', app_build_verions)), 1)
         self.assertEqual(len(filter(lambda abv: abv.app_id == self.apps[0]._id, app_build_verions)), 2)
+
+
+class TestAppGetters(TestCase):
+    domain = 'test-app-getters'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.project = Domain(name=cls.domain)
+        cls.project.save()
+
+        app_doc = Application(
+            domain=cls.domain,
+            name='foo',
+            langs=["en"],
+            version=1,
+            modules=[Module()]
+        ).to_json()
+        app = Application.wrap(app_doc)  # app is v1
+
+        app.save()  # app is v2
+        v2_build = app.make_build()
+        v2_build.is_released = True
+        v2_build.save()  # There is a starred build at v2
+
+        app.save()  # app is v3
+        app.make_build().save()  # There is a build at v3
+
+        app.save()  # app is v4
+        cls.app_id = app._id
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+
+    def test_get_app_current(self):
+        app = get_app(self.domain, self.app_id)
+        self.assertEqual(app.version, 4)
+
+    def test_get_current_app(self):
+        app_doc = get_current_app(self.domain, self.app_id)
+        self.assertEqual(app_doc['version'], 4)
+
+    def test_get_app_latest_released_build(self):
+        app = get_app(self.domain, self.app_id, latest=True)
+        self.assertEqual(app.version, 2)
+
+    def test_get_latest_released_app_doc(self):
+        app_doc = get_latest_released_app_doc(self.domain, self.app_id)
+        self.assertEqual(app_doc['version'], 2)
+
+    def test_get_app_latest_build(self):
+        app = get_app(self.domain, self.app_id, latest=True, target='build')
+        self.assertEqual(app.version, 3)
+
+    def test_get_latest_build_doc(self):
+        app_doc = get_latest_build_doc(self.domain, self.app_id)
+        self.assertEqual(app_doc['version'], 3)
+
+    def test_get_specific_version(self):
+        app_doc = get_build_doc_by_version(self.domain, self.app_id, version=2)
+        self.assertEqual(app_doc['version'], 2)

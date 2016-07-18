@@ -21,18 +21,26 @@ def get_reindex_commands(alias_name):
     # that should be used to rebuild the index from scratch
     pillow_command_map = {
         'hqdomains': [('ptop_reindexer_v2', {'index': 'domain'})],
-        'hqcases': ['ptop_fast_reindex_cases'],
-        'xforms': ['ptop_fast_reindex_xforms'],
+        'hqcases': [
+            'ptop_fast_reindex_cases',
+            ('ptop_reindexer_v2', {'index': 'sql-case'}),
+        ],
+        'xforms': [
+            'ptop_fast_reindex_xforms',
+            ('ptop_reindexer_v2', {'index': 'sql-form'}),
+        ],
         # groupstousers indexing must happen after all users are indexed
         'hqusers': [
             ('ptop_reindexer_v2', {'index': 'user'}),
             add_demo_user_to_user_index,
             ('ptop_reindexer_v2', {'index': 'groups-to-user'}),
         ],
-        'hqapps': ['ptop_fast_reindex_apps'],
+        'hqapps': [
+            ('ptop_reindexer_v2', {'index': 'app'})
+        ],
         'hqgroups': [('ptop_reindexer_v2', {'index': 'group'})],
-        'report_xforms': ['ptop_fast_reindex_reportxforms'],
-        'report_cases': ['ptop_fast_reindex_reportcases'],
+        'report_xforms': [('ptop_reindexer_v2', {'index': 'report-xform'})],
+        'report_cases': [('ptop_reindexer_v2', {'index': 'report-case'})],
         'case_search': [('ptop_reindexer_v2', {'index': 'case-search'})],
         'ledgers': [
             ('ptop_reindexer_v2', {'index': 'ledger-v1'}),

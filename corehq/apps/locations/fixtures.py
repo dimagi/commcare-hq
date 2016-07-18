@@ -1,8 +1,8 @@
 from collections import defaultdict
 from xml.etree.ElementTree import Element
+from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.locations.models import SQLLocation
 from corehq import toggles
-from corehq.apps.fixtures.models import UserFixtureType
 
 
 class LocationSet(object):
@@ -12,6 +12,7 @@ class LocationSet(object):
 
     def __init__(self, locations=None):
         self.by_id = {}
+        self.root_locations = set()
         self.by_parent = defaultdict(set)
         if locations is not None:
             for loc in locations:
@@ -22,18 +23,18 @@ class LocationSet(object):
             self.by_id[location.location_id] = location
             parent = location.parent
             parent_id = parent.location_id if parent else None
+            if parent_id is None:  # this is a root
+                self.add_root(location)
             self.by_parent[parent_id].add(location)
+
+    def add_root(self, location):
+        self.root_locations.add(location)
 
     def __contains__(self, item):
         return item in self.by_id
 
 
-def fixture_last_modified(user):
-    """Return when the fixture was last modified"""
-    return user.fixture_status(UserFixtureType.LOCATION)
-
-
-def should_sync_locations(last_sync, location_db, user):
+def should_sync_locations(last_sync, location_db, restore_user):
     """
     Determine if any locations (already filtered to be relevant
     to this user) require syncing.
@@ -41,7 +42,7 @@ def should_sync_locations(last_sync, location_db, user):
     if (
         not last_sync or
         not last_sync.date or
-        fixture_last_modified(user) >= last_sync.date
+        restore_user.get_fixture_last_modified() >= last_sync.date
     ):
         return True
 
@@ -59,7 +60,7 @@ def should_sync_locations(last_sync, location_db, user):
 class LocationFixtureProvider(object):
     id = 'commtrack:locations'
 
-    def __call__(self, user, version, last_sync=None, app=None):
+    def __call__(self, restore_user, version, last_sync=None, app=None):
         """
         By default this will generate a fixture for the users
         location and it's "footprint", meaning the path
@@ -68,78 +69,100 @@ class LocationFixtureProvider(object):
         There is an admin feature flag that will make this generate
         a fixture with ALL locations for the domain.
         """
-        if not user.project.uses_locations:
-            return []
-        if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-            locations = SQLLocation.active_objects.filter(domain=user.domain)
-        else:
-            locations = []
-            user_location = user.sql_location
-            if user_location:
-                # add users location (and ancestors) to fixture
-                locations.append(user_location)
+        assert isinstance(restore_user, OTARestoreUser)
 
-                # add all descendants as well
-                locations += (user_location.get_descendants()
-                                           .filter(is_archived=False))
-
-            if user.project.supports_multiple_locations_per_user:
-                # this might add duplicate locations but we filter that out later
-                location_ids = [loc.location_id for loc in user.locations]
-                locations += SQLLocation.active_objects.filter(
-                    location_id__in=location_ids
-                )
-
-        location_db = _location_footprint(locations)
-
-        if not should_sync_locations(last_sync, location_db, user):
+        if not restore_user.project.uses_locations:
             return []
 
-        root = Element('fixture',
-                       {'id': self.id,
-                        'user_id': user.user_id})
+        all_locations = _all_locations(restore_user)
 
-        root_locations = filter(
-            lambda loc: loc.parent is None, location_db.by_id.values()
-        )
+        if not should_sync_locations(last_sync, all_locations, restore_user):
+            return []
+
+        root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
+        root_locations = all_locations.root_locations
 
         if root_locations:
-            _append_children(root, location_db, root_locations)
-        return [root]
+            _append_children(root_node, all_locations, root_locations)
+        return [root_node]
 
 
 location_fixture_generator = LocationFixtureProvider()
+
+
+def _all_locations(user):
+    if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
+        return LocationSet(SQLLocation.active_objects.filter(domain=user.domain))
+    else:
+        all_locations = set()
+
+        user_location = user.sql_location
+        user_locations = set([user_location]) if user_location is not None else set()
+        user_locations |= {location for location in _gather_multiple_locations(user)}
+
+        for user_location in user_locations:
+            location_type = user_location.location_type
+            expand_from = location_type.expand_from or location_type
+            expand_to = location_type.expand_to
+            expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
+
+            for expand_from_location in expand_from_locations:
+                for child in _get_children(user.domain, expand_from_location, expand_to):
+                    # Walk down the tree and get all the children we want to sync
+                    all_locations.add(child)
+
+                for ancestor in expand_from_location.get_ancestors():
+                    # We sync all ancestors of the highest location
+                    all_locations.add(ancestor)
+
+        return LocationSet(all_locations)
+
+
+def _gather_multiple_locations(user):
+    """If the project has multiple locations enabled, returns all the extra
+    locations the user is assigned to.
+    """
+    if user.project.supports_multiple_locations_per_user:
+        location_ids = [loc.location_id for loc in user.locations]
+        for location in SQLLocation.active_objects.filter(location_id__in=location_ids):
+            yield location
+
+
+def _get_expand_from_level(domain, user_location, expand_from):
+    """From the users current location, returns the highest location they want to start expanding from
+    """
+    if user_location.location_type.expand_from_root:
+        return SQLLocation.root_locations(domain=domain)
+    else:
+        ancestors = (
+            user_location
+            .get_ancestors(include_self=True)
+            .filter(location_type=expand_from, is_archived=False)
+        )
+        return ancestors
+
+
+def _get_children(domain, root, expand_to):
+    """From the topmost location, get all the children we want to sync
+    """
+    expand_to_level = set(
+        SQLLocation.active_objects.
+        filter(domain__exact=domain, location_type=expand_to).
+        values_list('level', flat=True)
+    ) or None
+
+    children = root.get_descendants(include_self=True).filter(is_archived=False)
+    if expand_to_level is not None:
+        assert len(expand_to_level) == 1
+        children = children.filter(level__lte=expand_to_level.pop())
+
+    return children
 
 
 def _valid_parent_type(location):
     parent = location.parent
     parent_type = parent.location_type if parent else None
     return parent_type == location.location_type.parent_type
-
-
-def _location_footprint(locations):
-    """
-    Given a list of locations, generate the footprint of those by walking up parents.
-
-    Returns a dict of location ids to location objects.
-    """
-    all_locs = LocationSet(locations)
-    queue = list(locations)
-    while queue:
-        loc = queue.pop()
-
-        if loc.location_id not in all_locs:
-            # if it's not in there, it wasn't valid
-            continue
-
-        parent = loc.parent
-        if (parent and
-                parent.location_id not in all_locs and
-                _valid_parent_type(loc)):
-            all_locs.add_location(parent)
-            queue.append(parent)
-
-    return all_locs
 
 
 def _append_children(node, location_db, locations):

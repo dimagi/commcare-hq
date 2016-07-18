@@ -5,7 +5,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block main_column %}
+{% block page_content %}
     <div class="form form-horizontal">
         <fieldset>
             <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Information for {{ friendly_name }}{% endblocktrans %}</legend>
@@ -43,12 +43,15 @@
             {% crispy form_user_update %}
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">{% trans 'Update Role' %}</button>
+                <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+                    <button type="submit" class="btn btn-primary">{% trans 'Update Role' %}</button>
+                </div>
             </div>
         </fieldset>
     </form>
 
     {% if update_permissions %}
+        <hr />
         <form class="form form-horizontal" name="user_permissions" method="post">
             {% csrf_token %}
             <input type="hidden" name="form_type" value="update-user-permissions" />
@@ -58,13 +61,16 @@
             {% crispy form_user_update_permissions %}
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">{% trans 'Update Permissions' %}</button>
+                <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+                    <button type="submit" class="btn btn-primary">{% trans 'Update Permissions' %}</button>
+                </div>
             </div>
             </fieldset>
         </form>
     {% endif %}
 
     {% if update_form %}
+        <hr />
         <form id="commtrack_form" class="form form-horizontal" name="" method="post">
             {% csrf_token %}
             <input type="hidden" name="form_type" value="commtrack" />
@@ -74,16 +80,18 @@
                 {% else %}
                     <legend>{% trans 'Location Settings' %}</legend>
                 {% endif %}
-                {% include 'hqstyle/forms/basic_fieldset.html' with form=update_form %}
+                {% crispy update_form %}
             </fieldset>
             <div class="form-actions">
-              <button type="submit" class="btn btn-primary">{% trans 'Update CommCare Supply Settings' %}</button>
+                <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+                    <button type="submit" class="btn btn-primary">{% trans 'Update CommCare Supply Settings' %}</button>
+                </div>
             </div>
         </form>
     {% endif %}
     {% if request|toggle_enabled:"EWS_WEB_USER_EXTENSION" %}
         <a class="btn btn-primary" href="{% url 'ews_user_settings' domain=domain user_id=couch_user.get_id %}">
-            Edit EWS settings
+            {% trans 'Edit EWS settings' %}
         </a>
     {% endif %}
 {% endblock %}

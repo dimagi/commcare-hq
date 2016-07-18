@@ -1,9 +1,9 @@
 import base64
-from copy import copy
 import hashlib
-from mimetypes import guess_type
-import datetime
 import threading
+from copy import copy
+from mimetypes import guess_type
+from corehq.util.pagination import paginate_function, PaginationEventHandler, ArgsProvider
 
 
 class CouchAttachmentsBuilder(object):
@@ -98,27 +98,63 @@ class CouchAttachmentsBuilder(object):
         return copy(self._dict)
 
 
-class PaginateViewLogHandler(object):
+class PaginatedViewArgsProvider(ArgsProvider):
+    def __init__(self, initial_view_kwargs):
+        self.initial_view_kwargs = initial_view_kwargs
 
-    def log(self, message):
-        # subclasses can override this to actually log something
-        # built in implementation swallows it
-        pass
+    def get_initial_args(self):
+        return [], self.initial_view_kwargs
 
-    def view_starting(self, db, view_name, kwargs, total_emitted):
-        self.log(u'Fetching rows {}-{} from couch'.format(
-            total_emitted,
-            total_emitted + kwargs['limit'] - 1)
-        )
-        startkey = kwargs.get('startkey')
-        self.log(u'  startkey={!r}, startkey_docid={!r}'.format(startkey, kwargs.get('startkey_docid')))
-
-    def view_ending(self, db, view_name, kwargs, total_emitted, time):
-        self.log('View call took {}'.format(time))
+    def get_next_args(self, result, *last_args, **last_view_kwargs):
+        if result:
+            last_view_kwargs['startkey'] = result['key']
+            last_view_kwargs['startkey_docid'] = result['id']
+            last_view_kwargs['skip'] = 1
+            return [], last_view_kwargs
+        else:
+            raise StopIteration
 
 
-def paginate_view(db, view_name, chunk_size,
-                  log_handler=PaginateViewLogHandler(), **view_kwargs):
+class MultiKeyViewArgsProvider(PaginatedViewArgsProvider):
+    """Argument provider for iterating over a view using multiple keys.
+    :param keys: Sequence of view keys to iterate over. Each key should be a list
+    and all keys must have the same length.
+    """
+    def __init__(self, keys, include_docs=False, chunk_size=1000):
+        self.keys = list(keys)
+        self.key_length = len(self.keys[0])
+        assert all(len(key) == self.key_length for key in self.keys), "All keys must be the same length"
+        super(MultiKeyViewArgsProvider, self).__init__({
+            'limit': chunk_size,
+            'include_docs': include_docs,
+            'reduce': False,
+            'startkey': self.keys[0],
+            'endkey': self.keys[0] + [{}]
+        })
+
+    def get_next_args(self, result, *last_args, **last_view_kwargs):
+        try:
+            return super(MultiKeyViewArgsProvider, self).get_next_args(
+                result, *last_args, **last_view_kwargs
+            )
+        except StopIteration:
+            # all docs for the current key have been processed
+            # move on to the next key combo
+            last_key = last_view_kwargs["startkey"][:self.key_length]
+            key_index = self.keys.index(last_key) + 1
+            self.keys = self.keys[key_index:]
+            try:
+                next_key = self.keys[0]
+            except IndexError:
+                raise StopIteration
+            last_view_kwargs.pop('skip', None)
+            last_view_kwargs.pop("startkey_docid", None)
+            last_view_kwargs['startkey'] = next_key
+            last_view_kwargs['endkey'] = next_key + [{}]
+        return last_args, last_view_kwargs
+
+
+def paginate_view(db, view_name, chunk_size, event_handler=PaginationEventHandler(), **view_kwargs):
     """
     intended as a more performant drop-in replacement for
 
@@ -149,24 +185,14 @@ def paginate_view(db, view_name, chunk_size,
         raise ValueError('paginate_view cannot be called with skip')
 
     view_kwargs['limit'] = chunk_size
-    total_emitted = 0
-    len_results = -1
-    while len_results:
-        log_handler.view_starting(db, view_name, view_kwargs, total_emitted)
-        start_time = datetime.datetime.utcnow()
-        results = db.view(view_name, **view_kwargs)
-        len_results = len(results)
 
-        for result in results:
-            yield result
+    def call_view(**view_kwargs):
+        return db.view(view_name, **view_kwargs)
 
-        total_emitted += len_results
-        log_handler.view_ending(db, view_name, view_kwargs, total_emitted,
-                                datetime.datetime.utcnow() - start_time)
-        if len_results:
-            view_kwargs['startkey'] = result['key']
-            view_kwargs['startkey_docid'] = result['id']
-            view_kwargs['skip'] = 1
+    args_provider = PaginatedViewArgsProvider(view_kwargs)
+
+    for result in paginate_function(call_view, args_provider, event_handler):
+        yield result
 
 
 _override_db = threading.local()

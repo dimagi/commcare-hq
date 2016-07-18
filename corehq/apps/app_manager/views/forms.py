@@ -413,7 +413,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
         try:
             form.validate_form()
-            xform_questions = xform.get_questions(langs, include_triggers=True)
+            xform_questions = xform.get_questions(langs, include_triggers=True, form=form)
         except etree.XMLSyntaxError as e:
             form_errors.append(u"Syntax Error: %s" % e)
         except AppEditingError as e:

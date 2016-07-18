@@ -1,3 +1,4 @@
+/* globals: ga_track_event */
 hqDefine('app_manager/js/releases.js', function () {
     function SavedApp(app_data, releasesMain) {
         var self = ko.mapping.fromJS(app_data);
@@ -24,17 +25,26 @@ hqDefine('app_manager/js/releases.js', function () {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
         };
         self.build_profiles = function() {
-            var profiles = [{'label': gettext('all languages'), 'value': ''}];
+            var profiles = [{'label': gettext('(Default)'), 'value': ''}];
             _.each(app_data.build_profiles, function(value, key) {
                 profiles.push({'label': value['name'], 'value': key});
             });
             return profiles;
         };
 
+        self.track_deploy_type = function(type) {
+            ga_track_event('App Manager', 'Deploy Type', type);
+        };
+
         self.changeAppCode = function () {
             self.app_code(null);
             self.failed_url_generation(false);
             self.generating_url(false);
+        };
+
+        self.onSMSPanelClick = function() {
+            self.track_deploy_type('Send to phone via SMS');
+            self.generate_short_url('short_url');
         };
 
         self.build_profile.subscribe(self.changeAppCode);

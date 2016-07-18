@@ -7,6 +7,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 
 from django.contrib import admin
 from corehq.apps.domain.views import ProBonoStaticView
+from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
 from corehq.apps.registration.utils import PRICING_LINK
@@ -59,7 +60,6 @@ domain_specific = patterns('',
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
     (r'^importer/', include('corehq.apps.importer.urls')),
-    (r'^sqlextract/', include('ctable_view.urls')),
     (r'^fri/', include('custom.fri.urls')),
     (r'^ilsgateway/', include('custom.ilsgateway.urls')),
     (r'^ewsghana/', include('custom.ewsghana.urls')),
@@ -71,8 +71,9 @@ domain_specific = patterns('',
     (r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
     (r'^', include('custom.icds.urls')),
     (r'^_base_template/$', login_and_domain_required(
-        lambda request, domain: render(request, 'style/bootstrap3/base.html', {'domain': domain})
-    ))
+        lambda request, domain: render(request, 'style/base.html', {'domain': domain})
+    )),
+    (r'^zapier/', include('corehq.apps.zapier.urls', namespace='zapier'))
 )
 
 urlpatterns = patterns('',
@@ -117,7 +118,6 @@ urlpatterns = patterns('',
     (r'^builds/', include('corehq.apps.builds.urls')),
     (r'^downloads/temp/', include('soil.urls')),
     (r'^test/CommCare.jar', 'corehq.apps.app_manager.views.download_test_jar'),
-    (r'^sqlextract/', include('ctable_view.urls')),
     (r'^styleguide/', include('corehq.apps.styleguide.urls')),
     (r'^500/$', TemplateView.as_view(template_name='500.html')),
     (r'^404/$', TemplateView.as_view(template_name='404.html')),
@@ -142,6 +142,9 @@ urlpatterns = patterns('',
     url(r'^ping/$', 'corehq.apps.app_manager.views.formdesigner.ping', name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK), name='go_to_pricing'),
+    url(r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
+        r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4})/(?P<scheduled_report_secret>[\w-]+)/',
+        ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
 ) + patterns('', *LOCAL_APP_URLS)
 
 if settings.ENABLE_PRELOGIN_SITE:

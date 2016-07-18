@@ -1,3 +1,4 @@
+from django.http import HttpRequest
 from django.test import TestCase
 
 from corehq.apps.userreports.exceptions import UserReportsError
@@ -5,7 +6,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration, \
     ReportConfiguration
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.tests import ConfigurableReportTestMixin
+from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 
 
 class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
@@ -77,6 +78,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestReportAggregation, cls).setUpClass()
         cls._create_data()
         cls._create_data_source()
 
@@ -92,7 +94,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         return report_config
 
     def _create_view(self, report_config):
-        view = ConfigurableReport()
+        view = ConfigurableReport(request=HttpRequest())
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id

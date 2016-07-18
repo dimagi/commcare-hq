@@ -1,27 +1,35 @@
+import json
 from corehq.apps.sms.api import incoming
-from corehq.apps.sms.views import IncomingBackendView
+from corehq.apps.sms.views import NewIncomingBackendView
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from django.http import HttpResponse, HttpResponseBadRequest
 
 
-class AppositIncomingView(IncomingBackendView):
+class AppositIncomingView(NewIncomingBackendView):
     urlname = 'apposit_incoming'
 
-    def get(self, request, api_key, *args, **kwargs):
-        return HttpResponseBadRequest("ERROR: Expected POST")
+    @property
+    def backend_class(self):
+        return SQLAppositBackend
 
     def post(self, request, api_key, *args, **kwargs):
-        fromAddress = request.POST.get('fromAddress')
-        toAddress = request.POST.get('toAddress')
-        channel = request.POST.get('channel')
-        content = request.POST.get('content')
+        try:
+            data = json.loads(request.body)
+        except:
+            return HttpResponseBadRequest("Expected valid JSON as HTTP request body")
 
-        if channel != 'SMS':
-            # We don't support any other services yet
-            return HttpResponse("")
+        from_number = data.get('from')
+        message = data.get('message')
+        message_id = data.get('messageId')
 
-        if not fromAddress or not content:
-            return HttpResponseBadRequest("ERROR: Missing fromAddress or content")
+        if not from_number or not message:
+            return HttpResponseBadRequest("Missing 'from' or 'message'")
 
-        incoming(fromAddress, content, SQLAppositBackend.get_api_id())
+        incoming(
+            from_number,
+            message,
+            SQLAppositBackend.get_api_id(),
+            backend_message_id=message_id,
+            backend_id=self.backend_couch_id
+        )
         return HttpResponse("")

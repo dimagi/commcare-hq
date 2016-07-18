@@ -194,7 +194,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.sp2 = loc2.linked_supply_point()
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-    @process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER)
+    @process_kafka_changes('LedgerToElasticsearchPillow')
     def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime, **submit_extras):
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
@@ -227,7 +227,7 @@ class CommTrackSubmissionTest(CommTrackTest):
         self.assertEqual(section_id, latest_trans.section_id)
         self.assertEqual(expected_soh, latest_trans.stock_on_hand)
 
-        if should_use_sql_backend(self.domain.name):
+        if should_use_sql_backend(self.domain):
             if latest_trans.type == LedgerTransaction.TYPE_TRANSFER:
                 self.assertEqual(int(expected_qty), latest_trans.delta)
         else:
@@ -268,7 +268,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in final_amounts:
             self.check_product_stock(self.sp, product, amt, 0)
             inferred = amt - initial
-            if should_use_sql_backend(self.domain.name):
+            if should_use_sql_backend(self.domain):
                 sql_txn = LedgerAccessors(self.domain.name).get_latest_transaction(
                     self.sp.case_id, 'stock', product
                 )
@@ -458,7 +458,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         get processed
         """
         def _assert_no_stock_transactions():
-            if should_use_sql_backend(self.domain.name):
+            if should_use_sql_backend(self.domain):
                 self.assertEqual(0, LedgerTransaction.objects.count())
             else:
                 self.assertEqual(0, StockTransaction.objects.count())
@@ -540,7 +540,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
     def setUp(self):
         super(CommTrackSyncTest, self).setUp()
         # reused stuff
-        self.casexml_user = self.user.to_casexml_user()
+        self.restore_user = self.user.to_ota_restore_user()
         self.sp_block = CaseBlock(
             case_id=self.sp.case_id,
         ).as_xml()
@@ -560,7 +560,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         # get initial restore token
         restore_config = RestoreConfig(
             project=self.domain,
-            user=self.casexml_user,
+            restore_user=self.restore_user,
             params=RestoreParams(version=V2),
         )
         self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload().as_string())
@@ -568,14 +568,14 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
     @run_with_all_backends
     def testStockSyncToken(self):
         # first restore should not have the updated case
-        check_user_has_case(self, self.casexml_user, self.sp_block, should_have=False,
+        check_user_has_case(self, self.restore_user, self.sp_block, should_have=False,
                             restore_id=self.sync_log_id, version=V2)
 
         # submit with token
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id)
         # now restore should have the case
-        check_user_has_case(self, self.casexml_user, self.sp_block, should_have=True,
+        check_user_has_case(self, self.restore_user, self.sp_block, should_have=True,
                             restore_id=self.sync_log_id, version=V2, line_by_line=False)
 
 
@@ -600,7 +600,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         ledger_accessors = LedgerAccessors(self.domain.name)
         def _assert_initial_state():
-            if should_use_sql_backend(self.domain.name):
+            if should_use_sql_backend(self.domain):
                 self.assertEqual(3, LedgerTransaction.objects.filter(form_id=second_form_id).count())
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
@@ -621,10 +621,10 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         # archive and confirm commtrack data is deleted
         form = FormAccessors(self.domain.name).get_form(second_form_id)
-        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+        with process_kafka_changes('LedgerToElasticsearchPillow'):
             form.archive()
 
-        if should_use_sql_backend(self.domain.name):
+        if should_use_sql_backend(self.domain):
             self.assertEqual(0, LedgerTransaction.objects.filter(form_id=second_form_id).count())
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
@@ -639,7 +639,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             self.assertIsNone(state.daily_consumption)
 
         # unarchive and confirm commtrack data is restored
-        with process_kafka_changes('LedgerToElasticsearchPillow', topics.LEDGER):
+        with process_kafka_changes('LedgerToElasticsearchPillow'):
             form.unarchive()
         _assert_initial_state()
 
@@ -655,7 +655,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
 
         # check that we made stuff
         def _assert_initial_state():
-            if should_use_sql_backend(self.domain.name):
+            if should_use_sql_backend(self.domain):
                 self.assertEqual(3, LedgerTransaction.objects.filter(form_id=form_id).count())
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=form_id).count())
@@ -672,7 +672,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         form = FormAccessors(self.domain.name).get_form(form_id)
         form.archive()
         self.assertEqual(0, len(ledger_accessors.get_ledger_values_for_case(self.sp.case_id)))
-        if should_use_sql_backend(self.domain.name):
+        if should_use_sql_backend(self.domain):
             self.assertEqual(0, LedgerTransaction.objects.filter(form_id=form_id).count())
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=form_id).count())
@@ -702,7 +702,7 @@ def _report_soh(soh_reports, case_id, domain):
 def _get_ota_balance_blocks(project, user):
     restore_config = RestoreConfig(
         project=project,
-        user=user.to_casexml_user(),
+        restore_user=user.to_ota_restore_user(),
         params=RestoreParams(version=V2),
     )
     return extract_balance_xml(restore_config.get_payload().as_string())

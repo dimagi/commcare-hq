@@ -38,10 +38,13 @@ def clean_phone_number(text):
     return cleaned_text
 
 
-def validate_phone_number(phone_number):
-    if (not isinstance(phone_number, basestring) or
-        not phone_number_plus_re.match(phone_number)):
-        raise ValidationError(_("Invalid phone number format."))
+def validate_phone_number(phone_number, error_message=None):
+    if (
+        not isinstance(phone_number, basestring) or
+        not phone_number_plus_re.match(phone_number)
+    ):
+        error_message = error_message or _("Invalid phone number format.")
+        raise ValidationError(error_message)
 
 
 def format_message_list(message_list):

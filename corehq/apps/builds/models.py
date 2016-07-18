@@ -53,7 +53,7 @@ class CommCareBuild(Document):
             path = '/'.join([path, filename])
         return self.fetch_attachment(path)
 
-    def get_jadjar(self, path):
+    def get_jadjar(self, path, use_j2me_endpoint):
         """
         build.get_jadjar("Nokia/S40-generic")
         """
@@ -66,7 +66,8 @@ class CommCareBuild(Document):
             jad=jad,
             jar=self.fetch_file(path, "CommCare.jar"),
             version=self.version,
-            build_number=self.build_number
+            build_number=self.build_number,
+            use_j2me_endpoint=use_j2me_endpoint,
         )
 
     @classmethod

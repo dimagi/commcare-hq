@@ -15,7 +15,6 @@ from .. import util
 from ..models import HQUserType, HQUserToggle
 from ..analytics.esaccessors import get_user_stubs, get_group_stubs
 from .base import (
-    BaseDrilldownOptionFilter,
     BaseMultipleOptionFilter,
     BaseReportFilter,
     BaseSingleOptionFilter,

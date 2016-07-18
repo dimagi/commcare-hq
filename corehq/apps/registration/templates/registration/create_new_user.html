@@ -10,6 +10,12 @@
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
     <script src="{% static 'registration/js/password.js' %}"></script>
     {% endif %}
+    <script>
+        $('#new-user-btn').click(function() {
+           analytics.workflow('Clicked "Create Account" Button');
+           _kmq.push(["trackClick", "create_account_clicked", "Clicked Create Account (old)"]);
+        });
+    </script>
 {% endblock %}
 
 {% block registration-content %}
@@ -41,7 +47,7 @@
         </fieldset>
         <div class="form-actions">
             <div class="col-sm-offset-4 col-sm-8">
-                <button type="submit" class="btn btn-primary btn-large disable-on-submit">
+                <button type="submit" id="new-user-btn" class="btn btn-primary btn-large disable-on-submit">
                     {% trans "Create Account" %}
                 </button>
             </div>

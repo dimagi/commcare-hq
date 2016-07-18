@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import json_field.fields
 
 
 class Migration(migrations.Migration):

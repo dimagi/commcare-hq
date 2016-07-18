@@ -9,6 +9,7 @@ from corehq.apps.domain.models import Domain
 class UpdateTestCase(TestCase):
 
     def setUp(self):
+        super(UpdateTestCase, self).setUp()
         delete_all_users()
         self.username = "joe@my-domain.commcarehq.org"
         password = "password"

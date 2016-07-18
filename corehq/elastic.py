@@ -7,17 +7,18 @@ from django.conf import settings
 from elasticsearch.exceptions import ElasticsearchException, RequestError
 
 from corehq.apps.es.utils import flatten_field_dict
+from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.listener import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
-from corehq.pillows.mappings.group_mapping import GROUP_INDEX
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
+from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
+from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX
-from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 
 
 def get_es_new(**kwargs):
@@ -39,26 +40,35 @@ def get_es_new(**kwargs):
     return Elasticsearch(hosts, **kwargs)
 
 
-def doc_exists_in_es(index, doc_id):
-    es_meta = ES_META[index]
-    return get_es_new().exists(es_meta.index, es_meta.type, doc_id)
+def doc_exists_in_es(index_info, doc_id_or_dict):
+    """
+    Check if a document exists, by ID or the whole document.
+    """
+    if isinstance(doc_id_or_dict, basestring):
+        doc_id = doc_id_or_dict
+    else:
+        assert isinstance(doc_id_or_dict, dict)
+        doc_id = doc_id_or_dict['_id']
+    return get_es_new().exists(index_info.index, index_info.type, doc_id)
 
 
-def send_to_elasticsearch(index, doc, delete=False):
+def send_to_elasticsearch(index_name, doc, delete=False):
     """
     Utility method to update the doc in elasticsearch.
     Duplicates the functionality of pillowtop but can be called directly.
     """
+    from pillowtop.es_utils import ElasticsearchIndexInfo
     doc_id = doc['_id']
-    es_meta = ES_META[index]
-    doc_exists = doc_exists_in_es(index, doc_id)
+    es_meta = ES_META[index_name]
+    index_info = ElasticsearchIndexInfo(index=es_meta.index, type=es_meta.type)
+    doc_exists = doc_exists_in_es(index_info, doc_id)
     return send_to_es(
         index=es_meta.index,
         doc_type=es_meta.type,
         doc_id=doc_id,
         es_getter=get_es_new,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
-                                  send_to_elasticsearch.__name__, index),
+                                  send_to_elasticsearch.__name__, index_name),
         data=doc,
         except_on_failure=True,
         update=doc_exists,
@@ -68,18 +78,19 @@ def send_to_elasticsearch(index, doc, delete=False):
 EsMeta = namedtuple('EsMeta', 'index, type')
 
 ES_META = {
-    "forms": EsMeta(XFORM_INDEX, 'xform'),
+    "forms": EsMeta(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type),
     "cases": EsMeta(CASE_INDEX, 'case'),
     "active_cases": EsMeta(CASE_INDEX, 'case'),
-    "users": EsMeta(USER_INDEX, 'user'),
-    "users_all": EsMeta(USER_INDEX, 'user'),
-    "domains": EsMeta(DOMAIN_INDEX, 'hqdomain'),
+    "users": EsMeta(USER_INDEX_INFO.index, USER_INDEX_INFO.type),
+    "users_all": EsMeta(USER_INDEX_INFO.index, USER_INDEX_INFO.type),
+    "domains": EsMeta(DOMAIN_INDEX_INFO.index, DOMAIN_INDEX_INFO.type),
     "apps": EsMeta(APP_INDEX, 'app'),
-    "groups": EsMeta(GROUP_INDEX, 'group'),
-    "sms": EsMeta(SMS_INDEX, 'sms'),
+    "groups": EsMeta(GROUP_INDEX_INFO.index, GROUP_INDEX_INFO.type),
+    "sms": EsMeta(SMS_INDEX_INFO.index, SMS_INDEX_INFO.type),
     "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
     "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
-    "case_search": EsMeta(CASE_SEARCH_INDEX, 'case')
+    "case_search": EsMeta(CASE_SEARCH_INDEX_INFO.index, CASE_SEARCH_INDEX_INFO.type),
+    "ledgers": EsMeta(LEDGER_INDEX_INFO.index, LEDGER_INDEX_INFO.type),
 }
 
 ADD_TO_ES_FILTER = {

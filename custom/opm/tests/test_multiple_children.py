@@ -1,10 +1,6 @@
-from datetime import datetime, date
+from datetime import date
 from unittest import TestCase
 
-from couchforms.models import XFormInstance
-from dimagi.utils.dates import add_months
-
-from ..constants import *
 from .case_reports import Report, OPMCase, MockCaseRow
 
 

@@ -30,18 +30,6 @@ def stock_category(stock, daily_consumption, understock, overstock):
         return 'adequate'
 
 
-def state_stock_category(state):
-    if not state.sql_location:
-        return 'nodata'
-    location_type = state.sql_location.location_type
-    return stock_category(
-        state.stock_on_hand,
-        state.get_daily_consumption(),
-        location_type.understock_threshold,
-        location_type.overstock_threshold,
-    )
-
-
 def get_current_ledger_state(case_ids, ensure_form_id=False):
     """
     Given a list of cases returns a dict of all current ledger data of the following format:
@@ -73,6 +61,7 @@ def get_current_ledger_state(case_ids, ensure_form_id=False):
         sections[state.product_id] = state
         if ensure_form_id and not state.last_modified_form_id:
             transaction = StockTransaction.latest(state.case_id, state.section_id, state.product_id)
-            state.last_modified_form_id = transaction.report.form_id
-            state.save()
+            if transaction is not None:
+                state.last_modified_form_id = transaction.report.form_id
+                state.save()
     return ret

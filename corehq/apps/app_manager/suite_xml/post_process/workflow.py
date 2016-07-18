@@ -349,27 +349,25 @@ class CaseListFormWorkflow(object):
             for source_meta in source_form_dm:
                 if source_meta.case_type:
                     # This is true for registration forms where the case being created is a subcase
-                    try:
-                        target_dm = self.get_target_dm(target_form_dm, source_meta.case_type, module)
-                    except SuiteError:
-                        if source_meta.requires_selection:
-                            raise
-                    else:
+                    target_dm = self.get_target_dm(target_form_dm, source_meta.case_type, module)
+                    if target_dm:
                         used.add(source_meta)
                         meta = WorkflowDatumMeta.from_session_datum(source_meta)
                         frame_case_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
                         frame_case_not_created.add_child(meta.to_stack_datum(datum_id=target_dm.id))
                 else:
                     source_case_type = self.get_case_type_created_by_form(form, target_module)
-                    try:
-                        target_dm = self.get_target_dm(target_form_dm, source_case_type, module)
-                    except SuiteError:
-                        if not allow_missing:
-                            raise
-                    else:
+                    target_dm = self.get_target_dm(target_form_dm, source_case_type, module)
+                    if target_dm:
                         used.add(source_meta)
                         datum_meta = WorkflowDatumMeta.from_session_datum(target_dm)
                         frame_case_created.add_child(datum_meta.to_stack_datum(source_id=source_meta.id))
+                    elif not allow_missing:
+                        raise SuiteValidationError(
+                            u"The '{}' module is not properly configured to have a Case List Registration Form. "
+                            u"All forms in the module should have the same case management configuration.".format(
+                                module.default_name()
+                            ))
 
             # return any source datums that were not already added to the target
             return [dm for dm in source_form_dm if dm not in used]
@@ -400,13 +398,10 @@ class CaseListFormWorkflow(object):
                 if getattr(target_meta, 'case_type', None) == case_type
             ]
         except ValueError:
-            # This error is raised when we can't find a datum that matches the case type we're looking for among
-            # the list of datums that are common between all the forms in the module which implies that not all
-            # the forms have the same case management configuration.
-            raise SuiteValidationError(
-                u"The '{}' module is not properly configured to have a Case List Registration Form. All forms"
-                u" in the module should have the same case management configuration.".format(module.default_name())
-            )
+            # This either means that the source module (with the registration form) requires datums that the
+            # target module (the module which called the reg form).
+            # OR it could mean that not all the forms in the target module have the same case management configuration.
+            return
         return target_dm
 
     @staticmethod

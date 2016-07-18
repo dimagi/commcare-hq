@@ -1,4 +1,5 @@
 from corehq.apps.sms.forms import BackendForm
+from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.util import validate_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from crispy_forms import layout as crispy
@@ -114,7 +115,8 @@ class TelerivetOutgoingSMSForm(Form):
 
 class TelerivetPhoneNumberForm(Form):
     test_phone_number = TrimmedCharField(
-        required=True
+        required=True,
+        label=ugettext_lazy("+ (Country Code) Phone Number")
     )
 
     def __init__(self, *args, **kwargs):
@@ -149,7 +151,9 @@ class TelerivetPhoneNumberForm(Form):
 
     def clean_test_phone_number(self):
         value = self.cleaned_data.get('test_phone_number')
-        validate_phone_number(value)
+        value = apply_leniency(value)
+        validate_phone_number(value,
+            error_message=_("Please enter digits only, in international format (country code and phone number)."))
         return value
 
 
@@ -196,7 +200,8 @@ class FinalizeGatewaySetupForm(Form):
                     Div(
                         hqcrispy.MultiInlineField(
                             'set_as_default',
-                            ng_model='setAsDefault'
+                            ng_model='setAsDefault',
+                            style='margin-left: 0px;'
                         )
                     ),
                     get_rmi_error_placeholder('setAsDefaultError'),
@@ -204,9 +209,9 @@ class FinalizeGatewaySetupForm(Form):
                 ),
                 FormActions(
                     StrictButton(
-                        _("Finish"),
+                        _("Complete"),
                         id="id_create_backend",
-                        css_class='btn-primary',
+                        css_class='btn-success',
                         ng_click='createBackend();'
                     )
                 )

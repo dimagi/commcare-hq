@@ -10,8 +10,8 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.change_publishers import (
-    publish_form_saved, publish_case_saved, publish_ledger_v2_saved
-)
+    publish_form_saved, publish_case_saved, publish_ledger_v2_saved,
+    republish_all_changes_for_form)
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from couchforms.const import ATTACHMENT_NAME
@@ -62,6 +62,11 @@ class FormProcessorSQL(object):
         form_ids = [xform.form_id for xform in xforms]
         FormAccessorSQL.hard_delete_forms(domain, form_ids)
         CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+        for form in xforms:
+            form.state |= XFormInstanceSQL.DELETED
+            publish_form_saved(form)
+        case.deleted = True
+        publish_case_saved(case)
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None):
@@ -86,6 +91,13 @@ class FormProcessorSQL(object):
     def _publish_changes(processed_forms, cases, stock_result):
         # todo: form deprecations?
         publish_form_saved(processed_forms.submitted)
+        if processed_forms.submitted.is_duplicate:
+            # for duplicate forms, also publish changes for the original form since the fact that
+            # we're getting a duplicate indicates that we may not have fully processd/published it
+            # the first time
+            republish_all_changes_for_form(
+                processed_forms.submitted.domain, processed_forms.submitted.orig_id)
+
         cases = cases or []
         for case in cases:
             publish_case_saved(case)
@@ -102,6 +114,7 @@ class FormProcessorSQL(object):
     @classmethod
     def deduplicate_xform(cls, xform):
         xform.state = XFormInstanceSQL.DUPLICATE
+        xform.orig_id = xform.form_id
         xform.problem = "Form is a duplicate of another! (%s)" % xform.form_id
         return cls.assign_new_id(xform)
 
@@ -199,6 +212,7 @@ class FormProcessorSQL(object):
         if case.is_deleted and not found:
             return None
         CaseAccessorSQL.save_case(case)
+        publish_case_saved(case)
         return case
 
     @staticmethod

@@ -10,7 +10,7 @@ FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
 MAIN_GROUP = 'main'
 
-SHARD_OPTION_TEMPLATE = "p{id} 'dbname={dbname} host={host} port={port}'"
+SHARD_OPTION_TEMPLATE = "p{id:04d} 'dbname={dbname} host={host} port={port}'"
 
 
 class LooslyEqualJsonObject(object):
@@ -140,7 +140,7 @@ def get_shards_to_update(existing_shards, new_shards):
     assert len(existing_shards) == len(new_shards)
     shards_to_update = []
     for existing, new in zip(existing_shards, new_shards):
-        assert existing.id == new.id
+        assert existing.id == new.id, '{} != {}'.format(existing.id, new.id)
         if existing != new:
             shards_to_update.append(new)
 

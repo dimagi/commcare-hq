@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>Built by XFormBuilder</h:title>
+    <model>
+      <instance>
+        <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/96ee718b-1e40-470c-af01-b9f454646efd" uiVersion="1" version="3" name="Built by XFormBuilder">
+          <name/>
+        </data>
+      </instance>
+      <itext>
+        <translation lang="en" default="">
+          <text id="name-label">
+            <value>What is your name?</value>
+          </text>
+        </translation>
+      </itext>
+      <bind nodeset="/data/name" type="xsd:string"
+            constraint=". != 'Ford Prefect'"
+            jr:constraintMsg="That name is not as inconspicuous as you think."/>
+    </model>
+  </h:head>
+  <h:body>
+    <input ref="/data/name">
+      <label ref="jr:itext('name-label')"/>
+    </input>
+  </h:body>
+</h:html>
+

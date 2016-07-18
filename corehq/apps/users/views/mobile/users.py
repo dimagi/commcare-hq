@@ -6,12 +6,12 @@ from datetime import datetime
 from zipfile import BadZipfile
 
 from django.contrib import messages
-from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseForbidden, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
@@ -24,6 +24,7 @@ from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from openpyxl.utils.exceptions import InvalidFileException
+import re
 
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
@@ -52,26 +53,31 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import Location
+from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.style.decorators import use_bootstrap3, use_select2, \
-    use_angular_js
+from corehq.apps.style.decorators import (
+    use_select2,
+    use_angular_js,
+    use_multiselect,
+)
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.bulkupload import check_headers, dump_users_and_groups, GroupNameError, UserUploadError
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
-    SelfRegistrationForm
+    SelfRegistrationForm, SetUserPasswordForm,
 )
 from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
-from corehq.apps.users.tasks import bulk_upload_async
+from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
-from corehq.apps.users.views import BaseFullEditUserView, BaseUserSettingsView
+from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader
+from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -81,15 +87,30 @@ BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
 DEFAULT_USER_LIST_LIMIT = 10
 
 
-class EditCommCareUserView(BaseFullEditUserView):
-    template_name = "users/edit_commcare_user.html"
+class EditCommCareUserView(BaseEditUserView):
     urlname = "edit_commcare_user"
     user_update_form_class = UpdateCommCareUserInfoForm
     page_title = ugettext_noop("Edit Mobile Worker")
 
+    @property
+    def template_name(self):
+        if self.editable_user.is_deleted():
+            return "users/deleted_account.html"
+        else:
+            return "users/edit_commcare_user.html"
+
+    @use_multiselect
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        context = super(EditCommCareUserView, self).main_context
+        context.update({
+            'edit_user_form_title': self.edit_user_form_title,
+        })
+        return context
 
     @property
     @memoized
@@ -107,7 +128,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     def editable_user(self):
         try:
             user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
-            if not user or user.is_deleted():
+            if not user:
                 raise Http404()
             return user
         except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
@@ -124,7 +145,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     @property
     @memoized
     def reset_password_form(self):
-        return SetPasswordForm(user="")
+        return SetUserPasswordForm(self.domain, self.editable_user_id, user="")
 
     @property
     @memoized
@@ -175,6 +196,7 @@ class EditCommCareUserView(BaseFullEditUserView):
                 users_have_locations(self.domain) and
                 not has_privilege(self.request, privileges.LOCATIONS)
             ),
+            'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
         }
         if self.domain_object.commtrack_enabled or self.domain_object.uses_locations:
             context.update({
@@ -208,6 +230,7 @@ class EditCommCareUserView(BaseFullEditUserView):
     @memoized
     def form_user_update(self):
         form = super(EditCommCareUserView, self).form_user_update
+        form.load_language(language_choices=get_domain_languages(self.domain))
         if self.can_change_user_roles:
             form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
         else:
@@ -226,6 +249,15 @@ class EditCommCareUserView(BaseFullEditUserView):
             if self.update_commtrack_form.is_valid():
                 self.update_commtrack_form.save(self.editable_user)
                 messages.success(request, _("Information updated!"))
+        elif self.request.POST['form_type'] == "add-phonenumber":
+            phone_number = self.request.POST['phone_number']
+            phone_number = re.sub('\s', '', phone_number)
+            if re.match(r'\d+$', phone_number):
+                self.editable_user.add_phone_number(phone_number)
+                self.editable_user.save()
+                messages.success(request, _("Phone number added!"))
+            else:
+                messages.error(request, _("Please enter digits only."))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
 
     def custom_user_is_valid(self):
@@ -244,7 +276,6 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
     async_handlers = [
         Select2BillingInfoHandler,
     ]
-
     @property
     @memoized
     def account(self):
@@ -271,6 +302,7 @@ class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerM
             'billing_info_form': self.billing_info_form,
         }
 
+    @use_select2
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
         if self.account.date_confirmed_extra_charges is not None:
@@ -346,6 +378,121 @@ def delete_commcare_user(request, domain, user_id):
 
 @require_can_edit_commcare_users
 @require_POST
+def restore_commcare_user(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    user.unretire()
+    messages.success(request, "User %s and all their submissions have been restored" % user.username)
+    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
+
+
+@require_can_edit_commcare_users
+@require_POST
+def toggle_demo_mode(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    demo_mode = request.POST.get('demo_mode', 'no')
+    demo_mode = True if demo_mode == 'yes' else False
+
+    edit_user_url = reverse(EditCommCareUserView.urlname, args=[domain, user_id])
+    # handle bad POST param
+    if user.is_demo_user == demo_mode:
+        warning = _("User is already in Demo mode!") if user.is_demo_user else _("User is not in Demo mode!")
+        messages.warning(request, warning)
+        return HttpResponseRedirect(edit_user_url)
+
+    if demo_mode:
+        download = DownloadBase()
+        res = turn_on_demo_mode_task.delay(user, domain)
+        download.set_task(res)
+        return HttpResponseRedirect(
+            reverse(
+                DemoRestoreStatusView.urlname,
+                args=[domain, download.download_id, user_id]
+            )
+        )
+    else:
+        turn_off_demo_mode(user)
+        messages.success(request, _("Successfully turned off demo mode!"))
+    return HttpResponseRedirect(edit_user_url)
+
+
+class BaseManageCommCareUserView(BaseUserSettingsView):
+
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseManageCommCareUserView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': MobileWorkerListView.page_title,
+            'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
+        }]
+
+
+class DemoRestoreStatusView(BaseManageCommCareUserView):
+    urlname = 'demo_restore_status'
+    page_title = ugettext_noop('Demo User Status')
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(DemoRestoreStatusView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        context = super(DemoRestoreStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('demo_restore_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Demo User status"),
+            'progress_text': _("Getting latest restore data, please wait"),
+            'error_text': _("There was an unexpected error! Please try again or report an issue."),
+            'next_url': reverse(EditCommCareUserView.urlname, args=[self.domain, kwargs['user_id']]),
+            'next_url_text': _("Go back to Edit Mobile Worker"),
+        })
+        return render(request, 'style/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+
+@require_can_edit_commcare_users
+def demo_restore_job_poll(request, domain, download_id, template="users/mobile/partials/demo_restore_status.html"):
+
+    try:
+        context = get_download_context(download_id, check_state=True)
+    except TaskFailedError:
+        return HttpResponseServerError()
+
+    context.update({
+        'on_complete_short': _('Done'),
+        'on_complete_long': _('User is now in Demo mode with latest restore!'),
+
+    })
+    return render(request, template, context)
+
+
+@require_can_edit_commcare_users
+@require_POST
+def reset_demo_user_restore(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    if not user.is_demo_user:
+        warning = _("The user is not a demo user.")
+        messages.warning(request, warning)
+        return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
+
+    download = DownloadBase()
+    res = reset_demo_user_restore_task.delay(user, domain)
+    download.set_task(res)
+
+    return HttpResponseRedirect(
+        reverse(
+            DemoRestoreStatusView.urlname,
+            args=[domain, download.download_id, user_id]
+        )
+    )
+
+
+@require_can_edit_commcare_users
+@require_POST
 def update_user_groups(request, domain, couch_user_id):
     form = MultipleSelectionForm(request.POST)
     form.fields['selected_ids'].choices = [(id, 'throwaway') for id in Group.ids_by_domain(domain)]
@@ -376,26 +523,11 @@ def update_user_data(request, domain, couch_user_id):
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
 
 
-class BaseManageCommCareUserView(BaseUserSettingsView):
-
-    @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseManageCommCareUserView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def parent_pages(self):
-        return [{
-            'title': MobileWorkerListView.page_title,
-            'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
-        }]
-
-
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @use_bootstrap3
     @use_select2
     @use_angular_js
     @method_decorator(require_can_edit_commcare_users)
@@ -790,10 +922,6 @@ class UserUploadStatusView(BaseManageCommCareUserView):
     urlname = 'user_upload_status'
     page_title = ugettext_noop('Mobile Worker Upload Status')
 
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(UserUploadStatusView, self).dispatch(request, *args, **kwargs)
-
     def get(self, request, *args, **kwargs):
         context = super(UserUploadStatusView, self).main_context
         context.update({
@@ -806,7 +934,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
             'next_url_text': _("Return to manage mobile workers"),
         })
-        return render(request, 'style/bootstrap3/soil_status_full.html', context)
+        return render(request, 'style/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -896,10 +1024,6 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
     template_name = "users/mobile/commcare_user_self_register.html"
     urlname = "commcare_user_self_register"
     strict_domain_fetching = True
-
-    @use_bootstrap3
-    def dispatch(self, request, *args, **kwargs):
-        return super(CommCareUserSelfRegistrationView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

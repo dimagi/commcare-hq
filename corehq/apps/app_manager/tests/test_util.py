@@ -1,10 +1,6 @@
 import corehq.apps.app_manager.util as util
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import (
-    Application,
     Module,
-    OpenCaseAction,
-    OpenSubCaseAction,
     AdvancedModule,
     FormSchedule,
     ScheduleVisit
@@ -12,6 +8,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests import TestXmlMixin, AppFactory
 from django.test.testcases import SimpleTestCase
 from mock import patch, MagicMock
+import re
 
 
 @patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
@@ -94,9 +91,12 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
 class SchemaTest(SimpleTestCase):
-    def test_get_casedb_schema_empty_app(self):
-        app = self.make_app()
-        schema = util.get_casedb_schema(app)
+    def setUp(self):
+        self.factory = AppFactory()
+
+    def test_get_casedb_schema_form_without_cases(self):
+        survey = self.add_form()
+        schema = util.get_casedb_schema(survey)
         self.assert_has_kv_pairs(schema, {
             "id": "casedb",
             "uri": "jr://instance/casedb",
@@ -107,33 +107,69 @@ class SchemaTest(SimpleTestCase):
         })
 
     def test_get_casedb_schema_with_form(self):
-        app = self.make_app()
-        self.add_form(app, "village")
-        schema = util.get_casedb_schema(app)
+        village = self.add_form("village")
+        schema = util.get_casedb_schema(village)
         self.assertEqual(len(schema["subsets"]), 1, schema["subsets"])
         self.assert_has_kv_pairs(schema["subsets"][0], {
-            'id': 'village',
+            'id': 'case',
+            'name': 'village',
             'key': '@case_type',
             'structure': {'case_name': {}},
             'related': None,
         })
 
     def test_get_casedb_schema_with_related_case_types(self):
-        app = self.make_app()
-        self.add_form(app, "family")
-        village = self.add_form(app, "village")
-        village.actions.subcases.append(OpenSubCaseAction(
-            case_type='family',
-            reference_id='parent'
-        ))
-        schema = util.get_casedb_schema(app)
+        family = self.add_form("family")
+        village = self.add_form("village")
+        self.factory.form_opens_case(village, case_type='family', is_subcase=True)
+        schema = util.get_casedb_schema(family)
         subsets = {s["id"]: s for s in schema["subsets"]}
-        self.assertEqual(subsets["village"]["related"], None)
-        self.assertDictEqual(subsets["family"]["related"], {"parent": "village"})
+        self.assertEqual(subsets["parent"]["related"], None)
+        self.assertDictEqual(subsets["case"]["related"], {"parent": "parent"})
+
+    def test_get_casedb_schema_with_multiple_parent_case_types(self):
+        referral = self.add_form("referral")
+        child = self.add_form("child")
+        self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
+        pregnancy = self.add_form("pregnancy")
+        self.factory.form_opens_case(pregnancy, case_type='referral', is_subcase=True)
+        schema = util.get_casedb_schema(referral)
+        subsets = {s["id"]: s for s in schema["subsets"]}
+        self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$',
+                        subsets["parent"]["name"]))
+        self.assertEqual(subsets["parent"]["structure"], {"case_name": {}})
+
+    def test_get_casedb_schema_with_deep_hierarchy(self):
+        child = self.add_form("child")
+        parent = self.add_form("parent")
+        self.factory.form_opens_case(parent, case_type='child', is_subcase=True)
+        grandparent = self.add_form("grandparent")
+        self.factory.form_opens_case(grandparent, case_type='parent', is_subcase=True)
+        greatgrandparent = self.add_form("greatgrandparent")
+        self.factory.form_opens_case(greatgrandparent, case_type='grandparent', is_subcase=True)
+        schema = util.get_casedb_schema(child)
+        self.assertEqual([s["name"] for s in schema["subsets"]],
+                         ["child", "parent (parent)", "grandparent (grandparent)"])
+        schema = util.get_casedb_schema(parent)
+        self.assertEqual([s["name"] for s in schema["subsets"]],
+                         ["parent", "parent (grandparent)", "grandparent (greatgrandparent)"])
+        schema = util.get_casedb_schema(grandparent)
+        self.assertEqual([s["name"] for s in schema["subsets"]],
+                         ["grandparent", "parent (greatgrandparent)"])
+
+    def test_get_casedb_schema_with_parent_case_property_update(self):
+        family = self.add_form("family", {"parent/has_well": "/data/village_has_well"})
+        village = self.add_form("village")
+        self.factory.form_opens_case(village, case_type='family', is_subcase=True)
+        schema = util.get_casedb_schema(family)
+        subsets = {s["id"]: s for s in schema["subsets"]}
+        self.assertDictEqual(subsets["case"]["related"], {"parent": "parent"})
+        self.assertEqual(subsets["case"]["structure"]["case_name"], {})
+        #self.assertEqual(subsets["parent"]["structure"]["has_well"], {}) TODO
+        self.assertNotIn("parent/has_well", subsets["case"]["structure"])
 
     def test_get_session_schema_for_module_with_no_case_type(self):
-        app = self.make_app()
-        form = self.add_form(app)
+        form = self.add_form()
         schema = util.get_session_schema(form)
         self.assert_has_kv_pairs(schema, {
             "id": "commcaresession",
@@ -144,13 +180,26 @@ class SchemaTest(SimpleTestCase):
         assert "case_id" not in schema["structure"], schema["structure"]
 
     def test_get_session_schema_for_simple_module_with_case(self):
-        app = self.make_app()
-        form = self.add_form(app, "village")
+        module, form = self.factory.new_basic_module('village', 'village')
+        self.factory.form_requires_case(form)
         schema = util.get_session_schema(form)
         self.assertDictEqual(schema["structure"]["case_id"], {
             "reference": {
                 "source": "casedb",
-                "subset": "village",
+                "subset": "case",
+                "key": "@case_id",
+            },
+        })
+
+    def test_get_session_schema_advanced_form(self):
+        m2, m2f0 = self.factory.new_advanced_module('visit history', 'visit')
+        self.factory.form_requires_case(m2f0, 'visit')
+
+        schema = util.get_session_schema(m2f0)
+        self.assertDictEqual(schema["structure"]["case_id_load_visit_0"], {
+            "reference": {
+                "source": "casedb",
+                "subset": "case",
                 "key": "@case_id",
             },
         })
@@ -166,19 +215,13 @@ class SchemaTest(SimpleTestCase):
         for key, value in expected_dict.items():
             self.assertEqual(test_dict[key], value)
 
-    def add_form(self, app, case_type=None, module_id=None):
-        if module_id is None:
-            module_id = len(app.modules)
-            m = app.add_module(Module.new_module('Module{}'.format(module_id), lang='en'))
-            if case_type:
-                m.case_type = case_type
-        form = app.new_form(module_id, 'form {}'.format(case_type), lang='en')
+    def add_form(self, case_type=None, case_updates=None):
+        module_id = len(self.factory.app.modules)
+        module, form = self.factory.new_basic_module(module_id, case_type)
         if case_type:
-            form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
-            form.actions.open_case.condition.type = 'always'
+            self.factory.form_opens_case(form, case_type)
+        if case_updates:
+            assert case_type, 'case_type is required with case_updates'
+            self.factory.form_requires_case(
+                form, case_type=case_type, update=case_updates)
         return form
-
-    def make_app(self):
-        app = Application.new_app('domain', 'New App', APP_V2)
-        app.version = 1
-        return app

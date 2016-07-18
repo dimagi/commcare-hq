@@ -26,9 +26,9 @@ from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
+from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
-from corehq.toggles import OPENLMIS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 
@@ -53,39 +53,64 @@ class ProjectReportsTab(UITab):
 
     @property
     def sidebar_items(self):
+        tools = self._get_tools_items()
+        report_builder_nav = self._get_report_builder_items()
+        project_reports = ProjectReportDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
+        custom_reports = CustomProjectReportDispatcher.navigation_sections(
+            request=self._request, domain=self.domain)
+        sidebar_items = tools + report_builder_nav + project_reports + custom_reports
+        return self._filter_sidebar_items(sidebar_items)
 
+    def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
-
-        tools = [(_("Tools"), [
+        return [(_("Tools"), [
             {'title': MySavedReportsView.page_title,
              'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
              'icon': 'icon-tasks fa fa-tasks',
              'show_in_dropdown': True}
         ])]
 
+    def _get_report_builder_items(self):
         user_reports = []
         if self.couch_user.can_edit_data():
-            if has_report_builder_access(self._request):
-                create_report_url = reverse("report_builder_select_type", args=[self.domain])
-            else:
-                from corehq.apps.userreports.views import paywall_home
-                create_report_url = paywall_home(self.domain)
-
             user_reports = [(
                 _("Create Reports"),
                 [{
                     "title": _('Create new report'),
-                    "url": create_report_url,
+                    "url": self._get_create_report_url(),
                     "icon": "icon-plus fa fa-plus",
                     "id": "create-new-report-left-nav",
                 }]
             )]
+        return user_reports
 
-        project_reports = ProjectReportDispatcher.navigation_sections(
-            request=self._request, domain=self.domain)
-        custom_reports = CustomProjectReportDispatcher.navigation_sections(
-            request=self._request, domain=self.domain)
-        return tools + user_reports + project_reports + custom_reports
+    def _get_create_report_url(self):
+        """
+        Return the url for the start of the report builder, or the paywall.
+        """
+        if has_report_builder_access(self._request):
+            url = reverse("report_builder_select_type", args=[self.domain])
+        else:
+            from corehq.apps.userreports.views import paywall_home
+            url = paywall_home(self.domain)
+        return url
+
+    @staticmethod
+    def _filter_sidebar_items(sidebar_items):
+        """
+        Exclude sidebar items where `item["show_in_navigation"] == False`
+        """
+        filtered_sidebar_items = []
+        for section, items in sidebar_items:
+            filtered_items = []
+            for item in items:
+                if not item.get("show_in_navigation", True):
+                    continue
+                filtered_items.append(item)
+            if filtered_items:
+                filtered_sidebar_items.append((section, filtered_items))
+        return filtered_sidebar_items
 
     @property
     def dropdown_items(self):
@@ -265,7 +290,6 @@ class SetupTab(UITab):
             EditProductView,
             ProductFieldsView,
         )
-        from corehq.apps.locations.views import FacilitySyncView
 
         if self.project.commtrack_enabled:
             commcare_supply_setup = [
@@ -324,13 +348,6 @@ class SetupTab(UITab):
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
                 },
             ]
-            if OPENLMIS.enabled(self.domain):
-                commcare_supply_setup.append(
-                    # external sync
-                    {
-                        'title': FacilitySyncView.page_title,
-                        'url': reverse(FacilitySyncView.urlname, args=[self.domain]),
-                    })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
@@ -425,7 +442,7 @@ class ProjectDataTab(UITab):
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
             )
-            if toggles.NEW_EXPORTS.enabled(self.domain):
+            if use_new_exports(self.domain):
                 create_case_cls = CreateNewCustomCaseExportView
                 create_form_cls = CreateNewCustomFormExportView
                 edit_form_cls = EditNewCustomFormExportView
@@ -631,7 +648,6 @@ class MessagingTab(UITab):
     url_prefix_formats = (
         '/a/{domain}/sms/',
         '/a/{domain}/reminders/',
-        '/a/{domain}/reports/message_log/',
         '/a/{domain}/data/edit/case_groups/',
     )
 
@@ -765,16 +781,6 @@ class MessagingTab(UITab):
                             'urlname': CopyBroadcastView.urlname,
                         },
                     ],
-                    'show_in_dropdown': True,
-                },
-            ])
-
-        if self.can_use_outbound_sms:
-            from corehq.apps.reports.standard.sms import MessageLogReport
-            messages_urls.extend([
-                {
-                    'title': _('Message Log'),
-                    'url': MessageLogReport.get_url(domain=self.domain),
                     'show_in_dropdown': True,
                 },
             ])
@@ -1113,11 +1119,11 @@ class ProjectSettingsTab(UITab):
             'url': reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
         })
 
-        if toggles.DHIS2_DOMAIN.enabled(self.domain):
-            from corehq.apps.domain.views import EditDhis2SettingsView
+        if toggles.OPENCLINICA.enabled(self.domain):
+            from corehq.apps.domain.views import EditOpenClinicaSettingsView
             project_info.append({
-                'title': _(EditDhis2SettingsView.page_title),
-                'url': reverse(EditDhis2SettingsView.urlname, args=[self.domain])
+                'title': _(EditOpenClinicaSettingsView.page_title),
+                'url': reverse(EditOpenClinicaSettingsView.urlname, args=[self.domain])
             })
 
         items.append((_('Project Information'), project_info))
@@ -1277,10 +1283,15 @@ class MySettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.settings.views import MyAccountSettingsView, \
-            MyProjectsList, ChangeMyPasswordView, TwoFactorProfileView
+        from corehq.apps.settings.views import (
+            ChangeMyPasswordView,
+            EnableSuperuserView,
+            MyAccountSettingsView,
+            MyProjectsList,
+            TwoFactorProfileView,
+        )
         items = [
-            (_("Manage My Settings"), (
+            [_("Manage My Settings"), [
                 {
                     'title': _(MyAccountSettingsView.page_title),
                     'url': reverse(MyAccountSettingsView.urlname),
@@ -1297,8 +1308,13 @@ class MySettingsTab(UITab):
                     'title': _(TwoFactorProfileView.page_title),
                     'url': reverse(TwoFactorProfileView.urlname),
                 }
-            ))
+            ]]
         ]
+        if self.couch_user and self.couch_user.is_dimagi:
+            items[0][1].append({
+                'title': _(EnableSuperuserView.page_title),
+                'url': reverse(EnableSuperuserView.urlname),
+            })
         return items
 
 
@@ -1470,10 +1486,12 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
                 {'title': _('System Info'),
                  'url': reverse('system_info')},
-                {'title': _('Loadtest Report'),
-                 'url': reverse('loadtest_report')},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
+                {'title': _('Download Global Impact Report'),
+                 'url': reverse('download_gir')},
+                {'title': _('CommCare Version'),
+                 'url': reverse('admin_report_dispatcher', args=('commcare_version', ))}
             ]),
             (_('Administrative Operations'), admin_operations),
             (_('CommCare Reports'), [

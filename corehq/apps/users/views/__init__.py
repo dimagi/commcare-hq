@@ -3,13 +3,11 @@ from datetime import datetime
 import json
 import langcodes
 import logging
-import re
 import urllib
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import redirect_to_login
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -58,15 +56,21 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
 )
 from corehq.apps.style.decorators import (
-    use_bootstrap3,
     use_angular_js,
-)
+    use_select2)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
-from corehq.apps.users.forms import (BaseUserInfoForm, CommtrackUserForm, DomainRequestForm,
-                                     UpdateMyAccountInfoForm, UpdateUserPermissionForm, UpdateUserRoleForm)
+
+from corehq.apps.users.forms import (
+    BaseUserInfoForm,
+    CommtrackUserForm,
+    DomainRequestForm,
+    UpdateUserPermissionForm,
+    UpdateUserRoleForm,
+    SetUserPasswordForm,
+)
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
-                                      DomainRemovalRecord, UserRole, AdminUserRole, Invitation, PublicUser,
+                                      DomainRemovalRecord, UserRole, AdminUserRole, Invitation,
                                       DomainMembershipError)
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
@@ -120,18 +124,16 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
     @memoized
     def redirect(self):
         redirect = None
-        # good ol' public domain...
-        if not isinstance(self.couch_user, PublicUser):
-            user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
-            if user:
-                if user.has_permission(self.domain, 'edit_commcare_users'):
-                    from corehq.apps.users.views.mobile import MobileWorkerListView
-                    redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
-                elif user.has_permission(self.domain, 'edit_web_users'):
-                    redirect = reverse(
-                        ListWebUsersView.urlname,
-                        args=[self.domain]
-                    )
+        user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
+        if user:
+            if user.has_permission(self.domain, 'edit_commcare_users'):
+                from corehq.apps.users.views.mobile import MobileWorkerListView
+                redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
+            elif user.has_permission(self.domain, 'edit_web_users'):
+                redirect = reverse(
+                    ListWebUsersView.urlname,
+                    args=[self.domain]
+                )
         return redirect
 
     def get(self, request, *args, **kwargs):
@@ -143,6 +145,10 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 class BaseEditUserView(BaseUserSettingsView):
     user_update_form_class = None
 
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
+    
     @property
     @memoized
     def page_url(self):
@@ -336,43 +342,11 @@ def get_domain_languages(domain):
     return sorted(domain_languages) or langcodes.get_all_langs_for_select()
 
 
-class BaseFullEditUserView(BaseEditUserView):
-    edit_user_form_title = ""
-
-    @property
-    def main_context(self):
-        context = super(BaseFullEditUserView, self).main_context
-        context.update({
-            'edit_user_form_title': self.edit_user_form_title,
-        })
-        return context
-
-    @property
-    @memoized
-    def form_user_update(self):
-        form = super(BaseFullEditUserView, self).form_user_update
-        form.load_language(language_choices=get_domain_languages(self.domain))
-        return form
-
-    def post(self, request, *args, **kwargs):
-        if self.request.POST['form_type'] == "add-phonenumber":
-            phone_number = self.request.POST['phone_number']
-            phone_number = re.sub('\s', '', phone_number)
-            if re.match(r'\d+$', phone_number):
-                self.editable_user.add_phone_number(phone_number)
-                self.editable_user.save()
-                messages.success(request, _("Phone number added!"))
-            else:
-                messages.error(request, _("Please enter digits only."))
-        return super(BaseFullEditUserView, self).post(request, *args, **kwargs)
-
-
 class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
 
-    @use_bootstrap3
     @use_angular_js
     @method_decorator(require_can_edit_web_users)
     def dispatch(self, request, *args, **kwargs):
@@ -507,10 +481,16 @@ def remove_web_user(request, domain, couch_user_id):
     if user:
         record = user.delete_domain_membership(domain, create_record=True)
         user.save()
-        messages.success(request, 'You have successfully removed {username} from your domain. <a href="{url}" class="post-link">Undo</a>'.format(
-            username=user.username,
-            url=reverse('undo_remove_web_user', args=[domain, record.get_id])
-        ), extra_tags="html")
+        if record:
+            message = _('You have successfully removed {username} from your '
+                        'domain. <a href="{url}" class="post-link">Undo</a>')
+            messages.success(request, message.format(
+                username=user.username,
+                url=reverse('undo_remove_web_user', args=[domain, record.get_id])
+            ), extra_tags="html")
+        else:
+            message = _('It appears {username} has already been removed from your domain.')
+            messages.success(request, message.format(username=user.username))
 
     return HttpResponseRedirect(
         reverse(ListWebUsersView.urlname, args=[domain]))
@@ -663,7 +643,7 @@ class UserInvitationView(object):
                 form = NewWebUserRegistrationForm(request.POST)
                 if form.is_valid():
                     # create the new user
-                    user = activate_new_user(form)
+                    user = activate_new_user(form, domain=invitation.domain)
                     user.save()
                     messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     self._invite(invitation, user)
@@ -681,10 +661,9 @@ class UserInvitationView(object):
                 if CouchUser.get_by_username(invitation.email):
                     return HttpResponseRedirect(reverse("login") + '?next=' +
                         reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
-                domain = Domain.get_by_name(invitation.domain)
                 form = NewWebUserRegistrationForm(initial={
                     'email': invitation.email,
-                    'hr_name': domain.display_name() if domain else invitation.domain,
+                    'hr_name': invitation.domain,
                     'create_domain': False,
                 })
 
@@ -994,13 +973,13 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
-        form = SetPasswordForm(user=django_user, data=request.POST)
+        form = SetUserPasswordForm(domain, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
-            form = SetPasswordForm(user=django_user)
+            form = SetUserPasswordForm(domain, login_id, user='')
     else:
-        form = SetPasswordForm(user=django_user)
+        form = SetUserPasswordForm(domain, login_id, user=django_user)
     context = _users_context(request, domain)
     context.update({
         'reset_password_form': form,

@@ -37,11 +37,6 @@ class TestElasticPillow(AliasedElasticPillow):
         }
     }
 
-    @classmethod
-    def calc_meta(cls):
-        # must be overridden by subclasses of AliasedElasticPillow
-        return cls.es_index
-
 
 def get_doc_count(es, index, refresh_first=True):
     if refresh_first:

@@ -1,0 +1,139 @@
+{
+  "domains": [
+    "icds-test",
+    "icds-sql",
+    "icds-cas"
+  ],
+  "report_id": "static-ls_report_child_nutrition_status",
+  "data_source_table": "static-child_health_cases",
+  "config": {
+    "title": "LS Report - Child Nutrition Status (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": true,
+        "datatype": "string",
+        "required": false,
+        "display": "Modified Date",
+        "field": "modified_on",
+        "type": "date",
+        "slug": "modified_on"
+      },
+      {
+        "compare_as_string": false,
+        "display": "WFA ZScore Grading",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Severely Malnourished",
+            "value": "red"
+          },
+          {
+            "display": "Moderately Malnourished",
+            "value": "yellow"
+          },
+          {
+            "display": "Normal",
+            "value": "green"
+          },
+          {
+            "display": "Overweight",
+            "value": "white"
+          }
+        ],
+        "field": "zscore_grading_wfa",
+        "type": "choice_list",
+        "slug": "zscore_grading_wfa"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "display": "Date of Birth",
+        "field": "dob",
+        "type": "date",
+        "slug": "dob"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by Supervisor",
+        "field": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "slug": "supervisor_id"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "owner"
+        },
+        "required": false,
+        "display": "Owner Name",
+        "field": "owner_id",
+        "type": "dynamic_choice_list",
+        "slug": "owner_id"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "person_name",
+        "field": "person_name",
+        "transform": { },
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Child Name",
+          "hin": "\u0928\u093e\u092e"
+        }
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "dob",
+        "field": "dob",
+        "transform": { },
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Date of Birth",
+          "hin": "\u091c\u0928\u094d\u092e \u0924\u093f\u0925\u093f"
+        }
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "sex",
+        "field": "sex",
+        "transform": { },
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Sex",
+          "hin": "\u0932\u093f\u0902\u0917"
+        }
+      }
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}

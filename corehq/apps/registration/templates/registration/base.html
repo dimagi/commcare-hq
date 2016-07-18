@@ -1,4 +1,18 @@
-{% extends login_template %}
+{% extends 'login_and_password/login.html' %}
+
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+  {% if ab_test %}
+    <script>
+      $(function () {
+        _kmq.push(["set", {"{{ ab_test.name }}": "{{ ab_test.version }}"}]);
+      })
+    </script>
+  {% endif %}
+{% endblock %}
 
 {% block login-content %}
     <div class="row">

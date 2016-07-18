@@ -1,45 +1,41 @@
 import uuid
-from kafka import KafkaConsumer
-from kafka.common import KafkaUnavailableError
 
-from corehq.util.decorators import ContextDecorator
-from corehq.util.test_utils import trap_extra_setup
-from nose.tools import nottest
-from pillowtop import get_pillow_by_name
 from django.conf import settings
 
-@nottest
-def get_test_kafka_consumer(topic):
-    """
-    Gets a KafkaConsumer object for the topic, or conditionally raises
-    a skip error for the test if Kafka is not available
-    """
-    with trap_extra_setup(KafkaUnavailableError):
-        return KafkaConsumer(
-            topic,
-            group_id='test-{}'.format(uuid.uuid4().hex),
-            bootstrap_servers=[settings.KAFKA_URL],
-            consumer_timeout_ms=100,
-        )
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_offset
 
-
-def get_current_kafka_seq(topic):
-    consumer = get_test_kafka_consumer(topic)
-    # have to get the seq id before the change is processed
-    return consumer.offsets()['fetch'].get((topic, 0), 0)
+from corehq.util.decorators import ContextDecorator
+from pillowtop import get_pillow_by_name
 
 
 class process_kafka_changes(ContextDecorator):
-    def __init__(self, pillow_name, topic):
-        self.topic = topic
+    def __init__(self, pillow_name):
+        with real_pillow_settings():
+            self.pillow = get_pillow_by_name(pillow_name, instantiate=True)
+
+        self.topics = self.pillow.get_change_feed().topics
+
+    def __enter__(self):
+        if len(self.topics) == 1:
+            self.kafka_seq = get_topic_offset(self.topics[0])
+        else:
+            self.kafka_seq = get_multi_topic_offset(self.topics)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.pillow.process_changes(since=self.kafka_seq, forever=False)
+
+
+class process_couch_changes(ContextDecorator):
+    def __init__(self, pillow_name):
         with real_pillow_settings():
             self.pillow = get_pillow_by_name(pillow_name, instantiate=True)
 
     def __enter__(self):
-        self.kafka_seq = get_current_kafka_seq(self.topic)
+        self.seq = self.pillow.get_change_feed().get_latest_change_id()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.pillow.process_changes(since=self.kafka_seq, forever=False)
+        self.pillow.process_changes(since=self.seq, forever=False)
 
 
 class real_pillow_settings(ContextDecorator):
@@ -51,3 +47,23 @@ class real_pillow_settings(ContextDecorator):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         settings.PILLOWTOPS = self._PILLOWTOPS
+
+
+class capture_kafka_changes_context(object):
+    def __init__(self, *topics):
+        self.topics = topics
+        self.change_feed = KafkaChangeFeed(
+            topics=topics,
+            group_id='test-{}'.format(uuid.uuid4().hex),
+        )
+        self.changes = None
+
+    def __enter__(self):
+        self.kafka_seq = get_multi_topic_offset(self.topics)
+        self.changes = []
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for change in self.change_feed.iter_changes(since=self.kafka_seq, forever=False):
+            if change:
+                self.changes.append(change)

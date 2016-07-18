@@ -3,7 +3,6 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.processing import compute_ledger_values, rebuild_stock_state
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
     LedgerDBInterface
-from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 
 
 class LedgerDBCouch(LedgerDBInterface):

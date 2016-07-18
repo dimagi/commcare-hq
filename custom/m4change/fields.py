@@ -1,7 +1,4 @@
-import datetime
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.util.dates import iso_string_to_date
-from dimagi.utils.dates import DateSpan
 import json
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.dont_use.fields import ReportField

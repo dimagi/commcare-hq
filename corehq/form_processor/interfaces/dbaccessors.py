@@ -78,11 +78,11 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def forms_have_multimedia(domain, app_id, xmlns):
+    def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         raise NotImplementedError
 
     @abstractmethod
-    def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
+    def soft_undelete_forms(domain, form_ids):
         raise NotImplementedError
 
 
@@ -125,7 +125,7 @@ class FormAccessors(object):
         return self.db_accessor.form_exists(form_id, domain=self.domain)
 
     def get_all_form_ids_in_domain(self):
-        self.db_accessor.get_form_ids_in_domain_by_type(self.domain, 'XFormInstance')
+        return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, 'XFormInstance')
 
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
@@ -139,8 +139,8 @@ class FormAccessors(object):
     def update_form_problem_and_state(self, form):
         self.db_accessor.update_form_problem_and_state(form)
 
-    def get_deleted_form_ids_for_user(self, domain, user_id):
-        return self.db_accessor.get_deleted_form_ids_for_user(domain, user_id)
+    def get_deleted_form_ids_for_user(self, user_id):
+        return self.db_accessor.get_deleted_form_ids_for_user(self.domain, user_id)
 
     def get_form_ids_for_user(self, user_id):
         return self.db_accessor.get_form_ids_for_user(self.domain, user_id)
@@ -148,11 +148,11 @@ class FormAccessors(object):
     def get_attachment_content(self, form_id, attachment_name):
         return self.db_accessor.get_attachment_content(form_id, attachment_name)
 
-    def forms_have_multimedia(self, app_id, xmlns):
-        return self.db_accessor.forms_have_multimedia(self.domain, app_id, xmlns)
-
     def soft_delete_forms(self, form_ids, deletion_date=None, deletion_id=None):
         return self.db_accessor.soft_delete_forms(self.domain, form_ids, deletion_date, deletion_id)
+
+    def soft_undelete_forms(self, form_ids):
+        return self.db_accessor.soft_undelete_forms(self.domain, form_ids)
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
@@ -189,6 +189,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
         raise NotImplementedError
 
@@ -198,6 +202,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_indexed_case_ids(domain, case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_reverse_indexed_cases(domain, case_ids):
         raise NotImplementedError
 
     @abstractmethod
@@ -230,6 +238,14 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        raise NotImplementedError
+
+    @abstractmethod
+    def soft_undelete_cases(domain, case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_deleted_case_ids_by_owner(domain, owner_id):
         raise NotImplementedError
 
 
@@ -285,6 +301,9 @@ class CaseAccessors(object):
     def get_open_case_ids_for_owner(self, owner_id):
         return self.db_accessor.get_open_case_ids_for_owner(self.domain, owner_id)
 
+    def get_open_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
+        return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
+
     def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
         return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
 
@@ -303,6 +322,9 @@ class CaseAccessors(object):
     def get_all_reverse_indices_info(self, case_ids):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
 
+    def get_reverse_indexed_cases(self, case_ids):
+        return self.db_accessor.get_reverse_indexed_cases(self.domain, case_ids)
+
     def get_attachment_content(self, case_id, attachment_id):
         return self.db_accessor.get_attachment_content(case_id, attachment_id)
 
@@ -314,6 +336,27 @@ class CaseAccessors(object):
 
     def soft_delete_cases(self, case_ids, deletion_date=None, deletion_id=None):
         return self.db_accessor.soft_delete_cases(self.domain, case_ids, deletion_date, deletion_id)
+
+    def soft_undelete_cases(self, case_ids):
+        return self.db_accessor.soft_undelete_cases(self.domain, case_ids)
+
+    def get_deleted_case_ids_by_owner(self, owner_id):
+        return self.db_accessor.get_deleted_case_ids_by_owner(self.domain, owner_id)
+
+    def get_extension_chain(self, case_ids):
+        assert isinstance(case_ids, list)
+        get_extension_case_ids = self.db_accessor.get_extension_case_ids
+
+        incoming_extensions = set(get_extension_case_ids(self.domain, case_ids))
+        all_extension_ids = set(incoming_extensions)
+        new_extensions = set(incoming_extensions)
+        while new_extensions:
+            new_extensions = (
+                set(get_extension_case_ids(self.domain, list(new_extensions))) -
+                all_extension_ids
+            )
+            all_extension_ids = all_extension_ids | new_extensions
+        return all_extension_ids
 
     @quickcache(['self.domain'], timeout=30 * 60)
     def get_case_types(self):
@@ -411,9 +454,6 @@ class LedgerAccessors(object):
 
     def get_ledger_values_for_case(self, case_id):
         return self.db_accessor.get_ledger_values_for_case(case_id)
-
-    def get_ledger_values_for_product_ids(self, product_ids):
-        return self.db_accessor.get_ledger_values_for_product_ids(product_ids)
 
     def get_current_ledger_state(self, case_ids):
         if not case_ids:

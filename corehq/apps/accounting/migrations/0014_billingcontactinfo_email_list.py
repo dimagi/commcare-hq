@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='billingcontactinfo',
             name='email_list',
-            field=jsonfield.fields.JSONField(default=[], help_text='We will email communications regarding your account to the emails specified here.', verbose_name='Contact Emails'),
+            field=jsonfield.fields.JSONField(default=list, help_text='We will email communications regarding your account to the emails specified here.', verbose_name='Contact Emails'),
             preserve_default=True,
         ),
     ]

@@ -125,7 +125,7 @@ class Command(BaseCommand):
         if options['postgres_db'] and options['postgres_password']:
             settings.DATABASES[options['postgres_db']]['PASSWORD'] = options['postgres_password']
 
-        self.targetdb = Database(args[2]) if len(args) == 3 else get_db()
+        self.targetdb = CouchConfig(args[2]) if len(args) == 3 else CouchConfig()
 
         try:
             domain_doc = Domain.get_by_name(domain)
@@ -211,8 +211,9 @@ class Command(BaseCommand):
                 queue.put(None)
         else:
             for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
+                target = self.targetdb.get_db_for_doc_type(doc['doc_type'])
                 count += 1
-                copy_doc(doc, count, sourcedb, self.targetdb, exclude_types, total, simulate, exclude_attachments)
+                copy_doc(doc, count, sourcedb, target, exclude_types, total, simulate, exclude_attachments)
 
         err_log.close()
         if os.stat(err_log.name)[6] == 0:
@@ -236,7 +237,7 @@ class Command(BaseCommand):
         if result and 'doc' in result:
             domain_doc = Domain.wrap(result['doc'])
             dt = DocumentTransform(domain_doc._obj, sourcedb)
-            save(dt, self.targetdb)
+            save(dt, self.targetdb.get_db_for_doc_type(domain_doc['doc_type']))
         else:
             print "Domain doc not found for domain %s." % domain
 
@@ -264,7 +265,8 @@ class Worker(Process):
     def run(self):
         for doc, count in iter(self.queue.get, None):
             try:
-                copy_doc(doc, count, self.sourcedb, self.targetdb, self.exclude_types, self.total, self.simulate,
+                target = self.targetdb.get_db_for_doc_type(doc['doc_type'])
+                copy_doc(doc, count, self.sourcedb, target, self.exclude_types, self.total, self.simulate,
                          self.exclude_attachments)
             except Exception, e:
                 self.err_log.write('%s\n' % doc["_id"])

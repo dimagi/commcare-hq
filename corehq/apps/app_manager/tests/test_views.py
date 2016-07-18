@@ -15,7 +15,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
-    APP_V1,
     APP_V2,
     Module,
     ReportModule,

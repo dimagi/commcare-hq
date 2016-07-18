@@ -11,7 +11,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
         this.app_profiles = ko.observableArray([]);
         this.app_langs = app_langs;
         this.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: gettext("You have unsaved changes to your build profiles"),
+            unsavedMessage: gettext("You have unsaved changes to your application profiles"),
             save: function() {
                 var postProfiles = [];
                 _.each(self.app_profiles(), function(element) {

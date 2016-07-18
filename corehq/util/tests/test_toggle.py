@@ -1,3 +1,4 @@
+# coding=utf-8
 from collections import defaultdict
 import uuid
 from django.test import SimpleTestCase
@@ -27,6 +28,11 @@ class DeterministicRandomTestCase(SimpleTestCase):
             self.assertEqual(converted_rand, deterministic_random(seed))
             self.assertTrue(converted_rand not in seen)
             seen.add(converted_rand)
+
+    def test_unicode(self):
+        unicode_string = u'टूटना{}'.format(self._random_string())
+        value = deterministic_random(unicode_string)
+        self.assertEqual(value, deterministic_random(unicode_string))
 
     def test_randomness(self):
         buckets = defaultdict(lambda: 0)

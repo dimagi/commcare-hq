@@ -1,0 +1,16 @@
+{% extends "style/partials/download_status.html" %}
+{% load i18n %}
+{% block results %}
+{% if result.errors %}
+    <div class="alert alert-danger">
+        <h3>{{ error_text }}</h3>
+        {% for e in result.errors %}
+        <p>{{ e }}</p>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-success">
+        <h3>{{ on_complete_long }}</h3>
+    </div>
+{% endif %}
+{% endblock %}

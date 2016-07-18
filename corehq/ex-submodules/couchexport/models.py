@@ -679,7 +679,9 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         Does NOT save the doc, just updates the in-memory object.
         """
         from couchexport.schema import build_latest_schema
-        self.set_schema(build_latest_schema(self.index))
+        schema = build_latest_schema(self.index)
+        if schema:
+            self.set_schema(schema)
 
     def set_schema(self, schema):
         """

@@ -2,6 +2,7 @@ import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
@@ -10,12 +11,13 @@ from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.display import FormDisplay
-from corehq.apps.reports.filters.forms import MISSING_APP_ID, FormsByApplicationFilter
+from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.apps.reports.generic import (GenericTabularReport,
                                          ProjectInspectionReportParamsMixin,
                                          ElasticProjectInspectionReport)
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
+from corehq.const import MISSING_APP_ID
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from corehq.toggles import SUPPORT
 from dimagi.utils.decorators.memoized import memoized
@@ -53,21 +55,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     ]
     ajax_pagination = True
     include_inactive = True
-
-    # Feature preview flag for Submit History Filters
-    def __init__(self, request, **kwargs):
-        if feature_previews.SUBMIT_HISTORY_FILTERS.enabled(request.domain):
-            # create a new instance attribute instead of modifying the
-            # class attribute
-            self.fields = self.fields + [
-                'corehq.apps.reports.filters.forms.FormDataFilter',
-                'corehq.apps.reports.filters.forms.CustomFieldFilter',
-            ]
-        super(SubmitHistoryMixin, self).__init__(request, **kwargs)
-
-    @property
-    def other_fields(self):
-        return filter(None, self.request.GET.get('custom_field', "").split(","))
 
     @property
     def default_datespan(self):
@@ -117,10 +104,9 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                 }
             }
 
-        props = truthy_only(self.request.GET.get('form_data', '').split(','))
-        for prop in props:
+        if HQUserType.UNKNOWN not in ExpandedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs):
             yield {
-                'term': {'__props_for_querying': prop}
+                'not': {'term': {'xmlns.exact': SYSTEM_FORM_XMLNS}}
             }
 
     def _es_xform_filter(self):
@@ -199,7 +185,6 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
         if self.show_extra_columns:
             h.append(DataTablesColumn(_("Sync Log")))
 
-        h.extend([DataTablesColumn(field) for field in self.other_fields])
         return DataTablesHeader(*h)
 
     @property
@@ -217,4 +202,4 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
 
             if self.show_extra_columns:
                 row.append(form.get('last_sync_token', ''))
-            yield row + display.other_columns
+            yield row

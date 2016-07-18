@@ -12,7 +12,6 @@ from corehq.apps.performance_sms.forms import PerformanceMessageEditForm
 from corehq.apps.performance_sms.message_sender import send_messages_for_config
 from corehq.apps.performance_sms.models import PerformanceConfiguration
 from corehq.apps.reminders.views import reminders_framework_permission
-from corehq.apps.style.decorators import use_bootstrap3
 from corehq.util import get_document_or_404
 from dimagi.utils.decorators.memoized import memoized
 
@@ -20,7 +19,6 @@ from dimagi.utils.decorators.memoized import memoized
 class BasePerformanceSMSView(BaseDomainView):
     section_name = ugettext_lazy('Performance Messaging')
 
-    @use_bootstrap3
     @method_decorator(reminders_framework_permission)
     @method_decorator(toggles.SMS_PERFORMANCE_FEEDBACK.required_decorator())
     def dispatch(self, request, *args, **kwargs):

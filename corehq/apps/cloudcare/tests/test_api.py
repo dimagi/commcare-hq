@@ -28,6 +28,7 @@ class CaseAPITest(TestCase):
     user_ids = ['TEST_API1', 'TEST_API2']
 
     def setUp(self):
+        super(CaseAPITest, self).setUp()
         create_domain(self.domain)
         self.password = "****"
 
@@ -63,6 +64,7 @@ class CaseAPITest(TestCase):
             user.delete()
         delete_all_cases()
         clear_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, toggles.NAMESPACE_DOMAIN)
+        super(CaseAPITest, self).tearDown()
 
     def assertListMatches(self, list, function):
         for item in list:

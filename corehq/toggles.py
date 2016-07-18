@@ -62,6 +62,8 @@ def deterministic_random(input_string):
     Returns a deterministically random number between 0 and 1 based on the
     value of the string. The same input should always produce the same output.
     """
+    if isinstance(input_string, unicode):
+        input_string = input_string.encode('utf-8')
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
 
@@ -193,14 +195,6 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
-APP_AWARE_SYNC = PredictablyRandomToggle(
-    'app_aware_sync',
-    'App-aware Sync',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=0.6
-)
-
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
@@ -241,13 +235,6 @@ DEMO_REPORTS = StaticToggle(
     'Access to map-based demo reports',
     TAG_PREVIEW,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-SUPPLY_REPORTS = StaticToggle(
-    'supply_reports',
-    "Early stages reports for CommCare Supply",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TABS = StaticToggle(
@@ -317,6 +304,13 @@ REPORT_BUILDER = StaticToggle(
     'Report Builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+ASYNC_RESTORE = StaticToggle(
+    'async_restore',
+    'Generate restore response in an asynchronous task to prevent timeouts',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
 )
 
 REPORT_BUILDER_BETA_GROUP = StaticToggle(
@@ -444,13 +438,6 @@ TRANSFER_DOMAIN = StaticToggle(
     'transfer_domain',
     'Transfer domains to different users',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-DHIS2_DOMAIN = StaticToggle(
-    'dhis2_domain',
-    'Enable DHIS2 integration for this domain',
-    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
@@ -592,10 +579,10 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-OPENLMIS = StaticToggle(
-    'openlmis',
-    'Offer OpenLMIS settings',
-    TAG_UNKNOWN,
+OPENCLINICA = StaticToggle(
+    'openclinica',
+    'Offer OpenClinica settings and CDISC ODM export',
+    TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
@@ -648,6 +635,13 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+USE_FORMPLAYER_FRONTEND = StaticToggle(
+    'use_formplayer_frontend',
+    'Use the new formplayer frontend',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 USE_FORMPLAYER = StaticToggle(
     'use_formplayer',
     'Use the new formplayer server',
@@ -687,13 +681,6 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
     'Allow mobile workers to self register',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
-TELERIVET_SETUP_WALKTHROUGH = StaticToggle(
-    'telerivet_setup_walkthrough',
-    'Use the new Telerivet setup walkthrough for creating Telerivet backends.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
 )
@@ -749,9 +736,10 @@ VIEW_BUILD_SOURCE = StaticToggle(
 
 USE_SQL_BACKEND = StaticToggle(
     'sql_backend',
-    'Uses a sql backend instead of a couch backend for form processing (testing only)',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    'Uses a sql backend instead of a couch backend for form processing',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    description="This flag is deprecated. All new domains now use the sql backend."
 )
 
 
@@ -807,14 +795,6 @@ CASE_LIST_DISTANCE_SORT = StaticToggle(
 )
 
 
-NOTIFICATIONS = StaticToggle(
-    'hq_notifications',
-    'Shows notification icon when announcements need to be made',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
-)
-
-
 PROJECT_HEALTH_DASHBOARD = StaticToggle(
     'project_health_dashboard',
     'Shows the project performance dashboard in the reports navigation',
@@ -827,5 +807,36 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+MOBILE_USER_DEMO_MODE = StaticToggle(
+    'mobile_user_demo_mode',
+    'Ability to make a mobile worker into Demo only mobile worker',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+EXPORT_ZIPPED_APPS = StaticToggle(
+    'export-zipped-apps',
+    'Export+Import Zipped Applications',
+    TAG_UNKNOWN,
+    [NAMESPACE_USER]
+)
+
+
+SEND_UCR_REBUILD_INFO = StaticToggle(
+    'send_ucr_rebuild_info',
+    'Notify when UCR rebuilds finish or error.',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_USER]
+)
+
+
+ZAPIER_INTEGRATION = StaticToggle(
+    'zapier_integration',
+    'Allow to use domain in Zapier application',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )

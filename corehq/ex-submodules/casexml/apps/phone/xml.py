@@ -26,10 +26,11 @@ def tostring(element):
     return ElementTree.tostring(element, encoding="utf-8")
 
 
-def get_sync_element(restore_id):
+def get_sync_element(restore_id=None):
     elem = safe_element("Sync")
     elem.attrib = {"xmlns": SYNC_XMLNS}
-    elem.append(safe_element("restore_id", restore_id))
+    if restore_id is not None:
+        elem.append(safe_element("restore_id", restore_id))
     return elem
 
 
@@ -112,19 +113,19 @@ def get_casedb_xml(case):
     return tostring(get_casedb_element(case))
 
 
-def get_registration_element(user):
+def get_registration_element(restore_user):
     root = safe_element("Registration")
     root.attrib = {"xmlns": USER_REGISTRATION_XMLNS}
-    root.append(safe_element("username", user.username))
-    root.append(safe_element("password", user.password))
-    root.append(safe_element("uuid", user.user_id))
-    root.append(safe_element("date", date_to_xml_string(user.date_joined)))
-    root.append(get_data_element('user_data', user.user_session_data))
+    root.append(safe_element("username", restore_user.username))
+    root.append(safe_element("password", restore_user.password))
+    root.append(safe_element("uuid", restore_user.user_id))
+    root.append(safe_element("date", date_to_xml_string(restore_user.date_joined)))
+    root.append(get_data_element('user_data', restore_user.user_session_data))
     return root
 
 
-def get_registration_xml(user):
-    return tostring(get_registration_element(user))
+def get_registration_xml(restore_user):
+    return tostring(get_registration_element(restore_user))
 
 
 def get_data_element(name, dict):
@@ -133,4 +134,12 @@ def get_data_element(name, dict):
         sub_el = safe_element("data", v)
         sub_el.attrib = {"key": k}
         elem.append(sub_el)
+    return elem
+
+
+def get_progress_element(done=0, total=0, retry_after=0):
+    elem = safe_element("progress")
+    elem.set('done', str(done))
+    elem.set('total', str(total))
+    elem.set('retry-after', str(retry_after))
     return elem

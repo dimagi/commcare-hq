@@ -49,6 +49,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestCase, TestFileMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(TestConvertSavedExportSchemaToCaseExportInstance, cls).setUpClass()
         cls.project = create_domain(cls.domain)
         cls.project.commtrack_enabled = True
         cls.project.save()
@@ -164,6 +165,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestCase, TestFileMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(TestConvertSavedExportSchemaToFormExportInstance, cls).setUpClass()
         cls.schema = FormExportDataSchema(
             domain=cls.domain,
             group_schemas=[

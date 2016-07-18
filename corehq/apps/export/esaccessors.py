@@ -1,5 +1,6 @@
-from corehq.apps.es import CaseES, GroupES
+from corehq.apps.es import CaseES, GroupES, LedgerES
 from corehq.apps.es import FormES
+from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
@@ -27,3 +28,15 @@ def get_group_user_ids(group_id):
             .doc_id(group_id)
             .fields("users"))
     return q.run().hits[0]['users']
+
+
+def get_ledger_section_entry_combinations(domain):
+    """Get all section / entry combinations in a domain.
+    :returns: a generator of namedtuples with fields ``section_id``, ``entry_id``, ``doc_count``
+    """
+    terms = [
+        AggregationTerm('section_id', 'section_id'),
+        AggregationTerm('entry_id', 'entry_id'),
+    ]
+    query = LedgerES().domain(domain)
+    return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()

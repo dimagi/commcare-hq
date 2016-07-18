@@ -1,75 +1,84 @@
-# Stub models file
 from collections import namedtuple
+
 import itertools
-from django.conf import settings
-from corehq.apps.callcenter.const import DATE_RANGES
-from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.util.quickcache import skippable_quickcache
-from dimagi.ext.couchdbkit import *
+from jsonobject import JsonObject, BooleanProperty, SetProperty, StringProperty, ListProperty, ObjectProperty
+
+from corehq.apps.callcenter import const
 
 TypeRange = namedtuple('TypeRange', 'type, range_slug')
 
 
-class BasicIndicator(DocumentSchema):
-    active = BooleanProperty()
-    date_ranges = StringListProperty()
-    include_legacy = BooleanProperty()
+class BasicIndicator(JsonObject):
+    enabled = BooleanProperty(default=False)
+    date_ranges = SetProperty(unicode)
 
 
 class TypedIndicator(BasicIndicator):
-    type = StringProperty()
+    type = StringProperty(unicode)
 
 
-class ByTypeIndicator(DocumentSchema):
-    include_legacy = BooleanProperty()
-    total = SchemaProperty(BasicIndicator)
-    all_types = BooleanProperty()  # same date ranges as 'total'
-    types = SchemaListProperty(TypedIndicator)
+class ByTypeWithTotal(JsonObject):
+    by_type = ListProperty(TypedIndicator)
+    totals = ObjectProperty(BasicIndicator)
+    all_types = BooleanProperty(default=False)
 
     @property
-    def active(self):
-        return self.total.active or self.all_types or any(type_.active for type_ in self.types)
+    def enabled(self):
+        return self.totals.enabled or self.all_types or len(self.enabled_types) > 0
+
+    @property
+    def enabled_types(self):
+        return [type_ for type_ in self.by_type if type_.enabled]
 
     def types_by_date_range(self):
         types_list = sorted([
-            TypeRange(type_.type, date_range) for type_ in self.types
+            TypeRange(type_.type, date_range) for type_ in self.enabled_types
             for date_range in type_.date_ranges
-            if type_.active
         ], key=lambda x: x.range_slug)
+
         return {
             range_slug: {type_.type for type_ in group}
             for range_slug, group in itertools.groupby(types_list, lambda x: x.range_slug)
         }
 
+    def get_or_add_for_type(self, type_):
+        try:
+            return [by_type for by_type in self.by_type if by_type.type == type_][0]
+        except IndexError:
+            indicator = TypedIndicator(enabled=True, type=type_)
+            self.by_type.append(
+                indicator
+            )
+            return indicator
 
-class CallCenterIndicatorConfig(Document):
-    domain = StringProperty()
-    forms_submitted = SchemaProperty(BasicIndicator)
-    cases_total = SchemaProperty(ByTypeIndicator)
-    cases_active = SchemaProperty(ByTypeIndicator)
-    cases_opened = SchemaProperty(ByTypeIndicator)
-    cases_closed = SchemaProperty(ByTypeIndicator)
+
+class CallCenterIndicatorConfig(JsonObject):
+    forms_submitted = ObjectProperty(BasicIndicator)
+    cases_total = ObjectProperty(ByTypeWithTotal)
+    cases_active = ObjectProperty(ByTypeWithTotal)
+    cases_opened = ObjectProperty(ByTypeWithTotal)
+    cases_closed = ObjectProperty(ByTypeWithTotal)
+
+    legacy_forms_submitted = BooleanProperty(False)
+    legacy_cases_total = BooleanProperty(False)
+    legacy_cases_active = BooleanProperty(False)
+
+    def includes_legacy(self):
+        return (
+            self.legacy_forms_submitted or
+            self.legacy_cases_total or
+            self.legacy_cases_active
+        )
 
     @classmethod
-    @skippable_quickcache(['domain'], lambda *_: settings.UNIT_TESTING)
-    def for_domain(cls, domain):
-        res = get_docs_in_domain_by_class(domain, cls)
-        return res[0] if res else cls.default_config(domain)
-
-    @classmethod
-    def default_config(cls, domain, include_legacy=True):
+    def default_config(cls, include_legacy=True):
         def default_basic():
-            return BasicIndicator(active=True, date_ranges=DATE_RANGES, include_legacy=include_legacy)
+            return BasicIndicator(enabled=True, date_ranges=set(const.DATE_RANGES))
 
         def default_typed():
-            return ByTypeIndicator(
-                total=default_basic(),
-                all_types=True,
-                include_legacy=include_legacy
-            )
+            return ByTypeWithTotal(totals=default_basic(), all_types=True)
 
-        return cls(
-            domain=domain,
+        config = cls(
             forms_submitted=default_basic(),
             cases_total=default_typed(),
             cases_active=default_typed(),
@@ -77,9 +86,36 @@ class CallCenterIndicatorConfig(Document):
             cases_closed=default_typed(),
         )
 
-    def save(self, **params):
-        super(CallCenterIndicatorConfig, self).save(**params)
-        CallCenterIndicatorConfig.for_domain.clear(self.__class__, self.domain)
+        config.legacy_forms_submitted = include_legacy
+        config.legacy_cases_total = include_legacy
+        config.legacy_cases_active = include_legacy
+
+        return config
+
+    def set_indicator(self, parsed_indicator):
+        if parsed_indicator.is_legacy:
+            indicator = getattr(self, parsed_indicator.category)
+            setattr(self, 'legacy_{}'.format(parsed_indicator.category), True)
+            if parsed_indicator.date_range:
+                date_range = parsed_indicator.date_range
+                if isinstance(indicator, ByTypeWithTotal):
+                    indicator.totals.date_ranges.add(date_range)
+                else:
+                    indicator.date_ranges.add(date_range)
+        elif parsed_indicator.category == const.FORMS_SUBMITTED:
+            self.forms_submitted.enabled = True
+            if parsed_indicator.date_range:
+                self.forms_submitted.date_ranges.add(parsed_indicator.date_range)
+        else:
+            indicator = getattr(self, parsed_indicator.category)
+            if parsed_indicator.type:
+                indicator = indicator.get_or_add_for_type(parsed_indicator.type)
+            else:
+                indicator = indicator.totals
+
+            indicator.enabled = True
+            if parsed_indicator.date_range:
+                indicator.date_ranges.add(parsed_indicator.date_range)
 
 
 from .signals import *

@@ -1,15 +1,16 @@
 from collections import defaultdict
 from datetime import datetime
 import logging
-from couchdbkit import ResourceNotFound
 from lxml.builder import E
 from django.conf import settings
+
+from casexml.apps.phone.models import OTARestoreUser
 
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
 from corehq.util.xml_utils import serialize
 
-from corehq.apps.userreports.exceptions import UserReportsError, BadReportConfigurationError
+from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -18,14 +19,16 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 class ReportFixturesProvider(object):
     id = 'commcare:reports'
 
-    def __call__(self, user, version, last_sync=None, app=None):
+    def __call__(self, restore_user, version, last_sync=None, app=None):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not toggles.MOBILE_UCR.enabled(user.domain):
+        assert isinstance(restore_user, OTARestoreUser)
+
+        if not toggles.MOBILE_UCR.enabled(restore_user.domain):
             return []
 
-        apps = [app] if app else (a for a in get_apps_in_domain(user.domain, include_remote=False))
+        apps = [app] if app else (a for a in get_apps_in_domain(restore_user.domain, include_remote=False))
         report_configs = [
             report_config
             for app_ in apps
@@ -35,12 +38,12 @@ class ReportFixturesProvider(object):
         if not report_configs:
             return []
 
-        root = E.fixture(id=self.id)
+        root = E.fixture(id=self.id, user_id=restore_user.user_id)
         reports_elem = E.reports(last_sync=datetime.utcnow().isoformat())
         for report_config in report_configs:
             try:
-                reports_elem.append(self._report_config_to_fixture(report_config, user))
-            except BadReportConfigurationError as err:
+                reports_elem.append(self._report_config_to_fixture(report_config, restore_user))
+            except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
             except UserReportsError:
@@ -54,13 +57,14 @@ class ReportFixturesProvider(object):
         return [root]
 
     @staticmethod
-    def _report_config_to_fixture(report_config, user):
+    def _report_config_to_fixture(report_config, restore_user):
         report, data_source = ReportFixturesProvider._get_report_and_data_source(
-            report_config.report_id, user.domain
+            report_config.report_id, restore_user.domain
         )
 
+        # TODO: Convert to be compatiable with restore_user
         all_filter_values = {
-            filter_slug: filter.get_filter_value(user, report.get_ui_filter(filter_slug))
+            filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
             for filter_slug, filter in report_config.filters.items()
         }
         filter_values = {
@@ -90,14 +94,8 @@ class ReportFixturesProvider(object):
 
     @staticmethod
     def _get_report_and_data_source(report_id, domain):
-        try:
-            report = get_report_config(report_id, domain)[0]
-        except ResourceNotFound as err:
-            # ReportConfiguration not found
-            raise BadReportConfigurationError('Error getting ReportConfiguration with ID "{}": {}'.format(
-                report_id, err))
+        report = get_report_config(report_id, domain)[0]
         data_source = ReportFactory.from_spec(report)
-
         return report, data_source
 
     @staticmethod

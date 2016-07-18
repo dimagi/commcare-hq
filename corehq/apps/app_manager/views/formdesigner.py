@@ -3,7 +3,7 @@ import logging
 
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.conf import settings
@@ -33,6 +33,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
+from corehq.apps.tour import tours
 
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,14 @@ logger = logging.getLogger(__name__)
 
 @require_can_edit_apps
 def form_designer(request, domain, app_id, module_id=None, form_id=None):
+    def _form_uses_case(module, form):
+        return module and module.case_type and form.requires_case()
+
+    def _form_too_large(app, form):
+        # form less than 0.1MB, anything larger starts to have
+        # performance issues with fullstory
+        return app.blobs['{}.xml'.format(form.unique_id)]['content_length'] > 102400
+
     meta = get_meta(request)
     track_entered_form_builder_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
 
@@ -65,18 +74,19 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         return back_to_main(request, domain, app_id=app_id,
                             unique_form_id=form.unique_id)
 
+    include_fullstory = False
     vellum_plugins = ["modeliteration", "itemset", "atwho"]
     if (toggles.COMMTRACK.enabled(domain)):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
-    if (app.vellum_case_management and
-            module and module.case_type and form.requires_case()):
+    if (app.vellum_case_management and _form_uses_case(module, form)):
         vellum_plugins.append("databrowser")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
     vellum_features.update(feature_previews.previews_dict(domain))
+    include_fullstory = not _form_too_large(app, form)
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,
         'image_resize': app.enable_image_resize,
@@ -105,6 +115,10 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
+    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) \
+        and app.vellum_case_management and form.requires_case():
+        request.guided_tour = tours.VELLUM_CASE_MANAGEMENT.get_tour_data()
+
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
@@ -118,6 +132,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'app_callout_templates': next(app_callout_templates),
         'scheduler_data_nodes': scheduler_data_nodes,
         'no_header': True,
+        'include_fullstory': include_fullstory
     })
     return render(request, 'app_manager/form_designer.html', context)
 
@@ -181,12 +196,17 @@ def get_form_data_schema(request, domain, form_unique_id):
         form, app = Form.get_form(form_unique_id, and_app=True)
     except ResourceConflict:
         raise Http404()
-    data.append(get_session_schema(form))
 
     if app.domain != domain:
         raise Http404()
-    if form and form.requires_case():
-        data.append(get_casedb_schema(app))  # TODO use domain instead of app
+
+    try:
+        data.append(get_session_schema(form))
+        if form and form.requires_case():
+            data.append(get_casedb_schema(form))
+    except Exception as e:
+        return HttpResponseBadRequest(e)
+
     data.extend(
         sorted(item_lists_by_domain(domain), key=lambda x: x['name'].lower())
     )

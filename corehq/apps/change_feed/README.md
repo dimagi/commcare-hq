@@ -31,3 +31,5 @@ cd /usr/local/opt/kafka/libexec
 
 If you use the default configuration you should not have to do anything.
 If you are running kafka in a VM, on another machine, or on a nonstandard port, you will need to override `KAFKA_URL` in your `localsettings.py`.
+
+To more easily manage Kafka's settings, try installing [kafkat](https://github.com/airbnb/kafkat)

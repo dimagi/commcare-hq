@@ -49,7 +49,7 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_address_from_invoice,
     get_change_status,
-    get_dimagi_from_email_by_product,
+    get_dimagi_from_email,
     get_privileges,
     is_active_subscription,
     log_accounting_error,
@@ -63,6 +63,7 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
@@ -73,6 +74,11 @@ MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
+
+_soft_assert_domain_not_loaded = soft_assert(
+    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 class BillingAccountType(object):
@@ -111,14 +117,6 @@ class SoftwareProductType(object):
         (COMMTRACK, COMMTRACK),
         (COMMCONNECT, COMMCONNECT),
     )
-
-    @classmethod
-    def get_type_by_domain(cls, domain):
-        if domain.commtrack_enabled:
-            return cls.COMMTRACK
-        if domain.commconnect_enabled:
-            return cls.COMMCONNECT
-        return cls.COMMCARE
 
 
 class SoftwarePlanEdition(object):
@@ -512,7 +510,7 @@ class BillingContactInfo(models.Model):
     )
     # TODO - replace with models.ArrayField once django >= 1.9
     email_list = jsonfield.JSONField(
-        default=[],
+        default=list,
         verbose_name=_("Contact Emails"),
         help_text=_("We will email communications regarding your account "
                     "to the emails specified here.")
@@ -744,13 +742,11 @@ class DefaultProductPlan(models.Model):
         app_label = 'accounting'
 
     @classmethod
-    def get_default_plan_by_domain(cls, domain, edition=None, is_trial=False):
-        domain = ensure_domain_instance(domain)
+    def get_default_plan(cls, edition=None, is_trial=False):
         edition = edition or SoftwarePlanEdition.COMMUNITY
-        product_type = SoftwareProductType.get_type_by_domain(domain)
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
-                product_type=product_type, edition=edition, is_trial=is_trial
+                product_type=SoftwareProductType.COMMCARE, edition=edition, is_trial=is_trial
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
@@ -759,11 +755,10 @@ class DefaultProductPlan(models.Model):
             )
 
     @classmethod
-    def get_lowest_edition_by_domain(cls, domain, requested_privileges,
-                                     return_plan=False):
+    def get_lowest_edition(cls, requested_privileges, return_plan=False):
         for edition in SoftwarePlanEdition.SELF_SERVICE_ORDER:
-            plan_version = cls.get_default_plan_by_domain(
-                domain, edition=edition
+            plan_version = cls.get_default_plan(
+                edition=edition
             )
             privileges = get_privileges(plan_version) - REPORT_BUILDER_ADD_ON_PRIVS
             if privileges.issuperset(requested_privileges):
@@ -796,10 +791,6 @@ class SoftwarePlanVersion(models.Model):
         }
 
     @property
-    def core_product(self):
-        return self.product_rate.product.product_type
-
-    @property
     def version(self):
         return (self.plan.softwareplanversion_set.count() -
                 self.plan.softwareplanversion_set.filter(
@@ -817,11 +808,20 @@ class SoftwarePlanVersion(models.Model):
                 self.plan.visibility == SoftwarePlanVisibility.PUBLIC
                 or self.plan.visibility == SoftwarePlanVisibility.TRIAL
             ):
-                desc['description'] = DESC_BY_EDITION[self.plan.edition]['description']
+                desc['description'] = (
+                    DESC_BY_EDITION[self.plan.edition]['description'] % self.user_feature.monthly_limit
+                    if self.plan.edition != SoftwarePlanEdition.ENTERPRISE
+                    else DESC_BY_EDITION[self.plan.edition]['description']
+                )
             else:
                 for desc_key in desc:
                     if not desc[desc_key]:
-                        desc[desc_key] = DESC_BY_EDITION[self.plan.edition][desc_key]
+                        if desc_key == 'description' and self.plan.edition != SoftwarePlanEdition.ENTERPRISE:
+                            desc[desc_key] = (
+                                DESC_BY_EDITION[self.plan.edition]['description'] % self.user_feature.monthly_limit
+                            )
+                        else:
+                            desc[desc_key] = DESC_BY_EDITION[self.plan.edition][desc_key]
         except KeyError:
             pass
         desc.update({
@@ -953,8 +953,11 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
+        _soft_assert_domain_not_loaded(isinstance(self.domain, basestring), "domain is object")
+
+
         if new_plan_version is None:
-            new_plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain)
+            new_plan_version = DefaultProductPlan.get_default_plan()
 
         if downgraded_privileges is None or upgraded_privileges is None:
             change_status_result = get_change_status(None, new_plan_version)
@@ -1016,9 +1019,11 @@ class Subscription(models.Model):
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
     no_invoice_reason = models.CharField(blank=True, null=True, max_length=256)
-    do_not_email = models.BooleanField(default=False)
+    do_not_email_invoice = models.BooleanField(default=False)
+    do_not_email_reminder = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
+    skip_invoicing_if_no_feature_charges = models.BooleanField(default=False)
     service_type = models.CharField(
         max_length=25,
         choices=SubscriptionType.CHOICES,
@@ -1178,11 +1183,12 @@ class Subscription(models.Model):
 
     def update_subscription(self, date_start, date_end,
                             date_delay_invoicing=None, do_not_invoice=None,
-                            no_invoice_reason=None, do_not_email=None,
-                            salesforce_contract_id=None,
+                            no_invoice_reason=None, do_not_email_invoice=None,
+                            do_not_email_reminder=None, salesforce_contract_id=None,
                             auto_generate_credits=None,
                             web_user=None, note=None, adjustment_method=None,
-                            service_type=None, pro_bono_status=None, funding_source=None):
+                            service_type=None, pro_bono_status=None, funding_source=None,
+                            skip_invoicing_if_no_feature_charges=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1193,7 +1199,9 @@ class Subscription(models.Model):
         self._update_properties(
             do_not_invoice=do_not_invoice,
             no_invoice_reason=no_invoice_reason,
-            do_not_email=do_not_email,
+            skip_invoicing_if_no_feature_charges=skip_invoicing_if_no_feature_charges,
+            do_not_email_invoice=do_not_email_invoice,
+            do_not_email_reminder=do_not_email_reminder,
             auto_generate_credits=auto_generate_credits,
             salesforce_contract_id=salesforce_contract_id,
             service_type=service_type,
@@ -1233,7 +1241,9 @@ class Subscription(models.Model):
         property_names = {
             'do_not_invoice',
             'no_invoice_reason',
-            'do_not_email',
+            'skip_invoicing_if_no_feature_charges',
+            'do_not_email_invoice',
+            'do_not_email_reminder',
             'auto_generate_credits',
             'salesforce_contract_id',
             'service_type',
@@ -1365,9 +1375,8 @@ class Subscription(models.Model):
 
         if new_version is None:
             current_privileges = get_privileges(self.plan_version)
-            new_version = DefaultProductPlan.get_lowest_edition_by_domain(
-                self.subscriber.domain, current_privileges,
-                return_plan=True,
+            new_version = DefaultProductPlan.get_lowest_edition(
+                current_privileges, return_plan=True,
             )
 
         if new_version is None:
@@ -1393,9 +1402,6 @@ class Subscription(models.Model):
         if datetime.date.today() == self.date_end:
             renewed_subscription.is_active = True
         renewed_subscription.save()
-
-        # transfer existing credit lines to the renewed subscription
-        self.transfer_credits(renewed_subscription)
 
         # record renewal from old subscription
         SubscriptionAdjustment.record_adjustment(
@@ -1452,13 +1458,11 @@ class Subscription(models.Model):
         user_desc = self.plan_version.user_facing_description
         plan_name = user_desc['name']
         domain_name = self.subscriber.domain
-        product = self.plan_version.core_product
         emails = {a.username for a in WebUser.get_admins_by_domain(domain_name)}
         emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if self.is_trial:
-            subject = _("%(product)s Alert: 30 day trial for '%(domain)s' "
+            subject = _("CommCare Alert: 30 day trial for '%(domain)s' "
                         "ends %(ending_on)s") % {
-                'product': product,
                 'domain': domain_name,
                 'ending_on': ending_on,
             }
@@ -1466,10 +1470,9 @@ class Subscription(models.Model):
             template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
         else:
             subject = _(
-                "%(product)s Alert: %(domain)s's subscription to "
+                "CommCare Alert: %(domain)s's subscription to "
                 "%(plan_name)s ends %(ending_on)s"
             ) % {
-                'product': product,
                 'plan_name': plan_name,
                 'domain': domain_name,
                 'ending_on': ending_on,
@@ -1489,7 +1492,6 @@ class Subscription(models.Model):
         context = {
             'domain': domain_name,
             'plan_name': plan_name,
-            'product': product,
             'ending_on': ending_on,
             'subscription_url': absolute_reverse(
                 DomainSubscriptionView.urlname, args=[self.subscriber.domain]),
@@ -1505,7 +1507,7 @@ class Subscription(models.Model):
             send_html_email_async.delay(
                 subject, email, email_html,
                 text_content=email_plaintext,
-                email_from=get_dimagi_from_email_by_product(product),
+                email_from=get_dimagi_from_email(),
                 bcc=bcc,
             )
             log_accounting_info(
@@ -1595,7 +1597,7 @@ class Subscription(models.Model):
         subscriber = Subscriber.objects.safe_get(domain=domain.name)
         plan_version, subscription = cls._get_plan_by_subscriber(subscriber) if subscriber else (None, None)
         if plan_version is None:
-            plan_version = DefaultProductPlan.get_default_plan_by_domain(domain)
+            plan_version = DefaultProductPlan.get_default_plan()
         return plan_version, subscription
 
     @classmethod
@@ -1705,7 +1707,6 @@ class InvoiceBaseManager(models.Manager):
 
 class InvoiceBase(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
-    date_received = models.DateField(blank=True, db_index=True, null=True)
     is_hidden = models.BooleanField(default=False)
     tax_rate = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     balance = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
@@ -2193,8 +2194,8 @@ class BillingRecord(BillingRecordBase):
         small_contracted = (self.invoice.balance <= SMALL_INVOICE_THRESHOLD and
                             subscription.service_type == SubscriptionType.IMPLEMENTATION)
         hidden = self.invoice.is_hidden
-        do_not_email = self.invoice.subscription.do_not_email
-        return not (autogenerate or small_contracted or hidden or do_not_email)
+        do_not_email_invoice = self.invoice.subscription.do_not_email_invoice
+        return not (autogenerate or small_contracted or hidden or do_not_email_invoice)
 
     def is_email_throttled(self):
         month = self.invoice.date_start.month
@@ -2421,7 +2422,7 @@ class BillingRecord(BillingRecordBase):
         }
 
     def email_from(self):
-        return get_dimagi_from_email_by_product(self.invoice.subscription.plan_version.core_product)
+        return get_dimagi_from_email()
 
     @staticmethod
     def _get_total_balance(credit_lines):
@@ -2854,7 +2855,7 @@ class StripePaymentMethod(PaymentMethod):
 
     @property
     def all_cards(self):
-        return self.customer.cards.data
+        return filter(lambda card: card is not None, self.customer.cards.data)
 
     def all_cards_serialized(self, billing_account):
         return [{
@@ -2870,9 +2871,10 @@ class StripePaymentMethod(PaymentMethod):
         return self.customer.cards.retrieve(card_token)
 
     def get_autopay_card(self, billing_account):
-        return next((card for card in self.all_cards
-                     if card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) == 'True'),
-                    None)
+        return next((
+            card for card in self.all_cards
+            if card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) == 'True'
+        ), None)
 
     def remove_card(self, card_token):
         card = self.get_card(card_token)

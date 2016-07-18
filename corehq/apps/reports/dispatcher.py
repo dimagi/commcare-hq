@@ -139,7 +139,7 @@ class ReportDispatcher(View):
             report = cls(request, domain=domain, **report_kwargs)
             report.rendered_as = render_as
             try:
-                report.bootstrap3_dispatcher(
+                report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
                 return getattr(report, '%s_response' % render_as)
@@ -186,11 +186,12 @@ class ReportDispatcher(View):
             report_contexts = []
             for report in report_group:
                 class_name = report.__module__ + '.' + report.__name__
+                show_in_navigation = report.show_in_navigation(domain=domain, project=project, user=couch_user)
+                show_in_dropdown = report.display_in_dropdown(domain=domain, project=project, user=couch_user)
                 if (
-                    dispatcher.permissions_check(class_name, request, domain=domain,
-                                                 is_navigation_check=True)
+                    dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True)
                     and cls.toggles_enabled(report, request)
-                    and report.show_in_navigation(domain=domain, project=project, user=couch_user)
+                    and (show_in_navigation or show_in_dropdown)
                 ):
                     report_contexts.append({
                         'url': report.get_url(domain=domain, request=request),
@@ -198,7 +199,8 @@ class ReportDispatcher(View):
                         'icon': report.icon,
                         'title': _(report.name),
                         'subpages': report.get_subpages(),
-                        'show_in_dropdown': report.display_in_dropdown(project=project),
+                        'show_in_navigation': show_in_navigation,
+                        'show_in_dropdown': show_in_dropdown,
                     })
             if report_contexts:
                 if hasattr(section_name, '__call__'):

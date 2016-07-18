@@ -5,7 +5,7 @@ in the table DSL
 import json
 from collections import namedtuple
 
-from json_field.fields import JSONEncoder
+from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (
@@ -158,7 +158,6 @@ def ledger_value_adapter(ledger_value):
         ledger_value.daily_consumption,
         ledger_value.last_modified_form_id,
         ledger_value.domain,
-        ledger_value.location_id,
     ]
     return ObjectAdapter(fields, LedgerValue_DB_TABLE)
 

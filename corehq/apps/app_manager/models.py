@@ -52,8 +52,10 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from restkit.errors import ResourceError
@@ -65,18 +67,17 @@ from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.bulk import get_docs
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.xpath import (
+    dot_interpolate,
     interpolate_xpath,
     LocationXpath,
 )
 from corehq.apps.builds import get_default_build_spec
-from corehq.util.hash_compat import make_password
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
@@ -110,7 +111,6 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     update_unique_ids,
     app_callout_templates,
-    use_app_aware_sync,
     xpath_references_case,
     xpath_references_user_case,
 )
@@ -1104,7 +1104,7 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
         errors = []
         try:
             valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[])}
+                           for question in self.get_questions(langs=[], include_triggers=True)}
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': unicode(e)})
         else:
@@ -1549,18 +1549,48 @@ class MappingItem(DocumentSchema):
     value = DictProperty()
 
     @property
+    def treat_as_expression(self):
+        """
+        Returns if whether the key can be treated as a valid expression that can be included in
+        condition-predicate of an if-clause for e.g. if(<expression>, value, ...)
+        """
+        special_chars = '{}()[]=<>."\'/'
+        return any(special_char in self.key for special_char in special_chars)
+
+    @property
     def key_as_variable(self):
         """
         Return an xml variable name to represent this key.
-        If the key has no spaces, return the key with "k" prepended.
-        If the key does contain spaces, return a hash of the key with "h" prepended.
+
+        If the key contains spaces or a condition-predicate of an if-clause,
+        return a hash of the key with "h" prepended.
+        If not, return the key with "k" prepended.
+
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        if " " not in self.key:
-            return 'k{key}'.format(key=self.key)
-        else:
+        if ' ' in self.key or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+        else:
+            return 'k{key}'.format(key=self.key)
+
+    def key_as_condition(self, property):
+        if self.treat_as_expression:
+            condition = dot_interpolate(self.key, property)
+            return u"{condition}".format(condition=condition)
+        else:
+            return u"{property} = '{key}'".format(
+                property=property,
+                key=self.key
+            )
+
+    def ref_to_key_variable(self, index, sort_or_display):
+        if sort_or_display == "sort":
+            key_as_var = "{}, ".format(index)
+        elif sort_or_display == "display":
+            key_as_var = "${var_name}, ".format(var_name=self.key_as_variable)
+
+        return key_as_var
 
 
 class GraphAnnotations(IndexedSchema):
@@ -1687,6 +1717,18 @@ class DetailColumn(IndexedSchema):
 
         return super(DetailColumn, cls).wrap(data)
 
+    @classmethod
+    def from_json(cls, data):
+        from corehq.apps.app_manager.views.media_utils import interpolate_media_path
+
+        to_ret = cls.wrap(data)
+        if to_ret.format == 'enum-image':
+            # interpolate icons-paths
+            for item in to_ret.enum:
+                for lang, path in item.value.iteritems():
+                    item.value[lang] = interpolate_media_path(path)
+        return to_ret
+
 
 class SortElement(IndexedSchema):
     field = StringProperty()
@@ -1709,11 +1751,17 @@ class SortOnlyDetailColumn(DetailColumn):
 
 class CaseListLookupMixin(DocumentSchema):
     """
-        Allows for the addition of Android Callouts to do lookups from the CaseList
+    Allows for the addition of Android Callouts to do lookups from the CaseList
+
         <lookup action="" image="" name="">
-            <extra key="" value = "" />
-            <response key ="" />
+            <extra key="" value="" />
+            <response key="" />
+            <field>
+                <header><text><locale id=""/></text></header>
+                <template><text><xpath function=""/></text></template>
+            </field>
         </lookup>
+
     """
     lookup_enabled = BooleanProperty(default=False)
     lookup_action = StringProperty()
@@ -1722,6 +1770,10 @@ class CaseListLookupMixin(DocumentSchema):
 
     lookup_extras = SchemaListProperty()
     lookup_responses = SchemaListProperty()
+
+    lookup_display_results = BooleanProperty(default=False)  # Display callout results in case list?
+    lookup_field_header = DictProperty()
+    lookup_field_template = StringProperty()
 
 
 class Detail(IndexedSchema, CaseListLookupMixin):
@@ -1800,6 +1852,7 @@ class CaseSearch(DocumentSchema):
     """
     command_label = DictProperty(default={'en': 'Search All Cases'})
     properties = SchemaListProperty(CaseSearchProperty)
+    relevant = StringProperty(default=CLAIM_DEFAULT_RELEVANT_CONDITION)
 
 
 class ParentSelect(DocumentSchema):
@@ -1949,20 +2002,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         from corehq.apps.locations.util import parent_child
         hierarchy = None
         for column in columns:
-            if column.format in ('enum', 'enum-image'):
-                for item in column.enum:
-                    key = item.key
-                    # key cannot contain certain characters because it is used
-                    # to generate an xpath variable name within suite.xml
-                    # (names with spaces will be hashed to form the xpath
-                    # variable name)
-                    if not re.match('^([\w_ -]*)$', key):
-                        yield {
-                            'type': 'invalid id key',
-                            'key': key,
-                            'module': self.get_module_info(),
-                        }
-            elif column.field_type == FIELD_TYPE_LOCATION:
+            if column.field_type == FIELD_TYPE_LOCATION:
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
                     LocationXpath('').validate(column.field_property, hierarchy)
@@ -2325,7 +2365,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 pass
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
-        super(AdvancedForm, self).add_stuff_to_xform(xform)
+        super(AdvancedForm, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta_advanced(self)
 
     def requires_case(self):
@@ -2695,7 +2735,15 @@ class AdvancedModule(ModuleBase):
     has_schedule = BooleanProperty()
     schedule_phases = SchemaListProperty(SchedulePhase)
     get_schedule_phases = IndexedSchema.Getter('schedule_phases')
-    search_config = SchemaListProperty(CaseSearch)
+    search_config = SchemaProperty(CaseSearch)
+
+    @classmethod
+    def wrap(cls, data):
+        # lazy migration to accommodate search_config as empty list
+        # http://manage.dimagi.com/default.asp?231186
+        if data.get('search_config') == []:
+            data['search_config'] = {}
+        return super(AdvancedModule, cls).wrap(data)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -3033,7 +3081,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
             return super(CareplanForm, cls).wrap(data)
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
-        super(CareplanForm, self).add_stuff_to_xform(xform)
+        super(CareplanForm, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_care_plan(self)
 
     def get_case_updates(self, case_type):
@@ -3473,7 +3521,12 @@ class CustomDatespanFilter(ReportAppFilter):
     date_number2 = StringProperty()
 
     def get_filter_value(self, user, ui_filter):
-        today = datetime.date.today()
+        assert user is not None, (
+            "CustomDatespanFilter.get_filter_value must be called "
+            "with an OTARestoreUser object, not None")
+
+        timezone = get_timezone_for_domain(user.user_id, user.domain)
+        today = ServerTime(datetime.datetime.utcnow()).user_time(timezone).done().date()
         start_date = end_date = None
         days = int(self.date_number)
         if self.operator == 'between':
@@ -3551,19 +3604,29 @@ class CustomMonthFilter(ReportAppFilter):
             _, last_day = calendar.monthrange(date.year, date.month)
             return last_day
 
-        # Find the start and end dates of period 0
         start_of_month = int(self.start_of_month)
-        end_date = datetime.date.today()
-        start_day = start_of_month if start_of_month > 0 else get_last_day(end_date) + start_of_month
-        end_of_month = end_date if end_date.day >= start_day else get_last_month(end_date)
-        start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+        today = datetime.date.today()
+        if start_of_month > 0:
+            start_day = start_of_month
+        else:
+            # start_of_month is zero or negative. Work backwards from the end of the month
+            start_day = get_last_day(today) + start_of_month
 
         # Loop over months backwards for period > 0
+        month = today if today.day >= start_day else get_last_month(today)
         for i in range(int(self.period)):
-            end_of_month = get_last_month(end_of_month)
-            end_date = start_date - datetime.timedelta(days=1)
-            start_day = start_of_month if start_of_month > 0 else get_last_day(end_of_month) + start_of_month
-            start_date = datetime.date(end_of_month.year, end_of_month.month, start_day)
+            month = get_last_month(month)
+
+        if start_of_month > 0:
+            start_date = datetime.date(month.year, month.month, start_day)
+            days = get_last_day(start_date) - 1
+            end_date = start_date + datetime.timedelta(days=days)
+        else:
+            start_day = get_last_day(month) + start_of_month
+            start_date = datetime.date(month.year, month.month, start_day)
+            next_month = datetime.date(month.year, month.month, get_last_day(month)) + datetime.timedelta(days=1)
+            end_day = get_last_day(next_month) + start_of_month - 1
+            end_date = datetime.date(next_month.year, next_month.month, end_day)
 
         return DateSpan(startdate=start_date, enddate=end_date)
 
@@ -3741,6 +3804,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     module_type = 'shadow'
     source_module_id = StringProperty()
     forms = []
+    excluded_form_ids = SchemaListProperty()
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     put_in_root = BooleanProperty(default=False)
@@ -3786,7 +3850,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     def get_suite_forms(self):
         if not self.source_module:
             return []
-        return self.source_module.get_forms()
+        return [f for f in self.source_module.get_forms() if f.unique_id not in self.excluded_form_ids]
 
     @parse_int([1])
     def get_form(self, i):
@@ -3858,10 +3922,8 @@ class LazyBlobDoc(BlobMixin):
     Cache strategy:
     - on fetch, check in local memory, then cache
       - if both are a miss, fetch from couchdb and store in both
-    - before an attachment is committed to couchdb, clear cache
-      (allowing the next fetch to go all the way through).
-      Clear rather than write new value, in case something
-      goes wrong with the save.
+    - after an attachment is committed to the blob db and the
+      save save has succeeded, save the attachment in the cache
     """
 
     migrating_blobs_from_couch = True
@@ -3882,7 +3944,7 @@ class LazyBlobDoc(BlobMixin):
                 # preserve stubs so couch attachments don't get deleted on save
                 stubs = {}
                 for name, value in list(attachments.items()):
-                    if "stub" in value:
+                    if isinstance(value, dict) and "stub" in value:
                         stubs[name] = attachments.pop(name)
                 if stubs:
                     data["_attachments"] = stubs
@@ -3904,25 +3966,21 @@ class LazyBlobDoc(BlobMixin):
 
     def __set_cached_attachment(self, name, content):
         cache.set(self.__attachment_cache_key(name), content, timeout=60 * 60 * 24)
+        self._LAZY_ATTACHMENTS_CACHE[name] = content
 
     def __get_cached_attachment(self, name):
-        return cache.get(self.__attachment_cache_key(name))
-
-    def __remove_cached_attachment(self, name):
-        cache.delete(self.__attachment_cache_key(name))
-
-    def __store_lazy_attachment(self, content, name=None, content_type=None,
-                                content_length=None):
-        info = {
-            'content': content,
-            'content_type': content_type,
-            'content_length': content_length,
-        }
-        self._LAZY_ATTACHMENTS[name] = info
-        return info
+        try:
+            # it has been fetched already during this request
+            content = self._LAZY_ATTACHMENTS_CACHE[name]
+        except KeyError:
+            content = cache.get(self.__attachment_cache_key(name))
+            if content is not None:
+                self._LAZY_ATTACHMENTS_CACHE[name] = content
+        return content
 
     def put_attachment(self, content, name=None, *args, **kw):
-        self.__remove_cached_attachment(name)
+        cache.delete(self.__attachment_cache_key(name))
+        self._LAZY_ATTACHMENTS_CACHE.pop(name, None)
         return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
 
     def lazy_put_attachment(self, content, name=None, content_type=None,
@@ -3932,19 +3990,20 @@ class LazyBlobDoc(BlobMixin):
         and that upon self.save(), the attachments are put to the doc as well
 
         """
-        self.__store_lazy_attachment(content, name, content_type, content_length)
+        self._LAZY_ATTACHMENTS[name] = {
+            'content': content,
+            'content_type': content_type,
+            'content_length': content_length,
+        }
 
     def lazy_fetch_attachment(self, name):
         # it has been put/lazy-put already during this request
-        if name in self._LAZY_ATTACHMENTS and 'content' in self._LAZY_ATTACHMENTS[name]:
+        if name in self._LAZY_ATTACHMENTS:
             content = self._LAZY_ATTACHMENTS[name]['content']
-        # it has been fetched already during this request
-        elif name in self._LAZY_ATTACHMENTS_CACHE:
-            content = self._LAZY_ATTACHMENTS_CACHE[name]
         else:
             content = self.__get_cached_attachment(name)
 
-            if not content:
+            if content is None:
                 try:
                     content = self.fetch_attachment(name)
                 except ResourceNotFound as e:
@@ -3956,9 +4015,6 @@ class LazyBlobDoc(BlobMixin):
                     raise
                 finally:
                     self.__set_cached_attachment(name, content)
-                    self._LAZY_ATTACHMENTS_CACHE[name] = content
-            else:
-                self._LAZY_ATTACHMENTS_CACHE[name] = content
 
         if isinstance(content, ResourceNotFound):
             raise content
@@ -3979,8 +4035,11 @@ class LazyBlobDoc(BlobMixin):
                 for name, info in self._LAZY_ATTACHMENTS.items():
                     if not info['content_type']:
                         info['content_type'] = ';'.join(filter(None, guess_type(name)))
-                    self.__remove_cached_attachment(name)
                     super(LazyBlobDoc, self).put_attachment(name=name, **info)
+            # super_save() has succeeded by now
+            for name, info in self._LAZY_ATTACHMENTS.items():
+                self.__set_cached_attachment(name, info['content'])
+            self._LAZY_ATTACHMENTS.clear()
         else:
             super_save()
 
@@ -4243,6 +4302,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # each language is a key and the value is a list of multimedia referenced in that language
     media_language_map = SchemaDictProperty(MediaList)
 
+    use_j2me_endpoint = BooleanProperty(default=False)
+
+    # Whether or not the Application has had any forms submitted against it
+    has_submissions = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -4387,9 +4450,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def ota_restore_url(self):
-        if use_app_aware_sync(self):
-            return reverse('app_aware_restore', args=[self.domain, self._id])
-        return reverse('ota_restore', args=[self.domain])
+        return reverse('app_aware_restore', args=[self.domain, self._id])
 
     @absolute_url_property
     def form_record_url(self):
@@ -4437,7 +4498,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return spec
 
     def get_jadjar(self):
-        return self.get_build().get_jadjar(self.get_jar_path())
+        return self.get_build().get_jadjar(self.get_jar_path(), self.use_j2me_endpoint)
 
     def validate_fixtures(self):
         if not domain_has_privilege(self.domain, privileges.LOOKUP_TABLES):
@@ -4615,7 +4676,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
-            if build_profile_id:
+            if build_profile_id is not None:
                 url += '?profile={profile_id}'.format(profile_id=build_profile_id)
             code.add_data(url)
 
@@ -4634,7 +4695,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             if settings.BITLY_LOGIN:
                 view_name = 'corehq.apps.app_manager.views.{}'.format(url_type)
-                if build_profile_id:
+                if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
                     )
@@ -4706,6 +4767,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 user.save()
         copy.is_released = False
 
+        if not copy.is_remote_app():
+            copy.update_mm_map()
+
         return copy
 
     def delete_app(self):
@@ -4720,7 +4784,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
-        if not self._id and not domain_has_apps(self.domain):
+        if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
@@ -4736,11 +4800,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if self.build_profiles and domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             for lang in self.langs:
                 self.media_language_map[lang] = MediaList()
-            for form in self.get_forms(bare=False):
-                xml = XForm(form['form'].source)
+            for form in self.get_forms():
+                xml = form.wrapped_xform()
                 for lang in self.langs:
                     media = []
-                    for path in xml.all_references(lang):
+                    for path in xml.all_media_references(lang):
                         if path is not None:
                             media.append(path)
                             map_item = self.multimedia_map.get(path)
@@ -4752,7 +4816,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.media_language_map = {}
 
     def get_build_langs(self, build_profile_id=None):
-        if build_profile_id:
+        if build_profile_id is not None:
             return self.build_profiles[build_profile_id].langs
         else:
             return self.langs
@@ -5065,7 +5129,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
-        locale = self.langs[0] if not build_profile_id else self.build_profiles[build_profile_id].langs[0]
+        locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5181,7 +5245,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, application_version, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang], application_version=application_version)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang],
+                  application_version=application_version, vellum_case_management=True)
         return app
 
     def add_module(self, module):
@@ -5242,6 +5307,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for i,lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
+        for profile in self.build_profiles:
+            for i, lang in enumerate(profile.langs):
+                if lang == old_lang:
+                    profile.langs[i] = new_lang
         for module in self.get_modules():
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
@@ -5536,7 +5605,7 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-
+    
     def is_remote_app(self):
         return True
 
@@ -5565,8 +5634,11 @@ class RemoteApp(ApplicationBase):
 
     def get_build_langs(self):
         if self.build_profiles:
-            # return first profile, generated as part of lazy migration
-            return self.build_profiles[self.build_profiles.keys()[0]].langs
+            if len(self.build_profiles.keys()) > 1:
+                raise AppEditingError('More than one app profile for a remote app')
+            else:
+                # return first profile, generated as part of lazy migration
+                return self.build_profiles[self.build_profiles.keys()[0]].langs
         else:
             return self.langs
 

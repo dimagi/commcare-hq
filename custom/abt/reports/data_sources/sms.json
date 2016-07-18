@@ -1,12 +1,9 @@
 {
     "domains": [
-        "airs",
         "airszambia",
         "airszimbabwe",
         "airsrwanda",
-        "abtmali",
         "airsmadagascar",
-        "airstanzania",
         "airsghana"
     ],
     "config": {

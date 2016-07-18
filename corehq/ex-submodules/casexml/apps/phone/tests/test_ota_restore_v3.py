@@ -4,12 +4,18 @@ from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 from casexml.apps.case.xml import V3
 from casexml.apps.phone.tests.utils import generate_restore_payload
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
-from corehq.apps.receiverwrapper import submit_form_locally
-from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs
+from casexml.apps.case.tests.util import (
+    delete_all_cases,
+    delete_all_sync_logs,
+    assert_user_has_case,
+)
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import FileRestoreResponse
-from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user
+from casexml.apps.phone.tests.utils import create_restore_user
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -18,44 +24,28 @@ class OtaV3RestoreTest(TestCase):
 
     def setUp(self):
         self.domain = 'dummy-project'
+        self.project = Domain(name=self.domain)
+        self.project.save()
         delete_all_cases()
         delete_all_sync_logs()
+        delete_all_users()
+
+    def tearDown(self):
+        self.project.delete()
 
     def testUserRestoreWithCase(self):
-        file_path = os.path.join(os.path.dirname(__file__), "data", "create_short.xml")
-        with open(file_path, "rb") as f:
-            xml_data = f.read()
-        submit_form_locally(xml_data, self.domain)
-
-        expected_case_block = """
-        <case case_id="asdf" date_modified="2010-06-29T13:42:50.000000Z" user_id="foo"
-            xmlns="http://commcarehq.org/case/transaction/v2">
-            <create>
-                <case_type>test_case_type</case_type>
-                <case_name>test case name</case_name>
-                <owner_id>foo</owner_id>
-            </create>
-            <update>
-                <external_id>someexternal</external_id>
-            </update>
-        </case>"""
-
-        restore_payload = generate_restore_payload(
-            project=Domain(name=self.domain),
-            user=dummy_user(),
-            items=True,
-            version=V3
+        restore_user = create_restore_user(domain=self.domain)
+        expected_case_block = CaseBlock(
+            create=True,
+            case_id='my-case-id',
+            user_id=restore_user.user_id,
+            owner_id=restore_user.user_id,
+            case_type='test-case-type',
+            update={'external_id': 'someexternal'},
         )
-        sync_log_id = SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False,
-        ).one().get_id
-        check_xml_line_by_line(
-            self,
-            dummy_restore_xml(sync_log_id, expected_case_block, items=4),
-            restore_payload
-        )
+        _, [case] = post_case_blocks([expected_case_block.as_xml()], {'domain': self.domain})
+
+        assert_user_has_case(self, restore_user, case.case_id)
 
 
 class TestRestoreResponse(SimpleTestCase):

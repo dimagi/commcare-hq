@@ -134,7 +134,9 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
             return this.get("urlRoot");
         },
         getSubmitUrl: function () {
-            return this.get('post_url');
+            // http://stackoverflow.com/a/2599721/835696
+            // Strip host and scheme from url
+            return this.get('post_url').replace(/https?:\/\/[^\/]+/i, '');
         },
         renderFormRoot: function () {
             return this.get("renderFormRoot");
@@ -633,12 +635,6 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                 }
             }
 
-            // superhacky
-            if ($('#use-offline').is(':checked')) {
-                url += (url.indexOf('?') != -1 ? '&' : '?');
-                url += "offline=true"
-            }
-
             return url;
         },
         getSyncUrl: function () {
@@ -701,7 +697,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                 $.ajax({
                     type: 'POST',
                     url: submitUrl,
-                    data: xml,
+                    data: xml.output,
                     success: function () {
                         self._clearFormPlayer();
                         self.showModule(selectedModule);
@@ -776,6 +772,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
             data.onLoading = tfLoading;
             data.onLoadingComplete = tfLoadingComplete;
             data.domain = this.model.get("domain");
+            data.formplayerEnabled = this.options.formplayerEnabled;
             var loadSession = function() {
                 var sess = new WebFormSession(data);
                 // TODO: probably shouldn't hard code these divs
@@ -903,8 +900,16 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
             $('#sync-button').disableButton();
             showLoading();
             resp.done(function (data) {
-                tfSyncComplete(data.status === "error");
+                var hasError = data.status === "error";
+                tfSyncComplete(hasError);
+                if (hasError) {
+                    console.error(data.message);
+                }
                 $('#sync-button').enableButton();
+            });
+            resp.error(function(data) {
+                tfSyncComplete(true);
+                console.error(data.responseJSON);
             });
 
         },
@@ -976,6 +981,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                 instanceViewerEnabled: self.options.instanceViewerEnabled,
                 username: self.options.username,
                 syncDbUrl: self.options.syncDbUrl,
+                formplayerEnabled: self.options.formplayerEnabled,
             });
 
             // fetch session list here
