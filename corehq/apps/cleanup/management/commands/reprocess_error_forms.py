@@ -5,6 +5,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.xform import get_and_check_xform_domain, process_cases_with_casedb
 from collections import defaultdict
+from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import string_to_datetime
 from django.conf import settings
@@ -82,6 +83,9 @@ class Command(BaseCommand):
             since = string_to_datetime(args[1])
         else:
             raise CommandError('Usage: %s\n%s' % (self.args, self.help))
+
+        if should_use_sql_backend(domain):
+            raise CommandError('This command only works for couch-based domains.')
 
         succeeded = []
         failed = []
