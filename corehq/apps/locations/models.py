@@ -524,7 +524,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
     # a list of doc ids, referring to the parent location, then the
     # grand-parent, and so on up to the root location in the hierarchy
     lineage = StringListProperty()
-    previous_parents = StringListProperty()
 
     @classmethod
     def wrap(cls, data):
