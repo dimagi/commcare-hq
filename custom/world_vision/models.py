@@ -75,7 +75,7 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
 
 
 def referenced_case_attribute(case, field_name):
-    if not case.indices[0]['referenced_id']:
+    if not (case.indices and case.indices[0]['referenced_id']):
         return ""
     referenced_case = CommCareCase.get(case.indices[0]['referenced_id'])
     if hasattr(referenced_case, field_name):
