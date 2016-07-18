@@ -144,7 +144,7 @@ def _get_location(form):
         if not user_id:
             return None
         try:
-            user = CouchUser.wrap_correctly(CouchUser.get_db().get(user_id))
+            user = CouchUser.get_by_user_id(user_id)
             loc = user.location
         except ResourceNotFound:
             logging.info('Location %s Not Found.' % loc)
