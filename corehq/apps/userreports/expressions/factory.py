@@ -8,7 +8,7 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
-    IterationNumberExpressionSpec, SubcasesExpressionSpec
+    IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
@@ -108,6 +108,14 @@ def _dict_expression(spec, context):
     compiled_properties = {key: ExpressionFactory.from_spec(value) for key, value in wrapped.properties.items()}
     wrapped.configure(
         compiled_properties=compiled_properties,
+    )
+    return wrapped
+
+
+def _split_string_expression(spec, context):
+    wrapped = SplitStringExpressionSpec.wrap(spec)
+    wrapped.configure(
+        delim=ExpressionFactory.from_spec(wrapped.delim, context),
     )
     return wrapped
 
@@ -239,6 +247,7 @@ class ExpressionFactory(object):
         'switch': _switch_expression,
         'nested': _nested_expression,
         'dict': _dict_expression,
+        'split_string': _split_string_expression,
         'add_days': _add_days_expression,
         'add_months': _add_months_expression,
         'month_start_date': _month_start_date_expression,
