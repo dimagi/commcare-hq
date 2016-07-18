@@ -1,6 +1,6 @@
 import mock
 
-from stripe import Charge
+from stripe import Charge, StripeObject
 
 from django.core import mail
 
@@ -85,6 +85,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
     @mock.patch.object(Charge, 'create')
     def test_pay_autopayable_invoices(self, fake_charge, fake_customer):
         self._create_autopay_method(fake_customer)
+        fake_charge.return_value = StripeObject(id='transaction_id')
 
         original_outbox_length = len(mail.outbox)
 
