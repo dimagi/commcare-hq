@@ -1,17 +1,16 @@
-from copy import copy
 import json
+from copy import copy
 
-from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset
-from dimagi.utils.logging import notify_error
 from django.conf import settings
 from kafka import KafkaConsumer
-from kafka.common import ConsumerTimeout, KafkaConfigurationError, KafkaUnavailableError
+from kafka.common import ConsumerTimeout
+
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-import logging
+from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset
+from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
-
 
 MIN_TIMEOUT = 100
 
@@ -126,7 +125,9 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
     """
 
     def __init__(self, checkpoint, checkpoint_frequency, change_feed, checkpoint_listeners=None):
-        super(MultiTopicCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency, checkpoint_listeners)
+        super(MultiTopicCheckpointEventHandler, self).__init__(
+            checkpoint, checkpoint_frequency, checkpoint_listeners
+        )
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
         # todo: do this somewhere smarter?

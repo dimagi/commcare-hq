@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 
-from pillowtop.const import CHECKPOINT_FREQUENCY
 from pillowtop.pillow.interface import CheckpointEventListener
 
 MAX_WAIT_TIME = 60
