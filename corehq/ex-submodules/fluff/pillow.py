@@ -165,3 +165,11 @@ def get_fluff_pillow(indicator_class, delete_filtered=False, chunk_size=None):
         indicator_class=indicator_class,
         processor=processor,
     )
+
+
+def get_fluff_pillow_configs():
+    from pillowtop import get_all_pillow_configs
+    return [
+        config for config in get_all_pillow_configs()
+        if config.section == 'fluff'
+    ]

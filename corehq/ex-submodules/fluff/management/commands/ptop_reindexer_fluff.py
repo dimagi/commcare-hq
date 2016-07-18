@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.change_feed import topics
 from corehq.util.couchdb_management import couch_config
 from corehq.util.pagination import PaginationEventHandler
+from fluff.pillow import get_fluff_pillow_configs
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer
 from pillowtop.utils import get_pillow_by_name, get_all_pillow_configs
@@ -36,10 +37,7 @@ class Command(BaseCommand):
         if len(args) != 1:
             raise CommandError('Usage is ptop_reindexer_fluff %s' % self.args)
 
-        fluff_configs = {
-            config.name: config for config in get_all_pillow_configs()
-            if config.section == 'fluff'
-        }
+        fluff_configs = {config.name: config for config in get_fluff_pillow_configs()}
 
         pillow_name = args[0]
         if pillow_name not in fluff_configs:
