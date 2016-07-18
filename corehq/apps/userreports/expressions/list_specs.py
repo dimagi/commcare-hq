@@ -112,3 +112,18 @@ class SortItemsExpressionSpec(JsonObject):
             )
         except TypeError:
             return []
+
+
+class DedupItemsExpressionSpec(JsonObject):
+    type = TypeProperty('dedup_items')
+    items_expression = DefaultProperty(required=True)
+
+    def configure(self, items_expression):
+        self._items_expression = items_expression
+
+    def __call__(self, doc, context=None):
+        items = _evaluate_items_expression(self._items_expression, doc, context)
+        try:
+            return list(set(items))
+        except TypeError:
+            return []
