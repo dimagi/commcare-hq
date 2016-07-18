@@ -91,7 +91,7 @@ class LocationForm(forms.Form):
         kwargs['initial'] = dict(self.location._doc)
         if not self.is_new_location:
             kwargs['initial']['location_type'] = self.location.location_type
-        kwargs['initial']['parent_id'] = self.location.parent_id
+        kwargs['initial']['parent_id'] = self.location.parent_location_id
         lat, lon = (getattr(self.location, k, None)
                     for k in ('latitude', 'longitude'))
         kwargs['initial']['coordinates'] = ('%s, %s' % (lat, lon)
@@ -171,13 +171,13 @@ class LocationForm(forms.Form):
 
     def clean_parent_id(self):
         if self.is_new_location:
-            parent_id = self.location.parent_id
+            parent_id = self.location.parent_location_id
         else:
             parent_id = self.cleaned_data['parent_id'] or None
         parent = Location.get(parent_id) if parent_id else None
         self.cleaned_data['parent'] = parent
 
-        if self.location.location_id is not None and self.location.parent_id != parent_id:
+        if self.location.location_id is not None and self.location.parent_location_id != parent_id:
             # location is being re-parented
 
             if parent and self.location.location_id in parent.path:
@@ -189,7 +189,7 @@ class LocationForm(forms.Form):
                     'moved to a different parent'
                 )
 
-            self.cleaned_data['orig_parent_id'] = self.location.parent_id
+            self.cleaned_data['orig_parent_id'] = self.location.parent_location_id
 
         return parent_id
 

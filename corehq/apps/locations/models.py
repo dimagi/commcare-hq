@@ -708,8 +708,8 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         location_type = self._sql_location_type or sql_location.location_type
         sql_location.location_type = location_type
         # sync parent connection
-        sql_location.parent = (SQLLocation.objects.get(location_id=self.parent_id)
-                               if self.parent_id else None)
+        sql_location.parent = (SQLLocation.objects.get(location_id=self.parent_location_id)
+                               if self.parent_location_id else None)
 
         self._migration_sync_to_sql(sql_location)
 
@@ -811,7 +811,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
     @property
     def parent(self):
-        parent_id = self.parent_id
+        parent_id = self.parent_location_id
         return Location.get(parent_id) if parent_id else None
 
     def siblings(self, parent=None):
