@@ -9,7 +9,7 @@ from corehq.blobs.s3db import maybe_not_found
 from corehq.blobs.tests.util import (
     TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB, TemporaryS3BlobDB
 )
-from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_list_to_dict
+from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
 from corehq.util.test_utils import trap_extra_setup
 
 from django.conf import settings
@@ -36,7 +36,7 @@ class BaseMigrationTest(TestCase):
         self._old_flags = {}
         self.docs_to_delete = []
 
-        for model in doc_type_list_to_dict(mod.MIGRATIONS[self.slug].doc_types).values():
+        for model in doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug].doc_types).values():
             self._old_flags[model] = model.migrating_blobs_from_couch
             model.migrating_blobs_from_couch = True
 
@@ -55,7 +55,7 @@ class BaseMigrationTest(TestCase):
     def discard_migration_state(slug):
         migrator = mod.MIGRATIONS[slug]
         iterator = CouchDocumentProvider(
-            slug + "-blob-migration", migrator.doc_types
+            migrator.iteration_key, migrator.doc_types
         ).get_document_iterator(1)
         iterator.discard_state()
         mod.BlobMigrationState.objects.filter(slug=slug).delete()
@@ -65,7 +65,7 @@ class BaseMigrationTest(TestCase):
 
     @property
     def doc_types(self):
-        return set(doc_type_list_to_dict(mod.MIGRATIONS[self.slug].doc_types))
+        return set(doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug].doc_types))
 
     def do_migration(self, docs, num_attachments=1):
         self.docs_to_delete.extend(docs)

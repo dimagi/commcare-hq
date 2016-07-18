@@ -16,8 +16,8 @@ from corehq.pillows.domain import get_domain_reindexer
 from corehq.pillows.group import get_group_reindexer
 from corehq.pillows.groups_to_user import get_groups_to_user_reindexer
 from corehq.pillows.ledger import get_ledger_v2_reindexer, get_ledger_v1_reindexer
-from corehq.pillows.reportcase import get_report_case_couch_reindexer
-from corehq.pillows.reportxform import get_report_xform_couch_reindexer
+from corehq.pillows.reportcase import get_report_case_reindexer
+from corehq.pillows.reportxform import get_report_xforms_reindexer
 from corehq.pillows.sms import get_sms_reindexer
 from corehq.pillows.user import get_user_reindexer
 from corehq.pillows.xform import get_couch_form_reindexer, get_sql_form_reindexer
@@ -76,8 +76,8 @@ class Command(BaseCommand):
             'ledger-v2': get_ledger_v2_reindexer,
             'ledger-v1': get_ledger_v1_reindexer,
             'sms': get_sms_reindexer,
-            'report-case': get_report_case_couch_reindexer,
-            'report-xform': get_report_xform_couch_reindexer,
+            'report-case': get_report_case_reindexer,
+            'report-xform': get_report_xforms_reindexer,
             'app': get_app_reindexer,
             'couch-app-form-submission': get_couch_app_form_submission_tracker_reindexer,
             'sql-app-form-submission': get_sql_app_form_submission_tracker_reindexer,
@@ -89,7 +89,13 @@ class Command(BaseCommand):
             return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
 
         reindexer = reindex_fns[index]()
-        reindexer_options = clean_options(options)
+        if not BaseCommand.option_list:
+            reindexer_options = {
+                key: value for key, value in options.items()
+                if value is not None and key in [option.dest for option in self.option_list]
+            }
+        else:  # remove when django>=1.8
+            reindexer_options = clean_options(options)
         unconsumed = reindexer.consume_options(reindexer_options)
         if unconsumed:
             raise CommandError(

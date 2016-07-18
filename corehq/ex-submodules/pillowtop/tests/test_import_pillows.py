@@ -99,6 +99,6 @@ class PillowTestCase(TestCase):
         pillow = make_fake_constructed_pillow('FakeConstructedPillowName')
         seq_id = '456'
         pillow.set_checkpoint(Change('123', seq_id))
-        self.assertEqual(pillow.checkpoint.get_or_create_wrapped().document.sequence, seq_id)
+        self.assertEqual(pillow.checkpoint.get_current_sequence_id(), seq_id)
         pillow.reset_checkpoint()
-        self.assertEqual(pillow.checkpoint.get_or_create_wrapped().document.sequence, '0')
+        self.assertEqual(pillow.checkpoint.get_current_sequence_id(), '0')

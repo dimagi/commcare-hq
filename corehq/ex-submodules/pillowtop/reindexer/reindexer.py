@@ -61,7 +61,10 @@ class PillowChangeProviderReindexer(PillowReindexer):
 
     def reindex(self):
         for change in self.change_provider.iter_all_changes(start_from=self.start_from):
-            self.pillow.process_change(change)
+            try:
+                self.pillow.process_change(change)
+            except Exception:
+                pillow_logging.exception("Unable to process change: %s", change.id)
 
 
 def _clean_index(es, index_info):

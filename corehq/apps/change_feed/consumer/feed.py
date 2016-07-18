@@ -1,5 +1,7 @@
 from copy import copy
 import json
+
+from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset
 from dimagi.utils.logging import notify_error
 from django.conf import settings
 from kafka import KafkaConsumer
@@ -99,30 +101,11 @@ class KafkaChangeFeed(ChangeFeed):
         }
 
     def get_current_offsets(self):
-        consumer = self._get_consumer(MIN_TIMEOUT, auto_offset_reset='smallest')
-        try:
-            # we have to fetch the changes to populate the highwater offsets
-            # todo: there is likely a cleaner way to do this
-            changes = list(consumer)
-        except ConsumerTimeout:
-            pass
-        except (KafkaConfigurationError, KafkaUnavailableError) as e:
-            # kafka seems to be having issues. log it and move on
-            logging.exception(u'Problem getting latest offsets form kafka for {}: {}'.format(
-                self,
-                e,
-            ))
-            return None
-
-        highwater_offsets = consumer.offsets('highwater')
-        return {
-            topic: highwater_offsets[(topic, self._partition)]
-            for topic in self._topics
-        }
+        return get_multi_topic_offset(self.topics)
 
     def get_latest_change_id(self):
         topic = self._get_single_topic_or_fail()
-        return self.get_current_offsets().get(topic)
+        return get_topic_offset(topic)
 
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {
@@ -148,7 +131,7 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
         # todo: do this somewhere smarter?
-        checkpoint_doc = self.checkpoint.get_or_create_wrapped().document
+        checkpoint_doc = self.checkpoint.get_or_create_wrapped()
         if checkpoint_doc.sequence_format != 'json' or checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
             checkpoint_doc.sequence_format = 'json'
             # convert initial default to json default
