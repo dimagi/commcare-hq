@@ -63,7 +63,6 @@ class Command(BaseCommand):
         make_option('--in-place',
                     action='store_true',
                     dest='in-place',
-                    default=False,
                     help='Run the reindex in place - assuming it is against a live index.'),
     )
 
