@@ -157,7 +157,7 @@ def get_restore_user(domain, couch_user, as_user):
             user = WebUser.get_by_username(as_user)
             if not user:
                 return None
-            elif domain not in user.domains:
+            elif not user.is_member_of(domain):
                 return None
             restore_user = user.to_ota_restore_user(domain)
 
