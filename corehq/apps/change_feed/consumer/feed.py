@@ -125,9 +125,8 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
     Event handler that supports checkpoints when subscribing to multiple topics.
     """
 
-    def __init__(self, checkpoint, checkpoint_frequency, change_feed):
-        self.checkpoint = checkpoint
-        self.checkpoint_frequency = checkpoint_frequency
+    def __init__(self, checkpoint, checkpoint_frequency, change_feed, checkpoint_listeners=None):
+        super(MultiTopicCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency, checkpoint_listeners)
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
         # todo: do this somewhere smarter?
@@ -141,7 +140,9 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
 
     def fire_change_processed(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
-            self.checkpoint.update_to(json.dumps(self.change_feed.get_current_checkpoint_offsets()))
+            updated_to = self.change_feed.get_current_checkpoint_offsets()
+            self.checkpoint.update_to(json.dumps(updated_to))
+            self.notify_listeners(updated_to)
 
 
 def change_from_kafka_message(message):

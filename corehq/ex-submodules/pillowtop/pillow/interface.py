@@ -122,8 +122,26 @@ class ChangeEventHandler(object):
     """
     __metaclass__ = ABCMeta
 
+    def __init__(self, listeners=None):
+        self.listeners = listeners or []
+
+    def notify_listeners(self, updated_to):
+        for listener in self.listeners:
+            listener.checkpoint_updated(updated_to)
+
     @abstractmethod
     def fire_change_processed(self, change, context):
+        pass
+
+
+class CheckpointEventListener(object):
+    """
+    Interface for objects that want to be notified of checkpoint changes.
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def checkpoint_updated(self, updated_to):
         pass
 
 

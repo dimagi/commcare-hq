@@ -79,13 +79,16 @@ class PillowCheckpoint(object):
 
 class PillowCheckpointEventHandler(ChangeEventHandler):
 
-    def __init__(self, checkpoint, checkpoint_frequency):
+    def __init__(self, checkpoint, checkpoint_frequency, checkpoint_listeners=None):
+        super(PillowCheckpointEventHandler, self).__init__(checkpoint_listeners)
         self.checkpoint = checkpoint
         self.checkpoint_frequency = checkpoint_frequency
 
     def fire_change_processed(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
-            self.checkpoint.update_to(change['seq'])
+            updated_to = change['seq']
+            self.checkpoint.update_to(updated_to)
+            self.notify_listeners(updated_to)
 
 
 def get_default_django_checkpoint_for_legacy_pillow_class(pillow_class):
