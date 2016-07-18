@@ -274,3 +274,7 @@ def is_contact_active(domain, contact_doc_type, contact_id):
         return is_case_contact_active(domain, contact_id)
     elif contact_doc_type in ('CommCareUser', 'WebUser'):
         return is_user_contact_active(domain, contact_id)
+    else:
+        # We can't tie the contact to a document so since we can't say whether
+        # it's inactive, we count it as active
+        return True

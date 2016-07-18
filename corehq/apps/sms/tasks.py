@@ -15,6 +15,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
+from corehq.apps.sms.util import is_contact_active
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
@@ -219,7 +220,16 @@ def process_sms(queued_sms_pk):
                 recipient_lock.acquire(blocking=True)
 
             if msg.direction == OUTGOING:
-                requeue = handle_outgoing(msg)
+                if (
+                    msg.domain and
+                    msg.couch_recipient_doc_type and
+                    msg.couch_recipient and
+                    not is_contact_active(msg.domain, msg.couch_recipient_doc_type, msg.couch_recipient)
+                ):
+                    msg.set_system_error(SMS.ERROR_CONTACT_IS_INACTIVE)
+                    remove_from_queue(msg)
+                else:
+                    requeue = handle_outgoing(msg)
             elif msg.direction == INCOMING:
                 handle_incoming(msg)
             else:
