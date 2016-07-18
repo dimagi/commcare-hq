@@ -483,6 +483,10 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
             return None
 
     @property
+    def parent_location_id(self):
+        return self.parent.location_id if self.parent else None
+
+    @property
     def location_type_object(self):
         return self.location_type
 
@@ -799,10 +803,11 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return not self.lineage
 
     @property
-    def parent_id(self):
+    def parent_location_id(self):
         if self.is_root:
             return None
         return self.lineage[0]
+    parent_id = parent_location_id  # deprecated
 
     @property
     def parent(self):
