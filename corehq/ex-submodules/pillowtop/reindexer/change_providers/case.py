@@ -1,7 +1,8 @@
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.change_providers import _sql_case_to_change
+from corehq.form_processor.change_publishers import change_meta_from_sql_case
 from corehq.form_processor.utils.general import should_use_sql_backend
+from pillowtop.feed.interface import Change
 from pillowtop.reindexer.change_providers.composite import CompositeChangeProvider
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
@@ -39,3 +40,14 @@ def get_domain_case_change_provider(domains):
         else:
             change_providers.append(get_couch_domain_case_change_provider(domain))
     return CompositeChangeProvider(change_providers)
+
+
+def _sql_case_to_change(case):
+    return Change(
+        id=case.case_id,
+        sequence_id=None,
+        document=case.to_json(),
+        deleted=False,
+        metadata=change_meta_from_sql_case(case),
+        document_store=None,
+    )

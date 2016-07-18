@@ -430,6 +430,7 @@ corehq.apps.users:
   - corehq.apps.groups
   - corehq.apps.hqcase
   - corehq.apps.locations
+  - corehq.apps.notifications
   - corehq.apps.products
   - corehq.apps.reminders
   - corehq.apps.sms

@@ -3,7 +3,7 @@ import re
 from corehq.apps.products.models import SQLProduct
 from dimagi.utils.dates import force_to_datetime
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CouchUser
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
 from corehq.util.translation import localize
@@ -100,8 +100,8 @@ def get_products_id(form, property):
         k = PRODUCT_NAMES.get(product[property].lower())
         if k is not None:
             try:
-                code = SQLProduct.objects.get(name__iexact=k,
-                                              domain=get_domain(form)).product_id
+                code = SQLProduct.active_objects.get(name__iexact=k,
+                                                     domain=get_domain(form)).product_id
                 products.append(code)
             except SQLProduct.DoesNotExist:
                 pass
@@ -123,8 +123,8 @@ def get_rupture_products_ids(form):
             product_name = PRODUCT_NAMES.get(PRODUCT_MAPPING[k[8:-3]].lower())
             if product_name is not None:
                 try:
-                    prd = SQLProduct.objects.get(name__iexact=product_name,
-                                                 domain=get_domain(form))
+                    prd = SQLProduct.active_objects.get(name__iexact=product_name,
+                                                        domain=get_domain(form))
                     result.append(prd.product_id)
                 except SQLProduct.DoesNotExist:
                     pass
@@ -144,7 +144,7 @@ def _get_location(form):
         if not user_id:
             return None
         try:
-            user = CommCareUser.get(user_id)
+            user = CouchUser.get_by_user_id(user_id)
             loc = user.location
         except ResourceNotFound:
             logging.info('Location %s Not Found.' % loc)

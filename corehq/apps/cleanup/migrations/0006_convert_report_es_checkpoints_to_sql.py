@@ -2,16 +2,8 @@
 from __future__ import unicode_literals
 
 from django.db import migrations
-from corehq.apps.cleanup.pillow_migrations import noop_reverse_migration, migrate_legacy_pillows
-from corehq.sql_db.operations import HqRunPython
 
-
-def migrate_report_es_pillows(apps, schema_editor):
-    pillow_names = [
-        "ReportCasePillow",
-        "ReportXFormPillow",
-    ]
-    migrate_legacy_pillows(apps, pillow_names)
+from corehq.sql_db.operations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -21,5 +13,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(migrate_report_es_pillows, noop_reverse_migration)
+        noop_migration()
     ]

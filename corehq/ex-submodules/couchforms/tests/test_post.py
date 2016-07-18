@@ -23,7 +23,7 @@ class PostTest(TestCase, TestFileMixin):
     def _process_sql_json(self, expected, xform_json, any_id_ok):
         expected['received_on'] = xform_json['received_on']
         if any_id_ok:
-            expected['form_id'] = xform_json['form_id']
+            expected['_id'] = xform_json['_id']
         return expected, xform_json
 
     def _process_couch_json(self, expected, xform_json, any_id_ok):

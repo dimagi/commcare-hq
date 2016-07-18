@@ -84,6 +84,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         raise NotImplementedError
 
+    @abstractmethod
+    def soft_undelete_forms(domain, form_ids):
+        raise NotImplementedError
+
 
 class FormAccessors(object):
     """
@@ -138,8 +142,8 @@ class FormAccessors(object):
     def update_form_problem_and_state(self, form):
         self.db_accessor.update_form_problem_and_state(form)
 
-    def get_deleted_form_ids_for_user(self, domain, user_id):
-        return self.db_accessor.get_deleted_form_ids_for_user(domain, user_id)
+    def get_deleted_form_ids_for_user(self, user_id):
+        return self.db_accessor.get_deleted_form_ids_for_user(self.domain, user_id)
 
     def get_form_ids_for_user(self, user_id):
         return self.db_accessor.get_form_ids_for_user(self.domain, user_id)
@@ -149,6 +153,9 @@ class FormAccessors(object):
 
     def soft_delete_forms(self, form_ids, deletion_date=None, deletion_id=None):
         return self.db_accessor.soft_delete_forms(self.domain, form_ids, deletion_date, deletion_id)
+
+    def soft_undelete_forms(self, form_ids):
+        return self.db_accessor.soft_undelete_forms(self.domain, form_ids)
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
@@ -234,6 +241,14 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
+        raise NotImplementedError
+
+    @abstractmethod
+    def soft_undelete_cases(domain, case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_deleted_case_ids_by_owner(domain, owner_id):
         raise NotImplementedError
 
 
@@ -324,6 +339,12 @@ class CaseAccessors(object):
 
     def soft_delete_cases(self, case_ids, deletion_date=None, deletion_id=None):
         return self.db_accessor.soft_delete_cases(self.domain, case_ids, deletion_date, deletion_id)
+
+    def soft_undelete_cases(self, case_ids):
+        return self.db_accessor.soft_undelete_cases(self.domain, case_ids)
+
+    def get_deleted_case_ids_by_owner(self, owner_id):
+        return self.db_accessor.get_deleted_case_ids_by_owner(self.domain, owner_id)
 
     def get_extension_chain(self, case_ids):
         assert isinstance(case_ids, list)

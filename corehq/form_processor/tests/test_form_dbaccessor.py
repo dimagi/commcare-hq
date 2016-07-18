@@ -1,6 +1,4 @@
-import time
 import uuid
-from datetime import datetime
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
@@ -290,29 +288,6 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(XFormInstanceSQL.ERROR, saved_form.state)
         self.assertEqual(problem, saved_form.problem)
         self.assertEqual(original_domain, saved_form.domain)
-
-    def test_get_forms_received_since(self):
-        # since this test depends on the global form list just wipe everything
-        FormProcessorTestUtils.delete_all_sql_forms()
-
-        first_batch = [create_form_for_test(DOMAIN).form_id for i in range(4)]
-        middle = datetime.utcnow()
-        time.sleep(.02)
-        second_batch = [create_form_for_test(DOMAIN).form_id for i in range(4)]
-        time.sleep(.02)
-        end = datetime.utcnow()
-
-        forms_back = list(FormAccessorSQL.get_all_forms_received_since(chunk_size=2))
-        self.assertEqual(8, len(forms_back))
-        self.assertEqual(set(form.form_id for form in forms_back),
-                         set(first_batch + second_batch))
-
-        forms_back = list(FormAccessorSQL.get_all_forms_received_since(middle, chunk_size=2))
-        self.assertEqual(4, len(forms_back))
-        self.assertEqual(set(form.form_id for form in forms_back),
-                         set(second_batch))
-
-        self.assertEqual(0, len(list(FormAccessorSQL.get_all_forms_received_since(end))))
 
     def _validate_deprecation(self, existing_form, new_form):
         saved_new_form = FormAccessorSQL.get_form(new_form.form_id)

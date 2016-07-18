@@ -68,7 +68,7 @@ from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,
     get_datasource_config,
     get_report_config,
-    is_report_config_id_static,
+    report_config_id_is_static,
     id_is_static,
 )
 from corehq.apps.userreports.reports.builder.forms import (
@@ -197,7 +197,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
 
     @property
     def read_only(self):
-        return is_report_config_id_static(self.report_id) if self.report_id is not None else False
+        return report_config_id_is_static(self.report_id) if self.report_id is not None else False
 
     @property
     @memoized
@@ -300,18 +300,7 @@ class ReportBuilderPaywall(ReportBuilderPaywallBase):
     urlname = 'report_builder_paywall'
 
     def dispatch(self, request, *args, **kwargs):
-        self._init_tour()
         return super(ReportBuilderPaywall, self).dispatch(request, *args, **kwargs)
-
-    def _init_tour(self):
-        """
-        Add properties to the request if the tour should be active
-        """
-        if self.request.user.is_authenticated():
-            tour = tours.REPORT_BUILDER_NO_ACCESS
-            step = 1
-            if tour.should_show(self.request, step, self.request.GET.get('tour', False)):
-                self.request.guided_tour = tour.get_tour_data(self.request, step)
 
 
 class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):

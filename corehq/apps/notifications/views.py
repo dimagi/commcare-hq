@@ -1,10 +1,11 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.generic import View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation, JSONResponseException
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -12,7 +13,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
-from corehq.apps.notifications.models import Notification
+from corehq.apps.notifications.models import Notification, LastSeenNotification, IllegalModelStateException
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):
@@ -30,15 +31,32 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         # todo always grab alerts if they are still relevant
         notifications = Notification.get_by_user(self.request.user)
         has_unread = len(filter(lambda x: not x['isRead'], notifications)) > 0
+        last_seen_notification_date = LastSeenNotification.get_last_seen_notification_date_for_user(
+            self.request.user
+        )
         return {
             'hasUnread': has_unread,
             'notifications': notifications,
+            'lastSeenNotificationDate': last_seen_notification_date
         }
 
     @allow_remote_invocation
     def mark_as_read(self, in_data):
         Notification.objects.get(pk=in_data['id']).mark_as_read(self.request.user)
         return {}
+
+    @allow_remote_invocation
+    def save_last_seen(self, in_data):
+        if 'notification_id' not in in_data:
+            raise JSONResponseException('notification_id is required')
+        notification = get_object_or_404(Notification, pk=in_data['notification_id'])
+        try:
+            notification.set_as_last_seen(self.request.user)
+        except IllegalModelStateException as e:
+            raise JSONResponseException(e.message)
+        return {
+            'activated': notification.activated
+        }
 
 
 class ManageNotificationView(BasePageView):

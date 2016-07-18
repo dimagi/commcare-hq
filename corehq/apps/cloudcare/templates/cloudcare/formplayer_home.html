@@ -1,4 +1,4 @@
-{% extends "cloudcare/base.html" %}
+{% extends 'style/full_screen.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
@@ -50,11 +50,14 @@
         <script src="{% static 'cloudcare/js/formplayer/js/entities/cc_app.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/entities/menu.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/entities/globals.js' %}"></script>
-        <script src="{% static 'cloudcare/js/formplayer/js/apps/session_nav.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/entities/sessions.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_controller.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/list/list_view.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_view.js' %}"></script>
         <script src="{% static 'cloudcare/js/formplayer/js/apps/menus/menu_controller.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/apps/sessions/session_view.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/apps/sessions/session_controller.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/js/apps/session_nav.js' %}"></script>
         <script src="{% static 'style/js/ui-element.js' %}"></script>
         <script src="{% static 'formplayer/script/vendor/markdown-it-4.2.0.min.js' %}"></script>
         <script src="{% static 'formplayer/script/vendor/purify.js' %}"></script>
@@ -69,6 +72,10 @@
 
 {% block js-inline %} {{ block.super }}
     <script>
+        var translatedStrings = {
+            synced: "{% trans "User Data Successfully Synced" %}",
+            errSyncing: "{% trans "Could not sync user data. Please try again and report a bug if issue persists." %}"
+        };
         var apps = {{ apps|JSON }};
         var language = "{{ language }}";
         var username = "{{ username  }}";
@@ -88,11 +95,7 @@
 {% block page_content %}
 
     <div id="menu-container">
-        <div id="menu-region" class="container">
-            <p>Here is static content in the web page. You'll notice that it gets replaced by our app as soon as we
-                start
-                it.</p>
-        </div>
+        <div id="menu-region" class="container"></div>
     </div>
 
     <!-- For now we won't touch this since the form entry code is coupled with it  -->
@@ -116,5 +119,6 @@
     {% include 'formplayer/case_detail.html' %}
     {% include 'formplayer/case_list.html' %}
     {% include 'formplayer/menu_list.html' %}
+    {% include 'formplayer/session_list.html' %}
 
 {% endblock %}

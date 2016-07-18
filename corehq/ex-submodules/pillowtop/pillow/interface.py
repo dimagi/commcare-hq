@@ -60,10 +60,10 @@ class PillowBase(object):
         pass
 
     def get_last_checkpoint_sequence(self):
-        return self.checkpoint.get_or_create_wrapped().document.wrapped_sequence
+        return self.checkpoint.get_or_create_wrapped().wrapped_sequence
 
     def get_checkpoint(self, verify_unchanged=False):
-        return self.checkpoint.get_or_create_wrapped(verify_unchanged=verify_unchanged).document
+        return self.checkpoint.get_or_create_wrapped(verify_unchanged=verify_unchanged)
 
     def set_checkpoint(self, change):
         self.checkpoint.update_to(change['seq'])

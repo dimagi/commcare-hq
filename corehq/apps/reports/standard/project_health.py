@@ -241,6 +241,16 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
 
 
+def build_worksheet(title, headers, rows):
+    worksheet = []
+    worksheet.append(headers)
+    worksheet.extend(rows)
+    return [
+        title,
+        worksheet
+    ]
+
+
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
     name = ugettext_noop("Project Performance")
@@ -249,6 +259,8 @@ class ProjectHealthDashboard(ProjectReport):
     fields = [
         'corehq.apps.reports.filters.location.LocationGroupFilter',
     ]
+
+    exportable = True
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -326,6 +338,39 @@ class ProjectHealthDashboard(ProjectReport):
             this_month_summary.set_percent_active()
             last_month_summary = this_month_summary
         return six_month_summary[1:]
+
+    def export_summary(self, six_months):
+        return build_worksheet(title="Six Month Performance Summary",
+                               headers=['month', 'num_high_performing_users', 'num_low_performing_users',
+                                        'total_active', 'total_inactive', 'total_num_users'],
+                               rows=[[monthly_summary.month.isoformat(),
+                                      monthly_summary.number_of_performing_users,
+                                      monthly_summary.number_of_low_performing_users, monthly_summary.active,
+                                      monthly_summary.inactive, monthly_summary.total_users_by_month]
+                                     for monthly_summary in six_months])
+
+    @property
+    def export_table(self):
+        six_months_reports = self.previous_six_months()
+        last_month = six_months_reports[-2]
+
+        header = ['user_id', 'username', 'last_month_forms', 'delta_last_month',
+                  'this_month_forms', 'delta_this_month', 'is_performing']
+
+        def extract_user_stat(user_list):
+            return [[user.user_id, user.username, user.num_forms_submitted, user.delta_forms,
+                    user.num_forms_submitted_next_month, user.delta_forms_next_month,
+                    user.is_performing] for user in user_list]
+
+        return [
+            self.export_summary(six_months_reports),
+            build_worksheet(title="Inactive Users", headers=header,
+                            rows=extract_user_stat(last_month.get_dropouts())),
+            build_worksheet(title="Low Performing Users", headers=header,
+                            rows=extract_user_stat(last_month.get_unhealthy_users())),
+            build_worksheet(title="New Performing Users", headers=header,
+                            rows=extract_user_stat(last_month.get_newly_performing())),
+        ]
 
     @property
     def template_context(self):

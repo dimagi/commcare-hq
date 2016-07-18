@@ -34,3 +34,11 @@ Util.getSteps = function (queryString) {
     paramMap.steps = steps;
     return paramMap;
 };
+
+Util.setCrossDomainAjaxOptions = function(options) {
+    options.type = 'POST';
+    options.dataType = "json";
+    options.crossDomain = { crossDomain: true};
+    options.xhrFields = { withCredentials: true};
+    options.contentType = "application/json";
+};

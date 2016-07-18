@@ -52,10 +52,7 @@ class SubmissionTest(TestCase):
         with open(file_path, "rb") as f:
             expected = json.load(f)
 
-        if '_id' in expected:
-            expected['_id'] = form_id
-        else:
-            expected['form_id'] = unicode(form_id)
+        expected['_id'] = form_id
         expected['xmlns'] = unicode(xmlns)
 
         return expected

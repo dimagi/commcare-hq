@@ -8,9 +8,9 @@
     });
 </script>
 <li id="js-settingsmenu-notifications" class="dropdown">
-    <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown" id="notification-icon">
+    <a href="#" data-bind="click: bellClickHandler" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown" id="notification-icon">
         <i class="icon-bell-alt fa fa-bell nav-main-icon"
-           data-bind="css: {'notifications-active-icon': hasUnread()}"></i>
+           data-bind="css: {'notifications-active-icon': !seen()}"></i>
     </a>
     <ul class="dropdown-menu notifications-dropdown dropdown-menu-right"
         role="menu">
