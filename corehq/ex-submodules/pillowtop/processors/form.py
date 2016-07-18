@@ -12,7 +12,7 @@ class AppFormSubmissionTrackerProcessor(PillowProcessor):
     having submissions (has_submissions = True).
     """
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, pillow_instance, change, is_retry_attempt=False):
         if change.deleted or change.metadata is None:
             return
 

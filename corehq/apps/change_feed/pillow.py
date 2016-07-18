@@ -26,7 +26,7 @@ class KafkaProcessor(PillowProcessor):
         self._data_source_type = data_source_type
         self._data_source_name = data_source_name
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, pillow_instance, change, is_retry_attempt=False):
         try:
             document = change.get_document()
             doc_meta = get_doc_meta_object_from_document(document)
