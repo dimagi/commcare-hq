@@ -73,9 +73,10 @@ class Command(BaseCommand):
             help="Don't do the actual reprocessing, just print the ids that would be affected"),)
 
     def handle(self, *args, **options):
-        domain = since = None
+
         if len(args) == 1:
             domain = args[0]
+            since = None
         elif len(args) == 2:
             domain = args[0]
             since = string_to_datetime(args[1])
