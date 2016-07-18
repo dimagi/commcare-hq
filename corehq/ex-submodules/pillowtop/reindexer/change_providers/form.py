@@ -6,37 +6,8 @@ from corehq.util.pagination import paginate_function, ArgsListProvider
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from pillowtop.feed.interface import Change
 from pillowtop.reindexer.change_providers.composite import CompositeChangeProvider
+from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
-
-
-class CouchXFormDomainChangeProvider(ChangeProvider):
-    def __init__(self, domains, chunk_size=1000):
-        self.domains = domains
-        self.chunk_size = chunk_size
-
-    def iter_all_changes(self, start_from=None):
-        if not self.domains:
-            return
-
-        def data_function(**view_kwargs):
-            return XFormInstance.get_db().view('by_domain_doc_type_date/view', **view_kwargs)
-
-        keys = []
-        doc_types = all_known_formlike_doc_types()
-        for domain in self.domains:
-            for doc_type in doc_types:
-                keys.append([domain, doc_type])
-
-        args_provider = MultiKeyViewArgsProvider(keys, include_docs=True, chunk_size=self.chunk_size)
-
-        for row in paginate_function(data_function, args_provider):
-            yield Change(
-                id=row['id'],
-                sequence_id=None,
-                document=row.get('doc'),
-                deleted=False,
-                document_store=None
-            )
 
 
 class SqlDomainXFormChangeProvider(ChangeProvider):
@@ -86,5 +57,9 @@ def get_domain_form_change_provider(domains):
 
     return CompositeChangeProvider([
         SqlDomainXFormChangeProvider(sql_domains),
-        CouchXFormDomainChangeProvider(couch_domains),
+        CouchDomainDocTypeChangeProvider(
+            couch_db=XFormInstance.get_db(),
+            domains=couch_domains,
+            doc_types=all_known_formlike_doc_types()
+        ),
     ])
