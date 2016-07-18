@@ -181,6 +181,7 @@ class DetailContributor(SectionContributor):
             field = None
         return Lookup(
             name=detail.lookup_name or None,
+            auto_launch=detail.lookup_autolaunch or False,
             action=detail.lookup_action,
             image=detail.lookup_image or None,
             extras=[Extra(**e) for e in detail.lookup_extras],

@@ -833,6 +833,7 @@ def _new_careplan_module(request, domain, app, name, lang):
 
 def _save_case_list_lookup_params(short, case_list_lookup, lang):
     short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
+    short.lookup_autolaunch = case_list_lookup.get("lookup_autolaunch", short.lookup_autolaunch)
     short.lookup_action = case_list_lookup.get("lookup_action", short.lookup_action)
     short.lookup_name = case_list_lookup.get("lookup_name", short.lookup_name)
     short.lookup_extras = case_list_lookup.get("lookup_extras", short.lookup_extras)

@@ -19,6 +19,15 @@
     <div data-bind="visible: lookup_enabled">
         <form>
             <div class="form-group">
+                <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-autolaunch">
+                    {% trans "Autolaunch Lookup" %}
+                </label>
+                <div class="col-sm-4 checkbox">
+                    <input type="checkbox" id="{{ detail.type }}-lookup-autolaunch"
+                           data-bind="checked: lookup_autolaunch" />
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-action">
                     {% trans "Action" %}
                 </label>
