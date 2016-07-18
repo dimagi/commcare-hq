@@ -1,5 +1,6 @@
 from functools import partial
 from corehq.apps.change_feed import topics
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.dates import force_to_datetime
 import fluff
 from corehq.fluff.calculators.case import CasePropertyFilter
@@ -75,9 +76,9 @@ class WorldVisionMotherFluff(fluff.IndicatorDocument):
 
 
 def referenced_case_attribute(case, field_name):
-    if not case.indices[0]['referenced_id']:
+    if not (case.indices and case.indices[0]['referenced_id']):
         return ""
-    referenced_case = CommCareCase.get(case.indices[0]['referenced_id'])
+    referenced_case = CaseAccessors(case.domain).get_case(case.indices[0]['referenced_id'])
     if hasattr(referenced_case, field_name):
         return getattr(referenced_case, field_name)
     else:
