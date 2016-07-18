@@ -143,6 +143,7 @@ class BaseResumableSqlModelIteratorTest(object):
 
     def tearDown(self):
         self.itr.discard_state()
+        super(BaseResumableSqlModelIteratorTest, self).tearDown()
 
     def get_iterator(self, deleted_doc_ids=None):
         reindex_accessor = SimulateDeleteReindexAccessor(self.reindex_accessor, deleted_doc_ids)
@@ -225,8 +226,8 @@ class LedgerResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, Tes
 
     @classmethod
     def tearDownClass(cls):
-        super(LedgerResumableSqlModelIteratorTest, cls).tearDownClass()
         cls.product.delete()
+        super(LedgerResumableSqlModelIteratorTest, cls).tearDownClass()
 
 
 class DemoProcessor(BaseDocProcessor):
