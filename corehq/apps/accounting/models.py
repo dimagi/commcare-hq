@@ -2951,7 +2951,7 @@ class StripePaymentMethod(PaymentMethod):
         return 'auto_pay_{billing_account_id}'.format(billing_account_id=billing_account.id)
 
     def create_charge(self, card, amount_in_dollars, description=None):
-        """ Charges a stripe card and returns a payment record """
+        """ Charges a stripe card and returns a transaction id """
         amount_in_cents = int((amount_in_dollars * Decimal('100')).quantize(Decimal(10)))
         transaction_record = stripe.Charge.create(
             card=card,
@@ -2960,7 +2960,7 @@ class StripePaymentMethod(PaymentMethod):
             currency=settings.DEFAULT_CURRENCY,
             description=description if description else '',
         )
-        return PaymentRecord.create_record(self, transaction_record.id, amount_in_dollars)
+        return transaction_record.id
 
 
 class PaymentRecord(models.Model):
