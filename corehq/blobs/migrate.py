@@ -322,6 +322,7 @@ MIGRATIONS = {m.slug: m for m in [
         xform.XFormDuplicate,
         xform.XFormError,
         xform.SubmissionErrorLog,
+        ("HQSubmission", xform.XFormInstance),
     ], CouchAttachmentMigrator),
 ]}
 

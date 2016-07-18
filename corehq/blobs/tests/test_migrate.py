@@ -324,6 +324,7 @@ class TestXFormInstanceMigrations(BaseMigrationTest):
         "XFormDuplicate": mod.xform.XFormDuplicate,
         "XFormError": mod.xform.XFormError,
         "SubmissionErrorLog": mod.xform.SubmissionErrorLog,
+        "HQSubmission": mod.xform.XFormInstance,
     }
 
     def test_migrate_happy_path(self):
