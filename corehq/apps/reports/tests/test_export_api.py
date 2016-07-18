@@ -3,6 +3,7 @@ import time
 import uuid
 
 from django.core.urlresolvers import reverse
+from django.test import override_settings
 from django.test.client import Client
 
 from elasticsearch.exceptions import ConnectionError
@@ -116,6 +117,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
         return form_pair
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testExportTokenMigration(self):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
@@ -133,6 +135,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         prev_checkpoint = ExportSchema.get(prev_token)
         assert prev_checkpoint.timestamp
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testExportTokens(self):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})
@@ -162,6 +165,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         self.assertTrue(_content(resp) is not None)
         self.assertTrue("X-CommCareHQ-Export-Token" in resp)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testExportFilter(self):
         c = Client()
         c.login(**{'username': 'test', 'password': 'foobar'})

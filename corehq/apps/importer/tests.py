@@ -293,6 +293,7 @@ class ImporterTest(TestCase):
         self.assertEqual(0, res['match_count'])
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testBasicChunking(self):
         config = self._config(self.default_headers)
         file = MockExcelFile(header_columns=self.default_headers, num_rows=5)

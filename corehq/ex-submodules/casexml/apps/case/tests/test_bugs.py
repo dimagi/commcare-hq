@@ -36,6 +36,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         super(CaseBugTest, self).setUp()
         delete_all_cases()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_conflicting_ids(self):
         """
         If a form and a case share an ID it's a conflict

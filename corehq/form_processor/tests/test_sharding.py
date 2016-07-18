@@ -31,6 +31,7 @@ class ShardingTests(TestCase):
         FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
         super(ShardingTests, self).tearDown()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_objects_only_in_one_db(self):
         case_id = uuid4().hex
         form = create_form_for_test(DOMAIN, case_id=case_id)
@@ -49,6 +50,7 @@ class ShardingTests(TestCase):
         self.assertEqual(1, len(dbs_with_form))
         self.assertEqual(1, len(dbs_with_case))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_objects_distributed_to_all_dbs(self):
         """
         Rudimentary test to ensure that not all cases / forms get saved to the same DB.

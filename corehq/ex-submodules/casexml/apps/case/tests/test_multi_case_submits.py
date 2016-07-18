@@ -15,6 +15,7 @@ class MultiCaseTest(TestCase):
         delete_all_xforms()
         delete_all_cases()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testParallel(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "parallel_cases.xml")
         with open(file_path, "rb") as f:
@@ -24,6 +25,7 @@ class MultiCaseTest(TestCase):
         self.assertEqual(4, len(cases))
         self._check_ids(form, cases)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testMixed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "mixed_cases.xml")
         with open(file_path, "rb") as f:
@@ -32,6 +34,7 @@ class MultiCaseTest(TestCase):
         self.assertEqual(4, len(cases))
         self._check_ids(form, cases)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def testCasesInRepeats(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "multicase", "case_in_repeats.xml")
         with open(file_path, "rb") as f:

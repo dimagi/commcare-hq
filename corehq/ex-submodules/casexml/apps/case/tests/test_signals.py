@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import cases_received
@@ -9,6 +9,7 @@ from couchforms.models import XFormInstance
 
 class TestCasesReceivedSignal(TestCase):
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_casedb_already_has_cases(self):
         casedb_cache = FormProcessorInterface().casedb_cache
         case = CaseFactory().create_case()

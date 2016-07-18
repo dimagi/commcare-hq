@@ -3,7 +3,7 @@ import os
 import uuid
 
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from elasticsearch import ConnectionError
 from testil import tempdir
 
@@ -170,6 +170,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
                 self.assertTrue(form.unique_id not in log)
                 self.assertTrue(xform._id not in log)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_app_with_bad_form(self):
         good_form, bad_form, good_xform, bad_xforms = self.build_app_with_bad_form()
         self._refresh_pillow()
@@ -188,6 +189,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
                     self.assertTrue(xform._id in log)
             self.assertNoMissingXmlnss()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_app_with_recently_fixed_form(self):
         form, good_build, bad_build, good_xform, bad_xform = self.build_app_with_recently_fixed_form()
         self._refresh_pillow()
@@ -216,6 +218,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
         )
         self.assertNoMissingXmlnss()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_fix_xforms_with_missing_xmlns_task(self):
         """Tests the ability to find anomalies that violate our asssumptions
         about all applications and builds being fixes
@@ -235,6 +238,7 @@ class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
             )
             self.assertEqual(stats['not_fixed_undefined_xmlns'][DOMAIN], len(bad_xforms))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_fix_xforms_with_missing_xmlns_task_fixed(self):
         """Tests the ability to fix xforms with the periodic cron task
         """

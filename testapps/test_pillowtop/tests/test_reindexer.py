@@ -2,7 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.case_search.models import CaseSearchConfig
@@ -44,6 +44,7 @@ class PillowtopReindexerTest(TestCase):
             ensure_index_deleted(index)
         super(PillowtopReindexerTest, cls).tearDownClass()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_domain_reindexer(self):
         delete_all_domains()
         ensure_index_deleted(DOMAIN_INDEX)

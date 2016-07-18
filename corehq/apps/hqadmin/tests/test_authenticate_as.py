@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.core.urlresolvers import reverse
 
 from corehq.apps.domain.models import Domain
@@ -85,6 +85,7 @@ class AuthenticateAsIntegrationTest(TestCase):
         cls.domain.delete()
         super(AuthenticateAsIntegrationTest, cls).tearDownClass()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_authenticate_as(self):
         self.client.login(username=self.username, password=self.password)
 
@@ -102,6 +103,7 @@ class AuthenticateAsIntegrationTest(TestCase):
             self.mobile_worker.get_django_user().id
         )
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_permisssions_for_authenticate_as(self):
         self.client.login(username=self.regular_name, password=self.password)
 

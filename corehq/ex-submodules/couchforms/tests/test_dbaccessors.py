@@ -1,5 +1,5 @@
 import datetime
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
@@ -58,16 +58,19 @@ class TestDBAccessors(TestCase):
         cls.xform_deleted.delete()
         super(TestDBAccessors, cls).tearDownClass()
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_get_form_ids_by_type_xforminstance(self):
         form_ids = get_form_ids_by_type(self.domain, 'XFormInstance')
         self.assertEqual(len(form_ids), len(self.xforms))
         self.assertEqual(set(form_ids), {form._id for form in self.xforms})
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_get_form_ids_by_type_xformerror(self):
         form_ids = get_form_ids_by_type(self.domain, 'XFormError')
         self.assertEqual(len(form_ids), len(self.xform_errors))
         self.assertEqual(set(form_ids), {form._id for form in self.xform_errors})
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_get_forms_by_type_xforminstance(self):
         forms = get_forms_by_type(self.domain, 'XFormInstance', limit=10)
         self.assertEqual(len(forms), len(self.xforms))
@@ -76,6 +79,7 @@ class TestDBAccessors(TestCase):
         for form in forms:
             self.assertIsInstance(form, XFormInstance)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_get_forms_by_type_xformerror(self):
         forms = get_forms_by_type(self.domain, 'XFormError', limit=10)
         self.assertEqual(len(forms), len(self.xform_errors))
@@ -84,6 +88,7 @@ class TestDBAccessors(TestCase):
         for form in forms:
             self.assertIsInstance(form, XFormError)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_get_deleted_form_ids_for_user(self):
         ids = get_deleted_form_ids_for_user(self.user_id2)
         self.assertEqual(len(ids), 1)
@@ -92,6 +97,7 @@ class TestDBAccessors(TestCase):
         ids = get_deleted_form_ids_for_user(self.user_id1)
         self.assertEqual(len(ids), 0)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_get_form_ids_for_user(self):
         ids = get_form_ids_for_user(self.domain, self.user_id1)
         self.assertEqual(len(ids), 1)

@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from django.test import override_settings
+
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.apps.sms.tests import setup_default_sms_test_backend, delete_domain_phone_numbers
@@ -269,6 +271,7 @@ class TestStockOut(RemindersTest):
         set_default_consumption_for_supply_point(TEST_DOMAIN, cls.dp.get_id, cls.facility_sp_id, 100)
         set_default_consumption_for_supply_point(TEST_DOMAIN, cls.ip.get_id, cls.facility_sp_id, 100)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_reminder(self):
         now = datetime.utcnow()
         self.assertEqual(0, len(list(StockoutReminder(TEST_DOMAIN, now).get_people())))

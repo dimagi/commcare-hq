@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timedelta
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -24,6 +24,7 @@ class TestSupplyAccessors(TestCase):
                                                               as_of=datetime.utcnow()))
 
     # @run_with_all_backends
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_get_ledger_values_for_case_as_of(self):
         case_id = uuid.uuid4().hex
         form_xml = get_simple_form_xml(uuid.uuid4().hex, case_id)

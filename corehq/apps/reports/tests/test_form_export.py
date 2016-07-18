@@ -4,7 +4,7 @@ import datetime
 
 import mock
 from django.core.urlresolvers import reverse
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.export.models import FormExportInstance, TableConfiguration, ExportColumn, ScalarItem, PathNode
 from corehq.apps.reports.models import FormExportSchema
@@ -180,6 +180,7 @@ class FormExportTest(TestCase):
         f.name = 'form.xml'
         return self.client.post(self.url, {'xml_submission_file': f})
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_include_duplicates(self):
         self.post_it()
         self.post_it()
@@ -196,6 +197,7 @@ class FormExportTest(TestCase):
         self.assertEqual(data['Export']['headers'], ['Name'])
         self.assertEqual(len(data['Export']['rows']), 1)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_exclude_unknown_users(self):
         self.post_it(form_id='good', user_id=self.couch_user._id)
         files = self.custom_export.get_export_files()

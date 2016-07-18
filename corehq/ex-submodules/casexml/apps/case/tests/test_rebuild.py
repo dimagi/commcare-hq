@@ -1,6 +1,6 @@
 import uuid
 from couchdbkit.exceptions import ResourceNotFound
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.exceptions import MissingServerDate
@@ -69,6 +69,7 @@ class CaseRebuildTest(TestCase):
         else:
             self.fail(msg)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_couch_action_equality(self):
         case_id = _post_util(create=True)
         _post_util(case_id=case_id, p1='p1', p2='p2')
@@ -95,6 +96,7 @@ class CaseRebuildTest(TestCase):
         copy.updated_unknown_properties['pnew'] = ''
         self.assertTrue(copy != orig)
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_couch_soft_rebuild(self):
         user_id = 'test-basic-rebuild-user'
         now = datetime.utcnow()
@@ -125,6 +127,7 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p2, 'p2-1') # updated (back!)
         self.assertEqual(case.p3, 'p3-2') # new
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_couch_action_comparison(self):
         user_id = 'test-action-comparison-user'
         case_id = _post_util(create=True, property='a1 wins', user_id=user_id)
@@ -182,6 +185,7 @@ class CaseRebuildTest(TestCase):
     def test_rebuild_empty(self):
         self.assertEqual(None, rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test')))
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_couch_rebuild_deleted_case(self):
         # Note: Can't run this on SQL because if a case gets hard deleted then
         # there is no way to find out which forms created / updated it without
@@ -202,6 +206,7 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p2, 'p2')
         self.assertEqual(3, len(primary_actions(case)))  # create + update
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_couch_reconcile_actions(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
