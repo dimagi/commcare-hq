@@ -41,7 +41,6 @@ function(doc) {
         };
 
         if (xmlns) {
-            var status = 'submission';
             emit(['submission', doc.domain, submission_time], emit_entry);
             emit(['submission xmlns', doc.domain, xmlns, submission_time], emit_entry);
             emit(['submission app', doc.domain, app_id, submission_time], emit_entry);
