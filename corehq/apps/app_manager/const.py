@@ -54,6 +54,4 @@ AMPLIFIES_NOT_SET = 'not_set'
 
 DEFAULT_MONTH_FILTER_PERIOD_LENGTH = 0
 
-CLAIM_DEFAULT_RELEVANT_CONDITION = """
-count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0
-"""
+CLAIM_DEFAULT_RELEVANT_CONDITION = "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0"
