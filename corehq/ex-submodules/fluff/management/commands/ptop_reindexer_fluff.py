@@ -8,7 +8,7 @@ from corehq.util.pagination import PaginationEventHandler
 from fluff.pillow import get_fluff_pillow_configs
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer
-from pillowtop.utils import get_pillow_by_name, get_all_pillow_configs
+from pillowtop.utils import get_pillow_by_name
 
 
 class ReindexEventHandler(PaginationEventHandler):
