@@ -8,25 +8,19 @@ from pillowtop.pillow.interface import ChangeEventHandler
 
 DEFAULT_EMPTY_CHECKPOINT_SEQUENCE = '0'
 
-DocGetOrCreateResult = namedtuple('DocGetOrCreateResult', ['document', 'created'])
-
 
 def get_or_create_checkpoint(checkpoint_id):
-    created = False
-    try:
-        checkpoint = DjangoPillowCheckpoint.objects.get(checkpoint_id=checkpoint_id)
-    except DjangoPillowCheckpoint.DoesNotExist:
-        checkpoint = DjangoPillowCheckpoint.objects.create(
-            checkpoint_id=checkpoint_id,
-            sequence=DEFAULT_EMPTY_CHECKPOINT_SEQUENCE,
-            timestamp=datetime.utcnow(),
-        )
-        created = True
-    return DocGetOrCreateResult(checkpoint, created)
+    checkpoint, created = DjangoPillowCheckpoint.objects.get_or_create(
+        checkpoint_id=checkpoint_id,
+        defaults={
+            'sequence': DEFAULT_EMPTY_CHECKPOINT_SEQUENCE,
+            'timestamp': datetime.utcnow()
+        })
+    return checkpoint
 
 
 def reset_checkpoint(checkpoint_id):
-    checkpoint = get_or_create_checkpoint(checkpoint_id).document
+    checkpoint = get_or_create_checkpoint(checkpoint_id)
     checkpoint.old_sequence = checkpoint.sequence
     checkpoint.sequence = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
     checkpoint.timestamp = datetime.utcnow()
@@ -40,8 +34,7 @@ class PillowCheckpoint(object):
         self._last_checkpoint = None
 
     def get_or_create_wrapped(self, verify_unchanged=False):
-        result = get_or_create_checkpoint(self.checkpoint_id)
-        checkpoint, created = result
+        checkpoint = get_or_create_checkpoint(self.checkpoint_id)
         if (verify_unchanged and self._last_checkpoint and
                 str(checkpoint.sequence) != str(self._last_checkpoint.sequence)):
             raise PillowtopCheckpointReset(u'Checkpoint {} expected seq {} but found {} in database.'.format(
@@ -52,7 +45,7 @@ class PillowCheckpoint(object):
         return checkpoint
 
     def get_current_sequence_id(self):
-        return get_or_create_checkpoint(self.checkpoint_id).document.sequence
+        return get_or_create_checkpoint(self.checkpoint_id).sequence
 
     def update_to(self, seq):
         pillow_logging.info(
