@@ -225,7 +225,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self._previous_summary:
             unhealthy_users = filter(
                 lambda stub: stub.is_active and not stub.is_performing and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                CommCareUser.get(stub.user_id).is_deleted() and CommCareUser.get(stub.user_id).is_active,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
@@ -238,7 +238,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self._previous_summary:
             dropouts = filter(
                 lambda stub: not stub.is_active and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                CommCareUser.get(stub.user_id).is_deleted() and CommCareUser.get(stub.user_id).is_active,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: stub.delta_forms)
@@ -251,7 +251,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self._previous_summary:
             dropouts = filter(
                 lambda stub: stub.is_newly_performing and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                CommCareUser.get(stub.user_id).is_deleted() and CommCareUser.get(stub.user_id).is_active,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
