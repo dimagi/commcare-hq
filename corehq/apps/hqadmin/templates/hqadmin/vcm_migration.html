@@ -35,6 +35,7 @@
                 placement: "right",
                 title: "{{ email_subject|escapejs }}",
                 content: "{{ email_body|escapejs }}",
+                html: true,
             });
             $("#migrations th button").click(function() {
                 var $button = $(this),
