@@ -84,7 +84,6 @@ class IndicatorDocument(schema.Document):
     document_filter = None
     group_by = ()
     save_direct_to_sql = True
-    kafka_topic = None  # if set, this will use a kafka feed instead of couch for the pillow
 
     # A list of doc types to delete from fluff (in case a previously matching document no
     # longer is relevant)
@@ -99,6 +98,14 @@ class IndicatorDocument(schema.Document):
     @property
     def table(self):
         return self._table
+
+    @property
+    def kafka_topic(self):
+        """if set, this will use a kafka feed instead of couch for the pillow"""
+        from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+        from corehq.apps.change_feed.topics import get_topic
+        meta = get_doc_meta_object_from_document(self.document_class().to_json())
+        return get_topic(meta)
 
     @property
     def wrapped_group_by(self):
