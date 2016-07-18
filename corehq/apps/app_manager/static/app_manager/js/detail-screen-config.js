@@ -249,7 +249,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         self._getRelevant = function() {
             if (self.default_relevant()) {
-                if (self.relevant().trim() === "") {
+                if (!self.relevant() || self.relevant().trim() === "") {
                     return DEFAULT_CLAIM_RELEVANT;
                 } else {
                     return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.relevant().trim() + ")";
