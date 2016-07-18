@@ -415,7 +415,10 @@ class AutoPayInvoicePaymentHandler(object):
         """ Pays the full balance of all autopayable invoices on date_due """
         autopayable_invoices = Invoice.autopayable_invoices(date_due)
         for invoice in autopayable_invoices:
-            self._pay_invoice(invoice)
+            try:
+                self._pay_invoice(invoice)
+            except Exception as e:
+                log_accounting_error("Error autopaying invoice %d: %s" % (invoice.id, e.message))
 
     def _pay_invoice(self, invoice):
         log_accounting_info("[Autopay] Autopaying invoice {}".format(invoice.id))

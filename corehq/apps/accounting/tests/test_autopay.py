@@ -112,8 +112,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self._create_autopay_method(fake_customer)
 
         self.original_outbox_length = len(mail.outbox)
-        with self.assertRaises(Exception):
-            self._run_autopay()
+        self._run_autopay()
         self.assertFalse(fake_create.called)
         self._assert_no_side_effects()
 
@@ -124,8 +123,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
         self._create_autopay_method(fake_customer)
 
         self.original_outbox_length = len(mail.outbox)
-        with self.assertRaises(Exception):
-            self._run_autopay()
+        self._run_autopay()
         self._assert_no_side_effects()
 
     def _run_autopay(self):
