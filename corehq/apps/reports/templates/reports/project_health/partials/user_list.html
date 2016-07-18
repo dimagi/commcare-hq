@@ -4,35 +4,42 @@
     <thead>
         <tr>
             <th></th>
-            <th colspan="2">{% trans "Change in Forms Submitted" %}</th>
+            <th colspan="4">{% trans "Change in Forms Submitted" %}</th>
+            <th colspan="2">{% trans "Number of Forms Submitted" %}</th>
         </tr>
         <tr>
             <th>{% trans "Username" %}</th>
+            <th colspan="2">{% trans "Last Month" %}</th>
+            <th colspan="2">{% trans "This Month" %}</th>
             <th>{% trans "Last Month" %}</th>
             <th>{% trans "This Month" %}</th>
         </tr>
     </thead>
-    {% for user in user_list %}
-    <tr>
-        <td><a class="user-popover"
-               data-url="{% url 'project_health_user_details' domain user.user_id %}"
-               tabindex="0" role="button" data-trigger="focus" data-toggle="popover"
-               title="{% trans 'User Information' %}" >
-               {{ user.username }}
-           </a>
-       </td>
-        <td title="{% trans 'Change in Forms Submitted Since Two Months Ago' %}">
-            {% chevron user.delta_forms %} {{ user.delta_forms }} &nbsp;&nbsp;
-            <small class="text-muted" title="{% trans 'Number of Forms Submitted Last Month' %}">
-                {{ user.num_forms_submitted }}
-            </small>
-        </td>
-        <td title="{% trans 'Change in Forms Submitted Since Last Month' %}">
-            {% chevron user.delta_forms_next_month %} {{ user.delta_forms_next_month }} &nbsp;&nbsp;
-            <small class="text-muted" title="{% trans 'Number of Forms Submitted This Month' %}">
-                {{ user.num_forms_submitted_next_month }}
-            </small>
-        </td>
-    </tr>
-    {% endfor %}
+
+     <tbody data-bind="foreach: pagedList">
+         <tr>
+             <td data-bind="text: username"></td>
+             <td><span class="fa" data-bind="css: delta_forms > 0 ? 'fa-chevron-up':'fa-chevron-down',
+             style: {color: delta_forms > 0 ? '#006400': '#8b0000'}"></span></td>
+             <td title="{% trans 'Change in Forms Submitted Since Two Months Ago' %}"
+                 data-bind="text: delta_forms">
+             </td>
+             <td><span class="fa" data-bind="css: delta_forms_next_month > 0 ? 'fa-chevron-up':'fa-chevron-down',
+             style: {color: delta_forms_next_month > 0 ? '#006400': '#8b0000'}"></span></td>
+             <td title="{% trans 'Change in Forms Submitted Since Two Months Ago' %}"
+                 data-bind="text: delta_forms_next_month">
+             </td>
+             <td data-bind="text: num_forms_submitted"></td>
+             <td data-bind="text: num_forms_submitted_next_month"></td>
+         </tr>
+     </tbody>
+
 </table>
+<div>
+    <ul class="pagination">
+        <li class="page-item"><a href="#" data-bind="click: previousPage">Previous</a></li></ul>
+    <ul class="pagination" data-bind="foreach: allPages">
+        <li class="page-item"><a href="#" data-bind="text: $data.pageNumber, click: function() { $root.moveToPage($data.pageNumber-1); }"></a></li>
+    </ul>
+    <ul class="pagination"><li class="page-item"><a href="#" data-bind="click: nextPage">Next</a></li></ul>
+</div>

@@ -140,10 +140,60 @@
         }
     }
 
+
+    function setupUsersTables(){
+        var low_performing = {{last_month.get_unhealthy_users|JSON}};
+        var inactive = {{last_month.get_dropouts|JSON}};
+        console.log(inactive);
+        var high_performing = {{last_month.get_newly_performing|JSON}};
+
+        var ListViewModel = function(items){
+            var self = this;
+            self.list = ko.observableArray(items);
+            self.pageSize = ko.observable(5);
+            self.pageIndex = ko.observable(0);
+
+            self.pagedList = ko.dependentObservable(function () {
+                var size = self.pageSize();
+                var start = self.pageIndex() * size;
+                return self.list.slice(start, start + size);
+            });
+            self.maxPageIndex = ko.dependentObservable(function () {
+                return Math.ceil(self.list().length/self.pageSize())-1;
+            });
+            self.previousPage = function () {
+                if (self.pageIndex() > 0) {
+                    self.pageIndex(self.pageIndex() - 1);
+                }
+            };
+            self.nextPage = function () {
+                if (self.pageIndex() < self.maxPageIndex()) {
+                    self.pageIndex(self.pageIndex() + 1);
+                }
+            };
+            self.allPages = ko.dependentObservable(function () {
+                var pages = [];
+                for (i = 0; i <= self.maxPageIndex() ; i++) {
+                    pages.push({ pageNumber: (i + 1) });
+                }
+                return pages;
+            });
+            self.moveToPage = function (index) {
+                self.pageIndex(index);
+            };
+        };
+
+        $("#low_performing_users_table").koApplyBindings(new ListViewModel(low_performing));
+        $("#inactive_users_table").koApplyBindings(new ListViewModel(inactive));
+        $("#high_performing_users_table").koApplyBindings(new ListViewModel(high_performing));
+
+    };
+
     $(function() {
         setupCharts();
         setupPopovers();
         setupLineChart();
+        setupUsersTables();
     });
 </script>
 {% endblock %}
@@ -217,7 +267,7 @@
         </p>
     <div id="perform_chart"><svg></svg></div>
 </div>
-<div class="col-md-4">
+<div class="col-md-4" id="low_performing_users_table">
     <h2>{% trans "Low Performing Users" %}</h2>
     <p class="lead">
         {% blocktrans %}
@@ -229,7 +279,7 @@
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}
 </div>
-<div class="col-md-4">
+<div class="col-md-4" id="inactive_users_table">
     <h2>{% trans "New Inactive Users" %}</h2>
     <p class="lead">
         {% trans "These are people who stopped using CommCare last month. They could use a follow up!" %}
@@ -238,11 +288,11 @@
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}
 </div>
-<div class="col-md-4">
+<div class="col-md-4" id="high_performing_users_table">
     <h2>{% trans "New High Performing Users" %}</h2>
     <p class="lead">
         {% blocktrans %}
-            These are people who submitted at least {{ threshold }} forms this month and didn't last month.
+            These are people who submitted at least {{ threshold }} forms last month and didn't two months ago.
             Give them a high five!
         {% endblocktrans %}
     </p>
@@ -250,4 +300,5 @@
         {% include "reports/project_health/partials/user_list.html" %}
     {% endwith %}
 </div>
+
 {% endblock %}
