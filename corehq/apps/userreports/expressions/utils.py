@@ -46,7 +46,8 @@ SUM = 'sum'
 COUNT = 'count'
 FIRST_ITEM = 'first_item'
 LAST_ITEM = 'last_item'
-SUPPORTED_UCR_AGGREGATIONS = [SUM, COUNT, FIRST_ITEM, LAST_ITEM]
+STRING_AGG = 'string_agg'
+SUPPORTED_UCR_AGGREGATIONS = [SUM, COUNT, FIRST_ITEM, LAST_ITEM, STRING_AGG]
 
 
 def aggregate_items(items, fn_name):
@@ -56,6 +57,7 @@ def aggregate_items(items, fn_name):
         COUNT: _count,
         FIRST_ITEM: _first_item,
         LAST_ITEM: _last_item,
+        STRING_AGG: _string_agg,
     }
 
     if not isinstance(items, list):
@@ -88,4 +90,11 @@ def _last_item(items):
     try:
         return items[-1]
     except (IndexError, TypeError):
+        return None
+
+
+def _string_agg(items, delim=' '):
+    try:
+        return delim.join(items)
+    except TypeError:
         return None
