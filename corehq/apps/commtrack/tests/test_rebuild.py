@@ -97,7 +97,7 @@ class RebuildStockStateTest(TestCase):
         rebuild_case_from_forms(self.domain, case_id, RebuildWithReason(reason='test'))
         case = CaseAccessors(self.domain).get_case(self.case.case_id)
         self.assertEqual(case.xform_ids[1:], [form_id])
-        self.assertEqual(case.actions[1].form_id, form_id)
+        self.assertTrue(form_id in [action.form_id for action in case.actions])
 
     @run_with_all_backends
     def test_edit_submissions_simple(self):
