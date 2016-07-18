@@ -3,7 +3,7 @@ import re
 from corehq.apps.products.models import SQLProduct
 from dimagi.utils.dates import force_to_datetime
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CouchUser
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
 from corehq.util.translation import localize
@@ -144,7 +144,7 @@ def _get_location(form):
         if not user_id:
             return None
         try:
-            user = CommCareUser.get(user_id)
+            user = CouchUser.wrap_correctly(CouchUser.get_db().get(user_id))
             loc = user.location
         except ResourceNotFound:
             logging.info('Location %s Not Found.' % loc)
