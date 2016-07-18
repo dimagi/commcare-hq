@@ -4,9 +4,7 @@ from datetime import datetime, timedelta
 from pillowtop.const import CHECKPOINT_FREQUENCY
 from pillowtop.pillow.interface import CheckpointEventListener
 
-PYTHONPILLOW_CHUNK_SIZE = 250
-PYTHONPILLOW_CHECKPOINT_FREQUENCY = CHECKPOINT_FREQUENCY * 10
-PYTHONPILLOW_MAX_WAIT_TIME = 60
+MAX_WAIT_TIME = 60
 
 
 class PillowProcessor(object):
@@ -18,10 +16,9 @@ class PillowProcessor(object):
 
 
 class ChunkedPillowProcessor(PillowProcessor):
-    def __init__(self, chunk_size=PYTHONPILLOW_CHUNK_SIZE):
+    def __init__(self, chunk_size=250):
         self.change_queue = []
-        # explicitly check against None since we want to pass chunk_size=0 through
-        self.chunk_size = chunk_size if chunk_size is not None else PYTHONPILLOW_CHUNK_SIZE
+        self.chunk_size = chunk_size
         self.use_chunking = chunk_size > 0
         self.last_processed_time = None
 
@@ -51,7 +48,7 @@ class ChunkedPillowProcessor(PillowProcessor):
             return False
 
         wait_time = datetime.utcnow() - self.last_processed_time
-        return wait_time > timedelta(seconds=PYTHONPILLOW_MAX_WAIT_TIME)
+        return wait_time > timedelta(seconds=MAX_WAIT_TIME)
 
     @abstractmethod
     def process_individual_change(self, change):
