@@ -42,13 +42,24 @@ def _should_use_sql_backend_in_tests(domain_object_or_name):
     assert settings.UNIT_TESTING
     from corehq.apps.domain.models import Domain
     override = getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', None)
+    print 'override'
+    print override
     if override is not None:
         return override
 
     if domain_object_or_name and getattr(settings, 'DB_ENABLED', True):
+        print 'domain_object_or_name'
+        print domain_object_or_name
         domain_object = domain_object_or_name \
             if isinstance(domain_object_or_name, Domain) \
             else Domain.get_by_name(domain_object_or_name)
+        print 'domain_object'
+        print domain_object
+        if domain_object:
+            print 'domain_object.use_sql_backend'
+            print domain_object.use_sql_backend
+        print 'domain_object and domain_object.use_sql_backend'
+        print domain_object and domain_object.use_sql_backend
         return domain_object and domain_object.use_sql_backend
     else:
         return False
