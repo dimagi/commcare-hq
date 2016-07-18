@@ -6,7 +6,7 @@ import logging
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
 from django.conf import settings
-from pillowtop.utils import get_all_pillow_configs
+from pillowtop.utils import get_all_pillow_configs, get_all_pillow_instances
 from alembic.migration import MigrationContext
 from alembic.autogenerate import compare_metadata
 from fluff.util import metadata as fluff_metadata
@@ -54,17 +54,15 @@ def catch_signal(sender, **kwargs):
     if settings.UNIT_TESTING or kwargs['using'] != DEFAULT_DB_ALIAS:
         return
 
-    from fluff.pillow import FluffPillow
     table_pillow_map = {}
-    pillow_configs = get_all_pillow_configs()
-    for pillow_config in pillow_configs:
-        pillow_class = pillow_config.get_class()
-        if issubclass(pillow_class, FluffPillow):
-            doc = pillow_class.indicator_class()
+    for pillow in get_all_pillow_instances():
+        processor = getattr(pillow, '_processor', None)
+        if processor and hasattr(processor, 'indicator_class'):
+            doc = processor.indicator_class()
             if doc.save_direct_to_sql:
                 table_pillow_map[doc._table.name] = {
                     'doc': doc,
-                    'pillow': pillow_class
+                    'pillow': pillow
                 }
 
     print '\tchecking fluff SQL tables for schema changes'
@@ -136,8 +134,9 @@ def get_tables_to_rebuild(diffs, table_names):
     }
 
 
-def rebuild_table(engine, pillow_class, indicator_doc):
-    logger.warn('Rebuilding table and resetting checkpoint for %s', pillow_class)
+def rebuild_table(engine, pillow, indicator_doc):
+    if pillow:
+        logger.warn('Rebuilding table and resetting checkpoint for %s', pillow.get_name())
     table = indicator_doc._table
     with engine.begin() as connection:
         table.drop(connection, checkfirst=True)
@@ -145,8 +144,8 @@ def rebuild_table(engine, pillow_class, indicator_doc):
         owner = getattr(settings, 'SQL_REPORTING_OBJECT_OWNER', None)
         if owner:
             connection.execute('ALTER TABLE "%s" OWNER TO %s' % (table.name, owner))
-    if pillow_class:
-        pillow_class().reset_checkpoint()
+    if pillow:
+        pillow.reset_checkpoint()
 
 
 def get_migration_context(connection, table_names):
