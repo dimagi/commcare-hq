@@ -263,10 +263,16 @@ def delete_phone_numbers_for_owners(owner_ids):
         p.delete()
 
 
+def clear_case_caches(case):
+    from corehq.apps.sms.util import is_case_contact_active
+    is_case_contact_active.clear(case.domain, case.case_id)
+
+
 @task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
       default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_case_phone_number(self, case):
     try:
+        clear_case_caches(case)
         _sync_case_phone_number(case)
     except Exception as e:
         self.retry(exc=e)
