@@ -257,7 +257,7 @@
       {
         "display_name": "timeEnd",
         "property_name": "modified_on",
-        "datatype": "date",
+        "datatype": "datetime",
         "is_primary_key": false,
         "column_id": "timeEnd",
         "is_nullable": true,
