@@ -30,7 +30,7 @@
                 return {
                     x: moment(item.month).format("MMMM YYYY"),
                     y: item.performing,
-                    z: item.delta_num_high_performing_users,
+                    z: item.delta_high_performers,
                 };
             })
         };
@@ -40,7 +40,7 @@
                 return {
                     x: moment(item.month).format("MMMM YYYY"),
                     y: item.active - item.performing,
-                    z: item.delta_num_low_performing_users,
+                    z: item.delta_low_performers,
                 };
             })
         };
