@@ -1,5 +1,3 @@
-import logging
-
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
