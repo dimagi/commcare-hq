@@ -107,6 +107,7 @@ class Command(LabelCommand):
         def form_wrapper(row):
             doc = row['doc']
             doc.pop('_attachments', None)
+            doc.pop('external_blobs', None)
             return XFormInstance.wrap(doc)
         for i, subset in enumerate(chunked(xform_ids, CHUNK_SIZE)):
             print i * CHUNK_SIZE
