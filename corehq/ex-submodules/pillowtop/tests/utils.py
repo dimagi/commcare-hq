@@ -1,11 +1,7 @@
-import sys
-from select import select
-
 from django.conf import settings
 from elasticsearch import TransportError
 
 from pillowtop.es_utils import ElasticsearchIndexInfo
-from pillowtop.listener import AliasedElasticPillow
 
 TEST_ES_META = {"settings":
     {
