@@ -102,12 +102,12 @@ class FormattedDetailColumn(object):
 
     @property
     def locale_id(self):
-        if not is_sort_only_column(self.column):
+        if is_sort_only_column(self.column):
+            return self.detail.sort_elements[0].display
+        else:
             return self.id_strings.detail_column_header_locale(
                 self.module, self.detail_type, self.column,
             )
-        else:
-            return None
 
     @property
     def header(self):
@@ -393,7 +393,16 @@ class LateFlag(HideShortHeaderColumn):
 
 @register_format_type('invisible')
 class Invisible(HideShortColumn):
-    pass
+    @property
+    def header(self):
+        if self.detail.sort_elements:
+            header = sx.Header(
+                text=sx.Text(locale_id=self.locale_id),
+                width=self.template_width
+            )
+        else:
+            header = super(Invisible, self).header
+        return header
 
 
 @register_format_type('filter')

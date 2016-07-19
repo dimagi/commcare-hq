@@ -98,8 +98,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             }
         });
 
+        self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
         self.type = ko.observable(typeof params.type !== 'undefined' ? params.type : "");
         self.type.subscribe(function () {
+            self.notifyButton();
+        });
+        self.display.subscribe(function () {
             self.notifyButton();
         });
         self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
@@ -150,11 +154,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         var self = this;
         self.sortRows = ko.observableArray([]);
 
-        self.addSortRow = function (field, type, direction, notify) {
+        self.addSortRow = function (field, type, direction, display, notify) {
             self.sortRows.push(new SortRow({
                 field: field,
                 type: type,
                 direction: direction,
+                display: display,
                 saveButton: saveButton,
                 properties: properties
             }));
@@ -1072,7 +1077,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             return {
                                 field: row.textField.val(),
                                 type: row.type(),
-                                direction: row.direction()
+                                direction: row.direction(),
+                                display: row.display()
                             };
                         }));
                     }
@@ -1208,6 +1214,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 spec.sortRows[j].field,
                                 spec.sortRows[j].type,
                                 spec.sortRows[j].direction,
+                                spec.sortRows[j].display,
                                 false
                             );
                         }

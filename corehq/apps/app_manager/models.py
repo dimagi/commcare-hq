@@ -1734,7 +1734,7 @@ class SortElement(IndexedSchema):
     field = StringProperty()
     type = StringProperty()
     direction = StringProperty()
-
+    display = StringProperty()
 
 class SortOnlyDetailColumn(DetailColumn):
     """This is a mock type, not intended to be part of a document"""
