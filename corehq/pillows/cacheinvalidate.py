@@ -42,7 +42,7 @@ class CacheInvalidateProcessor(PillowProcessor):
     def get_generations(self):
         return ["%s :: %s" % (gc.generation_key, gc._get_generation()) for gc in self.gen_caches]
 
-    def process_change(self, pillow_instance, change, is_retry_attempt=False):
+    def process_change(self, pillow_instance, change):
         self.process_doc(change.get_document(), change.deleted)
 
     def process_doc(self, doc, is_deleted):

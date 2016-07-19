@@ -110,7 +110,7 @@ class ConfigurableReportTableManagerMixin(object):
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
 
-    def process_change(self, pillow_instance, change, is_retry_attempt=False):
+    def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
         if change.deleted:
             # we don't currently support hard-deletions at all.
