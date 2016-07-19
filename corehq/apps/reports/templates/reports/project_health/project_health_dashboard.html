@@ -44,18 +44,31 @@
                 };
             })
         };
+        function chevronIcon(value){
+            var chevronUp = '<span class="fa fa-chevron-up" style="color: #006400;"></span> ';
+            var chevronDown = '<span class="fa fa-chevron-down" style="color: #8b0000;"></span> ';
+            if (value > 0) {
+                return chevronUp;
+            } else if (value < 0) {
+                return chevronDown;
+            } else {
+                return ''
+            }
+        }
         nv.addGraph(function() {
             var chart = nv.models.multiBarChart()
               .showControls(false)
               .stacked(true)
             ;
+
             chart.yAxis.tickFormat(d3.format(',.0f'));
             chart.color(["#004ebc", "#e53e30"]);
             chart.tooltipContent(function(key, x, y, e, graph){
                 var d = e.series.values[e.pointIndex];
+                var chevron = chevronIcon(d.z);
                 return '<h3>' + key + '</h3>' +
                        '<p>' +  y + ' in ' + x + '</p>' +
-                       '<p>' + 'Change in ' + key + ": " + d.z +
+                       '<p>' + chevron + d.z + ' from last month'
                        '</p>'
             })
             d3.select('#perform_chart svg')
