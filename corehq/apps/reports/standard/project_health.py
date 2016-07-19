@@ -391,4 +391,5 @@ class ProjectHealthDashboard(ProjectReport):
             'this_month': six_months_reports[-1],
             'last_month': six_months_reports[-2],
             'threshold': performance_threshold,
+            'domain': self.domain,
         }
