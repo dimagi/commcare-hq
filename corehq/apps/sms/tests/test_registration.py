@@ -570,7 +570,8 @@ class RegistrationAPITestCase(TestCase):
                 {'app_id': 123},
             )
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.content, '{"sms_user_registration": {"app_id": "Expected type: basestring"}}')
+            self.assertEqual(response.content,
+                '{"sms_user_registration": {"app_id": "Expected type: basestring"}}')
 
             response = self.make_api_post(
                 self.domain1,
@@ -588,4 +589,5 @@ class RegistrationAPITestCase(TestCase):
                 {'app_id': '123', 'users': [{}]},
             )
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.content, '{"sms_user_registration": {"phone_number": "This field is required"}}')
+            self.assertEqual(response.content,
+                '{"sms_user_registration": {"phone_number": "This field is required"}}')

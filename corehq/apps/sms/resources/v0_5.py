@@ -5,8 +5,7 @@ from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.v0_1 import RequirePermissionAuthentication
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.models import Domain
-from corehq.apps.sms.mixin import (CommCareMobileContactMixin, apply_leniency,
-    InvalidFormatException)
+from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.users.models import Permissions
 from corehq import privileges
