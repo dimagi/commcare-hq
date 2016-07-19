@@ -2861,7 +2861,7 @@ class StripePaymentMethod(PaymentMethod):
 
     @property
     def all_cards(self):
-        return filter(lambda card: card is not None, self.customer.cards.data)
+        return filter(lambda card: card is not None, self.customer.cards.data) #
 
     def all_cards_serialized(self, billing_account):
         return [{
