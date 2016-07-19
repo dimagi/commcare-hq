@@ -3,8 +3,8 @@ from elasticsearch import TransportError
 
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-TEST_ES_META = {"settings":
-    {
+TEST_ES_META = {
+    "settings": {
         "analysis": {
             "analyzer": {
                 "default": {
@@ -18,11 +18,10 @@ TEST_ES_META = {"settings":
 }
 
 TEST_ES_MAPPING = {
-    '_meta':
-        {
-            'comment': 'You know, for tests',
-            'created': '2015-10-07 @czue'
-        },
+    '_meta': {
+        'comment': 'You know, for tests',
+        'created': '2015-10-07 @czue'
+    },
     "properties": {
         "doc_type": {
             "index": "not_analyzed", "type": "string"
