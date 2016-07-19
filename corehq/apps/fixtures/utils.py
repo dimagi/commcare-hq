@@ -20,5 +20,11 @@ def is_identifier_invalid(name):
     - Blank
     - Contains special characters
     - Start with "xml"
+    - Start with a number
     """
-    return not bool(name) or bool(re.search(BAD_SLUG_PATTERN, name)) or name.startswith('xml')
+    return (
+        not bool(name) or
+        bool(re.search(BAD_SLUG_PATTERN, name)) or
+        name.startswith('xml') or
+        name[0].isdigit()
+    )
