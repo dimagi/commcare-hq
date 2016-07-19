@@ -29,6 +29,22 @@ class SelfRegistrationValidationException(Exception):
 
 
 class SelfRegistrationUserInfo(object):
+
+    def __eq__(self, other):
+        """
+        Allow comparison of two of these objects for use in tests.
+        """
+        if isinstance(other, SelfRegistrationUserInfo):
+            return all(
+                [getattr(self, prop) == getattr(other, prop)
+                 for prop in ('phone_number', 'custom_user_data')]
+            )
+
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __init__(self, phone_number, custom_user_data=None):
         self.phone_number = phone_number
         self.custom_user_data = custom_user_data
@@ -181,6 +197,7 @@ class UserSelfRegistrationResource(HqBaseResource):
             app_id=bundle.obj.app_id,
             custom_first_message=bundle.obj.custom_registration_message,
             android_only=bundle.obj.android_only,
+            require_email=bundle.obj.require_email,
         )
         return bundle
 

@@ -435,3 +435,158 @@ class RegistrationAPITestCase(TestCase):
             response = self.make_api_post(self.domain2, 'admin@reg-api-test-2',
                 'admin@reg-api-test-2-password', payload)
             self.assertEqual(response.status_code, 200)
+
+    @patch('corehq.apps.sms.resources.v0_5.UserSelfRegistrationValidation._validate_app_id', new=noop)
+    def test_parameter_passing(self):
+
+        with patch.object(SelfRegistrationInvitation, 'initiate_workflow', return_value=([], [], [])) as init:
+
+            response = self.make_api_post(
+                self.domain1,
+                'admin@reg-api-test-1',
+                'admin@reg-api-test-1-password',
+                {
+                    'app_id': '123',
+                    'users': [{'phone_number': '999123'}],
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            init.assert_called_once_with(
+                self.domain1.name,
+                SelfRegistrationUserInfo('999123'),
+                app_id='123',
+                custom_first_message=None,
+                android_only=False,
+                require_email=False,
+            )
+
+        with patch.object(SelfRegistrationInvitation, 'initiate_workflow', return_value=([], [], [])) as init:
+
+            response = self.make_api_post(
+                self.domain1,
+                'admin@reg-api-test-1',
+                'admin@reg-api-test-1-password',
+                {
+                    'app_id': '123',
+                    'users': [
+                        {'phone_number': '999123',
+                         'custom_user_data': {'abc': 'def'}}
+                    ]
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            init.assert_called_once_with(
+                self.domain1.name,
+                SelfRegistrationUserInfo('999123', {'abc': 'def'}),
+                app_id='123',
+                custom_first_message=None,
+                android_only=False,
+                require_email=False,
+            )
+
+        with patch.object(SelfRegistrationInvitation, 'initiate_workflow', return_value=([], [], [])) as init:
+
+            response = self.make_api_post(
+                self.domain1,
+                'admin@reg-api-test-1',
+                'admin@reg-api-test-1-password',
+                {
+                    'app_id': '123',
+                    'users': [{'phone_number': '999123'}],
+                    'android_only': True,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            init.assert_called_once_with(
+                self.domain1.name,
+                SelfRegistrationUserInfo('999123'),
+                app_id='123',
+                days_until_expiration=30,
+                custom_first_message=None,
+                android_only=True,
+                require_email=False,
+            )
+
+        with patch.object(SelfRegistrationInvitation, 'initiate_workflow', return_value=([], [], [])) as init:
+
+            response = self.make_api_post(
+                self.domain1,
+                'admin@reg-api-test-1',
+                'admin@reg-api-test-1-password',
+                {
+                    'app_id': '123',
+                    'users': [{'phone_number': '999123'}],
+                    'require_email': True,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            init.assert_called_once_with(
+                self.domain1.name,
+                SelfRegistrationUserInfo('999123'),
+                app_id='123',
+                custom_first_message=None,
+                android_only=False,
+                require_email=True,
+            )
+
+        with patch.object(SelfRegistrationInvitation, 'initiate_workflow', return_value=([], [], [])) as init:
+
+            response = self.make_api_post(
+                self.domain1,
+                'admin@reg-api-test-1',
+                'admin@reg-api-test-1-password',
+                {
+                    'app_id': '123',
+                    'users': [{'phone_number': '999123'}],
+                    'custom_registration_message': 'Hello',
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            init.assert_called_once_with(
+                self.domain1.name,
+                SelfRegistrationUserInfo('999123'),
+                app_id='123',
+                custom_first_message='Hello',
+                android_only=False,
+                require_email=False,
+            )
+
+    @patch('corehq.apps.sms.resources.v0_5.UserSelfRegistrationValidation._validate_app_id', new=noop)
+    def test_validation(self):
+
+        with patch.object(SelfRegistrationInvitation, 'initiate_workflow', return_value=([], [], [])):
+            response = self.make_api_post(
+                self.domain1,
+                'admin@reg-api-test-1',
+                'admin@reg-api-test-1-password',
+                {},
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.content, '{"sms_user_registration": {"app_id": "This field is required"}}')
+
+            response = self.make_api_post(
+                self.domain1,
+                'admin@reg-api-test-1',
+                'admin@reg-api-test-1-password',
+                {'app_id': 123},
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.content, '{"sms_user_registration": {"app_id": "Expected type: basestring"}}')
+
+            response = self.make_api_post(
+                self.domain1,
+                'admin@reg-api-test-1',
+                'admin@reg-api-test-1-password',
+                {'app_id': '123'},
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.content, '{"sms_user_registration": {"users": "This field is required"}}')
+
+            response = self.make_api_post(
+                self.domain1,
+                'admin@reg-api-test-1',
+                'admin@reg-api-test-1-password',
+                {'app_id': '123', 'users': [{}]},
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.content, '{"sms_user_registration": {"phone_number": "This field is required"}}')
