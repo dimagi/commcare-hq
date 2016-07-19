@@ -24,21 +24,23 @@
     // "Performing / Active User Trends" Chart
     function setupCharts() {
         var data = {{ six_months_reports|JSON }};
-        var performingSeries = {
+        var highPerformingSeries = {
             'key': 'high performing',
             values: _.map(data, function(item) {
                 return {
-                    'x': moment(item.month).format("MMMM YYYY"),
-                    'y': item.performing
+                    x: moment(item.month).format("MMMM YYYY"),
+                    y: item.performing,
+                    z: item.delta_num_high_performing_users,
                 };
             })
         };
-        var activeNonPerformingSeries = {
+        var lowPerformingSeries = {
             'key': 'low performing',
             values: _.map(data, function(item) {
                 return {
-                    'x': moment(item.month).format("MMMM YYYY"),
-                    'y': item.active - item.performing
+                    x: moment(item.month).format("MMMM YYYY"),
+                    y: item.active - item.performing,
+                    z: item.delta_num_low_performing_users,
                 };
             })
         };
@@ -49,8 +51,15 @@
             ;
             chart.yAxis.tickFormat(d3.format(',.0f'));
             chart.color(["#004ebc", "#e53e30"]);
+            chart.tooltipContent(function(key, x, y, e, graph){
+                var d = e.series.values[e.pointIndex];
+                return '<h3>' + key + '</h3>' +
+                       '<p>' +  y + ' in ' + x + '</p>' +
+                       '<p>' + 'Change in ' + key + ": " + d.z +
+                       '</p>'
+            })
             d3.select('#perform_chart svg')
-                .datum([performingSeries, activeNonPerformingSeries])
+                .datum([highPerformingSeries, lowPerformingSeries])
                 .call(chart);
             nv.utils.windowResize(chart.update);
             return chart;

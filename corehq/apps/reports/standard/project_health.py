@@ -81,6 +81,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             total_users_by_month=0,
             percent_active=0,
             performing=num_performing_user,
+            delta_num_high_performing_users=0,
+            delta_num_low_performing_users=0,
         )
 
     def set_next_month_summary(self, next_month_summary):
@@ -92,6 +94,12 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def set_percent_active(self):
         self.total_users_by_month = self.number_of_inactive_users + self.number_of_active_users
         self.percent_active = float(self.number_of_active_users) / float(self.total_users_by_month)
+
+    def set_delta_high_performing(self, delta_high_performing):
+        self.delta_num_high_performing_users = delta_high_performing
+
+    def set_delta_low_performing(self, delta_low_performing):
+        self.delta_num_low_performing_users = delta_low_performing
 
     @property
     def number_of_performing_users(self):
@@ -115,16 +123,18 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         return datetime.datetime(prev_year, prev_month, 1)
 
     @property
-    def delta_performing(self):
+    def delta_high_performing(self):
         if self._previous_summary:
             return self.number_of_performing_users - self._previous_summary.number_of_performing_users
         else:
             return self.number_of_performing_users
 
     @property
-    def delta_performing_pct(self):
-        if self.delta_performing and self._previous_summary and self._previous_summary.number_of_performing_users:
-            return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
+    def delta_high_performing_pct(self):
+        if (self.delta_high_performing and self._previous_summary and
+           self._previous_summary.number_of_performing_users):
+            return float(self.delta_high_performing /
+                         float(self._previous_summary.number_of_performing_users)) * 100.
 
     @property
     def delta_low_performing(self):
@@ -345,6 +355,8 @@ class ProjectHealthDashboard(ProjectReport):
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
                 this_month_summary.set_num_inactive_users(len(this_month_summary.get_dropouts()))
+            this_month_summary.set_delta_high_performing(this_month_summary.delta_high_performing)
+            this_month_summary.set_delta_low_performing(this_month_summary.delta_low_performing)
             this_month_summary.set_percent_active()
             last_month_summary = this_month_summary
         return six_month_summary[1:]
