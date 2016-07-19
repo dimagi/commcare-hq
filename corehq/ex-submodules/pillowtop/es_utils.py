@@ -102,15 +102,6 @@ def initialize_mapping_if_necessary(es, index_info):
         pillow_logging.info("Elasticsearch mapping for [%s] was already present." % index_info.type)
 
 
-def assume_alias_for_pillow(pillow):
-    """
-    Assigns the pillow's `es_alias` to its index in elasticsearch.
-
-    This operation removes the alias from any other indices it might be assigned to
-    """
-    assume_alias(pillow.get_es_new(), pillow.es_index, pillow.es_alias)
-
-
 def assume_alias(es, index, alias):
     """
     This operation assigns the alias to the index and removes the alias
