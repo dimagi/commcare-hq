@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from datetime import datetime, timedelta
 
 MAX_WAIT_TIME = 60
 
