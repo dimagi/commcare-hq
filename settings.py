@@ -1837,3 +1837,5 @@ else:
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
+
+TESTS_SHOULD_USE_SQL_BACKEND = None
