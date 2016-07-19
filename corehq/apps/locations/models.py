@@ -203,6 +203,12 @@ class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
 
 class LocationManager(LocationQueriesMixin, TreeManager):
 
+    def get_or_None(self, **kwargs):
+        try:
+            return self.get(**kwargs)
+        except SQLLocation.DoesNotExist:
+            return None
+
     def _get_base_queryset(self):
         return LocationQuerySet(self.model, using=self._db)
 
