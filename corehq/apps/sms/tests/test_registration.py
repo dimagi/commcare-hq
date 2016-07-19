@@ -453,7 +453,7 @@ class RegistrationAPITestCase(TestCase):
             self.assertEqual(response.status_code, 200)
             init.assert_called_once_with(
                 self.domain1.name,
-                SelfRegistrationUserInfo('999123'),
+                [SelfRegistrationUserInfo('999123')],
                 app_id='123',
                 custom_first_message=None,
                 android_only=False,
@@ -477,7 +477,7 @@ class RegistrationAPITestCase(TestCase):
             self.assertEqual(response.status_code, 200)
             init.assert_called_once_with(
                 self.domain1.name,
-                SelfRegistrationUserInfo('999123', {'abc': 'def'}),
+                [SelfRegistrationUserInfo('999123', {'abc': 'def'})],
                 app_id='123',
                 custom_first_message=None,
                 android_only=False,
@@ -499,9 +499,8 @@ class RegistrationAPITestCase(TestCase):
             self.assertEqual(response.status_code, 200)
             init.assert_called_once_with(
                 self.domain1.name,
-                SelfRegistrationUserInfo('999123'),
+                [SelfRegistrationUserInfo('999123')],
                 app_id='123',
-                days_until_expiration=30,
                 custom_first_message=None,
                 android_only=True,
                 require_email=False,
@@ -522,7 +521,7 @@ class RegistrationAPITestCase(TestCase):
             self.assertEqual(response.status_code, 200)
             init.assert_called_once_with(
                 self.domain1.name,
-                SelfRegistrationUserInfo('999123'),
+                [SelfRegistrationUserInfo('999123')],
                 app_id='123',
                 custom_first_message=None,
                 android_only=False,
@@ -544,7 +543,7 @@ class RegistrationAPITestCase(TestCase):
             self.assertEqual(response.status_code, 200)
             init.assert_called_once_with(
                 self.domain1.name,
-                SelfRegistrationUserInfo('999123'),
+                [SelfRegistrationUserInfo('999123')],
                 app_id='123',
                 custom_first_message='Hello',
                 android_only=False,

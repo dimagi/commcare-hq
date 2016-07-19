@@ -34,7 +34,7 @@ class SelfRegistrationUserInfo(object):
         """
         Allow comparison of two of these objects for use in tests.
         """
-        if isinstance(other, SelfRegistrationUserInfo):
+        if isinstance(other, self.__class__):
             return all(
                 [getattr(self, prop) == getattr(other, prop)
                  for prop in ('phone_number', 'custom_user_data')]
