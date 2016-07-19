@@ -339,29 +339,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return "landmark_%d" % (landmark,)
 
     @property
-    def sort_key(self):
-        def _sort(row):
-            column_num = self.request_params.get('iSortCol_0', 0)
-            num_columns = self.request_params.get('iColumns', 15)
-            if column_num == 0:
-                return row.user
-            elif column_num == (num_columns - 2):
-                return row.total_active_count()
-            elif column_num == (num_columns - 1):
-                return row.total_inactive_count()
-            else:
-                landmark = column_num // 4
-                sub_col = column_num % 4
-                if sub_col == 1:
-                    return row.modified_count('landmark_' + str(landmark))
-                elif sub_col == 2:
-                    return row.active_count('landmark_' + str(landmark))
-                elif sub_col == 3:
-                    return row.modified_count('landmark_' + str(landmark))
-                else:
-                    return None  # Can't actually select this in the UI
-
-        return _sort
+    def should_sort_by_username(self):
+        return self.request_params.get('iSortCol_0', 0) == 0
 
     def _format_row(self, row):
         cells = [row.header()]
@@ -402,7 +381,9 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             user = self.users_by_id[bucket.key]
             rows.append(self.Row(self, user, bucket))
 
-        rows.sort(key=self.sort_key)
+        if self.should_sort_by_username:
+            # ES handles sorting for all other columns
+            rows.sort(key=lambda row: row.user)
 
         self.total_row = self._total_row
         if len(rows) == self.pagination.count:
