@@ -153,7 +153,15 @@
 {% block reportcontent %}
     {% include "reports/project_health/partials/last_month_stats.html" %}
     <div class="col-md-6">
-        <h2>{% trans "Active Users Trend" %} <small><a href="{% url 'domain_internal_settings' domain %}">{% trans "Set Performance Threshold" %}</a></small></h2>
+        <h2>{% trans "Active Users Trend" %}
+            {% if request.user.is_superuser %}
+                <small>
+                    <a href="{% url 'domain_internal_settings' domain %}">
+                    {% trans "Set Performance Threshold" %}
+                    </a>
+                </small>
+            {% endif %}
+        </h2>
             <p class="lead">
                 {% trans "Proportion of users that are active (submitting at least one form) over time." %}
             </p>
