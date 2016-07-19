@@ -45,7 +45,7 @@ class Command(BaseCommand):
                 pillow_name, '\n\t'.join(fluff_configs)))
 
         pillow_getter = get_pillow_by_name(pillow_name, instantiate=False)
-        pillow = pillow_getter(delete_filtered=True, chunk_size=0)
+        pillow = pillow_getter(delete_filtered=True)
 
         if pillow.kafka_topic in (topics.CASE, topics.FORM):
             couch_db = couch_config.get_db(None)

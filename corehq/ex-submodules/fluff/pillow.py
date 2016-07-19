@@ -8,14 +8,13 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, \
     PillowCheckpointEventHandler
 from pillowtop.checkpoints.util import get_machine_id
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.interface import ChunkedPillowProcessor, ChunkedProcessorCheckpointListener
+from pillowtop.processors.interface import PillowProcessor
 from .signals import BACKEND_SQL, BACKEND_COUCH, indicator_document_updated
 
 
-class FluffPillowProcessor(ChunkedPillowProcessor):
+class FluffPillowProcessor(PillowProcessor):
 
-    def __init__(self, indicator_class, delete_filtered=False, chunk_size=None):
-        super(FluffPillowProcessor, self).__init__(chunk_size=chunk_size)
+    def __init__(self, indicator_class, delete_filtered=False):
         self.indicator_class = indicator_class
         self.domains = indicator_class.domains
         self.document_filter = indicator_class.document_filter
@@ -44,7 +43,7 @@ class FluffPillowProcessor(ChunkedPillowProcessor):
         assert self.doc_type is not None
         assert self.doc_type not in self.deleted_types
 
-    def process_individual_change(self, change):
+    def process_change(self, pillow_instance, change, is_retry_attempt=False):
         if self.should_process_change(change):
             try:
                 doc_dict = self.change_transform(change.get_document())
@@ -151,15 +150,13 @@ class FluffPillow(ConstructedPillow):
             change_feed=KafkaChangeFeed(topics=[self.kafka_topic], group_id=indicator_class.__name__),
             processor=processor,
             change_processed_event_handler=PillowCheckpointEventHandler(
-                checkpoint=checkpoint, checkpoint_frequency=1000, checkpoint_listeners=[
-                    ChunkedProcessorCheckpointListener(processor)
-                ]
+                checkpoint=checkpoint, checkpoint_frequency=1000,
             )
         )
 
 
-def get_fluff_pillow(indicator_class, delete_filtered=False, chunk_size=None):
-    processor = FluffPillowProcessor(indicator_class, delete_filtered=delete_filtered, chunk_size=chunk_size)
+def get_fluff_pillow(indicator_class, delete_filtered=False):
+    processor = FluffPillowProcessor(indicator_class, delete_filtered=delete_filtered)
 
     return FluffPillow(
         indicator_class=indicator_class,
