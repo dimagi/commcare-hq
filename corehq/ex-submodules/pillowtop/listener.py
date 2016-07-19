@@ -148,7 +148,7 @@ class BasicPillow(PillowBase):
     def _get_base_name(cls):
         return cls.__module__
 
-    def process_change(self, change, is_retry_attempt=False):
+    def process_change(self, change):
         """
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
