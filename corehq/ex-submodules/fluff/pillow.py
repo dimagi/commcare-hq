@@ -45,13 +45,9 @@ class FluffPillowProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change):
         if self.should_process_change(change):
-            try:
-                doc_dict = self.change_transform(change.get_document())
-                if doc_dict:
-                    self.change_transport(doc_dict)
-            except Exception:
-                logging.exception('something went wrong processing change %s (%s)' %
-                                  (change.get('seq', None), change['id']))
+            doc_dict = self.change_transform(change.get_document())
+            if doc_dict:
+                self.change_transport(doc_dict)
 
     def should_process_change(self, change):
         def domain_filter(domain):
