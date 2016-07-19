@@ -382,7 +382,7 @@ class IndicatorDocument(schema.Document):
             'doc_type': doc_type,
             'save_direct_to_sql': cls().save_direct_to_sql,
             'deleted_types': cls.deleted_types,
-            'kafka_topic': cls().kafka_topic,
+            'kafka_topic': str(cls().kafka_topic),
         })
 
     @classmethod
