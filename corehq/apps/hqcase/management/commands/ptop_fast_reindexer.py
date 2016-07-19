@@ -1,20 +1,19 @@
+import json
+import subprocess
+import sys
+import time
 import weakref
 from datetime import datetime
-import subprocess
-import time
 from optparse import make_option
-import sys
 
 from django.core.management.base import NoArgsCommand
-import json
+
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.pagination import PaginationEventHandler
 from pillowtop.couchdb import CachedCouchDB
-from pillowtop.es_utils import set_index_reindex_settings, set_index_normal_settings, \
-    get_index_info_from_pillow, initialize_index_and_mapping
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
-from pillowtop.listener import AliasedElasticPillow, PythonPillow
+from pillowtop.listener import PythonPillow
 
 CHUNK_SIZE = 10000
 POOL_SIZE = 15
@@ -242,7 +241,7 @@ class PtopReindexer(NoArgsCommand):
     def _bootstrap(self, options):
         self.resume = options['resume']
         self.pillow = self.pillow_class()
-        self.bulk = options['bulk'] and isinstance(self.pillow, AliasedElasticPillow)
+        self.bulk = False
         self.indexing_pillow = self.indexing_pillow_class()
         self.db = self.doc_class.get_db()
         self.runfile = options['runfile']
@@ -345,27 +344,7 @@ class PtopReindexer(NoArgsCommand):
             self.pillow.process_chunk()
 
     def send_bulk(self, slice, start, end):
-        doc_ids = [x['id'] for x in slice]
-        self.pillow.get_couch_db().bulk_load(doc_ids, purge_existing=True)
-        filtered_ids = set([d['_id'] for d in filter(self.custom_filter, self.pillow.get_couch_db().get_all())])
-        filtered_slice = filter(lambda change: change['id'] in filtered_ids, slice)
-
-        retries = 0
-        bulk_start = datetime.utcnow()
-        while retries < MAX_TRIES:
-            try:
-                self.log('Sending chunk to ES: %s:%s' % (start, end))
-                assert isinstance(self.pillow, AliasedElasticPillow)
-                self.pillow.process_bulk(filtered_slice)
-                break
-            except Exception as ex:
-                retries += 1
-                retry_time = (datetime.utcnow() - bulk_start).seconds + retries * RETRY_TIME_DELAY_FACTOR
-                self.log("\t%s: Exception sending slice %d:%d, %s, retrying in %s seconds" % (datetime.utcnow().isoformat(), start, end, ex, retry_time))
-                time.sleep(retry_time)
-                self.log("\t%s: Retrying again %d:%d..." % (datetime.utcnow().isoformat(), start, end))
-                # reset timestamp when looping again
-                bulk_start = datetime.utcnow()
+        raise NotImplementedError
 
     def pre_load_hook(self):
         pass

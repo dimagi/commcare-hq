@@ -12,7 +12,7 @@ from dimagi.utils.decorators.memoized import memoized
 from pillowtop import get_all_pillow_configs
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.interface import Change
-from pillowtop.listener import BasicPillow, AliasedElasticPillow
+from pillowtop.listener import BasicPillow
 
 
 def get_ex_tb(message, ex_class=None):
@@ -339,10 +339,8 @@ class PillowtopRetryAllPillowsTests(TestCase):
 
 def _pillow_instance_from_config_with_mock_process_change(pillow_config):
     pillow_class = pillow_config.get_class()
-    is_elastic = issubclass(pillow_class, AliasedElasticPillow)
     if pillow_config.instance_generator is None:
-        kwargs = {'online': False} if is_elastic else {}
-        instance = pillow_class(**kwargs)
+        instance = pillow_class()
     else:
         instance = pillow_config.get_instance()
 

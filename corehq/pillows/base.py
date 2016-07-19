@@ -1,6 +1,3 @@
-from pillowtop.listener import AliasedElasticPillow
-
-
 VALUE_TAG = '#value'
 DEFAULT_META = {
     "settings": {
