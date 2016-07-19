@@ -17,7 +17,7 @@ class ReindexEventHandler(PaginationEventHandler):
         self.log_prefix = log_prefix
 
     def page_start(self, total_emitted, *args, **kwargs):
-        domain, doc_type = kwargs.get('startkey')
+        domain, doc_type = kwargs.get('startkey')[:2]
         print (u'{} Fetching rows {}-{} from couch: domain="{}" doc_type="{}"'.format(
             self.log_prefix,
             total_emitted,
