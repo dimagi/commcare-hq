@@ -64,14 +64,3 @@ def get_index_mapping(es, index, doc_type):
         return _format_mapping_for_es_version(es.indices.get_mapping(index, doc_type))
     except TransportError:
         return {}
-
-
-def timed_raw_input(prompt, timeout=None, default="", stdout=sys.stdout):
-    # http://stackoverflow.com/a/3471853/10840
-    # does not work on Windows
-    timeout_arg = () if timeout is None else (timeout,)
-    stdout.write(prompt)
-    rlist, _, _ = select([sys.stdin], [], [], *timeout_arg)
-    if rlist:
-        return sys.stdin.readline()
-    return default
