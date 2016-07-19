@@ -106,7 +106,7 @@ class MessageTestCase(TestCase):
 
     def get_expected_template_params_for_mobile(self):
         return {
-            'name': self.mobile_user.username,
+            'name': self.mobile_user.raw_username,
             'first_name': self.mobile_user.first_name,
             'last_name': self.mobile_user.last_name,
         }
