@@ -141,7 +141,6 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
             updated_to = self.change_feed.get_current_checkpoint_offsets()
             self.checkpoint.update_to(json.dumps(updated_to))
-            self.notify_listeners(updated_to)
 
 
 def change_from_kafka_message(message):
