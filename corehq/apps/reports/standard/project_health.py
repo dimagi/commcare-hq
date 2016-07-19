@@ -22,7 +22,8 @@ def get_performance_threshold(domain_name):
 
 
 class UserActivityStub(namedtuple('UserStub', ['user_id', 'username', 'num_forms_submitted',
-                                               'is_performing', 'previous_stub', 'next_stub'])):
+                                               'is_performing', 'previous_stub', 'next_stub',
+                                               'is_not_deleted_active_user'])):
 
     @property
     def is_active(self):
@@ -57,6 +58,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                  performance_threshold, previous_summary=None,
                  delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
+        self._domain = domain
         self._next_summary = None
         base_queryset = MALTRow.objects.filter(
             domain_name=domain,
@@ -186,6 +188,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 is_performing=row.num_of_forms >= self.performance_threshold,
                 previous_stub=None,
                 next_stub=None,
+                is_not_deleted_active_user=True,
             ) for row in self._distinct_user_ids
         }
 
@@ -195,6 +198,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             previous_stubs = self._previous_summary.get_all_user_stubs()
             next_stubs = self._next_summary.get_all_user_stubs() if self._next_summary else {}
             user_stubs = self.get_all_user_stubs()
+            not_deleted_active_users = UserES().domain(self._domain).values_list("_id", flat=True)
             ret = []
             for user_stub in user_stubs.values():
                 ret.append(UserActivityStub(
@@ -204,6 +208,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                     is_performing=user_stub.is_performing,
                     previous_stub=previous_stubs.get(user_stub.user_id),
                     next_stub=next_stubs.get(user_stub.user_id),
+                    is_not_deleted_active_user=user_stub.user_id in not_deleted_active_users,
                 ))
             for missing_user_id in set(previous_stubs.keys()) - set(user_stubs.keys()):
                 previous_stub = previous_stubs[missing_user_id]
@@ -214,6 +219,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                     is_performing=False,
                     previous_stub=previous_stub,
                     next_stub=next_stubs.get(missing_user_id),
+                    is_not_deleted_active_user=user_stub.user_id in not_deleted_active_users,
                 ))
             return ret
 
@@ -224,8 +230,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             unhealthy_users = filter(
-                lambda stub: stub.is_active and not stub.is_performing and not
-                CommCareUser.get(stub.user_id).is_deleted() and CommCareUser.get(stub.user_id).is_active,
+                lambda stub: stub.is_active and not stub.is_performing and stub.is_not_deleted_active_user,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
@@ -237,8 +242,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: not stub.is_active and not
-                CommCareUser.get(stub.user_id).is_deleted() and CommCareUser.get(stub.user_id).is_active,
+                lambda stub: not stub.is_active and stub.is_not_deleted_active_user,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: stub.delta_forms)
@@ -250,8 +254,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: stub.is_newly_performing and not
-                CommCareUser.get(stub.user_id).is_deleted() and CommCareUser.get(stub.user_id).is_active,
+                lambda stub: stub.is_newly_performing and stub.is_not_deleted_active_user,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
