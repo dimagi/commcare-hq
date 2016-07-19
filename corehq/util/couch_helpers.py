@@ -120,12 +120,11 @@ class MultiKeyViewArgsProvider(PaginatedViewArgsProvider):
     :param keys: Sequence of view keys to iterate over. Each key should be a list
     and all keys must have the same length.
     """
-    def __init__(self, keys, include_docs=False, chunk_size=1000):
+    def __init__(self, keys, include_docs=False):
         self.keys = list(keys)
         self.key_length = len(self.keys[0])
         assert all(len(key) == self.key_length for key in self.keys), "All keys must be the same length"
         super(MultiKeyViewArgsProvider, self).__init__({
-            'limit': chunk_size,
             'include_docs': include_docs,
             'reduce': False,
             'startkey': self.keys[0],

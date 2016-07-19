@@ -25,10 +25,11 @@ def resumable_docs_by_type_iterator(db, doc_types, iteration_key, chunk_size=100
     """
 
     def data_function(**view_kwargs):
+        view_kwargs["limit"] = chunk_size
         return db.view('all_docs/by_doc_type', **view_kwargs)
 
     keys = [[doc_type] for doc_type in doc_types]
-    args_provider = MultiKeyViewArgsProvider(keys, include_docs=True, chunk_size=chunk_size)
+    args_provider = MultiKeyViewArgsProvider(keys, include_docs=True)
 
     class ResumableDocsIterator(ResumableFunctionIterator):
         def __iter__(self):
