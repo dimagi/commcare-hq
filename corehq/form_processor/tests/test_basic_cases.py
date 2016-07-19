@@ -97,7 +97,7 @@ class FundamentalCaseTests(TestCase):
         modified_on = datetime.utcnow()
         _submit_case_block(
             False, case_id, user_id='user2', owner_id='owner2',
-            case_name='update_case', date_modified=modified_on, update={
+            case_name='update_case', date_modified=modified_on, date_opened=opened_on, update={
                 'dynamic': '1234'
             }
         )
