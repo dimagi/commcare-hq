@@ -1,7 +1,9 @@
 from django.conf import settings
 from elasticsearch import TransportError
 
+from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.es_utils import ElasticsearchIndexInfo
+from pillowtop.pillow.interface import ConstructedPillow
 
 TEST_ES_META = {
     "settings": {
@@ -59,3 +61,20 @@ def get_index_mapping(es, index, doc_type):
         return _format_mapping_for_es_version(es.indices.get_mapping(index, doc_type))
     except TransportError:
         return {}
+
+
+class FakeConstructedPillow(ConstructedPillow):
+    pass
+
+
+def make_fake_constructed_pillow(pillow_id, checkpoint_id):
+    from pillowtop.feed.mock import RandomChangeFeed
+    from pillowtop.processors import LoggingProcessor
+
+    pillow = FakeConstructedPillow(
+        name=pillow_id,
+        checkpoint=PillowCheckpoint(checkpoint_id),
+        change_feed=RandomChangeFeed(10),
+        processor=LoggingProcessor(),
+    )
+    return pillow
