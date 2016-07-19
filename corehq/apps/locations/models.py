@@ -17,10 +17,17 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
+from corehq.util.soft_assert import soft_assert
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
 
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
+
+
+def notify_of_deprecation(msg):
+    _assert = soft_assert(notify_admins=True, fail_if_debug=True)
+    message = "Deprecated Locations feature used: {}".format(msg)
+    _assert(False, message)
 
 
 class LocationTypeManager(models.Manager):
@@ -807,7 +814,16 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         if self.is_root:
             return None
         return self.lineage[0]
-    parent_id = parent_location_id  # deprecated
+
+    @property
+    def parent_id(self):
+        # TODO this is deprecated as of 2016-07-19
+        # delete after we're sure this isn't called dynamically
+        # Django automagically reserves field_name+_id for foreign key fields,
+        # so because we have SQLLocation.parent, SQLLocation.parent_id refers
+        # to the Django primary key
+        notify_of_deprecation("parent_id should be replaced by parent_location_id")
+        return self.parent_location_id
 
     @property
     def parent(self):
