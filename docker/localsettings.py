@@ -175,6 +175,7 @@ PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 ENABLE_PRELOGIN_SITE = True
 
 TESTS_SHOULD_TRACK_CLEANLINESS = True
+TESTS_SHOULD_USE_SQL_BACKEND = False
 
 # touchforms must be running when this is false or not set
 # see also corehq.apps.sms.tests.util.TouchformsTestCase
