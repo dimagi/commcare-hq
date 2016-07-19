@@ -1139,6 +1139,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
+        from corehq.apps.sms.util import is_user_contact_active
+
         self.get_by_username.clear(self.__class__, self.username)
         self.get_by_user_id.clear(self.__class__, self.user_id)
         domains = getattr(self, 'domains', None)
@@ -1147,6 +1149,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             domains = [domain] if domain else []
         for domain in domains:
             self.get_by_user_id.clear(self.__class__, self.user_id, domain)
+            is_user_contact_active.clear(domain, self.user_id)
         Domain.active_for_couch_user.clear(self)
         _get_domain_list.clear(self)
 

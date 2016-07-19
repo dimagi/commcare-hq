@@ -34,8 +34,11 @@ class Command(BaseCommand):
 
     def migrate_app(self, app_id):
         app = Application.get(app_id)
-        modules = [m for m in app.modules if m.module_type == 'basic']
+        if app.vellum_case_management:
+            logger.info('already migrated app {}'.format(app_id))
+            return
 
+        modules = [m for m in app.modules if m.module_type == 'basic']
         for module in modules:
             forms = [f for f in module.forms if f.doc_type == 'Form']
             for form in forms:

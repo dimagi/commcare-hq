@@ -400,31 +400,3 @@ def _ask_user_to_proceed(pillow_name):
     if confirm_alias != "yes":
         return False
     return True
-
-
-class ElasticReindexer(PtopReindexer):
-
-    own_index_exists = True
-
-    def pre_load_hook(self):
-        if not self.in_place and self.own_index_exists:
-            # delete the existing index.
-            self.log("Deleting index")
-            self.indexing_pillow.get_es_new().indices.delete(self.indexing_pillow.es_index)
-            self.log("Recreating index")
-            initialize_index_and_mapping(
-                es=self.indexing_pillow.get_es_new(),
-                index_info=get_index_info_from_pillow(self.indexing_pillow),
-            )
-
-    def post_load_hook(self):
-        if not self.in_place:
-            # configure index to indexing mode
-            set_index_reindex_settings(self.indexing_pillow.get_es_new(), self.indexing_pillow.es_index)
-
-    def pre_complete_hook(self):
-        if not self.in_place:
-            self.log("setting index settings to normal search configuration and refreshing index")
-            set_index_normal_settings(self.indexing_pillow.get_es_new(), self.indexing_pillow.es_index)
-        # refresh the index
-        self.indexing_pillow.get_es_new().indices.refresh(self.indexing_pillow.es_index)

@@ -41,6 +41,17 @@
                 <i class="fa fa-plus"></i> {% trans "Add search property" %}
             </button>
         </p>
+        <div class="form-group">
+            <label>
+                {% trans "Conditional claim condition" %}
+                <input type="text" data-bind="value: relevant" class="form-control" />
+            </label>
+            <div class="checkbox">
+                <label>
+                    {% trans "Don't claim already owned cases" %}
+                    <input type="checkbox" data-bind="checked: default_relevant">
+                </label>
+            </div>
+        </div>
     </form>
-
 </div>
