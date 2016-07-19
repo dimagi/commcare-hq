@@ -46,15 +46,6 @@ TEST_INDEX_INFO = ElasticsearchIndexInfo(
 )
 
 
-class TestElasticPillow(AliasedElasticPillow):
-    es_alias = 'pillowtop_tests'
-    es_type = 'test_doc'
-    es_index = 'test_pillowtop_index'
-    # just for the sake of something being here
-    es_meta = TEST_ES_META
-    default_mapping = TEST_ES_MAPPING
-
-
 def get_doc_count(es, index, refresh_first=True):
     if refresh_first:
         # we default to calling refresh since ES might have stale data
