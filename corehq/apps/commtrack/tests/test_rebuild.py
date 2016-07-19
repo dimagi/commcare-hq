@@ -90,16 +90,14 @@ class RebuildStockStateTest(TestCase):
 
     @run_with_all_backends
     def test_case_actions(self):
-        """
-        make sure that when a case is rebuilt (using rebuild_case)
-        stock transactions show up as well
-        """
+        # make sure that when a case is rebuilt (using rebuild_case)
+        # stock transactions show up as well
         form_id = self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
         case_id = self.case.case_id
         rebuild_case_from_forms(self.domain, case_id, RebuildWithReason(reason='test'))
         case = CaseAccessors(self.domain).get_case(self.case.case_id)
         self.assertEqual(case.xform_ids[1:], [form_id])
-        self.assertEqual(case.actions[1].form_id, form_id)
+        self.assertTrue(form_id in [action.form_id for action in case.actions])
 
     @run_with_all_backends
     def test_edit_submissions_simple(self):
@@ -112,7 +110,10 @@ class RebuildStockStateTest(TestCase):
 
         case_accessors = CaseAccessors(self.domain)
         case = case_accessors.get_case(self.case.case_id)
-        self.assertEqual(2, len(case.actions))
+        try:
+            self.assertTrue(any([action.is_ledger_transaction for action in case.actions]))
+        except AttributeError:
+            self.assertTrue('commtrack' in [action.action_type for action in case.actions])
         self.assertEqual([form.form_id], case.xform_ids[1:])
 
         # change the value to 50
@@ -123,6 +124,13 @@ class RebuildStockStateTest(TestCase):
             form_id=form.form_id,
         )
         case = case_accessors.get_case(self.case.case_id)
-        self.assertEqual(2, len(case.actions))
+
+        try:
+            # CaseTransaction
+            self.assertTrue(any([action.is_ledger_transaction for action in case.actions]))
+        except AttributeError:
+            # CaseAction
+            self.assertTrue('commtrack' in [action.action_type for action in case.actions])
+
         self._assert_stats(1, edit_quantity, edit_quantity)
         self.assertEqual([form.form_id], case.xform_ids[1:])

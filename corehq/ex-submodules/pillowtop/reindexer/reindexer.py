@@ -83,18 +83,22 @@ def _prepare_index_for_usage(es, index_info):
 
 
 class ElasticPillowReindexer(PillowChangeProviderReindexer):
+    in_place = False
 
     def __init__(self, pillow, change_provider, elasticsearch, index_info):
         super(ElasticPillowReindexer, self).__init__(pillow, change_provider)
         self.es = elasticsearch
         self.index_info = index_info
 
+    def consume_options(self, options):
+        super(ElasticPillowReindexer, self).consume_options(options)
+        self.in_place = options.pop("in-place", False)
+
     def clean(self):
         _clean_index(self.es, self.index_info)
 
     def reindex(self):
-        if not self.start_from:
-            # when not resuming force delete and create the index
+        if not self.in_place and not self.start_from:
             _prepare_index_for_reindex(self.es, self.index_info)
 
         super(ElasticPillowReindexer, self).reindex()
@@ -175,6 +179,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
 
 class ResumableBulkElasticPillowReindexer(Reindexer):
     reset = False
+    in_place = False
 
     def __init__(self, doc_provider, elasticsearch, index_info,
                  doc_filter=None, doc_transform=None, chunk_size=1000):
@@ -188,6 +193,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
 
     def consume_options(self, options):
         self.reset = options.pop("reset", False)
+        self.in_place = options.pop("in-place", False)
         chunk_size = options.pop("chunksize", None)
         if chunk_size:
             self.chunk_size = chunk_size
@@ -204,8 +210,7 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
             chunk_size=self.chunk_size,
         )
 
-        if self.reset or not processor.has_started():
-            # when not resuming force delete and create the index
+        if not self.in_place and (self.reset or not processor.has_started()):
             _prepare_index_for_reindex(self.es, self.index_info)
 
         processor.run()

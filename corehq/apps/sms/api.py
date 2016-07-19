@@ -20,6 +20,7 @@ from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
 from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.sms.util import is_contact_active
 from corehq.apps.domain.models import Domain
 from datetime import datetime
 
@@ -525,7 +526,10 @@ def process_incoming(msg):
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
     elif v is not None and v.verified:
-        if domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+        if (
+            domain_has_privilege(msg.domain, privileges.INBOUND_SMS) and
+            is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
+        ):
             for h in settings.SMS_HANDLERS:
                 try:
                     handler = to_function(h)
