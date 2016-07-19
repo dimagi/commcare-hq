@@ -71,7 +71,7 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 
 from . import service_checks, escheck
-from .forms import AuthenticateAsForm, BrokenBuildsForm
+from .forms import AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data
@@ -143,6 +143,51 @@ class AuthenticateAs(BaseAdminSectionView):
             request.user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, request.user)
             return HttpResponseRedirect('/')
+        return self.get(request, *args, **kwargs)
+
+
+class SuperuserManagement(BaseAdminSectionView):
+    urlname = 'superuser_management'
+    page_title = _("Grant or revoke superuser access")
+    template_name = 'hqadmin/superuser_management.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(SuperuserManagement, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        # only staff can toggle is_staff
+        can_toggle_is_staff = self.request.user.is_staff
+        # render validation errors if rendered after POST
+        args = [can_toggle_is_staff, self.request.POST] if self.request.POST else [can_toggle_is_staff]
+        return {
+            'form': SuperuserManagementForm(*args)
+        }
+
+    def post(self, request, *args, **kwargs):
+        can_toggle_is_staff = request.user.is_staff
+        form = SuperuserManagementForm(can_toggle_is_staff, self.request.POST)
+        if form.is_valid():
+            users = form.cleaned_data['users']
+            is_superuser = 'is_superuser' in form.cleaned_data['privileges']
+            is_staff = 'is_staff' in form.cleaned_data['privileges']
+
+            for user in users:
+                # save user object only if needed and just once
+                should_save = False
+                if user.is_superuser is not is_superuser:
+                    user.is_superuser = is_superuser
+                    should_save = True
+
+                if can_toggle_is_staff and user.is_staff is not is_staff:
+                    user.is_staff = is_staff
+                    should_save = True
+
+                if should_save:
+                    user.save()
+            messages.success(request, _("Successfully updated superuser permissions"))
+
         return self.get(request, *args, **kwargs)
 
 
