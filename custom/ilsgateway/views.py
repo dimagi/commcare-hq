@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Count
-from django.http.response import HttpResponseRedirect, Http404
+from django.http.response import HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView, RedirectView
@@ -23,7 +23,7 @@ from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from custom.ilsgateway import DashboardReport
-from custom.ilsgateway.forms import SupervisionDocumentForm
+from custom.ilsgateway.forms import SupervisionDocumentForm, ILSConfigForm
 from custom.ilsgateway.oneoff import recalculate_moshi_rural_task, recalculate_non_facilities_task
 from custom.ilsgateway.tanzania import make_url
 from custom.ilsgateway.tanzania.reports.delivery import DeliveryReport
@@ -113,7 +113,27 @@ class ILSConfigView(BaseConfigView):
     def page_context(self):
         context = super(ILSConfigView, self).page_context
         context['oneoff_tasks'] = OneOffTaskProgress.objects.filter(domain=self.domain)
+        ils_config = ILSGatewayConfig.for_domain(self.domain)
+        enabled = False
+        if ils_config:
+            enabled = ils_config.enabled
+        context['form'] = ILSConfigForm(initial={'enabled': enabled})
         return context
+
+    def post(self, request, *args, **kwargs):
+        ils_config = ILSGatewayConfig.for_domain(self.domain)
+        ils_config_form = ILSConfigForm(request.POST)
+        if not ils_config_form.is_valid():
+            return HttpResponseBadRequest()
+
+        enabled = ils_config_form.cleaned_data['enabled']
+        if not ils_config and enabled:
+            ils_config = ILSGatewayConfig(enabled=True, domain=self.domain)
+            ils_config.save()
+        elif ils_config and ils_config.enabled != enabled:
+            ils_config.enabled = enabled
+            ils_config.save()
+        return self.get(request, *args, **kwargs)
 
 
 class SupervisionDocumentListView(BaseDomainView):
