@@ -503,6 +503,7 @@ The from_date_expression and to_date_expression can be any valid expressions, or
 This returns 25 (1 + 20 - 2 + 6).
 
 `statement` can be any statement that returns a valid number. All python math [operators](https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators) except power operator are available for use.
+Boolean operators `and` and `or` are also available to be used as ternary and coalesce operators, e.g.  `"statement": "a or b"` will return `b` if `a` is zero or null, otherwise `a`; `"statement": "a and b or c"` will return `c` if `a` **or `b`** are zero or null, otherwise `b`.
 
 `context_variables` is a dictionary of Expressions where keys are names of variables used in the `statement` and values are expressions to generate those variables.
 Variables can be any valid numbers (Python datatypes `int`, `float` and `long` are considered valid numbers.) or also expressions that return numbers. In addition to numbers the following types are supported:
