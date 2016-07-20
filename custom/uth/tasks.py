@@ -1,4 +1,3 @@
-from corehq.blobs.mixin import BlobMixin
 from custom.uth.utils import create_case, match_case, attach_images_to_case, submit_error_case
 from custom.uth.models import SonositeUpload, VscanUpload
 from celery.task import task
@@ -11,8 +10,7 @@ def get_files_from_doc(doc):
     """
 
     files = {}
-    attachments = doc.blobs if isinstance(doc, BlobMixin) else doc._attachments
-    for f in attachments:
+    for f in doc._attachments.keys():
         if f[-4:].lower() != '.xml':
             # we really only want images/videos, but specifically
             # blacklisting uploaded config files
@@ -52,10 +50,7 @@ def async_find_and_attach(upload_id):
 
         if case:
             files = {}
-            attachments = (upload_doc.blobs
-                if isinstance(upload_doc, BlobMixin)
-                else upload_doc._attachments)
-            for f in attachments:
+            for f in upload_doc._attachments.keys():
                 files[f] = io.BytesIO(upload_doc.fetch_attachment(f))
 
             attach_images_to_case(case._id, files)

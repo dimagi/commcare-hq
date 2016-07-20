@@ -11,8 +11,7 @@ def noop(request):
 
 @httpdigest
 def saving(request):
-    xform = XFormInstance()
-    xform.deferred_put_attachment('-', 'form.xml')
+    xform = XFormInstance(_attachments={'form.xml': {'data': '-'}})
     xform.save()
     case = CommCareCase()
     case.save()

@@ -21,7 +21,6 @@ from elasticsearch.exceptions import ConnectionError
 from corehq.util.elastic import ensure_index_deleted
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from corehq.blobs.mixin import BlobMeta
 from corehq.form_processor.utils import TestFormMetadata
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.const import CASE_ACTION_CREATE
@@ -90,8 +89,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         form_pair = make_es_ready_form(metadata)
         if attachment_dict:
-            form_pair.wrapped_form.external_blobs = {name: BlobMeta(**meta)
-                for name, meta in attachment_dict.iteritems()}
+            setattr(form_pair.wrapped_form, 'external_blobs', attachment_dict)
             form_pair.json_form['external_blobs'] = attachment_dict
 
         es_form = transform_xform_for_elasticsearch(form_pair.json_form)
@@ -141,7 +139,10 @@ class TestFormESAccessors(BaseESAccessorsTest):
             received_on=datetime(2013, 7, 2),
             user_id=user_id,
             attachment_dict={
-                'my_image': {'content_type': 'image/jpg'}
+                'my_image': {
+                    'content_type': 'image/jpg',
+                    'data': 'abc'
+                }
             }
         )
 

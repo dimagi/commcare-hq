@@ -59,7 +59,6 @@ class Command(LabelCommand):
         def form_wrapper(row):
             doc = row['doc']
             doc.pop('_attachments', None)
-            doc.pop('external_blobs', None)
             return XFormInstance.wrap(doc)
 
         xforms = source_couch.get_db_for_class(XFormInstance).all_docs(

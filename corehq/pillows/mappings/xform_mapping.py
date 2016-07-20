@@ -4,7 +4,7 @@ from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-XFORM_INDEX = es_index("xforms_2016-07-07")
+XFORM_INDEX = es_index("xforms_2016-06-09")
 
 XFORM_MAPPING = {
     "date_detection": False,
@@ -47,10 +47,6 @@ XFORM_MAPPING = {
         'initial_processing_complete': {"type": "boolean"},
         'partial_submission': {"type": "boolean"},
         "#export_tag": {"type": "string", "index": "not_analyzed"},
-        'external_blobs': {
-            'dynamic': False,
-            'type': 'object'
-        },
         '_attachments': {
             'dynamic': False,
             'type': 'object'
