@@ -148,7 +148,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
-    
+
     @property
     @memoized
     def page_url(self):
@@ -1003,4 +1003,12 @@ def location_restriction_for_users(request, domain):
     if "restrict_users" in request.POST:
         project.location_restriction_for_users = json.loads(request.POST["restrict_users"])
     project.save()
+    return HttpResponse()
+
+
+@require_POST
+def register_fcm_device_token(request, couch_user_id, device_token):
+    user = WebUser.get_by_user_id(couch_user_id)
+    user.set_fcm_device_token(device_token)
+    user.save()
     return HttpResponse()
