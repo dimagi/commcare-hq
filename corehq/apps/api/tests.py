@@ -1672,6 +1672,11 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         )
         cls.report_configuration.save()
 
+        another_report_configuration = ReportConfiguration(
+            domain=cls.domain.name, config_id=cls.data_source._id, columns=[], filters=[]
+        )
+        another_report_configuration.save()
+
     def test_get_detail(self):
         response = self._assert_auth_get_resource(
             self.single_endpoint(self.report_configuration._id))
@@ -1695,15 +1700,23 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         )
         self.assertEqual(response_dict['title'], self.report_title)
 
+    def test_get_list(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        response_dict = json.loads(response.content)
+
+        self.assertEqual(set(response_dict.keys()), {'meta', 'objects'})
+        self.assertEqual(set(response_dict['meta'].keys()), {'total_count'})
+
+        self.assertEqual(response_dict['meta']['total_count'], 2)
+        self.assertEqual(len(response_dict['objects']), 2)
+
     def test_disallowed_methods(self):
         response = self._assert_auth_post_resource(
             self.single_endpoint(self.report_configuration._id),
             {},
             failure_code=405
         )
-        self.assertEqual(response.status_code, 405)
-
-        response = self._assert_auth_get_resource(self.list_endpoint, failure_code=405)
         self.assertEqual(response.status_code, 405)
 
     def test_auth(self):

@@ -641,6 +641,14 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         detail_allowed_methods = ["get"]
 
 
+class DoesNothingPaginator(Paginator):
+    def page(self):
+        return {
+            self.collection_name: self.objects,
+            "meta": {'total_count': self.get_count()}
+        }
+
+
 class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
     title = fields.CharField(readonly=True, attribute="title", null=True)
@@ -670,6 +678,11 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
             raise NotFound(e.message)
         return report_configuration
 
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        print domain
+        return ReportConfiguration.by_domain(domain)
+
     def detail_uri_kwargs(self, bundle_or_obj):
         return {
             'domain': get_obj(bundle_or_obj).domain,
@@ -677,8 +690,9 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         }
 
     class Meta(CustomResourceMeta):
-        list_allowed_methods = []
+        list_allowed_methods = ["get"]
         detail_allowed_methods = ["get"]
+        paginator_class = DoesNothingPaginator
 
 
 UserDomain = namedtuple('UserDomain', 'domain_name project_name')
