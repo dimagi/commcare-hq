@@ -1,24 +1,20 @@
-from functools import wraps
-import logging
-from couchdbkit.exceptions import ResourceNotFound
-from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
-from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
-from django.db.utils import InterfaceError as DjangoInterfaceError
-from datetime import datetime, timedelta
-import traceback
 import math
 import time
+import traceback
+from datetime import datetime
+from functools import wraps
 
-import simplejson
+from couchdbkit.exceptions import ResourceNotFound
+from django import db
+from django.db.utils import InterfaceError as DjangoInterfaceError
+from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
+from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch import LockManager
+from dimagi.utils.decorators.memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint, get_default_django_checkpoint_for_legacy_pillow_class
 from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
 from pillowtop.const import CHECKPOINT_FREQUENCY
-from pillowtop.couchdb import CachedCouchDB
-
-from django import db
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.es_utils import completely_initialize_pillow_index, doc_exists
 from pillowtop.feed.couch import CouchChangeFeed
@@ -152,7 +148,7 @@ class BasicPillow(PillowBase):
     def _get_base_name(cls):
         return cls.__module__
 
-    def process_change(self, change, is_retry_attempt=False):
+    def process_change(self, change):
         """
         Parent processsor for a pillow class - this should not be overridden.
         This workflow is made for the situation where 1 change yields 1 transport/transaction
@@ -212,124 +208,6 @@ class BasicPillow(PillowBase):
         """
         raise NotImplementedError(
             "Error, this pillowtop subclass has not been configured to do anything!")
-
-
-PYTHONPILLOW_CHUNK_SIZE = 250
-PYTHONPILLOW_CHECKPOINT_FREQUENCY = CHECKPOINT_FREQUENCY * 10
-PYTHONPILLOW_MAX_WAIT_TIME = 60
-
-
-class PythonPillow(BasicPillow):
-    """
-    A pillow that does filtering in python instead of couch.
-
-    Useful because it will actually set checkpoints throughout even if there
-    are no matched docs.
-
-    In initial profiling this was also 2-3x faster than the couch-filtered
-    version.
-
-    Subclasses should override the python_filter function to perform python
-    filtering.
-    """
-    process_deletions = False
-
-    def __init__(self, document_class=None, chunk_size=PYTHONPILLOW_CHUNK_SIZE,
-                 checkpoint_frequency=PYTHONPILLOW_CHECKPOINT_FREQUENCY,
-                 couch_db=None, checkpoint=None, change_feed=None, preload_docs=True):
-        """
-        Use chunk_size = 0 to disable chunking
-        """
-        super(PythonPillow, self).__init__(
-            document_class=document_class,
-            checkpoint=checkpoint,
-            couch_db=couch_db,
-            change_feed=change_feed,
-        )
-        self.change_queue = []
-        self.chunk_size = chunk_size
-        self.use_chunking = chunk_size > 0
-        self.checkpoint_frequency = checkpoint_frequency
-        self.include_docs = not self.use_chunking
-        self.last_processed_time = None
-        self.preload_docs = preload_docs
-
-    def get_default_couch_db(self):
-        if self.document_class and self.use_chunking:
-            return CachedCouchDB(self.document_class.get_db().uri, readonly=False)
-        else:
-            return super(PythonPillow, self).get_default_couch_db()
-
-    def python_filter(self, change):
-        """
-        Should return True if the doc is to be processed by your pillow
-        """
-        return True
-
-    def process_chunk(self):
-        def _assert_change_has_id(change):
-            if 'id' not in change:
-                _assert(False, "expected 'id' in change, but wasn't found! change is: {}".format(
-                    simplejson.dumps(change)
-                ))
-                return False
-            return True
-
-        changes_to_process = filter(_assert_change_has_id, self.change_queue)
-        if self.preload_docs:
-            self.get_couch_db().bulk_load([change['id'] for change in changes_to_process],
-                                     purge_existing=True)
-        for change in changes_to_process:
-            if self.preload_docs:
-                doc = self.get_couch_db().open_doc(change['id'], check_main=False)
-                change.set_document(doc)
-
-            # a valid change is either a non-preload situation or a valid doc + a filter match
-            valid_change = (not self.preload_docs or change.document) and self.python_filter(change)
-            valid_deletion = self.process_deletions and change.get('deleted', None)
-            if valid_change or valid_deletion:
-                try:
-                    super(PythonPillow, self).process_change(change)
-                except Exception:
-                    logging.exception('something went wrong processing change %s (%s)' %
-                                      (change.get('seq', None), change['id']))
-
-        # reset the queue after we've processed this chunk
-        self.change_queue = []
-        self.last_processed_time = datetime.utcnow()
-
-    @property
-    def queue_full(self):
-        return len(self.change_queue) > self.chunk_size
-
-    @property
-    def wait_expired(self):
-        if not self.last_processed_time:
-            return False
-
-        wait_time = datetime.utcnow() - self.last_processed_time
-        return wait_time > timedelta(seconds=PYTHONPILLOW_MAX_WAIT_TIME)
-
-    def process_change(self, change, is_retry_attempt=False):
-        if self.use_chunking and not is_retry_attempt:
-            self.change_queue.append(change)
-            if self.queue_full or self.wait_expired:
-                self.process_chunk()
-        elif self.python_filter(change) or (change.get('deleted', None) and self.process_deletions):
-            super(PythonPillow, self).process_change(change)
-
-    def fire_change_processed_event(self, change, context):
-        if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
-            # if using chunking make sure we never allow the checkpoint to get in
-            # front of the chunks
-            if self.use_chunking:
-                self.process_chunk()
-            self.set_checkpoint(change)
-
-    def run(self):
-        self.change_queue = []
-        self.last_processed_time = datetime.utcnow()
-        super(PythonPillow, self).run()
 
 
 def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,

@@ -94,8 +94,6 @@ class GeographyFluff(fluff.IndicatorDocument):
     domains = ('pathways-india-mis', 'pathways-tanzania', 'care-macf-malawi', 'care-macf-bangladesh',)
     group_by = ('domain',)
 
-    kafka_topic = topics.CASE
-
     numerator = Numerator()
     lvl_1 = case_property('lvl_1')
     lvl_2 = case_property('lvl_2')
@@ -112,8 +110,6 @@ class FarmerRecordFluff(fluff.IndicatorDocument):
                 fluff.AttributeGetter('value_chain', lambda c: get_mapping(c)),
                 fluff.AttributeGetter('domains', lambda c: get_domains(c)),
                 fluff.AttributeGetter('practices', lambda c: get_practices(c)))
-
-    kafka_topic = topics.CASE
 
     lvl_1 = case_property('lvl_1')
     lvl_2 = case_property('lvl_2')

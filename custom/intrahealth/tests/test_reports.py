@@ -10,6 +10,7 @@ from custom.intrahealth.tests.test_utils import IntraHealthTestCase, TEST_DOMAIN
 from django.core import management
 
 from dimagi.utils.parsing import json_format_date
+from testapps.test_pillowtop.utils import real_pillow_settings
 
 
 class TestReports(IntraHealthTestCase):
@@ -29,12 +30,11 @@ class TestReports(IntraHealthTestCase):
                 )
             )[1]
 
-        management.call_command(
-            'ptop_fast_reindex_fluff',
-            TEST_DOMAIN,
-            'custom.intrahealth.models.TauxDeSatisfactionFluffPillow',
-            noinput=True
-        )
+        with real_pillow_settings():
+            management.call_command(
+                'ptop_reindexer_fluff',
+                'TauxDeSatisfactionFluffPillow',
+            )
 
     def test_disp_des_products_report(self):
         disp_des = DispDesProducts(config=dict(

@@ -38,10 +38,9 @@ class PillowCheckpointDbTest(TestCase):
         checkpoint.save()
 
     def test_get_or_create_empty(self):
-        checkpoint, created = get_or_create_checkpoint('some-id')
+        checkpoint = get_or_create_checkpoint('some-id')
         self.assertEqual('0', checkpoint.sequence)
         self.assertTrue(bool(checkpoint.timestamp))
-        self.assertTrue(bool(created))
 
     def test_create_initial_checkpoint(self):
         checkpoint = self.checkpoint.get_or_create_wrapped()
