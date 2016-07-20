@@ -656,7 +656,10 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
 
     def dehydrate_columns(self, bundle):
         obj_columns = bundle.obj.columns
-        return [c['column_id'] for c in obj_columns]
+        return [{
+            "column_id": c['column_id'],
+            "display": c['display'],
+        } for c in obj_columns]
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']

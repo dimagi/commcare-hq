@@ -1627,12 +1627,14 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         cls.report_columns = [
             {
                 "column_id": 'foo',
+                "display": "foo display",
                 "type": "field",
                 "field": "my_field",
                 "aggregation": "simple",
             },
             {
                 "column_id": 'bar',
+                "display": "bar display",
                 "type": "field",
                 "field": "my_field",
                 "aggregation": "simple",
@@ -1684,7 +1686,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         )
 
         self.assertEqual(
-            [c['column_id'] for c in self.report_columns],
+            [{"column_id": c['column_id'], "display": c['display']} for c in self.report_columns],
             columns
         )
         self.assertEqual(
