@@ -152,6 +152,8 @@ class LedgerAccessorErrorTests(TestCase):
         cls.product = make_product(cls.domain, 'A Product', 'prodcode_a')
 
     def setUp(self):
+        super(LedgerAccessorErrorTests, self).setUp()
+
         # can't do this in setUpClass until Django 1.9 since @override_settings
         # doesn't apply to classmethods
         from corehq.apps.commtrack.tests import get_single_balance_block
