@@ -59,8 +59,10 @@ def should_sync_locations(last_sync, location_db, restore_user):
 
 class LocationFixtureProvider(object):
 
-    def __init__(self, serializer):
-        self.serializer = serializer
+    def __init__(self, serializers=None):
+        if serializers is None:
+            serializers = [HierarchicalLocationSerializer(), FlatLocationSerializer()]
+        self.serializers = serializers
 
     def __call__(self, restore_user, version, last_sync=None, app=None):
         """
@@ -81,13 +83,17 @@ class LocationFixtureProvider(object):
         if not should_sync_locations(last_sync, all_locations, restore_user):
             return []
 
-        return self.serializer.get_xml(restore_user, all_locations)
+        xml_nodes = []
+        for serializer in self.serializers:
+            xml_nodes.extend(serializer.get_xml_nodes(restore_user, all_locations))
+
+        return xml_nodes
 
 
 class HierarchicalLocationSerializer(object):
     id = 'commtrack:locations'
 
-    def get_xml(self, restore_user, all_locations):
+    def get_xml_nodes(self, restore_user, all_locations):
         root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
         root_locations = all_locations.root_locations
 
@@ -99,7 +105,10 @@ class HierarchicalLocationSerializer(object):
 class FlatLocationSerializer(object):
     id = 'commtrack:locations_v2'
 
-    def get_xml(self, restore_user, all_locations):
+    def get_xml_nodes(self, restore_user, all_locations):
+        if not toggles.FLAT_LOCATION_FIXTURE.enabled(restore_user.project.name):
+            return []
+
         root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
 
         outer_node = Element('locations')
@@ -121,8 +130,7 @@ class FlatLocationSerializer(object):
         return [root_node]
 
 
-location_fixture_generator = LocationFixtureProvider(HierarchicalLocationSerializer())
-flat_location_fixture_generator = LocationFixtureProvider(FlatLocationSerializer())
+location_fixture_generator = LocationFixtureProvider()
 
 
 def _all_locations(user):
