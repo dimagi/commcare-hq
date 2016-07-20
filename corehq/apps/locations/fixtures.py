@@ -58,7 +58,9 @@ def should_sync_locations(last_sync, location_db, restore_user):
 
 
 class LocationFixtureProvider(object):
-    id = 'commtrack:locations'
+
+    def __init__(self, serializer):
+        self.serializer = serializer
 
     def __call__(self, restore_user, version, last_sync=None, app=None):
         """
@@ -79,6 +81,13 @@ class LocationFixtureProvider(object):
         if not should_sync_locations(last_sync, all_locations, restore_user):
             return []
 
+        return self.serializer.get_xml(restore_user, all_locations)
+
+
+class HierarchicalLocationSerializer(object):
+    id = 'commtrack:locations'
+
+    def get_xml(self, restore_user, all_locations):
         root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
         root_locations = all_locations.root_locations
 
@@ -87,7 +96,7 @@ class LocationFixtureProvider(object):
         return [root_node]
 
 
-location_fixture_generator = LocationFixtureProvider()
+location_fixture_generator = LocationFixtureProvider(HierarchicalLocationSerializer())
 
 
 def _all_locations(user):
