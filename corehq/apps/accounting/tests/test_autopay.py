@@ -1,6 +1,7 @@
 import mock
 
-from stripe import Charge, StripeObject
+from stripe import Charge
+from stripe.resource import StripeObject
 
 from django.core import mail
 

@@ -33,10 +33,10 @@ For more information on a specific command, run
     Usage:: 
     $ ./manage.py copy_domain [options] <sourcedb> <domain>
 
-**ptop_fast_reindex_fluff**
+**ptop_reindexer_fluff**
     Fast reindex of fluff docs.
     Usage::
-    $ ./manage.py ptop_fast_reindex_fluff [options] <domain> <pillow_class>
+    $ ./manage.py ptop_reindexer_fluff <pillow_name>
 
 **run_ptop**
     Run the pillowtop management command to scan all _changes feeds

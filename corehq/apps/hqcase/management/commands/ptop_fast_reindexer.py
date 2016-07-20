@@ -13,7 +13,6 @@ from corehq.util.pagination import PaginationEventHandler
 from pillowtop.couchdb import CachedCouchDB
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
-from pillowtop.listener import PythonPillow
 
 CHUNK_SIZE = 10000
 POOL_SIZE = 15
@@ -339,9 +338,7 @@ class PtopReindexer(NoArgsCommand):
         self.send_bulk(bulk_slice, start, end)
 
     def finish_saving(self):
-        # python pillows may have some chunked up changes so make sure they get processed
-        if isinstance(self.pillow, PythonPillow) and self.pillow.use_chunking:
-            self.pillow.process_chunk()
+        pass
 
     def send_bulk(self, slice, start, end):
         raise NotImplementedError

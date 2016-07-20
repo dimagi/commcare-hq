@@ -37,6 +37,24 @@ class BaseTestCase(TestCase):
     def setUp(self):
         self.obj = self.make_doc()
 
+    def get_blob(self, name=None, bucket=None):
+        return self.TestBlob(self.db, name, bucket)
+
+    class TestBlob(object):
+
+        def __init__(self, db, name, bucket):
+            self.db = db
+            self.path = db.get_path(name, bucket)
+
+        def exists(self):
+            return os.path.exists(self.path)
+
+        def open(self):
+            return open(self.path)
+
+        def listdir(self):
+            return os.listdir(self.path)
+
 
 class TestBlobMixin(BaseTestCase):
 
@@ -408,24 +426,6 @@ class TestBlobMixin(BaseTestCase):
         # bug caused old blobs (not modifed in atomic context) to be deleted
         self.assertEqual(self.obj.fetch_attachment("file"), "file content")
 
-    def get_blob(self, name=None, bucket=None):
-        return self.TestBlob(self.db, name, bucket)
-
-    class TestBlob(object):
-
-        def __init__(self, db, name, bucket):
-            self.db = db
-            self.path = db.get_path(name, bucket)
-
-        def exists(self):
-            return os.path.exists(self.path)
-
-        def open(self):
-            return open(self.path)
-
-        def listdir(self):
-            return os.listdir(self.path)
-
 
 class TestBlobMixinWithS3Backend(TestBlobMixin):
 
@@ -701,6 +701,57 @@ class TestBlobHelper(BaseTestCase):
         self.assertIn("doc.txt", obj.doc["_attachments"])
         self.assertFalse(obj.doc["external_blobs"])
         self.assertTrue(self.couch.meta)
+
+
+class TestBulkAtomicBlobs(BaseTestCase):
+
+    def test_bulk_atomic_blobs(self):
+        docs = [self.obj]
+        self.assertNotIn("name", self.obj.blobs)
+        with mod.bulk_atomic_blobs(docs):
+            self.obj.put_attachment("data", "name")
+            self.assertIn("name", self.obj.blobs)
+        self.assertFalse(self.obj.saved)
+        self.assertEqual(self.obj.fetch_attachment("name"), "data")
+
+    def test_bulk_atomic_blobs_with_deferred_blobs(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        self.assertNotIn("name", obj.blobs)
+        obj.deferred_put_attachment("data", "name")
+        docs = [obj]
+        with mod.bulk_atomic_blobs(docs):
+            obj.put_attachment("data", "name")
+            self.assertIn("name", obj.external_blobs)
+            ident = obj.blobs["name"].id
+            self.assertTrue(ident)
+        self.assertFalse(obj.saved)
+        with self.get_blob(ident, obj._blobdb_bucket()).open() as fh:
+            self.assertEqual(fh.read(), "data")
+
+    def test_bulk_atomic_blobs_with_non_blob_docs(self):
+        noblobs = self.make_doc(BaseFakeDocument)
+        self.assertFalse(hasattr(noblobs, "blobs"))
+        docs = [noblobs]
+        with mod.bulk_atomic_blobs(docs):
+            pass
+        self.assertFalse(noblobs.saved)
+
+    def test_bulk_atomic_blobs_with_mixed_docs(self):
+        noblobs = self.make_doc(BaseFakeDocument)
+        deferred = self.make_doc(DeferredPutBlobDocument)
+        deferred.deferred_put_attachment("deferred", "att")
+        self.assertFalse(hasattr(noblobs, "blobs"))
+        docs = [self.obj, noblobs, deferred]
+        self.assertNotIn("name", self.obj.blobs)
+        with mod.bulk_atomic_blobs(docs):
+            self.obj.put_attachment("data", "name")
+            self.assertIn("name", self.obj.blobs)
+            self.assertIn("att", deferred.external_blobs)
+        self.assertFalse(any(d.saved for d in docs))
+        self.assertEqual(self.obj.fetch_attachment("name"), "data")
+        ident = deferred.blobs["att"].id
+        with self.get_blob(ident, deferred._blobdb_bucket()).open() as fh:
+            self.assertEqual(fh.read(), "deferred")
 
 
 class FakeCouchDatabase(object):
