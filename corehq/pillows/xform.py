@@ -23,7 +23,6 @@ from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
-from .base import HQPillow
 
 
 def is_valid_date(txt):

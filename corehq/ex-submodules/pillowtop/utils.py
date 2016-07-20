@@ -115,11 +115,8 @@ def get_all_pillows_json():
 
 def get_pillow_json(pillow_config):
     assert isinstance(pillow_config, PillowConfig)
-    from pillowtop.listener import AliasedElasticPillow
 
-    pillow_class = pillow_config.get_class()
-    pillow = (pillow_class(online=False) if issubclass(pillow_class, AliasedElasticPillow)
-              else pillow_config.get_instance())
+    pillow = pillow_config.get_instance()
 
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.timestamp
