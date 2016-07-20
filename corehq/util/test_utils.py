@@ -12,7 +12,6 @@ from contextlib import contextmanager
 
 from functools import wraps
 from django.conf import settings
-from django.test.utils import override_settings
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
