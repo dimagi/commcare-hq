@@ -58,6 +58,7 @@ def should_sync_locations(last_sync, location_db, restore_user):
 
 
 class LocationFixtureProvider(object):
+    id = 'commtrack:locations'
 
     def __init__(self, serializers=None):
         if serializers is None:
