@@ -33,6 +33,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 // form entry time, doggy
                 FormplayerFrontend.request('startForm', response, this.app_id);
             }
+            else if(response.exception){
+                FormplayerFrontend.request('error', response);
+            }
         },
 
         initialize: function (params) {
