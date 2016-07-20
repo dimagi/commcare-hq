@@ -206,6 +206,12 @@ def _get_metadata_node(location):
 
 def _location_to_fixture(location_db, location, type):
     root = Element(type.code, {'id': location.location_id})
+    _fill_in_location_element(root, location)
+    _append_children(root, location_db, location_db.by_parent[location.location_id])
+    return root
+
+
+def _fill_in_location_element(xml_root, location):
     fixture_fields = [
         'name',
         'site_code',
@@ -219,8 +225,6 @@ def _location_to_fixture(location_db, location, type):
         field_node = Element(field)
         val = getattr(location, field)
         field_node.text = unicode(val if val is not None else '')
-        root.append(field_node)
+        xml_root.append(field_node)
 
-    root.append(_get_metadata_node(location))
-    _append_children(root, location_db, location_db.by_parent[location.location_id])
-    return root
+    xml_root.append(_get_metadata_node(location))
