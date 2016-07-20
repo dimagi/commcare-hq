@@ -34,7 +34,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 FormplayerFrontend.request('startForm', response, this.app_id);
             }
             else if(response.exception){
-                FormplayerFrontend.request('error', response);
+                FormplayerFrontend.request('error', response.exception);
             }
         },
 

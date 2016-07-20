@@ -68,7 +68,7 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
 });
 
 FormplayerFrontend.reqres.setHandler('error', function(errorMessage) {
-    showError(errorMessage.exception, $("#cloudcare-notifications"), 10000);
+    showError(errorMessage, $("#cloudcare-notifications"), 10000);
 });
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
