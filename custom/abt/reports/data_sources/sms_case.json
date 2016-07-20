@@ -456,7 +456,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_2_name"
+                    "level_2_id"
                   ]
                 },
                 "type": "related_doc",
@@ -740,7 +740,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_3_name"
+                    "level_3_id"
                   ]
                 },
                 "type": "related_doc",
