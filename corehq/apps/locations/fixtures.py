@@ -104,7 +104,7 @@ class HierarchicalLocationSerializer(object):
 
 
 class FlatLocationSerializer(object):
-    id = 'commtrack:locations_v2'
+    id = 'locations'
 
     def get_xml_nodes(self, restore_user, all_locations):
         if not toggles.FLAT_LOCATION_FIXTURE.enabled(restore_user.project.name):
