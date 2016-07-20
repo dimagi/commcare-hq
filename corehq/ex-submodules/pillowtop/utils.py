@@ -137,11 +137,15 @@ def get_pillow_json(pillow_config):
         time_since_last = ''
         hours_since_last = None
     offsets = pillow.get_change_feed().get_current_offsets()
+
+    def _couch_seq_to_int(checkpoint, seq):
+        return force_seq_int(seq) if checkpoint.sequence_format != 'json' else seq
+
     return {
         'name': pillow_config.name,
         'seq_format': checkpoint.sequence_format,
-        'seq': checkpoint.wrapped_sequence,
-        'old_seq': force_seq_int(checkpoint.old_sequence) or 0,
+        'seq': _couch_seq_to_int(checkpoint, checkpoint.wrapped_sequence),
+        'old_seq': _couch_seq_to_int(checkpoint, checkpoint.old_sequence) or 0,
         'offsets': offsets,
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last
