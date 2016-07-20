@@ -104,6 +104,9 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
 class FormReindexAccessor(ReindexAccessor):
 
+    def __init__(self, include_attachments=True):
+        self.include_attachments = include_attachments
+
     @property
     def startkey_attribute_name(self):
         return 'received_on'
@@ -115,7 +118,7 @@ class FormReindexAccessor(ReindexAccessor):
             pass
 
     def doc_to_json(self, doc):
-        return doc.to_json(include_attachments=True)
+        return doc.to_json(include_attachments=self.include_attachments)
 
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         received_on_since = startkey or datetime.min

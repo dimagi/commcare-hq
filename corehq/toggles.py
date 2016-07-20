@@ -854,3 +854,11 @@ ZAPIER_INTEGRATION = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
+
+
+EMG_AND_REC_SMS_HANDLERS = StaticToggle(
+    'emg_and_rec_sms_handlers',
+    'Enable emergency and receipt sms handlers used in ILSGateway',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)

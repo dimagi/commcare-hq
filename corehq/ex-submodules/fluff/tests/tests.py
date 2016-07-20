@@ -163,7 +163,7 @@ class FluffTest(TestCase):
         )
         for cls in [MockIndicators, MockIndicatorsWithGetters]:
             classname = cls.__name__
-            pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
+            pillow = cls.pillow()()
             pillow.process_change(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}))
             indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
             self.assertIsNotNone(indicator)
@@ -527,7 +527,7 @@ class FluffTest(TestCase):
         )
         for cls in [MockIndicators, MockIndicatorsWithGetters]:
             classname = cls.__name__
-            pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
+            pillow = cls.pillow()()
             pillow.process_change(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}))
             indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
             self.assertIsNotNone(indicator)
@@ -535,7 +535,7 @@ class FluffTest(TestCase):
         doc['doc_type'] = 'MockArchive'
         for cls in [MockIndicators, MockIndicatorsWithGetters]:
             classname = cls.__name__
-            pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
+            pillow = cls.pillow()()
             pillow.process_change(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}))
             indicator = self.fakedb.mock_docs.get("%s-123" % classname, None)
             self.assertIsNone(indicator)
@@ -551,7 +551,7 @@ class FluffTest(TestCase):
         )
 
         for cls in [MockIndicatorsSql]:
-            pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
+            pillow = cls.pillow()()
             pillow.process_change(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}))
             with self.engine.begin() as connection:
                 rows = connection.execute(sqlalchemy.select([cls._table]))
@@ -559,19 +559,11 @@ class FluffTest(TestCase):
 
         doc['doc_type'] = 'MockArchive'
         for cls in [MockIndicatorsSql]:
-            pillow = cls.pillow()(chunk_size=0, checkpoint=mock_checkpoint())
+            pillow = cls.pillow()()
             pillow.process_change(change_from_couch_row({'changes': [], 'id': '123', 'seq': 1, 'doc': doc}))
             with self.engine.begin() as connection:
                 rows = connection.execute(sqlalchemy.select([cls._table]))
                 self.assertEqual(rows.rowcount, 0)
-
-
-def mock_checkpoint():
-    # for some reason the testrunner chokes on these if they are not defined inline.
-    # in the future we may want to explicitly use django tests instead of regular tests
-    # if we're going to depend on a django environment.
-    from pillowtop.checkpoints.manager import PillowCheckpoint
-    return PillowCheckpoint('mock-checkpoint')
 
 
 class MockDoc(Document):

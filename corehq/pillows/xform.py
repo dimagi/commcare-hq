@@ -23,10 +23,6 @@ from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
-from .base import HQPillow
-
-UNKNOWN_VERSION = 'XXX'
-UNKNOWN_UIVERSION = 'XXX'
 
 
 def is_valid_date(txt):
@@ -50,23 +46,6 @@ def flatten(d, parent_key='', delimiter='/'):
         elif not isinstance(v, list):
             items.append((new_key, v))
     return dict(items)
-
-
-class XFormPillow(HQPillow):
-    document_class = XFormInstance
-    couch_filter = "couchforms/xforms"
-    es_alias = "xforms"
-    es_type = XFORM_INDEX_INFO.type
-    es_index = XFORM_INDEX_INFO.index
-    include_docs = False
-
-    # for simplicity, the handlers are managed on the domain level
-    handler_domain_map = {}
-    default_mapping = XFORM_INDEX_INFO.mapping
-
-    def change_transform(self, doc_dict):
-        if not xform_pillow_filter(doc_dict):
-            return transform_xform_for_elasticsearch(doc_dict)
 
 
 def xform_pillow_filter(doc_dict):

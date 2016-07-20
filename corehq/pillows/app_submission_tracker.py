@@ -120,5 +120,8 @@ def get_couch_app_form_submission_tracker_reindexer():
 
 def get_sql_app_form_submission_tracker_reindexer():
     iteration_key = "SqlAppFormSubmissionTrackerPillow_reindexer"
-    doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor())
+    doc_provider = SqlDocumentProvider(
+        iteration_key,
+        FormReindexAccessor(include_attachments=False)
+    )
     return AppFormSubmissionReindexer(doc_provider, FORM_SQL, 'form_processor_xforminstancesql')

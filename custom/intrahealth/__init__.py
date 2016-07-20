@@ -3,7 +3,7 @@ import re
 from corehq.apps.products.models import SQLProduct
 from dimagi.utils.dates import force_to_datetime
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.locations.models import Location, SQLLocation
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
 from corehq.util.translation import localize
@@ -132,11 +132,10 @@ def get_rupture_products_ids(form):
 
 
 def _get_location(form):
-    loc = None
     loc_id = form.form.get('location_id')
     if loc_id:
         try:
-            loc = Location.get(loc_id)
+            return Location.get(loc_id)
         except ResourceNotFound:
             logging.info('Location %s Not Found.' % loc_id)
     else:
@@ -144,12 +143,11 @@ def _get_location(form):
         if not user_id:
             return None
         try:
-            user = CommCareUser.get(user_id)
-            loc = user.location
+            user = CouchUser.get_by_user_id(user_id)
+            if isinstance(user, CommCareUser):
+                return user.location
         except ResourceNotFound:
-            logging.info('Location %s Not Found.' % loc)
-
-    return loc
+            logging.info('Location for user %s Not Found.' % user_id)
 
 
 def get_domain(form):

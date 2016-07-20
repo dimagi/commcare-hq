@@ -23,10 +23,15 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
 
         events: {
             'click #incompleteSessionsItem': 'incompleteSessionsClick',
+            'click #syncItem': 'syncClick',
         },
         incompleteSessionsClick: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger("sessions");
+        },
+        syncClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("sync");
         },
     });
 })

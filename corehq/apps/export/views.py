@@ -10,7 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from corehq.apps.export.export import get_export_download
+from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.utils import use_new_exports
@@ -59,6 +59,7 @@ from corehq.apps.export.models import (
 from corehq.apps.export.const import (
     FORM_EXPORT,
     CASE_EXPORT,
+    MAX_EXPORTABLE_ROWS,
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
@@ -878,6 +879,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
     def download_export_form(self):
         return self.filter_form_class(
             self.domain_object,
+            timezone=self.timezone,
             initial={
                 'type_or_group': 'type',
             },
@@ -896,7 +898,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
 
     def _get_filter_form(self, filter_form_data):
         filter_form = self.filter_form_class(
-            self.domain_object, filter_form_data
+            self.domain_object, self.timezone, filter_form_data,
         )
         if not filter_form.is_valid():
             raise ExportFormValidationException()
@@ -1643,6 +1645,7 @@ class GenericDownloadNewExportMixin(object):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
         export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
         self._check_deid_permissions(export_instances)
+        self._check_export_size(export_instances, export_filters)
 
         return get_export_download(
             export_instances=export_instances,
@@ -1672,6 +1675,16 @@ class GenericDownloadNewExportMixin(object):
                         _("You do not have permission to export this "
                         "De-Identified export.")
                     )
+
+    def _check_export_size(self, export_instances, filters):
+        count = 0
+        for instance in export_instances:
+            count += get_export_size(instance, filters)
+        if count > MAX_EXPORTABLE_ROWS:
+            raise ExportAsyncException(
+                _("This export contains " + count + " rows. Please change the " +
+                "filters to be less than " + MAX_EXPORTABLE_ROWS + "rows.")
+            )
 
 
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):

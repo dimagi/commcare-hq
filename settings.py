@@ -1405,8 +1405,16 @@ CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
     'core': [
-        'corehq.pillows.case.CasePillow',
-        'corehq.pillows.xform.XFormPillow',
+        {
+            'name': 'CaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'XFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
+        },
         {
             'name': 'UserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1485,16 +1493,6 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
         },
         {
-            'name': 'XFormToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'CaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
-        },
-        {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
@@ -1503,12 +1501,12 @@ PILLOWTOPS = {
     'cache': [
         {
             'name': 'CacheInvalidatePillow',
-            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_main_cache_invalidation_pillow',
         },
         {
             'name': 'UserCacheInvalidatePillow',
-            'class': 'corehq.pillows.cacheinvalidate.CacheInvalidatePillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
         },
     ],

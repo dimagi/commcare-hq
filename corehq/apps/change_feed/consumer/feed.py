@@ -143,12 +143,11 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
     """
 
     def __init__(self, checkpoint, checkpoint_frequency, change_feed):
-        self.checkpoint = checkpoint
-        self.checkpoint_frequency = checkpoint_frequency
+        super(MultiTopicCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency)
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
         # todo: do this somewhere smarter?
-        checkpoint_doc = self.checkpoint.get_or_create_wrapped().document
+        checkpoint_doc = self.checkpoint.get_or_create_wrapped()
         if checkpoint_doc.sequence_format != 'json' or checkpoint_doc.sequence == DEFAULT_EMPTY_CHECKPOINT_SEQUENCE:
             checkpoint_doc.sequence_format = 'json'
             # convert initial default to json default
@@ -158,7 +157,8 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
 
     def fire_change_processed(self, change, context):
         if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
-            self.checkpoint.update_to(json.dumps(self.change_feed.get_current_checkpoint_offsets()))
+            updated_to = self.change_feed.get_current_checkpoint_offsets()
+            self.checkpoint.update_to(json.dumps(updated_to))
 
 
 def change_from_kafka_message(message):

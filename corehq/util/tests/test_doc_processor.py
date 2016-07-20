@@ -68,8 +68,8 @@ class TestResumableDocsByTypeIterator(TestCase):
             pass
         return doc
 
-    def get_iterator(self):
-        return resumable_docs_by_type_iterator(self.db, self.doc_types, self.iteration_key, 2)
+    def get_iterator(self, chunk_size=2):
+        return resumable_docs_by_type_iterator(self.db, self.doc_types, self.iteration_key, chunk_size)
 
     def test_iteration(self):
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys)
@@ -80,6 +80,25 @@ class TestResumableDocsByTypeIterator(TestCase):
         # stop/resume iteration
         self.itr = self.get_iterator()
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[5:])
+
+    def test_resume_iteration_with_new_chunk_size(self):
+        def data_function(*args, **kw):
+            chunk = real_data_function(*args, **kw)
+            chunks.append(len(chunk))
+            return chunk
+        chunks = []
+        real_data_function = self.itr.data_function
+        self.itr.data_function = data_function
+        itr = iter(self.itr)
+        self.assertEqual([next(itr)["_id"] for i in range(6)], self.sorted_keys[:6])
+        self.assertEqual(chunks, [2, 1, 0, 2, 1])  # max chunk: 2
+        # stop/resume iteration
+        self.itr = self.get_iterator(chunk_size=3)
+        chunks = []
+        real_data_function = self.itr.data_function
+        self.itr.data_function = data_function
+        self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys[5:])
+        self.assertEqual(chunks, [1, 0, 3, 0])  # max chunk: 3
 
     def test_iteration_with_retry(self):
         itr = iter(self.itr)
@@ -143,10 +162,11 @@ class BaseResumableSqlModelIteratorTest(object):
 
     def tearDown(self):
         self.itr.discard_state()
+        super(BaseResumableSqlModelIteratorTest, self).tearDown()
 
-    def get_iterator(self, deleted_doc_ids=None):
+    def get_iterator(self, deleted_doc_ids=None, chunk_size=2):
         reindex_accessor = SimulateDeleteReindexAccessor(self.reindex_accessor, deleted_doc_ids)
-        return resumable_sql_model_iterator(self.iteration_key, reindex_accessor, 2)
+        return resumable_sql_model_iterator(self.iteration_key, reindex_accessor, chunk_size)
 
     def test_iteration(self):
         self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids)
@@ -157,6 +177,25 @@ class BaseResumableSqlModelIteratorTest(object):
         # stop/resume iteration
         self.itr = self.get_iterator()
         self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
+
+    def test_resume_iteration_with_new_chunk_size(self):
+        def data_function(*args, **kw):
+            chunk = real_data_function(*args, **kw)
+            chunks.append(len(chunk))
+            return chunk
+        chunks = []
+        real_data_function = self.itr.data_function
+        self.itr.data_function = data_function
+        itr = iter(self.itr)
+        self.assertEqual([next(itr)["_id"] for i in range(6)], self.all_doc_ids[:6])
+        self.assertEqual(chunks, [2, 2, 2])  # max chunk: 2
+        # stop/resume iteration
+        self.itr = self.get_iterator(chunk_size=3)
+        chunks = []
+        real_data_function = self.itr.data_function
+        self.itr.data_function = data_function
+        self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
+        self.assertEqual(chunks, [3, 2, 0])  # max chunk: 3
 
     def test_iteration_with_retry(self):
         itr = iter(self.itr)
@@ -225,8 +264,8 @@ class LedgerResumableSqlModelIteratorTest(BaseResumableSqlModelIteratorTest, Tes
 
     @classmethod
     def tearDownClass(cls):
-        super(LedgerResumableSqlModelIteratorTest, cls).tearDownClass()
         cls.product.delete()
+        super(LedgerResumableSqlModelIteratorTest, cls).tearDownClass()
 
 
 class DemoProcessor(BaseDocProcessor):

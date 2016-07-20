@@ -60,10 +60,10 @@ class PillowBase(object):
         pass
 
     def get_last_checkpoint_sequence(self):
-        return self.checkpoint.get_or_create_wrapped().document.wrapped_sequence
+        return self.checkpoint.get_or_create_wrapped().wrapped_sequence
 
     def get_checkpoint(self, verify_unchanged=False):
-        return self.checkpoint.get_or_create_wrapped(verify_unchanged=verify_unchanged).document
+        return self.checkpoint.get_or_create_wrapped(verify_unchanged=verify_unchanged)
 
     def set_checkpoint(self, change):
         self.checkpoint.update_to(change['seq'])
@@ -108,7 +108,7 @@ class PillowBase(object):
             handle_pillow_error(self, change, ex)
 
     @abstractmethod
-    def process_change(self, change, is_retry_attempt=False):
+    def process_change(self, change):
         pass
 
     @abstractmethod
@@ -161,7 +161,7 @@ class ConstructedPillow(PillowBase):
     def get_change_feed(self):
         return self._change_feed
 
-    def process_change(self, change, is_retry_attempt=False):
+    def process_change(self, change):
         self._processor.process_change(self, change)
 
     def fire_change_processed_event(self, change, context):
