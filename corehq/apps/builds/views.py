@@ -30,16 +30,14 @@ def post(request):
     artifacts       = request.FILES.get('artifacts')
     build_number    = request.POST.get('build_number')
     version         = request.POST.get('version')
+    try:
+        build_number = int(build_number)
+    except Exception:
+        return HttpResponseBadRequest("build_number has to be a base-10 integer")
 
     if not artifacts:
         CommCareBuild.create_without_artifacts(version, build_number)
     else:
-        try:
-            build_number = int(build_number)
-        except Exception:
-            print "%r" % build_number
-            return HttpResponseBadRequest("build_number has to be a base-10 integer")
-
         CommCareBuild.create_from_zip(artifacts, build_number=build_number, version=version)
     return HttpResponse()
 
