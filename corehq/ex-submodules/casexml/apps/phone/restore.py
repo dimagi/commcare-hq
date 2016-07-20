@@ -417,7 +417,8 @@ class RestoreState(object):
         if self.params.sync_log_id:
             try:
                 sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
-                self._check_for_date_opened_bug(sync_log)
+                if settings.SERVER_ENVIRONMENT == "production":
+                    self._check_for_date_opened_bug(sync_log)
             except ResourceNotFound:
                 # if we are in loose mode, return an HTTP 412 so that the phone will
                 # just force a fresh sync

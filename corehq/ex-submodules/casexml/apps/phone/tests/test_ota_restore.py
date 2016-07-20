@@ -315,6 +315,7 @@ class WebUserOtaRestoreTest(OtaRestoreTest):
         self.restore_user = create_restore_user(self.project.name, is_mobile_user=False)
 
 
+@override_settings(SERVER_ENVIRONMENT="production")  # This is only relevant for production
 class DateOpenedForceCloseTest(BaseOtaRestoreTest):
     def setUp(self):
         super(DateOpenedForceCloseTest, self).setUp()
