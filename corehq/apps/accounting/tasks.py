@@ -286,7 +286,7 @@ def remind_dimagi_contact_subscription_ending_40_days():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 40 days
     """
-    send_subscription_reminder_emails_dimagi_contact(40)
+    send_subscription_reminder_emails_dimagi_contact(60)
 
 
 def send_subscription_reminder_emails(num_days):
