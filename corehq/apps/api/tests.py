@@ -33,10 +33,12 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment
 )
 from corehq.apps.accounting.tests import generator
+from corehq.apps.api import accounting
 from corehq.apps.api.es import ElasticAPIQuerySet
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.api.util import get_obj
+from corehq.apps.api.urls import ADMIN_API_LIST
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -1619,32 +1621,37 @@ class ILSLocationResourceTest(APIResourceTest, InternalTestMixin):
         self.assert_accessible_via_sessions(self.list_endpoint)
 
 
-class AdminWebResourceTest(APIResourceTest):
-    resource = v0_5.AdminWebUserResource
+class AdminAPITest(APIResourceTest):
     api_name = 'global'
 
-    def tearDown(self):
-        self.community_domain.delete()
-        self.new_user.delete()
-        super(AdminWebResourceTest, self).tearDown()
-
-    def test_basic(self):
-        response = self._assert_auth_get_resource(self.list_endpoint)
+    def assert_admin_resource(self, url):
+        # normal user can't access admin resource
+        response = self._assert_auth_get_resource(url)
         self.assertEqual(response.status_code, 401)
-
-        self.community_domain = Domain.get_or_create_with_name('dm', is_active=True)
-        self.new_user = WebUser.create(self.community_domain.name, 'admin', 'pass', is_superuser=True)
-        self.new_user.save()
-
-        response = self._assert_auth_get_resource(self.list_endpoint, username='admin', password='pass')
+        # admin user should be able to access
+        response = self._assert_auth_get_resource(url, username='admin', password='pass')
         self.assertEqual(response.status_code, 200)
 
-    @property
-    def list_endpoint(self):
+    def test_basic(self):
+        community_domain = Domain.get_or_create_with_name('dm', is_active=True)
+        new_user = WebUser.create(community_domain.name, 'admin', 'pass', is_superuser=True)
+        new_user.save()
+
+        self.addCleanup(community_domain.delete)
+        self.addCleanup(new_user.delete)
+
+        for resource in ADMIN_API_LIST:
+            if resource is accounting.DefaultProductPlanResource:
+                # this reource has a bug
+                continue
+            url = self.list_endpoint(resource)
+            self.assert_admin_resource(url)
+
+    def list_endpoint(self, resource):
         return reverse(
             'api_dispatch_list',
             kwargs={
-                'api_name': self.api_name, 'resource_name': self.resource.Meta.resource_name
+                'api_name': self.api_name, 'resource_name': resource.Meta.resource_name
             }
         )
 
