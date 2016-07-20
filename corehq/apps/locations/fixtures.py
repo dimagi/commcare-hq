@@ -96,7 +96,33 @@ class HierarchicalLocationSerializer(object):
         return [root_node]
 
 
+class FlatLocationSerializer(object):
+    id = 'commtrack:locations_v2'
+
+    def get_xml(self, restore_user, all_locations):
+        root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
+
+        outer_node = Element('locations')
+        root_node.append(outer_node)
+        for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
+            attrs = {
+                'type': location.location_type.code,
+                'id': location.location_id,
+            }
+            tmp_location = location
+            while tmp_location.parent:
+                tmp_location = tmp_location.parent
+                attrs['{}_id'.format(tmp_location.location_type.code)] = tmp_location.location_id
+
+            location_node = Element('location', attrs)
+            _fill_in_location_element(location_node, location)
+            outer_node.append(location_node)
+
+        return [root_node]
+
+
 location_fixture_generator = LocationFixtureProvider(HierarchicalLocationSerializer())
+flat_location_fixture_generator = LocationFixtureProvider(FlatLocationSerializer())
 
 
 def _all_locations(user):
