@@ -1779,6 +1779,7 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
+    'care-macf-ghana': 'custom.care_pathways'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
