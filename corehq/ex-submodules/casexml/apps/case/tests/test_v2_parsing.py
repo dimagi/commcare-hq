@@ -41,9 +41,7 @@ class Version2CaseParsingTest(TestCase):
         self.assertFalse(case.closed)
         self.assertEqual("bar-user-id", case.user_id)
         self.assertEqual("bar-user-id", case.opened_by)
-        creation_date = datetime(2011, 12, 6, 13, 42, 50)
-        self.assertEqual(creation_date, case.modified_on)
-        self.assertEqual(creation_date, case.opened_on)
+        self.assertEqual(datetime(2011, 12, 6, 13, 42, 50), case.modified_on)
         self.assertEqual("v2_case_type", case.type)
         self.assertEqual("test case name", case.name)
 
@@ -163,9 +161,6 @@ class Version2CaseParsingTest(TestCase):
                     <case_name>test case name</case_name>
                     <owner_id>bar-user-id</owner_id>
                 </create>
-                <update>
-                    <date_opened>2011-12-06T13:42:50.000000Z</date_opened>
-                </update>
                 <index>
                     <baz_ref case_type="bop">some_other_referenced_id</baz_ref>
                     <foo_ref case_type="bar">some_referenced_id</foo_ref>
