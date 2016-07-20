@@ -14,13 +14,14 @@ from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_
 from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
-    BadStateException, RestoreException,
+    BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
     SyncLog,
     get_properly_wrapped_sync_log,
@@ -416,6 +417,7 @@ class RestoreState(object):
         if self.params.sync_log_id:
             try:
                 sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
+                self._check_for_date_opened_bug(sync_log)
             except ResourceNotFound:
                 # if we are in loose mode, return an HTTP 412 so that the phone will
                 # just force a fresh sync
@@ -434,6 +436,26 @@ class RestoreState(object):
             return sync_log
         else:
             return None
+
+    def _check_for_date_opened_bug(self, sync_log):
+        introduced_date = datetime(2016, 7, 19, 19, 15)
+        reverted_date = datetime(2016, 7, 20, 9, 15)  # date bug was reverted on HQ
+        resolved_date = datetime(2016, 7, 21, 0, 0)  # approximate date this fix was deployed
+
+        if introduced_date < sync_log.date < reverted_date:
+            raise DateOpenedBugException(self.restore_user, sync_log._id)
+
+        # if the last synclog was before the time we pushed out this resolution,
+        # we also need to check that they don't have a bad sync
+        if reverted_date <= sync_log.date < resolved_date:
+            synclogs = SyncLog.view(
+                "phone/sync_logs_by_user",
+                reduce=True,
+                startkey=[sync_log.user_id, json_format_datetime(introduced_date), None],
+                endkey=[sync_log.user_id, json_format_datetime(reverted_date), {}],
+            ).first()
+            if synclogs and synclogs.get('value') != 0:
+                raise DateOpenedBugException(self.restore_user, sync_log._id)
 
     @property
     def is_initial(self):
