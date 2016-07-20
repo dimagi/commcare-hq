@@ -1922,7 +1922,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
-        return CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+        case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+        return case.case_id if case else None
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
