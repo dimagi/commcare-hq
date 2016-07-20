@@ -23,7 +23,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.sql_db.connections import connection_manager
 from corehq.sql_db.tests.utils import temporary_database
-from corehq.util.test_utils import OverridableSettingsTestMixin
 
 CASE_TYPE = 'cc_flw'
 
@@ -125,7 +124,7 @@ def expected_standard_indicators(no_data=False, include_legacy=True, include_tot
     return expected
 
 
-class BaseCCTests(OverridableSettingsTestMixin, TestCase):
+class BaseCCTests(TestCase):
     domain_name = None
 
     def setUp(self):
