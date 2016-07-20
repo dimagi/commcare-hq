@@ -1652,6 +1652,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
                 'slug': 'my_other_field_filter',
             }
         ]
+        cls.report_title = "test report"
 
         cls.data_source = DataSourceConfiguration(
             domain=cls.domain.name,
@@ -1661,6 +1662,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
         cls.data_source.save()
 
         cls.report_configuration = ReportConfiguration(
+            title=cls.report_title,
             domain=cls.domain.name,
             config_id=cls.data_source._id,
             columns=cls.report_columns,
@@ -1678,7 +1680,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
 
         self.assertEqual(
             set(response_dict.keys()),
-            {'resource_uri', 'filters', 'columns', 'id'}
+            {'resource_uri', 'filters', 'columns', 'id', 'title'}
         )
 
         self.assertEqual(
@@ -1689,6 +1691,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
             [{'datatype': x['datatype'], 'slug': x['slug']} for x in self.report_filters],
             filters
         )
+        self.assertEqual(response_dict['title'], self.report_title)
 
     def test_disallowed_methods(self):
         response = self._assert_auth_post_resource(

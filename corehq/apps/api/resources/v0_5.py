@@ -643,6 +643,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
 
 class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     id = fields.CharField(attribute='get_id', readonly=True, unique=True)
+    title = fields.CharField(readonly=True, attribute="title", null=True)
     filters = fields.ListField(readonly=True)
     columns = fields.ListField(readonly=True)
 
