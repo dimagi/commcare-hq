@@ -9,14 +9,14 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import get_simple_form_xml, should_use_sql_backend
-from corehq.util.test_utils import OverridableSettingsTestMixin, create_and_save_a_case, create_and_save_a_form
+from corehq.util.test_utils import create_and_save_a_case, create_and_save_a_form
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import TestProcessor
 from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class KafkaPublishingTest(OverridableSettingsTestMixin, TestCase):
+class KafkaPublishingTest(TestCase):
 
     domain = 'kafka-publishing-test'
 
