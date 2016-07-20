@@ -389,7 +389,7 @@
                   }
                 }
               },
-            "mali": {
+            "Mali": {
                 "default": 0,
                 "cases": {
                     "koulikoro": 169156,
@@ -456,7 +456,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_2_name"
+                    "level_2_id"
                   ]
                 },
                 "type": "related_doc",
@@ -571,7 +571,7 @@
                 }
               }
             },
-            "mali": {
+            "Mali": {
               "default": 0,
               "cases": {
                 "baroueli": 73528,
@@ -740,7 +740,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_3_name"
+                    "level_3_id"
                   ]
                 },
                 "type": "related_doc",
@@ -959,7 +959,7 @@
                     }
                   }
                 },
-            "mali": {
+            "Mali": {
               "default": 0,
               "cases": {
                 "koulikoro": 66927,
@@ -1013,7 +1013,7 @@
         "expression": {
           "default": 0,
           "cases": {
-            "mali": {
+            "Mali": {
               "default": 0,
               "cases": {
                 "banido": 1968,
@@ -1153,7 +1153,7 @@
             "Rwanda": 144417,
             "Zambia": 539348,
             "Ethiopia": 708258,
-            "mali": 242684,
+            "Mali": 242684,
             "Madagascar": 72120,
             "Tanzania": 502934,
             "benin": 270141
