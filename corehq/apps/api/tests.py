@@ -1832,9 +1832,9 @@ class TestConfigurableReportDataResource(APIResourceTest):
             self.single_endpoint(self.report_configuration._id, {"limit": 10000}))
         self.assertEqual(response.status_code, 400)
 
-    def test_page_start(self):
+    def test_page_offset(self):
         response = self.client.get(
-            self.single_endpoint(self.report_configuration._id, {"start": 2}))
+            self.single_endpoint(self.report_configuration._id, {"offset": 2}))
         response_dict = json.loads(response.content)
         self.assertEqual(response_dict["total_records"], len(self.cases))
         self.assertEqual(len(response_dict["data"]), len(self.cases) - 2)
@@ -1860,7 +1860,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
         query_dict.update({"some_filter": "bar"})
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(
             self.domain.name, "123", 100, 50, 3450, query_dict)
-        self.assertEqual(next, self.single_endpoint("123", {"start": 150, "limit": 50, "some_filter": "bar"}))
+        self.assertEqual(next, self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"}))
 
         # It's the last page
         next = v0_5.ConfigurableReportDataResource(api_name=self.api_name)._get_next_page(

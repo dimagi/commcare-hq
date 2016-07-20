@@ -527,7 +527,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
 
     def _get_start_param(self, bundle):
         try:
-            start = int(bundle.request.GET.get('start', 0))
+            start = int(bundle.request.GET.get('offset', 0))
             if start < 0:
                 raise ValueError
         except (ValueError, TypeError):
@@ -550,7 +550,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         if total_records > start + limit:
             start += limit
             new_get_params = get_query_dict.copy()
-            new_get_params["start"] = start
+            new_get_params["offset"] = start
             # limit has not changed, but it may not have been present in get params before.
             new_get_params["limit"] = limit
             return reverse('api_dispatch_detail', kwargs=dict(
@@ -629,8 +629,8 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         uri = super(ConfigurableReportDataResource, self).get_resource_uri(bundle_or_obj, url_name)
         if bundle_or_obj is not None and uri:
             get_params = get_obj(bundle_or_obj).get_params.copy()
-            if "start" not in get_params:
-                get_params["start"] = 0
+            if "offset" not in get_params:
+                get_params["offset"] = 0
             if "limit" not in get_params:
                 get_params["limit"] = self.LIMIT_DEFAULT
             uri += "?{}".format(get_params.urlencode())
