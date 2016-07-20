@@ -90,6 +90,12 @@ def _create_custom_app_strings(app, lang, for_default=False):
                                 module, detail_type, column, index, property
                             ), trans(values)
 
+            # To list app strings for properties used as sorting properties only
+            column_fields = [column.field for column in detail.get_columns()]
+            only_sort_options = [se for se in detail.sort_elements if se.field not in column_fields]
+            for sort_element in only_sort_options:
+                yield id_strings.sort_only_column_header_locale(module, detail_type, sort_element), sort_element.display
+
             for tab in detail.get_tabs():
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)
 

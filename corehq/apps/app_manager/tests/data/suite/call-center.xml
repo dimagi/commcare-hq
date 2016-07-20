@@ -90,6 +90,23 @@
         </text>
       </sort>
     </field>
+    <field>
+      <header width="0">
+        <text>
+          <locale id="m0.case_short.phone_number.display"/>
+        </text>
+      </header>
+      <template width="0">
+        <text>
+          <xpath function="phone_number"/>
+        </text>
+      </template>
+      <sort direction="descending" order="2" type="integer">
+        <text>
+          <xpath function="phone_number"/>
+        </text>
+      </sort>
+    </field>
   </detail>
   <detail id="m0_case_long">
     <title>

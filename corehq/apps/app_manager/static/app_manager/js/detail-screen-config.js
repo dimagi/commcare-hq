@@ -1078,7 +1078,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 field: row.textField.val(),
                                 type: row.type(),
                                 direction: row.direction(),
-                                display: row.display()
+                                display: row.display(),
                             };
                         }));
                     }

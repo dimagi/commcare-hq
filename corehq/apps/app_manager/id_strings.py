@@ -90,6 +90,15 @@ def detail_column_header_locale(module, detail_type, column):
     )
 
 
+@pattern('m%d.%s.%s.display')
+def sort_only_column_header_locale(module, detail_type, sort_element):
+    return u"m{module.id}.{detail_type}.{field}.display".format(
+        detail_type=detail_type,
+        module=module,
+        d=sort_element,
+        field=sort_element.field
+    )
+
 @pattern('m%d.%s.%s_%s_%s.enum.%s')
 def detail_column_enum_variable(module, detail_type, column, key_as_var):
     field = column.field.replace('#', '')
