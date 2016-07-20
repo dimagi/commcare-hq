@@ -3,12 +3,12 @@ from django.test import TestCase
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.api.es import report_term_filter
 from corehq.pillows.base import VALUE_TAG
-from corehq.pillows.case import CasePillow
+from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.reportcase import transform_case_to_report_es
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
-from corehq.pillows.xform import XFormPillow
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_MAPPING
+from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.test_utils import softer_assert
 
 XFORM_MULTI_CASES = {
@@ -458,8 +458,7 @@ class testReportCaseProcessing(TestCase):
         Test that xform pillow can process and cleanup a single xform with a case submission
         """
         xform = XFORM_SINGLE_CASE
-        pillow = XFormPillow(online=False)
-        changed = pillow.change_transform(xform)
+        changed = transform_xform_for_elasticsearch(xform)
 
         self.assertIsNone(changed['form']['case'].get('@date_modified'))
         self.assertIsNotNone(xform['form']['case']['@date_modified'])
@@ -470,8 +469,7 @@ class testReportCaseProcessing(TestCase):
         Test that xform pillow can process and cleanup a single xform with a list of cases in it
         """
         xform = XFORM_MULTI_CASES
-        pillow = XFormPillow(online=False)
-        changed = pillow.change_transform(xform)
+        changed = transform_xform_for_elasticsearch(xform)
 
         changed_cases = extract_case_blocks(changed)
         orig_cases = extract_case_blocks(xform)
@@ -486,9 +484,8 @@ class testReportCaseProcessing(TestCase):
         case_owner_id = CASE_WITH_OWNER_ID
         case_no_owner_id = CASE_NO_OWNER_ID
 
-        pillow = CasePillow(online=False)
-        changed_with_owner_id = pillow.change_transform(case_owner_id)
-        changed_with_no_owner_id = pillow.change_transform(case_no_owner_id)
+        changed_with_owner_id = transform_case_for_elasticsearch(case_owner_id)
+        changed_with_no_owner_id = transform_case_for_elasticsearch(case_no_owner_id)
 
         self.assertEqual(changed_with_owner_id.get("owner_id"), "testuser")
         self.assertEqual(changed_with_no_owner_id.get("owner_id"), "testuser")

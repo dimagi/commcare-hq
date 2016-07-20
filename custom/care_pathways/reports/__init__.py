@@ -1,6 +1,8 @@
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.style.decorators import use_nvd3_v3
+from custom.care_pathways.filters import GeographyFilter, MalawiPPTYearFilter, PPTYearFilter, GenderFilter, \
+    GroupLeadershipFilter, CBTNameFilter, RealOrTestFilter, ScheduleFilter
 from custom.care_pathways.utils import get_domain_configuration
 
 
@@ -53,3 +55,21 @@ class CareBaseReport(GetParamsMixin, GenericTabularReport, CustomProjectReport, 
                 for f in self.filter_classes
             ],
         })
+
+    @property
+    def fields(self):
+        filters = [GeographyFilter]
+        if self.domain in ('care-macf-malawi', 'care-macf-ghana'):
+            filters.append(MalawiPPTYearFilter)
+        else:
+            filters.append(PPTYearFilter)
+        filters.extend([
+            GenderFilter,
+            GroupLeadershipFilter,
+            CBTNameFilter
+        ])
+        if self.domain == 'care-macf-malawi':
+            filters.append(RealOrTestFilter)
+        if self.domain == 'pathways-india-mis':
+            filters.append(ScheduleFilter)
+        return filters

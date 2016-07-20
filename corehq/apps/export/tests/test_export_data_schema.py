@@ -558,6 +558,7 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         cls.current_app = Application.wrap(cls.get_json('parent_child_case_application'))
+        cls.current_app.copy_of = None
 
         cls.apps = [
             cls.current_app,

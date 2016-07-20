@@ -558,9 +558,10 @@ class Field(OrderedXmlObject):
 
 class Lookup(OrderedXmlObject):
     ROOT_NAME = 'lookup'
-    ORDER = ('extras', 'responses', 'field')
+    ORDER = ('auto_launch', 'extras', 'responses', 'field')
 
     name = StringField("@name")
+    auto_launch = SimpleBooleanField("@auto_launch", "true", "false")
     action = StringField("@action", required=True)
     image = StringField("@image")
     extras = NodeListField('extra', Extra)

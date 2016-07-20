@@ -82,7 +82,7 @@ class ArgsListProvider(ArgsProvider):
         return last_args, next_kwargs
 
 
-def paginate_function(data_function, args_provider, event_handler=PaginationEventHandler()):
+def paginate_function(data_function, args_provider, event_handler=None):
     """
     Repeatedly call a data provider function with successive sets of arguments provided
     by the ``args_provider``
@@ -92,6 +92,7 @@ def paginate_function(data_function, args_provider, event_handler=PaginationEven
     generate the arguments that get passed to ``data_function``
     :param event_handler: class to be notified on page start and page end.
     """
+    event_handler = event_handler or PaginationEventHandler()
     total_emitted = 0
     args, kwargs = args_provider.get_initial_args()
     while True:

@@ -1,6 +1,6 @@
 from collections import namedtuple
 import datetime
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
@@ -253,14 +253,24 @@ def build_worksheet(title, headers, rows):
 
 class ProjectHealthDashboard(ProjectReport):
     slug = 'project_health'
-    name = ugettext_noop("Project Performance")
-    base_template = "reports/project_health/project_health_dashboard.html"
+    name = ugettext_lazy("Project Performance")
+    report_template_path = "reports/project_health/project_health_dashboard.html"
 
     fields = [
         'corehq.apps.reports.filters.location.LocationGroupFilter',
+        'corehq.apps.reports.filters.dates.HiddenLastMonthDateFilter',
     ]
 
     exportable = True
+    emailable = True
+    asynchronous = False
+
+    @property
+    @memoized
+    def template_report(self):
+        if self.is_rendered_as_email:
+            self.report_template_path = "reports/project_health/project_health_email.html"
+        return super(ProjectHealthDashboard, self).template_report
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -381,4 +391,5 @@ class ProjectHealthDashboard(ProjectReport):
             'this_month': six_months_reports[-1],
             'last_month': six_months_reports[-2],
             'threshold': performance_threshold,
+            'domain': self.domain,
         }

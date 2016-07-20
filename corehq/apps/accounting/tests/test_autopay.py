@@ -1,6 +1,7 @@
 import mock
 
 from stripe import Charge
+from stripe.resource import StripeObject
 
 from django.core import mail
 
@@ -85,6 +86,7 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
     @mock.patch.object(Charge, 'create')
     def test_pay_autopayable_invoices(self, fake_charge, fake_customer):
         self._create_autopay_method(fake_customer)
+        fake_charge.return_value = StripeObject(id='transaction_id')
 
         original_outbox_length = len(mail.outbox)
 
@@ -102,3 +104,34 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
                                                   customer_id=self.fake_stripe_customer.id)
         self.payment_method.set_autopay(self.fake_card, self.autopay_account, self.domain)
         self.payment_method.save()
+
+    @mock.patch.object(StripePaymentMethod, 'customer')
+    @mock.patch.object(Charge, 'create')
+    @mock.patch.object(PaymentRecord, 'create_record')
+    def test_when_create_record_fails_stripe_is_not_charged(self, fake_create_record, fake_create, fake_customer):
+        fake_create_record.side_effect = Exception
+        self._create_autopay_method(fake_customer)
+
+        self.original_outbox_length = len(mail.outbox)
+        self._run_autopay()
+        self.assertFalse(fake_create.called)
+        self._assert_no_side_effects()
+
+    @mock.patch.object(StripePaymentMethod, 'customer')
+    @mock.patch.object(Charge, 'create')
+    def test_when_stripe_fails_no_payment_record_exists(self, fake_create, fake_customer):
+        fake_create.side_effect = Exception
+        self._create_autopay_method(fake_customer)
+
+        self.original_outbox_length = len(mail.outbox)
+        self._run_autopay()
+        self._assert_no_side_effects()
+
+    def _run_autopay(self):
+        autopayable_invoice = Invoice.objects.filter(subscription=self.subscription)
+        date_due = autopayable_invoice.first().date_due
+        AutoPayInvoicePaymentHandler().pay_autopayable_invoices(date_due)
+
+    def _assert_no_side_effects(self):
+        self.assertEqual(PaymentRecord.objects.count(), 0)
+        self.assertEqual(len(mail.outbox), self.original_outbox_length)
