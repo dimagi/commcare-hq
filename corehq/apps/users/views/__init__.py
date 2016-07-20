@@ -1010,6 +1010,6 @@ def location_restriction_for_users(request, domain):
 @require_superuser
 def register_fcm_device_token(request, couch_user_id, device_token):
     user = WebUser.get_by_user_id(couch_user_id)
-    user.set_fcm_device_token(device_token)
+    user.fcm_device_token = device_token
     user.save()
     return HttpResponse()

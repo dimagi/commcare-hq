@@ -2113,9 +2113,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
-    def set_fcm_device_token(self, token):
-        self.fcm_device_token = token
-
 
 class FakeUser(WebUser):
     """
