@@ -67,6 +67,14 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
+FormplayerFrontend.reqres.setHandler('startLoading', function () {
+    tfLoading();
+});
+
+FormplayerFrontend.reqres.setHandler('endLoading', function () {
+    tfLoadingComplete();
+});
+
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
 
