@@ -407,3 +407,29 @@ class DateOpenedForceCloseTest(BaseOtaRestoreTest):
         )
         response = restore_config.get_response()
         self.assertEqual(response.status_code, 200)
+
+    def test_synced_during_and_after_bug_resolution_returns_200(self):
+        during = SimplifiedSyncLog(
+            user_id=self.restore_user.user_id,
+            date=datetime(2016, 7, 19, 20, 0)  # during bug
+        )
+        during.save()
+
+        after = SimplifiedSyncLog(
+            user_id=self.restore_user.user_id,
+            previous_log_id=during._id,
+            date=datetime(2016, 7, 21, 19, 0)  # after resolution
+        )
+        after.save()
+
+        restore_config = RestoreConfig(
+            project=self.project,
+            restore_user=self.restore_user,
+            params=RestoreParams(
+                sync_log_id=after._id,
+                version="2.0",
+            ),
+            cache_settings=RestoreCacheSettings()
+        )
+        response = restore_config.get_response()
+        self.assertEqual(response.status_code, 200)
