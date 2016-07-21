@@ -5,7 +5,7 @@ This includes support for changing location types, changing locations' parents,
 deleting things, and so on.  See the spec doc for specifics:
 https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 """
-from collections import namedtuple, Counter, defaultdict
+from collections import Counter, defaultdict
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -40,12 +40,6 @@ class LocationTypeStub(object):
         index = index
         return cls(name, code, parent_code, do_delete, shares_cases,
                    view_descendants, expand_from, sync_to, index)
-
-    def _lookup_location_id_site_code(self):
-        # if one of location_id/site_code are missing, check against existing location_id/site_code
-        # lookup them and set it
-        if not self.location_id and not self.site_code:
-            raise MissingLocationIDAndSiteCode
 
 
 class LocationStub(object):
