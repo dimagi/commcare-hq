@@ -3,7 +3,6 @@ import datetime
 from django.utils.translation import ugettext_lazy
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.users.util import raw_username
