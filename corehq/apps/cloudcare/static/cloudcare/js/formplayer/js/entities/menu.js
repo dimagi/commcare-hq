@@ -91,10 +91,8 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             });
 
             var defer = $.Deferred();
-            FormplayerFrontend.request("startLoading");
             menus.fetch({
                 success: function (request) {
-                    FormplayerFrontend.request("endLoading");
                     defer.resolve(request);
                 },
             });
