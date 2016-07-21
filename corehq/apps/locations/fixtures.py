@@ -73,12 +73,7 @@ class LocationFixtureProvider(object):
         a fixture with ALL locations for the domain.
         """
         assert isinstance(restore_user, OTARestoreUser)
-
-        if not restore_user.project.uses_locations:
-            return []
-
-        all_locations = _all_locations(restore_user)
-
+        all_locations = restore_user.get_locations_to_sync()
         if not should_sync_locations(last_sync, all_locations, restore_user):
             return []
 
@@ -130,7 +125,7 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
-def _all_locations(user):
+def get_all_locations_to_sync(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return LocationSet(SQLLocation.active_objects.filter(domain=user.domain))
     else:
