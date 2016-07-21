@@ -5,7 +5,7 @@ from ..utils import pillow_seq_store, EPSILON
 
 
 def _get_dummy_pillow():
-    from pillowtop.tests import make_fake_constructed_pillow
+    from pillowtop.tests.utils import make_fake_constructed_pillow
     return make_fake_constructed_pillow('dummy pillow', 'test_checkpoint_seq_store')
 
 DummyPillow = _get_dummy_pillow
