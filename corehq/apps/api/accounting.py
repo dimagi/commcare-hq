@@ -92,7 +92,7 @@ class SoftwarePlanResource(ModelResource):
 
 
 class DefaultProductPlanResource(ModelResource):
-    plan = fields.IntegerField('plan', null=False)
+    plan = fields.IntegerField('plan_id', null=False)
 
     class Meta(AccountingResourceMeta):
         queryset = DefaultProductPlan.objects.all().order_by('pk')

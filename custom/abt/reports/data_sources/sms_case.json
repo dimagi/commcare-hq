@@ -389,7 +389,7 @@
                   }
                 }
               },
-            "mali": {
+            "Mali": {
                 "default": 0,
                 "cases": {
                     "koulikoro": 169156,
@@ -456,7 +456,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_2_name"
+                    "level_2_id"
                   ]
                 },
                 "type": "related_doc",
@@ -571,7 +571,7 @@
                 }
               }
             },
-            "mali": {
+            "Mali": {
               "default": 0,
               "cases": {
                 "baroueli": 73528,
@@ -740,7 +740,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_3_name"
+                    "level_3_id"
                   ]
                 },
                 "type": "related_doc",
@@ -959,7 +959,7 @@
                     }
                   }
                 },
-            "mali": {
+            "Mali": {
               "default": 0,
               "cases": {
                 "koulikoro": 66927,
@@ -1013,14 +1013,14 @@
         "expression": {
           "default": 0,
           "cases": {
-            "mali": {
+            "Mali": {
               "default": 0,
               "cases": {
                 "banido": 1968,
                 "baraoueli": 9248,
-                "belego": 11428,
+                "beleco": 11428,
                 "boidie": 3492,
-                "bougoucourala": 1640,
+                "bougoucouroula": 1640,
                 "chola": 2352,
                 "dandougou": 5044,
                 "diebe": 3723,
@@ -1028,11 +1028,11 @@
                 "dioforongo": 1635,
                 "djoumazana": 6174,
                 "dotembougou": 1748,
-                "dougoufie": 2930,
+                "dougoufe": 2930,
                 "doumba": 1900,
                 "falako": 6776,
                 "fana": 17450,
-                "faracoro": 907,
+                "fabacoro": 907,
                 "fougadougou": 1147,
                 "garna": 2474,
                 "gouendo": 3385,
@@ -1055,7 +1055,7 @@
                 "massala": 2335,
                 "mena": 7053,
                 "moabougou": 3513,
-                "monzombala": 3427,
+                "monzobala": 3427,
                 "n'djilla": 1802,
                 "n'gassola": 2051,
                 "nangola": 7003,
@@ -1153,7 +1153,7 @@
             "Rwanda": 144417,
             "Zambia": 539348,
             "Ethiopia": 708258,
-            "mali": 242684,
+            "Mali": 242684,
             "Madagascar": 72120,
             "Tanzania": 502934,
             "benin": 270141

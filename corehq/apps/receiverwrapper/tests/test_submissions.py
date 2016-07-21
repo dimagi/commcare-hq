@@ -6,7 +6,7 @@ from django.test.utils import override_settings
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.util.test_utils import TestFileMixin
+from corehq.util.test_utils import TestFileMixin, softer_assert
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 import os
@@ -91,6 +91,7 @@ class SubmissionTest(TestCase):
         )
 
     @run_with_all_backends
+    @softer_assert
     def test_submit_user_registration(self):
         self._test(
             form='user_registration.xml',
@@ -121,6 +122,7 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain)
         FormProcessorTestUtils.delete_all_cases(self.domain)
+        super(SubmissionSQLTransactionsTest, self).tearDown()
 
     def test_case_ledger_form(self):
         form_xml = self.get_xml('case_ledger_form')

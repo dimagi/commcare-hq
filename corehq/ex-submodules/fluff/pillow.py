@@ -83,11 +83,11 @@ class FluffPillowProcessor(PillowProcessor):
                 return None
 
         indicator = _get_indicator_doc_from_class_and_id(self.indicator_class, doc.get_id)
-        if not self._is_doc_type_deleted_match(doc.doc_type):
-            indicator.calculate(doc)
-        else:
+        if delete or self._is_doc_type_deleted_match(doc.doc_type):
             indicator['id'] = doc.get_id
             delete = True
+        else:
+            indicator.calculate(doc)
 
         return {
             'doc_dict': doc_dict,

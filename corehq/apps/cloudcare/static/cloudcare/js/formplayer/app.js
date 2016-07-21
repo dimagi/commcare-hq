@@ -75,10 +75,14 @@ $(document).bind("ajaxStart", function(){
     tfLoading();
 }).bind("ajaxStop", function() {
     var requestElements = $(".formplayer-request");
-    for (var i = 0; i < requestElements.length; i++ ) {
+    for (var i = 0; i < requestElements.length; i++) {
         requestElements[i].style.pointerEvents = 'auto';
     }
     tfLoadingComplete();
+});
+
+FormplayerFrontend.reqres.setHandler('error', function(errorMessage) {
+    showError(errorMessage, $("#cloudcare-notifications"), 10000);
 });
 
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {

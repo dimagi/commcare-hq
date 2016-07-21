@@ -28,6 +28,7 @@ class FormAccessorTestsSQL(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
         FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
+        super(FormAccessorTestsSQL, self).tearDown()
 
     def test_get_form_by_id(self):
         form = create_form_for_test(DOMAIN)
@@ -309,6 +310,7 @@ class FormAccessorsTests(TestCase):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        super(FormAccessorsTests, self).tearDown()
 
     @run_with_all_backends
     def test_soft_delete(self):
