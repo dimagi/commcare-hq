@@ -96,3 +96,22 @@ class CaseClaimTests(TestCase):
         """
         claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
         self.assertIsNone(claim)
+
+    @run_with_all_backends
+    def test_closed_claim(self):
+        """
+        get_first_claim should return None if claim case is closed
+        """
+        claim_id = claim_case(DOMAIN, self.user.user_id, self.host_case_id,
+                              host_type=self.host_case_type, host_name=self.host_case_name)
+        self._close_case(claim_id)
+        first_claim = get_first_claim(DOMAIN, self.user.user_id, self.host_case_id)
+        self.assertIsNone(first_claim)
+
+    def _close_case(self, case_id):
+        case_block = CaseBlock(
+            create=False,
+            case_id=case_id,
+            close=True
+        ).as_xml()
+        post_case_blocks([case_block], {'domain': DOMAIN})
