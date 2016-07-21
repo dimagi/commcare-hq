@@ -74,6 +74,7 @@ class RegistrationTestCase(BaseSMSTest):
         if phone_number:
             result = result.filter(phone_number=phone_number)
 
+        result = result.order_by('-date')
         result = list(result[:count])
         self.assertEqual(len(result), count)
         return result
