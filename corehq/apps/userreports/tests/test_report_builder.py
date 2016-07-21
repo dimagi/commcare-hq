@@ -5,7 +5,7 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     ReportConfiguration
-from corehq.apps.userreports.reports.builder.forms import ConfigureListReportForm
+from corehq.apps.userreports.reports.builder.forms import ConfigureListReportForm, ConfigureTableReportForm
 
 
 def read(rel_path):
@@ -67,6 +67,54 @@ class ReportBuilderTest(TestCase):
         report_two = builder_form.create_report()
 
         self.assertNotEqual(report_one.config_id, report_two.config_id)
+
+    def test_updating_report_data_source(self):
+        """
+        Test that changing the app or number column for a report results in an update to the data source next time the
+        report is saved.
+        """
+
+        # Make report
+        builder_form = ConfigureTableReportForm(
+            "Test Report",
+            self.app._id,
+            "case",
+            "some_case_type",
+            existing_report=None,
+            data={
+                'group_by': 'closed',
+                'filters': '[]',
+                'columns': '[{"property": "closed", "display_text": "closed", "calculation": "Count per Choice"}]',
+            }
+        )
+        self.assertTrue(builder_form.is_valid())
+        report = builder_form.create_report()
+
+        self.assertEqual(report.config.configured_indicators[0]['datatype'], "string")
+
+        # Make an edit to the first report builder report
+        builder_form = ConfigureTableReportForm(
+            "Test Report",
+            self.app._id,
+            "case",
+            "some_case_type",
+            existing_report=report,
+            data={
+                'group_by': 'closed',
+                'filters': '[]',
+                # Note that a "Sum" calculation on the closed case property isn't very sensical, but doing it so that
+                # I can have a numeric calculation without having to create real case properties for this case type.
+                'columns': '[{"property": "closed", "display_text": "closed", "calculation": "Sum"}]',
+            }
+        )
+        self.assertTrue(builder_form.is_valid())
+        builder_form.update_report()
+
+        # reload report data source, because report.config is memoized
+        data_source = DataSourceConfiguration.get(report.config._id)
+        # The closed property indicator should now be decimal type because the user indicated that it was numeric by
+        # giving the column the "Sum" aggregation.
+        self.assertEqual(data_source.configured_indicators[0]['datatype'], "decimal")
 
     def test_updating_report_that_shares_data_source(self):
         """
