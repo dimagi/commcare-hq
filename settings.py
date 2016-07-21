@@ -544,6 +544,7 @@ FIXTURE_GENERATORS = {
     # fixtures that must be sent along with the phones cases
     'case': [
         "corehq.apps.locations.fixtures.location_fixture_generator",
+        "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     ]
 }
 
@@ -1405,8 +1406,16 @@ CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
 PILLOWTOPS = {
     'core': [
-        'corehq.pillows.case.CasePillow',
-        'corehq.pillows.xform.XFormPillow',
+        {
+            'name': 'CaseToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
+        },
+        {
+            'name': 'XFormToElasticsearchPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
+        },
         {
             'name': 'UserPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1483,16 +1492,6 @@ PILLOWTOPS = {
             'name': 'ReportXFormToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'XFormToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.xform.get_xform_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'CaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.case.get_case_to_elasticsearch_pillow',
         },
         {
             'name': 'UnknownUsersPillow',
@@ -1781,6 +1780,7 @@ DOMAIN_MODULE_MAP = {
     'pathways-tanzania': 'custom.care_pathways',
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
+    'care-macf-ghana': 'custom.care_pathways'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

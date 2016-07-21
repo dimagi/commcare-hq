@@ -19,6 +19,7 @@ class FormPillowTest(TestCase):
     domain = 'test-form-pillow-domain'
 
     def setUp(self):
+        super(FormPillowTest, self).setUp()
         FormProcessorTestUtils.delete_all_xforms()
         self.pillow = get_app_form_submission_tracker_pillow()
 
@@ -28,6 +29,7 @@ class FormPillowTest(TestCase):
 
     def tearDown(self):
         self.app.delete()
+        super(FormPillowTest, self).tearDown()
 
     def test_xform_pillow_couch(self):
         form = self._make_form()

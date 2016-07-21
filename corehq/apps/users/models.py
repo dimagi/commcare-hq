@@ -1065,6 +1065,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
+            if attr == 'last_login' and attr_val == '':
+                attr_val = None
             setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER= True
         return django_user
@@ -1139,6 +1141,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
+        from corehq.apps.sms.util import is_user_contact_active
+
         self.get_by_username.clear(self.__class__, self.username)
         self.get_by_user_id.clear(self.__class__, self.user_id)
         domains = getattr(self, 'domains', None)
@@ -1147,6 +1151,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             domains = [domain] if domain else []
         for domain in domains:
             self.get_by_user_id.clear(self.__class__, self.user_id, domain)
+            is_user_contact_active.clear(domain, self.user_id)
         Domain.active_for_couch_user.clear(self)
         _get_domain_list.clear(self)
 
@@ -1438,6 +1443,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @classmethod
     def create_or_update_from_xform(cls, xform):
+        _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
+        _assert(False, 'someone actually called CommCareUser.create_or_update_from_xform')
         # if we have 1,000,000 users with the same name in a domain
         # then we have bigger problems then duplicate user accounts
         MAX_DUPLICATE_USERS = 1000000
@@ -1917,8 +1924,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
-        from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
-        return get_case_id_by_domain_hq_user_id(self.domain, self._id, USERCASE_TYPE)
+        case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
+        return case.case_id if case else None
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):

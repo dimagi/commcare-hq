@@ -249,7 +249,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         self._getRelevant = function() {
             if (self.default_relevant()) {
-                if (self.relevant().trim() === "") {
+                if (!self.relevant() || self.relevant().trim() === "") {
                     return DEFAULT_CLAIM_RELEVANT;
                 } else {
                     return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.relevant().trim() + ")";
@@ -328,6 +328,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
             var data = {
                 lookup_enabled: self.lookup_enabled(),
+                lookup_autolaunch: self.lookup_autolaunch(),
                 lookup_action: self.lookup_action(),
                 lookup_name: self.lookup_name(),
                 lookup_extras: _trimmed_extras(),
@@ -419,6 +420,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.$form = $el.find('form');
 
         self.lookup_enabled = ko.observable(state.lookup_enabled);
+        self.lookup_autolaunch = ko.observable(state.lookup_autolaunch);
         self.lookup_action = ko.observable(state.lookup_action);
         self.lookup_name = ko.observable(state.lookup_name);
         self.extras = ko.observableArray(ko.utils.arrayMap(state.lookup_extras, function(extra){

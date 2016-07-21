@@ -640,7 +640,6 @@ def module_offers_search(module):
 
 
 def get_cloudcare_session_data(domain_name, form, couch_user):
-    from corehq.apps.hqcase.utils import get_case_id_by_domain_hq_user_id
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 
     datums = EntriesHelper.get_new_case_id_datums_meta(form)
@@ -653,7 +652,7 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
             if EntriesHelper.any_usercase_datums(extra_datums):
-                usercase_id = get_case_id_by_domain_hq_user_id(domain_name, couch_user.get_id, USERCASE_TYPE)
+                usercase_id = couch_user.get_usercase_id()
                 if usercase_id:
                     session_data[USERCASE_ID] = usercase_id
     return session_data

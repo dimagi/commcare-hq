@@ -67,6 +67,10 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
+FormplayerFrontend.reqres.setHandler('error', function(errorMessage) {
+    showError(errorMessage, $("#cloudcare-notifications"), 10000);
+});
+
 FormplayerFrontend.reqres.setHandler('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
 

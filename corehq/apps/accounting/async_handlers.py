@@ -121,7 +121,7 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
         if self.existing:
             features = features.exclude(name__in=self.existing)
         if self.search_string:
-            features = features.filter(name__startswith=self.search_string)
+            features = features.filter(name__istartswith=self.search_string)
         return [(f.id, f.name, f.feature_type) for f in features.all()]
 
     @property
@@ -130,7 +130,7 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
         if self.existing:
             products = products.exclude(name__in=self.existing)
         if self.search_string:
-            products = products.filter(name__startswith=self.search_string)
+            products = products.filter(name__istartswith=self.search_string)
         return [(p.id, p.name, p.product_type) for p in products.all()]
 
     def _fmt_success(self, response):
