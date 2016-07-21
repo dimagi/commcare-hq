@@ -632,7 +632,7 @@ class Detail(OrderedXmlObject, IdNode):
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)
     fields = NodeListField('field', Field)
-    action = NodeField('action', Action)
+    actions = NodeListField('action', Action)
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
 
@@ -659,11 +659,12 @@ class Detail(OrderedXmlObject, IdNode):
             for variable in self.variables:
                 result.add(variable.function)
 
-        if self.action:
-            for frame in self.action.stack.frames:
-                result.add(frame.if_clause)
-                for datum in getattr(frame, 'datums', []):
-                    result.add(datum.value)
+        if self.actions:
+            for action in self.actions:
+                for frame in action.stack.frames:
+                    result.add(frame.if_clause)
+                    for datum in getattr(frame, 'datums', []):
+                        result.add(datum.value)
 
         def _get_graph_config_xpaths(configuration):
             result = set()
