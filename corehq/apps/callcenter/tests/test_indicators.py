@@ -126,11 +126,13 @@ class BaseCCTests(OverridableSettingsTestMixin, TestCase):
     domain_name = None
 
     def setUp(self):
+        super(BaseCCTests, self).setUp()
         locmem_cache.clear()
         CaseAccessors.get_case_types.clear(CaseAccessors(self.domain_name))
 
     def tearDown(self):
         CaseAccessors.get_case_types.clear(CaseAccessors(self.domain_name))
+        super(BaseCCTests, self).tearDown()
 
     def _test_indicators(self, user, data_set, expected):
         user_case = CaseAccessors(user.domain).get_case_by_domain_hq_user_id(user.user_id, CASE_TYPE)
@@ -424,9 +426,9 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         create_cases_for_types(self.domain_name, ['person', 'dog'])
 
     def tearDown(self):
-        super(CallCenterSupervisorGroupTest, self).tearDown()
         clear_data(self.domain.name)
         self.domain.delete()
+        super(CallCenterSupervisorGroupTest, self).tearDown()
 
     @run_with_all_backends
     def test_users_assigned_via_group(self):

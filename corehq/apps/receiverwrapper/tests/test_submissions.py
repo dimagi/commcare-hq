@@ -121,6 +121,7 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain)
         FormProcessorTestUtils.delete_all_cases(self.domain)
+        super(SubmissionSQLTransactionsTest, self).tearDown()
 
     def test_case_ledger_form(self):
         form_xml = self.get_xml('case_ledger_form')
