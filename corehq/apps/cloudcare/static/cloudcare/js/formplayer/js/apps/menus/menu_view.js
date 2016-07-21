@@ -42,6 +42,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         templateHelpers: function () {
             return {
                 title: this.options.collection.title,
+                breadcrumbs: this.options.breadcrumbs,
+                breadcrumbClick: function(index) {
+                    debugger;
+                },
             };
         },
     });
@@ -173,6 +177,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
                 tiles: this.options.tiles,
+                breadcrumbs: this.options.breadcrumbs,
+                breadcrumbClick: function(index) {
+                    debugger;
+                },
             };
         },
     });

@@ -3,7 +3,19 @@
 <script type="text/template" id="case-view-list-template">
     <div>
         <div class="col-sm-8">
+            <% if (_.isNull(breadcrumbs)) { %>
             <h2 id="title"><%= title %></h2>
+            <% } else { %>
+            <ol class="breadcrumb">
+                <% for(var i = 0; i < breadcrumbs.length; i++) {
+                    breadcrumb = breadcrumbs[i];
+                    if(i === breadcrumbs.length -1) { %>
+                <li class="active"> <%= breadcrumb %> </li>
+                <% } else { %>
+                <li><a onclick="<%= breadcrumbClick(i) %>"><%= breadcrumb %></a></li>
+                <% }} %>
+            </ol>
+            <% } %>
         </div>
         <div class="input-group col-sm-4">
             <input type="text" class="form-control" placeholder="Search" id="searchText">
@@ -28,7 +40,7 @@
         <tbody class="case-container">
         </tbody>
         <% } else { %>
-            <div class="wrapper case-container"></div>
+        <div class="wrapper case-container"></div>
         <% } %>
     </table>
     <% if (action) { %>
