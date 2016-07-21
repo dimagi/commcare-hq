@@ -7,7 +7,6 @@ from corehq.apps.locations.bulk_management import (
     LocationStub,
     LocationTreeValidator,
 )
-from corehq.apps.locations.const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS
 
 
 # These example types and trees mirror the information available in the upload files
@@ -216,41 +215,58 @@ class TestTreeUtils(SimpleTestCase):
         )
 
 
-def get_errors(location_types, locations):
-    return LocationTreeValidator(
+def get_validator(location_types, locations):
+    validator = LocationTreeValidator(
         [LocationTypeStub(*loc_type) for loc_type in location_types],
         [LocationStub(*loc) for loc in locations],
-    ).errors
+    )
+    print validator.errors
+    return validator
 
 
 class TestTreeValidator(SimpleTestCase):
+
     def test_good_location_set(self):
-        errors = get_errors(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE)
-        self.assertEqual(len(errors), 0)
+        validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE)
+        self.assertEqual(len(validator.errors), 0)
 
     def test_cyclic_location_types(self):
-        errors = get_errors(CYCLIC_LOCATION_TYPES, BASIC_LOCATION_TREE)
-        self.assertEqual(len(errors), 3)
+        validator = get_validator(CYCLIC_LOCATION_TYPES, BASIC_LOCATION_TREE)
+        self.assertEqual(len(validator._validate_types_tree()), 3)
 
     def test_bad_type_change(self):
-        errors = get_errors(FLAT_LOCATION_TYPES, MAKE_SUFFOLK_A_STATE_INVALID)
-        self.assertEqual(len(errors), 2)
+        validator = get_validator(FLAT_LOCATION_TYPES, MAKE_SUFFOLK_A_STATE_INVALID)
+
+        all_errors = validator.errors
+        self.assertEqual(len(all_errors), 2)
+
+        tree_errors = validator._validate_location_tree()
+        self.assertEqual(len(tree_errors), 2)
 
     def test_good_type_change(self):
-        errors = get_errors(FLAT_LOCATION_TYPES, MAKE_SUFFOLK_A_STATE_VALID)
+        validator = get_validator(FLAT_LOCATION_TYPES, MAKE_SUFFOLK_A_STATE_VALID)
+        errors = validator.errors
         self.assertEqual(len(errors), 0)
 
     def test_duplicate_type_codes(self):
-        errors = get_errors(DUPLICATE_TYPE_CODES, BASIC_LOCATION_TREE)
+        validator = get_validator(DUPLICATE_TYPE_CODES, BASIC_LOCATION_TREE)
+        errors = validator.errors
+        type_errors = validator._check_unique_type_codes()
         self.assertEqual(len(errors), 1)
+        self.assertEqual(len(type_errors), 1)
         self.assertIn("county", errors[0])
 
-    def test_duplicate_site_code(self):
-        errors = get_errors(FLAT_LOCATION_TYPES, DUPLICATE_SITE_CODES)
-        self.assertEqual(len(errors), 1)
+    def test_duplicate_location(self):
+        validator = get_validator(FLAT_LOCATION_TYPES, DUPLICATE_SITE_CODES)
+        errors = validator.errors
+        self.assertEqual(len(errors), 2)
+        self.assertEqual(len(validator._check_unique_location_codes()), 1)
+        self.assertEqual(len(validator._check_unique_location_ids()), 1)
         self.assertIn("cambridge", errors[0])
 
     def test_same_name_same_parent(self):
-        errors = get_errors(FLAT_LOCATION_TYPES, SAME_NAME_SAME_PARENT)
+        validator = get_validator(FLAT_LOCATION_TYPES, SAME_NAME_SAME_PARENT)
+        errors = validator.errors
         self.assertEqual(len(errors), 1)
+        self.assertEqual(len(validator._check_location_names()), 1)
         self.assertIn("middlesex", errors[0])

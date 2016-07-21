@@ -4,7 +4,7 @@ LOCATION_SHEET_HEADERS = {
     'site_code': 'Location Code',
     'name': 'Name',
     'parent_code': 'Parent',
-    'external_id': 'External ID'
+    'external_id': 'External ID',
     'latitude': 'GPS - Lat',
     'longitude': 'GPS - Lang',
     'do_delete': 'Delete Y/N'
