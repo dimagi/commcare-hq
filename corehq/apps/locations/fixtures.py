@@ -99,7 +99,7 @@ class HierarchicalLocationSerializer(object):
 class FlatLocationSerializer(object):
 
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
-        if not toggles.FLAT_LOCATION_FIXTURE.enabled(restore_user.project.name):
+        if not toggles.FLAT_LOCATION_FIXTURE.enabled(restore_user.domain):
             return []
 
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
