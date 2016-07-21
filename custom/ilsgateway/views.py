@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Count
-from django.http.response import HttpResponseRedirect, Http404, HttpResponseBadRequest
+from django.http.response import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView, RedirectView
@@ -124,7 +124,7 @@ class ILSConfigView(BaseConfigView):
         ils_config = ILSGatewayConfig.for_domain(self.domain)
         ils_config_form = ILSConfigForm(request.POST)
         if not ils_config_form.is_valid():
-            return HttpResponseBadRequest()
+            return self.get(request, *args, **kwargs)
 
         enabled = ils_config_form.cleaned_data['enabled']
         if not ils_config and enabled:
