@@ -231,13 +231,6 @@ hqDefine('userreports/js/builder_view_models.js', function () {
      * @returns {object}
      */
     PropertyList.prototype.getPropertyObject = function(property_id) {
-        // TODO: This is wrong as shit because we need to match on id sometimes.
-        // Let's maybe keep an unmodified set of properties on the PropertyList,
-        // and a second transformed set that is used for the select2/questionsSelect
-        //
-        // Still though, the unmodified will have two forms (but at least "id" will always be the identifier
-        // Maybe its time to properly subclass PropertyList?
-        // Then we could have different methods and shit.
         return _.find(this.propertyOptions, function (opt) {return opt.id === property_id;});
     };
 
