@@ -91,7 +91,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     def set_percent_active(self):
         self.total_users_by_month = self.number_of_inactive_users + self.number_of_active_users
-        self.percent_active = float(self.number_of_active_users) / float(self.total_users_by_month)
+        if self.total_users_by_month:
+            self.percent_active = float(self.number_of_active_users) / float(self.total_users_by_month)
+        else:
+            self.percent_active = 0
 
     @property
     def number_of_performing_users(self):
