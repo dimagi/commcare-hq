@@ -1695,7 +1695,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
             columns
         )
         self.assertEqual(
-            [{'datatype': x['datatype'], 'slug': x['slug']} for x in self.report_filters],
+            [{'datatype': x['datatype'], 'slug': x['slug'], 'type': x['type']} for x in self.report_filters],
             filters
         )
         self.assertEqual(response_dict['title'], self.report_title)

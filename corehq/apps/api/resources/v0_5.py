@@ -658,6 +658,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
     def dehydrate_filters(self, bundle):
         obj_filters = bundle.obj.filters
         return [{
+            "type": f["type"],
             "datatype": f["datatype"],
             "slug": f["slug"]
         } for f in obj_filters]
