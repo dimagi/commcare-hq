@@ -7,112 +7,116 @@ from corehq.apps.locations.bulk_management import (
     LocationStub,
     LocationTreeValidator,
 )
+from corehq.apps.locations.const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS
+
 
 # These example types and trees mirror the information available in the upload files
 
 FLAT_LOCATION_TYPES = [
+    # name, code, parent_code, do_delete, shares_cases, view_descendants, expand_from, sync_to, index
     # ('name', 'code', 'parent_code', 'shares_cases', 'view_descendants'),
-    ('State', 'state', '', False, False),
-    ('County', 'county', 'state', False, True),
-    ('City', 'city', 'county', True, False),
+    ('State', 'state', '', False, False, False, '', '', 0),
+    ('County', 'county', 'state', False, False, True, '', '', 0),
+    ('City', 'city', 'county', False, True, False, '', '', 0),
 ]
 
 DUPLICATE_TYPE_CODES = [
     # ('name', 'code', 'parent_code', 'shares_cases', 'view_descendants'),
-    ('State', 'state', '', False, False),
-    ('County', 'county', 'state', False, True),
-    ('City', 'city', 'county', True, False),
-    ('Other County', 'county', 'state', False, True),
+    ('State', 'state', '', False, False, False, '', '', 0),
+    ('County', 'county', 'state', False, False, True, '', '', 0),
+    ('City', 'city', 'county', False, True, False, '', '', 0),
+    ('Other County', 'county', 'state', False, False, True, '', '', 0),
 ]
 
 CYCLIC_LOCATION_TYPES = [
-    ('State', 'state', '', False, False),
-    ('County', 'county', 'state', False, True),
-    ('City', 'city', 'county', True, False),
+    ('State', 'state', '', False, False, False, '', '', 0),
+    ('County', 'county', 'state', False, False, True, '', '', 0),
+    ('City', 'city', 'county', False, True, False, '', '', 0),
     # These three cycle:
-    ('Region', 'region', 'village', False, False),
-    ('District', 'district', 'region', False, True),
-    ('Village', 'village', 'district', True, False),
+    ('Region', 'region', 'village', False, False, False, '', '', 0),
+    ('District', 'district', 'region', False, False, True, '', '', 0),
+    ('Village', 'village', 'district', False, True, False, '', '', 0),
 ]
 
 BASIC_LOCATION_TREE = [
+    # (name, site_code, location_type, parent_code, location_id,
+    # do_delete, external_id, latitude, longitude, index)
     # ('name', 'site_code', 'location_type', 'parent_code', 'location_id',
     # 'external_id', 'latitude', 'longitude'),
-    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
-    ('Suffolk', 'suffolk', 'county', 'mass', '2345', '', '', ''),
-    ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', ''),
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
-    ('Florida', 'florida', 'state', '', '5432', '', '', ''),
-    ('Duval', 'duval', 'county', 'florida', '5433', '', '', ''),
-    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', ''),
+    ('Massachusetts', 'mass', 'state', '', '1234', False, '', '', '', 0),
+    ('Suffolk', 'suffolk', 'county', 'mass', '2345', False, '', '', '', 0),
+    ('Boston', 'boston', 'city', 'suffolk', '2346', False, '', '', '', 0),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False, '', '', '', 0),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False, '', '', '', 0),
+    ('Florida', 'florida', 'state', '', '5432', False, '', '', '', 0),
+    ('Duval', 'duval', 'county', 'florida', '5433', False, '', '', '', 0),
+    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', False, '', '', '', 0),
 ]
 
 MOVE_SUFFOLK_TO_FLORIDA = [
-    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
+    ('Massachusetts', 'mass', 'state', '', '1234', False, '', '', '', 0),
     # this is the only changed line (parent is changed to florida)
-    ('Suffolk', 'suffolk', 'county', 'florida', '2345', '', '', ''),
-    ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', ''),
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
-    ('Florida', 'florida', 'state', '', '5432', '', '', ''),
-    ('Duval', 'duval', 'county', 'florida', '5433', '', '', ''),
-    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', ''),
+    ('Suffolk', 'suffolk', 'county', 'florida', '2345', False, '', '', '', 0),
+    ('Boston', 'boston', 'city', 'suffolk', '2346', False, '', '', '', 0),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False, '', '', '', 0),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False, '', '', '', 0),
+    ('Florida', 'florida', 'state', '', '5432', False, '', '', '', 0),
+    ('Duval', 'duval', 'county', 'florida', '5433', False, '', '', '', 0),
+    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', False, '', '', '', 0),
 ]
 
 DELETE_SUFFOLK = [
-    ('Massachusetts', 'mass', 'state', '', '1234', '', '', '', ''),
+    ('Massachusetts', 'mass', 'state', '', '1234', False, '', '', '', 0),
     # These next two are marked as 'delete'
-    ('Suffolk', 'suffolk', 'county', 'mass', '2345', '', '', '', 'delete'),
-    ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', '', 'delete'),
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', '', ''),
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', '', ''),
-    ('Florida', 'florida', 'state', '', '5432', '', '', '', ''),
-    ('Duval', 'duval', 'county', 'florida', '5433', '', '', '', ''),
-    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', '', ''),
+    ('Suffolk', 'suffolk', 'county', 'mass', '2345', True, '', '', '', 0),
+    ('Boston', 'boston', 'city', 'suffolk', '2346', True, '', '', '', 0),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False, '', '', '', 0),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False, '', '', '', 0),
+    ('Florida', 'florida', 'state', '', '5432', False, '', '', '', 0),
+    ('Duval', 'duval', 'county', 'florida', '5433', False, '', '', '', 0),
+    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', False, '', '', '', 0),
 ]
 
 MAKE_SUFFOLK_A_STATE_INVALID = [
-    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
+    ('Massachusetts', 'mass', 'state', '', '1234', False, '', '', '', 0),
     # This still lists mass as a parent, which is invalid,
     # plus, Boston (a city), can't have a state as a parent
-    ('Suffolk', 'suffolk', 'state', 'mass', '2345', '', '', ''),
-    ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', ''),
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
-    ('Florida', 'florida', 'state', '', '5432', '', '', ''),
-    ('Duval', 'duval', 'county', 'florida', '5433', '', '', ''),
-    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', ''),
+    ('Suffolk', 'suffolk', 'state', 'mass', '2345', False, '', '', '', 0),
+    ('Boston', 'boston', 'city', 'suffolk', '2346', False, '', '', '', 0),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False, '', '', '', 0),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False, '', '', '', 0),
+    ('Florida', 'florida', 'state', '', '5432', False, '', '', '', 0),
+    ('Duval', 'duval', 'county', 'florida', '5433', False, '', '', '', 0),
+    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', False, '', '', '', 0),
 ]
 
 MAKE_SUFFOLK_A_STATE_VALID = [
-    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
-    ('Suffolk', 'suffolk', 'state', '', '2345', '', '', ''),
-    ('Boston', 'boston', 'county', 'suffolk', '2346', '', '', ''),
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
-    ('Florida', 'florida', 'state', '', '5432', '', '', ''),
-    ('Duval', 'duval', 'county', 'florida', '5433', '', '', ''),
-    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', '', '', ''),
+    ('Massachusetts', 'mass', 'state', '', '1234', False, '', '', '', 0),
+    ('Suffolk', 'suffolk', 'state', '', '2345', False, '', '', '', 0),
+    ('Boston', 'boston', 'county', 'suffolk', '2346', False, '', '', '', 0),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False, '', '', '', 0),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False, '', '', '', 0),
+    ('Florida', 'florida', 'state', '', '5432', False, '', '', '', 0),
+    ('Duval', 'duval', 'county', 'florida', '5433', False, '', '', '', 0),
+    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', False, '', '', '', 0),
 ]
 
 DUPLICATE_SITE_CODES = [
-    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
-    ('Suffolk', 'suffolk', 'county', 'mass', '2345', '', '', ''),
-    ('Boston', 'boston', 'city', 'suffolk', '2346', '', '', ''),
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
-    ('East Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
+    ('Massachusetts', 'mass', 'state', '', '1234', False, '', '', '', 0),
+    ('Suffolk', 'suffolk', 'county', 'mass', '2345', False, '', '', '', 0),
+    ('Boston', 'boston', 'city', 'suffolk', '2346', False, '', '', '', 0),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False, '', '', '', 0),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False, '', '', '', 0),
+    ('East Cambridge', 'cambridge', 'city', 'middlesex', '3457', False, '', '', '', 0),
 ]
 
 SAME_NAME_SAME_PARENT = [
-    ('Massachusetts', 'mass', 'state', '', '1234', '', '', ''),
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', '', '', ''),
+    ('Massachusetts', 'mass', 'state', '', '1234', False, '', '', '', 0),
+    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False, '', '', '', 0),
     # These two locations have the same name AND same parent
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', '', '', ''),
-    ('Cambridge', 'cambridge2', 'city', 'middlesex', '3458', '', '', ''),
+    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False, '', '', '', 0),
+    ('Cambridge', 'cambridge2', 'city', 'middlesex', '3458', False, '', '', '', 0),
 ]
-
 
 
 class TestBulkManagement(TestCase):

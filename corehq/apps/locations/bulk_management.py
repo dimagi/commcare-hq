@@ -10,16 +10,83 @@ from collections import namedtuple, Counter, defaultdict
 from dimagi.utils.decorators.memoized import memoized
 
 from .tree_utils import BadParentError, CycleError, assert_no_cycles
+from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS
 
-LocationTypeStub = namedtuple(
-    "LocationTypeStub",
-    "name code parent_code shares_cases view_descendants"
-)
 
-LocationStub = namedtuple(
-    "LocationStub",
-    "name site_code location_type parent_code location_id external_id latitude longitude"
-)
+class LocationTypeStub(object):
+    titles = LOCATION_TYPE_SHEET_HEADERS
+
+    def __init__(self, name, code, parent_code, do_delete, shares_cases,
+                 view_descendants, expand_from, sync_to, index):
+        self.name = name
+        self.code = code
+        self.parent_code = parent_code
+        self.do_delete = do_delete
+        self.shares_cases = shares_cases
+        self.view_descendants = view_descendants
+        self.expand_from = expand_from
+        self.sync_to = sync_to
+        self.index = index
+
+    def from_excel_row(cls, row, index):
+        name = row.get(cls.titles['name'])
+        code = row.get(cls.titles['code'])
+        parent_code = row.get(cls.titles['parent_code'])
+        do_delete = row.get(cls.titles['do_delete'], 'N').lower() in ['y', 'yes']
+        shares_cases = row.get(cls.titles['shares_cases'], 'N').lower() in ['y', 'yes']
+        view_descendants = row.get(cls.titles['view_descendants'], 'N').lower() in ['y', 'yes']
+        expand_from = row.get(cls.titles['expand_from'])
+        sync_to = row.get(cls.titles['sync_to'])
+        index = index
+        return cls(name, code, parent_code, do_delete, shares_cases,
+                   view_descendants, expand_from, sync_to, index)
+
+    def _lookup_location_id_site_code(self):
+        # if one of location_id/site_code are missing, check against existing location_id/site_code
+        # lookup them and set it
+        if not self.location_id and not self.site_code:
+            raise MissingLocationIDAndSiteCode
+
+
+class LocationStub(object):
+    titles = LOCATION_SHEET_HEADERS
+
+    def __init__(self, name, site_code, location_type, parent_code, location_id,
+                 do_delete, external_id, latitude, longitude, index):
+        self.name = name
+        self.site_code = site_code
+        self.location_type = location_type
+        self.location_id = location_id
+        self.parent_code = parent_code
+        self.latitude = latitude
+        self.longitude = longitude
+        self.do_delete = do_delete
+        self.external_id = external_id
+        self.index = index
+        self.hardfail_reason = None
+        self.warnings = []
+
+    @classmethod
+    def from_excel_row(cls, row, index, location_type):
+        name = row.get(cls.titles['name'])
+        site_code = row.get(cls.titles['site_code'])
+        location_type = location_type
+        location_id = row.get(cls.titles['id'])
+        parent_code = row.get(cls.titles['parent_code'])
+        latitude = row.get(cls.titles['latitude'])
+        longitude = row.get(cls.titles['longitude'])
+        do_delete = row.get(cls.titles['do_delete'], 'N').lower() in ['y', 'yes']
+        external_id = row.get(cls.titles['external_id'])
+        index = index
+        return cls(name, site_code, location_type, parent_code, location_id,
+                   do_delete, external_id, latitude, longitude, index)
+
+    def _lookup_location_id_site_code(self):
+        # if one of location_id/site_code are missing, check against existing location_id/site_code
+        # lookup them and set it
+        if not self.location_id and not self.site_code:
+            raise MissingLocationIDAndSiteCode
+
 
 
 class LocationTreeValidator(object):
