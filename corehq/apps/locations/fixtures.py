@@ -83,6 +83,9 @@ class LocationFixtureProvider(object):
 class HierarchicalLocationSerializer(object):
 
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
+        if not restore_user.project.uses_locations:
+            return []
+
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
         root_locations = all_locations.root_locations
 

@@ -213,11 +213,7 @@ class OTARestoreCommCareUser(OTARestoreUser):
 
     @memoized
     def get_locations_to_sync(self):
-        from corehq.apps.locations.fixtures import LocationSet
         from corehq.apps.locations.fixtures import get_all_locations_to_sync
-
-        if not self.project.uses_locations:
-            return LocationSet()
         return get_all_locations_to_sync(self)
 
 
