@@ -1,4 +1,5 @@
 import mock
+from cStringIO import StringIO
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
@@ -15,9 +16,11 @@ from corehq.apps.domain.models import Domain
 from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
+    RestoreCacheSettings,
     AsyncRestoreResponse,
     FileRestoreResponse,
     restore_cache_key,
+    CachedPayload
 )
 from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
@@ -27,7 +30,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.util.test_utils import flag_enabled
 
 
-class AsyncRestoreTest(TestCase):
+class BaseAsyncRestoreTest(TestCase):
     dependent_apps = [
         'auditcare',
         'django_digest',
@@ -50,7 +53,7 @@ class AsyncRestoreTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(AsyncRestoreTest, cls).setUpClass()
+        super(BaseAsyncRestoreTest, cls).setUpClass()
         delete_all_cases()
         delete_all_sync_logs()
         delete_all_users()
@@ -65,18 +68,23 @@ class AsyncRestoreTest(TestCase):
         delete_all_cases()
         delete_all_sync_logs()
         delete_all_users()
-        super(AsyncRestoreTest, cls).tearDownClass()
+        super(BaseAsyncRestoreTest, cls).tearDownClass()
 
-    def _restore_config(self, async=True, sync_log_id=''):
+    def _restore_config(self, async=True, sync_log_id='', overwrite_cache=False):
         restore_config = RestoreConfig(
             project=self.project,
             restore_user=self.user,
             params=RestoreParams(sync_log_id=sync_log_id, version=V2),
+            cache_settings=RestoreCacheSettings(
+                overwrite_cache=overwrite_cache
+            ),
             async=async
         )
         self.addCleanup(restore_config.cache.clear)
         return restore_config
 
+
+class AsyncRestoreTest(BaseAsyncRestoreTest):
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
     def test_regular_restore_doesnt_start_task(self, task):
         """
@@ -103,11 +111,11 @@ class AsyncRestoreTest(TestCase):
 
         restore_config = self._restore_config(async=True)
         initial_payload = restore_config.get_payload()
-        self.assertTrue(isinstance(initial_payload, AsyncRestoreResponse))
+        self.assertIsInstance(initial_payload, AsyncRestoreResponse)
 
         subsequent_restore = self._restore_config(async=True)
         subsequent_payload = subsequent_restore.get_payload()
-        self.assertTrue(isinstance(subsequent_payload, AsyncRestoreResponse))
+        self.assertIsInstance(subsequent_payload, AsyncRestoreResponse)
 
     def test_subsequent_syncs_when_job_complete(self):
         # First sync, return a timout. Ensure that the async_task_id gets set
@@ -121,7 +129,7 @@ class AsyncRestoreTest(TestCase):
             restore_config = self._restore_config(async=True)
             initial_payload = restore_config.get_payload()
             self.assertIsNotNone(restore_config.cache.get(cache_id))
-            self.assertTrue(isinstance(initial_payload, AsyncRestoreResponse))
+            self.assertIsInstance(initial_payload, AsyncRestoreResponse)
             # new synclog should not have been created
             self.assertIsNone(restore_config.restore_state.current_sync_log)
 
@@ -195,6 +203,38 @@ class AsyncRestoreTest(TestCase):
             correct_user_factory.create_case()
             revoke.assert_called_with(fake_task_id)
             self.assertIsNone(restore_config.cache.get(cache_id))
+
+
+class AsyncRestoreIntegrationParameters(BaseAsyncRestoreTest):
+    """When overwrite_cache is set, the async restore should always first return an
+    AsyncRestoreResponse as its first response
+
+    """
+    @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
+    def test_always_returns_async_restore_response(self, task):
+        delay = mock.MagicMock()
+        delay.id = 'random_task_id'
+        task.delay.return_value = delay
+
+        payload = self._restore_config(async=True, overwrite_cache=True).get_payload()
+        self.assertTrue(task.delay.called)
+        self.assertIsInstance(payload, AsyncRestoreResponse)
+
+    @mock.patch.object(CachedPayload, 'finalize')  # fake that a cached payload exists
+    @mock.patch.object(RestoreConfig, 'cache')
+    @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
+    def test_clears_cache(self, task, cache, _):
+        delay = mock.MagicMock()
+        delay.id = 'random_task_id'
+        task.delay.return_value = delay
+        cache_get = mock.MagicMock().return_value = StringIO('<restore_id>123</restore_id>')
+        cache.get.return_value = cache_get
+
+        self._restore_config(async=True, overwrite_cache=False).get_payload()
+        self.assertFalse(cache.delete.called)
+
+        self._restore_config(async=True, overwrite_cache=True).get_payload()
+        self.assertTrue(cache.delete.called)
 
 
 class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):

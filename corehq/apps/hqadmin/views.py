@@ -405,7 +405,6 @@ class AdminRestoreView(TemplateView):
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
-        self.overwrite_cache = request.GET.get('ignore_cache') == 'true'
         self.app_id = kwargs.get('app_id', None)
 
         raw = request.GET.get('raw') == 'true'
@@ -417,7 +416,7 @@ class AdminRestoreView(TemplateView):
 
     def _get_restore_response(self):
         return get_restore_response(
-            self.user.domain, self.user, overwrite_cache=self.overwrite_cache, app_id=self.app_id,
+            self.user.domain, self.user, app_id=self.app_id,
             **get_restore_params(self.request)
         )
 
