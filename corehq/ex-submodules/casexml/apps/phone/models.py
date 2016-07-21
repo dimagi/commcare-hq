@@ -105,6 +105,12 @@ class OTARestoreUser(object):
     def get_ucr_filter_value(self, ucr_filter, ui_filter):
         return ucr_filter.get_filter_value(self._couch_user, ui_filter)
 
+    def get_locations_to_sync(self):
+        """
+        Returns a LocationSet object contianing all locations that should sync
+        """
+        raise NotImplementedError()
+
 
 class OTARestoreWebUser(OTARestoreUser):
 
@@ -144,6 +150,11 @@ class OTARestoreWebUser(OTARestoreUser):
         from corehq.apps.fixtures.models import UserFixtureStatus
 
         return UserFixtureStatus.DEFAULT_LAST_MODIFIED
+
+    def get_locations_to_sync(self):
+        # todo: not yet implemented for web users
+        from corehq.apps.locations.fixtures import LocationSet
+        return LocationSet()
 
 
 class OTARestoreCommCareUser(OTARestoreUser):
@@ -201,6 +212,11 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.fixtures.models import UserFixtureType
 
         return self._couch_user.fixture_status(UserFixtureType.LOCATION)
+
+    @memoized
+    def get_locations_to_sync(self):
+        from corehq.apps.locations.fixtures import get_all_locations_to_sync
+        return get_all_locations_to_sync(self)
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
