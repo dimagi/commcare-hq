@@ -1,4 +1,7 @@
+from collections import namedtuple
+
 from django.test import SimpleTestCase, TestCase
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles
 from corehq.apps.locations.bulk_management import (
@@ -215,13 +218,30 @@ class TestTreeUtils(SimpleTestCase):
         )
 
 
-def get_validator(location_types, locations):
+def get_validator(location_types, locations, old_collection=None):
     validator = LocationTreeValidator(
         [LocationTypeStub(*loc_type) for loc_type in location_types],
         [LocationStub(*loc) for loc in locations],
+        old_collection=old_collection
     )
     print validator.errors
     return validator
+
+
+MockCollection = namedtuple('MockCollection', 'types locations locations_by_id locations_by_site_code')
+
+
+def make_collection(types, locations):
+    types = [LocationTypeStub(*loc_type) for loc_type in types]
+
+    locations = [LocationStub(*loc) for loc in locations]
+
+    return MockCollection(
+        types=types,
+        locations=locations,
+        locations_by_id={l.location_id: l for l in locations},
+        locations_by_site_code={l.site_code: l for l in locations}
+    )
 
 
 class TestTreeValidator(SimpleTestCase):
@@ -270,3 +290,42 @@ class TestTreeValidator(SimpleTestCase):
         self.assertEqual(len(errors), 1)
         self.assertEqual(len(validator._check_location_names()), 1)
         self.assertIn("middlesex", errors[0])
+
+    def test_missing_types(self):
+        # all types in the domain should be listed in given excel
+        old_types = FLAT_LOCATION_TYPES + [('Galaxy', 'galaxy', '', False, False, False, '', '', 0)]
+
+        old_collection = make_collection(old_types, BASIC_LOCATION_TREE)
+        validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE, old_collection)
+
+        missing_type_errors = validator._check_unlisted_type_codes()
+        self.assertEqual(len(missing_type_errors), 1)
+        self.assertEqual(len(validator.errors), 1)
+        self.assertIn('galaxy', missing_type_errors[0])
+
+    def test_missing_location_ids(self):
+        # all locations in the domain should be listed in given excel
+        old_locations = (
+            BASIC_LOCATION_TREE +
+            [('extra_state', 'ex_code', 'state', '', 'ex_id', False, '', '', '', 0)]
+        )
+        old_collection = make_collection(FLAT_LOCATION_TYPES, old_locations)
+        validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE, old_collection)
+        missing_locations = validator._check_unlisted_location_ids()
+        self.assertEqual(len(missing_locations), 1)
+        self.assertEqual(len(validator.errors), 1)
+        self.assertIn('extra_state', missing_locations[0])
+
+    def test_unknown_location_ids(self):
+        # all locations in the domain should be listed in given excel
+
+        old_collection = make_collection(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE)
+        new_locations = (
+            BASIC_LOCATION_TREE +
+            [('extra_state', 'ex_code', 'state', '', 'ex_id', False, '', '', '', 0)]
+        )
+        validator = get_validator(FLAT_LOCATION_TYPES, new_locations, old_collection)
+        unknown_locations = validator._check_unknown_location_ids()
+        self.assertEqual(len(unknown_locations), 1)
+        self.assertEqual(len(validator.errors), 1)
+        self.assertIn('ex_id', unknown_locations[0])
