@@ -1214,7 +1214,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 spec.sortRows[j].field,
                                 spec.sortRows[j].type,
                                 spec.sortRows[j].direction,
-                                spec.sortRows[j].display,
+                                spec.sortRows[j].header[this.lang],
                                 false
                             );
                         }

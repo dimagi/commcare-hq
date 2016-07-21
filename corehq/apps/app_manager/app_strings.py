@@ -4,7 +4,7 @@ from django.utils.translation import ugettext
 
 from corehq.apps.app_manager import id_strings
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.app_manager.util import is_sort_only_column, module_offers_search
+from corehq.apps.app_manager.util import module_offers_search, create_temp_sort_column
 import langcodes
 import commcare_translations
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
@@ -71,8 +71,7 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 yield id_strings.detail_title_locale(module, detail_type), label
 
             for column in detail.get_columns():
-                if not is_sort_only_column(column):
-                    yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
+                yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 
                 if column.format in ('enum', 'enum-image'):
                     for item in column.enum:
@@ -91,10 +90,13 @@ def _create_custom_app_strings(app, lang, for_default=False):
                             ), trans(values)
 
             # To list app strings for properties used as sorting properties only
-            column_fields = [column.field for column in detail.get_columns()]
-            only_sort_options = [se for se in detail.sort_elements if se.field not in column_fields]
-            for sort_element in only_sort_options:
-                yield id_strings.sort_only_column_header_locale(module, detail_type, sort_element), sort_element.display
+            if detail.sort_elements:
+                column_fields = [column.field for column in detail.get_columns()]
+                only_sort_options = [se for se in detail.sort_elements if se.field not in column_fields]
+                for sort_element in only_sort_options:
+                    if bool(sort_element.header):
+                        column = create_temp_sort_column(sort_element, len(set(detail.get_columns())) - 1)
+                        yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 
             for tab in detail.get_tabs():
                 yield id_strings.detail_tab_title_locale(module, detail_type, tab), trans(tab.header)

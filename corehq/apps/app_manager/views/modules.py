@@ -693,7 +693,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             item.field = sort_element['field']
             item.type = sort_element['type']
             item.direction = sort_element['direction']
-            item.display = sort_element['display']
+            item.header[lang] = sort_element['display']
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)

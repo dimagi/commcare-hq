@@ -458,24 +458,21 @@ def add_odk_profile_after_build(app_build):
     app_build.odk_profile_created_after_build = True
 
 
-def create_temp_sort_column(field):
+def create_temp_sort_column(sort_element, order):
     """
     Used to create a column for the sort only properties to
     add the field to the list of properties and app strings but
     not persist anything to the detail data.
     """
-    from corehq.apps.app_manager.models import SortOnlyDetailColumn
-    return SortOnlyDetailColumn(
+    from corehq.apps.app_manager.models import DetailColumn
+    col = DetailColumn(
         model='case',
-        field=field,
+        field=sort_element.field,
         format='invisible',
-        header=None,
+        header=sort_element.header,
     )
-
-
-def is_sort_only_column(column):
-    from corehq.apps.app_manager.models import SortOnlyDetailColumn
-    return isinstance(column, SortOnlyDetailColumn)
+    col._i = order
+    return col
 
 
 def get_correct_app_class(doc):
