@@ -3,7 +3,6 @@ import datetime
 from django.utils.translation import ugettext_lazy
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.reports.standard import ProjectReport
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.users.util import raw_username
@@ -58,10 +57,12 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                  delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
         self._next_summary = None
+        not_deleted_active_users = UserES().domain(domain).values_list("_id", flat=True)
         base_queryset = MALTRow.objects.filter(
             domain_name=domain,
             month=month,
             user_type__in=['CommCareUser', 'CommCareUser-Deleted'],
+            user_id__in=not_deleted_active_users,
         )
         if has_filter:
             base_queryset = base_queryset.filter(
@@ -176,8 +177,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                 return self.delta_inactive * 100.
             return float(self.delta_inactive / float(self._previous_summary.number_of_inactive_users)) * 100.
 
-    @memoized
-    def get_all_user_stubs(self):
+    def _get_all_user_stubs(self):
         return {
             row.user_id: UserActivityStub(
                 user_id=row.user_id,
@@ -192,9 +192,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     @memoized
     def get_all_user_stubs_with_extra_data(self):
         if self._previous_summary:
-            previous_stubs = self._previous_summary.get_all_user_stubs()
-            next_stubs = self._next_summary.get_all_user_stubs() if self._next_summary else {}
-            user_stubs = self.get_all_user_stubs()
+            previous_stubs = self._previous_summary._get_all_user_stubs()
+            next_stubs = self._next_summary._get_all_user_stubs() if self._next_summary else {}
+            user_stubs = self._get_all_user_stubs()
             ret = []
             for user_stub in user_stubs.values():
                 ret.append(UserActivityStub(
@@ -224,8 +224,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             unhealthy_users = filter(
-                lambda stub: stub.is_active and not stub.is_performing and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                lambda stub: stub.is_active and not stub.is_performing,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
@@ -237,8 +236,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: not stub.is_active and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                lambda stub: not stub.is_active,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: stub.delta_forms)
@@ -250,8 +248,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         """
         if self._previous_summary:
             dropouts = filter(
-                lambda stub: stub.is_newly_performing and not
-                CommCareUser.get(stub.user_id).is_deleted(),
+                lambda stub: stub.is_newly_performing,
                 self.get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
