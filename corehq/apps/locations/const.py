@@ -1,4 +1,6 @@
 
+ROOT_LOCATION_TYPE = "TOP"
+
 LOCATION_SHEET_HEADERS = {
     'location_id': 'Location ID',
     'site_code': 'Location Code',

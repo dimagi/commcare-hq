@@ -12,7 +12,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location
 from .tree_utils import BadParentError, CycleError, assert_no_cycles
-from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS
+from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
 
 
 class MissingLocationIDAndSiteCode(Exception):
@@ -41,7 +41,7 @@ class LocationTypeStub(object):
                  view_descendants, expand_from, sync_to, index):
         self.name = name
         self.code = code
-        self.parent_code = parent_code or 'TOP'
+        self.parent_code = parent_code or ROOT_LOCATION_TYPE
         self.do_delete = do_delete
         self.shares_cases = shares_cases
         self.view_descendants = view_descendants
@@ -339,7 +339,7 @@ class LocationTreeValidator(object):
                 return "Location '{}' has an invalid type".format(location.site_code)
 
             parent = self.locations_by_code.get(location.parent_code)
-            if loc_type.parent_code == 'TOP':
+            if loc_type.parent_code == ROOT_LOCATION_TYPE:
                 if parent:
                     return "Location '{}' is a '{}' and should not have a parent".format(
                            location.site_code, location.location_type)
@@ -347,7 +347,7 @@ class LocationTreeValidator(object):
                     return
 
             correct_parent_type = loc_type.parent_code
-            if parent == 'TOP' or parent.location_type != correct_parent_type:
+            if parent == ROOT_LOCATION_TYPE or parent.location_type != correct_parent_type:
                 return "Location '{}' is a '{}', so it should have a parent that is a '{}'".format(
                        location.site_code, location.location_type, correct_parent_type)
 
