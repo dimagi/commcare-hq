@@ -67,11 +67,17 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
     $('#menu-region').html("");
 });
 
-FormplayerFrontend.reqres.setHandler('startLoading', function () {
+$(document).bind("ajaxStart", function(){
+    var requestElements = $(".formplayer-request");
+    for (var i = 0; i < requestElements.length; i++ ) {
+        requestElements[i].style.pointerEvents = 'none';
+    }
     tfLoading();
-});
-
-FormplayerFrontend.reqres.setHandler('endLoading', function () {
+}).bind("ajaxStop", function() {
+    var requestElements = $(".formplayer-request");
+    for (var i = 0; i < requestElements.length; i++ ) {
+        requestElements[i].style.pointerEvents = 'auto';
+    }
     tfLoadingComplete();
 });
 

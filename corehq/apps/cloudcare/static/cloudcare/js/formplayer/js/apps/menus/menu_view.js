@@ -3,7 +3,7 @@
 FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
     MenuList.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
-
+        className: "formplayer-request",
         events: {
             "click": "rowClick",
         },
@@ -49,7 +49,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
     MenuList.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         template: "#case-view-item-template",
-
+        className: "formplayer-request",
         events: {
             "click": "rowClick",
         },

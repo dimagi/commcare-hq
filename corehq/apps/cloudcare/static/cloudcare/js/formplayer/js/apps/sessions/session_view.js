@@ -3,7 +3,7 @@
 FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, FormplayerFrontend, Backbone, Marionette) {
     SessionList.SessionView = Marionette.ItemView.extend({
         tagName: "tr",
-
+        className: "formplayer-request",
         events: {
             "click": "rowClick",
         },
