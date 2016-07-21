@@ -119,7 +119,9 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
                 </field>
                 <field>
                     <header width="0">
-                        <text/>
+                        <text>
+                           <locale id="m0.case_short.gps.display"/>
+                        </text>
                     </header>
                     <template width="0">
                         <text>
