@@ -171,6 +171,8 @@ class OTARestoreCommCareUser(OTARestoreUser):
         return FixtureDataItem.by_user(self._couch_user)
 
     def get_groups(self):
+        # this call is only used by bihar custom code and can be removed when that project is inactive
+        from corehq.apps.groups.models import Group
         return Group.by_user(self._couch_user)
 
     def get_commtrack_location_id(self):
