@@ -58,12 +58,10 @@ def should_sync_locations(last_sync, location_db, restore_user):
 
 
 class LocationFixtureProvider(object):
-    id = 'commtrack:locations'
 
-    def __init__(self, serializers=None):
-        if serializers is None:
-            serializers = [HierarchicalLocationSerializer(), FlatLocationSerializer()]
-        self.serializers = serializers
+    def __init__(self, id, serializer):
+        self.id = id
+        self.serializer = serializer
 
     def __call__(self, restore_user, version, last_sync=None, app=None):
         """
@@ -84,18 +82,13 @@ class LocationFixtureProvider(object):
         if not should_sync_locations(last_sync, all_locations, restore_user):
             return []
 
-        xml_nodes = []
-        for serializer in self.serializers:
-            xml_nodes.extend(serializer.get_xml_nodes(restore_user, all_locations))
-
-        return xml_nodes
+        return self.serializer.get_xml_nodes(self.id, restore_user, all_locations)
 
 
 class HierarchicalLocationSerializer(object):
-    id = 'commtrack:locations'
 
-    def get_xml_nodes(self, restore_user, all_locations):
-        root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
+    def get_xml_nodes(self, fixture_id, restore_user, all_locations):
+        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
         root_locations = all_locations.root_locations
 
         if root_locations:
@@ -104,14 +97,12 @@ class HierarchicalLocationSerializer(object):
 
 
 class FlatLocationSerializer(object):
-    id = 'locations'
 
-    def get_xml_nodes(self, restore_user, all_locations):
+    def get_xml_nodes(self, fixture_id, restore_user, all_locations):
         if not toggles.FLAT_LOCATION_FIXTURE.enabled(restore_user.project.name):
             return []
 
-        root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
-
+        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
         outer_node = Element('locations')
         root_node.append(outer_node)
         for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
@@ -131,7 +122,12 @@ class FlatLocationSerializer(object):
         return [root_node]
 
 
-location_fixture_generator = LocationFixtureProvider()
+location_fixture_generator = LocationFixtureProvider(
+    id='commtrack:locations', serializer=HierarchicalLocationSerializer()
+)
+flat_location_fixture_generator = LocationFixtureProvider(
+    id='locations', serializer=FlatLocationSerializer()
+)
 
 
 def _all_locations(user):

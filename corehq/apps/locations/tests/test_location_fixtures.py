@@ -25,7 +25,7 @@ from .util import (
     LocationTypeStructure,
 )
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
-    LocationFixtureProvider, FlatLocationSerializer, HierarchicalLocationSerializer
+    flat_location_fixture_generator
 from ..models import SQLLocation, LocationType, Location
 
 DEPENDENT_APPS = [
@@ -71,8 +71,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
             for desired_location in desired_locations
         }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
 
-        serializer = FlatLocationSerializer() if flat else HierarchicalLocationSerializer()
-        generator = LocationFixtureProvider(serializers=[serializer])
+        generator = flat_location_fixture_generator if flat else location_fixture_generator
         fixture = ElementTree.tostring(generator(self.user, V2)[0])
         desired_fixture = self.get_xml(xml_name).format(
             user_id=self.user.user_id,

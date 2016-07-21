@@ -544,6 +544,7 @@ FIXTURE_GENERATORS = {
     # fixtures that must be sent along with the phones cases
     'case': [
         "corehq.apps.locations.fixtures.location_fixture_generator",
+        "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     ]
 }
 
