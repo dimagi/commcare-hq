@@ -179,7 +179,7 @@ class TestBulkManagement(TestCase):
 class TestTreeUtils(SimpleTestCase):
     def test_no_issues(self):
         assert_no_cycles([
-            ("State", None),
+            ("State", 'TOP'),
             ("County", "State"),
             ("City", "County"),
             ("Region", "State"),
@@ -202,7 +202,7 @@ class TestTreeUtils(SimpleTestCase):
     def test_has_cycle(self):
         with self.assertRaises(TreeError) as e:
             assert_no_cycles([
-                ("State", None),
+                ("State", 'TOP'),
                 ("County", "State"),
                 ("City", "County"),
                 # These three cycle:
