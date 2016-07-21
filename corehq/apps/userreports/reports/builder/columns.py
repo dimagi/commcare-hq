@@ -64,11 +64,6 @@ class CountColumn(ColumnOption):
 
     def to_column_dict(self, index, display_text, aggregation):
         # aggregation is only an arg so that we match the the parent's method signature.
-        return {
-            'type': 'field',
-            'format': 'default',
-            'aggregation': 'sum',
-            'field': 'count',
-            'column_id': 'column_{}'.format(index),
-            'display': display_text,
-        }
+        column_dict = super(CountColumn, self).to_column_dict(index, display_text, "Sum")
+        del column_dict['transform']
+        return column_dict
