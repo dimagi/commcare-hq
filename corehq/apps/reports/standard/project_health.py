@@ -53,7 +53,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     active = jsonobject.IntegerProperty()
     performing = jsonobject.IntegerProperty()
 
-    def __init__(self, domain, month, users, has_filter, performance_threshold, previous_summary=None):
+    def __init__(self, domain, month, users, has_filter,
+                 performance_threshold, previous_summary=None,
+                 delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
         self._next_summary = None
         base_queryset = MALTRow.objects.filter(
@@ -67,20 +69,29 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             )
         self._distinct_user_ids = base_queryset.distinct('user_id')
 
-        num_performing_user = (base_queryset
-                               .filter(num_of_forms__gte=performance_threshold)
-                               .distinct('user_id')
-                               .count())
+        num_performing_users = (base_queryset
+                                .filter(num_of_forms__gte=performance_threshold)
+                                .distinct('user_id')
+                                .count())
+
+        num_active_users = self._distinct_user_ids.count()
+        num_low_performing_user = num_active_users - num_performing_users
+
+        if self._previous_summary:
+            delta_high_performers = num_performing_users - self._previous_summary.number_of_performing_users
+            delta_low_performers = num_low_performing_user - self._previous_summary.number_of_low_performing_users
 
         super(MonthlyPerformanceSummary, self).__init__(
             month=month,
             domain=domain,
             performance_threshold=performance_threshold,
-            active=self._distinct_user_ids.count(),
+            active=num_active_users,
             inactive=0,
             total_users_by_month=0,
             percent_active=0,
-            performing=num_performing_user,
+            performing=num_performing_users,
+            delta_high_performers=delta_high_performers,
+            delta_low_performers=delta_low_performers,
         )
 
     def set_next_month_summary(self, next_month_summary):
@@ -115,16 +126,18 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         return datetime.datetime(prev_year, prev_month, 1)
 
     @property
-    def delta_performing(self):
+    def delta_high_performing(self):
         if self._previous_summary:
             return self.number_of_performing_users - self._previous_summary.number_of_performing_users
         else:
             return self.number_of_performing_users
 
     @property
-    def delta_performing_pct(self):
-        if self.delta_performing and self._previous_summary and self._previous_summary.number_of_performing_users:
-            return float(self.delta_performing / float(self._previous_summary.number_of_performing_users)) * 100.
+    def delta_high_performing_pct(self):
+        if (self.delta_high_performing and self._previous_summary and
+           self._previous_summary.number_of_performing_users):
+            return float(self.delta_high_performing /
+                         float(self._previous_summary.number_of_performing_users)) * 100.
 
     @property
     def delta_low_performing(self):
