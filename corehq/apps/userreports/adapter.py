@@ -27,12 +27,7 @@ class IndicatorAdapter(object):
         For certain known, expected errors this will do no additional logging.
         For unexpected errors it will log them.
         """
-        try:
-            self.save(doc)
-        except IntegrityError:
-            pass  # can be due to users messing up their tables/data so don't bother logging
-        except Exception as e:
-            self.handle_exception(doc, e)
+        raise NotImplementedError
 
     def handle_exception(self, doc, exception):
         notify_exception(

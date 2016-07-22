@@ -22,6 +22,12 @@ class IndicatorESAdapter(IndicatorAdapter):
             # index doesn't exist yet
             pass
 
+    def best_effort_save(self, doc):
+        try:
+            self.save(doc)
+        except Exception as e:
+            self.handle_exception(doc, e)
+
     def save(self, doc):
         """
         Saves the document. Should bubble up known errors.

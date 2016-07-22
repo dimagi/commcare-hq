@@ -46,6 +46,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         """
         return self.session_helper.Session.query(self.get_table())
 
+    def best_effort_save(self, doc):
+        try:
+            self.save(doc)
+        except IntegrityError:
+            pass  # can be due to users messing up their tables/data so don't bother logging
+        except Exception as e:
+            self.handle_exception(doc, e)
+
     def save(self, doc):
         """
         Saves the document. Should bubble up known errors.
