@@ -1319,24 +1319,27 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     @memoized
     def get_action_type(self):
 
-        if self.actions.close_case.condition.type != 'never':
+        if self.actions.close_case.condition.is_active():
             return 'close'
-        elif self.get_subcase_types():
+        elif (self.actions.open_case.condition.is_active() or
+                self.actions.subcases):
             return 'open'
-        elif self.requires_case():
+        elif self.actions.update_case.condition.is_active():
             return 'update'
         else:
             return 'none'
 
     @memoized
     def get_icon_help_text(self):
-        subcases = self.get_subcase_types()
         messages = []
 
-        if subcases:
-            messages.append(_('This form opens a {}').format(', '.join(subcases)))
+        if self.actions.open_case.condition.is_active():
+            messages.append(_('This form opens a {}').format(self.get_module().case_type))
 
-        if self.actions.close_case.condition != 'never':
+        if self.actions.subcases:
+            messages.append(_('This form opens a subcase {}').format(', '.join(self.get_subcase_types())))
+
+        if self.actions.close_case.condition.is_active():
             messages.append(_('This form closes a {}').format(self.get_module().case_type))
 
         elif self.requires_case():
