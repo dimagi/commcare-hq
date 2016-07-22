@@ -653,6 +653,7 @@ class ConfigureNewReportBase(forms.Form):
     def _build_data_source(self):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
+            # The uuid gets truncated, so it's not really universally unique.
             table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
             **self._get_data_source_configuration_kwargs()
         )
