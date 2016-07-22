@@ -32,6 +32,7 @@ from restkit.errors import Unauthorized
 from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.phone.xml import SYNC_XMLNS
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -426,9 +427,11 @@ class AdminRestoreView(TemplateView):
         timing_context = timing_context or TimingContext(self.user.username)
         string_payload = ''.join(response.streaming_content)
         xml_payload = etree.fromstring(string_payload)
+        restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
+            'restore_id': restore_id_element.text if restore_id_element is not None else None,
             'status_code': response.status_code,
             'timing_data': timing_context.to_list()
         })
