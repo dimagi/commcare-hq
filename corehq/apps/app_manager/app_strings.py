@@ -91,11 +91,12 @@ def _create_custom_app_strings(app, lang, for_default=False):
 
             # To list app strings for properties used as sorting properties only
             if detail.sort_elements:
-                column_fields = [column.field for column in detail.get_columns()]
-                only_sort_options = [se for se in detail.sort_elements if se.field not in column_fields]
-                for sort_element in only_sort_options:
+                sort_elements = {s.field: (s, i + 1) for i, s in enumerate(detail.sort_elements)}
+                [sort_elements.pop(column.field, None) for column in detail.get_columns()]
+                sort_only = sorted(sort_elements.items(), key=lambda (field, (sort_element, order)): order)
+                for field, (sort_element, order) in sort_only:
                     if bool(sort_element.header):
-                        column = create_temp_sort_column(sort_element, len(set(detail.get_columns())) - 1)
+                        column = create_temp_sort_column(sort_element, order)
                         yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 
             for tab in detail.get_tabs():

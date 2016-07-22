@@ -391,7 +391,7 @@ class LateFlag(HideShortHeaderColumn):
 class Invisible(HideShortColumn):
     @property
     def header(self):
-        if self.detail.sort_elements:
+        if bool(self.column.header):
             header = sx.Header(
                 text=sx.Text(locale_id=self.locale_id),
                 width=self.template_width
