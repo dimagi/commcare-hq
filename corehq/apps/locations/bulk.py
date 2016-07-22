@@ -151,7 +151,7 @@ class LocationImporter(object):
                     )
                 }
 
-            parent = parent_id or existing.parent_id
+            parent = parent_id or existing.parent_location_id
 
         form_data['site_code'] = provided_code
 

@@ -490,6 +490,10 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     def location_type_name(self):
         return self.location_type.name
 
+    @property
+    def parent_location_id(self):
+        return self.parent.location_id if self.parent else None
+
 
 def _filter_for_archived(locations, include_archive_ancestors):
     """
@@ -704,8 +708,8 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         location_type = self._sql_location_type or sql_location.location_type
         sql_location.location_type = location_type
         # sync parent connection
-        sql_location.parent = (SQLLocation.objects.get(location_id=self.parent_id)
-                               if self.parent_id else None)
+        sql_location.parent = (SQLLocation.objects.get(location_id=self.parent_location_id)
+                               if self.parent_location_id else None)
 
         self._migration_sync_to_sql(sql_location)
 
@@ -799,14 +803,14 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return not self.lineage
 
     @property
-    def parent_id(self):
+    def parent_location_id(self):
         if self.is_root:
             return None
         return self.lineage[0]
 
     @property
     def parent(self):
-        parent_id = self.parent_id
+        parent_id = self.parent_location_id
         return Location.get(parent_id) if parent_id else None
 
     def siblings(self, parent=None):
