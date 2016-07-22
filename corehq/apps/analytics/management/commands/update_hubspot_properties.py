@@ -20,7 +20,8 @@ class Command(BaseCommand):
 
         print "Calculating properties for users"
         users = self.get_active_users()
-        data_to_submit = [self.get_user_data(user, args) for user in users if user.email]
+        data_to_submit = [self.get_user_data(user, args)
+                          for user in users if user.email and user.analytics_enabled]
         json_data = json.dumps(data_to_submit)
 
         print "Sending data to Hubspot"

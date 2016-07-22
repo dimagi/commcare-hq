@@ -5,6 +5,7 @@ import json
 
 from django.views.generic.base import TemplateView
 
+from corehq.apps.analytics.utils import analytics_enabled_for_email
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -788,7 +789,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
         send_html_email_async.delay(
             subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+            email_from=settings.DEFAULT_FROM_EMAIL,
+            ga_track=request.analytics_enabled,
             ga_tracking_info={
                 'cd4': request.domain,
                 'cd10': report_slug
@@ -799,7 +801,8 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
             body = render_full_report_notification(request, content).content
             send_html_email_async.delay(
                 subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL, ga_track=True,
+                email_from=settings.DEFAULT_FROM_EMAIL,
+                ga_track=analytics_enabled_for_email(recipient),
                 ga_tracking_info={
                     'cd4': request.domain,
                     'cd10': report_slug
