@@ -42,10 +42,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         templateHelpers: function () {
             return {
                 title: this.options.collection.title,
-                breadcrumbs: this.options.breadcrumbs,
-                breadcrumbClick: function(index) {
-                    debugger;
-                },
             };
         },
     });
@@ -73,7 +69,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         tagName: "tr",
 
         getTemplate: function () {
-            if (_.isNull(this.options.tiles)) {
+            if (_.isNull(this.options.tiles) || !this.tiles) {
                 return "#case-view-item-template";
             } else {
                 return "#case-tile-view-item-template";
@@ -83,7 +79,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         initialize: function (options) {
             this.tiles = options.tiles;
             this.styles = options.styles;
-            if(!_.isNull(this.tiles)) {
+            if(!_.isNull(this.tiles) && this.tiles) {
                 for (var i = 0; i < this.tiles.length; i++) {
                     var tile = this.tiles[i];
                     if (tile === null) {
@@ -183,6 +179,18 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 },
             };
         },
+    });
+
+    MenuList.BreadcrumbView = Marionette.ItemView.extend({
+        tagName: "li",
+        template: "#breadcrumb-item-template",
+    });
+
+    MenuList.BreadcrumbListView = Marionette.CompositeView.extend({
+        tagName: "div",
+        template: "#breadcrumb-list-template",
+        childView: MenuList.BreadcrumbView,
+        childViewContainer: "ol",
     });
 
     MenuList.DetailView = Marionette.ItemView.extend({

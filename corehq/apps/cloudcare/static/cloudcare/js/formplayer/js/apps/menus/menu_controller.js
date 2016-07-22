@@ -23,7 +23,6 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                     currentPage: menuResponse.currentPage,
                     styles: menuResponse.styles,
                     tiles: menuResponse.tiles,
-                    breadcrumbs: menuResponse.breadcrumbs,
                 };
                 if (menuResponse.type === "commands") {
                     menuListView = new MenuList.MenuListView(menuData);
@@ -33,6 +32,20 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                     menuListView = new MenuList.CaseListView(menuData);
                     FormplayerFrontend.regions.main.show(menuListView.render());
                 }
+
+                var breadcrumbsModel = [];
+                for (var i = 0; i < menuResponse.breadcrumbs.length; i++) {
+                    var obj = {};
+                    obj.data = menuResponse.breadcrumbs[i];
+                    obj.id = i;
+                    breadcrumbsModel.push(obj);
+                }
+                var detailCollection = new Backbone.Collection();
+                detailCollection.reset(breadcrumbsModel);
+                var breadcrumbView = new MenuList.BreadcrumbListView({
+                    collection: detailCollection,
+                });
+                FormplayerFrontend.regions.breadcrumb.show(breadcrumbView.render());
             });
         },
 
