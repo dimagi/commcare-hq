@@ -1325,6 +1325,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             return 'none'
 
+    @memoized
+    def get_icon_help_text(self):
+        subcases = self.get_subcase_types()
+        messages = []
+
+        if subcases:
+            messages.append(_('This form opens cases for {}').format(', '.join(subcases)))
+
+        if self.requires_case():
+            messages.append(('This form updates the {} case').format(self.get_module().case_type))
+
+        return '. '.join(messages)
+
     def active_actions(self):
         if self.get_app().application_version == APP_V1:
             action_types = (

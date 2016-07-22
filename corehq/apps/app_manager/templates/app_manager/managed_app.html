@@ -45,6 +45,7 @@
     {% if app.get_doc_type == "Application" %}
     <script>
         $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
             $('.edit-form-pencil').hide().tooltip({
                 title: "{% trans "Edit in form builder" %}",
                 placement: 'auto'
@@ -207,9 +208,25 @@
                                         <!--[F]-->
                                         <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar" href="{% url "view_form" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
-                                            {% if form.get_action_type == 'open' %}<i class="fa fa-play-circle"></i>
-                                            {% elif form.get_action_type == 'update' %}<i class="fa fa-pencil-square"></i>
-                                            {% else %}<i class="fa fa-file-o"></i>{% endif %}
+                                            {% if form.get_action_type == 'open' %}
+                                            <i
+                                                class="fa fa-play-circle"
+                                                data-toggle="tooltip"
+                                                data-placement="top"
+                                                title="{{ form.get_icon_help_text }}"
+                                                >
+                                            </i>
+                                            {% elif form.get_action_type == 'update' %}
+                                            <i
+                                                class="fa fa-pencil-square"
+                                                data-toggle="tooltip"
+                                                data-placement="top"
+                                                title="{{ form.get_icon_help_text }}"
+                                                >
+                                            </i>
+                                            {% else %}
+                                            <i class="fa fa-file-o"></i>
+                                            {% endif %}
                                             <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
                                             {{ form.name|html_trans:langs }}
                                             </span>
