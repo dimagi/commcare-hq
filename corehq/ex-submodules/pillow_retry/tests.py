@@ -211,21 +211,6 @@ class PillowRetryTestCase(TestCase):
         docs_to_process = {e.doc_id for e in errors}
         self.assertEqual({'to-process1', 'to-process2'}, docs_to_process)
 
-    def test_include_doc(self):
-        """
-        see FakePillow.process_change
-        """
-        id = 'test_doc'
-        FakePillow.get_couch_db()._docs[id] = {'id': id, 'property': 'value'}
-        change_dict = {'id': id, 'seq': 54321}
-        error = create_error(change_dict)
-        error.save()
-        process_pillow_retry(error.id)
-
-        #  if processing is successful the record will be deleted
-        with self.assertRaises(PillowError.DoesNotExist):
-            PillowError.objects.get(id=error.id)
-
     def test_deleted_doc(self):
         id = 'test_doc'
         change_dict = {'id': id, 'seq': 54321}
