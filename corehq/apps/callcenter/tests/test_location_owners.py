@@ -1,11 +1,12 @@
 from django.test import TestCase
-from casexml.apps.case.tests import delete_all_cases, CaseAccessors
+from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.callcenter.utils import sync_call_center_user_case
 from corehq.apps.domain.models import CallCenterProperties
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType
-from corehq.apps.locations.tests import make_loc
+from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 TEST_DOMAIN = "cc-location-owner-test-domain"
 CASE_TYPE = "cc-case-type"

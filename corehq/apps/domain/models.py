@@ -251,6 +251,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
+    use_sql_backend = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 
@@ -931,12 +932,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return most_restrictive(licenses)
 
     @classmethod
-    def hit_sort(cls, domains):
-        domains = list(domains)
-        domains = sorted(domains, key=lambda domain: domain.download_count, reverse=True)
-        return domains
-
-    @classmethod
     def get_module_by_name(cls, domain_name):
         """
         import and return the python module corresponding to domain_name, or
@@ -987,12 +982,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         """
             Returns the total number of downloads from every snapshot created from this domain
         """
-        return self.get_db().view("domain/snapshots",
-            startkey=[self.get_id],
-            endkey=[self.get_id, {}],
-            reduce=True,
-            include_docs=False,
-        ).one()["value"]
+        from corehq.apps.domain.dbaccessors import count_downloads_for_all_snapshots
+        return count_downloads_for_all_snapshots(self.get_id)
 
     @property
     @memoized

@@ -3,6 +3,7 @@ from corehq.apps.api.domain_metadata import DomainMetadataResource
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI, FormAttachmentAPI
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.resources import v0_1, v0_2, v0_3, v0_4, v0_5
+from corehq.apps.api.resources.v0_5 import UserDomainsResource, DomainForms
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource, InternalFixtureResource
 from corehq.apps.locations import resources as locations
@@ -71,6 +72,9 @@ API_LIST = (
         DomainMetadataResource,
         locations.v0_5.LocationResource,
         locations.v0_5.LocationTypeResource,
+        v0_5.SimpleReportConfigurationResource,
+        v0_5.ConfigurableReportDataResource,
+        DomainForms,
     )),
 )
 
@@ -128,9 +132,14 @@ ADMIN_API_LIST = (
 )
 
 
+USER_API_LIST = (
+    UserDomainsResource,
+)
+
+
 def api_url_patterns():
     api = CommCareHqApi(api_name='global')
-    for resource in ADMIN_API_LIST:
+    for resource in ADMIN_API_LIST + USER_API_LIST:
         api.register(resource())
         yield (r'^', include(api.urls))
 

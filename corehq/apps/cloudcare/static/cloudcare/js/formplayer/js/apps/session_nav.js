@@ -6,6 +6,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             "apps": "listApps", // list all apps available to this user
             "apps/:id": "selectApp", // select the app under :id and list root commands
             "apps/:id/menu": "listMenus", // select the app under :id, make session steps in params, display screen
+            "apps/sessions": "listSessions", //list all this user's current sessions (incomplete forms)
         },
     });
 
@@ -23,14 +24,18 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var paramMap = Util.getSteps(currentFragment);
             var steps = paramMap.steps;
             var page = paramMap.page || 0;
-            if (steps && steps.length > 0) {
-                SessionNavigate.MenuList.Controller.selectMenu(appId, steps, page);
-            } else {
-                SessionNavigate.MenuList.Controller.selectMenu(appId);
-            }
+            var search = paramMap.search || "";
+            SessionNavigate.MenuList.Controller.selectMenu(appId, steps, page, search);
         },
         showDetail: function (model) {
             SessionNavigate.MenuList.Controller.showDetail(model);
+        },
+        listSessions: function() {
+            SessionNavigate.SessionList.Controller.listSessions();
+        },
+
+        getIncompleteForm: function(sessionId) {
+            FormplayerFrontend.request("getIncompleteForm", sessionId);
         },
     };
 
@@ -59,6 +64,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     FormplayerFrontend.on("menu:paginate", function (index, appId) {
         var newAddition = "&page=" + index;
         var oldRoute = Backbone.history.getFragment();
+        // "page" param should always be at the end of the URL
         if (oldRoute.indexOf('page') > 0) {
             oldRoute = oldRoute.substring(0, oldRoute.indexOf('&page'));
         }
@@ -66,8 +72,32 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listMenus(appId);
     });
 
+    FormplayerFrontend.on("menu:search", function (searchText, appId) {
+        var newAddition = "&search=" + searchText;
+        var oldRoute = Backbone.history.getFragment();
+        // If we have a "oage" param, wipe it out (pagination is reset on search)
+        if (oldRoute.indexOf('page') > 0) {
+            oldRoute = oldRoute.substring(0, oldRoute.indexOf('&page'));
+        }
+        // If we have a previous "search" param wipe it out
+        if (oldRoute.indexOf('search') > 0) {
+            oldRoute = oldRoute.substring(0, oldRoute.indexOf('&search'));
+        }
+        FormplayerFrontend.navigate(oldRoute + newAddition);
+        API.listMenus(appId);
+    });
+
+
     FormplayerFrontend.on("menu:show:detail", function (model) {
         API.showDetail(model);
+    });
+
+    FormplayerFrontend.on("sessions", function () {
+        API.listSessions();
+    });
+
+    FormplayerFrontend.on("getIncompleteForm", function (sessionId) {
+        API.getIncompleteForm(sessionId);
     });
 
     SessionNavigate.on("start", function () {

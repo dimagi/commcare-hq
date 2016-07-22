@@ -2,7 +2,7 @@ from datetime import datetime
 
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
-from corehq.apps.sms.tests import setup_default_sms_test_backend, delete_domain_phone_numbers
+from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroups, SupplyPointStatusTypes, \
     SupplyPointStatusValues, SLABConfig
@@ -23,6 +23,7 @@ class RemindersTest(ILSTestScript):
 
     @classmethod
     def setUpClass(cls):
+        super(RemindersTest, cls).bypass_setUpClass()
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(TEST_DOMAIN)
 
@@ -39,13 +40,16 @@ class RemindersTest(ILSTestScript):
 
     def tearDown(self):
         SupplyPointStatus.objects.all().delete()
+        super(RemindersTest, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
         delete_domain_phone_numbers(TEST_DOMAIN)
-        cls.sms_backend_mapping.delete()
+        if cls.sms_backend_mapping.id is not None:
+            cls.sms_backend_mapping.delete()
         cls.sms_backend.delete()
         cls.domain.delete()
+        super(RemindersTest, cls).tearDownClass()
 
 
 class TestStockOnHandReminders(RemindersTest):
@@ -82,6 +86,7 @@ class TestStockOnHandReminders(RemindersTest):
 class TestDeliveryReminder(RemindersTest):
 
     def setUp(self):
+        super(TestDeliveryReminder, self).setUp()
         self.facility.metadata['group'] = DeliveryGroups().current_delivering_group()
         self.facility.save()
 
@@ -127,6 +132,7 @@ class TestDeliveryReminder(RemindersTest):
 class TestRandRReminder(RemindersTest):
 
     def setUp(self):
+        super(TestRandRReminder, self).setUp()
         self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
         self.facility.save()
 
@@ -172,6 +178,7 @@ class TestRandRReminder(RemindersTest):
 class TestSupervisionStatusSet(RemindersTest):
 
     def setUp(self):
+        super(TestSupervisionStatusSet, self).setUp()
         self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
         self.facility.save()
 

@@ -1,7 +1,108 @@
 User Configurable Reporting
 ===========================
-
 An overview of the design, API and data structures used here.
+
+
+**Table of Contents**
+
+- [Data Flow](#data-flow)
+- [Data Sources](#data-sources)
+    - [Data Source Filtering](#data-source-filtering)
+        - [Filter type overview](#filter-type-overview)
+        - [Expressions](#expressions)
+        - [JSON snippets for expressions](#json-snippets-for-expressions)
+            - [Constant Expression](#constant-expression)
+            - [Property Name Expression](#property-name-expression)
+            - [Property Path Expression](#property-path-expression)
+            - [Conditional Expression](#conditional-expression)
+            - [Switch Expression](#switch-expression)
+            - [Array Index Expression](#array-index-expression)
+            - [Iterator Expression](#iterator-expression)
+            - [Base iteration number expressions](#base-iteration-number-expressions)
+            - [Related document expressions](#related-document-expressions)
+            - [Nested expressions](#nested-expressions)
+            - [Dict expressions](#dict-expressions)
+            - ["Add Days" expressions](#add-days-expressions)
+            - ["Add Months" expressions](#add-months-expressions)
+            - ["Diff Days" expressions](#diff-days-expressions)
+            - ["Evaluator" expression](#evaluator-expression)
+            - [Function calls within evaluator expressions](#function-calls-within-evaluator-expressions)
+            - ["Month Start Date" and "Month End Date" expressions](#month-start-date-and-month-end-date-expressions)
+            - [Filter, Sort, Map and Reduce Expressions](#filter-sort-map-and-reduce-expressions)
+                - [map_items Expression](#mapitems-expression)
+                - [filter_items Expression](#filteritems-expression)
+                - [sort_items Expression](#sortitems-expression)
+                - [reduce_items Expression](#reduceitems-expression)
+                - [flatten_items expression](#flattenitems-expression)
+            - [Named Expressions](#named-expressions)
+        - [Boolean Expression Filters](#boolean-expression-filters)
+            - [Operators](#operators)
+        - [Compound filters](#compound-filters)
+            - ["And" Filters](#and-filters)
+            - ["Or" Filters](#or-filters)
+            - ["Not" Filters](#not-filters)
+        - [Practical Examples](#practical-examples)
+    - [Indicators](#indicators)
+        - [Indicator Properties](#indicator-properties)
+        - [Indicator types](#indicator-types)
+            - [Boolean indicators](#boolean-indicators)
+            - [Expression indicators](#expression-indicators)
+            - [Choice list indicators](#choice-list-indicators)
+            - [Ledger Balance Indicators](#ledger-balance-indicators)
+        - [Practical notes for creating indicators](#practical-notes-for-creating-indicators)
+            - [Fractions](#fractions)
+    - [Saving Multiple Rows per Case/Form](#saving-multiple-rows-per-caseform)
+- [Report Configurations](#report-configurations)
+    - [Samples](#samples)
+    - [Report Filters](#report-filters)
+        - [Numeric Filters](#numeric-filters)
+        - [Date filters](#date-filters)
+        - [Dynamic choice lists](#dynamic-choice-lists)
+            - [Choice providers](#choice-providers)
+        - [Choice lists](#choice-lists)
+        - [Internationalization](#internationalization)
+    - [Report Columns](#report-columns)
+        - [Field columns](#field-columns)
+        - [Percent columns](#percent-columns)
+            - [Formats](#formats)
+        - [AggregateDateColumn](#aggregatedatecolumn)
+        - [Expanded Columns](#expanded-columns)
+        - [The "aggregation" column property](#the-aggregation-column-property)
+            - [Column IDs](#column-ids)
+        - [Calculating Column Totals](#calculating-column-totals)
+        - [Internationalization](#internationalization)
+    - [Aggregation](#aggregation)
+        - [No aggregation](#no-aggregation)
+        - [Aggregate by 'username' column](#aggregate-by-username-column)
+        - [Aggregate by two columns](#aggregate-by-two-columns)
+    - [Transforms](#transforms)
+        - [Displaying username instead of user ID](#displaying-username-instead-of-user-id)
+        - [Displaying username minus @domain.commcarehq.org instead of user ID](#displaying-username-minus-domaincommcarehqorg-instead-of-user-id)
+        - [Displaying owner name instead of owner ID](#displaying-owner-name-instead-of-owner-id)
+        - [Displaying month name instead of month index](#displaying-month-name-instead-of-month-index)
+        - [Rounding decimals](#rounding-decimals)
+        - [Generic number formatting](#generic-number-formatting)
+            - [Round to the nearest whole number](#round-to-the-nearest-whole-number)
+            - [Always round to 3 decimal places](#always-round-to-3-decimal-places)
+        - [Date formatting](#date-formatting)
+    - [Charts](#charts)
+        - [Pie charts](#pie-charts)
+        - [Aggregate multibar charts](#aggregate-multibar-charts)
+        - [Multibar charts](#multibar-charts)
+    - [Sort Expression](#sort-expression)
+- [Mobile UCR](#mobile-ucr)
+    - [Filters](#filters)
+        - [Custom Calendar Month](#custom-calendar-month)
+- [Export](#export)
+    - [Export example](#export-example)
+- [Practical Notes](#practical-notes)
+    - [Getting Started](#getting-started)
+    - [Static data sources](#static-data-sources)
+    - [Static configurable reports](#static-configurable-reports)
+    - [Custom configurable reports](#custom-configurable-reports)
+    - [Extending User Configurable Reports](#extending-user-configurable-reports)
+    - [Inspecting database tables](#inspecting-database-tables)
+
 
 # Data Flow
 
@@ -355,7 +456,7 @@ The date_expression and count_expression can be any valid expressions, or simply
 `add_months` offsets given date by given number of calendar months.
 If offset results in an invalid day (for e.g. Feb 30, April 31), the day of resulting date will be adjusted to last day of the resulting calendar month.
 
-The date_expression and months_expression can be any valid expressions, or simply constants, including nagative numbers.
+The date_expression and months_expression can be any valid expressions, or simply constants, including negative numbers.
 
 ```json
 {
@@ -413,7 +514,7 @@ Variables can be any valid numbers (Python datatypes `int`, `float` and `long` a
 Only the following functions are permitted:
 
 * `rand()`: generate a random number between 0 and 1
-* `randint(max)`: generate a random integer beween 0 and `max`
+* `randint(max)`: generate a random integer between 0 and `max`
 * `int(value)`: convert `value` to an int. Value can be a number or a string representation of a number
 * `float(value)`: convert `value` to a floating point number
 * `str(value)`: convert `value` to a string
@@ -495,7 +596,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 ##### sort_items Expression
 
-`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is speicifed by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
+`sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is specified by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
 
 `items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
 
@@ -562,7 +663,7 @@ Last, but certainly not least, are named expressions.
 These are special expressions that can be defined once in a data source and then used throughout other filters and indicators in that data source.
 This allows you to write out a very complicated expression a single time, but still use it in multiple places with a simple syntax.
 
-Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as folllows:
+Named expressions are defined in a special section of the data source. To reference a named expression, you just specify the type of `"named"` and the name as follows:
 
 ```json
 {

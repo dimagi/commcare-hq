@@ -187,9 +187,8 @@ def get_address_from_invoice(invoice):
         return Address()
 
 
-def get_dimagi_from_email_by_product(product):
-    return ("Dimagi %(product)s Accounts <%(email)s>" % {
-        'product': product,
+def get_dimagi_from_email():
+    return ("Dimagi CommCare Accounts <%(email)s>" % {
         'email': settings.INVOICING_CONTACT_EMAIL,
     })
 

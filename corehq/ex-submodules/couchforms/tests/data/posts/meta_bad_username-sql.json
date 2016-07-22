@@ -1,5 +1,5 @@
 {
-    "form_id": "e8afaec3c66745ef80e48062d4b91b56",
+    "_id": "e8afaec3c66745ef80e48062d4b91b56",
     "form": {
         "#type": "data",
         "@uiVersion": "1",
@@ -56,5 +56,6 @@
     "state": 1,
     "orig_id": null,
     "user_id": "f7f0c79e-8b79-11df-b7de-005056c00008",
-    "deprecated_form_id": null
+    "deprecated_form_id": null,
+    "doc_type": "XFormInstance"
 }

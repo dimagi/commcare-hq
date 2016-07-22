@@ -1,7 +1,6 @@
 import uuid
-from datetime import datetime
 from collections import namedtuple
-import time
+from datetime import datetime
 
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -13,7 +12,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAcce
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
-from corehq.form_processor.tests import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.tests.test_basic_cases import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 
@@ -588,29 +587,6 @@ class CaseAccessorTestsSQL(TestCase):
             CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime.utcnow())
         )
 
-    def test_get_all_cases_modified_since(self):
-        case1 = _create_case(user_id="user1")
-        case2 = _create_case(user_id="user1")
-        middle = datetime.utcnow()
-        time.sleep(.01)
-        case3 = _create_case(user_id="user2")
-        case4 = _create_case(user_id="user3")
-        time.sleep(.01)
-        end = datetime.utcnow()
-
-        cases_back = list(CaseAccessorSQL.get_all_cases_modified_since())
-        self.assertEqual(4, len(cases_back))
-        self.assertEqual(set(case.case_id for case in cases_back),
-                         set([case1.case_id, case2.case_id, case3.case_id, case4.case_id]))
-
-        cases_back = list(CaseAccessorSQL.get_all_cases_modified_since(middle))
-        self.assertEqual(2, len(cases_back))
-        self.assertEqual(set(case.case_id for case in cases_back),
-                         set([case3.case_id, case4.case_id]))
-
-        self.assertEqual(0, len(list(CaseAccessorSQL.get_all_cases_modified_since(end))))
-        self.assertEqual(1, len(CaseAccessorSQL.get_cases_modified_since(limit=1)))
-
     def test_get_case_by_external_id(self):
         case1 = _create_case(domain=DOMAIN)
         case1.external_id = '123'
@@ -618,6 +594,7 @@ class CaseAccessorTestsSQL(TestCase):
         case2 = _create_case(domain='d2', case_type='t1')
         case2.external_id = '123'
         CaseAccessorSQL.save_case(case2)
+        self.addCleanup(lambda: CaseAccessorSQL.delete_all_cases('d2'))
 
         [case] = CaseAccessorSQL.get_cases_by_external_id(DOMAIN, '123')
         self.assertEqual(case.case_id, case1.case_id)

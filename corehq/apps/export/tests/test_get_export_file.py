@@ -1,11 +1,14 @@
 import json
-from mock import patch
-
 from StringIO import StringIO
+
 from django.test import SimpleTestCase
 from elasticsearch.exceptions import ConnectionError
+from mock import patch
 from openpyxl import load_workbook
 
+from corehq.apps.export.const import (
+    DEID_DATE_TRANSFORM,
+)
 from corehq.apps.export.export import (
     _get_writer,
     _Writer,
@@ -26,21 +29,19 @@ from corehq.apps.export.models import (
     Option,
     MAIN_TABLE
 )
-from corehq.apps.export.const import (
-    DEID_DATE_TRANSFORM,
-)
 from corehq.apps.export.tests.util import (
     new_case,
     DOMAIN,
     DEFAULT_CASE_TYPE,
 )
-from corehq.pillows.case import CasePillow
+from corehq.elastic import send_to_elasticsearch, get_es_new
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 from couchexport.export import get_writer
-from couchexport.transforms import couch_to_excel_datetime
 from couchexport.models import Format
-from pillowtop.es_utils import completely_initialize_pillow_index
+from couchexport.transforms import couch_to_excel_datetime
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class WriterTest(SimpleTestCase):
@@ -370,27 +371,27 @@ class ExportTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         super(ExportTest, cls).setUpClass()
-        cls.case_pillow = CasePillow(online=False)
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            completely_initialize_pillow_index(cls.case_pillow)
+            cls.es = get_es_new()
+            initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
 
         case = new_case(foo="apple", bar="banana", date='2016-4-24')
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(owner_id="some_other_owner", foo="apple", bar="banana", date='2016-4-04')
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(type="some_other_type", foo="apple", bar="banana")
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(closed=True, foo="apple", bar="banana")
-        cls.case_pillow.send_robust(case.to_json())
+        send_to_elasticsearch('cases', case.to_json())
 
-        cls.case_pillow.get_es_new().indices.refresh(cls.case_pillow.es_index)
+        cls.es.indices.refresh(CASE_INDEX_INFO.index)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(cls.case_pillow.es_index)
+        ensure_index_deleted(CASE_INDEX_INFO.index)
         super(ExportTest, cls).tearDownClass()
 
     def test_get_export_file(self):

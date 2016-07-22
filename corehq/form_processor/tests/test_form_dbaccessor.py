@@ -1,6 +1,4 @@
-import time
 import uuid
-from datetime import datetime
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
@@ -30,6 +28,7 @@ class FormAccessorTestsSQL(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
         FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
+        super(FormAccessorTestsSQL, self).tearDown()
 
     def test_get_form_by_id(self):
         form = create_form_for_test(DOMAIN)
@@ -291,32 +290,6 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(problem, saved_form.problem)
         self.assertEqual(original_domain, saved_form.domain)
 
-    def test_get_forms_received_since(self):
-        # since this test depends on the global form list just wipe everything
-        FormProcessorTestUtils.delete_all_sql_forms()
-
-        form1 = create_form_for_test(DOMAIN)
-        form2 = create_form_for_test(DOMAIN)
-        middle = datetime.utcnow()
-        time.sleep(.01)
-        form3 = create_form_for_test(DOMAIN)
-        form4 = create_form_for_test(DOMAIN)
-        time.sleep(.01)
-        end = datetime.utcnow()
-
-        forms_back = list(FormAccessorSQL.get_all_forms_received_since())
-        self.assertEqual(4, len(forms_back))
-        self.assertEqual(set(form.form_id for form in forms_back),
-                         set([form1.form_id, form2.form_id, form3.form_id, form4.form_id]))
-
-        forms_back = list(FormAccessorSQL.get_all_forms_received_since(middle))
-        self.assertEqual(2, len(forms_back))
-        self.assertEqual(set(form.form_id for form in forms_back),
-                         set([form3.form_id, form4.form_id]))
-
-        self.assertEqual(0, len(list(FormAccessorSQL.get_all_forms_received_since(end))))
-        self.assertEqual(1, len(list(FormAccessorSQL.get_forms_received_since(limit=1))))
-
     def _validate_deprecation(self, existing_form, new_form):
         saved_new_form = FormAccessorSQL.get_form(new_form.form_id)
         deprecated_form = FormAccessorSQL.get_form(existing_form.form_id)
@@ -337,6 +310,7 @@ class FormAccessorsTests(TestCase):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        super(FormAccessorsTests, self).tearDown()
 
     @run_with_all_backends
     def test_soft_delete(self):

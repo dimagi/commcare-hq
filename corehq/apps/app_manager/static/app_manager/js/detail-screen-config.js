@@ -197,7 +197,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
     };
 
     var searchViewModel = function (searchProperties, lang, saveButton) {
-        var self = this;
+        var self = this,
+            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0";
 
         var SearchProperty = function (name, label) {
             var self = this;
@@ -205,6 +206,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             self.label = ko.observable(label);
         };
 
+        self.relevant = ko.observable();
+        self.default_relevant = ko.observable(true);
         self.searchProperties = ko.observableArray();
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
@@ -244,8 +247,22 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         };
 
+        self._getRelevant = function() {
+            if (self.default_relevant()) {
+                if (!self.relevant() || self.relevant().trim() === "") {
+                    return DEFAULT_CLAIM_RELEVANT;
+                } else {
+                    return "(" + DEFAULT_CLAIM_RELEVANT + ") and (" + self.relevant().trim() + ")";
+                }
+            }
+            return self.relevant().trim();
+        };
+
         self.serialize = function () {
-            return self._getProperties();
+            return {
+                properties: self._getProperties(),
+                relevant: self._getRelevant(),
+            };
         };
     };
 
@@ -311,6 +328,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
             var data = {
                 lookup_enabled: self.lookup_enabled(),
+                lookup_autolaunch: self.lookup_autolaunch(),
                 lookup_action: self.lookup_action(),
                 lookup_name: self.lookup_name(),
                 lookup_extras: _trimmed_extras(),
@@ -402,6 +420,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.$form = $el.find('form');
 
         self.lookup_enabled = ko.observable(state.lookup_enabled);
+        self.lookup_autolaunch = ko.observable(state.lookup_autolaunch);
         self.lookup_action = ko.observable(state.lookup_action);
         self.lookup_name = ko.observable(state.lookup_name);
         self.extras = ko.observableArray(ko.utils.arrayMap(state.lookup_extras, function(extra){
@@ -565,7 +584,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
                    ? COMMCAREHQ.icons.PAPERCLIP : null);
-                this.field = uiElement.input().val(this.original.field).setIcon(icon);
+                this.field = uiElement.input(this.original.field).setIcon(icon);
 
                 // Make it possible to observe changes to this.field
                 // note that observableVal is read only!

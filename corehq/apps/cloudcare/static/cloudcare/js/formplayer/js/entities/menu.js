@@ -1,4 +1,4 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Util */
 
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
@@ -33,6 +33,9 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 // form entry time, doggy
                 FormplayerFrontend.request('startForm', response, this.app_id);
             }
+            else if(response.exception){
+                FormplayerFrontend.request('error', response.exception);
+            }
         },
 
         initialize: function (params) {
@@ -45,11 +48,12 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
     var API = {
 
-        getMenus: function (appId, stepList, page) {
+        getMenus: function (appId, stepList, page, search) {
 
             var user = FormplayerFrontend.request('currentUser');
             var username = user.username;
             var domain = user.domain;
+            var language = user.language;
             var formplayerUrl = user.formplayer_url;
             var trimmedUsername = username.substring(0, username.indexOf("@"));
 
@@ -64,8 +68,10 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                         "username": trimmedUsername,
                         "domain": domain,
                         "app_id": collection.appId,
+                        "locale": language,
                         "selections": stepList,
                         "offset": page * 10,
+                        "search_text": search,
                     });
 
                     if (stepList) {
@@ -73,11 +79,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                     }
 
                     options.url = formplayerUrl + '/navigate_menu';
-                    options.type = 'POST';
-                    options.dataType = "json";
-                    options.crossDomain = { crossDomain: true};
-                    options.xhrFields = { withCredentials: true};
-                    options.contentType = "application/json";
+                    Util.setCrossDomainAjaxOptions(options);
                     return Backbone.Collection.prototype.fetch.call(this, options);
                 },
 
@@ -98,7 +100,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, stepList, page) {
-        return API.getMenus(appId, stepList, page);
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (appId, stepList, page, search) {
+        return API.getMenus(appId, stepList, page, search);
     });
 });

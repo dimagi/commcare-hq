@@ -17,6 +17,7 @@ class CaseDbCacheTest(TestCase):
     """
 
     def setUp(self):
+        super(CaseDbCacheTest, self).setUp()
         self.interface = FormProcessorInterface()
 
     @run_with_all_backends

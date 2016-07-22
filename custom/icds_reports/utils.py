@@ -5,7 +5,10 @@ from datetime import datetime, timedelta
 
 import operator
 
+from django.template.loader import render_to_string
+
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
@@ -35,7 +38,7 @@ class ICDSData(object):
 
     def __init__(self, domain, filters, report_id):
         report_config = ReportFactory.from_spec(
-            StaticReportConfiguration.by_id(report_id)
+            StaticReportConfiguration.by_id(report_id.format(domain=domain))
         )
         report_config.set_filter_values(filters)
         self.report_config = report_config
@@ -155,3 +158,21 @@ class ICDSMixin(object):
                     column_display: data.get(column_display, 0) + column_data
                 })
         return data
+
+
+class ICDSDataTableColumn(DataTablesColumn):
+
+    @property
+    def render_html(self):
+        column_params = dict(
+            title=self.html,
+            sort=self.sortable,
+            rotate=self.rotate,
+            css="span%d" % self.css_span if self.css_span > 0 else '',
+            rowspan=self.rowspan,
+            help_text=self.help_text,
+            expected=self.expected
+        )
+        return render_to_string("icds_reports/partials/column.html", dict(
+            col=column_params
+        ))

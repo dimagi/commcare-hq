@@ -2,7 +2,8 @@ from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
 from couchforms.analytics import get_form_analytics_metadata
-from dimagi.utils.couch import get_cached_property, IncompatibleDocument, safe_index
+from dimagi.utils.couch import get_cached_property, IncompatibleDocument
+from dimagi.utils.couch.safe_index import safe_index
 
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
@@ -63,10 +64,6 @@ class FormDisplay(object):
             app_id=self.form.get("app_id"),
             lang=self.lang
         )
-
-    @property
-    def other_columns(self):
-        return [self.form["form"].get(field) for field in self.report.other_fields]
 
 
 class _FormType(object):

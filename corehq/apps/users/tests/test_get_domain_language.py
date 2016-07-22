@@ -1,10 +1,12 @@
 from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
-from pillowtop.es_utils import completely_initialize_pillow_index
+
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application
-from corehq.pillows.application import AppPillow
 from corehq.util.elastic import delete_es_index
 from corehq.util.test_utils import trap_extra_setup
 
@@ -17,26 +19,26 @@ class TestDomainLanguages(TestCase):
     def setUpClass(cls):
         cls.domain = 'test-languages'
 
-        cls.pillow = AppPillow(online=False)
         with trap_extra_setup(ConnectionError):
-            completely_initialize_pillow_index(cls.pillow)
+            cls.es = get_es_new()
+            initialize_index_and_mapping(cls.es, APP_INDEX_INFO)
 
         cls.app1 = Application.new_app(cls.domain, 'My Application 1', APP_V2)
         cls.app1.langs = ['en', 'es']
         cls.app1.save()
-        cls.pillow.send_robust(cls.app1.to_json())
+        send_to_elasticsearch('apps', cls.app1.to_json())
         cls.app2 = Application.new_app(cls.domain, 'My Application 2', APP_V2)
         cls.app2.langs = ['fr']
         cls.app2.save()
-        cls.pillow.send_robust(cls.app2.to_json())
+        send_to_elasticsearch('apps', cls.app2.to_json())
 
-        cls.pillow.get_es_new().indices.refresh(cls.pillow.es_index)
+        cls.es.indices.refresh(APP_INDEX_INFO.index)
 
     @classmethod
     def tearDownClass(cls):
         cls.app1.delete()
         cls.app2.delete()
-        delete_es_index(cls.pillow.es_index)
+        delete_es_index(APP_INDEX_INFO.index)
 
     def test_get_domain_languages(self):
         self.assertEqual(

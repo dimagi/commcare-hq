@@ -93,10 +93,8 @@
             </li>
         </ul>
     </li>
-    {% if request|toggle_enabled:"NOTIFICATIONS" %}
-    {% include 'notifications/partials/global_notifications.html' %}
-    {% endif %}
     {% if request.couch_user and request.couch_user.is_web_user %}
+    {% include 'notifications/partials/global_notifications.html' %}
     <li id="settingsmenu-project" class="dropdown">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
             {% if domain %}

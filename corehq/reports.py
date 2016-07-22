@@ -99,7 +99,7 @@ def REPORTS(project):
             commtrack.CurrentStockStatusReport,
             commtrack.StockStatusMapReport,
         )
-        if not should_use_sql_backend(project.name):
+        if not should_use_sql_backend(project):
             supply_reports = supply_reports + (
                 commtrack.ReportingRatesReport,
                 commtrack.ReportingStatusMapReport,

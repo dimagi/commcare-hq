@@ -31,7 +31,6 @@ Welcome to CommCareHQ's documentation!
    profiling
    elasticsearch
    es_query
-   dhis2_integration
    test_coverage
    advanced_app_features
    nfs

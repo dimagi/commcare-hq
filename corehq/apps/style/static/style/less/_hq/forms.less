@@ -95,14 +95,25 @@ legend .subtext {
 }
 
 // Static width for select2 widgets, which otherwise grow too large on case management pages
-.app-manager-content .select2-container {
-    @width: 210px;
-    width: @width;
+.app-manager-select2s(@width) {
+    .select2-container {
+        width: @width;
+    }
 
     // This needs a static width so that text-overflow: ellipsis will work in Firefox.
     // Unusually specific selector to override select2's width: auto rule.
     > .select2-choice > .select2-chosen {
         width: @width - 35px;
+    }
+}
+
+.app-manager-content {
+    @select2Width: 210px;
+
+    .app-manager-select2s(@select2Width);
+
+    .wide-select2s {
+        .app-manager-select2s(@select2Width * 1.5);
     }
 }
 
@@ -224,4 +235,8 @@ textarea.vertical-resize {
             margin-right: 0;
         }
     }
+}
+
+table .ko-inline-edit .read-only:hover {
+    background-color: @cc-neutral-hi;
 }

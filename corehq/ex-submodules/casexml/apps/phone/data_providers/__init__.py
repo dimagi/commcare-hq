@@ -2,7 +2,7 @@ from .standard import *
 from .case import *
 
 
-def get_restore_providers(timing_context):
+def get_element_providers(timing_context):
     """
     Get restore providers which contribute directly to the XML.
     """
@@ -15,10 +15,12 @@ def get_restore_providers(timing_context):
     ]
 
 
-def get_long_running_providers(timing_context):
+def get_full_response_providers(timing_context, async_task=None):
     """
-    Get restore providers that are expected to run for a long time.
+    Get restore providers that return their own fully formed responses
 
-    These have different API semantics to be able to support asynchronous calls in hte future.
+    They can optionally take an async task to update progress
     """
-    return [CasePayloadProvider(timing_context)]
+    return [
+        CasePayloadProvider(timing_context, async_task),
+    ]

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from xml.etree import ElementTree
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.case.xml import V2
@@ -338,6 +339,14 @@ class FieldNameValidationTest(SimpleTestCase):
         bad_name = "<space>\<dadgg sd"
         self.assertTrue(is_identifier_invalid(bad_name))
 
+    def test_starts_with_number(self):
+        bad_name = "0hello"
+        self.assertTrue(is_identifier_invalid(bad_name))
+
+    def test_unicode(self):
+        bad_name = u"ﾉｲ丂 ﾑ ｲ尺ﾑｱ! \_(ツ)_/¯"
+        self.assertTrue(is_identifier_invalid(bad_name))
+
     def test_good(self):
-        good_name = "fooxmlbar"
+        good_name = "fooxmlbar0123"
         self.assertFalse(is_identifier_invalid(good_name))

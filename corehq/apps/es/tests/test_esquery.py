@@ -4,7 +4,7 @@ from mock import patch
 from corehq.apps.es import filters
 from corehq.apps.es import forms, users
 from corehq.apps.es.es_query import HQESQuery
-from corehq.apps.es.tests import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
 
 

@@ -102,15 +102,6 @@ def initialize_mapping_if_necessary(es, index_info):
         pillow_logging.info("Elasticsearch mapping for [%s] was already present." % index_info.type)
 
 
-def assume_alias_for_pillow(pillow):
-    """
-    Assigns the pillow's `es_alias` to its index in elasticsearch.
-
-    This operation removes the alias from any other indices it might be assigned to
-    """
-    assume_alias(pillow.get_es_new(), pillow.es_index, pillow.es_alias)
-
-
 def assume_alias(es, index, alias):
     """
     This operation assigns the alias to the index and removes the alias
@@ -125,35 +116,9 @@ def assume_alias(es, index, alias):
 
 
 def doc_exists(pillow, doc_id_or_dict):
-    """
-    Check if a document exists, by ID or the whole document.
-    """
-    if isinstance(doc_id_or_dict, basestring):
-        doc_id = doc_id_or_dict
-    else:
-        assert isinstance(doc_id_or_dict, dict)
-        doc_id = doc_id_or_dict['_id']
-    return pillow.get_es_new().exists(pillow.es_index, pillow.es_type, doc_id)
-
-
-def get_all_elasticsearch_pillow_classes():
-    from pillowtop.listener import AliasedElasticPillow
-    return filter(lambda x: issubclass(x, AliasedElasticPillow), get_all_pillow_classes())
-
-
-def get_all_inferred_es_indices_from_pillows():
-    """
-    Get all expected elasticsearch indices according to the currently running code
-    """
-    seen_indices = set()
-    seen_aliases = set()
-    pillows = get_all_elasticsearch_pillow_classes()
-    for pillow in pillows:
-        assert pillow.es_index not in seen_indices
-        assert pillow.es_alias not in seen_aliases
-        yield get_index_info_from_pillow(pillow)
-        seen_indices.add(pillow.es_index)
-        seen_aliases.add(pillow.es_alias)
+    index_info = get_index_info_from_pillow(pillow)
+    from corehq.elastic import doc_exists_in_es
+    return doc_exists_in_es(index_info, doc_id_or_dict)
 
 
 def get_index_info_from_pillow(pillow):

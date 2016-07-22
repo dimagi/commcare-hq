@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ugettext
 
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import CouchUser
@@ -17,6 +17,7 @@ from corehq.apps.analytics.tasks import track_workflow
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.utils.functional import lazy
 import six
+import re
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -24,6 +25,161 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)
+
+
+class RegisterNewWebUserForm(forms.Form):
+    # Use: NewUserRegistrationView
+    # Not inheriting from other forms to de-obfuscate the role of this form.
+
+    full_name = forms.CharField(label=_("Full Name"))
+    email = forms.CharField(label=_("Email"))
+    password = forms.CharField(
+        label=_("Create Password"),
+        widget=forms.PasswordInput(),
+    )
+    project_name = forms.CharField(label=_("Project Name"))
+    eula_confirmed = forms.BooleanField(
+        required=False,
+        label=mark_safe_lazy(_(
+            """I have read and agree to the
+            <a data-toggle='modal'
+               data-target='#eulaModal'
+               href='#eulaModal'>
+               CommCare HQ End User License Agreement</a>.""")))
+
+    def __init__(self, *args, **kwargs):
+        super(RegisterNewWebUserForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Fieldset(
+                    _('Create Your Account'),
+                    hqcrispy.FormStepNumber(1, 2),
+                    hqcrispy.InlineField(
+                        'full_name',
+                        css_class="input-lg",
+                        data_bind="value: fullName, "
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "   validator: fullName "
+                                  "}"
+                    ),
+                    hqcrispy.InlineField(
+                        'email',
+                        css_class="input-lg",
+                        data_bind="value: email, "
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "  validator: email, "
+                                  "  delayedValidator: emailDelayed "
+                                  "}",
+                    ),
+                    crispy.HTML('<p class="validation-message-block" '
+                                'data-bind="visible: isEmailValidating, '
+                                'text: validatingEmailMsg">&nbsp;</p>'),
+                    hqcrispy.ValidationMessage('emailDelayed'),
+                    hqcrispy.InlineField(
+                        'password',
+                        css_class="input-lg",
+                        autocomplete="new-password",
+                        data_bind="value: password, "
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "   validator: password, "
+                                  "   delayedValidator: passwordDelayed "
+                                  "}",
+                    ),
+                    hqcrispy.ValidationMessage('passwordDelayed'),
+                    twbscrispy.StrictButton(
+                        ugettext("Next"),
+                        css_class="btn btn-success btn-lg",
+                        data_bind="click: nextStep, disable: disableNextStepOne"
+                    )
+                ),
+                css_class="form-step step-1",
+                style="display: none;"
+            ),
+            crispy.Div(
+                crispy.Fieldset(
+                    _('Name Your First Project'),
+                    hqcrispy.FormStepNumber(2, 2),
+                    hqcrispy.InlineField(
+                        'project_name',
+                        css_class="input-lg",
+                        data_bind="value: projectName, "
+                                  "valueUpdate: 'keyup', "
+                                  "koValidationStateFeedback: { "
+                                  "   validator: projectName "
+                                  "}",
+                    ),
+                    hqcrispy.InlineField(
+                        'eula_confirmed',
+                        css_class="input-lg",
+                        data_bind="checked: eulaConfirmed"
+                    ),
+                    twbscrispy.StrictButton(
+                        ugettext("Previous"),
+                        css_class="btn btn-primary-dark btn-lg",
+                        data_bind="click: previousStep"
+                    ),
+                    twbscrispy.StrictButton(
+                        ugettext("Finish"),
+                        css_class="btn btn-success btn-lg",
+                        data_bind="click: submitForm, "
+                                  "disable: disableNextStepTwo"
+                    )
+                ),
+                css_class="form-step step-2",
+                style="display: none;"
+            ),
+        )
+
+    def clean_full_name(self):
+        data = self.cleaned_data['full_name'].split()
+        return [data.pop(0)] + [' '.join(data)]
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data['phone_number']
+        phone_number = re.sub('\s|\+|\-', '', phone_number)
+        if phone_number == '':
+            return None
+        elif not re.match(r'\d+$', phone_number):
+            raise forms.ValidationError(ugettext(
+                "%s is an invalid phone number." % phone_number
+            ))
+        return phone_number
+
+    def clean_email(self):
+        data = self.cleaned_data['email'].strip().lower()
+        validate_email(data)
+        duplicate = CouchUser.get_by_username(data)
+        if duplicate:
+            # sync django user
+            duplicate.save()
+        if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
+            raise forms.ValidationError('Username already taken; please try another')
+        return data
+
+    def clean_password(self):
+        return clean_password(self.cleaned_data.get('password'))
+
+    def clean_eula_confirmed(self):
+        data = self.cleaned_data['eula_confirmed']
+        if data is not True:
+            raise forms.ValidationError(
+                "You must agree to our End User License Agreement in order "
+                "to register an account."
+            )
+        return data
+
+    def clean(self):
+        for field in self.cleaned_data:
+            if isinstance(self.cleaned_data[field], basestring):
+                self.cleaned_data[field] = self.cleaned_data[field].strip()
+        return self.cleaned_data
 
 
 class DomainRegistrationForm(forms.Form):
@@ -37,44 +193,23 @@ class DomainRegistrationForm(forms.Form):
                                       widget=forms.TextInput(attrs={'class': 'form-control',
                                         'placeholder': _('My CommCare Project')}))
 
-    use_new_backend = forms.MultipleChoiceField(
-        required=False,
-        choices=(
-            ('yes', _("Opt into beta testing of the new 'scale' backend (Dimagi only)")),
-        ),
-        widget=forms.CheckboxSelectMultiple,
-        help_text=mark_safe(
-            "<p class=\"text-danger\">Read this first: "
-            "<a href=\"https://confluence.dimagi.com/display/ccinternal/Scale+Backend+Beta:+Information+and+Caveats\"  target=\"_blank\">"
-            "Scale Backend Beta: Information and Caveats"
-            "</a></p>"
-        )
-    )
-
     def __init__(self, *args, **kwargs):
-        current_user = kwargs.pop('current_user', None)
         super(DomainRegistrationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-6 col-md-5 col-lg-3'
-        fields = [
+        self.helper.layout = crispy.Layout(
             'hr_name',
             'org',
-        ]
-        # TODO: revert this once the sharding config is fixed
-        # force_sql_backed = getattr(settings, 'NEW_DOMAINS_USE_SQL_BACKEND', False)
-        # if not force_sql_backed and current_user and current_user.is_superuser:
-        #     fields.append('use_new_backend')
-
-        fields.append(hqcrispy.FormActions(
-            twbscrispy.StrictButton(
-                _("Create Project"),
-                type="submit",
-                css_class="btn btn-primary btn-lg disable-on-submit",
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Create Project"),
+                    type="submit",
+                    css_class="btn btn-primary btn-lg disable-on-submit",
+                )
             )
-        ))
-        self.helper.layout = crispy.Layout(*fields)
+        )
 
     def clean(self):
         for field in self.cleaned_data:

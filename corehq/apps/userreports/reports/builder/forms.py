@@ -53,7 +53,6 @@ from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
 
-
 class FilterField(JsonField):
     """
     A form field with a little bit of validation for report builder report
@@ -214,9 +213,13 @@ class DataSourceBuilder(object):
                     prop.source, prop.column_id
                 ))
             elif prop.type == "question":
-                ret.append(make_form_question_indicator(
+                indicator = make_form_question_indicator(
                     prop.source, prop.column_id
-                ))
+                )
+                if prop.source['type'] == "DataBindOnly" and number_columns:
+                    if indicator['column_id'] in number_columns:
+                        indicator['datatype'] = 'decimal'
+                ret.append(indicator)
             elif prop.type == 'case_property' and prop.source == 'computed/owner_name':
                 ret.append(make_owner_name_indicator(prop.column_id))
             elif prop.type == 'case_property' and prop.source == 'computed/user_name':
@@ -386,19 +389,6 @@ class DataSourceBuilder(object):
         if self.source_type == 'case':
             return u"{} (v{})".format(self.source_id, self.app.version)
 
-    def get_existing_match(self):
-        return DataSourceConfiguration.view(
-            'userreports/data_sources_by_build_info',
-            key=[
-                self.domain,
-                self.source_doc_type,
-                self.source_id,
-                self.app._id,
-                self.app.version
-            ],
-            include_docs=True,
-            reduce=False
-        ).one()
 
 
 def _legend(title, subtext):
@@ -662,13 +652,10 @@ class ConfigureNewReportBase(forms.Form):
             crispy.Hidden('filters', None, data_bind="value: filtersList.serializedProperties")
         )
 
-    def _build_data_source(self):
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
+    def _get_data_source_configuration_kwargs(self):
+        return dict(
             display_name=self.ds_builder.data_source_name,
             referenced_doc_type=self.ds_builder.source_doc_type,
-            # The uuid gets truncated, so it's not really universally unique.
-            table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
             configured_filter=self.ds_builder.filter,
             configured_indicators=self.ds_builder.indicators(self._number_columns),
             meta=DataSourceMeta(build=DataSourceBuildInformation(
@@ -677,42 +664,35 @@ class ConfigureNewReportBase(forms.Form):
                 app_version=self.app.version,
             ))
         )
+
+    def _build_data_source(self):
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            # The uuid gets truncated, so it's not really universally unique.
+            table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
+            **self._get_data_source_configuration_kwargs()
+        )
         data_source_config.validate()
         data_source_config.save()
         tasks.rebuild_indicators.delay(data_source_config._id)
         return data_source_config._id
 
     def update_report(self):
-        matching_data_source = self.ds_builder.get_existing_match()
-        if matching_data_source:
-            reactivated = False
-            if matching_data_source._id != self.existing_report.config_id:
 
-                # If no one else is using the current data source, delete it.
-                data_source = DataSourceConfiguration.get(self.existing_report.config_id)
-                if data_source.get_report_count() <= 1:
-                    data_source.deactivate()
-
-                self.existing_report.config_id = matching_data_source._id
-            elif matching_data_source.is_deactivated:
-                matching_data_source.is_deactivated = False
-                reactivated = True
-            changed = False
-            indicators = self.ds_builder.indicators(self._number_columns)
-            if matching_data_source.configured_indicators != indicators:
-                matching_data_source.configured_indicators = indicators
-                changed = True
-            if changed or reactivated:
-                matching_data_source.save()
-                tasks.rebuild_indicators.delay(matching_data_source._id)
-        else:
-            # Delete the old one if no other reports use it
-            old_data_source = DataSourceConfiguration.get(self.existing_report.config_id)
-            if old_data_source.get_report_count() <= 1:
-                old_data_source.deactivate()
-
+        data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+        if data_source.get_report_count() > 1:
+            # If another report is pointing at this data source, create a new
+            # data source for this report so that we can change the indicators
+            # without worrying about breaking another report.
             data_source_config_id = self._build_data_source()
             self.existing_report.config_id = data_source_config_id
+        else:
+            indicators = self.ds_builder.indicators(self._number_columns)
+            if data_source.configured_indicators != indicators:
+                for property_name, value in self._get_data_source_configuration_kwargs().iteritems():
+                    setattr(data_source, property_name, value)
+                data_source.save()
+                tasks.rebuild_indicators.delay(data_source._id)
 
         self.existing_report.aggregation_columns = self._report_aggregation_cols
         self.existing_report.columns = self._report_columns
@@ -726,24 +706,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         Creates data source and report config.
         """
-        matching_data_source = self.ds_builder.get_existing_match()
-        if matching_data_source:
-            data_source_config_id = matching_data_source._id
-            reactivated = False
-            if matching_data_source.is_deactivated:
-                matching_data_source.is_deactivated = False
-                reactivated = True
-            changed = False
-            indicators = self.ds_builder.indicators(self._number_columns)
-            if matching_data_source.configured_indicators != indicators:
-                matching_data_source.configured_indicators = indicators
-                changed = True
-            if changed or reactivated:
-                matching_data_source.save()
-                tasks.rebuild_indicators.delay(matching_data_source._id)
-        else:
-            data_source_config_id = self._build_data_source()
-
+        data_source_config_id = self._build_data_source()
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_config_id,

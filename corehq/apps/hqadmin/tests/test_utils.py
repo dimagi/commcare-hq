@@ -1,16 +1,14 @@
 from django.test import TestCase, override_settings
-from pillowtop.listener import BasicPillow
-from corehq.apps.domain.models import Domain
 
-from ..utils import pillow_seq_store, EPSILON
 from ..models import PillowCheckpointSeqStore
+from ..utils import pillow_seq_store, EPSILON
 
 
-class DummyPillow(BasicPillow):
-    document_class = Domain
+def _get_dummy_pillow():
+    from pillowtop.tests.utils import make_fake_constructed_pillow
+    return make_fake_constructed_pillow('dummy pillow', 'test_checkpoint_seq_store')
 
-    def run(self):
-        pass
+DummyPillow = _get_dummy_pillow
 
 
 @override_settings(PILLOWTOPS={'test': ['corehq.apps.hqadmin.tests.test_utils.DummyPillow']})

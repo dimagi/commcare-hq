@@ -1,5 +1,3 @@
-import sys
-import gevent
 from optparse import make_option
 
 from django.conf import settings
@@ -21,38 +19,12 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        jobs = []
         for db_alias in settings.DATABASES.keys():
             print '\n======================= Migrating DB: {} ======================='.format(db_alias)
-
-            if options['interactive']:
-                # run synchronously
-                call_command(
-                    'migrate',
-                    database=db_alias,
-                    interactive=options['interactive'],
-                    fake=options['fake'],
-                    list=options['list'],
-                )
-            else:
-                # run asynchonously
-                jobs.append(gevent.spawn(
-                    call_command,
-                    'migrate',
-                    database=db_alias,
-                    interactive=options['interactive'],
-                    fake=options['fake'],
-                    list=options['list'],
-                ))
-
-        gevent.joinall(jobs)
-
-        success = True
-        for job in jobs:
-            if not job.successful():
-                print 'Failed to migrate'
-                print job.exception
-                success = False
-
-        if not success:
-            sys.exit(1)
+            call_command(
+                'migrate',
+                database=db_alias,
+                interactive=options['interactive'],
+                fake=options['fake'],
+                list=options['list'],
+            )

@@ -9,8 +9,8 @@ logger = logging.getLogger('app_migration')
 logger.setLevel('DEBUG')
 
 
-def get_all_app_ids(include_builds=False):
-    key = [None]
+def get_all_app_ids(domain=None, include_builds=False):
+    key = [domain]
     if not include_builds:
         key += [None]
 
@@ -36,6 +36,8 @@ class AppMigrationCommandBase(BaseCommand):
                     dest='failfast',
                     default=False,
                     help='Stop processing if there is an error'),
+        make_option('--domain',
+                    help='Migrate only this domain'),
     )
 
     def handle(self, *args, **options):
@@ -58,7 +60,7 @@ class AppMigrationCommandBase(BaseCommand):
                 raise e
 
     def get_app_ids(self):
-        return get_all_app_ids(self.include_builds)
+        return get_all_app_ids(domain=self.options.get('domain', None), include_builds=self.include_builds)
 
     def migrate_app(self, app):
         raise NotImplementedError()

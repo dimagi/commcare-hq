@@ -40,8 +40,6 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_ca
 
 from corehq.const import USER_DATE_FORMAT
 from corehq.tabs.tabclasses import ProjectSettingsTab
-from custom.dhis2.forms import Dhis2SettingsForm
-from custom.dhis2.models import Dhis2Settings
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -259,9 +257,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView,
 
     @property
     def required_plan_name(self):
-        return DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain_object, [self.missing_privilege]
-        )
+        return DefaultProductPlan.get_lowest_edition([self.missing_privilege])
 
     def get(self, request, *args, **kwargs):
         self.request = request
@@ -501,35 +497,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
-class EditDhis2SettingsView(BaseProjectSettingsView):
-    template_name = 'domain/admin/dhis2_settings.html'
-    urlname = 'dhis2_settings'
-    page_title = ugettext_lazy("DHIS2 API settings")
-
-    @property
-    @memoized
-    def dhis2_settings_form(self):
-        settings_ = Dhis2Settings.for_domain(self.domain_object.name)
-        initial = settings_.dhis2 if settings_ else {'enabled': False}
-        if self.request.method == 'POST':
-            return Dhis2SettingsForm(self.request.POST, initial=initial)
-        return Dhis2SettingsForm(initial=initial)
-
-    @property
-    def page_context(self):
-        return {
-            'dhis2_settings_form': self.dhis2_settings_form,
-        }
-
-    def post(self, request, *args, **kwargs):
-        if self.dhis2_settings_form.is_valid():
-            if self.dhis2_settings_form.save(self.domain_object):
-                messages.success(request, _('DHIS2 API settings successfully updated'))
-            else:
-                messages.error(request, _('There seems to have been an error. Please try again.'))
-        return self.get(request, *args, **kwargs)
-
-
 class EditOpenClinicaSettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/openclinica_settings.html'
     urlname = 'oc_settings'
@@ -552,7 +519,7 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
     def page_context(self):
         return {'openclinica_settings_form': self.openclinica_settings_form}
 
-    @sensitive_post_parameters('username', 'password')
+    @method_decorator(sensitive_post_parameters('username', 'password'))
     def post(self, request, *args, **kwargs):
         if self.openclinica_settings_form.is_valid():
             if self.openclinica_settings_form.save(self.domain_object):
@@ -588,7 +555,7 @@ def test_repeater(request, domain):
         format = format or RegisterGenerator.default_format_by_repeater(repeater_class)
         generator_class = RegisterGenerator.generator_class_by_repeater_format(repeater_class, format)
         generator = generator_class(repeater_class())
-        fake_post = generator.get_test_payload()
+        fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
 
         try:
@@ -630,9 +597,8 @@ class DomainAccountingSettings(BaseAdminProjectSettingsView):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
     @property
-    @memoized
     def product(self):
-        return SoftwareProductType.get_type_by_domain(self.domain_object)
+        return SoftwareProductType.COMMCARE
 
     @property
     @memoized
@@ -1126,9 +1092,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         return json_response({'success': True})
 
     def _get_items(self, request):
-        product_type = SoftwareProductType.get_type_by_domain(Domain.get_by_name(self.domain))
-
-        features = [{'type': get_feature_name(feature_type[0], product_type),
+        features = [{'type': get_feature_name(feature_type[0], SoftwareProductType.COMMCARE),
                      'amount': Decimal(request.POST.get(feature_type[0], 0))}
                     for feature_type in FeatureType.CHOICES
                     if Decimal(request.POST.get(feature_type[0], 0)) > 0]
@@ -1494,7 +1458,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     @memoized
     def selected_plan_version(self):
-        return DefaultProductPlan.get_default_plan_by_domain(self.domain, self.edition).plan.get_version()
+        return DefaultProductPlan.get_default_plan(self.edition).plan.get_version()
 
     @property
     def downgrade_messages(self):
@@ -1656,8 +1620,8 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         context = super(SubscriptionRenewalView, self).page_context
 
         current_privs = get_privileges(self.subscription.plan_version)
-        plan = DefaultProductPlan.get_lowest_edition_by_domain(
-            self.domain, current_privs, return_plan=False,
+        plan = DefaultProductPlan.get_lowest_edition(
+            current_privs, return_plan=False,
         ).lower()
 
         context['current_edition'] = (plan
@@ -1682,7 +1646,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def next_plan_version(self):
-        plan_version = DefaultProductPlan.get_default_plan_by_domain(self.domain, self.new_edition)
+        plan_version = DefaultProductPlan.get_default_plan(self.new_edition)
         if plan_version is None:
             log_accounting_error(
                 "Could not find a matching renewable plan "
