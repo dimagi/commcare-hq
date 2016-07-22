@@ -194,15 +194,21 @@ class LocationForm(forms.Form):
         return parent_id
 
     def clean_name(self):
+        def has_siblings_with_name(location, name, parent_location_id):
+            qs = SQLLocation.objects.filter(domain=location.domain,
+                                            name=name)
+            if parent_location_id:
+                qs.filter(parent__location_id=parent_location_id)
+            else:  # Top level
+                qs.filter(parent=None)
+            return (qs.exclude(location_id=self.location.location_id)
+                      .exists())
+
         name = self.cleaned_data['name']
-        parent = self.cleaned_data.get('parent')
+        parent_location_id = self.cleaned_data.get('parent_id', None)
 
         if self.strict:
-            if (SQLLocation.objects.filter(domain=self.location.domain,
-                                           parent=parent,
-                                           name=name)
-                                   .exclude(location_id=self.location._id)
-                                   .exists()):
+            if has_siblings_with_name(self.location, name, parent_location_id):
                 raise forms.ValidationError(
                     'name conflicts with another location with this parent'
                 )
