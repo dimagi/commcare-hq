@@ -1,37 +1,14 @@
 import math
 import time
-import traceback
-from datetime import datetime
 from functools import wraps
 
-from couchdbkit.exceptions import ResourceNotFound
 from django import db
 from django.db.utils import InterfaceError as DjangoInterfaceError
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
-from dimagi.utils.couch import LockManager
-from dimagi.utils.decorators.memoized import memoized
-from pillowtop.checkpoints.manager import PillowCheckpoint, get_default_django_checkpoint_for_legacy_pillow_class
-from pillowtop.checkpoints.util import get_machine_id, construct_checkpoint_doc_id_from_name
-from pillowtop.const import CHECKPOINT_FREQUENCY
-from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.es_utils import completely_initialize_pillow_index, doc_exists
-from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.logger import pillow_logging
-from pillowtop.pillow.interface import PillowBase
-from pillowtop.utils import prepare_bulk_payloads
 
-try:
-    from corehq.util.soft_assert import soft_assert
-    _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
-except ImportError:
-    # hack for dependency resolution if corehq not available
-    _assert = lambda assertion, message: None
-
-
-WAIT_HEARTBEAT = 10000
-CHANGES_TIMEOUT = 60000
 RETRY_INTERVAL = 2  # seconds, exponentially increasing
 MAX_RETRIES = 4  # exponential factor threshold for alerts
 
@@ -40,19 +17,8 @@ class PillowtopIndexingError(Exception):
     pass
 
 
-class PillowtopNetworkError(Exception):
-    pass
-
-
-def ms_from_timedelta(td):
-    """
-    Given a timedelta object, returns a float representing milliseconds
-    """
-    return (td.seconds * 1000) + (td.microseconds / 1000.0)
-
-
 def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
-        except_on_failure=False, update=False, delete=False):
+                          except_on_failure=False, update=False, delete=False):
     """
     More fault tolerant es.put method
     """
