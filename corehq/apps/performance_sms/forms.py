@@ -1,5 +1,4 @@
 import copy
-from jsonobject.exceptions import BadValueError
 from corehq.apps.groups.fields import GroupField
 from django import forms
 from django.utils.translation import ugettext as _, ugettext_lazy
