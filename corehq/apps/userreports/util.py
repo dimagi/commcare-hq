@@ -103,14 +103,15 @@ def number_of_report_builder_reports(domain):
     )
     return len(builder_reports)
 
-def get_indicator_adapter(config):
-    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter
+def get_indicator_adapter(config, raise_errors=False):
+    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
     from corehq.apps.userreports.es.adapter import IndicatorESAdapter
 
-    backend_id = config.get('backend_id', UCR_SQL_BACKEND)
-    if backend_id == UCR_SQL_BACKEND:
+    if config.backend_id == UCR_SQL_BACKEND:
+        if raise_errors:
+            return ErrorRaisingIndicatorSqlAdapter(config)
         return IndicatorSqlAdapter(config)
-    elif backend_id == UCR_ES_BACKEND:
+    elif config.backend_id == UCR_ES_BACKEND:
         return IndicatorESAdapter(config)
     else:
         _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
