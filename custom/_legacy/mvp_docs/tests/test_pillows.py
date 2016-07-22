@@ -6,8 +6,6 @@ from django.test.testcases import TestCase
 from mock import patch
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.indicators.models import (
     FormLabelIndicatorDefinition,
     FormDataInCaseIndicatorDefinition,
@@ -22,8 +20,7 @@ from mvp_docs.pillows import (
     get_mvp_form_indicator_pillow, get_mvp_case_indicator_pillow,
     process_indicators_for_case, process_indicators_for_form
 )
-from pillowtop.feed.couch import change_from_couch_row
-from testapps.test_pillowtop.utils import process_couch_changes
+from pillowtop.feed.couch import change_from_couch_row, get_current_seq
 
 INDICATOR_TEST_DOMAIN = 'indicator-domain'
 INDICATOR_TEST_NAMESPACE = 'indicator_test'
@@ -49,7 +46,6 @@ class IndicatorPillowTests(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_cases()
 
-    @process_couch_changes('DefaultChangeFeedPillow')
     def _save_doc_to_db(self, docname, doc_class):
         doc_dict = _get_doc_data(docname)
         try:
@@ -61,7 +57,7 @@ class IndicatorPillowTests(TestCase):
         return doc_dict['_id']
 
     def test_form_pillow_indicators(self):
-        since = get_topic_offset(topics.FORM)
+        since = get_current_seq(XFormInstance.get_db())
         form_id = self._save_doc_to_db('indicator_form.json', XFormInstance)
         form_instance = XFormInstance.get(form_id)
 
@@ -92,7 +88,7 @@ class IndicatorPillowTests(TestCase):
         self.assertNotEqual(indicator_form.computed_, {})
 
     def test_case_pillow_indicators(self):
-        since = get_topic_offset(topics.CASE)
+        since = get_current_seq(XFormInstance.get_db())
         self._save_doc_to_db('indicator_form.json', XFormInstance)
         case_id = self._save_doc_to_db('indicator_case.json', CommCareCase)
         case_instance = CommCareCase.get(case_id)

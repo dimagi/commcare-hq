@@ -16,6 +16,7 @@ from mvp_docs.models import IndicatorXForm, IndicatorCase
 from pillowtop.checkpoints.manager import PillowCheckpoint, \
     PillowCheckpointEventHandler
 from pillowtop.checkpoints.util import get_machine_id
+from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.interface import PillowProcessor
 
@@ -236,7 +237,7 @@ def _get_mvp_indicator_pillow(pillow_id, processor, topic):
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topic], group_id='{}-group'.format(pillow_id)),
+        change_feed=CouchChangeFeed(XFormInstance.get_db(), include_docs=False),
         processor=processor,
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100
