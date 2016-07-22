@@ -103,6 +103,7 @@ class MonthlyMALTRowsTests(SetupProjectPerformanceMixin, TestCase):
     @classmethod
     def setUpClass(cls):
         super(MonthlyMALTRowsTests, cls).setUpClass()
+        cls.class_setup()
         not_deleted_active_users = [cls.user._id, cls.user1._id, cls.user2._id]
         cls.prev_month_malt_rows = MonthlyMALTRows(
             domain=cls.DOMAIN_NAME,
@@ -120,7 +121,6 @@ class MonthlyMALTRowsTests(SetupProjectPerformanceMixin, TestCase):
             has_filter=False,
             not_deleted_active_users=not_deleted_active_users,
         )
-        cls.class_setup()
 
     @classmethod
     def tearDownClass(cls):
@@ -148,6 +148,7 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
     def setUpClass(cls):
         super(MonthlyPerformanceSummaryTests, cls).setUpClass()
         cls.class_setup()
+        not_deleted_active_users = [cls.user._id, cls.user1._id, cls.user2._id]
         filtered_users = []
         previous_month_malt_rows = MonthlyMALTRows(
             domain=cls.DOMAIN_NAME,
@@ -155,6 +156,7 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
             performance_threshold=15,
             users=filtered_users,
             has_filter=False,
+            not_deleted_active_users=not_deleted_active_users,
         )
         this_month_malt_rows = MonthlyMALTRows(
             domain=cls.DOMAIN_NAME,
@@ -162,6 +164,7 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
             performance_threshold=15,
             users=filtered_users,
             has_filter=False,
+            not_deleted_active_users=not_deleted_active_users,
         )
         cls.prev_month = MonthlyPerformanceSummary(
             domain=cls.DOMAIN_NAME,
