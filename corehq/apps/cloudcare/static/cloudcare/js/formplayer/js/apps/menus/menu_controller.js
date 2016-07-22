@@ -34,9 +34,11 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             });
         },
 
-        showDetail: function (model) {
-            var headers = model.options.model.get('detail').headers;
-            var details = model.options.model.get('detail').details;
+        showDetail: function myself (model, index) {
+            var detailObjects = model.options.model.get('details');
+            var detailObject = detailObjects[index];
+            var headers = detailObject.headers;
+            var details = detailObject.details;
             var detailModel = [];
             // we need to map the details and headers JSON to a list for a Backbone Collection
             for (var i = 0; i < headers.length; i++) {
@@ -52,12 +54,28 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 collection: detailCollection,
             });
 
+            var tabModel = [];
+            for (var j = 0; j < detailObjects.length; j++) {
+                var tabObject = {};
+                tabObject.title = detailObjects[j].title;
+                tabObject.id = j;
+                tabModel.push(tabObject);
+            }
+            var tabCollection = new Backbone.Collection();
+            tabCollection.reset(tabModel);
+            var tabListView = new MenuList.DetailTabListView({
+                collection: tabCollection,
+                showDetail: function(index) {
+                    myself(model, index);
+                },
+            });
+
             $('#select-case').click(function () {
                 FormplayerFrontend.trigger("menu:select", model._index, model.options.model.collection.appId);
             });
-
+            $('#case-detail-modal').find('.detail-tabs').html(tabListView.render().el);
             $('#case-detail-modal').find('.modal-body').html(menuListView.render().el);
-            $('#case-detail-modal').modal('toggle');
+            $('#case-detail-modal').modal('show');
         },
     };
 });
