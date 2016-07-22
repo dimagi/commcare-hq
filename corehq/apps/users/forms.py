@@ -219,7 +219,12 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     analytics_enabled = forms.BooleanField(
         required=False,
         label=ugettext_lazy("Enable Tracking"),
-        help_text=ugettext_lazy("Allow Dimagi to collect usage information to improve CommCare")
+        help_text=ugettext_lazy(
+            "Allow Dimagi to collect usage information to improve CommCare. "
+            "You can learn more about the information we collect and the ways "
+            "we use it in our "
+            '<a href="http://www.dimagi.com/policy/">privacy policy</a>'
+        ),
     )
 
     def __init__(self, *args, **kwargs):
