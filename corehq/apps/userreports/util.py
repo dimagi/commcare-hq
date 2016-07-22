@@ -1,4 +1,5 @@
 import collections
+import hashlib
 from corehq.util.soft_assert import soft_assert
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -103,6 +104,7 @@ def number_of_report_builder_reports(domain):
     )
     return len(builder_reports)
 
+
 def get_indicator_adapter(config, raise_errors=False):
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
     from corehq.apps.userreports.es.adapter import IndicatorESAdapter
@@ -126,3 +128,21 @@ def get_table_name(domain, table_id):
         'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
     )
+
+
+def truncate_value(value, max_length=63, from_left=True):
+    """
+    Truncate a value (typically a column name) to a certain number of characters,
+    using a hash to ensure uniqueness.
+    """
+    hash_length = 8
+    truncated_length = max_length - hash_length - 1
+    if from_left:
+        truncated_value = value[-truncated_length:]
+    else:
+        truncated_value = value[:truncated_length]
+
+    if len(value) > max_length:
+        short_hash = hashlib.sha1(value).hexdigest()[:hash_length]
+        return '{}_{}'.format(truncated_value, short_hash)
+    return value
