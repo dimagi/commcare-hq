@@ -841,6 +841,19 @@ class ConfigureNewReportBase(forms.Form):
         """
         return indicator_id in self._properties_by_column
 
+    def _get_multiselect_indicator_id(self, column_field, indicators):
+        """
+        If this column_field corresponds to a multiselect data source indicator, then return the id of the
+        indicator. Otherwise return None.
+        :param column_field: The "field" property of a report column
+        :return: a data source indicator id
+        """
+        indicator_id = "_".join(column_field.split("_")[:-1])
+        for indicator in indicators:
+            if indicator['column_id'] == indicator_id and indicator['type'] == 'choice_list':
+                return indicator_id
+        return None
+
     @property
     def _report_aggregation_cols(self):
         return ['doc_id']
@@ -1079,16 +1092,30 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 'sum': 'Sum',
                 'expand': 'Count per Choice'
             }
+            added_multiselect_columns = set()
             cols = []
             for c in self.existing_report.columns:
-                exists = self._column_exists(c['field'])
+                mselect_indicator_id = self._get_multiselect_indicator_id(
+                    c['field'], self.existing_report.config.configured_indicators
+                )
+                indicator_id = mselect_indicator_id or c['field']
+                display = c['display']
+                exists = self._column_exists(indicator_id)
+
+                if mselect_indicator_id:
+                    if mselect_indicator_id not in added_multiselect_columns:
+                        added_multiselect_columns.add(mselect_indicator_id)
+                        display = " - ".join(display.split(" - ")[:-1])
+                    else:
+                        continue
+
                 cols.append(
                     ColumnViewModel(
-                        display_text=c['display'],
+                        display_text=display,
                         exists_in_current_version=exists,
-                        property=self._get_column_option_by_indicator_id(c['field']).id if exists else None,
-                        data_source_field=c['field'] if not exists else None,
-                        calculation=reverse_agg_map.get(c.get('aggregation'), _('Count per Choice'))
+                        property=self._get_column_option_by_indicator_id(indicator_id).id if exists else None,
+                        data_source_field=indicator_id if not exists else None,
+                        calculation=reverse_agg_map.get(c.get('aggregation'), 'Count per Choice')
                     )
                 )
             return cols
